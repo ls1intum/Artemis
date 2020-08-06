@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,12 +20,14 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -35,10 +38,16 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     RequestUtilService request;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    ExerciseService exerciseService;
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TextClusterRepository textClusterRepository;
 
     @Autowired
     TextSubmissionRepository textSubmissionRepository;
@@ -73,16 +82,21 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void deleteTextExerciseWithSubmissionWithTextBlocks() throws Exception {
+    public void deleteTextExerciseWithSubmissionWithTextBlocksAndClusters() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
-
-        final List<TextBlock> textBlocks = List.of(ModelFactory.generateTextBlock(0, 11, "Lorem Ipsum"), ModelFactory.generateTextBlock(12, 19, "Foo Bar"));
+        int submissionCount = 5;
+        int submissionSize = 4;
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        int[] clusterSizes = { 4, 5, 10, 1 };
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        textClusterRepository.saveAll(clusters);
         database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
     }
 
     @Test
@@ -91,7 +105,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        assertThat(exerciseRepository.findAll().isEmpty());
+        assertThat(textExerciseRepository.findAll().isEmpty());
     }
 
     @Test
@@ -159,7 +173,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        textExercise = (TextExercise) exerciseRepository.findByIdWithEagerExampleSubmissions(textExercise.getId()).get();
+        textExercise = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(textExercise.getId()).get();
 
         // update certain attributes of text exercise
         String title = "Updated Text Exercise";

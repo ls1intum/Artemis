@@ -3,11 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { WindowRef } from 'app/core/websocket/window.service';
-
 @Injectable({ providedIn: 'root' })
 export class SourceTreeService {
-    constructor(private httpClient: HttpClient, private participationService: ParticipationService, private $window: WindowRef) {}
+    constructor(private httpClient: HttpClient, private participationService: ParticipationService) {}
 
     /**
      * Build source tree url.

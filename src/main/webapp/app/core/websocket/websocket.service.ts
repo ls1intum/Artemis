@@ -6,7 +6,6 @@ import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
 import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
-import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
 
 export interface IWebsocketService {
@@ -89,7 +88,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private socket: any = undefined;
     private subscriptionCounter = 0;
 
-    constructor(private router: Router, private authServerProvider: AuthServerProvider, private $window: WindowRef, private csrfService: CSRFService) {
+    constructor(private router: Router, private authServerProvider: AuthServerProvider, private csrfService: CSRFService) {
         this.connection = this.createConnection();
     }
 
@@ -145,7 +144,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             this.connection = this.createConnection();
         }
         // building absolute path so that websocket doesn't fail when deploying with a context path
-        const loc = this.$window.nativeWindow.location;
+        const loc = window.location;
         let url = '//' + loc.host + loc.pathname + 'websocket/tracker';
         const authToken = this.authServerProvider.getToken();
         if (authToken) {

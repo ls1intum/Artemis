@@ -52,7 +52,7 @@ class UMLClassDiagramTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         classDiagram = new UMLClassDiagram(123456789, List.of(umlClass1, umlClass2, umlClass3), List.of(umlRelationship1, umlRelationship2, umlRelationship3),
                 List.of(umlPackage1, umlPackage2, umlPackage3));

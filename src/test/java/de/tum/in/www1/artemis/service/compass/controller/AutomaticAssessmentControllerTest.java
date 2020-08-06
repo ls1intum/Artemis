@@ -63,7 +63,7 @@ class AutomaticAssessmentControllerTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         automaticAssessmentController = new AutomaticAssessmentController();
 

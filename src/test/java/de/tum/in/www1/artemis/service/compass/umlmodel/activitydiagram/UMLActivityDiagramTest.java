@@ -46,7 +46,7 @@ class UMLActivityDiagramTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         activityDiagram = new UMLActivityDiagram(123456789, List.of(umlActivityNode1, umlActivityNode2, umlActivityNode3), List.of(umlActivity1, umlActivity2, umlActivity3),
                 List.of(umlControlFlow1, umlControlFlow2, umlControlFlow3));

@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -106,7 +105,6 @@ describe('CodeEditorStudentIntegration', () => {
             declarations: [],
             providers: [
                 JhiLanguageHelper,
-                WindowRef,
                 ChangeDetectorRef,
                 DeviceDetectorService,
                 CodeEditorConflictStateService,
