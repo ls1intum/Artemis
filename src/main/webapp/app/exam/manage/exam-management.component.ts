@@ -20,7 +20,6 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
-    styles: [],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
