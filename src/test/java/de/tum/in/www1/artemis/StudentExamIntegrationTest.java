@@ -1076,6 +1076,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         }
         bitbucketRequestMockProvider.mockDeleteProject(projectKey);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
         for (final var verifiable : verifiables) {
             verifiable.performVerification();
         }
