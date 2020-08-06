@@ -137,9 +137,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         submissionRepository.save(programmingSubmission);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1.0).id(1L));
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1.0).id(2L));
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L));
+        expectedTestCases
+                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1.0).id(1L).bonusMultiplier(1D).bonusPoints(0D));
+        expectedTestCases
+                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1.0).id(2L).bonusMultiplier(1D).bonusPoints(0D));
+        expectedTestCases
+                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L).bonusMultiplier(1D).bonusPoints(0D));
 
         final var resultNotification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         final var optionalResult = resultService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
