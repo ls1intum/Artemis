@@ -11,7 +11,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
-    styleUrls: ['./course-exams.scss'],
+    styles: [],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
