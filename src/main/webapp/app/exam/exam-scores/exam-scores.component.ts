@@ -16,7 +16,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styles: [],
+    styleUrls: ['./exam-scores.component.scss'],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     public examScoreDTO: ExamScoreDTO;
