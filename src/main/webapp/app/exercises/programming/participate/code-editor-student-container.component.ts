@@ -21,12 +21,13 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import {ComponentCanDeactivate} from "app/shared/guard/can-deactivate.model";
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
 })
-export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -138,5 +139,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
+    }
+
+    canDeactivate() {
+        return this.codeEditorContainer.canDeactivate();
     }
 }

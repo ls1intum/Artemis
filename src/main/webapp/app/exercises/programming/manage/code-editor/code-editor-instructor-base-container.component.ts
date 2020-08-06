@@ -20,6 +20,7 @@ import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
+import {ComponentCanDeactivate} from "app/shared/guard/can-deactivate.model";
 
 /**
  * Enumeration specifying the repository type
@@ -43,7 +44,7 @@ export enum LOADING_STATE {
 }
 
 @Component({ template: '' })
-export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
+export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
 
     ButtonSize = ButtonSize;
@@ -341,5 +342,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     onError(error: string) {
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    canDeactivate() {
+        return this.codeEditorContainer.canDeactivate();
     }
 }
