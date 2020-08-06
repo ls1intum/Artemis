@@ -152,7 +152,11 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
+        // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
+        if (isStudentParticipation) {
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        }
         return updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
     }
 
@@ -190,10 +194,7 @@ public class ProgrammingExerciseTestCaseService {
         boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                 && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
-        // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
-                .collect(Collectors.toSet());
-        return testCasesForCurrentDate;
+        return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
     }
 
     private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
