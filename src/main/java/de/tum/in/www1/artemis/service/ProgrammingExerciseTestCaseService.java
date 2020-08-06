@@ -172,7 +172,7 @@ public class ProgrammingExerciseTestCaseService {
 
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases);
+            updateScore(result, successfulTestCases, testCases, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
             updateResultString(result, successfulTestCases, testCasesForCurrentDate);
@@ -235,13 +235,19 @@ public class ProgrammingExerciseTestCaseService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of a given programming exercise.
      */
-    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
+    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
+            ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
             // TODO: take exercise bonus points into account
             double successfulTestScore = successfulTestCases.stream().mapToDouble(test -> test.getWeight() * test.getBonusMultiplier() + test.getBonusPoints()).sum();
             // TODO: is the new formula for successfulTestScore correct?
             double maxTestScore = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
             long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+            // The score is capped by the maximum achievable bonus points
+            double maxScoreWithBonus = ((programmingExercise.getMaxScore() + programmingExercise.getBonusPoints()) / programmingExercise.getMaxScore()) * 100.;
+            if (score > maxScoreWithBonus) {
+                score = (long) maxScoreWithBonus;
+            }
             result.setScore(score);
         }
     }
