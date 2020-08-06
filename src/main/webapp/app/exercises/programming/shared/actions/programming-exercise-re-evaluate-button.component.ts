@@ -35,7 +35,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     isReEvaluationRunning = false;
 
-    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private alertService: AlertService) { }
+    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private alertService: AlertService) {}
 
     /**
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.
@@ -50,6 +50,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
             (error: HttpErrorResponse) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.error(`artemisApp.programmingExercise.reEvaluateFailed`, { message: error.message });
-            });
+            },
+        );
     }
 }
