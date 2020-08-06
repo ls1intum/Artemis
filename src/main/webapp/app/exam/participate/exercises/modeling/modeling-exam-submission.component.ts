@@ -48,7 +48,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     onDeactivate(): void {
-        this.cdr.reattach();
+        this.cdr.detach();
     }
 
     updateViewFromSubmission(): void {

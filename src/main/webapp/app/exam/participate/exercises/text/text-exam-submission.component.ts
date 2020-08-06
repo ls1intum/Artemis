@@ -56,7 +56,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onDeactivate(): void {
-        this.cdr.reattach();
+        this.cdr.detach();
     }
 
     updateViewFromSubmission(): void {

@@ -75,7 +75,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onDeactivate(): void {
-        this.cdr.reattach();
+        this.cdr.detach();
     }
 
     /**

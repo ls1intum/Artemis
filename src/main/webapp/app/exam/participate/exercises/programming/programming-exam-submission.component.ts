@@ -60,7 +60,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     onDeactivate(): void {
-        this.cdr.reattach();
+        this.cdr.detach();
     }
 
     updateSubmissionFromView(): void {
