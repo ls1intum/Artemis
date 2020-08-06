@@ -11,7 +11,6 @@ const privacyStatementFile = 'privacy_statement.html';
         <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
         <div [innerHTML]="privacyStatement"></div>
     `,
-    styles: [],
 })
 export class PrivacyComponent implements AfterViewInit, OnInit {
     privacyStatement: SafeHtml;

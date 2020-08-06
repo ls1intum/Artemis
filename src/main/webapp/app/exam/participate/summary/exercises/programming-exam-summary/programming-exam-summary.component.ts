@@ -6,7 +6,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 @Component({
     selector: 'jhi-programming-exam-summary',
     templateUrl: './programming-exam-summary.component.html',
-    styles: [],
 })
 export class ProgrammingExamSummaryComponent {
     @Input()
