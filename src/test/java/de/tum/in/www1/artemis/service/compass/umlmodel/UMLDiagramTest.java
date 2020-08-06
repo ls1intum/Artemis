@@ -40,7 +40,7 @@ class UMLDiagramTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         umlDiagram = mock(UMLDiagram.class, CALLS_REAL_METHODS);
         when(umlDiagram.getModelElements()).thenReturn(List.of(umlElement1, umlElement2));

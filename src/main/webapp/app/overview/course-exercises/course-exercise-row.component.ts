@@ -5,7 +5,6 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
 import { Course } from 'app/entities/course.model';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -42,7 +41,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private httpClient: HttpClient,

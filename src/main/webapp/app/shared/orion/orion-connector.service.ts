@@ -1,5 +1,4 @@
 import { Injectable, Injector } from '@angular/core';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ArtemisOrionConnector, ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
@@ -7,6 +6,13 @@ import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-ed
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+
+/**
+ * Return the global native browser window object with any type to prevent type errors
+ */
+function theWindow(): any {
+    return window;
+}
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -28,10 +34,10 @@ export class OrionConnectorService implements ArtemisOrionConnector {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 
-    constructor(private window: WindowRef, private injector: Injector) {}
+    constructor(private injector: Injector) {}
 
-    static initConnector(connector: OrionConnectorService, win: WindowRef) {
-        win.nativeWindow.artemisClientConnector = connector;
+    static initConnector(connector: OrionConnectorService) {
+        theWindow().artemisClientConnector = connector;
         connector.orionState = { opened: -1, inInstructorView: false, cloning: false, building: false };
         connector.orionStateSubject = new BehaviorSubject<OrionState>(connector.orionState);
     }
@@ -53,7 +59,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param password The password of the current user. This is stored safely in the IDE's password safe
      */
     login(username: string, password: string) {
-        this.window.nativeWindow.orionSharedUtilConnector.login(username, password);
+        theWindow().orionSharedUtilConnector.login(username, password);
     }
 
     /**
@@ -63,7 +69,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param exercise The exercise for which the repository should get cloned.
      */
     importParticipation(repository: string, exercise: ProgrammingExercise) {
-        this.window.nativeWindow.orionExerciseConnector.importParticipation(repository, stringifyCircular(exercise));
+        theWindow().orionExerciseConnector.importParticipation(repository, stringifyCircular(exercise));
     }
 
     /**
@@ -71,7 +77,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * get pushed to the remote master branch
      */
     submit() {
-        this.window.nativeWindow.orionVCSConnector.submit();
+        theWindow().orionVCSConnector.submit();
     }
 
     /**
@@ -90,7 +96,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param message The message to log in the development environment
      */
     log(message: string) {
-        this.window.nativeWindow.orionSharedUtilConnector.log(message);
+        theWindow().orionSharedUtilConnector.log(message);
     }
 
     /**
@@ -109,14 +115,14 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * Notify the IDE that a new build has started
      */
     onBuildStarted(problemStatement: string) {
-        this.window.nativeWindow.orionBuildConnector.onBuildStarted(problemStatement);
+        theWindow().orionBuildConnector.onBuildStarted(problemStatement);
     }
 
     /**
      * Notify the IDE that a build finished and all results have been sent
      */
     onBuildFinished() {
-        this.window.nativeWindow.orionBuildConnector.onBuildFinished();
+        theWindow().orionBuildConnector.onBuildFinished();
     }
 
     /**
@@ -125,7 +131,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param buildErrors All compile errors for the current build
      */
     onBuildFailed(buildErrors: BuildLogErrors) {
-        this.window.nativeWindow.orionBuildConnector.onBuildFailed(JSON.stringify(buildErrors));
+        theWindow().orionBuildConnector.onBuildFailed(JSON.stringify(buildErrors));
     }
 
     /**
@@ -137,7 +143,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param testName The name of finished test
      */
     onTestResult(success: boolean, testName: string, message: string) {
-        this.window.nativeWindow.orionBuildConnector.onTestResult(success, testName, message);
+        theWindow().orionBuildConnector.onTestResult(success, testName, message);
     }
 
     /**
@@ -182,7 +188,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      */
     editExercise(exercise: ProgrammingExercise): void {
         this.setIDEStateParameter({ cloning: true });
-        this.window.nativeWindow.orionExerciseConnector.editExercise(stringifyCircular(exercise));
+        theWindow().orionExerciseConnector.editExercise(stringifyCircular(exercise));
     }
 
     /**
@@ -192,10 +198,10 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param repository The repository to be selected for all future interactions
      */
     selectRepository(repository: REPOSITORY): void {
-        this.window.nativeWindow.orionVCSConnector.selectRepository(repository);
+        theWindow().orionVCSConnector.selectRepository(repository);
     }
 
     buildAndTestLocally(): void {
-        this.window.nativeWindow.orionBuildConnector.buildAndTestLocally();
+        theWindow().orionBuildConnector.buildAndTestLocally();
     }
 }
