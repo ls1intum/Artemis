@@ -1083,15 +1083,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response.examId).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
-        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.exerciseGroupId).collect(Collectors.toList());
+        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
         List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
         assertThat(exerciseGroupIdsInExam).containsExactlyInAnyOrderElementsOf(exerciseGroupIdsInDTO);
 
         // Compare exerciseGroups in DTO to exam exerciseGroups
         for (var exerciseGroupDTO : response.exerciseGroups) {
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
-            ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.exerciseGroupId))
-                    .findFirst().get();
+            ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
 
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
@@ -1103,7 +1102,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             for (var originalExercise : originalExerciseGroup.getExercises()) {
                 // Find the corresponding ExerciseInfo object
                 var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
+                // Check the exercise title
                 assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
+                // Check the max points of the exercise
+                assertThat(originalExercise.getMaxScore()).isEqualTo(exerciseDTO.maxPoints);
+                // Check the number of exercise participants and update the group participant counter
                 var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
                 noOfExerciseGroupParticipantions += noOfExerciseParticipations;
                 assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.numberOfParticipants);
