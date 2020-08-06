@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, Input, OnInit } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -51,7 +51,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(private quizService: ArtemisQuizService) {
+    constructor(private quizService: ArtemisQuizService, private cdr: ChangeDetectorRef) {
         super();
         smoothscroll.polyfill();
     }
@@ -70,7 +70,13 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.exercise;
     }
 
-    onActivate(): void {}
+    onActivate(): void {
+        this.cdr.reattach();
+    }
+
+    onDeactivate(): void {
+        this.cdr.reattach();
+    }
 
     /**
      * Initialize the selections / mappings for each question with an empty array
@@ -103,7 +109,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     /**
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
-     * @param questionIndex
+     * @param questionId
      */
     navigateToQuestion(questionId: number): void {
         document.getElementById('question' + questionId)!.scrollIntoView({

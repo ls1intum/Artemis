@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -41,6 +41,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor(private cdr: ChangeDetectorRef) {
+        super();
+    }
+
     hasUnsavedChanges(): boolean {
         if (this.exercise.allowOfflineIde && !this.exercise.allowOnlineEditor) {
             return false;
@@ -49,9 +53,14 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     onActivate(): void {
+        this.cdr.reattach();
         if (this.codeEditorComponent) {
             this.codeEditorComponent.reload();
         }
+    }
+
+    onDeactivate(): void {
+        this.cdr.reattach();
     }
 
     updateSubmissionFromView(): void {

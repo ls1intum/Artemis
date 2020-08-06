@@ -9,6 +9,7 @@ export abstract class ExamSubmissionComponent {
      * is called when the component becomes active / visible
      */
     abstract onActivate(): void;
+    abstract onDeactivate(): void;
 
     abstract getSubmission(): Submission | null;
     abstract getExercise(): Exercise;
