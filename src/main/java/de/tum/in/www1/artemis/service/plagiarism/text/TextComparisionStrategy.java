@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service.plagiarism.text;
 import org.jetbrains.annotations.NotNull;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import info.debatty.java.stringsimilarity.*;
+import info.debatty.java.stringsimilarity.Cosine;
+import info.debatty.java.stringsimilarity.MetricLCS;
+import info.debatty.java.stringsimilarity.NGram;
+import info.debatty.java.stringsimilarity.NormalizedLevenshtein;
 
 public interface TextComparisionStrategy {
 

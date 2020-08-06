@@ -135,7 +135,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                     headers: ['Student A', 'Submission A', 'Student B', 'Submission B', ...Object.keys(data[0].distanceMetrics)],
                 });
 
-                const fullname = (student: User): string => `${student.firstName || ''} ${student.lastName || ''}`;
+                const fullname = (student: User): string => `${student.firstName || ''} ${student.lastName || ''}`.trim();
                 const csvData = data.map((dto) => {
                     const submissionA = dto.submissions[0];
                     const submissionB = dto.submissions[1];
