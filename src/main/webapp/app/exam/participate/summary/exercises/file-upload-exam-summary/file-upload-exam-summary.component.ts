@@ -5,7 +5,6 @@ import { FileService } from 'app/shared/http/file.service';
 @Component({
     selector: 'jhi-file-upload-exam-summary',
     templateUrl: './file-upload-exam-summary.component.html',
-    styles: [],
 })
 export class FileUploadExamSummaryComponent implements OnInit {
     @Input()

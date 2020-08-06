@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import jplag.ExitException;
+
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -798,8 +800,7 @@ public class ProgrammingExerciseResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        Set<Long> participationIdSet = new ArrayList<String>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong)
-                .collect(Collectors.toSet());
+        Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
 
         // Select the participations that should be exported
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
@@ -931,6 +932,48 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 
+    /**
+     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
+     *
+     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException is thrown for file handling errors
+     */
+    @GetMapping(value = Endpoints.CHECK_PLAGIARISM, produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
+        log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
+        long start = System.nanoTime();
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExercise.isEmpty()) {
+            return notFound();
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+            return forbidden();
+        }
+
+        var language = programmingExercise.get().getProgrammingLanguage();
+        if (language != ProgrammingLanguage.JAVA && language != ProgrammingLanguage.C && language != ProgrammingLanguage.PYTHON) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
+                    "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
+        }
+
+        File zipFile = programmingExerciseExportService.checkPlagiarism(exerciseId);
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
+                formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -956,6 +999,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
+
+        public static final String CHECK_PLAGIARISM = PROGRAMMING_EXERCISE + "/check-plagiarism";
 
         public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
 

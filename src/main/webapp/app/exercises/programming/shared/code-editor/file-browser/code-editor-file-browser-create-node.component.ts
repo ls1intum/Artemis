@@ -1,12 +1,11 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
-    providers: [NgbModal, WindowRef],
+    providers: [NgbModal],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;

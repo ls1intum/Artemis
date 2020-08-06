@@ -109,7 +109,9 @@ public class ModelFactory {
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
-        programmingExercise.setTestRepositoryUrl("test@url");
+        final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUrl(testRepoUrl);
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
