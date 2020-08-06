@@ -42,6 +42,10 @@ public class FileService {
 
     private final Logger log = LoggerFactory.getLogger(FileService.class);
 
+    private final Map<Path, ScheduledFuture<?>> futures = new HashMap<>();
+
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
     /**
      * Get the file for the given path as a byte[]
      *
@@ -266,7 +270,7 @@ public class FileService {
                 filename = originalFilename;
             }
             else {
-                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
             String path = targetFolder + filename;
@@ -296,7 +300,7 @@ public class FileService {
         for (Resource resource : resources) {
 
             // Replace windows seperator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8").replaceAll("\\\\", "/");
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
@@ -621,12 +625,6 @@ public class FileService {
         return Charset.forName(charsetName);
     }
 
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
-
     /**
      * Schedule the deletion of the given path with a given delay
      *
@@ -634,7 +632,7 @@ public class FileService {
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
+        ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 log.info("Delete file " + path);
                 Files.delete(path);
@@ -643,7 +641,7 @@ public class FileService {
             catch (IOException e) {
                 log.error("Deleting the file " + path + " did not work", e);
             }
-        }, delayInMinutes, MINUTES);
+        }, delayInMinutes, TimeUnit.MINUTES);
 
         futures.put(path, future);
     }

@@ -17,7 +17,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -72,10 +71,6 @@ public class ProgrammingExerciseService {
     private final ResourceLoader resourceLoader;
 
     private final InstanceMessageSendService instanceMessageSendService;
-
-    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
-    @Value("${artemis.repo-download-clone-path}")
-    private String REPO_DOWNLOAD_CLONE_PATH;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
