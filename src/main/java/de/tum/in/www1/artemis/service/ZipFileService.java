@@ -73,9 +73,8 @@ public class ZipFileService {
             Files.copy(path, zipOutputStream);
             zipOutputStream.closeEntry();
         }
-        catch (Exception e) {
+        catch (IOException e) {
             log.error("Create zip file error", e);
         }
     }
-
 }
