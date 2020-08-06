@@ -28,7 +28,7 @@ class UMLPackageTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         umlPackage = new UMLPackage("myPackage", List.of(class1, class2), "packageId");
     }

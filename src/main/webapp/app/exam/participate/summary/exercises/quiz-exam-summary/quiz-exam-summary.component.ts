@@ -16,7 +16,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 @Component({
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
-    styles: [],
 })
 export class QuizExamSummaryComponent implements OnInit {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
