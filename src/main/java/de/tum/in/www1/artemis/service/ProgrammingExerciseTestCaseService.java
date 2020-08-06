@@ -173,17 +173,24 @@ public class ProgrammingExerciseTestCaseService {
      */
     public List<Result> updateAllResultsFromTestCases(ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+
+        ArrayList<Result> updatedResults = new ArrayList<>();
+
+        Result templateResult = exercise.getTemplateParticipation().findLatestResult();
+        Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
+        // template and solution are always updated using all test cases
+        updateResultFromTestCases(testCases, testCases, templateResult);
+        updateResultFromTestCases(testCases, testCases, solutionResult);
+        updatedResults.add(templateResult);
+        updatedResults.add(solutionResult);
+
+        // filter the test cases for the student results if necessary
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         // We only update the latest automatic results here, later manual assessments are not affected
         List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResult(exercise.getId());
 
-        ArrayList<Result> updatedResults = new ArrayList<>();
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
-            // Ignore participations without result
-            if (result == null) {
-                continue;
-            }
             updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
             updatedResults.add(result);
         }
