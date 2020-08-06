@@ -8,7 +8,6 @@ import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
@@ -52,7 +51,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private $window: WindowRef,
     ) {}
 
     /**
@@ -63,7 +61,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
-        this.$window.nativeWindow.scroll(0, 0);
+        window.scroll(0, 0);
 
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
