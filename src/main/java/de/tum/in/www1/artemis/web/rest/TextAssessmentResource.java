@@ -321,7 +321,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
-
+        // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
         result = textSubmission.getResult();
 
