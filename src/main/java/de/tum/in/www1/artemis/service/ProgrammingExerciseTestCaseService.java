@@ -221,7 +221,7 @@ public class ProgrammingExerciseTestCaseService {
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
             removeAllFeedbackAndSetScoreToZero(result);
         }
-        // Case 3: If there are no feedbacks, the build has failed. In this case we just return the original result without changing it.
+        // Case 3: If there are no feedbacks, the build has failed or it has previously fallen under case 2. In this case we just return the original result without changing it.
         return result;
     }
 
