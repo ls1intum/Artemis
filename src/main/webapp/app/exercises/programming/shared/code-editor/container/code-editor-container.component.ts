@@ -71,9 +71,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     commitState: CommitState;
 
     constructor(
-        private participationService: ParticipationService | null,
+        private participationService: ParticipationService,
         private translateService: TranslateService,
-        private route: ActivatedRoute | null,
+        private route: ActivatedRoute,
         private jhiAlertService: AlertService,
         private sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
