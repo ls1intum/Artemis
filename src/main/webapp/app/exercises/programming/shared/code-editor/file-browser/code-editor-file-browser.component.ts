@@ -7,7 +7,6 @@ import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { textFileExtensions } from './text-files.json';
-import { WindowRef } from 'app/core/websocket/window.service';
 import {
     CommitState,
     CreateFileChange,
@@ -28,7 +27,7 @@ import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-edito
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
     styleUrls: ['./code-editor-file-browser.scss'],
-    providers: [NgbModal, WindowRef],
+    providers: [NgbModal],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
     CommitState = CommitState;
@@ -109,7 +108,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     constructor(
-        private $window: WindowRef,
         public modalService: NgbModal,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private repositoryService: CodeEditorRepositoryService,
@@ -134,7 +132,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMinWidth = window.screen.width / 6;
         this.interactResizable = interact('.resizable-filebrowser');
     }
 

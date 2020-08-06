@@ -35,7 +35,7 @@ class UMLRelationshipTest {
 
     @BeforeEach
     void setUp() throws NoSuchFieldException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         relationship = new UMLRelationship(source1, target1, UMLRelationshipType.CLASS_BIDIRECTIONAL, "relationshipId", "sourceRole", "targetRole", "*", "0..1");
 

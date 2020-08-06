@@ -30,7 +30,7 @@ class UMLMethodTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         method = new UMLMethod("myMethod(arg1, arg2): void", "myMethod", "void", List.of("arg1", "arg2"), "methodId");
         method.setParentClass(parentClass);

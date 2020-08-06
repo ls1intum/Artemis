@@ -3,7 +3,6 @@ import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/alert/alert.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
@@ -70,7 +69,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private location: Location,
         private artemisMarkdown: ArtemisMarkdownService,
         private resultService: ResultService,
-        private $window: WindowRef,
         private guidedTourService: GuidedTourService,
     ) {}
 
@@ -97,8 +95,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      * Sets the size of resizable elements after initialization.
      */
     ngAfterViewInit(): void {
-        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.resizableMinWidth = window.screen.width / 6;
+        this.resizableMinHeight = window.screen.height / 7;
 
         this.interactResizableSubmission = interact('.resizable-submission')
             .resizable({

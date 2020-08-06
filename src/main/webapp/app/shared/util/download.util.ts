@@ -2,8 +2,8 @@ import { HttpResponse } from '@angular/common/http';
 
 export function downloadZipFileFromResponse(response: HttpResponse<Blob>): void {
     if (response.body) {
-        const file = new Blob([response.body], { type: 'application/zip' });
-        downloadFile(file, response.headers.get('filename')!);
+        const zipFile = new Blob([response.body], { type: 'application/zip' });
+        downloadFile(zipFile, response.headers.get('filename')!);
     }
 }
 
@@ -28,5 +28,6 @@ export function downloadFile(blob: Blob, filename: string) {
         // Click the url so that browser shows save file dialog,
         anchor.click();
         document.body.removeChild(anchor);
+        window.URL.revokeObjectURL(url);
     }
 }

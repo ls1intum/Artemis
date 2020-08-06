@@ -56,6 +56,8 @@
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommits": "Template Commits zusammenführen",
+            "checkPlagiarism": "Auf Plagiate prüfen",
+            "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der Zip Datei enthalten.",
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
             "combineTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",

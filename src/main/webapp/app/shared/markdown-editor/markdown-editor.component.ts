@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import 'brace/mode/latex';
@@ -87,19 +86,16 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {array} containing all colorPickerCommands
      * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
      * because the class definitions are saved within that method*/
-    @Input()
-    colorCommands: Command[] = [new ColorPickerCommand()];
+    @Input() colorCommands: Command[] = [new ColorPickerCommand()];
 
     /**
      * Use this array for commands that are not related to the markdown but to the editor (e.g. fullscreen mode).
      * These elements will be displayed on the right side of the command bar.
      */
-    @Input()
-    metaCommands: Command[] = [new FullscreenCommand()];
+    @Input() metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
-    @Input()
-    defaultCommands: Command[] = [
+    @Input() defaultCommands: Command[] = [
         new BoldCommand(),
         new ItalicCommand(),
         new UnderlineCommand(),
@@ -112,8 +108,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     ];
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/
-    @Input()
-    headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
+    @Input() headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
     @Input() domainCommands: Array<DomainCommand>;
@@ -157,12 +152,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg';
 
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        private $window: WindowRef,
-        private fileUploaderService: FileUploaderService,
-        private jhiAlertService: AlertService,
-    ) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: AlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -381,7 +371,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /**
      * @function onFileUpload
      * @desc handle file upload for input
-     * @param {any} $event
+     * @param $event
      */
     onFileUpload($event: any): void {
         if ($event.target.files.length >= 1) {
