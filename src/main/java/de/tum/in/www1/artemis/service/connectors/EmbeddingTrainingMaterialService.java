@@ -32,8 +32,7 @@ public class EmbeddingTrainingMaterialService {
     private FileService fileService = new FileService();
 
     private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log,
-        EmbeddingTrainingMaterialService.Response.class);
-
+            EmbeddingTrainingMaterialService.Response.class);
 
     // region Request/Response DTOs
     private static class Request {
