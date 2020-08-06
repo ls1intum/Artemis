@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -62,7 +61,6 @@ public class ProgrammingExerciseTestCaseService {
      * @throws EntityNotFoundException if the programming exercise could not be found.
      * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    @Transactional
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
             throws EntityNotFoundException, IllegalAccessException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTestCasesById(exerciseId);
@@ -79,6 +77,8 @@ public class ProgrammingExerciseTestCaseService {
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
             matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
+            matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
+            matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
             updatedTests.add(matchingTestCase);
         }
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
@@ -92,11 +92,12 @@ public class ProgrammingExerciseTestCaseService {
      * @param exerciseId to find exercise test cases
      * @return test cases that have been reset
      */
-    @Transactional
-    public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
+    public Set<ProgrammingExerciseTestCase> reset(Long exerciseId) {
         Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
         for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.setWeight(1);
+            testCase.setWeight(1.0);
+            testCase.setBonusMultiplier(1.0);
+            testCase.setBonusPoints(0.0);
         }
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
@@ -114,7 +115,7 @@ public class ProgrammingExerciseTestCaseService {
     public boolean generateTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
-                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1).exercise(exercise).active(true)).collect(Collectors.toSet());
+                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).exercise(exercise).active(true)).collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::equals))
                 .collect(Collectors.toSet());
@@ -234,8 +235,10 @@ public class ProgrammingExerciseTestCaseService {
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
         if (successfulTestCases.size() > 0) {
-            long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-            long maxTestScore = allTests.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+            // TODO: take exercise bonus points into account
+            double successfulTestScore = successfulTestCases.stream().mapToDouble(test -> test.getWeight() * test.getBonusMultiplier() + test.getBonusPoints()).sum();
+            // TODO: is the new formula for successfulTestScore correct?
+            double maxTestScore = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
             long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
             result.setScore(score);
         }

@@ -186,9 +186,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
-        expect(saveWeightsButton).to.exist;
-        expect(saveWeightsButton.nativeElement.disabled).to.be.true;
+        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        expect(saveButton).to.exist;
+        expect(saveButton.nativeElement.disabled).to.be.true;
 
         tick();
         fixture.destroy();
@@ -210,9 +210,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
-        expect(saveWeightsButton).to.exist;
-        expect(saveWeightsButton.nativeElement.disabled).to.be.true;
+        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        expect(saveButton).to.exist;
+        expect(saveButton.nativeElement.disabled).to.be.true;
 
         tick();
         fixture.destroy();

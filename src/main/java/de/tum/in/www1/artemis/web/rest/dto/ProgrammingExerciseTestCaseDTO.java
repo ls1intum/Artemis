@@ -8,7 +8,11 @@ public class ProgrammingExerciseTestCaseDTO {
 
     private Long id;
 
-    private Integer weight;
+    private Double weight;
+
+    private Double bonusMultiplier;
+
+    private Double bonusPoints;
 
     private boolean afterDueDate;
 
@@ -20,11 +24,11 @@ public class ProgrammingExerciseTestCaseDTO {
         this.id = id;
     }
 
-    public Integer getWeight() {
+    public Double getWeight() {
         return weight;
     }
 
-    public void setWeight(Integer weight) {
+    public void setWeight(Double weight) {
         this.weight = weight;
     }
 
@@ -34,5 +38,21 @@ public class ProgrammingExerciseTestCaseDTO {
 
     public void setAfterDueDate(boolean afterDueDate) {
         this.afterDueDate = afterDueDate;
+    }
+
+    public Double getBonusMultiplier() {
+        return bonusMultiplier;
+    }
+
+    public void setBonusMultiplier(Double bonusMultiplier) {
+        this.bonusMultiplier = bonusMultiplier;
+    }
+
+    public Double getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public void setBonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
     }
 }

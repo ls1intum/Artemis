@@ -117,16 +117,16 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
-        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
-        testCaseService.resetWeights(programmingExercise.getId());
+        testCaseService.reset(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
-        assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+        assertThat(testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
@@ -151,7 +151,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
-        programmingExerciseTestCaseDTO.setWeight(400);
+        programmingExerciseTestCaseDTO.setWeight(400.0);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();

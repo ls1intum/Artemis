@@ -12,7 +12,7 @@ export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
-    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+    reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,8 +87,8 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      *
      * @param exerciseId
      */
-    public resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset-weights`, {});
+    public reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset`, {});
     }
 
     /**
