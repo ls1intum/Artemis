@@ -8,11 +8,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -26,11 +24,14 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final ParticipationService participationService;
+
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.participationService = participationService;
     }
 
     /**
@@ -150,13 +151,52 @@ public class ProgrammingExerciseTestCaseService {
      * @return Result with updated feedbacks, score and result string.
      */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        return updateResultFormTestCases(testCases, testCasesForCurrentDate, result);
+    }
+
+    /**
+     * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
+     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
+     * - Checking the due date and the afterDueDate flag
+     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     *
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     *
+     * @param exercise the exercise whose results should be updated
+     * @return the results of the exercise that have been updated
+     */
+    public List<Result> updateAllResultsFromTestCases(ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        // We only update the latest automatic results here, later manual assessments are not affected
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResult(exercise.getId());
+
+        ArrayList<Result> updatedResults = new ArrayList<>();
+        for (StudentParticipation studentParticipation : participations) {
+            Result result = studentParticipation.findLatestResult();
+            // Ignore participations without result
+            if (result == null) {
+                continue;
+            }
+            updateResultFormTestCases(testCases, testCasesForCurrentDate, result);
+            updatedResults.add(result);
+        }
+        return updatedResults;
+    }
+
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
                 .collect(Collectors.toSet());
+        return testCasesForCurrentDate;
+    }
+
+    private Result updateResultFormTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
         // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
