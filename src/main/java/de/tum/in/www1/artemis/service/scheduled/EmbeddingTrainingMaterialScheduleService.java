@@ -31,15 +31,12 @@ public class EmbeddingTrainingMaterialScheduleService {
 
     private final EmbeddingTrainingMaterialService embeddingTrainingMaterialService;
 
-    private final Environment env;
-
     private final TaskScheduler scheduler;
 
     public EmbeddingTrainingMaterialScheduleService(EmbeddingTrainingMaterialService embeddingTrainingMaterialService, @Qualifier("taskScheduler") TaskScheduler scheduler,
             Environment env) {
         this.embeddingTrainingMaterialService = embeddingTrainingMaterialService;
         this.scheduler = scheduler;
-        this.env = env;
     }
 
     /**
@@ -49,6 +46,7 @@ public class EmbeddingTrainingMaterialScheduleService {
     public void scheduleMaterialUploadForNow(Attachment attachment) {
         // TODO: sanity checks.
         scheduler.schedule(trainingMaterialUploadRunnable(attachment), now());
+        log.debug("Scheduled upload for the attachment \"" + attachment.getName() + "\"");
     }
 
     @NotNull

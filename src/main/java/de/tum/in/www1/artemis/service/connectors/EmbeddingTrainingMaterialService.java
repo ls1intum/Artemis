@@ -23,6 +23,18 @@ public class EmbeddingTrainingMaterialService {
 
     private final Logger log = LoggerFactory.getLogger(EmbeddingTrainingMaterialService.class);
 
+    @Value("${artemis.automatic-text.material-upload-url}")
+    private String API_ENDPOINT;
+
+    @Value("${artemis.automatic-text.secret}")
+    private String API_SECRET;
+
+    private FileService fileService = new FileService();
+
+    private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log,
+        EmbeddingTrainingMaterialService.Response.class);
+
+
     // region Request/Response DTOs
     private static class Request {
 
@@ -44,17 +56,6 @@ public class EmbeddingTrainingMaterialService {
         public String remotePath;
     }
     // endregion
-
-    @Value("${artemis.automatic-text.material-upload-url}")
-    private String API_ENDPOINT;
-
-    @Value("${artemis.automatic-text.secret}")
-    private String API_SECRET;
-
-    private FileService fileService = new FileService();
-
-    private RemoteArtemisServiceConnector<EmbeddingTrainingMaterialService.Request, EmbeddingTrainingMaterialService.Response> connector = new RemoteArtemisServiceConnector<>(log,
-            EmbeddingTrainingMaterialService.Response.class);
 
     /**
      * uploads attachment to Athene to be used for the incremental training of the ELMo model
