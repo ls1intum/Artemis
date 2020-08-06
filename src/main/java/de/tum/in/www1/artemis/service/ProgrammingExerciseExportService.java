@@ -167,50 +167,47 @@ public class ProgrammingExerciseExportService {
      * @throws IOException is thrown for file handling errors
      */
     public File checkPlagiarism(long programmingExerciseId) throws ExitException, IOException {
+        // TODO: offer the following options in the client
+        // 1) filter empty submissions, i.e. repositories with no student commits
+        // 2) filter submissions with a result score of 0%
+
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
-        programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
-            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-            try {
-                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
-                    log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
-                    return;
-                }
-                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
-                gitService.resetToOriginMaster(repo); // start with clean state
-
-                // TODO: offer the following options in the client
-                // 1) filter empty submissions, i.e. repositories with no student commits
-                // 2) filter submissions with a result score of 0%
-
-                repo.close();
-            }
-            catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + programmingExerciseParticipation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + ex.getMessage());
-            }
-        });
+        downloadRepositories(programmingExercise);
 
         var output = "output";
-        var templateRepoName = "";
-        // clone the template repo
-        try {
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
-            templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
-            gitService.resetToOriginMaster(templateRepo); // start with clean state
-            templateRepo.close();
-        }
-        catch (GitException | GitAPIException | InterruptedException ex) {
-            log.error("clone template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
-                    + "' did not work as expected: " + ex.getMessage());
-        }
-
         var projectKey = programmingExercise.getProjectKey();
         var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
 
         File outputFolderFile = new File(outputFolder);
         outputFolderFile.mkdirs();
 
+        String programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
+
+        var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        String[] args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
+
+        CommandLineOptions options = new CommandLineOptions(args, null);
+        Program program = new Program(options);
+        program.run();
+
+        Path zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
+        zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
+        fileService.scheduleForDeletion(zipFilePath, 5);
+
+        // cleanup
+        if (outputFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(outputFolderFile);
+        }
+
+        cleanupRepositories(programmingExercise);
+
+        return new File(zipFilePath.toString());
+    }
+
+    public String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         var programmingLanguage = "";
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA:
@@ -226,24 +223,10 @@ public class ProgrammingExerciseExportService {
                 throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                         "ProgrammingExercise", "notSupported");
         }
+        return programmingLanguage;
+    }
 
-        var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
-        String[] args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
-
-        CommandLineOptions options = new CommandLineOptions(args, null);
-        Program program = new Program(options);
-        program.run();
-
-        Path zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
-                + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
-        zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
-        fileService.scheduleForDeletion(zipFilePath, 5);
-
-        if (outputFolderFile.exists()) {
-            FileSystemUtils.deleteRecursively(outputFolderFile);
-        }
-
-        // cleanup
+    private void cleanupRepositories(ProgrammingExercise programmingExercise) {
         programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
             var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
             try {
@@ -266,8 +249,38 @@ public class ProgrammingExerciseExportService {
             log.error("cleanup template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
                     + "' did not work as expected: " + ex.getMessage());
         }
+    }
 
-        return new File(zipFilePath.toString());
+    private void downloadRepositories(ProgrammingExercise programmingExercise) {
+        programmingExercise.getStudentParticipations().parallelStream().forEach(participation -> {
+            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+            try {
+                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() == null) {
+                    log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
+                    return;
+                }
+                Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation, REPO_DOWNLOAD_CLONE_PATH);
+                gitService.resetToOriginMaster(repo); // start with clean state
+
+                repo.close();
+            }
+            catch (GitException | GitAPIException | InterruptedException ex) {
+                log.error("clone student repository " + programmingExerciseParticipation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
+                        + "' did not work as expected: " + ex.getMessage());
+            }
+        });
+
+        // clone the template repo
+        try {
+            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), REPO_DOWNLOAD_CLONE_PATH);
+
+            gitService.resetToOriginMaster(templateRepo); // start with clean state
+            templateRepo.close();
+        }
+        catch (GitException | GitAPIException | InterruptedException ex) {
+            log.error("clone template repository " + programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle()
+                    + "' did not work as expected: " + ex.getMessage());
+        }
     }
 
     /**
