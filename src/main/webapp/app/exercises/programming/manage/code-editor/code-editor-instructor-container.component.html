@@ -51,13 +51,13 @@
                 </button>
                 <button
                     [disabled]="
-                            loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                            loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
-                            !exercise ||
-                            !exercise.studentParticipations ||
-                            !exercise.studentParticipations.length ||
-                            (exercise.studentParticipations.length && !repositoryUrl(exercise.studentParticipations[0]))
-                        "
+                        loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                        loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
+                        !exercise ||
+                        !exercise.studentParticipations ||
+                        !exercise.studentParticipations.length ||
+                        (exercise.studentParticipations.length && !repositoryUrl(exercise.studentParticipations[0]))
+                    "
                     (click)="selectAssignmentParticipation()"
                     ngbDropdownItem
                     [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"

@@ -20,7 +20,7 @@ import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
-import {ComponentCanDeactivate} from "app/shared/guard/can-deactivate.model";
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 /**
  * Enumeration specifying the repository type
