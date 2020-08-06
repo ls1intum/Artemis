@@ -54,11 +54,11 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.version-control.password}")
     private String BITBUCKET_PASSWORD;
 
-    @Value("${artemis.lti.user-prefix-edx}")
-    private String USER_PREFIX_EDX = "";
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> USER_PREFIX_EDX;
 
-    @Value("${artemis.lti.user-prefix-u4i}")
-    private String USER_PREFIX_U4I = "";
+    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
+    private Optional<String> USER_PREFIX_U4I;
 
     @Value("${artemis.git.name}")
     private String ARTEMIS_GIT_NAME;
@@ -77,7 +77,7 @@ public class BitbucketService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
-            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
+            if ((USER_PREFIX_EDX.isPresent() && username.startsWith(USER_PREFIX_EDX.get())) || (USER_PREFIX_U4I.isPresent() && username.startsWith((USER_PREFIX_U4I.get())))) {
                 // It is an automatically created user
 
                 if (!userExists(username)) {
@@ -533,7 +533,7 @@ public class BitbucketService extends AbstractVersionControlService {
                         new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
                         });
 
-                if (response.getBody().getSize() > 0) {
+                if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
                     if (exists) {
                         log.warn("Bitbucket project with name" + projectName + " already exists");

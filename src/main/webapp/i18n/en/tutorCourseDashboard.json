@@ -5,6 +5,7 @@
                 "title": "Tutor Course Dashboard"
             },
             "pageHeader": "Tutor Course Dashboard for course",
+            "pageHeaderExam": "Tutor Exam Dashboard for exam",
             "yourAssessments": "Your assessments",
             "totalAssessments": "Total assessments",
             "complaintsAboutYourAssessments": "Complaints about your assessments",

@@ -149,7 +149,7 @@ public class ProgrammingExerciseService {
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
 
-        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+        scheduleOperations(programmingExercise.getId());
 
         // Notify tutors only if this a course exercise
         if (programmingExercise.hasCourse()) {
@@ -157,6 +157,10 @@ public class ProgrammingExerciseService {
         }
 
         return programmingExercise;
+    }
+
+    public void scheduleOperations(Long programmingExerciseId) {
+        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
 
     private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
@@ -253,8 +257,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
-        instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
+        scheduleOperations(programmingExercise.getId());
 
         // Only send notification for course exercises
         if (notificationText != null && programmingExercise.hasCourse()) {
@@ -715,7 +718,7 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        var sorting = Sort.by(ProgrammingExercise.ProgrammingExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        var sorting = Sort.by(Exercise.ExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
@@ -747,7 +750,8 @@ public class ProgrammingExerciseService {
 
     /**
      * Check if the repository of the given participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed.
+     * This is the case when the participation is a ProgrammingExerciseStudentParticipation, the buildAndTestAfterDueDate of the exercise is set and the due date has passed, 
+     * or if manual correction is involved and the due date has passed.
      *
      * Locked means that the student can't make any changes to their repository anymore. While we can control this easily in the remote VCS, we need to check this manually for the local repository on the Artemis server.
      *
@@ -757,7 +761,11 @@ public class ProgrammingExerciseService {
     public boolean isParticipationRepositoryLocked(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            return programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+            // Editing is allowed if build and test after due date is not set and no manual correction is involved
+            // (this should match CodeEditorStudentContainerComponent.repositoryIsLocked on the client-side)
+            boolean isEditingAfterDueAllowed = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
+                    && programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+            return programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isBefore(ZonedDateTime.now()) && !isEditingAfterDueAllowed;
         }
         return false;
     }

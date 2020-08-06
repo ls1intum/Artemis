@@ -9,7 +9,7 @@
                 <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <button
                     type="submit"
-                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                 >
@@ -127,10 +127,12 @@
                 <dd>
                     <span>{{ programmingExercise.packageName }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
-                <dd>
-                    <a [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/lti-configuration' } }]">LTI Configuration</a>
-                </dd>
+                <ng-container *ngIf="!isExamExercise && programmingExercise.isAtLeastInstructor">
+                    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'lti-configuration']">LTI Configuration</a>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">

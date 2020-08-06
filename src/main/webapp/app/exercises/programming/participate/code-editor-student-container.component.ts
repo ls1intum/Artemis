@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, flatMap, map, tap } from 'rxjs/operators';
+import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
@@ -27,6 +28,8 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -56,6 +59,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
+        private exerciseHintService: ExerciseHintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -81,13 +85,19 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
-                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
+                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
+                        // (this should match ProgrammingExerciseService.isParticipationRepositoryLocked on the server-side)
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
-                        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
+                        const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
+                        this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
+                    }),
+                    switchMap(() => {
+                        return this.loadExerciseHints();
                     }),
                 )
                 .subscribe(
-                    () => {
+                    (exerciseHints: ExerciseHint[]) => {
+                        this.exercise.exerciseHints = exerciseHints;
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
@@ -106,6 +116,16 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainerComp
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+    }
+
+    /**
+     * Load exercise hints. Take them from the exercise if available.
+     */
+    private loadExerciseHints() {
+        if (!this.exercise.exerciseHints) {
+            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+        }
+        return of(this.exercise.exerciseHints);
     }
 
     /**

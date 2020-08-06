@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -14,14 +14,30 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType, FileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-exam-code-editor-student',
     templateUrl: './exam-code-editor-student-container.component.html',
+    providers: [
+        CodeEditorConflictStateService,
+        CodeEditorSessionService,
+        CodeEditorSubmissionService,
+        CodeEditorBuildLogService,
+        CodeEditorRepositoryFileService,
+        CodeEditorRepositoryService,
+        DomainService,
+    ],
 })
-export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
+export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainerComponent implements OnInit {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
@@ -62,16 +78,47 @@ export class ExamCodeEditorStudentContainerComponent extends CodeEditorContainer
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
-    /**
-     * If a subscription exists for paramSub, unsubscribe
-     */
-    ngOnDestroy() {}
+    reload(): void {
+        // this.ngOnInit();
+        // if (this.instructions) {
+        //     this.instructions.refreshInstructions();
+        // }
+    }
 
     /**
-     * Fetches details for the result (if we received one) and attach them to the result.
-     * Mutates the input parameter result.
-    loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
-    }
+     * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
+     * The submission is only synced, if all changes are committed (CommitState.CLEAN).
+     *
+     * @param commitState current CommitState from CodeEditorActionsComponent
      */
+    onCommitStateChange(commitState: CommitState): void {
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            if (commitState === CommitState.CLEAN) {
+                this.participation.submissions[0].submitted = true;
+                this.participation.submissions[0].isSynced = true;
+            }
+        }
+    }
+
+    /**
+     * Set Submission to unsynced on file changes
+     *
+     * @param $event
+     */
+    onFileChange<F extends FileChange>($event: [string[], F]) {
+        super.onFileChange($event);
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            this.participation.submissions[0].isSynced = false;
+        }
+    }
+
+    /**
+     * When the content of a file changes, set the submission status to unsynchronised.
+     */
+    onFileContentChange($event: { file: string; fileContent: string }) {
+        super.onFileContentChange($event);
+        if (this.participation.submissions && this.participation.submissions.length > 0) {
+            this.participation.submissions[0].isSynced = false;
+        }
+    }
 }

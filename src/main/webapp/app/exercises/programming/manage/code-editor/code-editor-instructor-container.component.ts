@@ -1,5 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
@@ -16,6 +17,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -35,6 +37,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
         courseExerciseService: CourseExerciseService,
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        exerciseHintService: ExerciseHintService,
+        location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -48,6 +52,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
             courseExerciseService,
             domainService,
             programmingExerciseParticipationService,
+            exerciseHintService,
+            location,
             participationService,
             translateService,
             route,

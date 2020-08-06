@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -81,7 +82,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate <= submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.participation.exercise.dueDate IS NULL OR submission.submissionDate <= submission.participation.exercise.dueDate)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
@@ -90,5 +91,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND submission.participation.exercise.dueDate IS NOT NULL AND submission.submissionDate > submission.participation.exercise.dueDate")
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
+
+    /**
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @param assessor the assessor we are interested in
+     * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
+     */
+    List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
 }

@@ -29,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -88,9 +87,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     ResultRepository resultRepository;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
 
     private Long exerciseId;
 

@@ -10,7 +10,7 @@ const routes: Routes = [
         path: 'test',
         component: CodeEditorInstructorContainerComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -23,7 +23,7 @@ const routes: Routes = [
         path: 'ide/test',
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -36,7 +36,7 @@ const routes: Routes = [
         path: 'ide/:participationId',
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -49,7 +49,7 @@ const routes: Routes = [
         path: ':participationId',
         component: CodeEditorInstructorContainerComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

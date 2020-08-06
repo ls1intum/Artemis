@@ -89,8 +89,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                     }, 3000);
                     this.courseRegistered.emit();
                 },
-                (error) => {
-                    console.log(error);
+                () => {
                     this.loading = false;
                     this.courseToRegister = undefined;
                 },

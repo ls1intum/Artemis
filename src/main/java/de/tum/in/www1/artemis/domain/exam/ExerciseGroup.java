@@ -49,7 +49,7 @@ public class ExerciseGroup implements Serializable {
 
     @OneToMany(mappedBy = "exerciseGroup", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exerciseGroup")
+    @JsonIgnoreProperties(value = "exerciseGroup", allowSetters = true)
     private Set<Exercise> exercises = new HashSet<>();
 
     public Long getId() {

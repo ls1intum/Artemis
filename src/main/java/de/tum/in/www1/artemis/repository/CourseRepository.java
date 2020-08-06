@@ -49,4 +49,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllCurrentlyActiveAndNotOnlineAndEnabled(@Param("now") ZonedDateTime now);
 
     List<Course> findAllByShortName(String shortName);
+
+    Optional<Course> findById(long courseId);
+
 }

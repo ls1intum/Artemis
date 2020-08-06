@@ -2,15 +2,6 @@
     background: #c4c4c4;
     margin: -1.25rem -1.25rem 1.25rem -1.25rem;
     z-index: 50;
-
-    .remaining-time {
-        background: white;
-        text-align: center;
-    }
-
-    .critical {
-        background: #fedc56;
-    }
 }
 
 .navigation-item {
@@ -43,8 +34,4 @@
     text-align: center;
     font-size: 18px;
     font-weight: bold;
-}
-.timer {
-    color: #212529;
-    margin-right: 2px;
 }

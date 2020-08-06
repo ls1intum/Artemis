@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
+import inet.ipaddr.IPAddress;
 
 /**
  * Service Implementation for managing ExamSession.
@@ -34,9 +35,11 @@ public class ExamSessionService {
      * @param fingerprint the browser fingerprint reported by the client, can be null
      * @param userAgent the user agent of the client, can be null
      * @param instanceId the instance id of the client, can be null
+     * @param ipAddress the ip addedd of the client, can be null
      * @return the newly create exam session
      */
-    public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId) {
+    public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId,
+            @Nullable IPAddress ipAddress) {
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
@@ -44,6 +47,7 @@ public class ExamSessionService {
         examSession.setBrowserFingerprintHash(fingerprint);
         examSession.setUserAgent(userAgent);
         examSession.setInstanceId(instanceId);
+        examSession.setIpAddress(ipAddress);
         examSession = examSessionRepository.save(examSession);
         return examSession;
     }

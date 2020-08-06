@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -26,7 +28,6 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -549,7 +551,7 @@ public class QuizScheduleService {
                         hasNewParticipations = true;
                         hasNewResults = true;
 
-                        log.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, printDuration(start), quizExercise.getTitle());
+                        log.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -571,7 +573,7 @@ public class QuizScheduleService {
                         }
                     });
                     if (finishedParticipations.size() > 0) {
-                        log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), printDuration(start), quizExercise.getTitle());
+                        log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -585,7 +587,7 @@ public class QuizScheduleService {
                         Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                        log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), printDuration(start), quizExercise.getTitle());
+                        log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
                         // Remove only processed results
                         for (Result result : newResultsForQuiz) {
                             cachedQuiz.getResults().remove(result.getId());
@@ -605,23 +607,6 @@ public class QuizScheduleService {
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
         cancelScheduledQuizStart(cachedQuiz.getExerciseId());
         cachedQuizExercises.remove(cachedQuiz.getExerciseId(), cachedQuiz);
-    }
-
-    private static String printDuration(long timeNanoStart) {
-        long durationInMicroSeconds = (System.nanoTime() - timeNanoStart) / 1000;
-        if (durationInMicroSeconds > 1000) {
-            double durationInMilliSeconds = durationInMicroSeconds / 1000.0;
-            if (durationInMilliSeconds > 1000) {
-                double durationInSeconds = durationInMilliSeconds / 1000.0;
-                return roundOffTo2DecPlaces(durationInSeconds) + "s";
-            }
-            return roundOffTo2DecPlaces(durationInMilliSeconds) + "ms";
-        }
-        return durationInMicroSeconds + "µs";
-    }
-
-    private static String roundOffTo2DecPlaces(double val) {
-        return String.format("%.2f", val);
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {

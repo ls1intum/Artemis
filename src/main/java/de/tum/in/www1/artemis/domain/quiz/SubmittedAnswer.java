@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,8 +10,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-
-import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -126,6 +124,19 @@ public abstract class SubmittedAnswer implements Serializable {
     public String toString() {
         return "SubmittedAnswer{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
+
+    /**
+     * Filter out information about correct answers.
+     * Calls {@link QuizQuestion#filterForStudentsDuringQuiz()} which removes all relevant fields.
+     * Dynamic binding will call the right overridden method for different question types.
+     */
+    public void filterOutCorrectAnswers() {
+        QuizQuestion question = this.getQuizQuestion();
+        if (question != null) {
+            question.filterForStudentsDuringQuiz();
+        }
+        this.setScoreInPoints(null);
+    };
 
     /**
      * Delete all references to quizQuestion and quizQuestion-elements if the quiz was changed

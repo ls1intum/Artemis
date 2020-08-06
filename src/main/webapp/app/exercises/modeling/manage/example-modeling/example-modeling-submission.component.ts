@@ -46,6 +46,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     readOnly: boolean;
     toComplete: boolean;
     assessmentExplanation: string;
+    isExamMode: boolean;
 
     private exampleSubmissionId: number;
 
@@ -86,7 +87,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            if (this.exercise.exerciseGroup !== null) {
+                this.isExamMode = true;
+            }
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 
         if (this.isNewSubmission) {
@@ -290,10 +294,26 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     }
 
     async back() {
-        const courseId = this.exercise.course!.id;
-
+        let courseId;
+        if (this.exercise.course) {
+            courseId = this.exercise.course!.id;
+        } else {
+            courseId = this.exercise.exerciseGroup!.exam!.course.id;
+        }
         if (this.readOnly || this.toComplete) {
             await this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
+        } else if (this.isExamMode) {
+            await this.router.navigate([
+                '/course-management',
+                courseId,
+                'exams',
+                this.exercise.exerciseGroup!.exam!.id,
+                'exercise-groups',
+                this.exercise.exerciseGroup?.id,
+                'modeling-exercises',
+                this.exerciseId,
+                'edit',
+            ]);
         } else {
             await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);
         }

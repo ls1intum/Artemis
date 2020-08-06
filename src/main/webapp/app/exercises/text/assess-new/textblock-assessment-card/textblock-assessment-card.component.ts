@@ -14,6 +14,7 @@ type OptionalTextBlockRef = TextBlockRef | null;
 export class TextblockAssessmentCardComponent {
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
+    @Input() readOnly: boolean;
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();

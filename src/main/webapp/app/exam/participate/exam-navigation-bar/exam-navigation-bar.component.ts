@@ -4,9 +4,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { timer } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -14,28 +12,22 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input()
-    exercises: Exercise[] = [];
+    @Input() exercises: Exercise[] = [];
+    @Input() exerciseIndex = 0;
+    @Input() endDate: Moment;
 
-    @Input()
-    endDate: Moment;
-
-    @Output() onExerciseChanged = new EventEmitter<Exercise>();
+    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+    @Output() examAboutToEnd = new EventEmitter<void>();
+    @Output() onExamHandInEarly = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;
-
-    exerciseIndex = 0;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
-    displayTime$ = timer(0, 100).pipe(
-        map(() => this.updateDisplayTime()),
-        distinctUntilChanged(),
-    );
+    criticalTime = moment.duration(5, 'minutes');
 
-    criticalTime = false;
     icon: string;
 
-    constructor(private layoutService: LayoutService, private serverDateService: ArtemisServerDateService) {}
+    constructor(private layoutService: LayoutService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -52,60 +44,116 @@ export class ExamNavigationBarComponent implements OnInit {
         });
     }
 
-    changeExercise(i: number) {
+    triggerExamAboutToEnd() {
+        this.saveExercise();
+        this.examAboutToEnd.emit();
+    }
+
+    changeExercise(exerciseIndex: number, force: boolean) {
         // out of index -> do nothing
-        if (i > this.exercises.length - 1 || i < 0) {
+        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
         }
         // set index and emit event
-        this.exerciseIndex = i;
-        this.onExerciseChanged.emit(this.exercises[i]);
-        this.setExerciseButtonStatus(i);
+        this.exerciseIndex = exerciseIndex;
+        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], force });
+        this.setExerciseButtonStatus(exerciseIndex);
     }
 
-    saveExercise() {
+    /**
+     * Save the currently active exercise and go to the next exercise.
+     * @param changeExercise whether to go to the next exercise {boolean}
+     */
+    saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        this.exercises[this.exerciseIndex].studentParticipations[0].submissions[0].submitted = true;
-        if (newIndex > this.exercises.length - 1) {
-            // if out of range "change" active exercise to current in order to trigger a save
-            this.changeExercise(this.exerciseIndex);
-        } else {
-            this.changeExercise(newIndex);
+        const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        // we do not submit programming exercises on a save
+        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
+            submission.submitted = true;
         }
-    }
-
-    updateDisplayTime() {
-        const timeDiff = moment.duration(this.endDate.diff(this.serverDateService.now()));
-        if (!this.criticalTime && timeDiff.asMinutes() < 5) {
-            this.criticalTime = true;
+        if (changeExercise) {
+            if (newIndex > this.exercises.length - 1) {
+                // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+                this.changeExercise(this.exerciseIndex, true);
+            } else {
+                this.changeExercise(newIndex, true);
+            }
         }
-        return timeDiff.asMinutes() > 10
-            ? Math.round(timeDiff.asMinutes()) + ' min'
-            : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
     }
 
     isProgrammingExercise() {
         return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
 
-    setExerciseButtonStatus(i: number): string {
-        let status: string;
+    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         this.icon = 'edit';
-        if (this.exercises[i].studentParticipations[0].submissions[0].submitted) {
-            this.icon = 'check';
-        }
-        if (this.exercises[i].studentParticipations[0].submissions[0].isSynced) {
-            // make button blue
-            status = 'synced';
-            if (i === this.exerciseIndex) {
-                status = status + ' active';
-                return status;
+        if (this.getSubmissionForExercise(this.exercises[exerciseIndex])) {
+            const submission = this.exercises[exerciseIndex].studentParticipations[0].submissions[0];
+            if (submission.submitted) {
+                this.icon = 'check';
             }
-            return status;
+            if (submission.isSynced) {
+                // make button blue
+                if (exerciseIndex === this.exerciseIndex) {
+                    return 'synced active';
+                } else {
+                    return 'synced';
+                }
+            } else {
+                // make button yellow
+                this.icon = 'edit';
+                return 'notSynced';
+            }
         } else {
-            // make button yellow
-            status = 'notSynced';
-            return status;
+            // in case no participation yet exists -> display synced
+            return 'synced';
+        }
+    }
+
+    getExerciseButtonTooltip(exerciseIndex: number): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' {
+        const submission = this.getSubmissionForExercise(this.exercises[exerciseIndex]);
+        if (submission) {
+            if (this.exercises[exerciseIndex].type === ExerciseType.PROGRAMMING) {
+                if (submission.isSynced) {
+                    return 'submitted';
+                } else {
+                    return 'notSubmitted';
+                }
+            } else {
+                if (submission.isSynced) {
+                    return 'synced';
+                } else {
+                    return 'notSynced';
+                }
+            }
+        } else {
+            // submission does not yet exist for this exercise.
+            // When the participant navigates to the exercise the submissions are created.
+            // Until then show, that the exercise is synced
+            return 'synced';
+        }
+    }
+
+    /**
+     * Notify parent component when user wants to hand in early
+     */
+    handInEarly() {
+        this.saveExercise(false);
+        this.onExamHandInEarly.emit();
+    }
+
+    // TODO: find usages of similar logic -> put into utils method
+    private getSubmissionForExercise(exercise: Exercise): Submission | null {
+        if (
+            exercise &&
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length > 0 &&
+            exercise.studentParticipations[0].submissions &&
+            exercise.studentParticipations[0].submissions.length > 0
+        ) {
+            return exercise.studentParticipations[0].submissions[0];
+        } else {
+            return null;
         }
     }
 }

@@ -38,13 +38,16 @@ public class SubmissionService {
 
     protected AuthorizationCheckService authCheckService;
 
+    private final ExamService examService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ExamService examService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+        this.examService = examService;
     }
 
     /**
@@ -262,13 +265,49 @@ public class SubmissionService {
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
+        if (dueDate == null) {
+            // this is an edge case, then basically all submissions are before due date
+            return submissions;
+        }
 
-        boolean hasInTimeSubmissions = submissions.stream().anyMatch(s -> s.getSubmissionDate().isBefore(dueDate));
+        boolean hasInTimeSubmissions = submissions.stream().anyMatch(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate));
         if (hasInTimeSubmissions) {
-            return submissions.stream().filter(s -> s.getSubmissionDate().isBefore(dueDate)).collect(Collectors.toList());
+            return submissions.stream().filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate))
+                    .collect(Collectors.toList());
         }
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * @param exercise course exercise or exam exercise that is checked
+     * @return boolean
+     */
+    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
+        final boolean isExamMode = exercise.hasExerciseGroup();
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (isExamMode) {
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
+            if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        else {
+            // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                    return false;
+                }
+            }
+
+            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

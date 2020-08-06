@@ -11,6 +11,17 @@ export class Exam implements BaseEntity {
     public visibleDate: Moment | null;
     public startDate: Moment | null;
     public endDate: Moment | null;
+    public publishResultsDate: Moment | null;
+    public examStudentReviewStart: Moment | null;
+    public examStudentReviewEnd: Moment | null;
+    /**
+     * grace period in seconds - time in which students can still submit even though working time is over
+     */
+    public gracePeriod: number;
+    public examiner: string;
+    public moduleNumber: string;
+    public courseName: string;
+
     public startText: string;
     public endText: string;
     public confirmationStartText: string;
@@ -22,5 +33,10 @@ export class Exam implements BaseEntity {
     public exerciseGroups: ExerciseGroup[] | null;
     public studentExams: StudentExam[] | null;
     public registeredUsers: User[] | null;
+
     public numberOfRegisteredUsers?: number; // transient
+
+    // helper attributes (calculated by the server at the time of the last request)
+    public visible = false;
+    public started = false;
 }

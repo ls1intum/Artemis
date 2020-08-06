@@ -34,6 +34,14 @@
             "timeWarning": "<b>Achtung:</b> Diese Aktion kann abhängig von Größe und Anzahl der Repositories mehrere Minuten dauern."
         },
         "exportCSV": "Als CSV exportieren",
+        "exportSubmissions": {
+            "title": "Abgaben exportieren",
+            "downloadAllStudents": "Oder lade die Abgaben aller Studenten herunter",
+            "question": "Tragen sie hier alle Kennungen der Studenten getrennt durch ein Komma ein, deren Abgaben heruntergeladen werden sollen (z.B. ga87fix,ga63dut)",
+            "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
+            "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
+            "successMessage": "Die Abgaben wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
+        },
         "loadingStudents": "Lade die Ergebnisse aller Studenten..."
     }
 }

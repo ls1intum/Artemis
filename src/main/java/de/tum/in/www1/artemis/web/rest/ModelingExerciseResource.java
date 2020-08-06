@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -13,18 +15,21 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -52,6 +57,10 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ModelingExerciseImportService modelingExerciseImportService;
+
+    private final SubmissionExportService modelingSubmissionExportService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final CompassService compassService;
@@ -59,10 +68,13 @@ public class ModelingExerciseResource {
     private final GradingCriterionService gradingCriterionService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService,
+            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
+            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
             ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseImportService = modelingExerciseImportService;
+        this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -100,14 +112,42 @@ public class ModelingExerciseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
+    /**
+     * This method performs the basic checks for a modeling exercise. These include making sure that a course
+     * or exerciseGroup has been set, otherwise we return http badRequest.
+     * If the above condition is met, it then checks whether the user is an instructor of the parent course.
+     * If not, it returns http forbidden.
+     * @param modelingExercise The modeling exercise to be checked
+     * @return Returns the http error, or null if successful
+     */
     @Nullable
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (modelingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
+            // fetch course from database to make sure client didn't change groups
+            Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
+                if (modelingExercise.hasCourse() && modelingExercise.hasExerciseGroup()) {
+                    return badRequest();
+                }
+                return null;
+            }
             return forbidden();
         }
-        return null;
+        return badRequest();
+    }
+
+    /**
+     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/modeling-exercises")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
     }
 
     /**
@@ -252,5 +292,109 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise.get(), course, user);
         exerciseService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.get().getTitle())).build();
+    }
+
+    /**
+     * POST /modeling-exercises/import: Imports an existing modeling exercise into an existing course
+     *
+     * This will import the whole exercise except for the participations and Dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * Uses {@link ModelingExerciseImportService}.
+     * See {@link ExerciseImportService#importExercise(Exercise, Exercise)}
+     *
+     * @param sourceExerciseId The ID of the original exercise which should get imported
+     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     *
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an instructor in the target course.
+     */
+    @PostMapping("/modeling-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            return badRequest();
+        }
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
+        if (optionalOriginalModelingExercise.isEmpty()) {
+            log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
+            return notFound();
+        }
+
+        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(importedExercise);
+        if (responseFailure != null) {
+            return responseFailure;
+        }
+
+        if (importedExercise.hasExerciseGroup()) {
+            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
+        }
+        else {
+            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        }
+
+        final var originalModelingExercise = optionalOriginalModelingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(originalModelingExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            return forbidden();
+        }
+
+        final var newExercise = modelingExerciseImportService.importExercise(originalModelingExercise, importedExercise);
+        if (newExercise == null) {
+            return conflict();
+        }
+
+        modelingExerciseRepository.save((ModelingExercise) newExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
+    }
+
+    /**
+     * POST /modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param submissionExportOptions the options that should be used for the export
+     * @return ResponseEntity with status
+     */
+    @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+
+        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findById(exerciseId);
+        if (optionalModelingExercise.isEmpty()) {
+            return notFound();
+        }
+        ModelingExercise modelingExercise = optionalModelingExercise.get();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            return forbidden();
+        }
+
+        // ta's are not allowed to download all participations
+        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+            return forbidden();
+        }
+
+        try {
+            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+
+            if (zipFile.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                        .body(null);
+            }
+
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
+                    .body(resource);
+
+        }
+        catch (IOException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
     }
 }

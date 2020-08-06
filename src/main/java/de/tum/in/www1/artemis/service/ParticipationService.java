@@ -231,7 +231,9 @@ public class ParticipationService {
             if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
-
+            // TODO: load submission with exercise for exam edge case:
+            // clients creates missing participaiton for exercise, call on server succeeds, but response to client is lost
+            // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text, file upload or quiz submission
                 if (createInitialSubmission) {
@@ -549,7 +551,7 @@ public class ParticipationService {
 
     /**
      * Return the StudentExam of the participation's user, if possible
-     * 
+     *
      * @param exercise that is possibly part of an exam
      * @param participation the participation of the student
      * @return an optional StudentExam, which is empty if the exercise is not part of an exam or the student exam hasn't been created
@@ -566,7 +568,7 @@ public class ParticipationService {
      * Return the individual release date for the exercise of the participation's user
      * <p>
      * Currently, exercise start dates are the same for all users
-     * 
+     *
      * @param exercise that is possibly part of an exam
      * @param participation the participation of the student
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
@@ -589,8 +591,8 @@ public class ParticipationService {
     /**
      * Return the individual due date for the exercise of the participation's user
      * <p>
-     * For exam exercises, this depends on the StudentExam's working time 
-     * 
+     * For exam exercises, this depends on the StudentExam's working time
+     *
      * @param exercise that is possibly part of an exam
      * @param participation the participation of the student
      * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
@@ -918,14 +920,33 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations belonging to exam with relevant results.
+     *
+     * @param examId the id of the exam
+     * @return list of participations belonging to course
+     */
+    public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
+        return filterParticipationsWithRelevantResults(participations);
+    }
+
+    /**
      * Get all participations belonging to course with relevant results.
      *
-     * @param courseId the id of the exercise
+     * @param courseId the id of the course
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
+        return filterParticipationsWithRelevantResults(participations);
+    }
 
+    /**
+     * filters the relevant results by removing all irrelevent ones (
+     * @param participations the participations to get filtered
+     * @return the filtered participations
+     */
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
         return participations.stream()
 
                 // Filter out participations without Students
@@ -1202,6 +1223,17 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get all participations for the given student and individual-mode exercises
+     *
+     * @param studentId the id of the student for which the participations should be found
+     * @param exercises the individual-mode exercises for which participations should be found
+     * @return student's participations
+     */
+    public List<StudentParticipation> findByStudentIdAndIndividualExercises(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndIndividualExercises(studentId, exercises);
     }
 
     /**

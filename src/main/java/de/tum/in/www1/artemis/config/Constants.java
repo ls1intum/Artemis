@@ -82,6 +82,10 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
 
+    public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "The visible date of the exam of the programming exercise has passed. When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
+
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully when the visible date of the exam passed.";
+
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
@@ -102,6 +106,10 @@ public final class Constants {
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
     public static final String DELETE_EXAM = "DELETE_EXAM";
+
+    public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
+
+    public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 

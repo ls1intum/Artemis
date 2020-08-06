@@ -209,7 +209,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     save() {
         // If no release date is set, we warn the user.
-        if (!this.programmingExercise.releaseDate) {
+        if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;
@@ -292,10 +292,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            (err) => {
+            () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
-                console.log('Error while getting template instruction file!', err);
             },
         );
     }

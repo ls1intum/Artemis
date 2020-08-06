@@ -109,6 +109,9 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             }
         }
 
+        if (!this.multipleChoiceSubmittedResult || !this.multipleChoiceSubmittedResult.submission) {
+            return;
+        }
         const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
         const submittedAnswerLength = submittedQuizSubmission.submittedAnswers.length;
         for (let i = 0; i < submittedAnswerLength; i++) {

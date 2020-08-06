@@ -95,8 +95,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepositoryOnline');
                     }
                 },
-                (error) => {
-                    console.log('Error: ' + error);
+                () => {
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
@@ -149,7 +148,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                     this.exercise.participationStatus = participationStatus(this.exercise);
                 }),
                 catchError((error) => {
-                    console.log('Error: ' + error);
                     this.jhiAlertService.error('artemisApp.exerciseActions.resumeExercise', { error });
                     return error;
                 }),

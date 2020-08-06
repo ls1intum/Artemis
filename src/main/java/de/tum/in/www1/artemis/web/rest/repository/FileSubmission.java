@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.websocket.repository;
+package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.io.Serializable;
 

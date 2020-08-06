@@ -158,7 +158,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                     return Observable.of(null);
                 }),
             )
-            .subscribe(() => {}, console.log);
+            .subscribe();
     }
 
     /**

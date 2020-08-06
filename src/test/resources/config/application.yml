@@ -7,6 +7,7 @@ logging:
 artemis:
     version: 1.3.3-beta7
     file-upload-path: uploads
+    submission-export-path: exports
 
 spring:
     application:
@@ -26,7 +27,6 @@ spring:
     jackson:
         serialization:
             indent-output: true
-            write-durations-as-timestamps: false
     jmx:
         enabled: false
     jpa:
@@ -97,6 +97,7 @@ spring:
 server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
+    forward-headers-strategy: native
 
 management:
     endpoints:

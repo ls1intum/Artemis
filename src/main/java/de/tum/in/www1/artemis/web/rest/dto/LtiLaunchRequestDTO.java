@@ -230,7 +230,7 @@ public class LtiLaunchRequestDTO {
 
     @Override
     public String toString() {
-        return "LtiLaunchRequestDTO{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\''
+        return "LtiLaunchRequest{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\''
                 + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
                 + ", context_id='" + context_id + '\'' + ", context_label='" + context_label + '\'' + ", oauth_version='" + oauth_version + '\'' + ", oauth_signature_method='"
                 + oauth_signature_method + '\'' + ", oauth_timestamp=" + oauth_timestamp + ", roles='" + roles + '\'' + ", launch_presentation_locale='"

@@ -79,7 +79,15 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType);
 
-        if (notificationType == NotificationType.EXERCISE_CREATED) {
+        // Exercises for exams
+        if (exercise.hasExerciseGroup()) {
+            if (exercise instanceof ProgrammingExercise) {
+                notification.setTarget(notification.getExamProgrammingExerciseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+            }
+
+        }
+        // Exercises for courses (not for exams)
+        else if (notificationType == NotificationType.EXERCISE_CREATED) {
             notification.setTarget(notification.getExerciseCreatedTarget(exercise));
         }
         else {

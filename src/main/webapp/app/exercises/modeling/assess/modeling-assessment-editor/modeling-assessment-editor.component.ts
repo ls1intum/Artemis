@@ -50,7 +50,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
-    canOverride = false;
     isLoading = true;
     hasAutomaticFeedback = false;
 
@@ -86,7 +85,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe((params) => {
@@ -222,13 +220,41 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
-        this.isAtLeastInstructor =
-            this.modelingExercise && this.modelingExercise.course
-                ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
-                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+        if (this.modelingExercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
+        }
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.modelingExercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.modelingExercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     onError(): void {
@@ -262,7 +288,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
+        if ((this.model && this.referencedFeedback.length < this.model.elements.length) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
