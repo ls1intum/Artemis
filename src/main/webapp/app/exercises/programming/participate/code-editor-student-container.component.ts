@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -19,12 +19,17 @@ import { DomainType } from 'app/exercises/programming/shared/code-editor/model/c
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
+
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -44,7 +49,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
         private exerciseHintService: ExerciseHintService,
-        private route: ActivatedRoute | null,
+        private route: ActivatedRoute,
     ) {}
 
     /**

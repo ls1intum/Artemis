@@ -207,10 +207,12 @@ describe('CodeEditorStudentIntegration', () => {
 
         container.participation = participation as any;
         container.exercise = exercise as ProgrammingExercise;
-        container.commitState = commitState;
+
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
+
+        container.codeEditorContainer.commitState = commitState;
 
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
@@ -220,42 +222,41 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // container
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.unsavedFiles).to.be.empty;
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
         expect(getRepositoryContentStub).to.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
+        expect(container.codeEditorContainer.fileBrowser.unsavedFiles).to.be.empty;
 
         // ace editor
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.aceEditor.isLoading).to.be.false;
+        expect(container.codeEditorContainer.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.aceEditor.commitState).to.equal(CommitState.CLEAN);
 
         // actions
-        expect(container.actions.commitState).to.equal(CommitState.CLEAN);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-        expect(container.actions.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.actions.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.actions.isBuilding).to.be.false;
 
         // status
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.CLEAN);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.fileBrowser.status.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
 
         // instructions
         expect(container.instructions.participation).to.deep.equal(participation);
-        expect(container.instructions.readOnlyInstructions).to.exist;
-        expect(container.instructions.editableInstructions).not.to.exist;
-        expect(container.instructions.readOnlyInstructions.exerciseHints).to.deep.equal(exerciseHints);
+        expect(container.instructions).to.exist;
+        expect(container.instructions.exerciseHints).to.deep.equal(exerciseHints);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
@@ -268,7 +269,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     const loadFile = (fileName: string, fileContent: string) => {
         getFileStub.returns(of({ fileContent }));
-        container.fileBrowser.selectedFile = fileName;
+        container.codeEditorContainer.fileBrowser.selectedFile = fileName;
     };
 
     it('should initialize all components correctly if all server calls are successful', (done) => {
@@ -292,10 +293,12 @@ describe('CodeEditorStudentIntegration', () => {
 
         container.participation = participation;
         container.exercise = exercise as ProgrammingExercise;
-        container.commitState = commitState;
+
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
+
+        container.codeEditorContainer.commitState = commitState;
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
@@ -304,41 +307,40 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // container
-        expect(container.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.unsavedFiles).to.be.empty;
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
         expect(getRepositoryContentStub).to.not.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
+        expect(container.codeEditorContainer.fileBrowser.unsavedFiles).to.be.empty;
 
         // ace editor
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.codeEditorContainer.aceEditor.isLoading).to.be.false;
+        expect(container.codeEditorContainer.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.aceEditor.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
-        expect(container.actions.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-        expect(container.actions.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.actions.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.actions.isBuilding).to.be.false;
 
         // status
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.fileBrowser.status.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.codeEditorContainer.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
 
         // instructions
         expect(container.instructions.participation).to.deep.equal(participation);
-        expect(container.instructions.readOnlyInstructions).to.exist;
-        expect(container.instructions.editableInstructions).not.to.exist;
+        expect(container.instructions).to.exist;
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
@@ -353,68 +355,68 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should update the file browser and ace editor on file selection', () => {
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
+        const selectedFile = Object.keys(container.codeEditorContainer.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
 
-        expect(container.selectedFile).to.equal(selectedFile);
-        expect(container.aceEditor.selectedFile).to.equal(selectedFile);
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(Object.keys(container.aceEditor.fileSession)).to.contain(selectedFile);
+        expect(container.codeEditorContainer.selectedFile).to.equal(selectedFile);
+        expect(container.codeEditorContainer.aceEditor.selectedFile).to.equal(selectedFile);
+        expect(container.codeEditorContainer.aceEditor.isLoading).to.be.false;
+        expect(Object.keys(container.codeEditorContainer.aceEditor.fileSession)).to.contain(selectedFile);
         expect(getFileStub).to.have.been.calledOnceWithExactly(selectedFile);
 
         containerFixture.detectChanges();
-        expect(container.aceEditor.editor.getEditor().getSession().getValue()).to.equal(fileContent);
+        expect(container.codeEditorContainer.aceEditor.editor.getEditor().getSession().getValue()).to.equal(fileContent);
     });
 
     it('should mark file to have unsaved changes in file tree if the file was changed in editor', () => {
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
+        const selectedFile = Object.keys(container.codeEditorContainer.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        container.aceEditor.onFileTextChanged(newFileContent);
+        container.codeEditorContainer.aceEditor.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
 
         expect(getFileStub).to.have.been.calledOnceWithExactly(selectedFile);
-        expect(container.unsavedFiles).to.deep.equal({ [selectedFile]: newFileContent });
-        expect(container.fileBrowser.unsavedFiles).to.deep.equal([selectedFile]);
-        expect(container.editorState).to.equal(EditorState.UNSAVED_CHANGES);
-        expect(container.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
+        expect(container.codeEditorContainer.unsavedFiles).to.deep.equal({ [selectedFile]: newFileContent });
+        expect(container.codeEditorContainer.fileBrowser.unsavedFiles).to.deep.equal([selectedFile]);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.UNSAVED_CHANGES);
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
     });
 
     it('should save files and remove unsaved status of saved files afterwards', () => {
         // setup
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const otherFileWithUnsavedChanges = Object.keys(container.fileBrowser.repositoryFiles)[2];
+        const selectedFile = Object.keys(container.codeEditorContainer.fileBrowser.repositoryFiles)[0];
+        const otherFileWithUnsavedChanges = Object.keys(container.codeEditorContainer.fileBrowser.repositoryFiles)[2];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
         const saveFilesSubject = new Subject();
         saveFilesStub.returns(saveFilesSubject);
-        container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
+        container.codeEditorContainer.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
         loadFile(selectedFile, fileContent);
         containerFixture.detectChanges();
 
         // init saving
-        container.actions.saveChangedFiles().subscribe();
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.editorState).to.equal(EditorState.SAVING);
+        container.codeEditorContainer.actions.saveChangedFiles().subscribe();
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.SAVING);
 
         // emit saving result
         saveFilesSubject.next({ [selectedFile]: null, [otherFileWithUnsavedChanges]: null });
         containerFixture.detectChanges();
 
         // check if saving result updates comps as expected
-        expect(container.unsavedFiles).to.be.empty;
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
+        expect(container.codeEditorContainer.fileBrowser.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.CLEAN);
     });
 
     it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
@@ -422,44 +424,44 @@ describe('CodeEditorStudentIntegration', () => {
         const repositoryFiles = { file: FileType.FILE, file2: FileType.FILE, folder: FileType.FOLDER };
         const expectedFilesAfterDelete = { file2: FileType.FILE, folder: FileType.FOLDER };
         const unsavedChanges = { file: 'lorem ipsum' };
-        container.fileBrowser.repositoryFiles = repositoryFiles;
-        container.unsavedFiles = unsavedChanges;
+        container.codeEditorContainer.fileBrowser.repositoryFiles = repositoryFiles;
+        container.codeEditorContainer.unsavedFiles = unsavedChanges;
 
         containerFixture.detectChanges();
 
-        expect(container.fileBrowser.unsavedFiles).to.deep.equal(Object.keys(unsavedChanges));
-        expect(container.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
+        expect(container.codeEditorContainer.fileBrowser.unsavedFiles).to.deep.equal(Object.keys(unsavedChanges));
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
 
-        container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
+        container.codeEditorContainer.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
         containerFixture.detectChanges();
 
-        expect(container.unsavedFiles).to.be.empty;
-        expect(container.fileBrowser.repositoryFiles).to.deep.equal(expectedFilesAfterDelete);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.unsavedFiles).to.be.empty;
+        expect(container.codeEditorContainer.fileBrowser.repositoryFiles).to.deep.equal(expectedFilesAfterDelete);
+        expect(container.codeEditorContainer.actions.editorState).to.equal(EditorState.CLEAN);
     });
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
-        expect(container.unsavedFiles).to.be.empty;
-        container.commitState = CommitState.UNCOMMITTED_CHANGES;
+        expect(container.codeEditorContainer.unsavedFiles).to.be.empty;
+        container.codeEditorContainer.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.detectChanges();
 
         // commit
-        expect(container.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
+        expect(container.codeEditorContainer.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         commitStub.returns(of(null));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
             participationId: successfulResult!.participation!.id,
         });
-        container.actions.commit();
+        container.codeEditorContainer.actions.commit();
         containerFixture.detectChanges();
 
         // waiting for build successfulResult
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).to.be.true;
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.true;
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -469,39 +471,39 @@ describe('CodeEditorStudentIntegration', () => {
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).to.be.empty;
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
+        expect(container.codeEditorContainer.fileBrowser.errorFiles).to.be.empty;
     });
 
     it('should first save unsaved files before triggering commit', () => {
         cleanInitialize();
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
-        const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
+        const unsavedFile = Object.keys(container.codeEditorContainer.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
         const commitSubject = new Subject();
         saveFilesStub.returns(saveFilesSubject);
         commitStub.returns(commitSubject);
-        container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
-        container.editorState = EditorState.UNSAVED_CHANGES;
-        container.commitState = CommitState.UNCOMMITTED_CHANGES;
+        container.codeEditorContainer.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
+        container.codeEditorContainer.editorState = EditorState.UNSAVED_CHANGES;
+        container.codeEditorContainer.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.detectChanges();
 
         // trying to commit
-        container.actions.commit();
+        container.codeEditorContainer.actions.commit();
         containerFixture.detectChanges();
 
         // saving before commit
         expect(saveFilesStub).to.have.been.calledOnceWithExactly([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }]);
-        expect(container.editorState).to.equal(EditorState.SAVING);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.SAVING);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.SAVING);
+        expect(container.codeEditorContainer.fileBrowser.status.editorState).to.equal(EditorState.SAVING);
         // committing
         expect(commitStub).to.have.been.calledOnce;
-        expect(container.commitState).to.equal(CommitState.COMMITTING);
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.COMMITTING);
+        expect(container.codeEditorContainer.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: null });
-        expect(container.editorState).to.equal(EditorState.CLEAN);
+        expect(container.codeEditorContainer.editorState).to.equal(EditorState.CLEAN);
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -512,8 +514,8 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // waiting for build result
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).to.be.true;
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.true;
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -522,9 +524,9 @@ describe('CodeEditorStudentIntegration', () => {
         });
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).to.be.empty;
+        expect(container.codeEditorContainer.buildOutput.isBuilding).to.be.false;
+        expect(container.codeEditorContainer.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
+        expect(container.codeEditorContainer.fileBrowser.errorFiles).to.be.empty;
     });
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
@@ -575,8 +577,8 @@ describe('CodeEditorStudentIntegration', () => {
         // Repository should be locked, the student can't write into it anymore.
         expect(container.repositoryIsLocked).to.be.true;
         expect(getElement(containerDebugElement, '.locked-container')).to.exist;
-        expect(container.fileBrowser.disableActions).to.be.true;
-        expect(container.actions.disableActions).to.be.true;
+        expect(container.codeEditorContainer.fileBrowser.disableActions).to.be.true;
+        expect(container.codeEditorContainer.actions.disableActions).to.be.true;
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
@@ -625,7 +627,7 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
         containerFixture.detectChanges();
 
-        expect(container.commitState).to.equal(CommitState.CONFLICT);
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CONFLICT);
         expect(getRepositoryContentStub).to.not.have.been.called;
 
         // Resolve conflict.
@@ -635,7 +637,7 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         containerFixture.detectChanges();
 
-        expect(container.commitState).to.equal(CommitState.CLEAN);
+        expect(container.codeEditorContainer.commitState).to.equal(CommitState.CLEAN);
         expect(getRepositoryContentStub).to.calledOnce;
 
         containerFixture.destroy();
