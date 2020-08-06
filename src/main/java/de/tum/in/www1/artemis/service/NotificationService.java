@@ -35,19 +35,19 @@ public class NotificationService {
     }
 
     /**
-     * Get all notifications for a specific course.
+     * Get all group notifications for a specific course.
      * @param course the course for which notifications should be retrieved
      * @return list of notifications
      */
-    public List<GroupNotification> findAllNotificationsForCourse(Course course) {
+    public List<GroupNotification> findAllGroupNotificationsForCourse(Course course) {
         return groupNotificationRepository.findAllByCourseId(course.getId());
     }
 
     /**
-     * Delete the specified notification.
+     * Delete the specified group notification.
      * @param notification group notification that should be deleted
      */
-    public void deleteNotification(GroupNotification notification) {
+    public void deleteGroupNotification(GroupNotification notification) {
         notificationRepository.delete(notification);
     }
 }

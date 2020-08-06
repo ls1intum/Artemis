@@ -28,7 +28,6 @@ import { Exercise } from 'app/entities/exercise.model';
             </div>
         </ng-container>
     `,
-    styles: [],
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
