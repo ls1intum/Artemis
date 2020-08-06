@@ -436,6 +436,10 @@ public class GitService {
             git.close();
 
             reset(repository, commitHash);
+
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.warn("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());

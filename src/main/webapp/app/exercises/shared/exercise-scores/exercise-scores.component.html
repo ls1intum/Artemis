@@ -53,6 +53,12 @@
                     [exerciseId]="exercise.id"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
+                <jhi-exercise-submission-export
+                    *ngIf="exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD"
+                    [exerciseId]="exercise.id"
+                    [exerciseType]="exercise.type"
+                    class="mr-1"
+                ></jhi-exercise-submission-export>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
                     <fa-icon [icon]="'sync'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
@@ -219,7 +225,7 @@
                             Build plan
                         </button>
                         <button
-                            routerLink="/code-editor/{{ value.participation.id }}"
+                            routerLink="/courses/{{ course.id }}/programming-exercises/{{ exercise.id }}/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"

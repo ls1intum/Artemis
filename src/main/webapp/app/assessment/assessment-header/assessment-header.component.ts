@@ -14,7 +14,6 @@ import { Result } from 'app/entities/result.model';
 })
 export class AssessmentHeaderComponent {
     @Input() hideBackButton: boolean;
-    @Input() isComplaint: boolean;
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
@@ -31,6 +30,7 @@ export class AssessmentHeaderComponent {
     @Input() result: Result | null;
     @Input() hasConflict = false;
     @Input() hasComplaint = false;
+    @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
 
     @Output() save = new EventEmitter<void>();

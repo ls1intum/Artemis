@@ -6,8 +6,15 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -26,16 +33,105 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ExerciseHint;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StudentQuestion;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.DropLocation;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerMapping;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -163,12 +259,6 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
-
-    @Autowired
-    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-
-    @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
@@ -178,63 +268,19 @@ public class DatabaseUtilService {
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
-    private TextClusterRepository textClusterRepository;
-
-    @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
     private StudentExamRepository studentExamRepository;
 
     @Autowired
-    private ExamSessionRepository examSessionRepository;
-
-    @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private DatabaseCleanupService databaseCleanupService;
+
     public void resetDatabase() {
-
-        conflictRepo.deleteAll();
-        conflictingResultRepo.deleteAll();
-        complaintResponseRepo.deleteAll();
-        complaintRepo.deleteAll();
-        resultRepo.deleteAll();
-        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
-        feedbackRepo.deleteAll();
-        tutorParticipationRepo.deleteAll();
-        exampleSubmissionRepo.deleteAll();
-        modelingSubmissionRepo.deleteAll();
-        textSubmissionRepo.deleteAll();
-        textClusterRepository.deleteAll();
-        fileUploadSubmissionRepo.deleteAll();
-        programmingSubmissionRepo.deleteAll();
-        submissionRepository.deleteAll();
-        submissionVersionRepository.deleteAll();
-        studentQuestionRepository.deleteAll();
-        studentParticipationRepo.deleteAll();
-        assertThat(studentParticipationRepo.findAll()).as("participation data has been cleared").isEmpty();
-        teamRepo.deleteAll();
-        ltiOutcomeUrlRepository.deleteAll();
-        programmingExerciseRepository.deleteAll();
-        groupNotificationRepository.deleteAll();
-        examSessionRepository.deleteAll();
-        studentExamRepository.deleteAll();
-        exerciseRepo.deleteAll();
-        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
-        examRepository.deleteAll();
-        assertThat(examRepository.findAll()).as("result data has been cleared").isEmpty();
-        exerciseGroupRepository.deleteAll();
-        attachmentRepo.deleteAll();
-        lectureRepo.deleteAll();
-        courseRepo.deleteAll();
-
-        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
-        assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
-        ltiUserIdRepository.deleteAll();
-        userRepo.deleteAll();
-        authorityRepository.deleteAll();
-        assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
-        assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
+        databaseCleanupService.clearDatabase();
     }
 
     // TODO: this should probably be moved into another service
@@ -358,6 +404,22 @@ public class DatabaseUtilService {
 
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
+        Course course = createCourse();
+        Exam exam = addExam(course, user, visible, start, end);
+        course.addExam(exam);
+        addExerciseGroupsAndExercisesToExam(exam, start, end, false);
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
+        Course course = createCourse();
+        Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
+        course.addExam(exam);
+        addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1), false);
         return courseRepo.save(course);
     }
 
@@ -515,6 +577,62 @@ public class DatabaseUtilService {
         return studentQuestions;
     }
 
+    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {
+        var exam = ModelFactory.generateExam(course);
+        exam.setNumberOfExercisesInExam(4);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setStartDate(ZonedDateTime.now().plusHours(2));
+        exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam = examRepository.save(exam);
+
+        // add exercise groups: 3 mandatory, 2 optional
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(true, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        ModelFactory.generateExerciseGroup(false, exam);
+        exam = examRepository.save(exam);
+
+        // TODO: also add other exercise types
+
+        // add exercises
+        var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
+        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+
+        var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
+        var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
+        var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
+        exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
+
+        var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
+        var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
+        var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
+        exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
+
+        var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
+        var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
+        var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
+        exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
+
+        var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
+        var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
+        var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
+        exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
+
+        // register user
+        var student1 = getUserByLogin("student1");
+        var student2 = getUserByLogin("student2");
+        var student3 = getUserByLogin("student3");
+        var student4 = getUserByLogin("student4");
+        var registeredUsers = Set.of(student1, student2, student3, student4);
+
+        exam.setRegisteredUsers(registeredUsers);
+        exam = examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course) {
         Exam exam = ModelFactory.generateExam(course);
         examRepository.save(exam);
@@ -523,7 +641,7 @@ public class DatabaseUtilService {
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
-        exam.addUser(user);
+        exam.addRegisteredUser(user);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
@@ -543,6 +661,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
     }
@@ -551,8 +670,13 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
-        exam.addUser(user);
+        exam.addRegisteredUser(user);
         examRepository.save(exam);
+        var studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        studentExamRepository.save(studentExam);
         return exam;
     }
 
@@ -562,24 +686,57 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime startDate, ZonedDateTime endDate) {
-        var assessmentDueDate = ZonedDateTime.now().plusDays(8);
-        ModelFactory.generateExerciseGroup(true, exam);
-        ModelFactory.generateExerciseGroup(true, exam);
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime examStartDate, ZonedDateTime examEndDate, boolean withProgrammingExercise) {
+        ModelFactory.generateExerciseGroup(true, exam); // text
+        ModelFactory.generateExerciseGroup(true, exam); // quiz
+        ModelFactory.generateExerciseGroup(true, exam); // file upload
+        ModelFactory.generateExerciseGroup(true, exam); // modeling
+        exam.setNumberOfExercisesInExam(4);
         exam = examRepository.save(exam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        var exerciseGroup1 = exam.getExerciseGroups().get(0);
-        var exerciseGroup2 = exam.getExerciseGroups().get(1);
+        var exerciseGroup0 = exam.getExerciseGroups().get(0);
+        var exerciseGroup1 = exam.getExerciseGroups().get(1);
+        var exerciseGroup2 = exam.getExerciseGroups().get(2);
+        var exerciseGroup3 = exam.getExerciseGroups().get(3);
 
-        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
-        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(startDate, endDate, assessmentDueDate, exerciseGroup1);
-        textExercise1 = exerciseRepo.save(textExercise1);
-        textExercise2 = exerciseRepo.save(textExercise2);
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
+        exerciseRepo.save(textExercise1);
+        exerciseRepo.save(textExercise2);
 
-        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup2, startDate, endDate);
-        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup2, startDate, endDate);
-        quizExercise1 = exerciseRepo.save(quizExercise1);
-        quizExercise2 = exerciseRepo.save(quizExercise2);
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
+        exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
+        exerciseRepo.save(quizExercise1);
+        exerciseRepo.save(quizExercise2);
+
+        FileUploadExercise fileUploadExercise1 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
+        FileUploadExercise fileUploadExercise2 = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2);
+        exerciseGroup2.setExercises(Set.of(fileUploadExercise1, fileUploadExercise2));
+        exerciseRepo.save(fileUploadExercise1);
+        exerciseRepo.save(fileUploadExercise2);
+
+        ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
+        ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
+        exerciseGroup3.setExercises(Set.of(modelingExercise1, modelingExercise2));
+        exerciseRepo.save(modelingExercise1);
+        exerciseRepo.save(modelingExercise2);
+
+        if (withProgrammingExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // programming
+            exam.setNumberOfExercisesInExam(5);
+            exam = examRepository.save(exam);
+            var exerciseGroup4 = exam.getExerciseGroups().get(4);
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup4);
+            exerciseRepo.save(programmingExercise1);
+            addTemplateParticipationForProgrammingExercise(programmingExercise1);
+            addSolutionParticipationForProgrammingExercise(programmingExercise1);
+
+            exerciseGroup4.setExercises(Set.of(programmingExercise1));
+        }
+
         return exam;
     }
 
@@ -793,7 +950,17 @@ public class DatabaseUtilService {
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        final var exercisesNrBefore = exerciseRepo.count();
+        exerciseRepo.save(textExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        return textExercise;
+    }
+
+    public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
+        var now = ZonedDateTime.now();
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
@@ -803,7 +970,7 @@ public class DatabaseUtilService {
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", exerciseGroup);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
         exerciseRepo.save(fileUploadExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
@@ -813,6 +980,39 @@ public class DatabaseUtilService {
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        final var courseNrBefore = courseRepo.count();
+        final var examNrBefore = examRepository.count();
+        final var exerciseGroupNrBefore = exerciseGroupRepository.count();
+
+        courseRepo.save(course);
+        examRepository.save(exam);
+
+        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        assertThat(examNrBefore + 1).as("an exam got stored").isEqualTo(examRepository.count());
+        assertThat(exerciseGroupNrBefore + 1).as("an exerciseGroup got stored").isEqualTo(exerciseGroupRepository.count());
+
+        Optional<Course> optionalCourse = courseRepo.findById(course.getId());
+        assertThat(optionalCourse).as("course can be retrieved").isPresent();
+        Course courseDB = optionalCourse.get();
+
+        Optional<Exam> optionalExam = examRepository.findById(exam.getId());
+        assertThat(optionalCourse).as("exam can be retrieved").isPresent();
+        Exam examDB = optionalExam.get();
+
+        Optional<ExerciseGroup> optionalExerciseGroup = exerciseGroupRepository.findById(exerciseGroup.getId());
+        assertThat(optionalExerciseGroup).as("exerciseGroup can be retrieved").isPresent();
+        ExerciseGroup exerciseGroupDB = optionalExerciseGroup.get();
+
+        assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
+        assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+
+        return exerciseGroup;
+    }
+
+    public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
         final var examNrBefore = examRepository.count();
@@ -1009,6 +1209,28 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithModelingAndTextAndFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        modelingExercise.setTitle("Modeling");
+        course.addExercises(modelingExercise);
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setTitle("Text");
+        course.addExercises(textExercise);
+
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        fileUploadExercise.setTitle("FileUpload");
+        course.addExercises(fileUploadExercise);
+
+        course = courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        return course;
+    }
+
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
@@ -1202,14 +1424,19 @@ public class DatabaseUtilService {
         return fileUploadSubmission;
     }
 
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
-        StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
-        result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
         result.setFeedbacks(feedbacks);
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
@@ -1243,7 +1470,12 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
-        result.setCompletionDate(exercise.getReleaseDate());
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
@@ -1526,7 +1758,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(releaseDate, dueDate, exerciseGroup);
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());

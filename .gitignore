@@ -171,3 +171,4 @@ repos-download/
 /.cache-loader
 /src/main/generated
 /coverage
+/exports

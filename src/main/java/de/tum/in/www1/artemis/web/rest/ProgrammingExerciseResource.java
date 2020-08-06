@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
@@ -154,7 +155,7 @@ public class ProgrammingExerciseResource {
      * @param course Course of the programming exercise
      * @return Optional validation error response
      */
-    private Optional<ResponseEntity> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return Optional.of(ResponseEntity.badRequest()
@@ -192,7 +193,7 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise Programming exercise to be validated
      * @return Optional validation error response
      */
-    private Optional<ResponseEntity> validateTitle(ProgrammingExercise programmingExercise) {
+    private Optional<ResponseEntity<ProgrammingExercise>> validateTitle(ProgrammingExercise programmingExercise, Course course) {
         // Check if exercise title is set
         if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
             return Optional.of(ResponseEntity.badRequest()
@@ -204,6 +205,16 @@ public class ProgrammingExerciseResource {
         if (!titleMatcher.matches()) {
             return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null));
         }
+
+        // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
+        long numberOfProgrammingExercisesWithSameTitle = programmingExerciseRepository.countByTitleAndCourse(programmingExercise.getTitle(), course)
+                + programmingExerciseRepository.countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
+        if (numberOfProgrammingExercisesWithSameTitle > 0) {
+            return Optional.of(ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "A programming exercise with the same title already exists. Please choose a different title.", "titleAlreadyExists"))
+                    .body(null));
+        }
+
         return Optional.empty();
     }
 
@@ -225,19 +236,7 @@ public class ProgrammingExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(programmingExercise, ENTITY_NAME);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
-        // Security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
-        Course course;
-        if (programmingExercise.hasExerciseGroup()) {
-            // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
-            course = exerciseGroup.getExam().getCourse();
-            programmingExercise.setExerciseGroup(exerciseGroup);
-        }
-        else {
-            course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            programmingExercise.setCourse(course);
-        }
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
 
         // Check authorization
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -245,13 +244,13 @@ public class ProgrammingExerciseResource {
         }
 
         // Validate exercise title
-        Optional<ResponseEntity> optionalTitleValidationError = validateTitle(programmingExercise);
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
         if (optionalTitleValidationError.isPresent()) {
             return optionalTitleValidationError.get();
         }
 
         // Validate course and exercise short name
-        Optional<ResponseEntity> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
         if (optionalShortNameValidationError.isPresent()) {
             return optionalShortNameValidationError.get();
         }
@@ -286,22 +285,14 @@ public class ProgrammingExerciseResource {
         }
 
         programmingExercise.generateAndSetProjectKey();
-        String projectKey = programmingExercise.getProjectKey();
-        String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-        if (projectExists) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
-                    .body(null);
+        Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(programmingExercise);
+        if (projectExistsError.isPresent()) {
+            return projectExistsError.get();
         }
 
-        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageCI != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
-        }
         try {
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            // Setup all repositories etc
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
@@ -310,6 +301,34 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
+    }
+
+    /**
+     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     * This prevents errors then the actual projects will be generated later on.
+     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
+     *
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @return an error response in case the project already exists or an empty optional in case it does not exist yet (which means the setup can continue as usual)
+     */
+    public Optional<ResponseEntity<ProgrammingExercise>> checkIfProjectExists(ProgrammingExercise programmingExercise) {
+        String projectKey = programmingExercise.getProjectKey();
+        String projectName = programmingExercise.getProjectName();
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
+                    .body(null));
+        }
+
+        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if (errorMessageCI != null) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null));
+        }
+        return Optional.empty();
     }
 
     /**
@@ -331,7 +350,7 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.IMPORT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
         if (sourceExerciseId < 0) {
             return badRequest();
         }
@@ -349,13 +368,13 @@ public class ProgrammingExerciseResource {
         }
 
         // Validate exercise title
-        Optional<ResponseEntity> optionalTitleValidationError = validateTitle(newExercise);
+        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(newExercise, course);
         if (optionalTitleValidationError.isPresent()) {
             return optionalTitleValidationError.get();
         }
 
         // Validate course and exercise short name
-        Optional<ResponseEntity> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
+        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(newExercise, course);
         if (optionalShortNameValidationError.isPresent()) {
             return optionalShortNameValidationError.get();
         }
@@ -373,6 +392,22 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
+        // Check if max score is set
+        if (newExercise.getMaxScore() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        if (!Boolean.TRUE.equals(newExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(newExercise.isAllowOfflineIde())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
+        newExercise.generateAndSetProjectKey();
+        Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(newExercise);
+        if (projectExistsError.isPresent()) {
+            return projectExistsError.get();
+        }
+
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
@@ -386,6 +421,8 @@ public class ProgrammingExerciseResource {
         catch (HttpException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
+
+        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
         // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);
@@ -483,7 +520,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the programming exercises.
+     * GET /courses/:courseId/programming-exercises : get all the programming exercises.
      *
      * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -695,7 +732,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     /**
@@ -729,12 +766,14 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
                 .collect(Collectors.toList());
-        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
-    // TODO: Should not throw the IOException but handle it!
-    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
-            RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+
+        long start = System.nanoTime();
+
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -742,13 +781,17 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
+                programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
+
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 

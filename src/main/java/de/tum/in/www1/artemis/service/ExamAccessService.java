@@ -52,7 +52,7 @@ public class ExamAccessService {
      * @param examId    The id of the exam
      * @return a ResponseEntity with the exam
      */
-    public ResponseEntity<Exam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
+    public ResponseEntity<StudentExam> checkAndGetCourseAndExamAccessForConduction(Long courseId, Long examId) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
@@ -62,13 +62,15 @@ public class ExamAccessService {
         }
 
         // Check that the exam exists
-        Optional<Exam> exam = examRepository.findById(examId);
-        if (exam.isEmpty()) {
+        Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+        if (studentExam.isEmpty()) {
             return notFound();
         }
 
+        Exam exam = studentExam.get().getExam();
+
         // Check that the exam belongs to the course
-        if (!exam.get().getCourse().getId().equals(courseId)) {
+        if (!exam.getCourse().getId().equals(courseId)) {
             return conflict();
         }
 
@@ -78,23 +80,38 @@ public class ExamAccessService {
         }
 
         // Check that the exam is visible
-        if (exam.get().getVisibleDate() != null && exam.get().getVisibleDate().isAfter(ZonedDateTime.now())) {
+        if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {
             return forbidden();
         }
 
-        return ResponseEntity.ok(exam.get());
+        return ResponseEntity.ok(studentExam.get());
     }
 
     /**
-     * Checks if the current user is allowed to manage exams of the given course
+     * Checks if the current user is allowed to manage exams of the given course.
      *
      * @param courseId  The id of the course
      * @param <T>       The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkCourseAccess(Long courseId) {
+    public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
         Course course = courseService.findOne(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            return Optional.of(forbidden());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Checks if the current user is allowed to access the exam as teaching assistant.
+     *
+     * @param courseId  The id of the course
+     * @param <T>       The type of the return type of the requesting route so that the response can be returned there
+     * @return an optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <T> Optional<ResponseEntity<T>> checkCourseAccessForTeachingAssistant(Long courseId) {
+        Course course = courseService.findOne(courseId);
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return Optional.of(forbidden());
         }
         return Optional.empty();
@@ -109,11 +126,32 @@ public class ExamAccessService {
      * @param <X>       The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Long examId) {
-        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccess(courseId);
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForInstructor(Long courseId, Long examId) {
+        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForInstructor(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure;
         }
+        return checkCourseAndExamAccess(courseId, examId);
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
+     * belongs to the given course.
+     *
+     * @param courseId  The id of the course
+     * @param examId    The id of the exam
+     * @param <X>       The type of the return type of the requesting route so that the response can be returned there
+     * @return an optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForTeachingAssistant(Long courseId, Long examId) {
+        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForTeachingAssistant(courseId);
+        if (courseAccessFailure.isPresent()) {
+            return courseAccessFailure;
+        }
+        return checkCourseAndExamAccess(courseId, examId);
+    }
+
+    private <X> Optional<ResponseEntity<X>> checkCourseAndExamAccess(Long courseId, Long examId) {
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
             return Optional.of(notFound());
@@ -136,7 +174,7 @@ public class ExamAccessService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Long courseId, Long examId, Long exerciseGroupId) {
-        Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
@@ -162,7 +200,7 @@ public class ExamAccessService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
-        Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId);
+        Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }

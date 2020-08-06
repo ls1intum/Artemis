@@ -4,7 +4,8 @@
             "home": {
                 "title": "Modellierungsaufgaben",
                 "createLabel": "Neue Modellierungsaufgabe erstellen",
-                "editLabel": "Modellierungsaufgabe bearbeiten"
+                "editLabel": "Modellierungsaufgabe bearbeiten",
+                "importLabel": "Modellierungsaufgabe importieren"
             },
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
@@ -17,7 +18,7 @@
             "exampleSolution": "Beispiel Lösung",
             "exampleSolutionExplanation": "Erklärung Beispiel Lösung",
             "createExampleSolution": "Beispiel Lösung erstellen",
-            "exampleSolutionRequiresExercise": "Um eine Beispiel Lösung zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen.",
+            "exampleSolutionRequiresExercise": "Um eine Beispiel Lösung zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
             "exampleSolutionForModelingExercise": "Beispiel Lösung für Modellierungsaufgabe {{ exerciseTitle }}",
             "saveExampleSolution": "Beispiel Lösung speichern",
             "exampleSubmission": "Beispiel Abgabe {{ number }}",
@@ -28,7 +29,7 @@
             "saveExampleAssessment": "Beispiel Bewertung speichern",
             "showExampleSubmission": "Abgabe anzeigen",
             "showExampleAssessment": "Bewertung anzeigen",
-            "exampleSubmissionsRequireExercise": "Um eine Beispiel Abgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen.",
+            "exampleSubmissionsRequireExercise": "Um eine Beispiel Abgabe zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
             "exampleSubmissionForModelingExercise": "Beispiel Abgabe für Modellierungsaufgabe {{ exerciseTitle }}",
             "usedForTutorial": "Für Tutorial"
         }

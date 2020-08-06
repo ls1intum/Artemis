@@ -31,6 +31,8 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-quiz',
@@ -93,6 +95,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     quizId: number;
     courseId: number;
     interval: any;
+    quizStarted = false;
 
     /**
      * Websocket channels
@@ -121,6 +124,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,
+        private quizService: ArtemisQuizService,
     ) {
         smoothscroll.polyfill();
     }
@@ -288,7 +292,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.initQuiz();
 
         // randomize order
-        this.randomizeOrder(this.quizExercise);
+        this.quizService.randomizeOrder(this.quizExercise);
 
         // init empty submission
         this.submission = new QuizSubmission();
@@ -400,6 +404,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
+                // Check if websocket has updated the quiz exercise and check that following block is only executed once
+                if (!this.quizExercise.started && !this.quizStarted) {
+                    this.quizStarted = true;
+                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                    setTimeout(() => {
+                        // Check again if websocket has updated the quiz exercise within the 5 seconds
+                        if (!this.quizExercise.started) {
+                            this.refreshQuiz(true);
+                        }
+                    }, 5000);
+                }
             }
         } else {
             this.timeUntilStart = '';
@@ -625,7 +640,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.jhiWebsocketService.enableReconnect();
 
                 // apply randomized order where necessary
-                this.randomizeOrder(this.quizExercise);
+                this.quizService.randomizeOrder(this.quizExercise);
             }
         } else {
             // quiz hasn't started yet
@@ -701,7 +716,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
-                    console.log('Unknown question type ' + clientQuestion);
+                    Sentry.captureException(new Error('Unknown question type: ' + clientQuestion));
                 }
             }
         }, this);
@@ -744,50 +759,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Randomize the order of the questions
-     * (and answerOptions or dragItems within each question)
-     * if randomizeOrder is true
-     *
-     * @param quizExercise {object} the quizExercise to randomize elements in
-     */
-    randomizeOrder(quizExercise: QuizExercise) {
-        if (quizExercise.quizQuestions) {
-            // shuffle questions
-            if (quizExercise.randomizeQuestionOrder) {
-                this.shuffle(quizExercise.quizQuestions);
-            }
-
-            // shuffle answerOptions / dragItems within questions
-            quizExercise.quizQuestions.forEach((question) => {
-                if (question.randomizeOrder) {
-                    if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                        this.shuffle((question as MultipleChoiceQuestion).answerOptions!);
-                    } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                        this.shuffle((question as DragAndDropQuestion).dragItems);
-                    } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                    } else {
-                        console.log('Unknown question type: ' + question);
-                    }
-                }
-            }, this);
-        }
-    }
-
-    /**
-     * Shuffles array in place.
-     * @param {Array} items An array containing the items.
-     */
-    shuffle<T>(items: T[]) {
-        for (let i = items.length - 1; i > 0; i--) {
-            const pickedIndex = Math.floor(Math.random() * (i + 1));
-            const picked = items[pickedIndex];
-            items[pickedIndex] = items[i];
-            items[i] = picked;
-        }
-    }
-
-    /**
-     * Callback method to be triggered when the user (de-)selects answers
+     * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
         this.applySelection();

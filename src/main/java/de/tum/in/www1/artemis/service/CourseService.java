@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC;
+
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -11,10 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -217,12 +219,26 @@ public class CourseService {
      * @return the Course of the Exercise
      */
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
+
         if (exercise.hasExerciseGroup()) {
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
+            exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            return findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            exercise.setCourse(course);
+            return course;
         }
+    }
+
+    /**
+     * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
+     * @param exercises all exercises (e.g. of a course or exercise group) that should be filtered
+     * @return the filtered and relevant exercises for manual assessment
+     */
+    public Set<Exercise> getInterestingExercisesForAssessmentDashboards(Set<Exercise> exercises) {
+        return exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
     }
 }

@@ -42,7 +42,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         });
     }
@@ -69,7 +69,20 @@ export class ExampleModelingSolutionComponent implements OnInit {
     }
 
     async back() {
-        const courseId = this.exercise.course!.id;
-        await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);
+        if (this.exercise.course) {
+            await this.router.navigate(['/course-management', this.exercise.course!.id, 'modeling-exercises', this.exerciseId, 'edit']);
+        } else {
+            await this.router.navigate([
+                '/course-management',
+                this.exercise.exerciseGroup!.exam!.course.id,
+                'exams',
+                this.exercise.exerciseGroup!.exam!.id,
+                'exercise-groups',
+                this.exercise.exerciseGroup?.id,
+                'modeling-exercises',
+                this.exerciseId,
+                'edit',
+            ]);
+        }
     }
 }

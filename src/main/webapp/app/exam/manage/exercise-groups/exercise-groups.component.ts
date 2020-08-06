@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, of, forkJoin } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -14,6 +15,12 @@ import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exer
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -21,16 +28,20 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 })
 export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
+    course: Course;
     examId: number;
+    exam: Exam;
     exerciseGroups: ExerciseGroup[] | null;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+    latestIndividualEndDate: Moment | null;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
         private examManagementService: ExamManagementService,
+        private courseManagementService: CourseManagementService,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -43,17 +54,53 @@ export class ExerciseGroupsComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.loadExerciseGroups();
+        // Only take action when a response was received for both requests
+        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
+            ([examRes, examInfoDTO]) => {
+                this.exam = examRes.body!;
+                this.exerciseGroups = examRes.body!.exerciseGroups;
+                this.course = examRes.body!.course;
+                this.courseManagementService.checkAndSetCourseRights(this.course);
+                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+            },
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
+    }
+
+    /**
+     * Load the latest individual end date of the exam. If this the HTTP response is erroneous, an observables emitting
+     * null will be returned
+     */
+    loadLatestIndividualEndDateOfExam() {
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+            // When the exam start date was not set properly an error will be thrown.
+            // Catch this in the inner observable otherwise forkJoin won't return data
+            catchError(() => {
+                return of(null);
+            }),
+        );
     }
 
     /**
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
-            (res) => (this.exerciseGroups = res.body!.exerciseGroups),
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+        return this.examManagementService.find(this.courseId, this.examId, false, true);
+    }
+
+    /**
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
+     * @param exerciseId
+     * @param exerciseGroupId
+     */
+    removeExercise(exerciseId: number, exerciseGroupId: number) {
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
+                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                }
+            });
+        }
     }
 
     /**
@@ -128,6 +175,19 @@ export class ExerciseGroupsComponent implements OnInit {
                     () => {},
                 );
                 break;
+            case ExerciseType.MODELING:
+                const modelingImportModalRef = this.modalService.open(ModelingExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                modelingImportModalRef.result.then(
+                    (result: ModelingExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
         }
     }
 
@@ -156,10 +216,7 @@ export class ExerciseGroupsComponent implements OnInit {
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
             (res) => (this.exerciseGroups = res.body),
-            (err) => {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
-                console.log(err);
-            },
+            () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
     }
 }

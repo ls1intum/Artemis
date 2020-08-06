@@ -9,6 +9,8 @@ import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -147,7 +149,20 @@ export class MarkdownEditorComponent implements AfterViewInit {
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef) {}
+    /** {enableFileUpload}
+     * whether to show the file upload field and enable the drag and drop functionality
+     * enabled by default
+     */
+    @Input()
+    enableFileUpload = true;
+    acceptedFileExtensions = 'png,jpg,jpeg,svg';
+
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private $window: WindowRef,
+        private fileUploaderService: FileUploaderService,
+        private jhiAlertService: AlertService,
+    ) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -361,5 +376,90 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if (event.activeId === 'editor_edit') {
             this.parse();
         }
+    }
+
+    /**
+     * @function onFileUpload
+     * @desc handle file upload for input
+     * @param {any} $event
+     */
+    onFileUpload($event: any): void {
+        if ($event.target.files.length >= 1) {
+            this.embedFiles(Array.from($event.target.files));
+        }
+    }
+
+    /**
+     * @function onFileDrop
+     * @desc handle drop of files
+     * @param {DragEvent} $event
+     */
+    onFileDrop($event: DragEvent): void {
+        $event.preventDefault();
+        if ($event.dataTransfer?.items) {
+            // Use DataTransferItemList interface to access the file(s)
+            const files = [];
+            for (let i = 0; i < $event.dataTransfer.items.length; i++) {
+                // If dropped items aren't files, reject them
+                if ($event.dataTransfer.items[i].kind === 'file') {
+                    const file = $event.dataTransfer.items[i].getAsFile();
+                    if (file) {
+                        files.push(file);
+                    }
+                }
+            }
+            this.embedFiles(files);
+        } else if ($event.dataTransfer?.files) {
+            // Use DataTransfer interface to access the file(s)
+            this.embedFiles(Array.from($event.dataTransfer.files));
+        }
+    }
+
+    /**
+     * @function onFilePaste
+     * @desc handle paste of files
+     * @param {ClipboardEvent} $event
+     */
+    onFilePaste($event: ClipboardEvent): void {
+        if ($event.clipboardData?.items) {
+            const images = [];
+            for (let i = 0; i < $event.clipboardData.items.length; i++) {
+                if ($event.clipboardData.items[i].kind === 'file') {
+                    const file = $event.clipboardData.items[i].getAsFile();
+                    if (file) {
+                        images.push(file);
+                    }
+                }
+            }
+            this.embedFiles(images);
+        }
+    }
+
+    /**
+     * @function embedFiles
+     * @desc generate and embed markdown code for files
+     * @param {FileList} files
+     */
+    embedFiles(files: File[]): void {
+        const aceEditor = this.aceEditorContainer.getEditor();
+        files.forEach((file: File) => {
+            const extension = file.name.split('.').pop()!.toLocaleLowerCase();
+            if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
+                const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            } else {
+                this.fileUploaderService.uploadMarkdownFile(file).then(
+                    (res) => {
+                        const textToAdd = `![${file.name}](${res.path})\n`;
+                        aceEditor.insert(textToAdd);
+                    },
+                    (error: Error) => {
+                        const jhiAlert = this.jhiAlertService.error(error.message);
+                        jhiAlert.msg = error.message;
+                    },
+                );
+            }
+        });
     }
 }

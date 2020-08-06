@@ -70,16 +70,23 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.restore();
     });
 
-    it('should show save and submit button without any inputs', () => {
+    it('should show refresh, save and submit button without any inputs', () => {
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save_button'));
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
+        const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
         expect(saveButton).to.exist;
         expect(submitButton).to.exist;
+        expect(refreshButton).to.exist;
     });
 
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
-    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
+    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
+    const enableRefreshButtonCombinations = cartesianProduct(
+        [EditorState.CLEAN, EditorState.UNSAVED_CHANGES],
+        [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED],
+        [false, true],
+    );
 
     cartesianProduct(
         Object.keys(EditorState),
@@ -88,9 +95,13 @@ describe('CodeEditorActionsComponent', () => {
     ).map((combination: [EditorState, CommitState, boolean]) => {
         const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
-        return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
-            enableCommitButton ? 'Enable commit button' : 'Disable commit button'
-        } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
+        const enableRefreshButton = enableRefreshButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        return it(`Should
+            ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and
+            ${enableCommitButton ? 'Enable commit button' : 'Disable commit button'} and
+            ${enableRefreshButton ? 'Enable refresh buttton' : 'Disable refresh button'}
+            for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'}
+        `, () => {
             const [editorState, commitState, isBuilding] = combination;
             comp.editorState = editorState;
             comp.commitState = commitState;
@@ -98,9 +109,11 @@ describe('CodeEditorActionsComponent', () => {
             fixture.detectChanges();
             const saveButton = fixture.debugElement.query(By.css('#save_button'));
             const commitButton = fixture.debugElement.query(By.css('#submit_button'));
+            const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
 
             expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
             expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
+            expect(!refreshButton.nativeElement.disabled).to.equal(enableRefreshButton);
         });
     });
 
@@ -185,7 +198,7 @@ describe('CodeEditorActionsComponent', () => {
 
         // receive error for save
         saveObservable.error(errorResponse);
-        expect(onErrorSpy).to.have.been.calledOnceWith(errorResponse.error);
+        expect(onErrorSpy).to.have.been.calledOnceWith('saveFailed');
         expect(comp.editorState).to.be.equal(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
         expect(saveButton.nativeElement.disabled).to.be.false;
@@ -219,7 +232,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -289,6 +302,6 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 });

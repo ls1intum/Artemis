@@ -11,6 +11,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 })
 export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
+    @Input() isExamMode: boolean;
+
     readonly assessmentType = AssessmentType;
 
     constructor(private translator: TranslateService) {}
@@ -29,8 +31,12 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
      *
      */
-    toggleHasManualTests() {
+    toggleHasManualAssessment() {
         this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? AssessmentType.AUTOMATIC : AssessmentType.SEMI_AUTOMATIC;
+        // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date
+        if (this.exercise.assessmentType === AssessmentType.AUTOMATIC) {
+            this.exercise.assessmentDueDate = null;
+        }
     }
 
     /**

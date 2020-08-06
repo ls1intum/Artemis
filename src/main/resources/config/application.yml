@@ -24,6 +24,7 @@ logging:
 artemis:
     version: #project.version#
     file-upload-path: uploads
+    submission-export-path: exports
 
 management:
     endpoints:
@@ -149,6 +150,7 @@ server:
             cookie:
                 http-only: true
     shutdown: graceful
+    forward-headers-strategy: native
 
 # Properties to be exposed on the /info management endpoint
 info:

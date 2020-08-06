@@ -47,10 +47,15 @@ export class TextSubmissionService {
         if (option) {
             url += `?${option}=true`;
         }
-        return this.http.get<TextSubmission>(url).pipe(
-            tap((submission) => (submission.participation.submissions = [submission])),
-            tap((submission) => (submission.participation.results = [submission.result])),
-        );
+        return this.http
+            .get<TextSubmission>(url, { observe: 'response' })
+            .pipe(
+                tap((response) => (response.body!.participation.submissions = [response.body!])),
+                tap((response) => (response.body!.participation.results = [response.body!.result])),
+                // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
+                tap((response) => (response.body!.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                map((response) => response.body!),
+            );
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

@@ -12,8 +12,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -76,7 +74,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
 
     /**
      * Check if a dragItem or dropLocation were deleted and delete reference to in mappings
-     * 
+     *
      * @param question the changed question with the changed DragItems and DropLocations
      */
     private void checkAndDeleteMappings(DragAndDropQuestion question) {

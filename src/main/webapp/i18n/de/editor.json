@@ -28,6 +28,8 @@
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
             "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
+            "refreshingFiles": "Aktualisiert...",
+            "refreshingFilesTooltip": "Aktualisiert alle Dateien im Editor.",
             "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
@@ -37,12 +39,18 @@
             "downloadBuildResult": "Build Ergebnis herunterladen",
             "saving": "Speichert",
             "saveFiles": "Speichern",
+            "refreshing": "Aktualisiert",
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "conflict": {
                 "resolveConflict": "Konflikt bereinigen"
+            },
+            "refresh": {
+                "performRefresh": "Aktualisieren",
+                "refreshExplanationShort": "Aktualisiere alle Dateien aus deinem Repository.",
+                "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "fileBrowser": {
                 "fileBrowser": "Datei Browser",
@@ -66,6 +74,7 @@
                 "exerciseNotFound": "Die Übung konnte nicht gefunden werden.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
                 "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
+                "refreshFailed": "Die Aktualisierung ist fehlgeschlagen",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
                 "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
@@ -76,7 +85,12 @@
                 "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
                 "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
                 "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden.",
-                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand."
+                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand.",
+                "notAllowedExam": "Du kannst (nicht mehr) abgeben",
+                "saveFailedInternetDisconnected": "Speichern ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
+                "commitFailedInternetDisconnected": "Commit ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
+                "refreshFailedInternetDisconnected": "Aktualisieren ist fehlgeschlagen. Bitte stelle eine gute Internetverbindung sicher und versuche es nochmal.",
+                "resetFailed": "Dein Repository konnte nicht zurückgesetzt werden."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
@@ -6,9 +6,9 @@ import { UMLModel } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-modeling-exam-summary',
     templateUrl: './modeling-exam-summary.component.html',
-    styles: [],
+    styles: ['::ng-deep .apollon-editor > div:first-of-type { padding: 20px}'],
 })
-export class ModelingExamSummaryComponent implements OnChanges {
+export class ModelingExamSummaryComponent implements OnInit {
     @Input()
     exercise: ModelingExercise;
 
@@ -19,8 +19,8 @@ export class ModelingExamSummaryComponent implements OnChanges {
 
     constructor() {}
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.submission.currentValue !== changes.submission.previousValue) {
+    ngOnInit() {
+        if (this.submission && this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
         }
     }

@@ -15,6 +15,9 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { cloneDeep } from 'lodash';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -48,7 +51,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor() {
+    constructor(private quizService: ArtemisQuizService) {
         super();
         smoothscroll.polyfill();
     }
@@ -59,10 +62,22 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    onActivate(): void {}
+
     /**
      * Initialize the selections / mappings for each question with an empty array
      */
     initQuiz() {
+        // randomize order
+        this.quizService.randomizeOrder(this.exercise);
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
@@ -90,8 +105,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
      * @param questionIndex
      */
-    navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex)!.scrollIntoView({
+    navigateToQuestion(questionId: number): void {
+        document.getElementById('question' + questionId)!.scrollIntoView({
             behavior: 'smooth',
         });
     }
@@ -157,71 +172,17 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     /**
-     * return true if we have no submission yet and we have new answers
-     * returns false if all submittedAnswers in studentSubmission are similar to the ones we have in the respective maps in this components
+     * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
+     */
+    onSelectionChanged() {
+        this.studentSubmission.isSynced = false;
+    }
+
+    /**
+     * return true if the user changed any answer in the quiz
      */
     hasUnsavedChanges(): boolean {
-        if (!this.studentSubmission.submittedAnswers) {
-            // subcomponents are not using a real map, thats why we need this workaround with Object.keys TODO: fix that at some point
-            // need to check the answers, because they are initialized with empty array in updateViewFromSubmission
-            return (
-                Object.values(this.selectedAnswerOptions).some((mcAnswer) => mcAnswer.length > 0) ||
-                Object.values(this.dragAndDropMappings).some((dndAnswer) => dndAnswer.length > 0) ||
-                Object.values(this.shortAnswerSubmittedTexts).some((shortAnswer) => shortAnswer.length > 0)
-            );
-        } else {
-            // be aware of !
-            return !this.studentSubmission.submittedAnswers.every((lastSubmittedAnswer) => {
-                // checks if there are no changes for each question type
-                if (lastSubmittedAnswer.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    const lastSubmittedSelectedOptions = (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        ? (lastSubmittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        : [];
-                    const changedOptions: AnswerOption[] = this.selectedAnswerOptions[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every selectedOption can be found in the lastSubmittedAnswer
-                    return (
-                        lastSubmittedSelectedOptions.length === changedOptions.length &&
-                        changedOptions.every((changedOption) => lastSubmittedSelectedOptions.findIndex((lastSubmittedOptions) => lastSubmittedOptions.id === changedOption.id) >= 0)
-                    );
-                } else if (lastSubmittedAnswer.type === QuizQuestionType.DRAG_AND_DROP) {
-                    const lastSubmittedDnDMapping = (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
-                        ? (lastSubmittedAnswer as DragAndDropSubmittedAnswer).mappings
-                        : [];
-                    const changedMappings: DragAndDropMapping[] = this.dragAndDropMappings[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every dragAndDrop can be found in the lastSubmittedAnswer
-                    return (
-                        lastSubmittedDnDMapping.length === changedMappings.length &&
-                        // work with dragItem.id and dropLocation.id, because id might not be available
-                        // check if drag item is in the same drop location as in last submission
-                        changedMappings.every(
-                            (changedMapping) =>
-                                lastSubmittedDnDMapping.findIndex(
-                                    (lastSubmittedMapping) =>
-                                        lastSubmittedMapping.dragItem?.id === changedMapping.dragItem?.id &&
-                                        lastSubmittedMapping.dropLocation?.id === changedMapping.dropLocation?.id,
-                                ) >= 0,
-                        )
-                    );
-                } else if (lastSubmittedAnswer.type === QuizQuestionType.SHORT_ANSWER) {
-                    const lastSubmittedSATexts = (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
-                        ? (lastSubmittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
-                        : [];
-                    const changedTexts: ShortAnswerSubmittedText[] = this.shortAnswerSubmittedTexts[lastSubmittedAnswer.quizQuestion.id];
-                    // check if they have the same length and every submittedText can be found in the lastSubmittedAnswer
-                    return (
-                        lastSubmittedSATexts.length === changedTexts.length &&
-                        changedTexts.every(
-                            (changedText) =>
-                                lastSubmittedSATexts.findIndex(
-                                    // work with spot id and text id, because lastSubmittedText does not necessarily have a id
-                                    // check if text of last submission is the same for the same spot
-                                    (lastSubmittedText) => lastSubmittedText.text === changedText.text && lastSubmittedText.spot.id === changedText.spot.id,
-                                ) >= 0,
-                        )
-                    );
-                }
-            });
-        }
+        return !this.studentSubmission.isSynced!;
     }
 
     /**
@@ -286,6 +247,5 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.studentSubmission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
-        this.studentSubmission.isSynced = false;
     }
 }

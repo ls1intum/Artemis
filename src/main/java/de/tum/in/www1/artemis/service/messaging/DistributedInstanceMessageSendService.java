@@ -53,6 +53,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("text-exercise-schedule-instant-clustering", exerciseId);
     }
 
+    @Override
+    public void sendUnlockAllRepositories(Long exerciseId) {
+        log.info("Sending unlock all repositories for programming exercise " + exerciseId + " to broker.");
+        sendMessageDelayed("programming-exercise-unlock-repositories", exerciseId);
+    }
+
+    @Override
+    public void sendLockAllRepositories(Long exerciseId) {
+        log.info("Sending lock all repositories for programming exercise " + exerciseId + " to broker.");
+        sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
+    }
+
     private void sendMessageDelayed(String destination, Long exerciseId) {
         exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
     }

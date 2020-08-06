@@ -22,19 +22,19 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
-    Optional<Exam> findWithExerciseGroupsById(Long id);
+    Optional<Exam> findWithExerciseGroupsById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithExerciseGroupsAndExercisesById(Long id);
+    Optional<Exam> findWithExerciseGroupsAndExercisesById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
-    Optional<Exam> findWithRegisteredUsersById(Long id);
+    Optional<Exam> findWithRegisteredUsersById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long id);
+    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams" })
-    Optional<Exam> findWithStudentExamsById(Long id);
+    Optional<Exam> findWithStudentExamsById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.studentParticipations",
             "studentExams.exercises.studentParticipations.submissions" })
@@ -43,8 +43,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "registeredUsers", "studentExams" })
-    Optional<Exam> findWithExercisesRegisteredUsersStudentExamsById(Long id);
+    // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
+    // @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "registeredUsers", "studentExams" })
 
     /**
      * Checks if the user is registered for the exam.

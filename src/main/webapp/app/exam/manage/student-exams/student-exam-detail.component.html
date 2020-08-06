@@ -36,8 +36,43 @@
     </div>
 
     <div class="mb-3">
-        <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
-        {{ studentExam.workingTime | artemisDurationFromSeconds }}
+        <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
+        <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
+            <div class="mr-2" [ngbTooltip]="getWorkingTimeToolTip()">
+                <input formControlName="minutes" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" step="1" required />
+                :
+                <input formControlName="seconds" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" max="59" step="1" required />
+            </div>
+            <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
+                <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
+                <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
+        <ol style="list-style-type: none;">
+            <li>
+                <strong>{{ 'artemisApp.studentExams.started' | translate }}:</strong>
+                {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | translate }}
+            </li>
+            <li>
+                <strong>{{ 'artemisApp.studentExams.submitted' | translate }}:</strong>
+                {{ (studentExam.submitted ? 'global.generic.yes' : 'global.generic.no') | translate }}
+            </li>
+            <li>
+                <strong>{{ 'artemisApp.studentExams.submissionDate' | translate }}:</strong>
+                {{ studentExam.submissionDate | artemisDate: 'long':true }}
+            </li>
+        </ol>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
+        <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'../summary'">
+            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+        </button>
     </div>
 
     <div class="mb-3">
@@ -83,16 +118,16 @@
                         </td>
                         <td class="d-flex justify-content-end">
                             <div class="btn-group">
-                                <button class="btn btn-primary btn-sm mr-1 mb-1" style="border: 4px;">
+                                <button class="btn btn-primary btn-sm mr-1 mb-1" style="border: 4px;" disabled>
                                     <span jhiTranslate="artemisApp.studentExamDetail.openSubmission">Open Submission</span>
                                     <!-- TODO Open Submission -->
                                 </button>
-                                <button class="btn btn-warning btn-sm mr-1 mb-1" style="border: 4px;">
+                                <button class="btn btn-warning btn-sm mr-1 mb-1" style="border: 4px;" disabled>
                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                     <span jhiTranslate="artemisApp.studentExamDetail.openAssessment">&nbsp;Open Assessment</span>
                                     <!-- TODO Open Assessment -->
                                 </button>
-                                <button class="btn btn-danger btn-sm mr-1 mb-1">
+                                <button class="btn btn-danger btn-sm mr-1 mb-1" disabled>
                                     <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>
                                     <span jhiTranslate="artemisApp.studentExamDetail.cancelAssessment">&nbsp;Cancel Assessment</span>
                                     <!-- TODO Cancel Assessment -->

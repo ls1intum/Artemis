@@ -35,7 +35,7 @@
                     </div>
                     <p>&nbsp;</p>
                     <div class="drag-and-drop-quizStatistic-picture">
-                        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="(this.resizeImage)"></jhi-secured-image>
+                        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
                         <div class="click-layer">
                             <div *ngIf="!showSolution">
                                 <div

@@ -44,8 +44,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet)
-            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
         final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         final var repoUrl = exercise.getTestRepositoryUrlAsUrl();
 

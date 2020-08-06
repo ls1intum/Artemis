@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, ComponentFactoryResolver, Injector, Input } from '@angular/core';
+import { ApplicationRef, Component, Injector, Input } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
@@ -35,7 +35,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private componentFactoryResolver: ComponentFactoryResolver,
         private appRef: ApplicationRef,
         private injector: Injector,
         private modalService: NgbModal,

@@ -9,10 +9,7 @@ import javax.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 
 /**
@@ -114,6 +111,23 @@ public class GroupNotification extends Notification implements Serializable {
 
     public String getAttachmentUpdated(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
+    }
+
+    /**
+     * Create JSON representation for a GroupNotification for an ProgrammingExercise in an Exam.
+     *
+     * @param programmingExercise for which to create the notification.
+     * @param message to use for the notification.
+     * @return the stringified JSON of the target.
+     */
+    public String getExamProgrammingExerciseTarget(ProgrammingExercise programmingExercise, String message) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", message);
+        target.addProperty("id", programmingExercise.getId());
+        target.addProperty("entity", "programming-exercises");
+        target.addProperty("course", programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("mainPage", "course-management");
+        return target.toString();
     }
 
     /**

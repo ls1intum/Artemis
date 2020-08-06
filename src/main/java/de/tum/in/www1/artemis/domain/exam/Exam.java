@@ -2,9 +2,28 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderColumn;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -47,6 +66,21 @@ public class Exam implements Serializable {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    @Column(name = "publish_results_date")
+    private ZonedDateTime publishResultsDate;
+
+    @Column(name = "exam_student_review_start")
+    private ZonedDateTime examStudentReviewStart;
+
+    @Column(name = "exam_student_review_end")
+    private ZonedDateTime examStudentReviewEnd;
+
+    /**
+     * The duration in which the students can do final submissions before the exam ends in seconds
+     */
+    @Column(name = "grace_period", columnDefinition = "integer default 180")
+    private Integer gracePeriod = 180;
+
     @Column(name = "start_text")
     @Lob
     private String startText;
@@ -76,6 +110,15 @@ public class Exam implements Serializable {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
+    @Column(name = "examiner")
+    private String examiner;
+
+    @Column(name = "module_number")
+    private String moduleNumber;
+
+    @Column(name = "course_name")
+    private String courseName;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -83,7 +126,7 @@ public class Exam implements Serializable {
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "exercise_group_order")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exam")
+    @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
     // TODO: add a big fat warning in case instructor delete exams where student exams already exist
@@ -139,6 +182,38 @@ public class Exam implements Serializable {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public ZonedDateTime getPublishResultsDate() {
+        return publishResultsDate;
+    }
+
+    public void setPublishResultsDate(ZonedDateTime publishResultsDate) {
+        this.publishResultsDate = publishResultsDate;
+    }
+
+    public ZonedDateTime getExamStudentReviewStart() {
+        return examStudentReviewStart;
+    }
+
+    public void setExamStudentReviewStart(ZonedDateTime examStudentReviewStart) {
+        this.examStudentReviewStart = examStudentReviewStart;
+    }
+
+    public ZonedDateTime getExamStudentReviewEnd() {
+        return examStudentReviewEnd;
+    }
+
+    public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
+        this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public Integer getGracePeriod() {
+        return gracePeriod;
+    }
+
+    public void setGracePeriod(Integer gracePeriod) {
+        this.gracePeriod = gracePeriod;
     }
 
     public String getStartText() {
@@ -197,6 +272,30 @@ public class Exam implements Serializable {
         this.randomizeExerciseOrder = randomizeExerciseOrder;
     }
 
+    public String getExaminer() {
+        return examiner;
+    }
+
+    public void setExaminer(String examiner) {
+        this.examiner = examiner;
+    }
+
+    public String getModuleNumber() {
+        return moduleNumber;
+    }
+
+    public void setModuleNumber(String moduleNumber) {
+        this.moduleNumber = moduleNumber;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
+
     public Course getCourse() {
         return course;
     }
@@ -253,12 +352,12 @@ public class Exam implements Serializable {
         this.registeredUsers = registeredUsers;
     }
 
-    public Exam addUser(User user) {
+    public Exam addRegisteredUser(User user) {
         this.registeredUsers.add(user);
         return this;
     }
 
-    public Exam removeUser(User user) {
+    public Exam removeRegisteredUser(User user) {
         this.registeredUsers.remove(user);
         return this;
     }
@@ -289,12 +388,36 @@ public class Exam implements Serializable {
     /**
      * check if students are allowed to see this exam
      *
-     * @return true, if students are allowed to see this exam, otherwise false
+     * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
     public Boolean isVisibleToStudents() {
-        if (visibleDate == null) {  // no visible date means the exercise is visible to students
-            return Boolean.TRUE;
+        if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
+            return null;
         }
         return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if the exam has started
+     *
+     * @return true, if the exam has started, otherwise false, null if this cannot be determined
+     */
+    public Boolean isStarted() {
+        if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
+            return null;
+        }
+        return startDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if results of exam are published
+     *
+     * @return true, if the results are published, false if not published or not set!
+     */
+    public Boolean resultsPublished() {
+        if (publishResultsDate == null) {
+            return false;
+        }
+        return publishResultsDate.isBefore(ZonedDateTime.now());
     }
 }

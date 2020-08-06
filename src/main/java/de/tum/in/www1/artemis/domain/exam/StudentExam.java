@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.persistence.*;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,11 +27,20 @@ public class StudentExam implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "submitted")
+    private Boolean submitted;
+
     /**
      * The working time in seconds
      */
     @Column(name = "working_time")
     private Integer workingTime;
+
+    @Column(name = "started")
+    private Boolean started;
+
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
 
     @ManyToOne
     @JoinColumn(name = "exam_id")
@@ -45,7 +56,7 @@ public class StudentExam implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Exercise> exercises = new ArrayList<>();
 
-    @OneToMany(mappedBy = "studentExam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
@@ -58,12 +69,36 @@ public class StudentExam implements Serializable {
         this.id = id;
     }
 
+    public Boolean isSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
+    }
+
     public Integer getWorkingTime() {
         return workingTime;
     }
 
     public void setWorkingTime(Integer workingTime) {
         this.workingTime = workingTime;
+    }
+
+    public Boolean isStarted() {
+        return started;
+    }
+
+    public void setStarted(Boolean started) {
+        this.started = started;
+    }
+
+    public ZonedDateTime getSubmissionDate() {
+        return submissionDate;
+    }
+
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
     }
 
     public Exam getExam() {
@@ -116,6 +151,48 @@ public class StudentExam implements Serializable {
     public StudentExam removeExercise(ExamSession examSession) {
         this.examSessions.remove(examSession);
         return this;
+    }
+
+    /**
+     * check if the individual student exam has ended (based on the working time)
+     *
+     * @return true if the exam has finished, otherwise false, null if this cannot be determined
+     */
+    public Boolean isEnded() {
+        if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
+            return null;
+        }
+        return ZonedDateTime.now().isAfter(getIndividualEndDate());
+    }
+
+    /**
+     * Returns the individual exam end date taking the working time of this student exam into account
+     *
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period)
+     */
+    @JsonIgnore
+    public ZonedDateTime getIndividualEndDate() {
+        return exam.getStartDate().plusSeconds(workingTime);
+    }
+
+    /**
+     * Returns the individual exam end date taking the working time of this student exam into account and the grace period set for this exam
+     *
+     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period
+     */
+    @JsonIgnore
+    public ZonedDateTime getIndividualEndDateWithGracePeriod() {
+        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
+        return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+    }
+
+    /**
+     * Calls {@link Exam#resultsPublished()}
+     * @return true the results are published
+     */
+    @JsonIgnore
+    public boolean areResultsPublishedYet() {
+        return exam.resultsPublished();
     }
 
     @Override
