@@ -207,7 +207,7 @@ public class ProgrammingExerciseExportService {
         return new File(zipFilePath.toString());
     }
 
-    public String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
+    private String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA:
                 return "java19";
