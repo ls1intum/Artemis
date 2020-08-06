@@ -6,7 +6,6 @@ import { TextBlock } from 'app/entities/text-block.model';
 @Component({
     selector: 'jhi-manual-textblock-selection',
     templateUrl: './manual-textblock-selection.component.html',
-    styles: [],
 })
 export class ManualTextblockSelectionComponent {
     @Input() set textBlockRefs(textBlockRefs: TextBlockRef[]) {

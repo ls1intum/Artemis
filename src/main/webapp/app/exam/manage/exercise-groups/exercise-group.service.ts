@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -49,9 +49,16 @@ export class ExerciseGroupService {
      * @param courseId The course id.
      * @param examId The exam id.
      * @param exerciseGroupId The id of the exercise group to delete.
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
      */
-    delete(courseId: number, examId: number, exerciseGroupId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { observe: 'response' });
+    delete(courseId: number, examId: number, exerciseGroupId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
+        let params = new HttpParams();
+        if (deleteBaseReposBuildPlans != null && deleteStudentReposBuildPlans != null) {
+            params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+            params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        }
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/exerciseGroups/${exerciseGroupId}`, { params, observe: 'response' });
     }
 
     /**

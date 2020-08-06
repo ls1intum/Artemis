@@ -15,8 +15,8 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 @Service
 public class ModelingSubmissionExportService extends SubmissionExportService {
 
-    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository) {
-        super(exerciseRepository);
+    public ModelingSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
+        super(exerciseRepository, zipFileService, fileService);
     }
 
     @Override

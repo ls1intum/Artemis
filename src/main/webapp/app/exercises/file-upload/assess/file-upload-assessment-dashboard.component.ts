@@ -15,7 +15,6 @@ import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
-    styles: [],
 })
 export class FileUploadAssessmentDashboardComponent implements OnInit {
     exercise: FileUploadExercise;
