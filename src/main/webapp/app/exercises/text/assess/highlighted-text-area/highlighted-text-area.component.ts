@@ -7,7 +7,6 @@ import { escapeString, convertToHtmlLinebreaks, sanitize } from 'app/utils/text.
 @Component({
     selector: 'jhi-highlighted-text-area',
     templateUrl: './highlighted-text-area.component.html',
-    styles: [],
 })
 export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     @Input() public submissionText: string;

@@ -17,7 +17,6 @@ enum TableColumn {
 @Component({
     selector: 'jhi-programming-exercise-import',
     templateUrl: './programming-exercise-import.component.html',
-    styles: [],
 })
 export class ProgrammingExerciseImportComponent implements OnInit {
     readonly column = TableColumn;

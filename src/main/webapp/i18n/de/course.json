@@ -11,7 +11,7 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Buildpläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
             },
             "detail": {

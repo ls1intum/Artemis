@@ -52,7 +52,7 @@ class UMLClassTest {
 
     @BeforeEach
     void setUp() throws NoSuchFieldException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         umlClass = spy(new UMLClass("myClass", List.of(attribute1, attribute2), List.of(method1, method2), "classId", CLASS));
 

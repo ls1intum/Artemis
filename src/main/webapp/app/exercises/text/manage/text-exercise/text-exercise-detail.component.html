@@ -25,6 +25,17 @@
             <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <div ngbDropdown class="d-inline-block ml-2">
+                <button class="btn btn-outline-primary" id="check-plagiarism-download" ngbDropdownToggle [disabled]="checkPlagiarismInProgress">
+                    <span *ngIf="this.checkPlagiarismInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+                </button>
+                <div ngbDropdownMenu aria-labelledby="check-plagiarism-download">
+                    <button type="button" (click)="checkPlagiarismJson()" ngbDropdownItem>JSON</button>
+                    <button type="button" (click)="checkPlagiarismCsv()" ngbDropdownItem>CSV</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
