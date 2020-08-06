@@ -21,38 +21,36 @@
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
     <span editorTitle>{{ exercise?.title }}</span>
-    <!-- class="d-flex flex-grow-1 justify-content-between align-items-center" -->
-    <div editorToolbar>
-        <div class="d-flex align-items-center ml-2">
-            <jhi-programming-exercise-instructor-exercise-status
-                class="mr-2"
-                [exercise]="exercise"
-                [templateParticipation]="exercise?.templateParticipation"
-                [solutionParticipation]="exercise?.solutionParticipation"
-            ></jhi-programming-exercise-instructor-exercise-status>
-            <!-- repository select -->
-            <div ngbDropdown class="d-inline-block mr-2">
-                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
-                <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                    <button
-                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUrl"
-                        (click)="selectTemplateParticipation()"
-                        ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
-                    >
-                        <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
-                    </button>
-                    <button
-                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUrl"
-                        (click)="selectSolutionParticipation()"
-                        ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
-                    >
-                        <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
-                    </button>
-                    <button
-                        [disabled]="
+    <div editorTitleActions class="d-flex align-items-center ml-2">
+        <jhi-programming-exercise-instructor-exercise-status
+            class="mr-2"
+            [exercise]="exercise"
+            [templateParticipation]="exercise?.templateParticipation"
+            [solutionParticipation]="exercise?.solutionParticipation"
+        ></jhi-programming-exercise-instructor-exercise-status>
+        <!-- repository select -->
+        <div ngbDropdown class="d-inline-block mr-2">
+            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <button
+                    [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUrl"
+                    (click)="selectTemplateParticipation()"
+                    ngbDropdownItem
+                    [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
+                >
+                    <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
+                </button>
+                <button
+                    [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUrl"
+                    (click)="selectSolutionParticipation()"
+                    ngbDropdownItem
+                    [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                    jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
+                >
+                    <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
+                </button>
+                <button
+                    [disabled]="
                             loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
                             loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                             !exercise ||
@@ -60,84 +58,83 @@
                             !exercise.studentParticipations.length ||
                             (exercise.studentParticipations.length && !repositoryUrl(exercise.studentParticipations[0]))
                         "
-                        (click)="selectAssignmentParticipation()"
-                        ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
-                    >
-                        Assignment Participation
-                    </button>
-                    <button
-                        [disabled]="!exercise"
-                        (click)="selectTestRepository()"
-                        ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="artemisApp.editor.repoSelect.testRepo"
-                    >
-                        Test Repository
-                    </button>
-                </div>
-            </div>
-            <!-- action buttons -->
-            <div>
-                <button
-                    *ngIf="!isExamMode && (!exercise.studentParticipations || !exercise.studentParticipations.length)"
-                    (click)="createAssignmentParticipation()"
-                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                    class="btn btn-primary mr-2"
+                    (click)="selectAssignmentParticipation()"
+                    ngbDropdownItem
+                    [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
+                    jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
                 >
-                    <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white mr-2"></fa-icon>
-                    <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'circle-notch'" [spin]="true" class="text-white mr-2"></fa-icon>
-                    <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
+                    Assignment Participation
                 </button>
                 <button
-                    *ngIf="!isExamMode && exercise.studentParticipations && exercise.studentParticipations.length"
-                    (click)="resetAssignmentParticipation()"
-                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                    class="btn btn-danger"
+                    [disabled]="!exercise"
+                    (click)="selectTestRepository()"
+                    ngbDropdownItem
+                    [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                    jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                 >
-                    <fa-icon
-                        *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                        [icon]="'times'"
-                        class="text-white mr-2"
-                    ></fa-icon>
-                    <fa-icon
-                        *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                        [icon]="'circle-notch'"
-                        [spin]="true"
-                        class="text-white mr-2"
-                    ></fa-icon>
-                    <span jhiTranslate="artemisApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                    Test Repository
                 </button>
             </div>
         </div>
-        <div class="ml-auto d-flex align-items-center">
-            <jhi-updating-result
-                *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
-                [exercise]="exercise"
-                [participation]="selectedParticipation"
-                [showUngradedResults]="true"
-                [showTestNames]="true"
-                [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
-                [short]="true"
-                [personalParticipation]="false"
-                class="mr-2"
-            ></jhi-updating-result>
-            <jhi-programming-exercise-student-trigger-build-button
-                class="mr-3"
-                *ngIf="selectedRepository !== REPOSITORY.TEST"
-                [exercise]="exercise"
-                [participation]="selectedParticipation"
-                [btnSize]="ButtonSize.MEDIUM"
-            ></jhi-programming-exercise-student-trigger-build-button>
-            <jhi-exercise-hint-student
-                *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT"
-                [exerciseId]="exercise.id"
-                [exerciseHints]="exercise.exerciseHints"
-                class="mr-2"
+        <!-- action buttons -->
+        <div>
+            <button
+                *ngIf="!isExamMode && (!exercise.studentParticipations || !exercise.studentParticipations.length)"
+                (click)="createAssignmentParticipation()"
+                [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                class="btn btn-primary mr-2"
             >
-            </jhi-exercise-hint-student>
+                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'circle-notch'" [spin]="true" class="text-white mr-2"></fa-icon>
+                <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
+            </button>
+            <button
+                *ngIf="!isExamMode && exercise.studentParticipations && exercise.studentParticipations.length"
+                (click)="resetAssignmentParticipation()"
+                [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                class="btn btn-danger"
+            >
+                <fa-icon
+                    *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                    [icon]="'times'"
+                    class="text-white mr-2"
+                ></fa-icon>
+                <fa-icon
+                    *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                    [icon]="'circle-notch'"
+                    [spin]="true"
+                    class="text-white mr-2"
+                ></fa-icon>
+                <span jhiTranslate="artemisApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+            </button>
         </div>
+    </div>
+    <div editorToolbar class="ml-auto d-flex align-items-center">
+        <jhi-updating-result
+            *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
+            [exercise]="exercise"
+            [participation]="selectedParticipation"
+            [showUngradedResults]="true"
+            [showTestNames]="true"
+            [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+            [short]="true"
+            [personalParticipation]="false"
+            class="mr-2"
+        ></jhi-updating-result>
+        <jhi-programming-exercise-student-trigger-build-button
+            class="mr-3"
+            *ngIf="selectedRepository !== REPOSITORY.TEST"
+            [exercise]="exercise"
+            [participation]="selectedParticipation"
+            [btnSize]="ButtonSize.MEDIUM"
+        ></jhi-programming-exercise-student-trigger-build-button>
+        <jhi-exercise-hint-student
+            *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT"
+            [exerciseId]="exercise.id"
+            [exerciseHints]="exercise.exerciseHints"
+            class="mr-2"
+        >
+        </jhi-exercise-hint-student>
     </div>
     <jhi-programming-exercise-editable-instructions
         editorSidebar

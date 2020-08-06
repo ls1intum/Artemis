@@ -1,18 +1,21 @@
 <jhi-code-editor-grid #grid (onResize)="onGridResize($event)">
-    <ng-content select="[editorTitle]" editorTitle></ng-content>
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <ng-content select="[editorToolbar]"></ng-content>
-        <jhi-code-editor-actions
-            [buildable]="buildable"
-            [disableActions]="!editable"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onRefreshFiles)="onRefreshFiles()"
-            (commitStateChange)="onCommitStateChange.emit($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-actions>
+    <div editorNavbar class="d-flex align-items-center">
+        <h4><ng-content select="[editorTitle]"></ng-content></h4>
+        <ng-content select="[editorTitleActions]"></ng-content>
+        <div class="d-flex align-items-center ml-auto">
+            <ng-content select="[editorToolbar]"></ng-content>
+            <jhi-code-editor-actions
+                [buildable]="buildable"
+                [disableActions]="!editable"
+                [unsavedFiles]="unsavedFiles"
+                [(editorState)]="editorState"
+                [(commitState)]="commitState"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onRefreshFiles)="onRefreshFiles()"
+                (commitStateChange)="onCommitStateChange.emit($event)"
+                (onError)="onError($event)"
+            ></jhi-code-editor-actions>
+        </div>
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft
@@ -36,7 +39,6 @@
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
     ></jhi-code-editor-ace>
-    <!-- toggle / error events not working since ng-content does not emit, only there as a reminder -->
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
