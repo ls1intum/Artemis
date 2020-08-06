@@ -179,7 +179,11 @@
             },
             "intellij": {
                 "openEditor": "Editor Öffnen"
-            }
+            },
+            "reEvaluate": "Alle erneut bewerten",
+            "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
+            "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
+            "reEvaluateFailed": "Die Neubewertung ist fehlgeschlagen: {{message}}"
         },
         "error": {
             "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."

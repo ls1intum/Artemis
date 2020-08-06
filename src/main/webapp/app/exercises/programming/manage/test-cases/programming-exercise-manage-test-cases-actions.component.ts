@@ -24,6 +24,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             [disabled]="disableResetWeights || isSaving"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
         ></button>
+        <jhi-programming-exercise-re-evaluate-button
+            [exercise]="exercise"
+            [disabled]="isSaving || !hasUnsavedChanges || hasUpdatedTestCases"
+        ></jhi-programming-exercise-re-evaluate-button>
         <jhi-programming-exercise-trigger-all-button
             [exercise]="exercise"
             [disabled]="isSaving || !hasUpdatedTestCases"
