@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -25,7 +24,6 @@ export class SubmissionExportDialogComponent implements OnInit {
     isLoading = false;
 
     constructor(
-        private $window: WindowRef,
         private exerciseService: ExerciseService,
         private submissionExportService: SubmissionExportService,
         public activeModal: NgbActiveModal,
@@ -73,6 +71,6 @@ export class SubmissionExportDialogComponent implements OnInit {
         this.jhiAlertService.success('instructorDashboard.exportSubmissions.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
-        downloadZipFileFromResponse(response, this.$window);
+        downloadZipFileFromResponse(response);
     };
 }

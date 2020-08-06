@@ -205,8 +205,7 @@ public class ProgrammingExerciseExportService {
         }
 
         var projectKey = programmingExercise.getProjectKey();
-        var outputFolder = REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? REPO_DOWNLOAD_CLONE_PATH + projectKey + "-" + output
-                : REPO_DOWNLOAD_CLONE_PATH + File.separator + projectKey + "-" + output;
+        var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
 
         File outputFolderFile = new File(outputFolder);
         outputFolderFile.mkdirs();
@@ -224,7 +223,7 @@ public class ProgrammingExerciseExportService {
                 break;
         }
 
-        var repoFolder = REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? REPO_DOWNLOAD_CLONE_PATH + projectKey : REPO_DOWNLOAD_CLONE_PATH + File.separator + projectKey;
+        var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
         String[] args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
 
         CommandLineOptions options = new CommandLineOptions(args, null);

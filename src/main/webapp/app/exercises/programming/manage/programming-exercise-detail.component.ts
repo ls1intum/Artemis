@@ -17,7 +17,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { WindowRef } from 'app/core/websocket/window.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -43,7 +42,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     checkPlagiarismInProgress: boolean;
 
     constructor(
-        private $window: WindowRef,
         private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -137,7 +135,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
         this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
         this.checkPlagiarismInProgress = false;
-        downloadZipFileFromResponse(response, this.$window);
+        downloadZipFileFromResponse(response);
     };
 
     combineTemplateCommits() {

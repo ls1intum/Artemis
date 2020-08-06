@@ -493,13 +493,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findByIdWithAllParticipations(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found");
-        }
+        return programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("programming exercise not found"));
     }
 
     /**

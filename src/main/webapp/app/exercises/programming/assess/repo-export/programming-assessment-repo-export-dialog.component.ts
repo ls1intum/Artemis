@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -30,7 +29,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     isLoading = false;
 
     constructor(
-        private $window: WindowRef,
         private exerciseService: ExerciseService,
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
@@ -94,6 +92,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
-        downloadZipFileFromResponse(response, this.$window);
+        downloadZipFileFromResponse(response);
     };
 }

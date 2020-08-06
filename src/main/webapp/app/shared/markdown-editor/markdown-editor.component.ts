@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import 'brace/mode/latex';
@@ -157,12 +156,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg';
 
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        private $window: WindowRef,
-        private fileUploaderService: FileUploaderService,
-        private jhiAlertService: AlertService,
-    ) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: AlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
