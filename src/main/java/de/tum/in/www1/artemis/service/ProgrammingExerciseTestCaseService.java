@@ -81,6 +81,7 @@ public class ProgrammingExerciseTestCaseService {
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
             updatedTests.add(matchingTestCase);
         }
+        testCaseRepository.saveAll(updatedTests);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
@@ -99,6 +100,7 @@ public class ProgrammingExerciseTestCaseService {
             testCase.setBonusMultiplier(1.0);
             testCase.setBonusPoints(0.0);
         }
+        testCaseRepository.saveAll(testCases);
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return testCases;

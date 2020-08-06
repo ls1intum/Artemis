@@ -21,7 +21,6 @@
                     [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                    [disableReset]="(testCases | averageBy: 'weight') <= 1"
                     (onReset)="resetChanges()"
                     (onSave)="saveChanges()"
                 ></jhi-programming-exercise-manage-test-cases-actions>

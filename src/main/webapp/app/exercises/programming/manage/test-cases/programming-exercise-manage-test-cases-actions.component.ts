@@ -21,7 +21,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             id="reset-weights-button"
             class="btn btn-secondary ml-3"
             (click)="onReset.emit()"
-            [disabled]="disableReset || isSaving"
+            [disabled]="isSaving"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.reset"
         ></button>
         <jhi-programming-exercise-trigger-all-button
@@ -36,7 +36,6 @@ export class ProgrammingExerciseManageTestCasesActionsComponent {
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
     @Input() isSaving: boolean;
-    @Input() disableReset: boolean;
 
     @Output() onSave = new EventEmitter();
     @Output() onReset = new EventEmitter();
