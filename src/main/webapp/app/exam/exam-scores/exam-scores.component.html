@@ -47,40 +47,53 @@
             </div>
 
             <!-- Exercise Statistics Table -->
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr>
-                        <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</th>
-                        <th jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
-                        <th jhiTranslate="artemisApp.examScores.averagePointsExerciseColumn">Average Points (Exercise)</th>
-                        <th jhiTranslate="artemisApp.examScores.noExerciseParticipantsColumn"># Exercise Participants (Filtered/Total)</th>
-                        <th jhiTranslate="artemisApp.examScores.averagePointsGroupColumn">Average Points (Exercise Group)</th>
-                        <th jhiTranslate="artemisApp.examScores.maximumPointsColumn">Maximum Points</th>
-                        <th jhiTranslate="artemisApp.examScores.noExerciseGroupParticipantsFilteredColumn"># Exercise Group Participants (Filtered/Total)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <ng-container *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>
+                                {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
                         <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
                                 {{ exerciseGroupResult.title }}
                             </td>
-                            <td>{{ exerciseResult.title }}</td>
-                            <td>{{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}</td>
-                            <td>{{ exerciseResult.noOfParticipantsWithFilter }}/{{ exerciseResult.totalParticipants }}</td>
-                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
-                            </td>
-                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                {{ toLocaleString(exerciseGroupResult.maxPoints) }}
-                            </td>
                             <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
                                 {{ exerciseGroupResult.noOfParticipantsWithFilter }}/{{ exerciseGroupResult.totalParticipants }}
                             </td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
+                                {{ toLocaleString(exerciseGroupResult.maxPoints) }}
+                            </td>
+                            <td>{{ exerciseResult.title }}</td>
+                            <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
+                            <td>{{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}</td>
                         </tr>
-                    </ng-container>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Student Result Table -->
@@ -88,7 +101,7 @@
             <span jhiTranslate="artemisApp.examScores.studentResultsTitle">Student Results</span>
         </h4>
         <div class="table-responsive">
-            <table class="table table-striped table-bordered table-hover">
+            <table class="table table-sm table-striped table-bordered table-hover">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th jhiSortBy="name">
