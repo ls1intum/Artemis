@@ -328,21 +328,12 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-
-        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
-
         User user = userService.getUser();
+        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                exerciseService.delete(exercise.getId(), false, false);
-            }
-        }
-
-        // The database operation cascades to Student Exams and Exercise Groups
-        examService.delete(examId);
+        examService.delete(exam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 
