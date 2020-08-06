@@ -171,28 +171,28 @@ public class ProgrammingExerciseExportService {
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
+        final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         downloadRepositories(programmingExercise);
 
-        var output = "output";
-        var projectKey = programmingExercise.getProjectKey();
-        var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
+        final var output = "output";
+        final var projectKey = programmingExercise.getProjectKey();
+        final var outputFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey + "-" + output;
 
-        File outputFolderFile = new File(outputFolder);
+        final var outputFolderFile = new File(outputFolder);
         outputFolderFile.mkdirs();
 
-        String programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
+        final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
-        var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
-        var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
-        String[] args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
+        final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
+        final var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        final var args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
 
-        CommandLineOptions options = new CommandLineOptions(args, null);
-        Program program = new Program(options);
+        final var options = new CommandLineOptions(args, null);
+        final var program = new Program(options);
         program.run();
 
-        Path zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
+        final var zipFilePath = Paths.get(REPO_DOWNLOAD_CLONE_PATH, programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-"
                 + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip");
         zipFileService.createZipFileWithFolderContent(zipFilePath, Paths.get(outputFolder));
         fileService.scheduleForDeletion(zipFilePath, 5);
@@ -208,22 +208,17 @@ public class ProgrammingExerciseExportService {
     }
 
     public String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
-        var programmingLanguage = "";
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA:
-                programmingLanguage = "java19";
-                break;
+                return "java19";
             case C:
-                programmingLanguage = "c/c++";
-                break;
+                return "c/c++";
             case PYTHON:
-                programmingLanguage = "python3";
-                break;
+                return "python3";
             default:
                 throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                         "ProgrammingExercise", "notSupported");
         }
-        return programmingLanguage;
     }
 
     private void cleanupRepositories(ProgrammingExercise programmingExercise) {
