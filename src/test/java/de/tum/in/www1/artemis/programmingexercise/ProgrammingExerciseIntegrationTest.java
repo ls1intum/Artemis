@@ -829,6 +829,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             testCaseUpdate.setId(testCase.getId());
             testCaseUpdate.setAfterDueDate(true);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
+            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
+            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).collect(Collectors.toList());
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
@@ -842,6 +844,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
+            assertThat(testCase.getBonusMultiplier()).isEqualTo(testCase.getId() + 1.0);
+            assertThat(testCase.getBonusPoints()).isEqualTo(testCase.getId() + 2.0);
         });
     }
 
