@@ -9,13 +9,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
 
@@ -38,8 +32,14 @@ public abstract class SubmissionExportService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public SubmissionExportService(ExerciseRepository exerciseRepository) {
+    private final ZipFileService zipFileService;
+
+    private final FileService fileService;
+
+    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         this.exerciseRepository = exerciseRepository;
+        this.zipFileService = zipFileService;
+        this.fileService = fileService;
     }
 
     @Value("${artemis.submission-export-path}")
@@ -156,13 +156,13 @@ public abstract class SubmissionExportService {
         }
 
         try {
-            createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
+            zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
             deleteTempFiles(submissionFilePaths);
         }
 
-        scheduleForDeletion(zipFilePath, 15);
+        fileService.scheduleForDeletion(zipFilePath, 5);
 
         return Optional.of(zipFilePath.toFile());
     }
@@ -170,30 +170,6 @@ public abstract class SubmissionExportService {
     protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;
 
     protected abstract String getFileEndingForSubmission(Submission submission);
-
-    /**
-     * Create a zipfile of the given paths and save it in the zipFilePath
-     *
-     * @param zipFilePath path where the zip file should be saved
-     * @param paths the paths that should be zipped
-     * @param pathsRoot the root path relative to <code>paths</code>
-     * @throws IOException if an error occurred while zipping
-     */
-    private void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
-                try {
-                    zipOutputStream.putNextEntry(zipEntry);
-                    Files.copy(path, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-    }
 
     /**
      * Delete all temporary files created during export
@@ -212,32 +188,4 @@ public abstract class SubmissionExportService {
             }
         }
     }
-
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
-
-    /**
-     * Schedule the deletion of the given path with a given delay
-     *
-     * @param path The path that should be deleted
-     * @param delayInMinutes The delay in minutes after which the path should be deleted
-     */
-    private void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
-            try {
-                log.info("Delete file " + path);
-                Files.delete(path);
-                futures.remove(path);
-            }
-            catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
-            }
-        }, delayInMinutes, MINUTES);
-
-        futures.put(path, future);
-    }
-
 }

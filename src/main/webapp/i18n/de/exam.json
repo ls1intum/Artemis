@@ -60,10 +60,16 @@
         "examScores": {
             "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
             "title": "Klausur Ergebnisse",
-            "titleColumn": "Titel",
-            "containedExercisesColumn": "Aufgaben in Gruppe",
-            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
-            "maximumPointsColumn": "Maximal erreichbare Punkte",
+            "exerciseStatisticsTitle": "Aufgaben Statistik",
+            "studentResultsTitle": "Studenten Ergebnisse",
+            "titleExerciseGroupColumn": "Aufgabengruppe",
+            "titleExerciseColumn": "Aufgabe",
+            "averageColumn": "Durchschnitt",
+            "participantsColumn": "Teilnehmer",
+            "averageExerciseTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "averageExerciseGroupTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabengruppe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "participantsExerciseTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
+            "participantsExerciseGroupTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabegruppe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",
@@ -71,7 +77,9 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
+            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten",
+            "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben"
         },
         "examParticipation": {
             "timer": "Restzeit: ",

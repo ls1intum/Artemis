@@ -6,9 +6,10 @@ import { ArtemisExamScoresRoutingModule } from 'app/exam/exam-scores/exam-scores
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     declarations: [ExamScoresComponent],
-    imports: [ArtemisSharedModule, MomentModule, ArtemisExamScoresRoutingModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisResultModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisExamScoresRoutingModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedComponentModule],
 })
 export class ArtemisExamScoresModule {}

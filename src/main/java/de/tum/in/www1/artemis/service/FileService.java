@@ -10,10 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -25,6 +23,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -37,9 +36,19 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
 @Service
-public class FileService {
+public class FileService implements DisposableBean {
 
     private final Logger log = LoggerFactory.getLogger(FileService.class);
+
+    private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
+
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    @Override
+    public void destroy() {
+        futures.values().forEach(future -> future.cancel(true));
+        futures.clear();
+    }
 
     /**
      * Get the file for the given path as a byte[]
@@ -154,9 +163,9 @@ public class FileService {
             return FilePathService.getLectureAttachmentFilepath() + lectureId + filename;
         }
         if (publicPath.contains("files/file-upload-exercises")) {
-            final var uploadSubpath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
-            final var shouldBeExerciseId = uploadSubpath[0];
-            final var shouldBeSubmissionId = uploadSubpath.length >= 3 ? uploadSubpath[2] : null;
+            final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
+            final var shouldBeExerciseId = uploadSubPath[0];
+            final var shouldBeSubmissionId = uploadSubPath.length >= 3 ? uploadSubPath[2] : null;
             if (!NumberUtils.isCreatable(shouldBeExerciseId) || !NumberUtils.isCreatable(shouldBeSubmissionId)) {
                 throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath);
             }
@@ -265,7 +274,7 @@ public class FileService {
                 filename = originalFilename;
             }
             else {
-                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
             String path = targetFolder + filename;
@@ -282,7 +291,7 @@ public class FileService {
     }
 
     /**
-     * This copies the directory at the old directory path to the new path, including all files and subfolders
+     * This copies the directory at the old directory path to the new path, including all files and sub folders
      *
      * @param resources           the resources that should be copied
      * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
@@ -294,8 +303,8 @@ public class FileService {
 
         for (Resource resource : resources) {
 
-            // Replace windows seperator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8").replaceAll("\\\\", "/");
+            // Replace windows separator with "/"
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
@@ -344,7 +353,7 @@ public class FileService {
     /**
      * Look for sections that start and end with a section marker (e.g. %section-start% and %section-end%). Overrides the given file in filePath with a new file!
      *
-     * @param filePath of file to look for replacable sections in.
+     * @param filePath of file to look for replaceable sections in.
      * @param sections of structure String (section name) / Boolean (keep content in section or remove it).
      */
     public void replacePlaceholderSections(String filePath, Map<String, Boolean> sections) {
@@ -430,7 +439,7 @@ public class FileService {
     }
 
     /**
-     * This replace all occurences of the target String with the replacement String in the given directory (recursive!)
+     * This replace all occurrences of the target String with the replacement String in the given directory (recursive!)
      *
      * @param startPath         the path where the file is located
      * @param targetString      the string that should be replaced
@@ -452,15 +461,17 @@ public class FileService {
         }
 
         // Get all subdirectories
-        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+        final var subDirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
-        for (String subdirectory : subdirectories) {
-            replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subdirectory, targetString, replacementString);
+        if (subDirectories != null) {
+            for (String subDirectory : subDirectories) {
+                replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subDirectory, targetString, replacementString);
+            }
         }
     }
 
     /**
-     * This replaces all occurences of the target Strings with the replacement Strings in the given file and saves the file
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      *
      * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
      * @param startPath          the path where the start directory is located
@@ -477,21 +488,22 @@ public class FileService {
 
         // Get all files in directory
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
-
-        for (String file : files) {
-            replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
+        if (files != null) {
+            for (String file : files) {
+                replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
+            }
         }
 
-        // Recursive call
-        // Get all subdirectories
-        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
-
-        for (String subdirectory : subdirectories) {
-            if (subdirectory.equalsIgnoreCase(".git")) {
-                // ignore files in the '.git' folder
-                continue;
+        // Recursive call: get all subdirectories
+        String[] subDirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+        if (subDirectories != null) {
+            for (String subdirectory : subDirectories) {
+                if (subdirectory.equalsIgnoreCase(".git")) {
+                    // ignore files in the '.git' folder
+                    continue;
+                }
+                replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
             }
-            replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
         }
     }
 
@@ -586,7 +598,7 @@ public class FileService {
 
     /**
      * This converts a specific file to the UTF-8 encoding.
-     * To determine the encoding of the file, the library juniversalchardet is used.
+     * To determine the encoding of the file, the library com.ibm.icu.text is used.
      *
      * @param filePath           the path where the file is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
@@ -611,12 +623,30 @@ public class FileService {
      * @return The detected charset
      */
     public Charset detectCharset(byte[] contentArray) {
-        // Part of the apache tika library in order to detect the encoding of a file
         CharsetDetector charsetDetector = new CharsetDetector();
-
         charsetDetector.setText(contentArray);
         String charsetName = charsetDetector.detect().getName();
-
         return Charset.forName(charsetName);
+    }
+
+    /**
+     * Schedule the deletion of the given path with a given delay
+     *
+     * @param path The path that should be deleted
+     * @param delayInMinutes The delay in minutes after which the path should be deleted
+     */
+    public void scheduleForDeletion(Path path, long delayInMinutes) {
+        ScheduledFuture<?> future = executor.schedule(() -> {
+            try {
+                log.info("Delete file " + path);
+                Files.delete(path);
+                futures.remove(path);
+            }
+            catch (IOException e) {
+                log.error("Deleting the file " + path + " did not work", e);
+            }
+        }, delayInMinutes, TimeUnit.MINUTES);
+
+        futures.put(path, future);
     }
 }

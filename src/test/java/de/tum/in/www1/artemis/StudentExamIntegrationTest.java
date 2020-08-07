@@ -238,7 +238,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             final HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", "foo");
             headers.set("X-Artemis-Client-Fingerprint", "bar");
-            headers.set("X-Forwarded-For", "10.0." + studentExam.getId() + ".1");
+            headers.set("X-Forwarded-For", "10.0.28.1");
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
@@ -294,7 +294,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(examSession.getIpAddress()).isNull();
             assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
             assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
-            assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0." + studentExam.getId() + ".1");
+            assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
         }
 
         // change back to instructor user
