@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, Output, HostBinding } from '@angular/co
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
@@ -33,7 +32,6 @@ export class AssessmentLayoutComponent {
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
-    @Input() conflicts: Conflict[] | null = null;
     @Input() assessmentsAreValid: boolean;
     ComplaintType = ComplaintType;
     @Input() complaint: Complaint | null;
@@ -41,7 +39,6 @@ export class AssessmentLayoutComponent {
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
-    @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
 

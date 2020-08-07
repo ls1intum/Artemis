@@ -68,8 +68,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ConflictingResultService conflictingResultService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final QuizScheduleService quizScheduleService;
@@ -80,8 +78,8 @@ public class ParticipationService {
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService, @Lazy QuizScheduleService quizScheduleService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
+            @Lazy QuizScheduleService quizScheduleService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -98,7 +96,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
     }
@@ -1095,11 +1092,6 @@ public class ParticipationService {
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
-
-                if (participation.getExercise() instanceof ModelingExercise) {
-                    // The conflicting results referencing a result of the given participation need to be deleted to prevent Hibernate constraint violation errors.
-                    conflictingResultService.deleteConflictingResultsByResultId(result.getId());
-                }
 
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
