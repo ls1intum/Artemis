@@ -314,100 +314,58 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScoreWithTestCaseBonusAn() {
+    public void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false).weight(5.).bonusMultiplier(1D).setBonusPoints(14D);
-        testCases.get("test2").active(true).afterDueDate(false).weight(2.).bonusMultiplier(2D).setBonusPoints(21.5D);
-        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(1D).setBonusPoints(0.0D);
+        testCases.get("test1").active(true).afterDueDate(false).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
+        testCases.get("test2").active(true).afterDueDate(false).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
+        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
         testCaseRepository.saveAll(testCases.values());
+
+        // Score should be capped at 200%
+        programmingExercise.setBonusPoints(programmingExercise.getMaxScore());
+        programmingExerciseRepository.save(programmingExercise);
 
         var result1 = new Result();
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
         var result2 = new Result();
-        result2 = updateAndSaveAutomaticResult(result2, true, false, false);
+        result2 = updateAndSaveAutomaticResult(result2, true, false, true);
 
         var result3 = new Result();
-        result3 = updateAndSaveAutomaticResult(result3, false, true, false);
+        result3 = updateAndSaveAutomaticResult(result3, true, true, false);
 
         var result4 = new Result();
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
-        var result5 = new Result();
-        result5 = updateAndSaveAutomaticResult(result5, true, true, true);
-
-        var result6 = new Result();
-        result6 = updateAndSaveAutomaticResult(result6, false, false, false);
-
-        // Build failure
-        var resultBF = new Result().feedbacks(List.of()).rated(true).score(0L).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
-                .assessmentType(AssessmentType.AUTOMATIC);
-        testCaseService.updateResultFromTestCases(resultBF, programmingExercise, true);
-
-        // Missing feedback
-        var resultMF = new Result();
-        var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
-        resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
-                .rated(true).score(0L).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        testCaseService.updateResultFromTestCases(resultMF, programmingExercise, true);
-
         // Assertions result1 - calculated
-        assertThat(result1.getScore()).isEqualTo(55L);
+        assertThat(result1.getScore()).isEqualTo(93L);
         assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result1.getHasFeedback()).isTrue();
         assertThat(result1.isSuccessful()).isFalse();
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
-        assertThat(result2.getScore()).isEqualTo(66L);
-        assertThat(result2.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result2.getScore()).isEqualTo(133L);
+        assertThat(result2.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
-        assertThat(result2.isSuccessful()).isFalse();
+        assertThat(result2.isSuccessful()).isTrue();
         assertThat(result2.getFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
-        assertThat(result3.getScore()).isEqualTo(40L);
-        assertThat(result3.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result3.getScore()).isEqualTo(180L);
+        assertThat(result3.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result3.getHasFeedback()).isTrue();
-        assertThat(result3.isSuccessful()).isFalse();
+        assertThat(result3.isSuccessful()).isTrue();
         assertThat(result3.getFeedbacks()).hasSize(3);
 
-        // Assertions result4 - calculated
-        assertThat(result4.getScore()).isEqualTo(95L);
+        // Assertions result4 - capped at 200%
+        assertThat(result4.getScore()).isEqualTo(200L);
         assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result4.getHasFeedback()).isTrue();
-        assertThat(result4.isSuccessful()).isFalse();
+        assertThat(result4.isSuccessful()).isTrue();
         assertThat(result4.getFeedbacks()).hasSize(3);
-
-        // Assertions result5 - capped to 100
-        assertThat(result5.getScore()).isEqualTo(100L);
-        assertThat(result5.getResultString()).isEqualTo("3 of 3 passed");
-        assertThat(result5.getHasFeedback()).isFalse();
-        assertThat(result5.isSuccessful()).isTrue();
-        assertThat(result5.getFeedbacks()).hasSize(3);
-
-        // Assertions result6 - only negative feedback
-        assertThat(result6.getScore()).isEqualTo(0L);
-        assertThat(result6.getResultString()).isEqualTo("0 of 3 passed");
-        assertThat(result6.getHasFeedback()).isTrue();
-        assertThat(result6.isSuccessful()).isFalse();
-        assertThat(result6.getFeedbacks()).hasSize(3);
-
-        // Assertions resultBF - build failure
-        assertThat(resultBF.getScore()).isEqualTo(0L);
-        assertThat(resultBF.getResultString()).isEqualTo("Build Failed"); // Won't get touched by the service method
-        assertThat(resultBF.getHasFeedback()).isFalse();
-        assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
-        assertThat(resultBF.getFeedbacks()).hasSize(0);
-
-        // Assertions resultMF - missing feedback will be created but is negative
-        assertThat(resultMF.getScore()).isEqualTo(55L);
-        assertThat(resultMF.getResultString()).isEqualTo("1 of 3 passed");
-        assertThat(resultMF.getHasFeedback()).isFalse(); // Generated missing feedback is omitted
-        assertThat(resultMF.isSuccessful()).isFalse();
-        assertThat(resultBF.getFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
     }
 
     @Test
