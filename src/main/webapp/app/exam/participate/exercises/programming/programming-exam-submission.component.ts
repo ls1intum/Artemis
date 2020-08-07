@@ -41,8 +41,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private cdr: ChangeDetectorRef) {
-        super();
+    constructor(changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
     }
 
     hasUnsavedChanges(): boolean {
@@ -53,18 +53,19 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     onActivate(): void {
-        this.cdr.reattach();
-        if (this.codeEditorComponent) {
-            this.codeEditorComponent.reload();
-        }
-    }
-
-    onDeactivate(): void {
-        this.cdr.reattach();
+        super.onActivate();
+        // reload for the current submission
+        this.updateViewFromSubmission();
     }
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorComponent.actions.onSave();
+    }
+
+    updateViewFromSubmission(): void {
+        if (this.codeEditorComponent) {
+            this.codeEditorComponent.reload();
+        }
     }
 }

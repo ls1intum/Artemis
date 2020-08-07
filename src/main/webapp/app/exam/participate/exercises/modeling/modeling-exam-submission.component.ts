@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -14,7 +14,7 @@ import { Exercise } from 'app/entities/exercise.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
 })
-export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -26,13 +26,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
-    constructor(private cdr: ChangeDetectorRef) {
-        super();
-    }
-
-    ngOnInit(): void {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
+    constructor(changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
     }
 
     getSubmission(): Submission {
@@ -41,14 +36,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     getExercise(): Exercise {
         return this.exercise;
-    }
-
-    onActivate(): void {
-        this.cdr.reattach();
-    }
-
-    onDeactivate(): void {
-        this.cdr.reattach();
     }
 
     updateViewFromSubmission(): void {

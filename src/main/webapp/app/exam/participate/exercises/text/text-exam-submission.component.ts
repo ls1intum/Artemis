@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent {
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -33,14 +33,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,
-        private cdr: ChangeDetectorRef,
+        changeDetectorReference: ChangeDetectorRef,
     ) {
-        super();
-    }
-
-    ngOnInit() {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
+        super(changeDetectorReference);
     }
 
     getExercise(): Exercise {
@@ -49,14 +44,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     getSubmission(): Submission {
         return this.studentSubmission;
-    }
-
-    onActivate(): void {
-        this.cdr.reattach();
-    }
-
-    onDeactivate(): void {
-        this.cdr.reattach();
     }
 
     updateViewFromSubmission(): void {

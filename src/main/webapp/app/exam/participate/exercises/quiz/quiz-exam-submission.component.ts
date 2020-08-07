@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, ChangeDetectorRef } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -25,7 +25,7 @@ import { Exercise } from 'app/entities/exercise.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -51,15 +51,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(private quizService: ArtemisQuizService, private cdr: ChangeDetectorRef) {
-        super();
+    constructor(private quizService: ArtemisQuizService, changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
         smoothscroll.polyfill();
     }
 
     ngOnInit(): void {
         this.initQuiz();
-        // show submission answers in UI
-        this.updateViewFromSubmission();
+        super.ngOnInit();
     }
 
     getSubmission(): Submission {
@@ -68,14 +67,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     getExercise(): Exercise {
         return this.exercise;
-    }
-
-    onActivate(): void {
-        this.cdr.reattach();
-    }
-
-    onDeactivate(): void {
-        this.cdr.reattach();
     }
 
     /**
