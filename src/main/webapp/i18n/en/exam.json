@@ -60,10 +60,16 @@
         "examScores": {
             "pointsAchievable": "{{ maxPoints }} Points achievable",
             "title": "Exam Scores",
-            "titleColumn": "Title",
-            "containedExercisesColumn": "Exercises in Group",
-            "averagePointsColumn": "Average Points achieved",
-            "maximumPointsColumn": "Maximum Points achievable",
+            "exerciseStatisticsTitle": "Exercise Statistics",
+            "studentResultsTitle": "Student Results",
+            "titleExerciseGroupColumn": "Exercise Group",
+            "titleExerciseColumn": "Exercise",
+            "averagePointsColumn": "Average",
+            "participantsColumn": "Participants",
+            "averageExerciseTooltip": "(Average / Maximum) points achieved for the exercise. The activated filters affect the average.",
+            "averageExerciseGroupTooltip": "(Average / Maximum) points achieved for the exercise group. The activated filters affect the average.",
+            "participantsExerciseTooltip": "(Filtered / Total) number of participants for the exercise. The activated filters only affect the first value.",
+            "participantsExerciseGroupTooltip": "(Filtered / Total) number of participants for the exercise group. The activated filters only affect the first value.",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",
@@ -71,7 +77,9 @@
             "overallPointsColumn": "Overall Points",
             "overallScoreColumn": "Overall Score (%)",
             "exportCSV": "Export Results as CSV",
-            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
+            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students",
+            "filterForSubmittedExams": "Include only submitted exams",
+            "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission"
         },
         "examParticipation": {
             "timer": "Time left: ",

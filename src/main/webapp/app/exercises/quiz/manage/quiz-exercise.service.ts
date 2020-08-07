@@ -8,6 +8,7 @@ import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model'
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -160,30 +161,7 @@ export class QuizExerciseService {
         // Make blob from the list of questions and download the file,
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
-        this.downloadFile(blob);
-    }
-
-    /**
-     * Make a file of given blob and allows user to download it from the browser.
-     * @param blob data to be written in file.
-     */
-    downloadFile(blob: Blob) {
-        // Different browsers require different code to download file,
-        if (window.navigator.appVersion.toString().indexOf('.NET') > 0) {
-            // IE & Edge
-            window.navigator.msSaveBlob(blob, 'quiz.json');
-        } else {
-            // Chrome & FF
-            // Create a url and attach file to it,
-            const url = window.URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            anchor.href = url;
-            anchor.download = 'quiz.json';
-            document.body.appendChild(anchor); // For FF
-            // Click the url so that browser shows save file dialog,
-            anchor.click();
-            document.body.removeChild(anchor);
-        }
+        downloadFile(blob, 'quiz.json');
     }
 
     getStatus(quizExercise: QuizExercise) {

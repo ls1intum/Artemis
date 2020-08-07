@@ -1,33 +1,44 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
-import { ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { AggregatedExerciseGroupResult, AggregatedExerciseResult, ExamScoreDTO, ExerciseGroup, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/alert/alert.service';
 import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ExamScoresComponent implements OnInit {
+export class ExamScoresComponent implements OnInit, OnDestroy {
     public examScoreDTO: ExamScoreDTO;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
 
+    public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
+
     public predicate = 'id';
     public reverse = false;
     public isLoading = true;
+    public filterForSubmittedExams = false;
+    public filterForNonEmptySubmissions = false;
+
+    private languageChangeSubscription: Subscription | null;
 
     constructor(
         private route: ActivatedRoute,
         private examService: ExamManagementService,
         private sortService: SortService,
         private jhiAlertService: AlertService,
+        private changeDetector: ChangeDetectorRef,
+        private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
     ) {}
 
@@ -39,16 +50,110 @@ export class ExamScoresComponent implements OnInit {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                        this.calculateAveragePoints();
                     }
                     this.isLoading = false;
+                    this.changeDetector.detectChanges();
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
         });
+
+        // Update the view if the language was changed
+        this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
+            this.changeDetector.detectChanges();
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
+        }
+    }
+
+    toggleFilterForSubmittedExam() {
+        this.filterForSubmittedExams = !this.filterForSubmittedExams;
+        this.calculateAveragePoints();
+        this.changeDetector.detectChanges();
+    }
+
+    toggleFilterForNonEmptySubmission() {
+        this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
+        this.calculateAveragePoints();
+        this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Calculates the average points and number of participants for each exercise group and exercise while taking the
+     * filter settings into account
+     */
+    calculateAveragePoints() {
+        const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
+        // Create data structures holding the statistics for all exercise groups and exercises
+        for (const exerciseGroup of this.exerciseGroups) {
+            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
+            // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
+            exerciseGroup.containedExercises.forEach((exerciseInfo) => {
+                const exResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants);
+                groupResult.exerciseResults.push(exResult);
+            });
+            groupIdToGroupResults.set(exerciseGroup.id, groupResult);
+        }
+
+        // Calculate the total points and number of participants when filters apply for each exercise group and exercise
+        for (const studentResult of this.studentResults) {
+            // Do not take un-submitted exams into account if the option was set
+            if (!studentResult.submitted && this.filterForSubmittedExams) {
+                continue;
+            }
+            for (const [exGroupId, studentExerciseResult] of Object.entries(studentResult.exerciseGroupIdToExerciseResult)) {
+                // Ignore exercise results with only empty submission if the option was set
+                if (!studentExerciseResult.hasNonEmptySubmission && this.filterForNonEmptySubmissions) {
+                    continue;
+                }
+                // Update the exerciseGroup statistic
+                const exGroupResult = groupIdToGroupResults.get(Number(exGroupId));
+                if (!exGroupResult) {
+                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
+                }
+                exGroupResult.noOfParticipantsWithFilter += 1;
+                exGroupResult.totalPoints += studentExerciseResult.achievedPoints;
+
+                // Update the specific exercise statistic
+                const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
+                if (!exerciseResult) {
+                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
+                } else {
+                    exerciseResult.noOfParticipantsWithFilter += 1;
+                    exerciseResult.totalPoints += studentExerciseResult.achievedPoints;
+                }
+            }
+        }
+        // Calculate average scores for exercise groups
+        const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
+        for (const groupResult of exerciseGroupResults) {
+            if (groupResult.noOfParticipantsWithFilter) {
+                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+            } else {
+                groupResult.averagePoints = null;
+            }
+            // Calculate average scores for exercises
+            groupResult.exerciseResults.forEach((exResult) => {
+                if (exResult.noOfParticipantsWithFilter) {
+                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                } else {
+                    exResult.averagePoints = null;
+                }
+            });
+        }
+        this.aggregatedExerciseGroupResults = exerciseGroupResults;
     }
 
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
+        this.changeDetector.detectChanges();
     }
 
     exportToCsv() {
@@ -131,7 +236,11 @@ export class ExamScoresComponent implements OnInit {
         return csvRow;
     }
 
-    getLocaleConversionService() {
-        return this.localeConversionService;
+    toLocaleString(points: number) {
+        return this.localeConversionService.toLocaleString(points);
+    }
+
+    roundAndPerformLocalConversion(points: number, exp: number, fractions = 1) {
+        return this.localeConversionService.toLocaleString(round(points, exp), fractions);
     }
 }

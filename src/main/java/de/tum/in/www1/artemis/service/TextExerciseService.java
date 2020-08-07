@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class TextExerciseService {
     }
 
     /**
-     * Get one quiz exercise by id.
+     * Get one text exercise by id.
      *
      * @param exerciseId the id of the exercise
      * @return the entity
@@ -52,6 +53,16 @@ public class TextExerciseService {
      */
     public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
         return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
+    }
+
+    /**
+     * Get one text exercise by id with eagerly fetched Student Participations and Submissions.
+     *
+     * @param exerciseId the id of the text exercise in question
+     * @return text exercise with eagerly fetched Student Participations and Submissions.
+     */
+    public Optional<TextExercise> findOneWithParticipationsAndSubmissions(long exerciseId) {
+        return textExerciseRepository.findWithEagerStudentParticipationAndSubmissionsById(exerciseId);
     }
 
     /**
