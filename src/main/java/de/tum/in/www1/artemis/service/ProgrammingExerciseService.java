@@ -120,7 +120,7 @@ public class ProgrammingExerciseService {
      * @throws IOException If the template files couldn't be read
      */
     @Transactional
-    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
         final var projectKey = programmingExercise.getProjectKey();
@@ -327,6 +327,9 @@ public class ProgrammingExerciseService {
             Map<String, Boolean> sectionsMap = new HashMap<>();
 
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+
+            // Keep or delete static code analysis configuration in pom.xml
+            sectionsMap.put("static-code-analysis", programmingExercise.isStaticCodeAnalysisEnabled());
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";

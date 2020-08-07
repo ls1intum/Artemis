@@ -16,8 +16,6 @@
     (submit)="submit.emit()"
     (cancel)="cancel.emit()"
     (nextSubmission)="nextSubmission.emit()"
-    [hasConflict]="conflicts && conflicts.length >= 0"
-    (resolveConflict)="resolveConflict.emit()"
     [hasComplaint]="!!complaint"
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
 ></jhi-assessment-header>

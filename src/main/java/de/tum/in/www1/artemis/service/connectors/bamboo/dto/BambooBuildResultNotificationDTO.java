@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooBuildResultNotificationDTO {
@@ -271,6 +272,8 @@ public class BambooBuildResultNotificationDTO {
 
         private List<BambooTestJobDTO> successfulTests;
 
+        private List<StaticCodeAnalysisReportDTO> staticAssessmentReports;
+
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
         }
@@ -293,6 +296,14 @@ public class BambooBuildResultNotificationDTO {
 
         public void setFailedTests(List<BambooTestJobDTO> failedTests) {
             this.failedTests = failedTests;
+        }
+
+        public List<StaticCodeAnalysisReportDTO> getStaticAssessmentReports() {
+            return staticAssessmentReports;
+        }
+
+        public void setStaticAssessmentReports(List<StaticCodeAnalysisReportDTO> staticAssessmentReports) {
+            this.staticAssessmentReports = staticAssessmentReports;
         }
     }
 

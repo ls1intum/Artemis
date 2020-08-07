@@ -123,7 +123,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @ParameterizedTest
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+    public void createProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         mockConnectorRequestsForSetup(exercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -135,7 +135,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseForExam_validExercise_created() throws Exception {
+    public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
 
         mockConnectorRequestsForSetup(examExercise);
@@ -148,7 +148,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_validExercise_structureOracle() throws Exception {
+    public void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         structureOracle(exercise);
     }
 
@@ -178,7 +178,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_noTutors_created() throws Exception {
+    public void createProgrammingExercise_noTutors_created() throws Exception {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
         mockConnectorRequestsForSetup(exercise);

@@ -68,6 +68,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -101,7 +102,6 @@ import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -112,7 +112,6 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -224,12 +223,6 @@ public class DatabaseUtilService {
 
     @Autowired
     ProgrammingSubmissionRepository programmingSubmissionRepo;
-
-    @Autowired
-    ModelAssessmentConflictRepository conflictRepo;
-
-    @Autowired
-    ConflictingResultRepository conflictingResultRepo;
 
     @Autowired
     FeedbackRepository feedbackRepo;
@@ -868,6 +861,14 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addSampleStaticCodeAnalysisFeedbackToResults(Result result) {
+        List<Feedback> feedback = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        feedback.addAll(ModelFactory.generateFeedback());
+        feedback = feedbackRepo.saveAll(feedback);
+        result.addFeedbacks(feedback);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToSubmission(Submission submission) {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
         resultRepo.save(result);
@@ -945,6 +946,14 @@ public class DatabaseUtilService {
 
         addTestCasesToProgrammingExercise(programmingExercise);
         return programmingExercise;
+    }
+
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
+        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setParticipation(participation);
+        return submissionRepository.save(programmingSubmission);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
@@ -1145,6 +1154,7 @@ public class DatabaseUtilService {
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle("Programming");
         programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));

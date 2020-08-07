@@ -125,7 +125,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise() });
         });
 
-        it('Should be in exam mode after onInit', fakeAsync(() => {
+        it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
 

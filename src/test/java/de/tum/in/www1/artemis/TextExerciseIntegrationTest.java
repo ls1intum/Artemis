@@ -90,7 +90,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int submissionCount = 5;
         int submissionSize = 4;
         ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
-        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
+        int[] clusterSizes = { 4, 5, 10, 1 };
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         database.addTextBlocksToTextSubmission(textBlocks, textSubmission);

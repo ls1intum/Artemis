@@ -35,17 +35,20 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.TestConstants;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ResultService resultService;
+
+    @Autowired
+    FeedbackService feedbackService;
 
     @Autowired
     ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
@@ -128,13 +131,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws Exception {
-        // TODO: This should be refactoring into the ModelUtilService.
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()).setParticipation(programmingExerciseStudentParticipation);
-        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
-        programmingSubmission.setParticipation(programmingExercise.getSolutionParticipation());
-        submissionRepository.save(programmingSubmission);
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1).id(1L));
@@ -152,6 +150,23 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
+
+        final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        final var staticCodeAnalysisFeedback = feedbackService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
+        final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+
+        assertThat(optionalResult).isPresent();
+        assertThat(savedResult.getFeedbacks().containsAll(staticCodeAnalysisFeedback));
+        assertThat(optionalResult.get().getFeedbacks().containsAll(staticCodeAnalysisFeedback));
+        assertThat(optionalResult.get().getFeedbacks().equals(savedResult.getFeedbacks()));
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -159,6 +174,17 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsWithStaticCodeAnalysisFeedbackForAProgrammingExerciseStudentParticipation() throws Exception {
+        Result result = database.addResultToParticipation(programmingExerciseStudentParticipation);
+        result = database.addSampleStaticCodeAnalysisFeedbackToResults(result);
+
+        List<Feedback> feedback = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedback).isEqualTo(result.getFeedbacks());
     }
 
     @Test

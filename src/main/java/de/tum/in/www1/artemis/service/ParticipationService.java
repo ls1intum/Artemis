@@ -68,8 +68,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ConflictingResultService conflictingResultService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final QuizScheduleService quizScheduleService;
@@ -80,8 +78,8 @@ public class ParticipationService {
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService, @Lazy QuizScheduleService quizScheduleService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
+            @Lazy QuizScheduleService quizScheduleService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -98,7 +96,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
     }
@@ -920,14 +917,14 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations belonging to exam with relevant results.
+     * Get all participations belonging to exam with submissions and their relevant results.
      *
      * @param examId the id of the exam
      * @return list of participations belonging to course
      */
-    public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
-        return filterParticipationsWithRelevantResults(participations);
+    public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        return filterParticipationsWithRelevantResults(participations, true);
     }
 
     /**
@@ -938,7 +935,7 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations);
+        return filterParticipationsWithRelevantResults(participations, false);
     }
 
     /**
@@ -946,7 +943,7 @@ public class ParticipationService {
      * @param participations the participations to get filtered
      * @return the filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
         return participations.stream()
 
                 // Filter out participations without Students
@@ -957,9 +954,17 @@ public class ParticipationService {
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<Result>();
 
+                    // Get the results over the participation or over submissions
+                    Set<Result> resultsOfParticipation;
+                    if (resultInSubmission) {
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getResult).collect(Collectors.toSet());
+                    }
+                    else {
+                        resultsOfParticipation = participation.getResults();
+                    }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : participation.getResults()) {
+                    for (Result result : resultsOfParticipation) {
                         // this should not happen because the database call above only retrieves rated results
                         if (Boolean.FALSE.equals(result.isRated())) {
                             continue;
@@ -1087,11 +1092,6 @@ public class ParticipationService {
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
-
-                if (participation.getExercise() instanceof ModelingExercise) {
-                    // The conflicting results referencing a result of the given participation need to be deleted to prevent Hibernate constraint violation errors.
-                    conflictingResultService.deleteConflictingResultsByResultId(result.getId());
-                }
 
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
