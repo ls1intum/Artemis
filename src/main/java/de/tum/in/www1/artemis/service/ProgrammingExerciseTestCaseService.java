@@ -302,7 +302,7 @@ public class ProgrammingExerciseTestCaseService {
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive()
+        if (result.getFeedbacks().stream().noneMatch(feedback -> feedback.isPositive() == Boolean.FALSE
                 || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
             result.setHasFeedback(false);
     }
