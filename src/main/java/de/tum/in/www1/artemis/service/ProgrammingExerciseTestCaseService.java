@@ -205,9 +205,6 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
-        // Update the completion date
-        result.setCompletionDate(ZonedDateTime.now());
-
         // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
         if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
