@@ -28,13 +28,19 @@ public class ProgrammingExerciseTestCase implements Serializable {
     private String testName;
 
     @Column(name = "weight")
-    private Integer weight;
+    private Double weight;
 
     @Column(name = "active")
     private Boolean active;
 
     @Column(name = "after_due_date")
     private Boolean afterDueDate;
+
+    @Column(name = "bonus_multiplier")
+    private Double bonusMultiplier;
+
+    @Column(name = "bonus_points")
+    private Double bonusPoints;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
@@ -67,17 +73,43 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.testName = testName;
     }
 
-    public Integer getWeight() {
+    public Double getWeight() {
         return weight;
     }
 
-    public ProgrammingExerciseTestCase weight(Integer weight) {
+    public ProgrammingExerciseTestCase weight(Double weight) {
         this.weight = weight;
         return this;
     }
 
-    public void setWeight(Integer weight) {
+    public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public Double getBonusMultiplier() {
+        return bonusMultiplier;
+    }
+
+    public ProgrammingExerciseTestCase bonusMultiplier(Double bonusMultiplier) {
+        this.bonusMultiplier = bonusMultiplier;
+        return this;
+    }
+
+    public void setBonusMultiplier(Double bonusMultiplier) {
+        this.bonusMultiplier = bonusMultiplier;
+    }
+
+    public Double getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public ProgrammingExerciseTestCase bonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
+        return this;
+    }
+
+    public void setBonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
     }
 
     public Boolean isActive() {
@@ -131,7 +163,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
      */
     public ProgrammingExerciseTestCase clone() {
         ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive())
-                .afterDueDate(afterDueDate).exercise(this.exercise);
+                .bonusPoints(this.getBonusPoints()).bonusMultiplier(this.getBonusMultiplier()).afterDueDate(afterDueDate).exercise(this.exercise);
         clone.setId(this.getId());
         return clone;
     }
