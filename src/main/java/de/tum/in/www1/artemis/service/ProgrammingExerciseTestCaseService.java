@@ -5,13 +5,13 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,11 +25,14 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final ParticipationService participationService;
+
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.participationService = participationService;
     }
 
     /**
@@ -155,13 +158,68 @@ public class ProgrammingExerciseTestCaseService {
      * @return Result with updated feedbacks, score and result string.
      */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
+        // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
+        if (isStudentParticipation) {
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        }
+        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
+    }
+
+    /**
+     * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
+     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
+     * - Checking the due date and the afterDueDate flag
+     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     *
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     *
+     * @param exercise the exercise whose results should be updated
+     * @return the results of the exercise that have been updated
+     */
+    public List<Result> updateAllResultsFromTestCases(ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+
+        ArrayList<Result> updatedResults = new ArrayList<>();
+
+        Result templateResult = exercise.getTemplateParticipation().findLatestResult();
+        Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
+        // template and solution are always updated using ALL test cases
+        if (templateResult != null) {
+            updateResultFromTestCases(testCases, testCases, templateResult, exercise);
+            updatedResults.add(templateResult);
+        }
+        if (solutionResult != null) {
+            updateResultFromTestCases(testCases, testCases, solutionResult, exercise);
+            updatedResults.add(solutionResult);
+        }
+        // filter the test cases for the student results if necessary
+        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        // We only update the latest automatic results here, later manual assessments are not affected
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
+
+        for (StudentParticipation studentParticipation : participations) {
+            Result result = studentParticipation.findLatestResult();
+            if (result != null) {
+                updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
+                updatedResults.add(result);
+            }
+        }
+        return updatedResults;
+    }
+
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
+        return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
+    }
+
+    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
+            ProgrammingExercise exercise) {
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate())
-                .collect(Collectors.toSet());
         // Distinguish between static code analysis feedback and test case feedback
         // TODO: For now we are only concerned with not breaking existing functionality and not losing static code analysis feedback.
         // This method has to be extended/refactored when a grading concept for static code analysis has been created
@@ -175,8 +233,9 @@ public class ProgrammingExerciseTestCaseService {
                 testCaseFeedback.add(feedback);
             }
         }
-        // Case 1: There are tests and test case feedbacks, find out which tests were not executed or should only count to the score after the due date.
-        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0) {
+
+        // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
+        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
             removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
 
@@ -193,10 +252,11 @@ public class ProgrammingExerciseTestCaseService {
             updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (testCases.size() > 0 && testCaseFeedback.size() > 0) {
+        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
         }
-        // Case 3: If there is no test case feedback, the build has failed. In this case we just return the original result without changing it.
+        // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
+        // changing it.
         return result;
     }
 
@@ -206,7 +266,8 @@ public class ProgrammingExerciseTestCaseService {
      * @return true if there is a positive feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
-        return testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive());
+        return testCase -> result.getFeedbacks().stream()
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && feedback.isPositive() == Boolean.TRUE);
     }
 
     /**
@@ -264,11 +325,15 @@ public class ProgrammingExerciseTestCaseService {
             double maxTestScore = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
             long score = maxTestScore > 0 ? (long) (successfulTestScore / maxTestScore * 100.0 + successfulBonusScore) : 0L;
             // The score is capped by the maximum achievable bonus points
-            double maxScoreWithBonus = ((programmingExercise.getMaxScore() + programmingExercise.getBonusPoints()) / programmingExercise.getMaxScore()) * 100.;
+            double bonus = programmingExercise.getBonusPoints() != null ? programmingExercise.getBonusPoints() : 0.0;
+            double maxScoreWithBonus = ((programmingExercise.getMaxScore() + bonus) / programmingExercise.getMaxScore()) * 100.;
             if (score > maxScoreWithBonus) {
                 score = (long) maxScoreWithBonus;
             }
             result.setScore(score);
+        }
+        else {
+            result.setScore(0L);
         }
     }
 

@@ -250,6 +250,11 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
+        if (programmingExercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            programmingExercise.setBonusPoints(0.0);
+        }
+
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
@@ -378,6 +383,11 @@ public class ProgrammingExerciseResource {
         // Check if max score is set
         if (newExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        if (newExercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            newExercise.setBonusPoints(0.0);
         }
 
         // Check if a participation mode is set
@@ -518,6 +528,11 @@ public class ProgrammingExerciseResource {
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
+        }
+
+        if (updatedProgrammingExercise.getBonusPoints() == null) {
+            // make sure the default value is set properly
+            updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
         // TODO: if isAllowOfflineIde changes, we might want to change access for all existing student participations

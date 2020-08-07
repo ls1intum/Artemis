@@ -66,7 +66,7 @@ export abstract class Exercise implements BaseEntity {
     public dueDate: Moment | null;
     public assessmentDueDate: Moment | null;
     public maxScore: number;
-    public bonusPoints: number;
+    public bonusPoints = 0; // default value
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
     public mode: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
