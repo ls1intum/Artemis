@@ -1080,7 +1080,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
         assertThat(response.title).isEqualTo(exam.getTitle());
-        assertThat(response.id).isEqualTo(exam.getId());
+        assertThat(response.examId).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
         List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
@@ -1091,29 +1091,38 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         for (var exerciseGroupDTO : response.exerciseGroups) {
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
-            // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
-            var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
-            assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
 
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
             assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
-            // Collect titles of all exercises in the exam group
-            List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
-            assertThat(exerciseGroupDTO.containedExercises).containsExactlyInAnyOrderElementsOf(exerciseTitlesInGroupFromExam);
+            // Compare exercise information
+            long noOfExerciseGroupParticipantions = 0;
+            for (var originalExercise : originalExerciseGroup.getExercises()) {
+                // Find the corresponding ExerciseInfo object
+                var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
+                // Check the exercise title
+                assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
+                // Check the max points of the exercise
+                assertThat(originalExercise.getMaxScore()).isEqualTo(exerciseDTO.maxPoints);
+                // Check the number of exercise participants and update the group participant counter
+                var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
+                noOfExerciseGroupParticipantions += noOfExerciseParticipations;
+                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.numberOfParticipants);
+            }
+            assertThat(noOfExerciseGroupParticipantions).isEqualTo(exerciseGroupDTO.numberOfParticipants);
         }
 
         // Ensure that all registered students have a StudentResult
-        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
+        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toList());
         List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
         assertThat(studentIdsWithStudentResults).containsExactlyInAnyOrderElementsOf(registeredUsersIds);
 
         // Compare StudentResult with the generated results
         for (var studentResult : response.studentResults) {
             // Find the original user using the id in StudentResult
-            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.id)).findFirst().get();
+            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.userId)).findFirst().get();
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().get();
 
             assertThat(studentResult.name).isEqualTo(originalUser.getName());
@@ -1131,7 +1140,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
+            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
                     .collect(Collectors.toList());
             List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
             assertThat(exerciseIdsOfStudentResult).containsExactlyInAnyOrderElementsOf(exerciseIdsInStudentExam);
@@ -1139,7 +1148,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 var exerciseResult = entry.getValue();
 
                 // Find the original exercise using the id in ExerciseResult
-                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.id)).findFirst().get();
+                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.exerciseId)).findFirst().get();
 
                 // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
                 assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());

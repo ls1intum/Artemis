@@ -920,14 +920,14 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations belonging to exam with relevant results.
+     * Get all participations belonging to exam with submissions and their relevant results.
      *
      * @param examId the id of the exam
      * @return list of participations belonging to course
      */
-    public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
-        return filterParticipationsWithRelevantResults(participations);
+    public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        return filterParticipationsWithRelevantResults(participations, true);
     }
 
     /**
@@ -938,7 +938,7 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations);
+        return filterParticipationsWithRelevantResults(participations, false);
     }
 
     /**
@@ -946,7 +946,7 @@ public class ParticipationService {
      * @param participations the participations to get filtered
      * @return the filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
         return participations.stream()
 
                 // Filter out participations without Students
@@ -957,9 +957,17 @@ public class ParticipationService {
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<Result>();
 
+                    // Get the results over the participation or over submissions
+                    Set<Result> resultsOfParticipation;
+                    if (resultInSubmission) {
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getResult).collect(Collectors.toSet());
+                    }
+                    else {
+                        resultsOfParticipation = participation.getResults();
+                    }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : participation.getResults()) {
+                    for (Result result : resultsOfParticipation) {
                         // this should not happen because the database call above only retrieves rated results
                         if (Boolean.FALSE.equals(result.isRated())) {
                             continue;
