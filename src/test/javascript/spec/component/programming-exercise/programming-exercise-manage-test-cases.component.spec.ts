@@ -356,7 +356,13 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            { id: testThatWasUpdated.id, weight: testThatWasUpdated.weight, afterDueDate: testThatWasUpdated.afterDueDate },
+            {
+                id: testThatWasUpdated.id,
+                weight: testThatWasUpdated.weight,
+                afterDueDate: testThatWasUpdated.afterDueDate,
+                bonusMultiplier: testThatWasUpdated.bonusMultiplier,
+                bonusPoints: testThatWasUpdated.bonusPoints,
+            },
         ]);
 
         await new Promise((resolve) => setTimeout(resolve));
