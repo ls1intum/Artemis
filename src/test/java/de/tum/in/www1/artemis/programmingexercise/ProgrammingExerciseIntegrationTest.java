@@ -17,7 +17,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -875,7 +874,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
             testCaseUpdate.setAfterDueDate(true);
-            testCaseUpdate.setWeight((int) (testCase.getId() + 42));
+            testCaseUpdate.setWeight(testCase.getId() + 42.0);
+            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
+            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).collect(Collectors.toList());
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
@@ -889,6 +890,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
+            assertThat(testCase.getBonusMultiplier()).isEqualTo(testCase.getId() + 1.0);
+            assertThat(testCase.getBonusPoints()).isEqualTo(testCase.getId() + 2.0);
         });
     }
 
@@ -916,25 +919,29 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bambooRequestMockProvider.enableMockingOfRequests();
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
-            test.setWeight(42);
+            test.setWeight(42.0);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
+        // Otherwise the HashSet for comparison can't be created because exercise id is used for the hashCode
+        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(testCasesResponse).isEqualTo(testsInDB);
+        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
     }
 
     @Test
     @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }
