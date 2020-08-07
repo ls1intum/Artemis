@@ -261,7 +261,8 @@ public class ProgrammingExerciseTestCaseService {
      * @return true if there is a positive feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
-        return testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive());
+        return testCase -> result.getFeedbacks().stream()
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && feedback.isPositive() == Boolean.TRUE);
     }
 
     /**

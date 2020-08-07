@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 
 /**
- * A button that re-eavluates all latest automatic results of the given programming exercise.
+ * A button that re-evaluates all latest automatic results of the given programming exercise.
  */
 @Component({
     selector: 'jhi-programming-exercise-re-evaluate-button',
