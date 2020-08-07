@@ -247,7 +247,9 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Update the score given the postive tests score divided by all tests's score.
+     * Update the score given the positive tests score divided by all tests's score.
+     * Takes weight, bonus multiplier and absolute bonus points into account
+     *
      * @param result of the build run.
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of a given programming exercise.
@@ -255,11 +257,12 @@ public class ProgrammingExerciseTestCaseService {
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
             ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
-            // TODO: take exercise bonus points into account
-            double successfulTestScore = successfulTestCases.stream().mapToDouble(test -> test.getWeight() * test.getBonusMultiplier() + test.getBonusPoints()).sum();
-            // TODO: is the new formula for successfulTestScore correct?
+            double successfulTestScore = successfulTestCases.stream().mapToDouble(test -> test.getWeight() * test.getBonusMultiplier()).sum();
+            // the successfulBonusPoints are calculated separately because they should increase the absolute points
+            double successfulBonusPoints = successfulTestCases.stream().mapToDouble(ProgrammingExerciseTestCase::getBonusPoints).sum();
+            double successfulBonusScore = successfulBonusPoints / programmingExercise.getMaxScore() * 100.0;
             double maxTestScore = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-            long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+            long score = maxTestScore > 0 ? (long) (successfulTestScore / maxTestScore * 100.0 + successfulBonusScore) : 0L;
             // The score is capped by the maximum achievable bonus points
             double maxScoreWithBonus = ((programmingExercise.getMaxScore() + programmingExercise.getBonusPoints()) / programmingExercise.getMaxScore()) * 100.;
             if (score > maxScoreWithBonus) {

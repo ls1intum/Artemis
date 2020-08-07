@@ -275,9 +275,12 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         // Only feedback for test case 'test1' is positive
         var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExerciseWithBonus.getId(), true);
         double totalWeight = activeTestCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-        double positiveTestCaseWeigth = activeTestCases.stream().filter(testCase -> testCase.getTestName().equals("test1"))
-                .mapToDouble(testCase -> testCase.getWeight() * testCase.getBonusMultiplier() + testCase.getBonusPoints()).sum();
-        long expectedScore = (long) (positiveTestCaseWeigth * 100. / totalWeight);
+        double positiveTestCaseWeight = activeTestCases.stream().filter(testCase -> testCase.getTestName().equals("test1"))
+                .mapToDouble(testCase -> testCase.getWeight() * testCase.getBonusMultiplier()).sum();
+        double positiveTestCaseBonusPoints = activeTestCases.stream().filter(testCase -> testCase.getTestName().equals("test1"))
+                .mapToDouble(ProgrammingExerciseTestCase::getBonusPoints).sum();
+        double positiveTestCaseBonusScore = positiveTestCaseBonusPoints / programmingExerciseWithBonus.getMaxScore() * 100.;
+        long expectedScore = (long) (positiveTestCaseWeight * 100. / totalWeight + positiveTestCaseBonusScore);
 
         testCaseService.updateResultFromTestCases(result, programmingExerciseWithBonus, true);
 
