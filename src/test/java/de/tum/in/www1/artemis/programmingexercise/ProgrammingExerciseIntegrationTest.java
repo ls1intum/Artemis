@@ -130,7 +130,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
         config2.save();
 
-        // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
+        // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
 
         // the following 2 lines prepare the generation of the structural test oracle
@@ -485,19 +485,19 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
+    public void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_idIsNotNull_badRequest() throws Exception {
+    public void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+    public void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
@@ -506,7 +506,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    public void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.FORBIDDEN);
@@ -514,7 +514,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_titleNull_badRequest() throws Exception {
+    public void createProgrammingExercise_titleNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -522,7 +522,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
+    public void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("abc?=§ ``+##");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -530,7 +530,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_invalidShortName_badRequest() throws Exception {
+    public void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -540,7 +540,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+    public void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseInExam.setId(null);
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
@@ -549,7 +549,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
+    public void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -557,7 +557,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
+    public void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         programmingExercise.setProgrammingLanguage(null);
@@ -566,7 +566,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
+    public void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
         programmingExercise.setShortName("testShortName");
@@ -575,7 +575,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
+    public void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("abc.final.xyz");
         programmingExercise.setShortName("testShortName");
@@ -584,7 +584,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
+    public void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("eist.2020something");
         programmingExercise.setShortName("testShortName");
@@ -593,7 +593,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
+    public void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);
         programmingExercise.setShortName("testShortName");
@@ -602,7 +602,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
+    public void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxScore(null);
         programmingExercise.setShortName("testShortName");
@@ -611,7 +611,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+    public void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -619,7 +619,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    public void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -629,7 +629,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    public void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -641,7 +641,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    public void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -651,7 +651,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    public void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
