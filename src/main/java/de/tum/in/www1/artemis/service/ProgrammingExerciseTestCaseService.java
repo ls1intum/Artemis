@@ -117,7 +117,8 @@ public class ProgrammingExerciseTestCaseService {
     public boolean generateTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
-                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).exercise(exercise).active(true)).collect(Collectors.toSet());
+                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1D).bonusPoints(0D).exercise(exercise).active(true))
+                .collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::equals))
                 .collect(Collectors.toSet());
