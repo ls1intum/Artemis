@@ -155,6 +155,7 @@ public class ModelFactory {
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
         exercise.setMaxScore(5.0);
+        exercise.setBonusPoints(0.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
@@ -172,6 +173,7 @@ public class ModelFactory {
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Exam Problem Statement");
         exercise.setMaxScore(5.0);
+        exercise.setBonusPoints(0.0);
         // these values are set to null explicitly
         exercise.setReleaseDate(null);
         exercise.setDueDate(null);
@@ -477,6 +479,7 @@ public class ModelFactory {
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxScore(template.getMaxScore());
+        toBeImported.setBonusPoints(template.getBonusPoints());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
         toBeImported.setMode(template.getMode());

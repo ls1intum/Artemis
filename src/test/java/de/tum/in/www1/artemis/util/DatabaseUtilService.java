@@ -943,7 +943,7 @@ public class DatabaseUtilService {
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        addTestCasesToProgrammingExercise(programmingExercise);
+        addTestCasesToProgrammingExercise(programmingExercise, false);
         return programmingExercise;
     }
 
@@ -1136,6 +1136,7 @@ public class DatabaseUtilService {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExercise.setBonusPoints(0D);
         programmingExercise.setPublishBuildPlanUrl(true);
         programmingExercise.setMaxScore(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
@@ -1182,19 +1183,25 @@ public class DatabaseUtilService {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
-        addTestCasesToProgrammingExercise(programmingExercise);
+        addTestCasesToProgrammingExercise(programmingExercise, false);
 
         return courseRepo.findById(course.getId()).get();
     }
 
-    private void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+    public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise, boolean withBonus) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D)
-                .bonusPoints(0D));
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).afterDueDate(true).bonusMultiplier(1D).bonusPoints(0D));
+        Double bonusMultiplier = 1D;
+        Double bonusPoints = 0D;
+        if (withBonus) {
+            bonusMultiplier = 2D;
+            bonusPoints = 3D;
+        }
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false)
+                .bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).afterDueDate(false)
+                .bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).afterDueDate(true).bonusMultiplier(bonusMultiplier)
+                .bonusPoints(bonusPoints));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
