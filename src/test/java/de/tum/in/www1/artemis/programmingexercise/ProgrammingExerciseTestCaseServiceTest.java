@@ -323,6 +323,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults() {
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -339,7 +340,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         var participationTemplate = programmingExercise.getTemplateParticipation();
         {
             // score 0 %
-            var resultTemplate = database.addResultToParticipation(participationTemplate);
+            var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100L);
             resultTemplate = updateAutomaticResult(resultTemplate, false, false, false);
 
             participationTemplate.setResults(Set.of(resultTemplate));
@@ -350,7 +351,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         var participationSolution = programmingExercise.getSolutionParticipation();
         {
             // score 75 %
-            var resultSolution = database.addResultToParticipation(participationSolution);
+            var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100L);
             resultSolution = updateAutomaticResult(resultSolution, false, true, true);
 
             participationSolution.setResults(Set.of(resultSolution));
@@ -361,7 +362,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         {
             // score 50 %
-            var result1 = database.addResultToParticipation(participation1);
+            var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
             result1 = updateAutomaticResult(result1, true, true, false);
 
             participation1.setResults(Set.of(result1));
@@ -372,11 +373,11 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         {
             // score 75 %
-            var result2a = database.addResultToParticipation(participation2);
+            var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
             result2a = updateAutomaticResult(result2a, true, false, true);
 
             // score 100 %
-            var result2b = database.addResultToParticipation(participation2);
+            var result2b = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
             result2b.feedbacks(List.of(new Feedback().text("Well done!").positive(true).type(FeedbackType.MANUAL))) //
                     .score(100L) //
                     .rated(true) //
@@ -397,7 +398,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
         {
             // score 100 %
-            var result4 = database.addResultToParticipation(participation4);
+            var result4 = new Result().participation(participation4).resultString("x of y passed").successful(false).rated(true).score(100L);
+            ;
             result4 = updateAutomaticResult(result4, true, true, true);
 
             participation4.setResults(Set.of(result4));
@@ -540,15 +542,16 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         }
     }
 
-    private Result updateAutomaticResult(Result result, boolean passes1, boolean passes2, boolean passes3) {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().result(result).text("test1").positive(passes1).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().result(result).text("test2").positive(passes2).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().result(result).text("test3").positive(passes3).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks) //
-                .rated(true) //
+    private Result updateAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
+        var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback1);
+        var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback2);
+        var feedback3 = new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback3);
+        result.rated(true) //
                 .hasFeedback(true) //
-                .successful(passes1 && passes2 && passes3) //
+                .successful(test1Passes && test2Passes && test3Passes) //
                 .completionDate(ZonedDateTime.now()) //
                 .assessmentType(AssessmentType.AUTOMATIC);
         testCaseService.updateResultFromTestCases(result, programmingExercise, true);

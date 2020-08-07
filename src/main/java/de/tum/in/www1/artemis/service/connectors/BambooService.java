@@ -552,11 +552,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Converts build result details into feedback and stores it in the result object
+     * Use addFeedbackToResultNew
      *
      * @param result to which to add the feedback.
      * @param failedTests All failed tests from the the rest API of bamboo
      * @return a list of feedbacks itemsstored in a result
      */
+    @Deprecated(since = "4.4.0", forRemoval = true)
     public List<Feedback> addFeedbackToResult(Result result, List<BambooTestResultDTO> failedTests) {
         if (failedTests == null) {
             return null;
@@ -631,7 +633,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
      * @return a list of feedback items stored in a result
      */
-    @SuppressWarnings("unchecked")
     private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
         if (jobs == null) {
             return null;

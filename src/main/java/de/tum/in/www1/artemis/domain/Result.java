@@ -306,7 +306,7 @@ public class Result implements Serializable {
     }
 
     public Result addFeedbacks(List<Feedback> feedbacks) {
-        feedbacks.forEach(feedback -> addFeedback(feedback));
+        feedbacks.forEach(this::addFeedback);
         return this;
     }
 
