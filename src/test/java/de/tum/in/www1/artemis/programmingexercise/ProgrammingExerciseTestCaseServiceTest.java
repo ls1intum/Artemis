@@ -420,9 +420,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false).setWeight(1);
-        testCases.get("test2").active(true).afterDueDate(false).setWeight(1);
-        testCases.get("test3").active(true).afterDueDate(false).setWeight(2);
+        testCases.get("test1").active(true).afterDueDate(false).setWeight(1.);
+        testCases.get("test2").active(true).afterDueDate(false).setWeight(1.);
+        testCases.get("test3").active(true).afterDueDate(false).setWeight(2.);
         testCaseRepository.saveAll(testCases.values());
 
         // template does not pass any tests
@@ -464,6 +464,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             // score 75 %
             var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
             result2a = updateAutomaticResult(result2a, true, false, true);
+            result2a = resultRepository.save(result2a);
 
             // score 100 %
             var result2b = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
@@ -516,9 +517,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         }
 
         // change test case weights
-        testCases.get("test1").setWeight(0);
-        testCases.get("test2").setWeight(1);
-        testCases.get("test3").setWeight(3);
+        testCases.get("test1").setWeight(0.);
+        testCases.get("test2").setWeight(1.);
+        testCases.get("test3").setWeight(3.);
         testCaseRepository.saveAll(testCases.values());
 
         // re-evaluate
