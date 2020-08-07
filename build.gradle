@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.spotless" version "5.1.0"
+    id "com.diffplug.spotless" version "5.1.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.3.11"
+version = "4.4.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
