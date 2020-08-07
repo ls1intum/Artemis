@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -162,7 +164,7 @@ public class ProgrammingExerciseTestCaseService {
         if (isStudentParticipation) {
             testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         }
-        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
+        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
     }
 
     /**
@@ -184,11 +186,14 @@ public class ProgrammingExerciseTestCaseService {
         Result templateResult = exercise.getTemplateParticipation().findLatestResult();
         Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
         // template and solution are always updated using ALL test cases
-        updateResultFromTestCases(testCases, testCases, templateResult, exercise, false);
-        updateResultFromTestCases(testCases, testCases, solutionResult, exercise, false);
-        updatedResults.add(templateResult);
-        updatedResults.add(solutionResult);
-
+        if (templateResult != null) {
+            updateResultFromTestCases(testCases, testCases, templateResult, exercise);
+            updatedResults.add(templateResult);
+        }
+        if (solutionResult != null) {
+            updateResultFromTestCases(testCases, testCases, solutionResult, exercise);
+            updatedResults.add(solutionResult);
+        }
         // filter the test cases for the student results if necessary
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         // We only update the latest automatic results here, later manual assessments are not affected
@@ -196,8 +201,10 @@ public class ProgrammingExerciseTestCaseService {
 
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
-            updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise, true);
-            updatedResults.add(result);
+            if (result != null) {
+                updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
+                updatedResults.add(result);
+            }
         }
         return updatedResults;
     }
@@ -209,10 +216,8 @@ public class ProgrammingExerciseTestCaseService {
         return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
     }
 
-    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result,
-            ProgrammingExercise exercise, boolean isStudentParticipation) {
-        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
+            ProgrammingExercise exercise) {
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         // Distinguish between static code analysis feedback and test case feedback
@@ -320,7 +325,8 @@ public class ProgrammingExerciseTestCaseService {
             double maxTestScore = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
             long score = maxTestScore > 0 ? (long) (successfulTestScore / maxTestScore * 100.0 + successfulBonusScore) : 0L;
             // The score is capped by the maximum achievable bonus points
-            double maxScoreWithBonus = ((programmingExercise.getMaxScore() + programmingExercise.getBonusPoints()) / programmingExercise.getMaxScore()) * 100.;
+            double bonus = programmingExercise.getBonusPoints() != null ? programmingExercise.getBonusPoints() : 0.0;
+            double maxScoreWithBonus = ((programmingExercise.getMaxScore() + bonus) / programmingExercise.getMaxScore()) * 100.;
             if (score > maxScoreWithBonus) {
                 score = (long) maxScoreWithBonus;
             }
