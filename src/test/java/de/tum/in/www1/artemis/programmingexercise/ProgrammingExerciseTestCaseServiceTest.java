@@ -207,7 +207,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScoreCappedScoreWithoutExerciseBonusPoints() {
+    public void shouldRecalculateScoreScoreWithoutExerciseBonusPoints() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
@@ -219,8 +219,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseService.updateResultFromTestCases(result, programmingExerciseWithBonus, true);
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        // Test cases have bonus multipliers and points but max bonus points was not set for the exercise, hence the score should be capped at 100L
-        assertThat(result.getScore()).isEqualTo(100L);
+        // Only one successful test because build and run after due date is set. Due to the bonus multiplier, 57% should be reached
+        assertThat(result.getScore()).isEqualTo(57L);
         assertThat(result.isSuccessful()).isTrue();
     }
 
