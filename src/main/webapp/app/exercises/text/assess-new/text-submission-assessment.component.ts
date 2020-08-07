@@ -22,7 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/entities/course.model';
-import { asseessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -272,7 +272,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        asseessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
     }
 
     private computeTotalScore() {

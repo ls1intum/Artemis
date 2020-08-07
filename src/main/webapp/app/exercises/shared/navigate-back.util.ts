@@ -4,7 +4,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 
-export function asseessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null) {
+export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null) {
     if (exercise) {
         const course = exercise.course || exercise.exerciseGroup?.exam?.course;
 

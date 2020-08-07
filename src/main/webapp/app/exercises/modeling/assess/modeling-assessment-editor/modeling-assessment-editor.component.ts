@@ -21,7 +21,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { asseessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -432,7 +432,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        asseessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission);
     }
 
     /**
