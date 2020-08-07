@@ -187,7 +187,7 @@ public class ProgrammingExerciseTestCaseService {
         // filter the test cases for the student results if necessary
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         // We only update the latest automatic results here, later manual assessments are not affected
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResult(exercise.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
 
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
