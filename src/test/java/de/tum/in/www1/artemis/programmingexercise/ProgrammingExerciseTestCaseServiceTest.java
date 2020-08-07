@@ -221,7 +221,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         // Only one successful test because build and run after due date is set. Due to the bonus multiplier, 57% should be reached
         assertThat(result.getScore()).isEqualTo(57L);
-        assertThat(result.isSuccessful()).isTrue();
+        assertThat(result.isSuccessful()).isFalse();
     }
 
     @Test
