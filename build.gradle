@@ -31,11 +31,11 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.spotless" version "5.1.0"
+    id "com.diffplug.spotless" version "5.1.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.3.11"
+version = "4.4.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -159,7 +159,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.15.3'
+    implementation 'org.gitlab4j:gitlab4j-api:4.15.4'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -220,8 +220,8 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.3.2.RELEASE"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.3.RELEASE"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.3.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.4.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.4.RELEASE"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.9.RELEASE"
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay

@@ -19,17 +19,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -230,42 +241,51 @@ public class ExamService {
     public ExamScoresDTO getExamScore(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
 
-        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithRelevantResult(examId);
+        // TODO: Check that this doesn't break the applications server
+        List<StudentParticipation> studentParticipations = participationService.findByExamIdWithSubmissionRelevantResult(examId);
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
+        // Counts how many participants each exercise has
+        Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
+                .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
+
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            // Alert: This only works if all exercises in an exercise groups have the same number of maximum points
-            Double maximumNumberOfPoints = null;
-            if (!exerciseGroup.getExercises().isEmpty()) {
-                maximumNumberOfPoints = exerciseGroup.getExercises().iterator().next().getMaxScore();
-            }
+            // Find the maximum points for this exercise group
+            OptionalDouble optionalMaxPointsGroup = exerciseGroup.getExercises().stream().mapToDouble(exercise -> exercise.getMaxScore()).max();
+            Double maxPointsGroup = optionalMaxPointsGroup.orElse(0);
 
-            List<String> containedExercises = new ArrayList<>();
-
+            // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
+            long numberOfExeciseGroupParticipants = 0;
+            // Add information about exercise groups and exercises
+            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup);
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                containedExercises.add(exercise.getTitle().trim());
+                Long participantsForExercise = exerciseIdToNumberParticipations.get(exercise.getId());
+                // If no participation exists for an exercise then no entry exists in the map
+                if (participantsForExercise == null) {
+                    participantsForExercise = 0L;
+                }
+                numberOfExeciseGroupParticipants += participantsForExercise;
+                exerciseGroupDTO.containedExercises
+                        .add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), participantsForExercise));
             }
-
-            scores.exerciseGroups.add(new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maximumNumberOfPoints, containedExercises));
+            exerciseGroupDTO.numberOfParticipants = numberOfExeciseGroupParticipants;
+            scores.exerciseGroups.add(exerciseGroupDTO);
         }
 
         // Adding registered student information to DTO
         List<StudentExam> studentExams = studentExamRepository.findByExamId(examId);
+        ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             User user = studentExam.getUser();
-            scores.studentResults
-                    .add(new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted()));
-        }
+            var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
+                    studentExam.isSubmitted());
 
-        // Adding student results information to DTO
-        for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
-
-            // ToDo Support Team Exercises
+            // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.id)).collect(Collectors.toList());
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).collect(Collectors.toList());
 
             studentResult.overallPointsAchieved = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
@@ -276,9 +296,11 @@ public class ExamService {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
                     double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxScore();
                     studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
-                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                            new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxScore(), relevantResult.getScore(), achievedPoints));
 
+                    // Check whether the student attempted to solve the exercise
+                    boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
+                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
+                            exercise.getMaxScore(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
                 }
 
             }
@@ -286,24 +308,7 @@ public class ExamService {
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
             }
-        }
-
-        // Updating exerciseGroup information in DTO
-        for (ExamScoresDTO.ExerciseGroup exerciseGroup : scores.exerciseGroups) {
-            int noOfFoundResults = 0;
-            double sumOfPoints = 0.0;
-
-            for (ExamScoresDTO.StudentResult studentResult : scores.studentResults) {
-                if (studentResult.exerciseGroupIdToExerciseResult.containsKey(exerciseGroup.id)) {
-                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult.get(exerciseGroup.id);
-                    noOfFoundResults++;
-                    sumOfPoints = sumOfPoints + exerciseResult.achievedPoints;
-                }
-            }
-
-            if (noOfFoundResults != 0) {
-                exerciseGroup.averagePointsAchieved = sumOfPoints / noOfFoundResults;
-            }
+            scores.studentResults.add(studentResult);
         }
 
         // Updating exam information in DTO
@@ -316,6 +321,45 @@ public class ExamService {
         }
 
         return scores;
+    }
+
+    /**
+     * Checks whether one of the submissions is not empty
+     *
+     * @param submissions Submissions to check
+     * @param exercise Exercise of the submissions
+     * @param jacksonObjectMapper Mapper to parse a modeling exercise model string to JSON
+     * @return true if at least one submission is not empty else false
+     */
+    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise, ObjectMapper jacksonObjectMapper) {
+        if (exercise instanceof ProgrammingExercise) {
+            return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
+            return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
+        }
+        else if (exercise instanceof TextExercise) {
+            TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
+            return textSubmission.getText() != null && !textSubmission.getText().isBlank();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
+            try {
+                return !jacksonObjectMapper.readTree(modelingSubmission.getModel()).get("elements").isEmpty();
+            }
+            catch (Exception e) {
+                // Then the student most likely submitted something which breaks the model, if parsing fails
+                return true;
+            }
+        }
+        else if (exercise instanceof QuizExercise) {
+            QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
+            return quizSubmission != null && !quizSubmission.getSubmittedAnswers().isEmpty();
+        }
+        else {
+            throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
+        }
     }
 
     /**

@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
@@ -104,6 +105,7 @@ public class ModelFactory {
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
@@ -440,6 +442,24 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        for (int i = 0; i < numOfFeedback; i++) {
+            feedbackList.add(generateStaticCodeAnalysisFeedback(i));
+        }
+        return feedbackList;
+    }
+
+    private static Feedback generateStaticCodeAnalysisFeedback(int index) {
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
+        feedback.setReference("Class:Line" + index);
+        feedback.setDetailText("This is a DetailText " + index);
+        return feedback;
+    }
+
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
@@ -484,6 +504,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setStaticCodeAnalysisEnabled(false);
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
@@ -612,6 +633,31 @@ public class ModelFactory {
         notification.setBuild(build);
 
         return notification;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames) {
+        final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        return notification;
+    }
+
+    private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
+        final var report = new StaticCodeAnalysisReportDTO();
+        final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        report.setTool(tool);
+        issue1.setType("Error1");
+        issue1.setMessage("Error1 - Message");
+        issue1.setClassname("Class1");
+        issue1.setLine(1);
+        issue2.setType("Error2");
+        issue2.setMessage("Error2 - Message");
+        issue1.setClassname("Class2");
+        issue1.setLine(2);
+        report.setIssues(List.of(issue1, issue2));
+        return report;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {

@@ -114,7 +114,8 @@ public class ProgrammingExerciseTestCaseService {
      */
     public boolean generateTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
-        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
+        // Do not generate test cases for static code analysis feedback
+        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1).exercise(exercise).active(true)).collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::equals))
@@ -157,7 +158,7 @@ public class ProgrammingExerciseTestCaseService {
         if (isStudentParticipation) {
             testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         }
-        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
+        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
 
     /**
@@ -178,9 +179,9 @@ public class ProgrammingExerciseTestCaseService {
 
         Result templateResult = exercise.getTemplateParticipation().findLatestResult();
         Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
-        // template and solution are always updated using all test cases
-        updateResultFromTestCases(testCases, testCases, templateResult);
-        updateResultFromTestCases(testCases, testCases, solutionResult);
+        // template and solution are always updated using ALL test cases
+        updateResultFromTestCases(testCases, testCases, templateResult, exercise, false);
+        updateResultFromTestCases(testCases, testCases, solutionResult, exercise, false);
         updatedResults.add(templateResult);
         updatedResults.add(solutionResult);
 
@@ -191,7 +192,7 @@ public class ProgrammingExerciseTestCaseService {
 
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
-            updateResultFromTestCases(testCases, testCasesForCurrentDate, result);
+            updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise, true);
             updatedResults.add(result);
         }
         return updatedResults;
@@ -204,9 +205,28 @@ public class ProgrammingExerciseTestCaseService {
         return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
     }
 
-    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result) {
-        // Case 1: There are tests and feedbacks, find out which tests were not executed or should only count to the score after the due date.
-        if (testCasesForCurrentDate.size() > 0 && result.getFeedbacks().size() > 0) {
+    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, Result result,
+            ProgrammingExercise exercise, boolean isStudentParticipation) {
+        boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
+        // We also don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
+        // Distinguish between static code analysis feedback and test case feedback
+        // TODO: For now we are only concerned with not breaking existing functionality and not losing static code analysis feedback.
+        // This method has to be extended/refactored when a grading concept for static code analysis has been created
+        List<Feedback> testCaseFeedback = new ArrayList<>();
+        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
+        for (var feedback : result.getFeedbacks()) {
+            if (feedback.isStaticCodeAnalysisFeedback()) {
+                staticCodeAnalysisFeedback.add(feedback);
+            }
+            else {
+                testCaseFeedback.add(feedback);
+            }
+        }
+
+        // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
+        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
             // Remove feedbacks that the student should not see yet because of the due date.
             removeFeedbacksForAfterDueDateTests(result, testCasesForCurrentDate);
 
@@ -223,10 +243,11 @@ public class ProgrammingExerciseTestCaseService {
             updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
-            removeAllFeedbackAndSetScoreToZero(result);
+        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
+            removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
         }
-        // Case 3: If there are no feedbacks, the build has failed or it has previously fallen under case 2. In this case we just return the original result without changing it.
+        // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
+        // changing it.
         return result;
     }
 
@@ -265,8 +286,10 @@ public class ProgrammingExerciseTestCaseService {
      * @param testCasesForCurrentDate of the given programming exercise.
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
-        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
-                .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
+        // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
+        List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(
+                feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+                .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive()
@@ -286,7 +309,8 @@ public class ProgrammingExerciseTestCaseService {
             long maxTestScore = allTests.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
             long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
             result.setScore(score);
-        } else {
+        }
+        else {
             result.setScore(0L);
         }
     }
@@ -304,12 +328,13 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Remove all feedback information from a result and treat it as if it has a score of 0.
-     * @param result
+     * Remove all test case feedback information from a result and treat it as if it has a score of 0.
+     * @param result Result containing all feedback
+     * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
-    private void removeAllFeedbackAndSetScoreToZero(Result result) {
-        result.setFeedbacks(new ArrayList<>());
-        result.hasFeedback(false);
+    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
+        result.setFeedbacks(staticCodeAnalysisFeedback);
+        result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
         result.setScore(0L);
         result.setResultString("0 of 0 passed");
     }
