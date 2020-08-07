@@ -93,17 +93,17 @@ public class ProgrammingExerciseTestCaseService {
      * @param exerciseId to find exercise test cases
      * @return test cases that have been reset
      */
-    public Set<ProgrammingExerciseTestCase> reset(Long exerciseId) {
+    public List<ProgrammingExerciseTestCase> reset(Long exerciseId) {
         Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1.0);
             testCase.setBonusMultiplier(1.0);
             testCase.setBonusPoints(0.0);
         }
-        testCaseRepository.saveAll(testCases);
+        List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
-        return testCases;
+        return updatedTestCases;
     }
 
     /**

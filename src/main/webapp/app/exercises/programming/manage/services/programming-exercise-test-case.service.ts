@@ -83,7 +83,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     }
 
     /**
-     * Use with care: Set all test case weights to 1.
+     * Use with care: Set all test case weights to 1, all bonus multipliers to 1 and all bonus points to 0.
      *
      * @param exerciseId
      */

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -115,7 +116,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping(Endpoints.RESET)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> reset(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTestCase>> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -124,8 +125,7 @@ public class ProgrammingExerciseTestCaseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
+        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
         return ResponseEntity.ok(testCases);
     }
 

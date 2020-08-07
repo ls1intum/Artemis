@@ -17,7 +17,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -876,12 +875,16 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
+        // Otherwise the HashSet for comparison can't be created because exercise id is used for the hashCode
+        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(testCasesResponse).isEqualTo(testsInDB);
+        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
     }
 
     @Test
