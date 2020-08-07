@@ -207,7 +207,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScore_cappedScore_withoutExerciseBonusPoints() {
+    public void shouldRecalculateScoreCappedScoreWithoutExerciseBonusPoints() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
@@ -225,7 +225,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScore_cappedScore_withExerciseBonusPoints() {
+    public void shouldRecalculateScoreCappedScoreWithExerciseBonusPoints() {
         // Add another test case with arbitrary high bonuses so that we run into the cap
         var testCases = testCaseRepository.findByExerciseId(programmingExerciseWithBonus.getId());
         testCases.add(new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExerciseWithBonus).afterDueDate(false).bonusMultiplier(1000D)
@@ -254,7 +254,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScore_withMultiplierAndBonusPoints() {
+    public void shouldRecalculateScoreWithMultiplierAndBonusPoints() {
         // Add another active test case to increase the total weight
         var testCases = testCaseRepository.findByExerciseId(programmingExerciseWithBonus.getId());
         testCases.add(new ProgrammingExerciseTestCase().testName("test4").weight(3.0).active(true).exercise(programmingExerciseWithBonus).afterDueDate(false).bonusMultiplier(1D)
