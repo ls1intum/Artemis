@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, ChangeDetectorRef, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -25,7 +25,7 @@ import { Exercise } from 'app/entities/exercise.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
-export class QuizExamSubmissionComponent extends ExamSubmissionComponent {
+export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -58,7 +58,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent {
 
     ngOnInit(): void {
         this.initQuiz();
-        super.ngOnInit();
+        this.updateViewFromSubmission();
     }
 
     getSubmission(): Submission {

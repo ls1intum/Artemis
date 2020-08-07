@@ -1,8 +1,8 @@
 import { Submission } from 'app/entities/submission.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ChangeDetectorRef, OnInit } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 
-export abstract class ExamSubmissionComponent implements OnInit {
+export abstract class ExamSubmissionComponent {
     abstract hasUnsavedChanges(): boolean;
     abstract updateSubmissionFromView(): void;
     abstract updateViewFromSubmission(): void;
@@ -27,9 +27,4 @@ export abstract class ExamSubmissionComponent implements OnInit {
 
     abstract getSubmission(): Submission | null;
     abstract getExercise(): Exercise;
-
-    ngOnInit(): void {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
-    }
 }

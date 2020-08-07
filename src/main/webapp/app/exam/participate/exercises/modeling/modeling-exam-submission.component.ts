@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, ViewChild, Input, ChangeDetectorRef, OnInit } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -14,7 +14,7 @@ import { Exercise } from 'app/entities/exercise.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
 })
-export class ModelingExamSubmissionComponent extends ExamSubmissionComponent {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -28,6 +28,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent {
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
+    }
+
+    ngOnInit(): void {
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     getSubmission(): Submission {

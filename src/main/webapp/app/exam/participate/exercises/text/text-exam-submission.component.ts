@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ChangeDetectorRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission.model';
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
     styleUrls: ['./text-exam-submission.component.scss'],
 })
-export class TextExamSubmissionComponent extends ExamSubmissionComponent {
+export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -36,6 +36,11 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent {
         changeDetectorReference: ChangeDetectorRef,
     ) {
         super(changeDetectorReference);
+    }
+
+    ngOnInit(): void {
+        // show submission answers in UI
+        this.updateViewFromSubmission();
     }
 
     getExercise(): Exercise {
