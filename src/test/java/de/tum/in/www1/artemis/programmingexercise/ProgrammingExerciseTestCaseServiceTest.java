@@ -34,13 +34,16 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     ParticipationRepository participationRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     ResultRepository resultRepository;
@@ -430,10 +433,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         {
             // score 0 %
             var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100L);
-            resultTemplate = updateAutomaticResult(resultTemplate, false, false, false);
-
             participationTemplate.setResults(Set.of(resultTemplate));
-            participationTemplate = participationRepository.save(participationTemplate);
+            resultTemplate = updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
 
         // solution passes most tests but is still faulty
@@ -441,10 +442,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         {
             // score 75 %
             var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100L);
-            resultSolution = updateAutomaticResult(resultSolution, false, true, true);
-
             participationSolution.setResults(Set.of(resultSolution));
-            participationSolution = participationRepository.save(participationSolution);
+            resultSolution = updateAndSaveAutomaticResult(resultSolution, false, true, true);
         }
 
         // student1 only has one automatic result
@@ -452,10 +451,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         {
             // score 50 %
             var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
-            result1 = updateAutomaticResult(result1, true, true, false);
-
             participation1.setResults(Set.of(result1));
-            participation1 = studentParticipationRepository.save(participation1);
+            result1 = updateAndSaveAutomaticResult(result1, true, true, false);
         }
 
         // student2 has an automatic result and a manual result as well
@@ -463,11 +460,10 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         {
             // score 75 %
             var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
-            result2a = updateAutomaticResult(result2a, true, false, true);
-            result2a = resultRepository.save(result2a);
+            result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
             // score 100 %
-            var result2b = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
+            var result2b = new Result().participation(participation2).resultString("nice job").successful(false).rated(true).score(100L);
             result2b.feedbacks(List.of(new Feedback().text("Well done!").positive(true).type(FeedbackType.MANUAL))) //
                     .score(100L) //
                     .rated(true) //
@@ -476,9 +472,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                     .completionDate(ZonedDateTime.now()) //
                     .assessmentType(AssessmentType.MANUAL);
             result2b = resultRepository.save(result2b);
-
             participation2.setResults(Set.of(result2a, result2b));
-            participation2 = studentParticipationRepository.save(participation2);
         }
 
         // student3 only started the exercise, but did not submit anything
@@ -489,11 +483,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         {
             // score 100 %
             var result4 = new Result().participation(participation4).resultString("x of y passed").successful(false).rated(true).score(100L);
-            ;
-            result4 = updateAutomaticResult(result4, true, true, true);
-
+            result4 = updateAndSaveAutomaticResult(result4, true, true, true);
             participation4.setResults(Set.of(result4));
-            participation4 = studentParticipationRepository.save(participation4);
         }
 
         // student5 has a build failure
@@ -511,9 +502,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                     .assessmentType(AssessmentType.AUTOMATIC);
             testCaseService.updateResultFromTestCases(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
-
             participation5.setResults(Set.of(result5));
-            participation5 = studentParticipationRepository.save(participation5);
         }
 
         // change test case weights
@@ -522,6 +511,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCases.get("test3").setWeight(3.);
         testCaseRepository.saveAll(testCases.values());
 
+        // TODO: we should instead invoke the REST call here
         // re-evaluate
         var updatedResults = testCaseService.updateAllResultsFromTestCases(programmingExercise);
         resultRepository.saveAll(updatedResults);
@@ -559,7 +549,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student1 25 %
         {
-            var participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participation1.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -573,7 +563,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student2 100 % / 75 %
         {
-            var participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participation2.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(2);
 
@@ -581,9 +571,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             assertThat(manualResultOptional).isPresent();
             var manualResult = manualResultOptional.get();
             assertThat(manualResult.getScore()).isEqualTo(100L);
-            assertThat(manualResult.getResultString()).isEqualTo("2 of 3 passed");
+            assertThat(manualResult.getResultString()).isEqualTo("nice job");
             assertThat(manualResult.getHasFeedback()).isTrue();
-            assertThat(manualResult.getFeedbacks()).hasSize(3);
+            assertThat(manualResult.getFeedbacks()).hasSize(0);
             assertThat(manualResult).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
@@ -597,7 +587,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student3 no result
         {
-            var participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participation3.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).get();
             var results = participation.getResults();
             assertThat(results).isNullOrEmpty();
             assertThat(participation.findLatestResult()).isNull();
@@ -605,7 +595,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student4 100%
         {
-            var participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participation4.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -619,7 +609,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student5 Build Failed
         {
-            var participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participation5.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation5.getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -632,7 +622,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         }
     }
 
-    private Result updateAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
+    private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
         var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback1);
         var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC);

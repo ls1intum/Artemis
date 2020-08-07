@@ -111,6 +111,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.id = :#{#participationId}")
     Optional<StudentParticipation> findByIdWithEagerResults(@Param("participationId") Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks" })
+    Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
+
     /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database. Returns an empty Optional if the
      * participation could not be found.
