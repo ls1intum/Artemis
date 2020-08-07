@@ -55,7 +55,7 @@ public class EmbeddingTrainingMaterialScheduleService {
                 embeddingTrainingMaterialService.uploadAttachment(attachment);
             }
             catch (NetworkingError networkingError) {
-                networkingError.printStackTrace();
+                log.error(networkingError.getMessage(), networkingError);
             }
         };
     }
