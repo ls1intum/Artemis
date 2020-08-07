@@ -286,6 +286,8 @@ public class ProgrammingExerciseTestCaseService {
             long maxTestScore = allTests.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
             long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
             result.setScore(score);
+        } else {
+            result.setScore(0L);
         }
     }
 
