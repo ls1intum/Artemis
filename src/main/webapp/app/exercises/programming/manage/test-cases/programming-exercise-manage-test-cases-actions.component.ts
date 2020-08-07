@@ -14,15 +14,15 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             id="save-test-cases-button"
             class="btn btn-primary ml-3"
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
-            (click)="onSaveWeights.emit()"
+            (click)="onSave.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
         <button
             id="reset-weights-button"
             class="btn btn-secondary ml-3"
-            (click)="onResetWeights.emit()"
-            [disabled]="disableResetWeights || isSaving"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
+            (click)="onReset.emit()"
+            [disabled]="isSaving"
+            jhiTranslate="artemisApp.programmingExercise.manageTestCases.reset"
         ></button>
         <jhi-programming-exercise-re-evaluate-button
             [exercise]="exercise"
@@ -40,9 +40,8 @@ export class ProgrammingExerciseManageTestCasesActionsComponent {
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
     @Input() isSaving: boolean;
-    @Input() disableResetWeights: boolean;
 
-    @Output() onSaveWeights = new EventEmitter();
-    @Output() onResetWeights = new EventEmitter();
+    @Output() onSave = new EventEmitter();
+    @Output() onReset = new EventEmitter();
     @Output() onBuildTriggered = new EventEmitter();
 }

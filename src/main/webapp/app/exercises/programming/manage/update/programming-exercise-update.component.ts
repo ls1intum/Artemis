@@ -112,7 +112,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        this.setupProgrammingExerciseForImport(params);
+                        this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['groupId']) {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
@@ -166,7 +166,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param params given by ActivatedRoute
      */
-    private setupProgrammingExerciseForImport(params: Params) {
+    private createProgrammingExerciseForImport(params: Params) {
         this.isImport = true;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['groupId']) {
