@@ -294,7 +294,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
         result.setParticipation(participation);
 
-        Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+        Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.CREATED);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
