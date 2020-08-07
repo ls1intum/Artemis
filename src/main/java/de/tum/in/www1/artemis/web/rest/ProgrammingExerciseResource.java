@@ -229,7 +229,7 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.SETUP)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
+    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
@@ -307,7 +307,7 @@ public class ProgrammingExerciseResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
