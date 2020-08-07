@@ -119,9 +119,9 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
      */
-    @PatchMapping(Endpoints.RESET_WEIGHTS)
+    @PatchMapping(Endpoints.RESET)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> resetWeights(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTestCase>> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -130,8 +130,7 @@ public class ProgrammingExerciseTestCaseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.resetWeights(exerciseId);
+        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
         return ResponseEntity.ok(testCases);
     }
 
@@ -164,7 +163,7 @@ public class ProgrammingExerciseTestCaseResource {
 
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 
-        public static final String RESET_WEIGHTS = PROGRAMMING_EXERCISE + "/test-cases/reset-weights";
+        public static final String RESET = PROGRAMMING_EXERCISE + "/test-cases/reset";
 
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
 

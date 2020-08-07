@@ -123,7 +123,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @ParameterizedTest
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void setupProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+    void createProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         mockConnectorRequestsForSetup(exercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
