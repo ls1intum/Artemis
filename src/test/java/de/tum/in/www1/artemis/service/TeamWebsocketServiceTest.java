@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.text.TextExercise;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

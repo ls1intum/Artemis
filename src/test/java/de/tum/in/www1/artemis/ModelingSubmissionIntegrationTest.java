@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.SubmissionVersion;
 import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;

@@ -7,11 +7,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.text.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextCluster;
 
 /**
  * Spring Data repository for the TextBlock entity.

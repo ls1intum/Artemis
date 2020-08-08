@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.plagiarism.text;
 
 import org.jetbrains.annotations.NotNull;
 
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import info.debatty.java.stringsimilarity.Cosine;
 import info.debatty.java.stringsimilarity.MetricLCS;
 import info.debatty.java.stringsimilarity.NGram;

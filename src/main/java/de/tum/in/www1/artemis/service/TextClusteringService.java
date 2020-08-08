@@ -11,8 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.PairwiseDistanceRepository;
-import de.tum.in.www1.artemis.repository.TreeNodeRepository;
+import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
@@ -45,7 +45,7 @@ public class TextClusteringService {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final TreeNodeRepository treeNodeRepository;
+    private final TextTreeNodeRepository treeNodeRepository;
 
     private final PairwiseDistanceRepository pairwiseDistanceRepository;
 
@@ -59,9 +59,9 @@ public class TextClusteringService {
     private int embeddingChunkSize;
 
     public TextClusteringService(TextBlockService textBlockService, TextSubmissionService textSubmissionService, TextClusterRepository textClusterRepository,
-            TextBlockRepository textBlockRepository, TreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
-            TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
-            TextAssessmentQueueService textAssessmentQueueService, TextSegmentationService textSegmentationService) {
+                                 TextBlockRepository textBlockRepository, TextTreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
+                                 TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
+                                 TextAssessmentQueueService textAssessmentQueueService, TextSegmentationService textSegmentationService) {
         this.textBlockService = textBlockService;
         this.textSubmissionService = textSubmissionService;
         this.textClusterRepository = textClusterRepository;
@@ -128,7 +128,7 @@ public class TextClusteringService {
 
         // Invoke clustering for Text Blocks
         final Map<Integer, TextCluster> clusters;
-        final List<TreeNode> clusterTree;
+        final List<TextTreeNode> clusterTree;
         final List<List<Double>> distanceMatrix;
         try {
             TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
@@ -141,10 +141,10 @@ public class TextClusteringService {
             return;
         }
 
-        final List<TreeNode> treeNodes = treeNodeRepository.saveAll(clusterTree);
+        final List<TextTreeNode> treeNodes = treeNodeRepository.saveAll(clusterTree);
         // Add an artificial root node
         long rootIndex = distanceMatrix.size() - 1;
-        TreeNode rootNode = new TreeNode();
+        TextTreeNode rootNode = new TextTreeNode();
         rootNode.setChild(rootIndex);
         rootNode.setParent(rootIndex);
         rootNode.setChild_size(0);
@@ -152,7 +152,7 @@ public class TextClusteringService {
         treeNodes.add((int) rootIndex, rootNode);
 
         // Update exercise of the treeNodes and store in Database
-        for(TreeNode node: treeNodes) {
+        for(TextTreeNode node: treeNodes) {
             node.setExercise(exercise);
         }
         treeNodeRepository.saveAll(treeNodes);
@@ -161,7 +161,7 @@ public class TextClusteringService {
         for(int i = 0; i < distanceMatrix.size(); i++) {
             // The matrix is symmetrical, no need to store the duplicate data
             for (int j = i; j < distanceMatrix.size(); j++) {
-                PairwiseDistance dist = new PairwiseDistance();
+                TextPairwiseDistance dist = new TextPairwiseDistance();
                 dist.setBlock_i(i);
                 dist.setBlock_j(j);
                 dist.setDistance(distanceMatrix.get(i).get(j));

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.text;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 

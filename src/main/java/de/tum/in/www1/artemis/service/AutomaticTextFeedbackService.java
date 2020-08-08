@@ -7,22 +7,17 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TreeNode;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.PairwiseDistanceRepository;
-import de.tum.in.www1.artemis.repository.TreeNodeRepository;
+import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 
 @Service
 @Profile("automaticText")
@@ -37,14 +32,14 @@ public class AutomaticTextFeedbackService {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final TreeNodeRepository treeNodeRepository;
+    private final TextTreeNodeRepository treeNodeRepository;
 
     private final PairwiseDistanceRepository pairwiseDistanceRepository;
 
     private final TextClusterRepository clusterRepository;
 
     public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository,
-                                        TreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
+                                        TextTreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
                                         TextClusterRepository clusterRepository) {
         this.feedbackService = feedbackService;
         this.textBlockRepository = textBlockRepository;
@@ -70,7 +65,7 @@ public class AutomaticTextFeedbackService {
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
             final TextExercise exercise = (TextExercise) block.getSubmission().getParticipation().getExercise();
-            final TreeNode[] clusterTree = fetchClusterTreeForExercise(exercise);
+            final TextTreeNode[] clusterTree = fetchClusterTreeForExercise(exercise);
 
             // if TextBlock is part of a cluster, we try to find an existing Feedback Element
             if (cluster != null) {
@@ -119,19 +114,19 @@ public class AutomaticTextFeedbackService {
      * @param exercise - Text exercise of the text block
      * @return The id of the text block, of which the feedback will be inherited, if such a TextBlock is found
      */
-    private Optional<String> findFeedbackForBlockInClusterWithoutFeedback(TreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
+    private Optional<String> findFeedbackForBlockInClusterWithoutFeedback(TextTreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
         boolean feedbackFound = false;
-        TreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
+        TextTreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
         // Starting with lambda = (lambda between block and cluster) + (lambda between cluster and parent)
         double currentLambdaVal = addLambdaValues(clusterTree[block.getTreeId()].getLambda_val(), currentNode.getLambda_val());
         while(!feedbackFound && currentLambdaVal > LAMBDA_THRESHOLD) {
             // parent is not an actual TextCluster but a "cluster of (clusters of) TextClusters"
             long parentId = currentNode.getParent();
-            List<TreeNode> siblings = treeNodeRepository.findAllByParentAndExercise(parentId, exercise);
-            siblings.sort(Comparator.comparingDouble(TreeNode::getLambda_val));
+            List<TextTreeNode> siblings = treeNodeRepository.findAllByParentAndExercise(parentId, exercise);
+            siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val));
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
-                TreeNode x = siblings.remove(0);
+                TextTreeNode x = siblings.remove(0);
                 // If already below lambda threshold remove x directly
                 if(addLambdaValues(x.getLambda_val(), currentLambdaVal) < LAMBDA_THRESHOLD) {
                     continue;
@@ -139,14 +134,14 @@ public class AutomaticTextFeedbackService {
                 if(x.isBlockNode()) {
                     // TODO: Check if TextBlock has feedback, inherit it if present
                 } else {
-                    for(TreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
+                    for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
                         y.setLambda_val(addLambdaValues(y.getLambda_val(), x.getLambda_val()));
                         // If still above lambda threshold add y to siblings
                         if(addLambdaValues(y.getLambda_val(), currentLambdaVal) > LAMBDA_THRESHOLD) {
                             siblings.add(y);
                         }
                     }
-                    siblings.sort(Comparator.comparingDouble(TreeNode::getLambda_val));
+                    siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val));
                 }
             }
             currentNode = clusterTree[(int) parentId];
@@ -162,8 +157,8 @@ public class AutomaticTextFeedbackService {
      * @param exercise - text exercise of the text block
      * @return The id of the text block, of which the feedback will be inherited, if such a TextBlock is found
      */
-    private Optional<String> findFeedbackForBlockWithoutCluster(TreeNode[] clusterTree, TextBlock block, TextExercise exercise){
-        TreeNode currentNode = clusterTree[(int) block.getTreeId()];
+    private Optional<String> findFeedbackForBlockWithoutCluster(TextTreeNode[] clusterTree, TextBlock block, TextExercise exercise){
+        TextTreeNode currentNode = clusterTree[(int) block.getTreeId()];
         Optional<TextCluster> clusterOptional = clusterRepository.findByTreeIdAndExercise(currentNode.getParent(), exercise);
         // There is an existing cluster one level above in tree
         if(clusterOptional.isPresent()) {
@@ -194,10 +189,10 @@ public class AutomaticTextFeedbackService {
      * @param exercise - Text exercise of the cluster tree
      * @return The cluster tree in form of an array
      */
-    private TreeNode[] fetchClusterTreeForExercise(TextExercise exercise) {
-        final List<TreeNode> unorderedTreeNodes = treeNodeRepository.findAllByExercise(exercise);
-        final TreeNode[] clusterTree = new TreeNode[unorderedTreeNodes.size()];
-        for (TreeNode node: unorderedTreeNodes) {
+    private TextTreeNode[] fetchClusterTreeForExercise(TextExercise exercise) {
+        final List<TextTreeNode> unorderedTreeNodes = treeNodeRepository.findAllByExercise(exercise);
+        final TextTreeNode[] clusterTree = new TextTreeNode[unorderedTreeNodes.size()];
+        for (TextTreeNode node: unorderedTreeNodes) {
             clusterTree[(int) node.getChild()] = node;
         }
         return clusterTree;

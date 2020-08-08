@@ -10,8 +10,8 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 
 @Service

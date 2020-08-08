@@ -15,7 +15,7 @@ export class TextBlock {
     type: TextBlockType;
 
     /**
-     * Identical with de.tum.in.www1.artemis.domain.TextBlock:computeId
+     * Identical with de.tum.in.www1.artemis.domain.text.TextBlock:computeId
      */
     computeId(): void {
         const submissionId = this.submission ? this.submission.id : 0;

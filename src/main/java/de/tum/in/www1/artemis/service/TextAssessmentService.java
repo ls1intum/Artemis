@@ -5,6 +5,9 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.text.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

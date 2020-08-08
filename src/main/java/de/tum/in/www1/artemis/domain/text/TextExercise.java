@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.text;
 
 import java.io.Serializable;
 import java.util.List;
@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
 /**
@@ -24,20 +25,14 @@ public class TextExercise extends Exercise implements Serializable {
     @JsonIgnore
     private List<TextCluster> clusters;
 
-    /*
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
-    private ClusteringResult clusteringResult;
-     */
+    private List<TextPairwiseDistance> pairwiseDistances;
 
-    @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
-    private List<PairwiseDistance> pairwiseDistances;
-
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @OrderBy("child")
     @JsonIgnore
-    private List<TreeNode> clusterTree;
+    private List<TextTreeNode> clusterTree;
 
     public String getSampleSolution() {
         return sampleSolution;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.text;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,7 +13,8 @@ import java.io.Serializable;
  *  interchangeably. An artificial edge is created to represent the root node.
  */
 @Entity
-public class TreeNode implements Serializable {
+@Table(name = "text_tree_node")
+public class TextTreeNode implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,7 +39,6 @@ public class TreeNode implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
-    // private ClusteringResult clusteringResult;
 
     public Long getId() { return id; }
 
@@ -62,22 +62,11 @@ public class TreeNode implements Serializable {
 
     public void setChild_size(long child_size) { this.child_size = child_size; }
 
-    // public ClusteringResult getClusteringResult() { return clusteringResult; }
-
     public TextExercise getExercise() { return exercise; }
-
-    // public void setClusteringResult(ClusteringResult clusteringResult) {
-    //     this.clusteringResult = clusteringResult;
-    // }
 
     public void setExercise(TextExercise exercise) { this.exercise = exercise; }
 
-    // public TreeNode clusteringResult(ClusteringResult clusteringResult) {
-    //     setClusteringResult(clusteringResult);
-    //     return this;
-    // }
-
-    public TreeNode exercise(TextExercise exercise) {
+    public TextTreeNode exercise(TextExercise exercise) {
         setExercise(exercise);
         return this;
     }

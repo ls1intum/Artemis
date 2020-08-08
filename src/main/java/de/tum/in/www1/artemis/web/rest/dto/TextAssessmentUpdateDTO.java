@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextBlock;
 
 public class TextAssessmentUpdateDTO extends AssessmentUpdate {
 

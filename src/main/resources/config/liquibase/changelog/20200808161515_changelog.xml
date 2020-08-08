@@ -1,0 +1,47 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="canarisan (generated)" id="1596896130239-34">
+        <createTable tableName="text_pairwise_distance">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="text_pairwise_distancePK"/>
+            </column>
+            <column name="block_i" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="block_j" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distance" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+        </createTable>
+        <createTable tableName="text_tree_node">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="text_tree_nodePK"/>
+            </column>
+            <column name="child" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="child_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lambda_val" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+        </createTable>
+        <addColumn tableName="text_block">
+            <column name="tree_id" type="integer"/>
+        </addColumn>
+        <addColumn tableName="text_cluster">
+            <column name="tree_id" type="bigint"/>
+        </addColumn>
+        <addUniqueConstraint columnNames="child" constraintName="UK_5r8jjcrsosk5koe91n81ro7sq" tableName="text_tree_node"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="text_pairwise_distance" constraintName="FKrk2lfk9qfeanmgkr6fgnnacmq" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="text_tree_node" constraintName="FKt8r0npk6qo1eojh4sglfpyuhc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

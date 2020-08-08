@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;

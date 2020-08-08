@@ -1,20 +1,17 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.PairwiseDistance;
-import org.springframework.data.jpa.repository.EntityGraph;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextPairwiseDistance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 /**
- * Spring Data repository for the PairwiseDistance entity.
+ * Spring Data repository for the TextPairwiseDistance entity.
  */
 @Repository
-public interface PairwiseDistanceRepository extends JpaRepository<PairwiseDistance, Long> {
+public interface PairwiseDistanceRepository extends JpaRepository<TextPairwiseDistance, Long> {
 
-    List<PairwiseDistance> findAllByExercise(TextExercise exercise);
+    List<TextPairwiseDistance> findAllByExercise(TextExercise exercise);
 }

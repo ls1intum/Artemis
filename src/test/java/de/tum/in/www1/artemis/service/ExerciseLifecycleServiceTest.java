@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 
 public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

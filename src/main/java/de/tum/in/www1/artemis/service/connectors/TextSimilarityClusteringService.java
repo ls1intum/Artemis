@@ -4,15 +4,15 @@ import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConn
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.TreeNode;
+import de.tum.in.www1.artemis.domain.text.TextTreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextEmbedding;
+import de.tum.in.www1.artemis.domain.text.TextCluster;
+import de.tum.in.www1.artemis.domain.text.TextEmbedding;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 @Service
@@ -35,7 +35,7 @@ public class TextSimilarityClusteringService {
 
         public LinkedHashMap<Integer, TextCluster> clusters;
         public List<List<Double>> distanceMatrix;
-        public List<TreeNode> clusterTree;
+        public List<TextTreeNode> clusterTree;
 
     }
     // endregion

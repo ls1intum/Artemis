@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.text;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

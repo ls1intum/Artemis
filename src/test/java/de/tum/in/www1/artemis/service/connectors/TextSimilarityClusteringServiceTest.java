@@ -8,12 +8,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.domain.text.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -73,15 +72,18 @@ public class TextSimilarityClusteringServiceTest {
         List<List<Double>> matrix = response.distanceMatrix;
         assertThat(matrix, hasSize(blocks.size()));
 
-        List<TreeNode> clusterTree = response.clusterTree;
-        List<TreeNode> blocksInTree = clusterTree.stream().filter(treeNode -> treeNode.isBlockNode()).collect(Collectors.toList());
+        List<TextTreeNode> clusterTree = response.clusterTree;
+        List<TextTreeNode> blocksInTree = clusterTree.stream().filter(treeNode -> treeNode.isBlockNode()).collect(toList());
+
         // Assert that number of blockNodes in the tree equals number of blocks
         assertThat(blocksInTree, hasSize(blocks.size()));
-        List<Long> groupByChild = clusterTree.stream().map(treeNode -> treeNode.getChild()).distinct().collect(Collectors.toList());
-        // Assert that child is a unique property of a TreeNode
+        List<Long> groupByChild = clusterTree.stream().map(treeNode -> treeNode.getChild()).distinct().collect(toList());
+
+        // Assert that child is a unique property of a TextTreeNode
         assertThat(groupByChild, hasSize(clusterTree.size()));
-        List<Long> groupByParent = clusterTree.stream().map(treeNode -> treeNode.getParent()).distinct().collect(Collectors.toList());
-        // Assert that parent is not a unique property of a TreeNode
+        List<Long> groupByParent = clusterTree.stream().map(treeNode -> treeNode.getParent()).distinct().collect(toList());
+
+        // Assert that parent is not a unique property of a TextTreeNode
         assertThat(groupByParent.size(), lessThan(clusterTree.size()));
     }
 

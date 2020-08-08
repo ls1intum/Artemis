@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextCluster;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
 
 /**
  * Spring Data repository for the TextCluster entity.

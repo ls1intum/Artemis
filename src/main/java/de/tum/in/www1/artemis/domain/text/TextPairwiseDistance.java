@@ -1,7 +1,6 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.text;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.NaturalId;
 
 import java.io.Serializable;
 
@@ -11,8 +10,8 @@ import javax.persistence.*;
  *  Pairwise distance between two TextBlocks
  */
 @Entity
-@Table(name = "pairwise_distance")
-public class PairwiseDistance implements Serializable {
+@Table(name = "text_pairwise_distance")
+public class TextPairwiseDistance implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -33,7 +32,6 @@ public class PairwiseDistance implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
-    // private ClusteringResult clusteringResult;
 
     public long getId() {
         return id;
@@ -55,22 +53,11 @@ public class PairwiseDistance implements Serializable {
 
     public void setDistance(double distance) { this.distance = distance; }
 
-    // public ClusteringResult getClusteringResult() { return clusteringResult; }
-
-
     public TextExercise getExercise() { return exercise; }
-
-    // public void setClusteringResult(ClusteringResult clusteringResult) { this.clusteringResult = clusteringResult; }
-
 
     public void setExercise(TextExercise exercise) { this.exercise = exercise; }
 
-    // public PairwiseDistance clusteringResult(ClusteringResult clusteringResult) {
-    //     setClusteringResult(clusteringResult);
-    //     return this;
-    // }
-
-    public PairwiseDistance exercise(TextExercise exercise) {
+    public TextPairwiseDistance exercise(TextExercise exercise) {
         setExercise(exercise);
         return this;
     }
