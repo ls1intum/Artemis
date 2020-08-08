@@ -20,6 +20,14 @@ public class TextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentConflictService.class);
 
+    @Value("${artemis.automatic-text.feedback-consistency-url}")
+    private String API_ENDPOINT;
+
+    @Value("${artemis.automatic-text.secret}")
+    private String API_SECRET;
+
+    private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
+
     // region Request/Response DTOs
     private static class Request {
 
@@ -38,14 +46,6 @@ public class TextAssessmentConflictService {
         public List<TextAssessmentConflictResponseDTO> feedbackInconsistencies;
     }
     // endregion
-
-    @Value("${artemis.automatic-text.feedback-consistency-url}")
-    private String API_ENDPOINT;
-
-    @Value("${artemis.automatic-text.secret}")
-    private String API_SECRET;
-
-    private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
     /**
      * Calls the remote feedback consistency service to check consistencies between feedback for an automatically assessed text exercise.

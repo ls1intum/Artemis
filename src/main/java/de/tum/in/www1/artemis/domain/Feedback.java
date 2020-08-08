@@ -69,10 +69,10 @@ public class Feedback implements Serializable {
     private GradingInstruction gradingInstruction;
 
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
-    private List<TextAssessmentConflict> first_conflicts = new ArrayList<>();
+    private List<TextAssessmentConflict> firstConflicts = new ArrayList<>();
 
     @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
-    private List<TextAssessmentConflict> second_conflicts = new ArrayList<>();
+    private List<TextAssessmentConflict> secondConflicts = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -215,20 +215,20 @@ public class Feedback implements Serializable {
         this.gradingInstruction = gradingInstruction;
     }
 
-    public List<TextAssessmentConflict> getFirst_conflicts() {
-        return first_conflicts;
+    public List<TextAssessmentConflict> getFirstConflicts() {
+        return firstConflicts;
     }
 
-    public void setFirst_conflicts(List<TextAssessmentConflict> first_conflicts) {
-        this.first_conflicts = first_conflicts;
+    public void setFirstConflicts(List<TextAssessmentConflict> firstConflicts) {
+        this.firstConflicts = firstConflicts;
     }
 
-    public List<TextAssessmentConflict> getSecond_conflicts() {
-        return second_conflicts;
+    public List<TextAssessmentConflict> getSecondConflicts() {
+        return secondConflicts;
     }
 
-    public void setSecond_conflicts(List<TextAssessmentConflict> second_conflicts) {
-        this.second_conflicts = second_conflicts;
+    public void setSecondConflicts(List<TextAssessmentConflict> secondConflicts) {
+        this.secondConflicts = secondConflicts;
     }
 
     @Override

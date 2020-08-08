@@ -3,7 +3,16 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
 
@@ -57,20 +66,20 @@ public class TextAssessmentConflict implements Serializable {
         this.conflict = conflict;
     }
 
-    public ZonedDateTime getCreated_at() {
+    public ZonedDateTime getCreatedAt() {
         return created_at;
     }
 
-    public void setCreated_at(ZonedDateTime created_at) {
-        this.created_at = created_at;
+    public void setCreated_at(ZonedDateTime createdAt) {
+        this.created_at = createdAt;
     }
 
-    public ZonedDateTime getSolved_at() {
+    public ZonedDateTime getSolvedAt() {
         return solved_at;
     }
 
-    public void setSolved_at(ZonedDateTime solved_at) {
-        this.solved_at = solved_at;
+    public void setSolvedAt(ZonedDateTime solvedAt) {
+        this.solved_at = solvedAt;
     }
 
     public TextAssessmentConflictType getType() {
