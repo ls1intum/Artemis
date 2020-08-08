@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
 
@@ -44,6 +42,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -70,11 +69,14 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    public GitService() {
+    private final ZipFileService zipFileService;
+
+    public GitService(ZipFileService zipFileService) {
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset=" + Charset.defaultCharset());
         log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        this.zipFileService = zipFileService;
     }
 
     /**
@@ -706,20 +708,7 @@ public class GitService {
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
-        try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(repoPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());
-                try {
-                    zs.putNextEntry(zipEntry);
-                    Files.copy(path, zs);
-                    zs.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-        return zipFilePath;
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
 
     /**

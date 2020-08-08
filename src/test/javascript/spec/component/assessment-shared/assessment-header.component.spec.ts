@@ -155,25 +155,6 @@ describe('AssessmentHeaderComponent', () => {
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should show resolve conflict button if hasConflict', () => {
-        component.isLoading = false;
-        component.hasConflict = false;
-        fixture.detectChanges();
-
-        let resolveConflictButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=resolveConflict]'));
-        expect(resolveConflictButtonSpan).toBeFalsy();
-
-        component.hasConflict = true;
-        fixture.detectChanges();
-
-        resolveConflictButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=resolveConflict]'));
-        expect(resolveConflictButtonSpan).toBeTruthy();
-
-        spyOn(component.resolveConflict, 'emit');
-        resolveConflictButtonSpan.nativeElement.click();
-        expect(component.resolveConflict.emit).toHaveBeenCalledTimes(1);
-    });
-
     it('should show next submission if assessor or instructur, result is present and no complaint', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;

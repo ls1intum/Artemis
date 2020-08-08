@@ -67,8 +67,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExamService examService;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -88,7 +86,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.examService = examService;
     }
 
     /**

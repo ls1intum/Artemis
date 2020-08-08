@@ -8,13 +8,11 @@
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="result"
-    [conflicts]="conflicts"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
     (cancel)="onCancelAssessment()"
-    (resolveConflict)="onShowConflictResolution()"
     (nextSubmission)="assessNextOptimal()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >

@@ -5,7 +5,7 @@ import { Result } from 'app/entities/result.model';
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
  * This guarantees a unified look and feel for both interfaces.
- * Depending Components need to perform actions based on the save/submit/cancel/resolveConflict/nextSubmission/navigateBack outputs.
+ * Depending Components need to perform actions based on the save/submit/cancel/nextSubmission/navigateBack outputs.
  */
 @Component({
     selector: 'jhi-assessment-header',
@@ -28,7 +28,6 @@ export class AssessmentHeaderComponent {
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
-    @Input() hasConflict = false;
     @Input() hasComplaint = false;
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
@@ -36,6 +35,5 @@ export class AssessmentHeaderComponent {
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
-    @Output() resolveConflict = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
 }

@@ -85,17 +85,35 @@
                                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                             </button>
                             <button
-                                *ngIf="course?.isAtLeastInstructor"
+                                *ngIf="course?.isAtLeastInstructor && exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id]; else containsNoProgrammingExercise"
                                 jhiDeleteButton
                                 [entityTitle]="exerciseGroup.title"
                                 deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
                                 deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
-                                (delete)="deleteExerciseGroup(exerciseGroup.id)"
+                                [additionalChecks]="{
+                                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                }"
+                                (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
                                 [dialogError]="dialogError$"
                                 class="mb-0"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>
+                            <ng-template #containsNoProgrammingExercise>
+                                <button
+                                    *ngIf="course?.isAtLeastInstructor"
+                                    jhiDeleteButton
+                                    [entityTitle]="exerciseGroup.title"
+                                    deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                                    deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                                    (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
+                                    [dialogError]="dialogError$"
+                                    class="mb-0"
+                                >
+                                    <fa-icon [icon]="'times'"></fa-icon>
+                                </button>
+                            </ng-template>
                         </div>
                     </div>
                 </div>
@@ -143,7 +161,8 @@
                                 [exercise]="exercise"
                                 [exerciseGroupId]="exerciseGroup.id"
                                 [latestIndividualEndDate]="latestIndividualEndDate"
-                                (onDeleteExercise)="loadExerciseGroups()"
+                                (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
+                                (onDeleteProgrammingExercise)="removeExercise(exercise.id, exerciseGroup.id, true)"
                             ></jhi-exam-exercise-row-buttons>
                         </td>
                     </tr>

@@ -7,7 +7,6 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-course-exam-detail',
     templateUrl: './course-exam-detail.component.html',
-    styleUrls: ['../course-exams.scss'],
 })
 export class CourseExamDetailComponent {
     @Input() exam: Exam;

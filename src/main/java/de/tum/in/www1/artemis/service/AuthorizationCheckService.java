@@ -324,7 +324,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the currently logged in user is allowed to retrieve the given result.
-     * The user is allowed to retrieve the result if (s)he is at least a student in the corresponding course, the
+     * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
      *
      * @param exercise      the corresponding exercise
@@ -333,7 +333,7 @@ public class AuthorizationCheckService {
      * @return true if the user is allowed to retrieve the given result, false otherwise
      */
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        return isAtLeastStudentForExercise(exercise) && isOwnerOfParticipation(participation)
+        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
                 && result.getCompletionDate() != null;
     }

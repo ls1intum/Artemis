@@ -13,7 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,11 +30,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ExamAccessService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -89,17 +85,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     ParticipationTestRepository participationTestRepository;
 
-    @SpyBean
-    ExamAccessService examAccessService;
-
-    @SpyBean
-    InstanceMessageSendService instanceMessageSendService;
-
     // Tolerated absolute difference for floating-point number comparisons
     private final Double EPSILON = 0000.1;
-
-    @SpyBean
-    ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     private List<User> users;
 
@@ -248,7 +235,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // creating exercise
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().get(0);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);
@@ -305,8 +292,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2.setVisibleDate(now().plusHours(1));
 
         // creating exercise
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(exam2.getStartDate(), exam2.getEndDate(), exam2.getEndDate().plusWeeks(2),
-                DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam2.getExerciseGroups().get(0));
         exam2.getExerciseGroups().get(0).addExercise(modelingExercise);
         exerciseGroupRepository.save(exam2.getExerciseGroups().get(0));
         modelingExercise = exerciseRepo.save(modelingExercise);
@@ -582,7 +568,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         var now = now();
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(now.minusDays(1), now.minusHours(2), now.minusHours(1), exam2.getExerciseGroups().get(0));
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepo.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
@@ -591,7 +577,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testDeleteExamThatDoesNotExist() throws Exception {
-        request.delete("/api/courses/" + course2.getId() + "/exams/55", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course2.getId() + "/exams/654555", HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -786,12 +772,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseGroup2 = examWithExerciseGroups.getExerciseGroups().get(1);
         exerciseGroup3 = examWithExerciseGroups.getExerciseGroups().get(2);
 
-        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
-        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup1);
-        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup2);
-        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
-        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
-        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(now().plusHours(5), now().plusHours(6), now().plusHours(10), exerciseGroup3);
+        TextExercise exercise1_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise1_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise2_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
+        TextExercise exercise3_1 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_2 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_3 = ModelFactory.generateTextExerciseForExam(exerciseGroup3);
         exercise1_1 = textExerciseRepository.save(exercise1_1);
         exercise1_2 = textExerciseRepository.save(exercise1_2);
         exercise2_1 = textExerciseRepository.save(exercise2_1);
@@ -873,13 +859,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 
@@ -919,13 +903,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
 
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         exerciseGroup1.addExercise(programmingExercise);
 
-        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
-                exerciseGroup1);
+        ProgrammingExercise programmingExercise2 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         exerciseGroup1.addExercise(programmingExercise2);
 
@@ -1017,11 +999,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate);
+
+        // TODO: it would be nice if we can support programming exercises here as well
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, false);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
-        exam.setNumberOfExercisesInExam(4);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
         exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
@@ -1031,7 +1015,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size()); // we generate two additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(users.size());
 
         // start exercises
 
@@ -1096,7 +1080,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(response.averagePointsAchieved).isEqualTo(calculatedAverageScore);
         assertThat(response.title).isEqualTo(exam.getTitle());
-        assertThat(response.id).isEqualTo(exam.getId());
+        assertThat(response.examId).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
         List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
@@ -1107,29 +1091,38 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         for (var exerciseGroupDTO : response.exerciseGroups) {
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
-            // Calculate the average points in the exerciseGroup, assume that all exercises in a group have the same maxScore
-            var calculatedAvgPointsInGroup = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore() * resultScore / 100;
-            assertEquals(exerciseGroupDTO.averagePointsAchieved, calculatedAvgPointsInGroup, EPSILON);
 
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
             assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);
 
-            // Collect titles of all exercises in the exam group
-            List<String> exerciseTitlesInGroupFromExam = originalExerciseGroup.getExercises().stream().map(exercise -> exercise.getTitle()).collect(Collectors.toList());
-            assertThat(exerciseGroupDTO.containedExercises).containsExactlyInAnyOrderElementsOf(exerciseTitlesInGroupFromExam);
+            // Compare exercise information
+            long noOfExerciseGroupParticipantions = 0;
+            for (var originalExercise : originalExerciseGroup.getExercises()) {
+                // Find the corresponding ExerciseInfo object
+                var exerciseDTO = exerciseGroupDTO.containedExercises.stream().filter(exerciseInfo -> exerciseInfo.exerciseId.equals(originalExercise.getId())).findFirst().get();
+                // Check the exercise title
+                assertThat(originalExercise.getTitle()).isEqualTo(exerciseDTO.title);
+                // Check the max points of the exercise
+                assertThat(originalExercise.getMaxScore()).isEqualTo(exerciseDTO.maxPoints);
+                // Check the number of exercise participants and update the group participant counter
+                var noOfExerciseParticipations = originalExercise.getStudentParticipations().size();
+                noOfExerciseGroupParticipantions += noOfExerciseParticipations;
+                assertThat(Long.valueOf(originalExercise.getStudentParticipations().size())).isEqualTo(exerciseDTO.numberOfParticipants);
+            }
+            assertThat(noOfExerciseGroupParticipantions).isEqualTo(exerciseGroupDTO.numberOfParticipants);
         }
 
         // Ensure that all registered students have a StudentResult
-        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.id).collect(Collectors.toList());
+        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toList());
         List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(user -> user.getId()).collect(Collectors.toList());
         assertThat(studentIdsWithStudentResults).containsExactlyInAnyOrderElementsOf(registeredUsersIds);
 
         // Compare StudentResult with the generated results
         for (var studentResult : response.studentResults) {
             // Find the original user using the id in StudentResult
-            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.id)).findFirst().get();
+            User originalUser = exam.getRegisteredUsers().stream().filter(users -> users.getId().equals(studentResult.userId)).findFirst().get();
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().get();
 
             assertThat(studentResult.name).isEqualTo(originalUser.getName());
@@ -1147,7 +1140,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.id)
+            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
                     .collect(Collectors.toList());
             List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(exercise -> exercise.getId()).collect(Collectors.toList());
             assertThat(exerciseIdsOfStudentResult).containsExactlyInAnyOrderElementsOf(exerciseIdsInStudentExam);
@@ -1155,7 +1148,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 var exerciseResult = entry.getValue();
 
                 // Find the original exercise using the id in ExerciseResult
-                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.id)).findFirst().get();
+                Exercise originalExercise = studentExamOfUser.getExercises().stream().filter(exercise -> exercise.getId().equals(exerciseResult.exerciseId)).findFirst().get();
 
                 // Check that the key is associated with the exerciseGroup which actually contains the exercise in the exerciseResult
                 assertThat(originalExercise.getExerciseGroup().getId()).isEqualTo(entry.getKey());

@@ -19,7 +19,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { catchError, map, throttleTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, throttleTime } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -134,9 +134,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     this.exam = studentExam.exam;
                     this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
                     if (this.isOver()) {
-                        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExamWithExercises: StudentExam) => {
-                            this.studentExam = studentExamWithExercises;
-                        });
+                        this.examParticipationService
+                            .loadStudentExamWithExercisesForSummary(this.exam.course.id, this.exam.id)
+                            .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                     }
                     this.loadingExam = false;
                 },
@@ -173,23 +173,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        const currentComponent = this.currentSubmissionComponents.find((submissionComponent) => submissionComponent.getExercise().id === this.activeExercise.id);
-        if (currentComponent) {
-            console.log(
-                'activeSubmissionComponent: Found component for ' +
-                    (this.activeExerciseIndex + 1) +
-                    '. exercise with id ' +
-                    this.activeExercise.id +
-                    ' with component.submission.id ' +
-                    currentComponent.getSubmission()?.id +
-                    ' in ' +
-                    this.currentSubmissionComponents.length +
-                    ' components',
-            );
-        } else {
-            console.log('activeSubmissionComponent: Component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
-        }
-        return currentComponent;
+        return this.currentSubmissionComponents.find((submissionComponent) => submissionComponent.getExercise().id === this.activeExercise.id);
     }
 
     /**
@@ -402,13 +386,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private activateActiveComponent() {
         this.submissionComponentVisited[this.activeExerciseIndex] = true;
-        console.log('submissionComponentVisited for ' + (this.activeExerciseIndex + 1) + '. exercise = true');
         const activeComponent = this.activeSubmissionComponent;
         if (activeComponent) {
-            console.log('activateActiveComponent: Found active component.submission.id: ' + activeComponent?.getSubmission()?.id);
             activeComponent.onActivate();
-        } else {
-            console.log('activateActiveComponent: component for ' + (this.activeExerciseIndex + 1) + '. exercise not found!');
         }
     }
 
