@@ -24,16 +24,6 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     @EntityGraph(type = LOAD, attributePaths = { "cluster" })
     List<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
 
-    /*
-    @Query("SELECT distinct b FROM TextBlock b " +
-        "LEFT JOIN FETCH Submission s on b.submission = s " +
-        "LEFT JOIN Participation p ON s.participation = p " +
-        "LEFT JOIN TextExercise e ON p.exercise = e " +
-        "WHERE e.id = :#{#exerciseId} AND b.treeId IS NOT NULL")
-    List<TextBlock> findAllByTreeIdExistsAndExerciseId(@Param("id") Long exerciseId);
-     */
-
-    // TODO: Test this query
     List<TextBlock> findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(Long exerciseId);
 
     List<TextBlock> findAllBySubmissionId(Long id);
