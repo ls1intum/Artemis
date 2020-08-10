@@ -8,7 +8,7 @@ import { RepositoryService } from 'app/exercises/shared/result/repository.servic
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
@@ -27,6 +27,21 @@ describe('ResultDetailComponent', () => {
     let resultService: ResultService;
     let buildlogsStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
+
+    const generateSCAFeedback = () => {
+        const scaFeedback = new Feedback();
+        scaFeedback.id = 42;
+        scaFeedback.type = FeedbackType.AUTOMATIC;
+        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'test';
+        return scaFeedback;
+    };
+
+    const generateTestCaseFeedback = () => {
+        const tcFeedback = new Feedback();
+        tcFeedback.id = 55;
+        tcFeedback.type = FeedbackType.AUTOMATIC;
+        return tcFeedback;
+    };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -47,7 +62,7 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has results', () => {
-        const feedbacks = [{ id: 55 }];
+        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result = { id: 89, participation: { id: 55 }, feedbacks } as Result;
 
@@ -55,13 +70,13 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.be.deep.equal(feedbacks);
+        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
         expect(comp.buildLogs).to.be.undefined;
         expect(comp.isLoading).to.be.false;
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have results', () => {
-        const feedbacks = [{ id: 55 }];
+        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result = { id: 89, participation: { id: 55 } } as Result;
         getFeedbackDetailsForResultStub.returns(of({ body: feedbacks as Feedback[] } as HttpResponse<Feedback[]>));
@@ -70,9 +85,24 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
         expect(buildlogsStub).to.not.have.been.called;
-        expect(comp.feedbackList).to.be.deep.equal(feedbacks);
+        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
         expect(comp.buildLogs).to.be.undefined;
         expect(comp.isLoading).to.be.false;
+    });
+
+    it('should split static code analysis feedback and test case feedback correctly', () => {
+        const scaFeedback = generateSCAFeedback();
+        const testCaseFeedback = generateTestCaseFeedback();
+        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result = { id: 89, participation: { id: 55 }, feedbacks } as Result;
+
+        comp.ngOnInit();
+
+        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
+        expect(buildlogsStub).to.not.have.been.called;
+        expect(comp.staticCodeAnalysisFeedbackList).to.have.same.deep.members([scaFeedback]);
+        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and no feedbacks are provided.', () => {

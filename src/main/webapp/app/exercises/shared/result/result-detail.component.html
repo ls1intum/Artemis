@@ -32,7 +32,19 @@
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
-            <div *ngIf="!feedbackList || feedbackList.length == 0"></div>
+        </ng-container>
+        <!-- Static Code Analysis Feedback -->
+        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisFeedbackList && staticCodeAnalysisFeedbackList.length">
+            <hr />
+            <h6>Static Code Analysis Issues</h6>
+            <hr />
+            <div *ngFor="let feedback of staticCodeAnalysisFeedbackList; last as isLast">
+                <p>
+                    Issue in file <span class="code-error">{{ feedback | staticCodeAnalysisLocationText }}</span> detected:
+                </p>
+                <pre>{{ feedback.detailText }}</pre>
+                <hr *ngIf="!isLast" />
+            </div>
         </ng-container>
     </ng-template>
     <!--
