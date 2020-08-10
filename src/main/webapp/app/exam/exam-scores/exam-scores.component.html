@@ -16,86 +16,131 @@
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
         </div>
-        <div class="d-flex mb-2">
-            <h6 *ngIf="examScoreDTO.maxPoints" jhiTranslate="artemisApp.examScores.pointsAchievable" [translateValues]="{ maxPoints: examScoreDTO.maxPoints }">
-                {{ toLocaleString(examScoreDTO.maxPoints) }} Points achievable
-            </h6>
-            <h6
-                class="ml-2"
-                jhiTranslate="artemisApp.examScores.examResultSummary"
-                [translateValues]="{ exercisesLength: exerciseGroups.length, studentsLength: studentResults.length }"
-            >
-                {{ exerciseGroups.length }} exercise groups, {{ studentResults.length }} registered students
-            </h6>
+
+        <div class="d-flex mb-1">
+            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }},</h6>
+            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }},</h6>
+            <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | translate }}</h6>
         </div>
 
-        <div class="mb-3">
+        <!-- Exam Point Statistics -->
+        <table class="table table-bordered table-sm table-clear-width mb-3">
+            <thead class="thead-dark">
+                <tr>
+                    <th></th>
+                    <th>
+                        {{ 'artemisApp.examScores.submittedColumn' | translate }}
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.totalColumn' | translate }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">{{ 'artemisApp.examScores.noOfExams' | translate }}</th>
+                    <td>{{ aggregatedExamResults.noOfExamsFiltered }}</td>
+                    <td>{{ aggregatedExamResults.noOfRegisteredUsers }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | translate }}</th>
+                    <td>
+                        {{ aggregatedExamResults.meanPoints !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPoints, 2, 2) : '-' }}
+                        ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}%)
+                    </td>
+                    <td>
+                        {{ aggregatedExamResults.meanPointsTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotal, 2, 2) : '-' }}
+                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}%)
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{{ 'artemisApp.examScores.medianColumn' | translate }}</th>
+                    <td>
+                        {{ aggregatedExamResults.median !== null ? roundAndPerformLocalConversion(aggregatedExamResults.median, 2, 2) : '-' }}
+                        ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}%)
+                    </td>
+                    <td>
+                        {{ aggregatedExamResults.medianTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianTotal, 2, 2) : '-' }}
+                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}%)
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{{ 'artemisApp.examScores.standardDeviationColumn' | translate }}</th>
+                    <td>{{ aggregatedExamResults.standardDeviation !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviation, 2, 2) : '-' }}</td>
+                    <td>{{ aggregatedExamResults.standardDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotal, 2, 2) : '-' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="mb-2">
             <h4>
                 <span jhiTranslate="artemisApp.examScores.exerciseStatisticsTitle">Exercise Statistics</span>
             </h4>
-            <div class="d-flex align-content-center mb-2">
-                <div class="d-flex align-items-center">
-                    <label class="radio-inline mb-0 d-flex align-items-center">
-                        <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                        <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
-                    </label>
-                    <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
-                        <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                        <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Exercise Statistics Table -->
-            <table class="table table-bordered table-sm body-striped">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>
-                            {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
-                    <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.title }}
-                        </td>
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }}
-                        </td>
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
-                            {{ toLocaleString(exerciseGroupResult.maxPoints) }}
-                        </td>
-                        <td>{{ exerciseResult.title }}</td>
-                        <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
-                        <td>
-                            {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
-                            {{ toLocaleString(exerciseResult.maxPoints) }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
+
+        <!-- Filter settings -->
+        <div class="d-flex align-content-center mb-2">
+            <div class="d-flex align-items-center">
+                <label class="radio-inline mb-0 d-flex align-items-center">
+                    <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                    <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                    <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                    <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Exercise Statistics Table -->
+        <table class="table table-bordered table-sm body-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>
+                        {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                        <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                        <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                        <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
+                    </th>
+                    <th>
+                        {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                        <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
+                    </th>
+                </tr>
+            </thead>
+            <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+                <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                        {{ exerciseGroupResult.title }}
+                    </td>
+                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }}
+                    </td>
+                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                        {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
+                        {{ toLocaleString(exerciseGroupResult.maxPoints) }}
+                    </td>
+                    <td>{{ exerciseResult.title }}</td>
+                    <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
+                    <td>
+                        {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
+                        {{ toLocaleString(exerciseResult.maxPoints) }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
         <!-- Student Result Table -->
         <h4>
