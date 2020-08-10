@@ -1,5 +1,3 @@
-import { AnnotationArray } from 'app/entities/annotation.model';
-
 export const buildLogs = [
     {
         time: '2019-05-15T10:32:11+02:00',
