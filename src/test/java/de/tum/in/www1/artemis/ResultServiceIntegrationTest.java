@@ -160,9 +160,11 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         final var staticCodeAnalysisFeedback = feedbackService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
         final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+        final var optionalSavedResult = resultService.findLatestResultWithFeedbacksForParticipation(programmingExerciseStudentParticipation.getId());
 
         assertThat(optionalResult).isPresent();
+        assertThat(optionalSavedResult).isPresent();
+        final Result savedResult = optionalSavedResult.get();
         assertThat(savedResult.getFeedbacks().containsAll(staticCodeAnalysisFeedback));
         assertThat(optionalResult.get().getFeedbacks().containsAll(staticCodeAnalysisFeedback));
         assertThat(optionalResult.get().getFeedbacks().equals(savedResult.getFeedbacks()));
