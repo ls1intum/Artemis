@@ -32,6 +32,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public studentResults: StudentResult[];
 
     // Data structures for calculated statistics
+    // TODO: Cache already calculated filter dependent statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
     public binWidth = 5;
@@ -64,6 +65,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
+                        // Exam point statistics must be only calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
                     }
@@ -99,9 +101,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Calculates exam statistics while taking the filter settings into account
-     * 1. Exam average absolute and relative, median and standard deviation
-     * 2. The average points and number of participants for each exercise group and exercise
+     * Calculates filter dependent exam statistics. Must be triggered if filter settings change.
+     * 1. The average points and number of participants for each exercise group and exercise
+     * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
         // Create data structure for histogram
@@ -164,12 +166,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
     }
 
+    /**
+     * Calculates statistics on exam granularity for submitted exams and for all exams.
+     */
     private calculateExamStatistics() {
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
 
+        // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
-            // Collect student points independent from the filter settings
             studentPointsTotal.push(studentResult.overallPointsAchieved);
             if (studentResult.submitted) {
                 studentPointsSubmitted.push(studentResult.overallPointsAchieved);
@@ -202,6 +207,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.aggregatedExamResults = examStatistics;
     }
 
+    /**
+     * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
+     * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
+     */
     private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
         for (const groupResult of exerciseGroupResults) {
             // For average points for exercise groups
