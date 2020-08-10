@@ -6,7 +6,6 @@ import { TextBlock } from 'app/entities/text-block.model';
 @Component({
     selector: 'jhi-manual-textblock-selection',
     templateUrl: './manual-textblock-selection.component.html',
-    styles: [],
 })
 export class ManualTextblockSelectionComponent {
     @Input() set textBlockRefs(textBlockRefs: TextBlockRef[]) {
@@ -18,6 +17,7 @@ export class ManualTextblockSelectionComponent {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
     @Input() selectedRef: TextBlockRef | null = null;
+    @Input() readOnly: boolean;
     @Output() selectedRefChange = new EventEmitter<TextBlockRef | null>();
     @Input() submission: TextSubmission;
     textBlockRefGroups: TextBlockRefGroup[];

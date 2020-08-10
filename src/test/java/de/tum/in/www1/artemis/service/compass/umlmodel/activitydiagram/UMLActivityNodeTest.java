@@ -22,7 +22,7 @@ class UMLActivityNodeTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         activityNode = new UMLActivityNode("myActivityNode", "activityNodeId", ACTIVITY_ACTION_NODE);
 

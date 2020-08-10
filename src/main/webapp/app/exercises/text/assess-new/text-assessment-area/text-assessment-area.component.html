@@ -3,6 +3,7 @@
         *ngFor="let ref of textBlockRefs"
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
+        [readOnly]="readOnly"
         (didSelect)="selectedRef = $event"
         (didChange)="textBlockRefsChangeEmit()"
         (didDelete)="removeTextBlockRef($event)"
@@ -12,6 +13,7 @@
     <jhi-manual-textblock-selection
         [(textBlockRefs)]="textBlockRefs"
         [(selectedRef)]="selectedRef"
+        [readOnly]="readOnly"
         (textBlockRefAdded)="addTextBlockRef($event)"
         [submission]="submission"
     ></jhi-manual-textblock-selection>

@@ -50,9 +50,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.studentSubmission;
     }
 
-    onActivate(): void {
-        console.log('TextExamSubmissionComponent.onActivate() for exercise ' + this.exercise.id);
-    }
+    onActivate(): void {}
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.text) {

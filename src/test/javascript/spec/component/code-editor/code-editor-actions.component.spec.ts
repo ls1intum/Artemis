@@ -198,7 +198,7 @@ describe('CodeEditorActionsComponent', () => {
 
         // receive error for save
         saveObservable.error(errorResponse);
-        expect(onErrorSpy).to.have.been.calledOnceWith(errorResponse.error);
+        expect(onErrorSpy).to.have.been.calledOnceWith('saveFailed');
         expect(comp.editorState).to.be.equal(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
         expect(saveButton.nativeElement.disabled).to.be.false;
@@ -272,13 +272,13 @@ describe('CodeEditorActionsComponent', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
         const commitObservable = new Subject<null>();
         const saveObservable = new Subject<null>();
-        const saveChangedFilesStub = stub(comp, 'saveChangedFilesWithTimeout');
+        const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
 
         comp.unsavedFiles = unsavedFiles;
-        comp.saveChangedFilesWithTimeout = saveChangedFilesStub;
+        comp.saveChangedFiles = saveChangedFilesStub;
         fixture.detectChanges();
 
         commitStub.returns(commitObservable);

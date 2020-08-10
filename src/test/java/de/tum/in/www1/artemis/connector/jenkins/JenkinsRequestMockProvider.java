@@ -48,7 +48,7 @@ public class JenkinsRequestMockProvider {
     public void enableMockingOfRequests(JenkinsServer jenkinsServer) {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         this.jenkinsServer = jenkinsServer;
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {

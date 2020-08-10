@@ -30,7 +30,9 @@
                             {{ attachmentExtension(submission.filePath!) | uppercase }}
                         </span>
                     </div>
-                    <button class="btn btn-success mt-4" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+                    <button class="btn btn-success mt-4" (click)="addReferencedFeedback()" [disabled]="readOnly">
+                        {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
+                    </button>
                     <ng-container *ngIf="!busy && !notFound">
                         <div class="row mt-4">
                             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
@@ -45,10 +47,15 @@
                                     [(assessment)]="referencedFeedback[i]"
                                     (assessmentChange)="updateAssessment()"
                                     (deleteAssessment)="deleteAssessment($event)"
+                                    [readOnly]="readOnly"
                                 ></jhi-assessment-detail>
                             </div>
                         </div>
-                        <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()"></jhi-assessment-general-feedback>
+                        <jhi-assessment-general-feedback
+                            [(feedback)]="generalFeedback"
+                            (feedbackChange)="validateAssessment()"
+                            [readOnly]="readOnly"
+                        ></jhi-assessment-general-feedback>
                     </ng-container>
                 </div>
             </div>

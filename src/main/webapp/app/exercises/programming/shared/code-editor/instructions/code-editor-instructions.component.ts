@@ -3,7 +3,6 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Subscription } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -35,7 +34,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     resizeSubscription: Subscription;
 
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -43,8 +42,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
      * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.initialInstructionsWidth = window.screen.width - 300 / 2;
+        this.minInstructionsWidth = window.screen.width / 4 - 50;
         this.interactResizable = interact('.resizable-instructions');
 
         this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {

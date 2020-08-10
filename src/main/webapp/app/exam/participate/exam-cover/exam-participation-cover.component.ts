@@ -27,6 +27,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
     @Input() handInEarly = false;
+    @Input() handInPossible = true;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
@@ -113,7 +114,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * displays popup or start exam participation immediately
      */
     startExam() {
-        this.examParticipationService.loadStudentExamWithExercises(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+        this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
             this.studentExam = studentExam;
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
             if (this.hasStarted()) {
@@ -162,21 +163,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Submits the exam if user has valid token
+     * Submits the exam
      */
     submitExam() {
-        // TODO: refactor following code
-        // this.examSessionService.getCurrentExamSession(this.courseId, this.examId).subscribe((response) => {
-        //     const localSessionToken = this.sessionStorage.retrieve('ExamSessionToken');
-        //     const validSessionToken = response.body?.sessionToken ?? '';
-        //     if (validSessionToken && localSessionToken === validSessionToken) {
-        //         console.log(validSessionToken + ' is the same as ' + localSessionToken);
-        //         // TODO: submit exam
-        //     } else {
-        //         console.log('Something went wrong');
-        //         // error message
-        //     }
-        // });
         this.onExamEnded.emit();
     }
 
@@ -193,7 +182,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get endButtonEnabled(): boolean {
         // TODO: add logic when confirm can be clicked
-        return !!(this.nameIsCorrect && this.confirmed && this.exam);
+        return this.nameIsCorrect && this.confirmed && this.exam && this.handInPossible;
     }
 
     get nameIsCorrect(): boolean {
@@ -202,5 +191,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
+    }
+
+    /**
+     * Returns whether the student failed to submit on time. In this case the end page is adapted.
+     */
+    get studentFailedToSubmit(): boolean {
+        const individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        return individualStudentEndDate.add(this.exam.gracePeriod, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

@@ -29,6 +29,8 @@ public class Feedback implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -229,6 +231,15 @@ public class Feedback implements Serializable {
 
     public void setSecondConflicts(List<TextAssessmentConflict> secondConflicts) {
         this.secondConflicts = secondConflicts;
+    }
+
+    /**
+     * Checks whether the feedback was created by static code analysis
+     * @return true if the it is static code analysis feedback else false
+     */
+    @JsonIgnore
+    public boolean isStaticCodeAnalysisFeedback() {
+        return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
     @Override

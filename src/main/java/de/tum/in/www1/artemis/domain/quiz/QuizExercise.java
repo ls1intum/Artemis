@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice or drag and drop. Artemis supports live quizzes with a start and end time which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
@@ -170,7 +170,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**

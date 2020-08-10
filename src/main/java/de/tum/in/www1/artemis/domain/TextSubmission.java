@@ -94,6 +94,10 @@ public class TextSubmission extends Submission implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    public boolean isEmpty() {
+        return text == null || text.isEmpty();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

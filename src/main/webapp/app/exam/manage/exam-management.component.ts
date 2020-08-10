@@ -20,7 +20,6 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
-    styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
@@ -115,8 +114,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     deleteExam(examId: number) {
         this.examManagementService.delete(this.course.id, examId).subscribe(
             () => {
-                this.eventManager.broadcast(this.examListModificationDeleteEvent);
                 this.dialogErrorSource.next('');
+                this.exams = this.exams.filter((exam) => exam.id !== examId);
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
