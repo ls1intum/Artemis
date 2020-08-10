@@ -105,7 +105,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
             text: f.detailText || '',
             fileName: "src/" + (f.reference?.split(':')[0] || '').split(".").join("/") + ".java", // TODO support other files
-            row: parseInt(f.reference?.split(':')[1] || '0', 10),
+            row: parseInt(f.reference?.split(':')[1] || '0', 10) - 1,
             column: 0,
             type: 'warning', // TODO encode type in feedback
             timestamp: this.result.completionDate != null ? new Date(this.result.completionDate.toString()).valueOf() : 0,
