@@ -16,7 +16,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
-import { TextChange } from 'app/entities/text-change.model';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -53,11 +52,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editorMode: string; // String or mode object
     isLoading = false;
     annotationChange: Subscription;
-    resizeSubscription: Subscription;
     buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-    // We store changes in the editor since the last content emit to update annotation positions.
-    editorChangeLog: TextChange[] = [];
 
     set buildLogErrors(buildLogErrors) {
         this.buildLogErrorsValue = buildLogErrors;
@@ -134,7 +130,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-                this.editorChangeLog.push(change);
+                if (this.buildLogErrors.errors[this.selectedFile]) {
+                    this.buildLogErrors = {
+                        ...this.buildLogErrors,
+                        errors: {
+                            ...this.buildLogErrors.errors,
+                            [this.selectedFile]: this.buildLogErrors.errors[this.selectedFile].update(change)!,
+                        },
+                    };
+                }
             });
 
             // Restore the previous cursor position
@@ -189,27 +193,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.fileSession[this.selectedFile].code !== code) {
                 const cursor = this.editor.getEditor().getCursorPosition();
                 this.fileSession[this.selectedFile] = { code, cursor };
-                if (this.buildLogErrors.errors[this.selectedFile]) {
-                    this.buildLogErrors = {
-                        ...this.buildLogErrors,
-                        errors: {
-                            ...this.buildLogErrors.errors,
-                            [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
-                        },
-                    };
-                }
-                this.editorChangeLog = [];
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
     }
 
+
+
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
-        }
-        if (this.resizeSubscription) {
-            this.resizeSubscription.unsubscribe();
         }
     }
 }
