@@ -120,7 +120,6 @@ public abstract class ExerciseImportService {
             newFeedback.setType(originalFeedback.getType());
             newFeedback.setText(originalFeedback.getText());
             newFeedback.setResult(newResult);
-
             newFeedbacks.add(newFeedback);
         }
         return newFeedbacks;

@@ -62,20 +62,15 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseWithBonus;
-
     private Result result;
 
     @BeforeEach
     public void setUp() {
         database.addUsers(5, 1, 0);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        database.addCourseWithOneProgrammingExercise();
         result = new Result();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
-        programmingExerciseWithBonus = programmingExercises.get(1);
-        database.addTestCasesToProgrammingExercise(programmingExerciseWithBonus, true);
         bambooRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -222,86 +217,155 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldRecalculateScoreScoreWithoutExerciseBonusPoints() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(true).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
+    public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
+        // Set up test cases with bonus
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).afterDueDate(false).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
+        testCases.get("test2").active(true).afterDueDate(false).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
+        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
+        testCaseRepository.saveAll(testCases.values());
 
-        testCaseService.updateResultFromTestCases(result, programmingExerciseWithBonus, true);
+        var result1 = new Result();
+        result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        // Only one successful test because build and run after due date is set. Due to the bonus multiplier, 57% should be reached
-        assertThat(result.getScore()).isEqualTo(57L);
-        assertThat(result.isSuccessful()).isFalse();
+        var result2 = new Result();
+        result2 = updateAndSaveAutomaticResult(result2, true, false, false);
+
+        var result3 = new Result();
+        result3 = updateAndSaveAutomaticResult(result3, false, true, false);
+
+        var result4 = new Result();
+        result4 = updateAndSaveAutomaticResult(result4, false, true, true);
+
+        var result5 = new Result();
+        result5 = updateAndSaveAutomaticResult(result5, true, true, true);
+
+        var result6 = new Result();
+        result6 = updateAndSaveAutomaticResult(result6, false, false, false);
+
+        // Build failure
+        var resultBF = new Result().feedbacks(List.of()).rated(true).score(0L).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
+                .assessmentType(AssessmentType.AUTOMATIC);
+        testCaseService.updateResultFromTestCases(resultBF, programmingExercise, true);
+
+        // Missing feedback
+        var resultMF = new Result();
+        var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
+        resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
+                .rated(true).score(0L).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        testCaseService.updateResultFromTestCases(resultMF, programmingExercise, true);
+
+        // Assertions result1 - calculated
+        assertThat(result1.getScore()).isEqualTo(55L);
+        assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result1.getHasFeedback()).isTrue();
+        assertThat(result1.isSuccessful()).isFalse();
+        assertThat(result1.getFeedbacks()).hasSize(3);
+
+        // Assertions result2 - calculated
+        assertThat(result2.getScore()).isEqualTo(66L);
+        assertThat(result2.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result2.getHasFeedback()).isTrue();
+        assertThat(result2.isSuccessful()).isFalse();
+        assertThat(result2.getFeedbacks()).hasSize(3);
+
+        // Assertions result3 - calculated
+        assertThat(result3.getScore()).isEqualTo(40L);
+        assertThat(result3.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result3.getHasFeedback()).isTrue();
+        assertThat(result3.isSuccessful()).isFalse();
+        assertThat(result3.getFeedbacks()).hasSize(3);
+
+        // Assertions result4 - calculated
+        assertThat(result4.getScore()).isEqualTo(95L);
+        assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
+        assertThat(result4.getHasFeedback()).isTrue();
+        assertThat(result4.isSuccessful()).isFalse();
+        assertThat(result4.getFeedbacks()).hasSize(3);
+
+        // Assertions result5 - capped to 100
+        assertThat(result5.getScore()).isEqualTo(100L);
+        assertThat(result5.getResultString()).isEqualTo("3 of 3 passed");
+        assertThat(result5.getHasFeedback()).isFalse();
+        assertThat(result5.isSuccessful()).isTrue();
+        assertThat(result5.getFeedbacks()).hasSize(3);
+
+        // Assertions result6 - only negative feedback
+        assertThat(result6.getScore()).isEqualTo(0L);
+        assertThat(result6.getResultString()).isEqualTo("0 of 3 passed");
+        assertThat(result6.getHasFeedback()).isTrue();
+        assertThat(result6.isSuccessful()).isFalse();
+        assertThat(result6.getFeedbacks()).hasSize(3);
+
+        // Assertions resultBF - build failure
+        assertThat(resultBF.getScore()).isEqualTo(0L);
+        assertThat(resultBF.getResultString()).isEqualTo("Build Failed"); // Won't get touched by the service method
+        assertThat(resultBF.getHasFeedback()).isFalse();
+        assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
+        assertThat(resultBF.getFeedbacks()).hasSize(0);
+
+        // Assertions resultMF - missing feedback will be created but is negative
+        assertThat(resultMF.getScore()).isEqualTo(55L);
+        assertThat(resultMF.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(resultMF.getHasFeedback()).isFalse(); // Generated missing feedback is omitted
+        assertThat(resultMF.isSuccessful()).isFalse();
+        assertThat(resultMF.getFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
     }
 
     @Test
-    public void shouldRecalculateScoreCappedScoreWithExerciseBonusPoints() {
-        // Add another test case with arbitrary high bonuses so that we run into the cap
-        var testCases = testCaseRepository.findByExerciseId(programmingExerciseWithBonus.getId());
-        testCases.add(new ProgrammingExerciseTestCase().testName("test4").weight(1.0).active(true).exercise(programmingExerciseWithBonus).afterDueDate(false).bonusMultiplier(1000D)
-                .bonusPoints(1000D));
-        testCaseRepository.saveAll(testCases);
+    public void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
+        // Set up test cases with bonus
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).afterDueDate(false).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
+        testCases.get("test2").active(true).afterDueDate(false).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
+        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
+        testCaseRepository.saveAll(testCases.values());
 
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test4").positive(true).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        Long scoreBeforeUpdate = result.getScore();
+        // Score should be capped at 200%
+        programmingExercise.setBonusPoints(programmingExercise.getMaxScore());
+        programmingExerciseRepository.save(programmingExercise);
 
-        // Set max achievable bonus points for the exercise, which will determine the cap we run into
-        Double maxPoints = programmingExercise.getMaxScore();
-        Double maxBonusPoints = 10D;
-        programmingExerciseWithBonus.setBonusPoints(maxBonusPoints);
-        var expectedScore = (long) ((maxPoints + maxBonusPoints) * 100. / maxPoints);
+        var result1 = new Result();
+        result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
-        testCaseService.updateResultFromTestCases(result, programmingExerciseWithBonus, true);
+        var result2 = new Result();
+        result2 = updateAndSaveAutomaticResult(result2, true, false, true);
 
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isTrue();
-    }
+        var result3 = new Result();
+        result3 = updateAndSaveAutomaticResult(result3, true, true, false);
 
-    @Test
-    public void shouldRecalculateScoreWithMultiplierAndBonusPoints() {
-        // Add another active test case to increase the total weight
-        var testCases = testCaseRepository.findByExerciseId(programmingExerciseWithBonus.getId());
-        testCases.add(new ProgrammingExerciseTestCase().testName("test4").weight(3.0).active(true).exercise(programmingExerciseWithBonus).afterDueDate(false).bonusMultiplier(1D)
-                .bonusPoints(0D));
-        testCaseRepository.saveAll(testCases);
+        var result4 = new Result();
+        result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
+        // Assertions result1 - calculated
+        assertThat(result1.getScore()).isEqualTo(93L);
+        assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
+        assertThat(result1.getHasFeedback()).isTrue();
+        assertThat(result1.isSuccessful()).isFalse();
+        assertThat(result1.getFeedbacks()).hasSize(3);
 
-        // Set bonus points for exercise arbitrary high so that the score won't get capped
-        programmingExerciseWithBonus.setBonusPoints(100000D);
-        // Only feedback for test case 'test1' is positive
-        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExerciseWithBonus.getId(), true);
-        double totalWeight = activeTestCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-        double positiveTestCaseWeight = activeTestCases.stream().filter(testCase -> testCase.getTestName().equals("test1"))
-                .mapToDouble(testCase -> testCase.getWeight() * testCase.getBonusMultiplier()).sum();
-        double positiveTestCaseBonusPoints = activeTestCases.stream().filter(testCase -> testCase.getTestName().equals("test1"))
-                .mapToDouble(ProgrammingExerciseTestCase::getBonusPoints).sum();
-        double positiveTestCaseBonusScore = positiveTestCaseBonusPoints / programmingExerciseWithBonus.getMaxScore() * 100.;
-        long expectedScore = (long) (positiveTestCaseWeight * 100. / totalWeight + positiveTestCaseBonusScore);
+        // Assertions result2 - calculated
+        assertThat(result2.getScore()).isEqualTo(133L);
+        assertThat(result2.getResultString()).isEqualTo("2 of 3 passed");
+        assertThat(result2.getHasFeedback()).isTrue();
+        assertThat(result2.isSuccessful()).isTrue();
+        assertThat(result2.getFeedbacks()).hasSize(3);
 
-        testCaseService.updateResultFromTestCases(result, programmingExerciseWithBonus, true);
+        // Assertions result3 - calculated
+        assertThat(result3.getScore()).isEqualTo(180L);
+        assertThat(result3.getResultString()).isEqualTo("2 of 3 passed");
+        assertThat(result3.getHasFeedback()).isTrue();
+        assertThat(result3.isSuccessful()).isTrue();
+        assertThat(result3.getFeedbacks()).hasSize(3);
 
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
+        // Assertions result4 - capped at 200%
+        assertThat(result4.getScore()).isEqualTo(200L);
+        assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
+        assertThat(result4.getHasFeedback()).isTrue();
+        assertThat(result4.isSuccessful()).isTrue();
+        assertThat(result4.getFeedbacks()).hasSize(3);
     }
 
     @Test
