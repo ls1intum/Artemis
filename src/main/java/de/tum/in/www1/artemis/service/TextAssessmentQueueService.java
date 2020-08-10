@@ -58,9 +58,8 @@ public class TextAssessmentQueueService {
             return Optional.empty();
         }
         Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
-        Optional<TextSubmission> best = textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
+        return textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
                 .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
-        return best;
     }
 
     /**
