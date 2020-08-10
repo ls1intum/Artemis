@@ -21,9 +21,8 @@
                     [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                    [disableResetWeights]="(testCases | averageBy: 'weight') <= 1"
-                    (onResetWeights)="resetWeights()"
-                    (onSaveWeights)="saveWeights()"
+                    (onReset)="resetChanges()"
+                    (onSave)="saveChanges()"
                 ></jhi-programming-exercise-manage-test-cases-actions>
             </div>
         </div>
@@ -56,6 +55,30 @@
                         [canEdit]="!editing"
                         [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.WEIGHT"
                         (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"
+                        (onValueUpdate)="updateEditedField($event)"
+                        (onCancel)="leaveEditingWithoutSaving()"
+                    ></jhi-table-editable-field>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
+                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                    <jhi-table-editable-field
+                        [value]="value"
+                        [canEdit]="!editing"
+                        [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_MULTIPLIER"
+                        (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_MULTIPLIER)"
+                        (onValueUpdate)="updateEditedField($event)"
+                        (onCancel)="leaveEditingWithoutSaving()"
+                    ></jhi-table-editable-field>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
+                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                    <jhi-table-editable-field
+                        [value]="value"
+                        [canEdit]="!editing"
+                        [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_POINTS"
+                        (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_POINTS)"
                         (onValueUpdate)="updateEditedField($event)"
                         (onCancel)="leaveEditingWithoutSaving()"
                     ></jhi-table-editable-field>

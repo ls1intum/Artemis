@@ -14,3 +14,6 @@ We use the folder structure of the test repository to differentiate structural a
 2. Behavior test files must be placed in the folder "behavior"
 
 Files in other folders will not be executed!
+
+#### Static Code Analysis
+The pom.xml contains dependencies for the execution of static code analysis, if the option is active for this programming exercise.

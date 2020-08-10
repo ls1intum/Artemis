@@ -109,6 +109,9 @@ public abstract class Exercise implements Serializable {
     @Column(name = "max_score")
     private Double maxScore;
 
+    @Column(name = "bonus_points")
+    private Double bonusPoints;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
@@ -311,6 +314,19 @@ public abstract class Exercise implements Serializable {
 
     public void setMaxScore(Double maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public Double getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public Exercise bonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
+        return this;
+    }
+
+    public void setBonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
     }
 
     public AssessmentType getAssessmentType() {

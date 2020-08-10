@@ -18,6 +18,8 @@ export enum FeedbackType {
     AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 
+export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
+
 export class Feedback implements BaseEntity {
     public id: number;
     public gradingInstruction: GradingInstruction | null;
@@ -32,6 +34,13 @@ export class Feedback implements BaseEntity {
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId: string | null;
+
+    public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
+        if (!that.text) {
+            return false;
+        }
+        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+    }
 
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != null && that.detailText.length > 0;
