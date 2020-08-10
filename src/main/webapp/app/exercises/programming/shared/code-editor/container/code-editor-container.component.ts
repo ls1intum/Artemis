@@ -30,7 +30,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
-export class CodeEditorContainerComponent implements AfterViewInit, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
