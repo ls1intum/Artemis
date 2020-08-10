@@ -42,8 +42,10 @@ public class TextPlagiarismDetectionService {
 
         for (int i = 0; i < textSubmissions.size(); i++) {
             for (int j = i + 1; j < textSubmissions.size(); j++) {
-                final double similarity = comparisionStrategy.compare(textSubmissions.get(i), textSubmissions.get(j));
-                map.put(Set.of(textSubmissions.get(i), textSubmissions.get(j)), similarity);
+                final TextSubmission a = textSubmissions.get(i);
+                final TextSubmission b = textSubmissions.get(j);
+                final double similarity = comparisionStrategy.compare(a, b);
+                map.put(Set.of(a, b), similarity);
             }
         }
 
@@ -58,7 +60,8 @@ public class TextPlagiarismDetectionService {
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions) {
         return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission).filter(Optional::isPresent)
-                .map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission).collect(toUnmodifiableList());
+                .map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission).filter(ts -> !ts.isEmpty())
+                .collect(toUnmodifiableList());
     }
 
 }
