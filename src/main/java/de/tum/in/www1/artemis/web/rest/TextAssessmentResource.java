@@ -39,13 +39,10 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -71,11 +68,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final ResultService resultService;
-
     private final TextAssessmentService textAssessmentService;
-
-    private final TextBlockService textBlockService;
 
     private final TextExerciseService textExerciseService;
 
@@ -85,28 +78,22 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
-
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     private final GradingCriterionService gradingCriterionService;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
-            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockRepository textBlockRepository,
+            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
+            WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
             Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
 
-        this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
-        this.textBlockService = textBlockService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
-        this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
