@@ -104,7 +104,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         const buildLogErrors = this.rawBuildLogs.extractErrors();
         const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
             text: f.detailText || '',
-            fileName: "src/" + (f.reference?.split(':')[0] || '').split(".").join("/") + ".java", // TODO support other files
+            fileName: 'src/' + (f.reference?.split(':')[0] || '').split('.').join('/') + '.java', // TODO support other files
             row: parseInt(f.reference?.split(':')[1] || '0', 10) - 1,
             column: 0,
             type: 'warning', // TODO encode type in feedback
