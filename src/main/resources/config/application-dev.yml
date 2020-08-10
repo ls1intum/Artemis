@@ -62,7 +62,7 @@ spring:
         localInstances: true
 server:
     port: 8080
-    url: http://localhost:8080
+    url: https://artemislocal.ase.in.tum.de
 
 # ===================================================================
 # JHipster specific properties
