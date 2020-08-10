@@ -32,7 +32,7 @@
     <jhi-code-editor-ace
         editorCenter
         [selectedFile]="selectedFile"
-        [sessionId]="participation.id"
+        [sessionId]="participation ? participation.id : 'test'"
         [commitState]="commitState"
         [editorState]="editorState"
         (onFileContentChange)="onFileContentChange($event)"

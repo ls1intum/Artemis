@@ -49,7 +49,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
-    annotations: Array<Annotation>;
+    annotations: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
 
@@ -208,7 +208,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     setAnnotations(annotations: Array<Annotation>) {
         if (annotations.length > 0) {
             const sessionAnnotations = this.loadAnnotations();
-            this.annotations
+            this.annotations = annotations
                 .map((a) => ({ ...a, hash: a.fileName + a.row + a.column + a.text }))
                 .map((a) => (sessionAnnotations[a.hash] == null || sessionAnnotations[a.hash].timestamp < a.timestamp ? a : sessionAnnotations[a.hash]));
         } else {
