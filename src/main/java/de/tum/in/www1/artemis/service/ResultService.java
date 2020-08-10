@@ -94,6 +94,18 @@ public class ResultService {
     }
 
     /**
+     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    public Result findOneWithEagerSubmissionAndFeedback(long resultId) {
+        log.debug("Request to get Result: {}", resultId);
+        return resultRepository.findWithEagerSubmissionAndFeedbackById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    }
+
+    /**
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
@@ -276,11 +288,7 @@ public class ResultService {
         // this call should cascade all feedback relevant changed and save them accordingly
         var savedResult = resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        Optional<Result> savedResultOpt = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
-        if (savedResultOpt.isEmpty()) {
-            throw new EntityNotFoundException("Could not retrieve result with id " + result.getId() + " after save.");
-        }
-        savedResult = savedResultOpt.get();
+        savedResult = findOneWithEagerSubmissionAndFeedback(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
