@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.lang.Integer.compare;
-import static java.util.stream.Collectors.toList;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
@@ -11,8 +10,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
@@ -37,22 +34,6 @@ public class TextBlockService {
 
     public List<TextBlock> findAllBySubmissionId(Long id) {
         return this.textBlockRepository.findAllBySubmissionId(id);
-    }
-
-    /**
-     * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission
-     * @param result the result, which correspond to the TextSubmission, that gets split
-     */
-    public void prepopulateFeedbackBlocks(Result result) {
-        if (result.getFeedbacks().size() != 0 || !(result.getSubmission() instanceof TextSubmission)) {
-            return;
-        }
-
-        final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> blocks = computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
-        final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block.getText()).credits(0d)).collect(toList());
-
-        result.getFeedbacks().addAll(feedbacks);
     }
 
     public List<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
