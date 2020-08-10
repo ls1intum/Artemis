@@ -60,7 +60,7 @@
         "examScores": {
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
-            "exerciseStatisticsTitle": "Aufgaben Statistik",
+            "examStatisticsTitle": "Klausur Statistik",
             "studentResultsTitle": "Studenten Ergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",

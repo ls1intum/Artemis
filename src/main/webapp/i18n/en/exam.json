@@ -60,7 +60,7 @@
         "examScores": {
             "maxPoints": "Maximum Points",
             "title": "Exam Scores",
-            "exerciseStatisticsTitle": "Exercise Statistics",
+            "examStatisticsTitle": "Exam Statistics",
             "studentResultsTitle": "Student Results",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",

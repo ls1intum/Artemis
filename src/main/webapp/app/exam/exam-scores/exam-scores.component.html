@@ -25,7 +25,7 @@
 
         <div class="mb-2">
             <h4>
-                <span jhiTranslate="artemisApp.examScores.exerciseStatisticsTitle">Exercise Statistics</span>
+                <span jhiTranslate="artemisApp.examScores.examStatisticsTitle">Exam Statistics</span>
             </h4>
         </div>
 
@@ -44,7 +44,7 @@
         </div>
 
         <!-- Exam Point Statistics -->
-        <table class="table table-bordered table-sm table-clear-width mb-3">
+        <table class="table table-bordered table-sm table-striped table-clear-width mb-3">
             <thead class="thead-dark">
                 <tr>
                     <th></th>
@@ -98,9 +98,9 @@
                 <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }},{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
             </thead>
             <tbody>
-                <th *ngFor="let noOfStudents of histogramData">
-                    {{ noOfStudents }}
-                </th>
+                <td *ngFor="let noOfStudents of histogramData">
+                    {{ noOfStudents }} ({{ noOfExamsFiltered ? roundAndPerformLocalConversion((noOfStudents * 100) / noOfExamsFiltered, 2, 2) : '-' }}%)
+                </td>
             </tbody>
         </table>
 

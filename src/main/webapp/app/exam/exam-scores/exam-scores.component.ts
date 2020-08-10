@@ -36,6 +36,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
     public binWidth = 5;
     public histogramData: number[];
+    public noOfExamsFiltered: number;
 
     public predicate = 'id';
     public reverse = false;
@@ -157,6 +158,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
+        this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
