@@ -13,9 +13,13 @@ import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
+import { TextChange } from 'app/entities/text-change.model';
+import { LocalStorageService } from 'ngx-webstorage';
+import { fromPairs, pickBy } from 'lodash';
+
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -30,19 +34,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     selectedFile: string;
     @Input()
-    fileChange: FileChange;
+    sessionId: number;
     @Input()
     readonly commitState: CommitState;
     @Input()
     readonly editorState: EditorState;
-    @Input()
-    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
-        return this.buildLogErrorsValue;
-    }
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
-    @Output()
-    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timestamp: number }>();
     @Output()
     onError = new EventEmitter<string>();
 
@@ -51,16 +49,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
+    annotations: Array<Annotation>;
     annotationChange: Subscription;
-    buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
 
-    set buildLogErrors(buildLogErrors) {
-        this.buildLogErrorsValue = buildLogErrors;
-        this.buildLogErrorsChange.emit(this.buildLogErrors);
-    }
-
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
     /**
      * @function ngAfterViewInit
@@ -77,10 +70,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /**
      * @function ngOnChanges
-     * @desc New participation     => reset the file update subscriptions
-     *       File has happened     => update internal variables to reflect change
+     * @desc New clean state       => reset the editor and file update subscriptions
      *       New selectedFile      => load the file from the repository and open it in the editor
-     *       New buildLogErrors    => update the ui with the annotations
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -94,14 +85,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
             this.editor.getEditor().getSession().setValue('');
         }
-        if (changes.fileChange && changes.fileChange.currentValue) {
-            if (this.fileChange instanceof RenameFileChange || this.fileChange instanceof DeleteFileChange) {
-                this.fileSession = this.fileService.updateFileReferences(this.fileSession, this.fileChange);
-            } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
-                this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
-                this.initEditorAfterFileChange();
-            }
-        } else if (
+        if (
             (changes.selectedFile && this.selectedFile) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
@@ -112,9 +96,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             } else {
                 this.initEditorAfterFileChange();
             }
-        } else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
-            // Build log errors have changed - this can be new build results, but also a file change that has updated the object
-            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
     }
 
@@ -130,15 +111,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-                if (this.buildLogErrors.errors[this.selectedFile]) {
-                    this.buildLogErrors = {
-                        ...this.buildLogErrors,
-                        errors: {
-                            ...this.buildLogErrors.errors,
-                            [this.selectedFile]: this.buildLogErrors.errors[this.selectedFile].update(change)!,
-                        },
-                    };
-                }
+                this.updateAnnotations(change);
             });
 
             // Restore the previous cursor position
@@ -149,9 +122,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.getEditor().focus();
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
-            if (this.buildLogErrors) {
-                this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
-            }
+            this.displayAnnotations();
         }
     }
 
@@ -198,11 +169,99 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
-
-
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
+    }
+
+    /**
+     * Recalculates the position of annotations according to changes in the editor.
+     * Annotations are affected by changes in previous rows for row updates,
+     * in the same row and previous columns for column updates.
+     * @param change
+     */
+    updateAnnotations(change: TextChange) {
+        const {
+            start: { row: rowStart, column: columnStart },
+            end: { row: rowEnd, column: columnEnd },
+            action,
+        } = change;
+        if (action === 'remove' || action === 'insert') {
+            const sign = action === 'remove' ? -1 : 1;
+            const updateRowDiff = sign * (rowEnd - rowStart);
+            const updateColDiff = sign * (columnEnd - columnStart);
+
+            this.annotations = this.annotations.map((a) => {
+                return this.selectedFile !== a.fileName
+                    ? a
+                    : {
+                          ...a,
+                          row: a.row > rowStart ? a.row + updateRowDiff : a.row,
+                          column: a.column > columnStart && a.row === rowStart && a.row === rowEnd ? a.column + updateColDiff : a.column,
+                      };
+            });
+            this.displayAnnotations();
+        }
+    }
+
+    setAnnotations(annotations: Array<Annotation>) {
+        if (annotations.length > 0) {
+            const sessionAnnotations = this.loadAnnotations();
+            this.annotations
+                .map((a) => ({ ...a, hash: a.fileName + a.row + a.column + a.text }))
+                .map((a) => (sessionAnnotations[a.hash] == null || sessionAnnotations[a.hash].timestamp < a.timestamp ? a : sessionAnnotations[a.hash]));
+        } else {
+            this.annotations = annotations;
+        }
+
+        this.displayAnnotations();
+    }
+
+    onFileChange(fileChange: FileChange) {
+        if (fileChange instanceof RenameFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.annotations = this.annotations.map((a) =>
+                a.fileName !== fileChange.oldFileName
+                    ? a
+                    : {
+                          ...a,
+                          fileName: fileChange.newFileName,
+                      },
+            );
+            this.storeAnnotations([fileChange.newFileName]);
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.annotations = this.annotations.filter((a) => a.fileName === fileChange.fileName);
+            this.storeAnnotations([fileChange.fileName]);
+        } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
+            this.initEditorAfterFileChange();
+        }
+        this.displayAnnotations();
+    }
+
+    storeAnnotations(savedFiles: Array<string>) {
+        const toUpdate = fromPairs(this.annotations.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
+        const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
+
+        this.localStorageService.store(
+            'annotations-' + this.sessionId,
+            JSON.stringify({
+                ...toKeep,
+                ...toUpdate,
+            }),
+        );
+    }
+
+    loadAnnotations() {
+        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+    }
+
+    displayAnnotations() {
+        this.editor
+            .getEditor()
+            .getSession()
+            .setAnnotations(this.annotations.filter((a) => a.fileName === this.selectedFile));
     }
 }

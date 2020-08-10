@@ -21,7 +21,7 @@
         editorSidebarLeft
         [disableActions]="!editable"
         [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+        [errorFiles]="errorFiles"
         [editorState]="editorState"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
@@ -32,10 +32,9 @@
     <jhi-code-editor-ace
         editorCenter
         [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
+        [sessionId]="participation.id"
         [commitState]="commitState"
         [editorState]="editorState"
-        [(buildLogErrors)]="buildLogErrors"
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
     ></jhi-code-editor-ace>
@@ -46,7 +45,7 @@
         editorBottomArea
         *ngIf="buildable"
         [participation]="participation"
-        [(buildLogErrors)]="buildLogErrors"
+        (onAnnotations)="onAnnotations($event)"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"
     ></jhi-code-editor-build-output>
