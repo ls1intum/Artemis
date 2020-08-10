@@ -158,7 +158,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any): void {
-        if (!this.isOver() && this.studentExam != null && !this.handInEarly) {
+        if (!this.canDeactivate()) {
             $event.returnValue = this.canDeactivateWarning;
         }
     }
