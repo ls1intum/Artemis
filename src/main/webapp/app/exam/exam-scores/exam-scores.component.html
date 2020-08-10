@@ -23,6 +23,26 @@
             <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | translate }}</h6>
         </div>
 
+        <div class="mb-2">
+            <h4>
+                <span jhiTranslate="artemisApp.examScores.exerciseStatisticsTitle">Exercise Statistics</span>
+            </h4>
+        </div>
+
+        <!-- Filter settings -->
+        <div class="d-flex align-content-center mb-2">
+            <div class="d-flex align-items-center">
+                <label class="radio-inline mb-0 d-flex align-items-center">
+                    <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                    <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                    <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                    <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
+                </label>
+            </div>
+        </div>
+
         <!-- Exam Point Statistics -->
         <table class="table table-bordered table-sm table-clear-width mb-3">
             <thead class="thead-dark">
@@ -72,25 +92,17 @@
             </tbody>
         </table>
 
-        <div class="mb-2">
-            <h4>
-                <span jhiTranslate="artemisApp.examScores.exerciseStatisticsTitle">Exercise Statistics</span>
-            </h4>
-        </div>
-
-        <!-- Filter settings -->
-        <div class="d-flex align-content-center mb-2">
-            <div class="d-flex align-items-center">
-                <label class="radio-inline mb-0 d-flex align-items-center">
-                    <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                    <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
-                </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
-                    <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                    <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
-                </label>
-            </div>
-        </div>
+        <!-- Histogram Table -->
+        <table class="table table-bordered table-sm table-clear-width mb-3">
+            <thead class="thead-dark">
+                <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }},{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
+            </thead>
+            <tbody>
+                <th *ngFor="let noOfStudents of histogramData">
+                    {{ noOfStudents }}
+                </th>
+            </tbody>
+        </table>
 
         <!-- Exercise Statistics Table -->
         <table class="table table-bordered table-sm body-striped">

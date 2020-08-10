@@ -34,6 +34,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // Data structures for calculated statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
+    public binWidth = 5;
+    public histogramData: number[];
 
     public predicate = 'id';
     public reverse = false;
@@ -61,7 +63,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        this.calculateStatistics();
+                        this.calculateExamStatistics();
+                        this.calculateFilterDependentStatistics();
                     }
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
@@ -84,13 +87,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
-        this.calculateStatistics();
+        this.calculateFilterDependentStatistics();
         this.changeDetector.detectChanges();
     }
 
     toggleFilterForNonEmptySubmission() {
         this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
-        this.calculateStatistics();
+        this.calculateFilterDependentStatistics();
         this.changeDetector.detectChanges();
     }
 
@@ -99,9 +102,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * 1. Exam average absolute and relative, median and standard deviation
      * 2. The average points and number of participants for each exercise group and exercise
      */
-    private calculateStatistics() {
-        const studentPointsSubmitted: number[] = [];
-        const studentPointsTotal: number[] = [];
+    private calculateFilterDependentStatistics() {
+        // Create data structure for histogram
+        this.histogramData = Array(100 / this.binWidth).fill(0);
+
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
         for (const exerciseGroup of this.exerciseGroups) {
@@ -116,16 +120,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
         for (const studentResult of this.studentResults) {
-            // Collect student points independent from the filter settings
-            studentPointsTotal.push(studentResult.overallPointsAchieved);
-            if (studentResult.submitted) {
-                studentPointsSubmitted.push(studentResult.overallPointsAchieved);
-            }
-
             // Do not take un-submitted exams into account for the exercise statistics if the option was set
             if (!studentResult.submitted && this.filterForSubmittedExams) {
                 continue;
             }
+            // Update histogram data structure
+            let histogramIndex = Math.floor(studentResult.overallScoreAchieved / this.binWidth);
+            if (histogramIndex >= 100 / this.binWidth) {
+                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
+                histogramIndex = 100 / this.binWidth - 1;
+            }
+            this.histogramData[histogramIndex]++;
 
             for (const [exGroupId, studentExerciseResult] of Object.entries(studentResult.exerciseGroupIdToExerciseResult)) {
                 // Ignore exercise results with only empty submission if the option was set
@@ -152,15 +157,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        // Calculate exam statistics
-        this.calculateExamStatistics(studentPointsSubmitted, studentPointsTotal);
-
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
     }
 
-    private calculateExamStatistics(studentPointsSubmitted: number[], studentPointsTotal: number[]) {
+    private calculateExamStatistics() {
+        const studentPointsSubmitted: number[] = [];
+        const studentPointsTotal: number[] = [];
+
+        for (const studentResult of this.studentResults) {
+            // Collect student points independent from the filter settings
+            studentPointsTotal.push(studentResult.overallPointsAchieved);
+            if (studentResult.submitted) {
+                studentPointsSubmitted.push(studentResult.overallPointsAchieved);
+            }
+        }
+
         const examStatistics = new AggregatedExamResult();
         // Calculate statistics for submitted exams
         if (studentPointsSubmitted.length) {
