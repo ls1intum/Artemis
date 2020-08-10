@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ public class UMLActivity extends UMLActivityElement {
 
     public final static String UML_ACTIVITY_TYPE = "Activity";
 
-    private List<UMLActivityElement> childElements;
+    private final List<UMLActivityElement> childElements;
 
     public UMLActivity(String name, List<UMLActivityElement> childElements, String jsonElementID) {
         super(name, jsonElementID);

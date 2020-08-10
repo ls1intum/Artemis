@@ -33,6 +33,8 @@ public class JSONMapping {
 
     public static final String relationshipEndpointID = "element";
 
+    public static final String relationshipMessages = "messages";
+
     public static final String relationshipType = "type";
 
     public static final String relationshipMultiplicity = "multiplicity";

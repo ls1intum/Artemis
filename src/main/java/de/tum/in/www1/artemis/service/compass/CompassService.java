@@ -453,11 +453,6 @@ public class CompassService {
         assessAutomatically(modelId, exerciseId);
     }
 
-    private CompassCalculationEngine getCalculationEngine(long exerciseId) { // TODO throw exception if exerciseId not existing
-        loadExerciseIfSuspended(exerciseId);
-        return (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-    }
-
     /**
      * Checks if a calculation engine for the given exerciseId already exists. If not, it tries to load a new engine.
      *

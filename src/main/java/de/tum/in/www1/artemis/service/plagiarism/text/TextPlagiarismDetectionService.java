@@ -21,30 +21,31 @@ public class TextPlagiarismDetectionService {
      * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
      *
      * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
-     * @param comparisionStrategy TextComparisionStrategy
+     * @param comparisonStrategy TextComparisonStrategy
      * @return Map of text submission pairs and distance score
      */
     public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions,
-            TextComparisionStrategy comparisionStrategy) {
+            TextComparisonStrategy comparisonStrategy) {
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(exerciseWithParticipationsAndSubmissions);
-        return compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisionStrategy);
+        return compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy);
     }
 
     /**
-     * Pairwise comparision of text submissions using a TextComparisionStrategy
+     * Pairwise comparison of text submissions using a TextComparisonStrategy
      *
      * @param textSubmissions List of text submissions
-     * @param comparisionStrategy TextComparisionStrategy
+     * @param comparisonStrategy TextComparisonStrategy
      * @return Map of text submission pairs and distance score
      */
-    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(List<TextSubmission> textSubmissions, TextComparisionStrategy comparisionStrategy) {
+    public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(List<TextSubmission> textSubmissions, TextComparisonStrategy comparisonStrategy) {
         final Map<Set<TextSubmission>, Double> map = new HashMap<>();
 
+        // it is intended to use the classic for loop here, because we only want to check similarity between two different submissions once
         for (int i = 0; i < textSubmissions.size(); i++) {
             for (int j = i + 1; j < textSubmissions.size(); j++) {
                 final TextSubmission a = textSubmissions.get(i);
                 final TextSubmission b = textSubmissions.get(j);
-                final double similarity = comparisionStrategy.compare(a, b);
+                final double similarity = comparisonStrategy.compare(a, b);
                 map.put(Set.of(a, b), similarity);
             }
         }

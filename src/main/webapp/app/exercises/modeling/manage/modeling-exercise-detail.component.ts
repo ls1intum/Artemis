@@ -9,6 +9,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -22,12 +23,14 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     gradingInstructions: SafeHtml;
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
+    checkPlagiarismInProgress: boolean;
 
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -51,6 +54,19 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    checkPlagiarism() {
+        this.checkPlagiarismInProgress = true;
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(this.handleCheckPlagiarismResponse, () => {
+            this.checkPlagiarismInProgress = false;
+        });
+    }
+
+    handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
+        this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
+        this.checkPlagiarismInProgress = false;
+        // TODO: display or download result
+    };
 
     previousState() {
         window.history.back();

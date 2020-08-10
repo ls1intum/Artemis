@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +51,6 @@ public class UMLActivityDiagram extends UMLDiagram {
         modelElements.addAll(activityNodeList);
         modelElements.addAll(activityList);
         modelElements.addAll(controlFlowList);
-
         return modelElements;
     }
 

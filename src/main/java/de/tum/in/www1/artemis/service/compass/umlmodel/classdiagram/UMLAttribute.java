@@ -11,7 +11,7 @@ public class UMLAttribute extends UMLElement {
 
     public final static String UML_ATTRIBUTE_TYPE = "ClassAttribute";
 
-    private UMLClass parentClass;
+    private UMLElement parentElement;
 
     private String name;
 
@@ -25,21 +25,21 @@ public class UMLAttribute extends UMLElement {
     }
 
     /**
-     * Get the parent class of this attribute, i.e. the UML class that contains it.
+     * Get the parent element of this attribute, i.e. the UML class that contains it.
      *
-     * @return the UML class that contains this attribute
+     * @return the UML element that contains this attribute
      */
-    public UMLClass getParentClass() {
-        return parentClass;
+    public UMLElement getParentElement() {
+        return parentElement;
     }
 
     /**
-     * Set the parent class of this attribute, i.e. the UML class that contains it.
+     * Set the parent element of this attribute, i.e. the UML class that contains it.
      *
-     * @param parentClass the UML class that contains this attribute
+     * @param parentElement the UML element that contains this attribute
      */
-    public void setParentClass(UMLClass parentClass) {
-        this.parentClass = parentClass;
+    public void setParentElement(UMLElement parentElement) {
+        this.parentElement = parentElement;
     }
 
     /**
@@ -80,16 +80,16 @@ public class UMLAttribute extends UMLElement {
      * @return true if the parent classes are similar/equal, false otherwise
      */
     private boolean parentsSimilar(UMLAttribute referenceAttribute) {
-        if (parentClass.getSimilarityID() != -1 && referenceAttribute.getParentClass().getSimilarityID() != -1) {
-            return parentClass.getSimilarityID() == referenceAttribute.getParentClass().getSimilarityID();
+        if (parentElement.getSimilarityID() != -1 && referenceAttribute.getParentElement().getSimilarityID() != -1) {
+            return parentElement.getSimilarityID() == referenceAttribute.getParentElement().getSimilarityID();
         }
 
-        return parentClass.similarity(referenceAttribute.getParentClass()) > CompassConfiguration.EQUALITY_THRESHOLD;
+        return parentElement.similarity(referenceAttribute.getParentElement()) > CompassConfiguration.EQUALITY_THRESHOLD;
     }
 
     @Override
     public String toString() {
-        return "Attribute " + name + (attributeType != null && !attributeType.equals("") ? ": " + attributeType : "") + " in class " + parentClass.getName();
+        return "Attribute " + name + (attributeType != null && !attributeType.equals("") ? ": " + attributeType : "") + " in class " + parentElement.getName();
     }
 
     @Override
@@ -110,6 +110,6 @@ public class UMLAttribute extends UMLElement {
 
         UMLAttribute otherAttribute = (UMLAttribute) obj;
 
-        return Objects.equals(otherAttribute.getAttributeType(), attributeType) && Objects.equals(otherAttribute.getParentClass().getName(), parentClass.getName());
+        return Objects.equals(otherAttribute.getAttributeType(), attributeType) && Objects.equals(otherAttribute.getParentElement().getName(), parentElement.getName());
     }
 }

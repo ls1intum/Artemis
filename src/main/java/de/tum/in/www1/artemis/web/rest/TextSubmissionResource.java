@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.cosine;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.metricLongestCommonSubsequence;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.nGram;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.normalizedLevenshtein;
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.cosine;
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.metricLongestCommonSubsequence;
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.nGram;
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.normalizedLevenshtein;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;

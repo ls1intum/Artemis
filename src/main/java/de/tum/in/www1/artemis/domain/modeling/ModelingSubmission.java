@@ -8,6 +8,8 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Submission;
 
 /**
@@ -80,5 +82,19 @@ public class ModelingSubmission extends Submission implements Serializable {
     @Override
     public String toString() {
         return "ModelingSubmission{" + "id=" + getId() + "}";
+    }
+
+    public boolean isEmpty() {
+        return isEmpty(new ObjectMapper());
+    }
+
+    public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
+        try {
+            // TODO: further improve this!!
+            return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("elements").isEmpty();
+        }
+        catch (JsonProcessingException ex) {
+            return false;
+        }
     }
 }
