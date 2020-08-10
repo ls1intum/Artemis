@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -17,6 +18,9 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
 public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -90,6 +94,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void init(){
+        assumeTrue(isTextAssessmentClusteringAvailable());
         database.addUsers(10, 0, 0);
         database.addCourseWithOneFinishedTextExercise();
         database.addCourseWithOneFinishedTextExercise();
@@ -185,5 +190,19 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(textClusterRepository.findAll(), hasSize(1));
         assertThat(textTreeNodeRepository.findAll(), hasSize(1));
         assertThat(textPairwiseDistanceRepository.findAll(), hasSize(1));
+    }
+
+    private static boolean isTextAssessmentClusteringAvailable() {
+        try {
+            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(CLUSTERING_ENDPOINT).openConnection();
+            httpURLConnection.setRequestMethod("HEAD");
+            httpURLConnection.setConnectTimeout(1000);
+            final int responseCode = httpURLConnection.getResponseCode();
+
+            return (responseCode == 405);
+        }
+        catch (IOException e) {
+            return false;
+        }
     }
 }
