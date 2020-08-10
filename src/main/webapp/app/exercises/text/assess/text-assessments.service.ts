@@ -86,16 +86,6 @@ export class TextAssessmentsService {
     }
 
     /**
-     * Get a result with predefined text blocks.
-     * @param resultId id of the result that should be retrieved of type {number}
-     */
-    public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
-    }
-
-    /**
      * Get all feedback items for a submission.
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
