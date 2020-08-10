@@ -171,7 +171,23 @@ public class StudentExamResource {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
-        return accessFailure.orElseGet(() -> studentExamService.submitStudentExam(studentExam, currentUser));
+        if (accessFailure.isPresent()) {
+            return accessFailure.get();
+        }
+
+        StudentExam existingStudentExam = studentExamService.findOneWithExercises(studentExam.getId());
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
+            return conflict("studentExam", "alreadySubmitted", "You have already submitted.");
+        }
+
+        // checks if student exam is live (after start date, before end date + grace period)
+        if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
+                || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod())))) {
+            return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
+        }
+
+        return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
     }
 
     /**
