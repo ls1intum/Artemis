@@ -108,7 +108,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             row: parseInt(f.reference?.split(':')[1] || '0'),
             column: 0,
             type: 'warning', // TODO encode type in feedback
-            timestamp: this.result.completionDate?.unix() || 0,
+            timestamp: this.result.completionDate != null ? new Date(this.result.completionDate.toString()).valueOf() : 0,
         }));
         this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisIssues]);
     }
