@@ -277,7 +277,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // ace editor
         expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.annotations.map(a => omit(a, "hash"))).to.deep.equal(extractedBuildLogErrors);
+        expect(container.aceEditor.annotations.map((a) => omit(a, 'hash'))).to.deep.equal(extractedBuildLogErrors);
         expect(container.aceEditor.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions

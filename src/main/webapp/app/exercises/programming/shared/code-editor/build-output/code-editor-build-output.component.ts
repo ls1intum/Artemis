@@ -81,7 +81,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
-                    tap((result) => this.result = result),
+                    tap((result) => (this.result = result)),
                     switchMap((result) => this.fetchBuildResults(result)),
                     map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
@@ -102,16 +102,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     private extractAnnotations() {
         const buildLogErrors = this.rawBuildLogs.extractErrors();
-        const codeAnalysisIssues = this.result.feedbacks
-            .filter(Feedback.isStaticCodeAnalysisFeedback)
-            .map<Annotation>(f => ({
-                text: f.detailText || "",
-                fileName: f.reference?.split(":")[0] || "",
-                row: parseInt(f.reference?.split(":")[1] || "0"),
-                column: 0,
-                type: "warning", // TODO encode type in feedback
-                timestamp: this.result.completionDate?.unix() || 0
-            }));
+        const codeAnalysisIssues = this.result.feedbacks.filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
+            text: f.detailText || '',
+            fileName: f.reference?.split(':')[0] || '',
+            row: parseInt(f.reference?.split(':')[1] || '0'),
+            column: 0,
+            type: 'warning', // TODO encode type in feedback
+            timestamp: this.result.completionDate?.unix() || 0,
+        }));
         this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisIssues]);
     }
 
@@ -138,7 +136,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .pipe(
                 // Ignore initial null result from service
                 filter((result) => !!result),
-                tap((result) => this.result = result!),
+                tap((result) => (this.result = result!)),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);

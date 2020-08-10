@@ -205,9 +205,16 @@ describe('CodeEditorBuildOutputComponent', () => {
                 log: '[INFO] 1 error',
             },
         ];
-        const expectedBuildLogErrors = [{
-            fileName: 'src/todo/main/BubbleSort.java', type: 'error', row: 7, column: 11, text: 'cannot find symbol', timestamp: 1557909131000
-        }];
+        const expectedBuildLogErrors = [
+            {
+                fileName: 'src/todo/main/BubbleSort.java',
+                type: 'error',
+                row: 7,
+                column: 11,
+                text: 'cannot find symbol',
+                timestamp: 1557909131000,
+            },
+        ];
         getBuildLogsStub.returns(of(buildLogs));
         subscribeForLatestResultOfParticipationStub.returns(of(result));
 

@@ -23,8 +23,15 @@ export const buildLogs = [
     },
 ];
 
-export const extractedBuildLogErrors = [{
-    fileName: 'src/todo/main/BubbleSort.java', type: 'error', row: 7, column: 11, text: 'cannot find symbol', timestamp: 1557909131000
-}];
+export const extractedBuildLogErrors = [
+    {
+        fileName: 'src/todo/main/BubbleSort.java',
+        type: 'error',
+        row: 7,
+        column: 11,
+        text: 'cannot find symbol',
+        timestamp: 1557909131000,
+    },
+];
 
 export const extractedErrorFiles = ['src/todo/main/BubbleSort.java'];
