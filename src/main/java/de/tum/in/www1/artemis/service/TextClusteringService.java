@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.text.*;
-import de.tum.in.www1.artemis.repository.PairwiseDistanceRepository;
+import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class TextClusteringService {
 
     private final TextTreeNodeRepository treeNodeRepository;
 
-    private final PairwiseDistanceRepository pairwiseDistanceRepository;
+    private final TextPairwiseDistanceRepository pairwiseDistanceRepository;
 
     private final TextEmbeddingService textEmbeddingService;
 
@@ -59,7 +59,7 @@ public class TextClusteringService {
     private int embeddingChunkSize;
 
     public TextClusteringService(TextBlockService textBlockService, TextSubmissionService textSubmissionService, TextClusterRepository textClusterRepository,
-                                 TextBlockRepository textBlockRepository, TextTreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
+                                 TextBlockRepository textBlockRepository, TextTreeNodeRepository treeNodeRepository, TextPairwiseDistanceRepository pairwiseDistanceRepository,
                                  TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
                                  TextAssessmentQueueService textAssessmentQueueService, TextSegmentationService textSegmentationService) {
         this.textBlockService = textBlockService;
@@ -142,14 +142,6 @@ public class TextClusteringService {
         }
 
         final List<TextTreeNode> treeNodes = treeNodeRepository.saveAll(clusterTree);
-        // Add an artificial root node
-        long rootIndex = distanceMatrix.size() - 1;
-        TextTreeNode rootNode = new TextTreeNode();
-        rootNode.setChild(rootIndex);
-        rootNode.setParent(rootIndex);
-        rootNode.setChild_size(0);
-        rootNode.setLambda_val(-1);
-        treeNodes.add((int) rootIndex, rootNode);
 
         // Update exercise of the treeNodes and store in Database
         for(TextTreeNode node: treeNodes) {
@@ -166,6 +158,8 @@ public class TextClusteringService {
                 dist.setBlock_j(j);
                 dist.setDistance(distanceMatrix.get(i).get(j));
                 dist.setExercise(exercise);
+                // The id is set to a proper value when being saved to the database
+                dist.setId(-1);
                 pairwiseDistanceRepository.save(dist);
             }
         }

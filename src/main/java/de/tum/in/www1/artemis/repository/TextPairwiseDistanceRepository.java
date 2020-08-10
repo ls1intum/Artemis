@@ -11,7 +11,7 @@ import java.util.List;
  * Spring Data repository for the TextPairwiseDistance entity.
  */
 @Repository
-public interface PairwiseDistanceRepository extends JpaRepository<TextPairwiseDistance, Long> {
+public interface TextPairwiseDistanceRepository extends JpaRepository<TextPairwiseDistance, Long> {
 
     List<TextPairwiseDistance> findAllByExercise(TextExercise exercise);
 }

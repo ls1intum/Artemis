@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.PairwiseDistanceRepository;
+import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 
 @Service
@@ -34,12 +34,12 @@ public class AutomaticTextFeedbackService {
 
     private final TextTreeNodeRepository treeNodeRepository;
 
-    private final PairwiseDistanceRepository pairwiseDistanceRepository;
+    private final TextPairwiseDistanceRepository pairwiseDistanceRepository;
 
     private final TextClusterRepository clusterRepository;
 
     public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository,
-                                        TextTreeNodeRepository treeNodeRepository, PairwiseDistanceRepository pairwiseDistanceRepository,
+                                        TextTreeNodeRepository treeNodeRepository, TextPairwiseDistanceRepository pairwiseDistanceRepository,
                                         TextClusterRepository clusterRepository) {
         this.feedbackService = feedbackService;
         this.textBlockRepository = textBlockRepository;
