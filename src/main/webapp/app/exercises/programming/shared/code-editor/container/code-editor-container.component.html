@@ -33,6 +33,7 @@
         editorCenter
         [selectedFile]="selectedFile"
         [sessionId]="participation ? participation.id : 'test'"
+        [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
         (onFileContentChange)="onFileContentChange($event)"

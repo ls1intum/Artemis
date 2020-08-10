@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs, uniq } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -30,7 +30,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements AfterViewInit, ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -68,6 +68,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     commitState: CommitState;
 
     errorFiles: string[];
+    annotations: Array<Annotation>;
 
     constructor(
         private participationService: ParticipationService,
@@ -225,7 +226,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     onAnnotations(annotations: Array<Annotation>) {
-        this.aceEditor.setAnnotations(annotations);
+        this.annotations = annotations;
         this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
     }
 }

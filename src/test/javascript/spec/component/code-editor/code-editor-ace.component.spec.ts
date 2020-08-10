@@ -177,13 +177,13 @@ describe('CodeEditorAceComponent', () => {
 
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-        comp.annotations = annotations;
+        comp.annotationsArray = annotations;
 
         comp.updateAnnotations(editorChange);
         comp.onFileTextChanged(newFileContent);
 
         expect(onFileContentChangeSpy).to.have.been.calledOnceWithExactly({ file: selectedFile, fileContent: newFileContent });
         const newAnnotations = [{ fileName: selectedFile, text: 'error', type: 'error', timestamp: 0, row: 4, column: 4 }];
-        expect(comp.annotations).to.deep.equal(newAnnotations);
+        expect(comp.annotationsArray).to.deep.equal(newAnnotations);
     });
 });

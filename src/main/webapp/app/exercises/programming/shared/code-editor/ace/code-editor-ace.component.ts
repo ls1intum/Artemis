@@ -36,6 +36,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     sessionId: number;
     @Input()
+    set annotations(annotations: Array<Annotation>) {
+        this.setAnnotations(annotations);
+    }
+    @Input()
     readonly commitState: CommitState;
     @Input()
     readonly editorState: EditorState;
@@ -49,7 +53,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
-    annotations: Array<Annotation> = [];
+    annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
 
@@ -192,7 +196,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             const updateRowDiff = sign * (rowEnd - rowStart);
             const updateColDiff = sign * (columnEnd - columnStart);
 
-            this.annotations = this.annotations.map((a) => {
+            this.annotationsArray = this.annotationsArray.map((a) => {
                 return this.selectedFile !== a.fileName
                     ? a
                     : {
@@ -208,11 +212,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     setAnnotations(annotations: Array<Annotation>) {
         if (annotations.length > 0) {
             const sessionAnnotations = this.loadAnnotations();
-            this.annotations = annotations
+            this.annotationsArray = annotations
                 .map((a) => ({ ...a, hash: a.fileName + a.row + a.column + a.text }))
                 .map((a) => (sessionAnnotations[a.hash] == null || sessionAnnotations[a.hash].timestamp < a.timestamp ? a : sessionAnnotations[a.hash]));
         } else {
-            this.annotations = annotations;
+            this.annotationsArray = annotations;
         }
 
         this.displayAnnotations();
@@ -221,7 +225,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
-            this.annotations = this.annotations.map((a) =>
+            this.annotationsArray = this.annotationsArray.map((a) =>
                 a.fileName !== fileChange.oldFileName
                     ? a
                     : {
@@ -232,7 +236,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
-            this.annotations = this.annotations.filter((a) => a.fileName === fileChange.fileName);
+            this.annotationsArray = this.annotationsArray.filter((a) => a.fileName === fileChange.fileName);
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
             this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
@@ -242,7 +246,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     storeAnnotations(savedFiles: Array<string>) {
-        const toUpdate = fromPairs(this.annotations.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
+        const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
         this.localStorageService.store(
@@ -262,6 +266,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.editor
             .getEditor()
             .getSession()
-            .setAnnotations(this.annotations.filter((a) => a.fileName === this.selectedFile));
+            .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
     }
 }
