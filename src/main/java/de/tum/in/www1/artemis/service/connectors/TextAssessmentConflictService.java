@@ -26,7 +26,7 @@ public class TextAssessmentConflictService {
     @Value("${artemis.automatic-text.secret}")
     private String API_SECRET;
 
-    private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
+    private final RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
     // region Request/Response DTOs
     private static class Request {

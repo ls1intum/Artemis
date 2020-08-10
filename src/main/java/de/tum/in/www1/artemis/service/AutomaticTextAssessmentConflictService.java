@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictResponseDTO;
 @Service
 @Profile("automaticText")
 public class AutomaticTextAssessmentConflictService {
+
+    private final Logger log = LoggerFactory.getLogger(AutomaticTextAssessmentConflictService.class);
 
     private final TextAssessmentConflictRepository textAssessmentConflictRepository;
 
@@ -53,8 +57,9 @@ public class AutomaticTextAssessmentConflictService {
 
         // Create TextAssessmentConflictRequestDTO objects that are used in service calls
         List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = feedbackList.stream().map(feedback -> {
-            TextBlock b = textBlocks.stream().filter(block -> block.getId().equals(feedback.getReference())).findFirst().get();
-            return new TextAssessmentConflictRequestDTO(b.getId(), b.getText(), b.getCluster().getId(), feedback.getId(), feedback.getDetailText(), feedback.getCredits());
+            TextBlock textBlock = textBlocks.stream().filter(block -> block.getId().equals(feedback.getReference())).findFirst().get();
+            return new TextAssessmentConflictRequestDTO(textBlock.getId(), textBlock.getText(), textBlock.getCluster().getId(), feedback.getId(), feedback.getDetailText(),
+                    feedback.getCredits());
         }).collect(toList());
 
         // remove the objects that have no text block cluster id
@@ -70,7 +75,7 @@ public class AutomaticTextAssessmentConflictService {
             conflicts = textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, exerciseId, 0);
         }
         catch (NetworkingError networkingError) {
-            networkingError.printStackTrace();
+            log.error(networkingError.getMessage(), networkingError);
             return;
         }
 
@@ -88,7 +93,7 @@ public class AutomaticTextAssessmentConflictService {
                     textAssessmentConflict.setFirstFeedback(firstFeedback.get());
                     textAssessmentConflict.setSecondFeedback(secondFeedback.get());
                     textAssessmentConflict.setType(conflict.getType());
-                    textAssessmentConflict.setCreated_at(ZonedDateTime.now());
+                    textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
                     textAssessmentConflicts.add(textAssessmentConflict);
                 }
             });

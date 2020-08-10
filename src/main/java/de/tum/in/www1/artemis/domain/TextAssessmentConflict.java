@@ -33,10 +33,10 @@ public class TextAssessmentConflict implements Serializable {
     private Boolean conflict;
 
     @Column(name = "created_at")
-    private ZonedDateTime created_at;
+    private ZonedDateTime createdAt;
 
     @Column(name = "solved_at")
-    private ZonedDateTime solved_at;
+    private ZonedDateTime solvedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
@@ -67,19 +67,19 @@ public class TextAssessmentConflict implements Serializable {
     }
 
     public ZonedDateTime getCreatedAt() {
-        return created_at;
+        return createdAt;
     }
 
-    public void setCreated_at(ZonedDateTime createdAt) {
-        this.created_at = createdAt;
+    public void setCreatedAt(ZonedDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public ZonedDateTime getSolvedAt() {
-        return solved_at;
+        return solvedAt;
     }
 
     public void setSolvedAt(ZonedDateTime solvedAt) {
-        this.solved_at = solvedAt;
+        this.solvedAt = solvedAt;
     }
 
     public TextAssessmentConflictType getType() {
