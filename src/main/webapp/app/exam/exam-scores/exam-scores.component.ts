@@ -65,7 +65,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        // Exam point statistics must be only calculated once as they are not filter dependent
+                        this.calculateFilterDependentStatistics();
+                    }
+                    // Only try to calculate statistics if the exam has exercise groups and student results
+                    if (this.studentResults && this.exerciseGroups) {
+                        // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
                     }
