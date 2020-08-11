@@ -70,7 +70,7 @@
         "rxjs-compat": "6.6.2",
         "showdown": "1.9.1",
         "showdown-katex": "0.6.0",
-        "simple-statistics": "^7.1.0",
+        "simple-statistics": "7.1.0",
         "sinon": "9.0.2",
         "sinon-chai": "3.5.0",
         "smoothscroll-polyfill": "0.4.4",
