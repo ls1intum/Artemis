@@ -7,7 +7,6 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLObject extends UMLElement {
 
@@ -71,7 +70,7 @@ public class UMLObject extends UMLElement {
         }
         UMLObject referenceObject = (UMLObject) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
 
         return ensureSimilarityRange(similarity);
     }

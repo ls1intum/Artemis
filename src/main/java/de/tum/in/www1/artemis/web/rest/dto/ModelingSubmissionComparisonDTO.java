@@ -4,15 +4,35 @@ import org.jetbrains.annotations.NotNull;
 
 public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmissionComparisonDTO> {
 
-    public Long submissionId1;
+    private Long submissionId1;
 
-    public Long submissionId2;
+    private Long submissionId2;
 
-    public Long score1;
+    private Long score1;
 
-    public Long score2;
+    private Long score2;
 
-    public Double similarity;
+    private Double similarity;
+
+    public Long getSubmissionId1() {
+        return submissionId1;
+    }
+
+    public Long getSubmissionId2() {
+        return submissionId2;
+    }
+
+    public Long getScore1() {
+        return score1;
+    }
+
+    public Long getScore2() {
+        return score2;
+    }
+
+    public Double getSimilarity() {
+        return similarity;
+    }
 
     public ModelingSubmissionComparisonDTO similarity(Double similarity) {
         this.similarity = similarity;

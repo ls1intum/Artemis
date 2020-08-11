@@ -35,15 +35,26 @@ public class UMLCommunicationLink extends UMLElement {
 
         double similarity = 0;
 
-        similarity += referenceLink.getSource().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += referenceLink.getTarget().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        double sourceWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        double targetWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        // the remaining 50% are taken into account for the messages
-        double messageWeight = (1 - 2 * CompassConfiguration.RELATION_ELEMENT_WEIGHT) / messages.size();
+        // when there are not messages, we increase the weight so that the links can still have a similarity of 100%
+        if (messages.isEmpty()) {
+            sourceWeight = 0.5;
+            targetWeight = 0.5;
+        }
 
-        for (var message : messages) {
-            double similarityValue = referenceLink.messages.stream().mapToDouble(referenceLinkMessage -> referenceLinkMessage.similarity(message)).max().orElse(0);
-            similarity += messageWeight * similarityValue;
+        similarity += referenceLink.getSource().similarity(source) * sourceWeight;
+        similarity += referenceLink.getTarget().similarity(target) * targetWeight;
+
+        if (!messages.isEmpty()) {
+            // the remaining 50% are taken into account for the messages
+            double messageWeight = (1 - 2 * CompassConfiguration.RELATION_ELEMENT_WEIGHT) / messages.size();
+
+            for (var message : messages) {
+                double similarityValue = referenceLink.messages.stream().mapToDouble(referenceLinkMessage -> referenceLinkMessage.similarity(message)).max().orElse(0);
+                similarity += messageWeight * similarityValue;
+            }
         }
 
         return ensureSimilarityRange(similarity);
