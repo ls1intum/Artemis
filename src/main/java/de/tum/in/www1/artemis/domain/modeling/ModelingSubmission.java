@@ -84,10 +84,24 @@ public class ModelingSubmission extends Submission implements Serializable {
         return "ModelingSubmission{" + "id=" + getId() + "}";
     }
 
+    /**
+     * checks if the modeling submission is empty by using a new object mapper.
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     *
+     * @return true if the submission is empty, false otherwise
+     */
     public boolean isEmpty() {
         return isEmpty(new ObjectMapper());
     }
 
+    /**
+     * checks if the modeling submission is empty by using a predefined object mapper (in case this is invoked multiple times).
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     *
+     * @param jacksonObjectMapper a predefined jackson object mapper
+     *
+     * @return true if the submission is empty, false otherwise
+     */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
         try {
             // TODO: further improve this!!
