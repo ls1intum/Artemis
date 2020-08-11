@@ -6,7 +6,7 @@
         </div>
     </div>
 
-    <div *ngIf="!isLoading">
+    <div *ngIf="!isLoading && studentResults && exerciseGroups">
         <div class="d-flex">
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
@@ -30,7 +30,7 @@
         </div>
 
         <!-- Filter settings -->
-        <div *ngIf="studentResults && exerciseGroups" class="d-flex align-items-center align-content-center mb-2">
+        <div class="d-flex align-items-center align-content-center mb-2">
             <label class="radio-inline mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
                 <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
