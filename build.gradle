@@ -129,6 +129,12 @@ task integrationTestReport(type: TestReport) {
     reportOn integrationTest
 }
 
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
 jacocoTestCoverageVerification {
     violationRules {
         rule {
