@@ -5,54 +5,61 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLObject;
 
 public class UMLUseCaseDiagram extends UMLDiagram {
 
     // TODO recreate for the purpose of UML Component diagrams
 
-    private final List<UMLObject> objectList;
+    private final List<UMLSystemBoundary> systemBoundaryList;
 
-    private final List<UMLCommunicationLink> communicationLinkList;
+    private final List<UMLActor> actorList;
 
-    public UMLUseCaseDiagram(long modelSubmissionId, List<UMLObject> objectList, List<UMLCommunicationLink> communicationLinkList) {
+    private final List<UMLUseCase> useCaseList;
+
+    private final List<UMLUseCaseAssociation> useCaseAssociationList;
+
+    public UMLUseCaseDiagram(long modelSubmissionId, List<UMLSystemBoundary> systemBoundaryList, List<UMLActor> actorList, List<UMLUseCase> useCaseList,
+            List<UMLUseCaseAssociation> useCaseAssociationList) {
         super(modelSubmissionId);
-        this.objectList = objectList;
-        this.communicationLinkList = communicationLinkList;
+        this.systemBoundaryList = systemBoundaryList;
+        this.actorList = actorList;
+        this.useCaseList = useCaseList;
+        this.useCaseAssociationList = useCaseAssociationList;
     }
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLObject object : objectList) {
-            if (object.getJSONElementID().equals(jsonElementId)) {
-                return object;
+        for (UMLUseCase useCase : useCaseList) {
+            if (useCase.getJSONElementID().equals(jsonElementId)) {
+                return useCase;
             }
         }
 
-        for (UMLCommunicationLink communicationLink : communicationLinkList) {
-            if (communicationLink.getJSONElementID().equals(jsonElementId)) {
-                return communicationLink;
+        // TODO
+
+        for (UMLUseCaseAssociation association : useCaseAssociationList) {
+            if (association.getJSONElementID().equals(jsonElementId)) {
+                return association;
             }
         }
 
         return null;
     }
 
-    public List<UMLObject> getObjectList() {
-        return objectList;
+    public List<UMLUseCase> getUseCaseList() {
+        return useCaseList;
     }
 
-    public List<UMLCommunicationLink> getCommunicationLinkList() {
-        return communicationLinkList;
+    public List<UMLUseCaseAssociation> getUseCaseAssociationList() {
+        return useCaseAssociationList;
     }
 
     @Override
     protected List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
-        modelElements.addAll(objectList);
-        modelElements.addAll(communicationLinkList);
+        modelElements.addAll(useCaseList);
+        modelElements.addAll(useCaseAssociationList);
         return modelElements;
     }
 }

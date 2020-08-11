@@ -46,6 +46,7 @@ public class UMLComponentRelationship extends UMLElement {
         }
     }
 
+    // TODO: update
     private UMLClass source;
 
     private UMLClass target;
