@@ -17,6 +17,8 @@ import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/ma
  */
 export enum EditableField {
     WEIGHT = 'weight',
+    BONUS_MULTIPLIER = 'bonusMultiplier',
+    BONUS_POINTS = 'bonusPoints',
 }
 
 @Component({
@@ -231,14 +233,14 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     /**
-     * Save the unsaved (edited) weights of the test cases.
+     * Save the unsaved (edited) changes of the test cases.
      */
-    saveWeights() {
+    saveChanges() {
         this.editing = null;
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, afterDueDate }) => ({ id, weight, afterDueDate }));
+        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }) => ({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }));
 
         this.testCaseService
             .updateTestCase(this.exercise.id, testCaseUpdates)
@@ -280,28 +282,20 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     /**
-     * Sets the weights of all test cases to 1.
+     * Reset all test cases.
      */
-    resetWeights() {
+    resetChanges() {
         this.editing = null;
         this.isSaving = true;
-        const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
-        // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
-        if (!existsUnchangedWithCustomWeight) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
-            return;
-        }
-
         this.testCaseService
-            .resetWeights(this.exercise.id)
+            .reset(this.exercise.id)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
+                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.resetSuccessful`);
                     this.testCaseService.notifyTestCases(this.exercise.id, testCases);
                 }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);
+                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.resetFailed`);
                     return of(null);
                 }),
             )

@@ -10,7 +10,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { WindowRef } from 'app/core/websocket/window.service';
 import * as ace from 'brace';
 import {
     CommitState,
@@ -32,7 +31,7 @@ import { TextChange } from 'app/entities/text-change.model';
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     styleUrls: ['./code-editor-ace.scss'],
-    providers: [WindowRef, RepositoryFileService],
+    providers: [RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
@@ -103,7 +102,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnChanges(changes: SimpleChanges): void {
         if (
             (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) ||
-            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState !== EditorState.REFRESHING)
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
             this.fileSession = {};
             if (this.annotationChange) {
@@ -118,7 +117,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
-        } else if ((changes.selectedFile && this.selectedFile) || (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING)) {
+        } else if (
+            (changes.selectedFile && this.selectedFile) ||
+            (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
+        ) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (this.selectedFile && !this.fileSession[this.selectedFile]) {
@@ -178,8 +180,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                         this.initEditorAfterFileChange();
                     }
                 }),
-                catchError((err) => {
-                    console.log('There was an error while getting file', this.selectedFile, err);
+                catchError(() => {
                     return of(null);
                 }),
             )

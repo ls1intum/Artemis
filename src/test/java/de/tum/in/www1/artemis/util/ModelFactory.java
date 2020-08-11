@@ -17,9 +17,10 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
@@ -60,17 +61,29 @@ public class ModelFactory {
         return quizExercise;
     }
 
-    public static QuizExercise generateQuizExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = new QuizExercise();
-        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, releaseDate, dueDate, null, exerciseGroup);
+        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, exerciseGroup);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsPlannedToStart(false);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
+        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                question.setQuizQuestionStatistic(new DragAndDropQuestionStatistic());
+            }
+            else if (question instanceof MultipleChoiceQuestion) {
+                question.setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
+            }
+            else {
+                question.setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
+            }
+        }
         quizExercise.setRandomizeQuestionOrder(true);
         return quizExercise;
     }
@@ -82,9 +95,9 @@ public class ModelFactory {
         return programmingExercise;
     }
 
-    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
+        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, exerciseGroup);
         populateProgrammingExercise(programmingExercise);
         return programmingExercise;
     }
@@ -92,10 +105,13 @@ public class ModelFactory {
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
-        programmingExercise.setTestRepositoryUrl("test@url");
+        final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUrl(testRepoUrl);
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
@@ -106,10 +122,9 @@ public class ModelFactory {
         return modelingExercise;
     }
 
-    public static ModelingExercise generateModelingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
-            ExerciseGroup exerciseGroup) {
+    public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
         ModelingExercise modelingExercise = new ModelingExercise();
-        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         return modelingExercise;
     }
@@ -119,9 +134,9 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static TextExercise generateTextExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ExerciseGroup exerciseGroup) {
+    public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = new TextExercise();
-        return (TextExercise) populateExerciseForExam(textExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        return (TextExercise) populateExerciseForExam(textExercise, exerciseGroup);
     }
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
@@ -131,11 +146,10 @@ public class ModelFactory {
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static FileUploadExercise generateFileUploadExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
-            ExerciseGroup exerciseGroup) {
+    public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
-        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
@@ -143,6 +157,7 @@ public class ModelFactory {
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
         exercise.setMaxScore(5.0);
+        exercise.setBonusPoints(0.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
@@ -155,20 +170,25 @@ public class ModelFactory {
         return exercise;
     }
 
-    private static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-            ExerciseGroup exerciseGroup) {
+    private static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Exam Problem Statement");
         exercise.setMaxScore(5.0);
-        exercise.setReleaseDate(releaseDate);
-        exercise.setDueDate(dueDate);
-        exercise.assessmentDueDate(assessmentDueDate);
+        exercise.setBonusPoints(0.0);
+        // these values are set to null explicitly
+        exercise.setReleaseDate(null);
+        exercise.setDueDate(null);
+        exercise.assessmentDueDate(null);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setExerciseGroup(exerciseGroup);
         exercise.setCourse(null);
+        if (!(exercise instanceof QuizExercise)) {
+            exercise.setGradingInstructions("Grading instructions");
+            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+        }
         return exercise;
     }
 
@@ -424,6 +444,24 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        for (int i = 0; i < numOfFeedback; i++) {
+            feedbackList.add(generateStaticCodeAnalysisFeedback(i));
+        }
+        return feedbackList;
+    }
+
+    private static Feedback generateStaticCodeAnalysisFeedback(int index) {
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
+        feedback.setReference("Class:Line" + index);
+        feedback.setDetailText("This is a DetailText " + index);
+        return feedback;
+    }
+
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
@@ -461,6 +499,7 @@ public class ModelFactory {
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxScore(template.getMaxScore());
+        toBeImported.setBonusPoints(template.getBonusPoints());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
         toBeImported.setMode(template.getMode());
@@ -468,6 +507,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setStaticCodeAnalysisEnabled(false);
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
@@ -596,6 +636,31 @@ public class ModelFactory {
         notification.setBuild(build);
 
         return notification;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames) {
+        final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        return notification;
+    }
+
+    private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
+        final var report = new StaticCodeAnalysisReportDTO();
+        final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        report.setTool(tool);
+        issue1.setType("Error1");
+        issue1.setMessage("Error1 - Message");
+        issue1.setClassname("Class1");
+        issue1.setLine(1);
+        issue2.setType("Error2");
+        issue2.setMessage("Error2 - Message");
+        issue1.setClassname("Class2");
+        issue1.setLine(2);
+        report.setIssues(List.of(issue1, issue2));
+        return report;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {

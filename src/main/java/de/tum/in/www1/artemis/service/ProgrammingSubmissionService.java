@@ -67,8 +67,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExamService examService;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -88,7 +86,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.examService = examService;
     }
 
     /**
@@ -569,7 +566,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());

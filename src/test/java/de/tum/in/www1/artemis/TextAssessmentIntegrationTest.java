@@ -357,7 +357,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
 
-        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam.getStartDate(), exam.getEndDate(), exam.getEndDate().plusWeeks(2), exerciseGroup);
+        TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
         textExercise = exerciseRepo.save(textExercise);

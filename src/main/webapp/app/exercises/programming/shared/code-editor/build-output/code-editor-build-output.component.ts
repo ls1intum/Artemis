@@ -1,6 +1,5 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
@@ -22,7 +21,6 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
-    providers: [WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()
@@ -55,7 +53,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     private submissionSubscription: Subscription;
 
     constructor(
-        private $window: WindowRef,
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
         private sessionService: CodeEditorSessionService,
@@ -74,7 +71,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
+        this.resizableMinHeight = window.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput');
     }
 
@@ -158,7 +155,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                     return Observable.of(null);
                 }),
             )
-            .subscribe(() => {}, console.log);
+            .subscribe();
     }
 
     /**

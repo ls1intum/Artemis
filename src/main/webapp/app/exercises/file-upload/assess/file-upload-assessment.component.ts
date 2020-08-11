@@ -10,7 +10,6 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/core/Interactable';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,7 +27,7 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
-    providers: [FileUploadAssessmentsService, WindowRef],
+    providers: [FileUploadAssessmentsService],
     templateUrl: './file-upload-assessment.component.html',
     styleUrls: ['./file-upload-assessment.component.scss'],
     encapsulation: ViewEncapsulation.None,
@@ -53,7 +52,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
-    canOverride = false;
     isLoading = true;
     courseId: number;
 
@@ -76,7 +74,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private accountService: AccountService,
         private location: Location,
-        private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
@@ -195,8 +192,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.resizableMinWidth = window.screen.width / 6;
+        this.resizableMinHeight = window.screen.height / 7;
 
         this.interactResizable = interact('.resizable-submission')
             .resizable({
@@ -428,14 +425,37 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private checkPermissions() {
         this.isAssessor = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-
-        let isBeforeAssessmentDueDate = true;
-        // Add check as the assessmentDueDate must not be set for exercises
-        if (this.exercise.assessmentDueDate) {
-            isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
+        if (this.exercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         }
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
     }
 
     toggleCollapse($event: any) {
@@ -493,6 +513,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.generalFeedback = new Feedback();
         }
         this.referencedFeedback = feedbacks;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     private onError(error: string) {

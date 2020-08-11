@@ -14,7 +14,6 @@ import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
-    styles: [],
 })
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;

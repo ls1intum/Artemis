@@ -57,6 +57,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
+    Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
+
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
@@ -90,6 +93,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("select pe from ProgrammingExercise pe where pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Returns the programming exercises that have manual assessment enabled and a due date higher than the provided date.
+     *
+     * @param dateTime ZonedDateTime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Returns the programming exercises that are part of an exam with an end date after than the provided date.

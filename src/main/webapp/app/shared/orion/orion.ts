@@ -198,7 +198,7 @@ export interface ArtemisClientConnector {
     startedBuildInOrion(courseId: number, exerciseId: number): void;
 }
 
-export interface Window {
+export interface OrionWindow {
     orionExerciseConnector: OrionExerciseConnector;
     orionSharedUtilConnector: OrionSharedUtilConnector;
     orionBuildConnector: OrionBuildConnector;
