@@ -49,7 +49,7 @@ public class ExerciseService {
 
     private final ExamRepository examRepository;
 
-    private final StudentExamService studentExamService;
+    private final StudentExamRepository studentExamRepository;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
@@ -64,7 +64,7 @@ public class ExerciseService {
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamService studentExamService,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
             ExamRepository exampRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
@@ -79,7 +79,7 @@ public class ExerciseService {
         this.teamService = teamService;
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
-        this.studentExamService = studentExamService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -273,11 +273,12 @@ public class ExerciseService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = findOne(exerciseId);
+
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
         // to avoid a ConcurrentModificationException, we need to use a copy of the set
-        var exampleSubmissions = new HashSet<ExampleSubmission>(exercise.getExampleSubmissions());
+        var exampleSubmissions = new HashSet<>(exercise.getExampleSubmissions());
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             exampleSubmissionService.deleteById(exampleSubmission.getId());
         }
@@ -287,7 +288,13 @@ public class ExerciseService {
         if (exercise.hasExerciseGroup()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : exam.getStudentExams()) {
-                studentExamService.deleteStudentExam(studentExam.getId());
+                if (studentExam.getExercises().contains(exercise)) {
+                    // remove exercise reference from student exam
+                    List<Exercise> exerciseList = studentExam.getExercises();
+                    exerciseList.remove(exercise);
+                    studentExam.setExercises(exerciseList);
+                    studentExamRepository.save(studentExam);
+                }
             }
         }
 

@@ -9,7 +9,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
-
+import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 
 @Component({
@@ -19,10 +19,11 @@ import * as moment from 'moment';
 export class ExamExerciseRowButtonsComponent {
     @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() examId: number;
+    @Input() exam: Exam;
     @Input() exerciseGroupId: number;
     @Input() latestIndividualEndDate: moment.Moment | null;
     @Output() onDeleteExercise = new EventEmitter<void>();
+    @Output() onDeleteProgrammingExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -41,6 +42,13 @@ export class ExamExerciseRowButtonsComponent {
      */
     isExamOver() {
         return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(moment()) : false;
+    }
+
+    /**
+     * Checks whether the exam has started
+     */
+    hasExamStarted() {
+        return this.exam.startDate ? this.exam.startDate.isBefore(moment()) : false;
     }
 
     /**
@@ -127,7 +135,7 @@ export class ExamExerciseRowButtonsComponent {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
+                this.onDeleteProgrammingExercise.emit();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

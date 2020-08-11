@@ -161,15 +161,17 @@
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
-                justify-content: space-evenly;
+                justify-content: flex-start;
+                align-items: center;
                 margin-left: auto;
                 margin-right: auto;
                 min-height: 50px;
-            }
+                overflow: auto;
+                max-height: 80vh;
 
-            > div {
                 @media (min-width: 1200px) {
-                    width: 200px;
+                    flex-direction: column;
+                    flex-wrap: nowrap;
                 }
             }
         }

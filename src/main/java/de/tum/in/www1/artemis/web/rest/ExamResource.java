@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -184,7 +185,10 @@ public class ExamResource {
 
         Exam result = examService.save(updatedExam);
 
-        if (!Objects.equals(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) || !Objects.equals(originalExam.getStartDate(), updatedExam.getStartDate())) {
+        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
+        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
+        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
+                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
             Exam examWithExercises = examService.findOneWithExerciseGroupsAndExercises(result.getId());
             // for all programming exercises in the exam, send their ids for scheduling
@@ -324,21 +328,12 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-
-        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
-
         User user = userService.getUser();
+        Exam exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(examId);
+        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                exerciseService.delete(exercise.getId(), false, false);
-            }
-        }
-
-        // The database operation cascades to Student Exams and Exercise Groups
-        examService.delete(examId);
+        examService.delete(exam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
 

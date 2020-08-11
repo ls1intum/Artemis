@@ -36,6 +36,7 @@ export class ExerciseGroupsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate: Moment | null;
+    exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
 
     constructor(
         private route: ActivatedRoute,
@@ -49,7 +50,8 @@ export class ExerciseGroupsComponent implements OnInit {
     ) {}
 
     /**
-     * Initialize the courseId and examId. Get all exercise groups for the exam.
+     * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
+     * See {@link setupExerciseGroupContainsProgrammingExerciseDict}.
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -62,6 +64,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.course = examRes.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+                this.setupExerciseGroupContainsProgrammingExerciseDict();
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
@@ -89,18 +92,40 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
+     * it calls {@link setupExerciseGroupContainsProgrammingExerciseDict} to update the dictionary
+     * @param exerciseId
+     * @param exerciseGroupId
+     * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
+     */
+    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise = false) {
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
+                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                    if (programmingExercise) {
+                        this.setupExerciseGroupContainsProgrammingExerciseDict();
+                    }
+                }
+            });
+        }
+    }
+
+    /**
      * Delete the exercise group with the given id.
      * @param exerciseGroupId {number}
+     * @param $event representation of users choices to delete the student repositories and base repositories
      */
-    deleteExerciseGroup(exerciseGroupId: number) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId).subscribe(
+    deleteExerciseGroup(exerciseGroupId: number, $event: { [key: string]: boolean }) {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.jhiEventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.loadExerciseGroups();
+                this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                delete this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -203,5 +228,31 @@ export class ExerciseGroupsComponent implements OnInit {
             (res) => (this.exerciseGroups = res.body),
             () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
+    }
+
+    /**
+     * sets up {@link exerciseGroupContainsProgrammingExerciseDict} that maps the exercise group id to whether the said exercise group contains programming exercises.
+     * Used to show the correct modal for deleting exercises.
+     * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     */
+    setupExerciseGroupContainsProgrammingExerciseDict() {
+        this.exerciseGroupContainsProgrammingExerciseDict = {};
+        if (this.exerciseGroups == null) {
+            return;
+        } else {
+            for (const exerciseGroup of this.exerciseGroups) {
+                if (exerciseGroup.exercises != null) {
+                    for (const exercise of exerciseGroup.exercises) {
+                        if (exercise.type === ExerciseType.PROGRAMMING) {
+                            this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
+                            break;
+                        }
+                    }
+                    if (!(exerciseGroup.id in this.exerciseGroupContainsProgrammingExerciseDict)) {
+                        this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+                    }
+                }
+            }
+        }
     }
 }

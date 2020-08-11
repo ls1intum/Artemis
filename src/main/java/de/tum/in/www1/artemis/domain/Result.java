@@ -221,14 +221,14 @@ public class Result implements Serializable {
     }
 
     /**
-     * 1. set score 2. set successful = true, if score is 100 or false if not
+     * 1. set score 2. set successful = true, if score >= 100 or false if not
      *
      * @param score new score
      */
     public void setScore(Long score) {
         if (score != null) {
             this.score = score;
-            this.successful = score == 100L;
+            this.successful = score >= 100L;
         }
     }
 
@@ -306,7 +306,7 @@ public class Result implements Serializable {
     }
 
     public Result addFeedbacks(List<Feedback> feedbacks) {
-        feedbacks.forEach(feedback -> addFeedback(feedback));
+        feedbacks.forEach(this::addFeedback);
         return this;
     }
 

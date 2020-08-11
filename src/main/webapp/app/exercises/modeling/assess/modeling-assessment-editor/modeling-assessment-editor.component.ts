@@ -21,7 +21,6 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -37,7 +36,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
-    conflicts: Conflict[] | null;
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
 
@@ -50,7 +48,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hideBackButton: boolean;
     complaint: Complaint;
     ComplaintType = ComplaintType;
-    canOverride = false;
     isLoading = true;
     hasAutomaticFeedback = false;
 
@@ -86,7 +83,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe((params) => {
@@ -222,17 +218,41 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
-        this.isAtLeastInstructor =
-            this.modelingExercise && this.modelingExercise.course
-                ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
-                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        let isBeforeAssessmentDueDate = true;
-        // Add check as the assessmentDueDate must not be set for exercises
-        if (this.modelingExercise?.assessmentDueDate) {
-            isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+        if (this.modelingExercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
         }
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.modelingExercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.modelingExercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.modelingExercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
+    }
+
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
     onError(): void {
@@ -293,7 +313,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -302,28 +322,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
 
                 this.highlightMissingFeedback = false;
-
-                this.conflicts = null;
-                this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
-                if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
-                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
-                    this.updateHighlightedConflictingElements();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                } else {
-                    let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
-                    if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
-                    }
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error(errorMessage);
+                let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
+                if (error.error && error.error.entityName && error.error.message) {
+                    errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error(errorMessage);
             },
         );
     }
@@ -348,12 +354,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
-    }
-
-    onShowConflictResolution() {
-        this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
-        this.jhiAlertService.clear();
-        this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -404,15 +404,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 }
             },
         );
-    }
-
-    private updateHighlightedConflictingElements() {
-        this.highlightedElements = new Map<string, string>();
-        if (this.conflicts) {
-            this.conflicts.forEach((conflict: Conflict) => {
-                this.highlightedElements.set(conflict.causingConflictingResult.modelElementId, FeedbackHighlightColor.RED);
-            });
-        }
     }
 
     /**

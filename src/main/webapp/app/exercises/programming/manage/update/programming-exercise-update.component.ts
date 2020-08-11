@@ -34,7 +34,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
     isImport: boolean;
     isExamMode: boolean;
-    hashUnsavedChanges = false;
+    hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
@@ -79,6 +79,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
+        // If we switch to another language which does not support static code analysis we need to reset the option
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.programmingExercise.staticCodeAnalysisEnabled = false;
+        }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language);
@@ -108,7 +112,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        this.setupProgrammingExerciseForImport(params);
+                        this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['groupId']) {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
@@ -162,7 +166,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param params given by ActivatedRoute
      */
-    private setupProgrammingExerciseForImport(params: Params) {
+    private createProgrammingExerciseForImport(params: Params) {
         this.isImport = true;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['groupId']) {
@@ -266,7 +270,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
-        if (this.hashUnsavedChanges) {
+        if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
             if (!window.confirm(confirmLanguageChangeText)) {
                 return this.selectedProgrammingLanguage;
@@ -284,7 +288,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
-        this.hashUnsavedChanges = false;
+        this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
@@ -292,10 +296,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            (err) => {
+            () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
-                console.log('Error while getting template instruction file!', err);
             },
         );
     }

@@ -24,7 +24,7 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
         this.subject.next(testCases);
     }
 
-    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+    reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return of();
     }
 

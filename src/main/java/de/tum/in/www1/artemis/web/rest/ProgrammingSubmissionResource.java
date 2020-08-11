@@ -12,10 +12,8 @@ import java.util.Set;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,18 +41,11 @@ public class ProgrammingSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
 
-    private static final String ENTITY_NAME = "programmingSubmission";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ExerciseService exerciseService;
 
     private final ProgrammingExerciseService programmingExerciseService;
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -69,13 +60,12 @@ public class ProgrammingSubmissionResource {
     private final UserService userService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
             UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
-        this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
@@ -113,10 +103,7 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            if (ex.getMessage().contains("empty setup commit")) {
-                // ignore
-            }
-            else {
+            if (!ex.getMessage().contains("empty setup commit")) {
                 log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
             }
             // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
@@ -358,7 +345,7 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId());
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);

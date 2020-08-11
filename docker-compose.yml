@@ -12,7 +12,7 @@ services:
     image: openjdk:14-jdk-alpine
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis
+      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis,scheduling
     networks:
       - artemis
     ports:

@@ -10,6 +10,7 @@ export class AssessmentGeneralFeedbackComponent {
     private feedbackClone: Feedback;
     public text: string;
 
+    @Input() readOnly: boolean;
     @Input() set feedback(feedback: Feedback) {
         this.feedbackClone = Object.assign({}, feedback);
         this.text = feedback.detailText || '';

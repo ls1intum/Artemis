@@ -223,7 +223,6 @@
                     *ngIf="!showResult"
                     class="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    [ngStyle]="{ overflow: 'auto', 'max-height': '80vh' }"
                     (onDropSuccess)="onDragDrop(null, $event)"
                     (onDragEnter)="preventDefault($event)"
                     (onDragOver)="preventDefault($event)"

@@ -9,13 +9,14 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -26,7 +27,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
     readonly FeatureToggle = FeatureToggle;
-    readonly JAVA = ProgrammingLanguage.JAVA;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
@@ -38,6 +39,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    checkPlagiarismInProgress: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -122,6 +124,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             return ['/course-management', this.programmingExercise.course?.id, 'programming-exercises', this.programmingExercise.id, 'edit'];
         }
     }
+
+    checkPlagiarism() {
+        this.checkPlagiarismInProgress = true;
+        this.programmingExerciseService.checkPlagiarism(this.programmingExercise.id).subscribe(this.handleCheckPlagiarismResponse, () => {
+            this.checkPlagiarismInProgress = false;
+        });
+    }
+
+    handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
+        this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
+        this.checkPlagiarismInProgress = false;
+        downloadZipFileFromResponse(response);
+    };
 
     combineTemplateCommits() {
         this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id).subscribe(

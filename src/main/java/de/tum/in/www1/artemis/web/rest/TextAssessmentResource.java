@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -40,22 +39,17 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -74,11 +68,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final ResultService resultService;
-
     private final TextAssessmentService textAssessmentService;
-
-    private final TextBlockService textBlockService;
 
     private final TextExerciseService textExerciseService;
 
@@ -88,28 +78,22 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
-
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
     private final GradingCriterionService gradingCriterionService;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
-            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockRepository textBlockRepository,
+            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
+            WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
             Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
 
-        this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
-        this.textBlockService = textBlockService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
-        this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
@@ -237,52 +221,6 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Splits the TextSubmission corresponding to a resultId into TextBlocks. The TextBlocks get a
-     * suggested feedback if automatic assessment is enabled and feedback available
-     * <p>
-     * TODO: Remove when migrating to Text Assessment V2
-     *
-     * @param resultId the resultId the which needs TextBlocks
-     * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
-     * @throws EntityNotFoundException  if the corresponding Exercise isn't a TextExercise
-     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
-     * @deprecated Text Blocks are now part of the retrieveParticipationForSubmission() response. Please use V2 text assessment which does not need this API call. This API call will be removed soon.
-     */
-    @Deprecated(since = "4.0.0", forRemoval = true)
-    @GetMapping("/result/{resultId}/with-textblocks")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
-        final StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
-        final Exercise exercise = studentParticipation.getExercise();
-        checkAuthorization(exercise, user);
-
-        if (!(exercise instanceof TextExercise)) {
-            throw new BadRequestAlertException("No text exercise found for the given ID.", "textExercise", "exerciseNotFound");
-        }
-
-        final TextExercise textExercise = (TextExercise) exercise;
-
-        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
-            automaticTextFeedbackService.get().suggestFeedback(result);
-        }
-        else {
-            textBlockService.prepopulateFeedbackBlocks(result);
-        }
-
-        TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-        textSubmission.setBlocks(textBlocks);
-
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    /**
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
@@ -321,7 +259,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
-
+        // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
         result = textSubmission.getResult();
 
