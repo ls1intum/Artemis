@@ -102,8 +102,9 @@ class JSONParserTest {
     @Test
     void buildModelFromJSON_communicationDiagram_empty() throws Exception {
         JsonObject communicationDiagramJson = loadFileFromResources("test-data/model-submission/empty-communication-diagram.json");
-
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789));
+        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789);
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test

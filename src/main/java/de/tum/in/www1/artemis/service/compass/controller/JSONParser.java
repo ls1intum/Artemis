@@ -76,7 +76,7 @@ public class JSONParser {
             return buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
         }
 
-        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by Compass.");
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
     /**
@@ -125,8 +125,7 @@ public class JSONParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     private static UMLUseCaseDiagram buildUseCaseDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
-        // TODO: implement
-        return null;
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
     /**
@@ -140,8 +139,7 @@ public class JSONParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     private static UMLComponentDiagram buildComponentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
-        // TODO: implement
-        return null;
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
     /**
@@ -155,8 +153,7 @@ public class JSONParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     private static UMLDeploymentDiagram buildDeploymentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
-        // TODO: implement
-        return null;
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
     /**
