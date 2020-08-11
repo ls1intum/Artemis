@@ -65,7 +65,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-                        this.calculateFilterDependentStatistics();
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
