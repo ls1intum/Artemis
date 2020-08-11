@@ -4,6 +4,17 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 
+/**
+ * Navigate from Assessment Editor to Dashboard:
+ *   1. For Team Exercises: Navigate to Team Dashboard with all Submissions of the Team
+ *   2. For Regular Exercises: Navigate to the Tutor Exercise Dashboard
+ *   Fallback: If we do not know the exercise, we navigate back in the browsers history.
+ *
+ * @param location: Angular wrapper for interacting with Browser URL and History
+ * @param router: Angular router to navigate to URL
+ * @param exercise: Exercise currently assessed
+ * @param submission: Submission currently assessed
+ */
 export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null) {
     if (exercise) {
         const course = exercise.course || exercise.exerciseGroup?.exam?.course;
