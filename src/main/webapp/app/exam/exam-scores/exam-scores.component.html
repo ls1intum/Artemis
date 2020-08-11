@@ -30,17 +30,15 @@
         </div>
 
         <!-- Filter settings -->
-        <div class="d-flex align-content-center mb-2">
-            <div class="d-flex align-items-center">
-                <label class="radio-inline mb-0 d-flex align-items-center">
-                    <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                    <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
-                </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
-                    <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                    <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
-                </label>
-            </div>
+        <div *ngIf="studentResults && exerciseGroups" class="d-flex align-items-center align-content-center mb-2">
+            <label class="radio-inline mb-0 d-flex align-items-center">
+                <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
+            </label>
+            <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
+            </label>
         </div>
 
         <!-- Exam Point Statistics -->
