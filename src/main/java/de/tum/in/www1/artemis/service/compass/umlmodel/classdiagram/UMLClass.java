@@ -28,6 +28,10 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
+    public UMLClass() {
+        super();
+    }
+
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType type) {
         super(jsonElementID);
 

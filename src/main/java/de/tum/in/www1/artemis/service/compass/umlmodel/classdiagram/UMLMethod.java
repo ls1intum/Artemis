@@ -23,6 +23,10 @@ public class UMLMethod extends UMLElement {
 
     private List<String> parameters;
 
+    public UMLMethod() {
+        super();
+    }
+
     public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
         super(jsonElementID);
 

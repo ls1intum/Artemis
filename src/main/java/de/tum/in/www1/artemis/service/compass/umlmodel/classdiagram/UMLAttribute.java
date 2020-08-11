@@ -17,6 +17,10 @@ public class UMLAttribute extends UMLElement {
 
     private String attributeType;
 
+    public UMLAttribute() {
+        super();
+    }
+
     public UMLAttribute(String name, String attributeType, String jsonElementID) {
         super(jsonElementID);
 

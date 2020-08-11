@@ -13,6 +13,10 @@ public abstract class UMLElement implements Similarity<UMLElement> {
 
     private Context context;
 
+    public UMLElement() {
+
+    }
+
     public UMLElement(String jsonElementID) {
         this.jsonElementID = jsonElementID;
     }
