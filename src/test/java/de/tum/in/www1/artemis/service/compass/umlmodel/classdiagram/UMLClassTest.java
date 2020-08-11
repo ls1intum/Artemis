@@ -24,31 +24,31 @@ class UMLClassTest {
     private UMLClass umlClass;
 
     @Spy
-    UMLClass referenceClass;
+    private UMLClass referenceClass;
 
     @Spy
-    UMLAttribute attribute1;
+    private UMLAttribute attribute1;
 
     @Spy
-    UMLAttribute attribute2;
+    private UMLAttribute attribute2;
 
     @Spy
-    UMLAttribute attribute3;
+    private UMLAttribute attribute3;
 
     @Spy
-    UMLAttribute attribute4;
+    private UMLAttribute attribute4;
 
     @Spy
-    UMLMethod method1;
+    private UMLMethod method1;
 
     @Spy
-    UMLMethod method2;
+    private UMLMethod method2;
 
     @Spy
-    UMLMethod method3;
+    private UMLMethod method3;
 
     @Spy
-    UMLMethod method4;
+    private UMLMethod method4;
 
     @BeforeEach
     void setUp() throws NoSuchFieldException {

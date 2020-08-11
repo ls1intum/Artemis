@@ -17,6 +17,10 @@ public class UMLAttribute extends UMLElement {
 
     private String attributeType;
 
+    /**
+     * empty constructor used to make mockito happy
+     */
+
     public UMLAttribute() {
         super();
     }
@@ -93,7 +97,7 @@ public class UMLAttribute extends UMLElement {
 
     @Override
     public String toString() {
-        return "Attribute " + name + (attributeType != null && !attributeType.equals("") ? ": " + attributeType : "") + " in class " + parentElement.getName();
+        return "Attribute " + name + (attributeType != null && !"".equals(attributeType) ? ": " + attributeType : "") + " in class " + parentElement.getName();
     }
 
     @Override

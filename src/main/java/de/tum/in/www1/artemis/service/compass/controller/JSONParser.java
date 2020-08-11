@@ -99,7 +99,7 @@ public class JSONParser {
 
             String elementType = element.get(JSONMapping.elementType).getAsString();
 
-            if (elementType.equals("ObjectName")) {
+            if ("ObjectName".equals(elementType)) {
                 UMLObject umlObject = parseObject(element, modelElements);
                 umlObjectMap.put(umlObject.getJSONElementID(), umlObject);
             }

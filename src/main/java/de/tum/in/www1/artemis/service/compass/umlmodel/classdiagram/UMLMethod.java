@@ -23,6 +23,9 @@ public class UMLMethod extends UMLElement {
 
     private List<String> parameters;
 
+    /**
+     * empty constructor used to make mockito happy
+     */
     public UMLMethod() {
         super();
     }

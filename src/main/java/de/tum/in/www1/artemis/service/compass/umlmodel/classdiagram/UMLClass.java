@@ -28,6 +28,9 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
+    /**
+     * empty constructor used to make mockito happy
+     */
     public UMLClass() {
         super();
     }

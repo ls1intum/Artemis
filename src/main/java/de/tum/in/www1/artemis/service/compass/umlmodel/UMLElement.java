@@ -13,8 +13,10 @@ public abstract class UMLElement implements Similarity<UMLElement> {
 
     private Context context;
 
+    /**
+     * empty constructor used to make mockito happy
+     */
     public UMLElement() {
-
     }
 
     public UMLElement(String jsonElementID) {

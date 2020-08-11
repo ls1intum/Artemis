@@ -58,7 +58,7 @@ public class ModelingPlagiarismDetectionService {
                     nonEmptyModels.put(model, modelingSubmission);
                 }
                 catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
                 }
             }
         }
