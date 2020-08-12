@@ -209,7 +209,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
-    setAnnotations(annotations: Array<Annotation>) {
+    setAnnotations(annotations: Array<Annotation> = []) {
         if (annotations.length > 0) {
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = annotations
