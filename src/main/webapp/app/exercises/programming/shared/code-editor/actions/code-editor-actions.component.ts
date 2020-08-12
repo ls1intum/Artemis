@@ -136,11 +136,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles(): Observable<any> {
+    saveChangedFiles(andCommit: boolean = false): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            this.repositoryFileService.updateFiles(unsavedFiles).subscribe(
+            this.repositoryFileService.updateFiles(unsavedFiles, andCommit).subscribe(
                 (fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 },
@@ -170,9 +170,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         // If there are unsaved changes, save them before trying to commit again.
         Observable.of(null)
             .pipe(
-                switchMap(() => (this.editorState === EditorState.UNSAVED_CHANGES ? this.saveChangedFiles() : Observable.of(null))),
                 tap(() => (this.commitState = CommitState.COMMITTING)),
-                switchMap(() => this.repositoryService.commit()),
+                switchMap(() => {
+                    if (!_isEmpty(this.unsavedFiles)) {
+                        return this.saveChangedFiles(true);
+                    } else {
+                        return this.repositoryService.commit();
+                    }
+                }),
                 tap(() => {
                     this.commitState = CommitState.CLEAN;
                     // Note: this is not 100% clean, but not setting it here would complicate the state model.

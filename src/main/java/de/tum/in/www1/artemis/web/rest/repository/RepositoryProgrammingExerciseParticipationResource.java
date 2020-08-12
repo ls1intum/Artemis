@@ -164,7 +164,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            Principal principal) {
+            @RequestParam String commit, Principal principal) {
         Participation participation;
         try {
             participation = participationService.findParticipation(participationId);
@@ -209,6 +209,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+
+        if (commit.equals("true")) {
+            var response = super.commitChanges(participationId);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new ResponseStatusException(response.getStatusCode());
+            }
+        }
+
         return ResponseEntity.ok(fileSaveResult);
     }
 
@@ -221,7 +229,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
-    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions, Principal principal) {
+    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
+            @RequestParam String commit, Principal principal) {
         ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
         if (versionControlService.isEmpty()) {
@@ -246,6 +255,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+
+        if (commit.equals("true")) {
+            var response = super.commitChanges(exerciseId);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new ResponseStatusException(response.getStatusCode());
+            }
+        }
+
         return ResponseEntity.ok(fileSaveResult);
     }
 
