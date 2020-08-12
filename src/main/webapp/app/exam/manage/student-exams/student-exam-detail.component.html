@@ -4,11 +4,6 @@
             Student exam ({{ studentExam.exam.title }})
         </h4>
     </div>
-    <div class="ml-auto d-flex" *ngIf="false">
-        <button class="btn btn-primary" style="height: 35px;" (click)="downloadPdf()" *ngIf="course?.isAtLeastInstructor">
-            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.studentExamDetail.downloadPDF">&nbsp;Download PDF</span>
-        </button>
-    </div>
 </div>
 <jhi-alert></jhi-alert>
 <br />
