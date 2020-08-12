@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -20,7 +19,9 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/alert/alert.service';
-import { AssessmentActionState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+// import { AssessmentActionState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result-in-code-editor',
@@ -33,7 +34,8 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     @Input() participationId: number;
     @Input() result: Result;
     @Input() exercise: ProgrammingExercise;
-    @Input() assessmentActionState: AssessmentActionState;
+    // check if really needed
+    // @Input() assessmentActionState: AssessmentActionState;
     @Output() onResultModified = new EventEmitter<Result>();
 
     participation: ProgrammingExerciseStudentParticipation;
@@ -52,7 +54,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     constructor(
         private participationService: ParticipationService,
         private manualResultService: ProgrammingAssessmentManualResultService,
-        //private activeModal: NgbActiveModal,
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: AlertService,
@@ -60,6 +61,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         private complaintService: ComplaintService,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
+        private examManagementService: ExamManagementService,
     ) {}
 
     /**
@@ -78,14 +80,14 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
             this.checkPermissions();
         });
     }
-
+    /* Check if really needed
     ngOnChanges(changes: SimpleChanges) {
         if (changes.assessmentActionState.currentValue === AssessmentActionState.TO_SUBMIT) {
             console.log('Step3');
             this.save();
         }
     }
-
+    */
     /**
      * If the result has feedbacks, override the feedbacks of this instance with them.
      * Else get them from the result service and override the feedbacks of the instance.
@@ -121,7 +123,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.result = this.manualResultService.generateInitialManualResult();
         this.result.assessor = this.user;
         // TODO: is this call really necessary?
-        this.getParticipation().subscribe(() => (this.isLoading = false));
+        this.getParticipation();
     }
 
     private checkPermissions(): void {
@@ -141,29 +143,40 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     /**
      * Gets the participation of this instance from the participation service
      */
-    getParticipation(): Observable<any> {
-        return this.participationService.find(this.participationId).pipe(
-            tap(({ body: participation }) => {
-                this.participation = participation! as ProgrammingExerciseStudentParticipation;
-                this.result.participation = this.participation;
-                this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
-            }),
-            catchError((err: any) => {
-                this.alertService.error(err);
-                this.clear();
-                return of(null);
-            }),
-        );
+    getParticipation(): void {
+        this.participationService
+            .find(this.participationId)
+            .pipe(
+                tap(({ body: participation }) => {
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
+                    this.result.participation = this.participation;
+                    if (!!this.exercise.exerciseGroup) {
+                        const exam = this.participation.exercise.exerciseGroup!.exam!;
+                        this.examManagementService
+                            .getLatestIndividualEndDateOfExam(exam.course!.id, exam.id)
+                            .subscribe((res: HttpResponse<ExamInformationDTO>) => (this.isOpenForSubmission = res.body!.latestIndividualEndDate.isAfter(moment())));
+                    } else {
+                        this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+                    }
+                }),
+                catchError((err: any) => {
+                    this.alertService.error(err);
+                    // this.clear();
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isLoading = false;
+            });
     }
 
     /**
-     * Emits the result if it was modified and dismisses the activeModal
+     * Emits the result if it was modified
      */
     clear() {
         if (this.resultModified) {
             this.onResultModified.emit(this.result);
         }
-        //this.activeModal.dismiss('cancel');
     }
 
     /**
@@ -176,33 +189,28 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.result.feedbacks = this.feedbacks;
         console.log(this.feedbacks);
         this.isSaving = true;
-        this.getParticipation().subscribe(() => {
-            this.isLoading = false;
-            for (let i = 0; i < this.result.feedbacks.length; i++) {
-                this.result.feedbacks[i].type = FeedbackType.MANUAL;
-            }
-            if (this.result.id != null) {
-                this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
-            } else {
-                // in case id is null or undefined
-                this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
-            }
-        });
+        for (let i = 0; i < this.result.feedbacks.length; i++) {
+            this.result.feedbacks[i].type = FeedbackType.MANUAL;
+        }
+        if (this.result.id != null) {
+            this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
+        } else {
+            // in case id is null or undefined
+            this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
+        }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
-            (res) => this.onSaveSuccess(res),
+            () => this.onSaveSuccess(),
             () => this.onSaveError(),
         );
     }
 
     /**
-     * Closes the active model, sets iSaving to false and broadcasts the corresponding message on a successful save
-     * @param {HttpResponse<Result>} result - The HTTP Response with the result
+     * Sets iSaving to false and broadcasts the corresponding message on a successful save
      */
-    onSaveSuccess(result: HttpResponse<Result>) {
-        //this.activeModal.close(result.body);
+    onSaveSuccess() {
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }
@@ -242,6 +250,18 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
                     this.alertService.error(err.message);
                 },
             );
+    }
+
+    /**
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     */
+    get isAllowedToRespond(): boolean {
+        if (this.complaint.team) {
+            return this.isAssessor;
+        } else {
+            return this.complaint.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
+        }
     }
 
     /**
