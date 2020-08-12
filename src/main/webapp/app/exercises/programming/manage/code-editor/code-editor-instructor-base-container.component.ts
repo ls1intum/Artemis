@@ -23,6 +23,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { Course } from 'app/entities/course.model';
 
 /**
  * Enumeration specifying the repository type
@@ -60,6 +61,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
+    course: Course;
     isExamMode: boolean;
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
@@ -109,7 +111,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                     catchError(() => throwError('exerciseNotFound')),
                     tap((exercise) => {
                         this.exercise = exercise;
-                        this.isExamMode = !exercise.course;
+                        this.course = exercise.course ? exercise.course : exercise.exerciseGroup!.exam!.course;
                     }),
                     // Set selected participation
                     tap(() => {
@@ -302,7 +304,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.exercise.course!.id, this.exercise.id)
+            .startExercise(this.course.id, this.exercise.id)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap((participation) => {
