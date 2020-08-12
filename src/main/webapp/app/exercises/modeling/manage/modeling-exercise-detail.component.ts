@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from './modeling-exercise.service';
+import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { downloadFile } from 'app/shared/util/download.util';
@@ -63,7 +63,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
+    handleCheckPlagiarismResponse = (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
         this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
         this.checkPlagiarismInProgress = false;
         const json = JSON.stringify(response.body);

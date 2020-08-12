@@ -403,11 +403,11 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /plagiarism-checks : Run comparison metrics pair-wise against all submissions of a given exercises.
+     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given exercises.
      * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
      *
-     * @param exerciseId exerciseID  for which all submission should be checked
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
+     * @param exerciseId for which all submission should be checked
+     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission similarities above a threshold of 80%.
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")

@@ -4,13 +4,20 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ModelingExercise } from '../../../entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
+export type ModelingSubmissionComparisonDTO = {
+    submissionId1: number;
+    submissionId2: number;
+    score1: number;
+    score2: number;
+    similarity: number;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
@@ -66,10 +73,7 @@ export class ModelingExerciseService {
      * Check for plagiarism
      * @param exerciseId of the programming exercise
      */
-    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<ModelingSubmissionComparisonDTO>>> {
+        return this.http.get<Array<ModelingSubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
     }
 }

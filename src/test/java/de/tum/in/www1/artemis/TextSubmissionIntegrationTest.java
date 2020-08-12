@@ -391,7 +391,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         database.addTextSubmission(finishedTextExercise, textSubmission2, "student2");
         database.addTextSubmission(finishedTextExercise, textSubmission3, "tutor1");
 
-        final var list = request.getList("/api/text-exercises/" + finishedTextExercise.getId() + "/plagiarism-checks", HttpStatus.OK, SubmissionComparisonDTO.class);
+        final var list = request.getList("/api/text-exercises/" + finishedTextExercise.getId() + "/check-plagiarism", HttpStatus.OK, SubmissionComparisonDTO.class);
 
         final var comparisonFirstSecond = list.stream().filter(dto -> dto.submissions.containsAll(Set.of(textSubmission1, textSubmission2))).findFirst().get();
         comparisonFirstSecond.distanceMetrics
