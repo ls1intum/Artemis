@@ -10,6 +10,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { downloadFile } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -65,7 +66,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     handleCheckPlagiarismResponse = (response: HttpResponse<Blob>) => {
         this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
         this.checkPlagiarismInProgress = false;
-        // TODO: display or download result
+        const json = JSON.stringify(response.body);
+        const blob = new Blob([json], { type: 'application/json' });
+        downloadFile(blob, `check-plagiarism-modeling-exercise-${this.modelingExercise.id}.json`);
     };
 
     previousState() {
