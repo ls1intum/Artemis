@@ -26,8 +26,10 @@ public class TextPlagiarismDetectionService {
      * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
      *
      * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
-     * @param comparisonStrategy TextComparisonStrategy
-     * @return Map of text submission pairs and distance score
+     * @param comparisonStrategy the chosen comparison strategy
+     * @param comparisonStrategyName the name of the strategy for logging purpose
+     * @param minimumSimilarity the minimum similarity (between 0 and 1) that should be reported in the response
+     * @return Map of text submission pairs and similarity score
      */
     public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(TextExercise exerciseWithParticipationsAndSubmissions,
             TextComparisonStrategy comparisonStrategy, String comparisonStrategyName, double minimumSimilarity) {
@@ -39,8 +41,10 @@ public class TextPlagiarismDetectionService {
      * Pairwise comparison of text submissions using a TextComparisonStrategy
      *
      * @param textSubmissions List of text submissions
-     * @param comparisonStrategy TextComparisonStrategy
-     * @return Map of text submission pairs and distance score
+     * @param comparisonStrategy the chosen comparison strategy
+     * @param comparisonStrategyName the name of the strategy for logging purpose
+     * @param minimumSimilarity the minimum similarity (between 0 and 1) that should be reported in the response
+     * @return Map of text submission pairs and similarity score
      */
     public Map<Set<TextSubmission>, Double> compareSubmissionsForExerciseWithStrategy(List<TextSubmission> textSubmissions, TextComparisonStrategy comparisonStrategy,
             String comparisonStrategyName, double minimumSimilarity) {
