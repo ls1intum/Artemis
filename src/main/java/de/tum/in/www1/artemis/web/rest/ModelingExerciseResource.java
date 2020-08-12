@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -422,10 +421,8 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        final List<ModelingSubmission> modelingSubmissions = modelingPlagiarismDetectionService.modelingSubmissionsForComparison(modelingExercise);
-
         // TODO: let the user specify the minimum similarity in the client
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingSubmissions, 0.8);
+        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, 0.8);
         return ResponseEntity.ok(comparisonResult.stream().sorted());
     }
 }

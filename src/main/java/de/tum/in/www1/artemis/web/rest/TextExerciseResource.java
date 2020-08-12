@@ -613,14 +613,16 @@ public class TextExerciseResource {
             submission.getParticipation().setSubmissions(null);
         });
 
-        // TODO: allow one more alternative using JPlag, see ProgrammingExerciseResource:961 --> checkPlagiarism()
+        log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
 
+        // TODO: allow one more alternative using JPlag with text compare, see ProgrammingExerciseResource:961 --> checkPlagiarism()
+        // TODO: let the user specify the minimum similarity in the client
         return ResponseEntity.ok(Stream
                 .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
                         new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
                 .parallel()
-                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX()).entrySet().stream()
-                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
+                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX(), strategy.getY(), 0.8).entrySet()
+                        .stream().map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
                 .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
     }
 

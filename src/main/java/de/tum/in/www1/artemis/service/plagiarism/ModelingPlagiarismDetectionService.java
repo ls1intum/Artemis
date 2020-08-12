@@ -27,12 +27,13 @@ public class ModelingPlagiarismDetectionService {
     /**
      * Convenience method to extract all latest submissions from a ModelingExercise and compute pair-wise distances.
      *
-     * @param exerciseWithParticipationsAndSubmissions Text Exercise with fetched participations and submissions
+     * @param exerciseWithParticipationsSubmissionsResults Text Exercise with fetched participations and submissions
      * @param minimumSimilarity the minimum similarity so that the result is considered
      * @return List of submission id pairs and similarity score
      */
-    public List<ModelingSubmissionComparisonDTO> compareSubmissions(ModelingExercise exerciseWithParticipationsAndSubmissions, double minimumSimilarity) {
-        final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsAndSubmissions);
+    public List<ModelingSubmissionComparisonDTO> compareSubmissions(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity) {
+        final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
+        log.info("Found " + modelingSubmissions.size() + " modeling submissions in exercise " + exerciseWithParticipationsSubmissionsResults.getId());
         return compareSubmissions(modelingSubmissions, minimumSimilarity);
     }
 
@@ -47,8 +48,6 @@ public class ModelingPlagiarismDetectionService {
 
         Map<UMLDiagram, ModelingSubmission> nonEmptyModels = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
-
-        log.info("Will check " + modelingSubmissions.size() + " modeling submissions for plagiarism");
 
         for (var modelingSubmission : modelingSubmissions) {
             if (!modelingSubmission.isEmpty(objectMapper)) {
@@ -96,7 +95,7 @@ public class ModelingPlagiarismDetectionService {
             }
         }
 
-        log.info("Found " + comparisonResults.size() + " similar modeling submission combinations (>" + minimumSimilarity + ")");
+        log.info("Found " + comparisonResults.size() + " similar modeling submission combinations ( > " + minimumSimilarity + ")");
 
         return comparisonResults;
     }
