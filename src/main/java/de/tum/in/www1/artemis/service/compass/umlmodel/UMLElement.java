@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import java.util.List;
 import java.util.Objects;
+
+import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
@@ -11,6 +14,16 @@ public abstract class UMLElement implements Similarity<UMLElement> {
     private String jsonElementID; // unique element id //TODO rename into uniqueId?
 
     private Context context;
+
+    // theoretically this can be a node or a component or a package
+    @Nullable
+    private UMLElement parentElement;
+
+    /**
+     * empty constructor used to make mockito happy
+     */
+    public UMLElement() {
+    }
 
     public UMLElement(String jsonElementID) {
         this.jsonElementID = jsonElementID;
@@ -30,6 +43,15 @@ public abstract class UMLElement implements Similarity<UMLElement> {
      * @return the type of the UML element
      */
     public abstract String getType();
+
+    @Nullable
+    public UMLElement getParentElement() {
+        return parentElement;
+    }
+
+    public void setParentElement(@Nullable UMLElement parentElement) {
+        this.parentElement = parentElement;
+    }
 
     /**
      * Get the similarity ID of this UML element. Similar elements share the same similarity ID.
@@ -96,6 +118,18 @@ public abstract class UMLElement implements Similarity<UMLElement> {
      */
     protected double ensureSimilarityRange(double similarity) {
         return Math.min(Math.max(similarity, 0), 1);
+    }
+
+    /**
+     * Compares a reference element to a list of UML elements and returns the maximum similarity score, i.e. the similarity of the reference element and the most similar element of
+     * the given list.
+     *
+     * @param referenceElement the reference element that should be compared to the model elements of the list
+     * @param elementList the list of model elements
+     * @return the maximum similarity score of the reference element and the list of model elements
+     */
+    protected double similarScore(UMLElement referenceElement, List<? extends UMLElement> elementList) {
+        return elementList.stream().mapToDouble(umlElement -> umlElement.similarity(referenceElement)).max().orElse(0);
     }
 
     @Override

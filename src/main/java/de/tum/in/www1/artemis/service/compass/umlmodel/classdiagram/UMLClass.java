@@ -28,6 +28,13 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
+    /**
+     * empty constructor used to make mockito happy
+     */
+    public UMLClass() {
+        super();
+    }
+
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType type) {
         super(jsonElementID);
 
@@ -36,19 +43,19 @@ public class UMLClass extends UMLElement {
         this.methods = methods;
         this.type = type;
 
-        setParentClassofChildElements();
+        setParentForChildElements();
     }
 
     /**
-     * Sets the parent class attribute of all child elements of this class. The child elements of a UML class are its attributes and methods.
+     * Sets the parent of all child elements of this class. The child elements of a UML class are its attributes and methods.
      */
-    private void setParentClassofChildElements() {
+    private void setParentForChildElements() {
         for (UMLAttribute attribute : attributes) {
-            attribute.setParentClass(this);
+            attribute.setParentElement(this);
         }
 
         for (UMLMethod method : methods) {
-            method.setParentClass(this);
+            method.setParentElement(this);
         }
     }
 
@@ -142,18 +149,6 @@ public class UMLClass extends UMLElement {
      */
     private double similarMethodScore(UMLMethod referenceMethod) {
         return similarScore(referenceMethod, methods);
-    }
-
-    /**
-     * Compares a reference element to a list of UML elements and returns the maximum similarity score, i.e. the similarity of the reference element and the most similar element of
-     * the given list.
-     *
-     * @param referenceElement the reference element that should be compared to the model elements of the list
-     * @param elementList the list of model elements
-     * @return the maximum similarity score of the reference element and the list of model elements
-     */
-    private double similarScore(UMLElement referenceElement, List<? extends UMLElement> elementList) {
-        return elementList.stream().mapToDouble(umlElement -> umlElement.similarity(referenceElement)).max().orElse(0);
     }
 
     @Override
