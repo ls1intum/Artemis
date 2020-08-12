@@ -1,58 +1,62 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLObject;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
 
-public class UMLDeploymentDiagram extends UMLDiagram {
+public class UMLDeploymentDiagram extends UMLComponentDiagram {
 
-    // TODO recreate for the purpose of UML Component diagrams
+    private final List<UMLNode> nodeList;
 
-    private final List<UMLObject> objectList;
+    private final List<UMLArtifact> artifactList;
 
-    private final List<UMLCommunicationLink> communicationLinkList;
-
-    public UMLDeploymentDiagram(long modelSubmissionId, List<UMLObject> objectList, List<UMLCommunicationLink> communicationLinkList) {
-        super(modelSubmissionId);
-        this.objectList = objectList;
-        this.communicationLinkList = communicationLinkList;
+    public UMLDeploymentDiagram(long modelSubmissionId, List<UMLComponent> componentList, List<UMLComponentInterface> componentInterfaceList,
+            List<UMLComponentRelationship> componentRelationshipList, List<UMLNode> nodeList, List<UMLArtifact> artifactList) {
+        super(modelSubmissionId, componentList, componentInterfaceList, componentRelationshipList);
+        this.nodeList = nodeList;
+        this.artifactList = artifactList;
     }
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLObject object : objectList) {
-            if (object.getJSONElementID().equals(jsonElementId)) {
-                return object;
+        var element = super.getElementByJSONID(jsonElementId);
+        if (element != null) {
+            return element;
+        }
+
+        for (UMLNode node : nodeList) {
+            if (node.getJSONElementID().equals(jsonElementId)) {
+                return node;
             }
         }
 
-        for (UMLCommunicationLink communicationLink : communicationLinkList) {
-            if (communicationLink.getJSONElementID().equals(jsonElementId)) {
-                return communicationLink;
+        for (UMLArtifact artifact : artifactList) {
+            if (artifact.getJSONElementID().equals(jsonElementId)) {
+                return artifact;
             }
         }
 
         return null;
     }
 
-    public List<UMLObject> getObjectList() {
-        return objectList;
+    public List<UMLNode> getNodeList() {
+        return nodeList;
     }
 
-    public List<UMLCommunicationLink> getCommunicationLinkList() {
-        return communicationLinkList;
+    public List<UMLArtifact> getArtifactList() {
+        return artifactList;
     }
 
     @Override
     protected List<UMLElement> getModelElements() {
-        List<UMLElement> modelElements = new ArrayList<>();
-        modelElements.addAll(objectList);
-        modelElements.addAll(communicationLinkList);
+        List<UMLElement> modelElements = super.getModelElements();
+        modelElements.addAll(nodeList);
+        modelElements.addAll(artifactList);
         return modelElements;
     }
 }

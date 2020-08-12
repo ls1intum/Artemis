@@ -4,32 +4,19 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLSystemBoundary extends UMLElement {
+public class UMLSystemBoundary extends UMLContainerElement {
 
-    public final static String UML_PACKAGE_TYPE = "Package";
+    public final static String UML_SYSTEM_BOUNDARY_TYPE = "SystemBoundary";
 
     private String name;
 
-    private List<UMLUseCase> useCases;
-
-    public UMLSystemBoundary(String name, List<UMLUseCase> classes, String jsonElementID) {
-        super(jsonElementID);
-
-        this.useCases = useCases;
+    public UMLSystemBoundary(String name, List<UMLElement> subElements, String jsonElementID) {
+        super(jsonElementID, subElements);
         this.name = name;
 
-        setPackageOfClasses();
-    }
-
-    /**
-     * Sets the package attribute of all classes contained in this package.
-     */
-    private void setPackageOfClasses() {
-        for (UMLUseCase useCase : useCases) {
-            useCase.setSystemBoundary(this);
-        }
     }
 
     @Override
@@ -46,7 +33,7 @@ public class UMLSystemBoundary extends UMLElement {
 
     @Override
     public String toString() {
-        return "Package " + name;
+        return "System Boundary " + name;
     }
 
     @Override
@@ -56,15 +43,7 @@ public class UMLSystemBoundary extends UMLElement {
 
     @Override
     public String getType() {
-        return UML_PACKAGE_TYPE;
-    }
-
-    public void addClass(UMLUseCase umlUseCase) {
-        this.useCases.add(umlUseCase);
-    }
-
-    public void removeClass(UMLUseCase umlUseCase) {
-        this.useCases.remove(umlUseCase);
+        return UML_SYSTEM_BOUNDARY_TYPE;
     }
 
     @Override
@@ -73,8 +52,8 @@ public class UMLSystemBoundary extends UMLElement {
             return false;
         }
 
-        UMLSystemBoundary otherPackage = (UMLSystemBoundary) obj;
+        UMLSystemBoundary systemBoundary = (UMLSystemBoundary) obj;
 
-        return otherPackage.useCases.size() == useCases.size() && otherPackage.useCases.containsAll(useCases) && useCases.containsAll(otherPackage.useCases);
+        return name.equals(systemBoundary.name);
     }
 }

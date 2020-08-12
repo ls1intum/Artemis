@@ -8,8 +8,6 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLUseCaseDiagram extends UMLDiagram {
 
-    // TODO recreate for the purpose of UML Component diagrams
-
     private final List<UMLSystemBoundary> systemBoundaryList;
 
     private final List<UMLActor> actorList;
@@ -36,7 +34,17 @@ public class UMLUseCaseDiagram extends UMLDiagram {
             }
         }
 
-        // TODO
+        for (UMLSystemBoundary systemBoundary : systemBoundaryList) {
+            if (systemBoundary.getJSONElementID().equals(jsonElementId)) {
+                return systemBoundary;
+            }
+        }
+
+        for (UMLActor actor : actorList) {
+            if (actor.getJSONElementID().equals(jsonElementId)) {
+                return actor;
+            }
+        }
 
         for (UMLUseCaseAssociation association : useCaseAssociationList) {
             if (association.getJSONElementID().equals(jsonElementId)) {
@@ -55,11 +63,21 @@ public class UMLUseCaseDiagram extends UMLDiagram {
         return useCaseAssociationList;
     }
 
+    public List<UMLSystemBoundary> getSystemBoundaryList() {
+        return systemBoundaryList;
+    }
+
+    public List<UMLActor> getActorList() {
+        return actorList;
+    }
+
     @Override
     protected List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(useCaseList);
         modelElements.addAll(useCaseAssociationList);
+        modelElements.addAll(systemBoundaryList);
+        modelElements.addAll(actorList);
         return modelElements;
     }
 }

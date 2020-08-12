@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActor extends UMLElement {
 
-    public final static String UML_OBJECT_TYPE = "ObjectName";
+    public final static String UML_ACTOR_TYPE = "Actor";
 
     private String name;
 
@@ -22,12 +22,12 @@ public class UMLActor extends UMLElement {
 
     @Override
     public String getType() {
-        return UML_OBJECT_TYPE;
+        return UML_ACTOR_TYPE;
     }
 
     @Override
     public String toString() {
-        return "Object " + name;
+        return "Actor " + name;
     }
 
     /**

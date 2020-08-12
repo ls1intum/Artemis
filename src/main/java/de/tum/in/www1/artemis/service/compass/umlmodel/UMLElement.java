@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 import java.util.List;
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 public abstract class UMLElement implements Similarity<UMLElement> {
@@ -12,6 +14,10 @@ public abstract class UMLElement implements Similarity<UMLElement> {
     private String jsonElementID; // unique element id //TODO rename into uniqueId?
 
     private Context context;
+
+    // theoretically this can be a node or a component or a package
+    @Nullable
+    private UMLElement parentElement;
 
     /**
      * empty constructor used to make mockito happy
@@ -37,6 +43,15 @@ public abstract class UMLElement implements Similarity<UMLElement> {
      * @return the type of the UML element
      */
     public abstract String getType();
+
+    @Nullable
+    public UMLElement getParentElement() {
+        return parentElement;
+    }
+
+    public void setParentElement(@Nullable UMLElement parentElement) {
+        this.parentElement = parentElement;
+    }
 
     /**
      * Get the similarity ID of this UML element. Similar elements share the same similarity ID.

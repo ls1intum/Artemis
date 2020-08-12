@@ -8,6 +8,8 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLComponentDiagram extends UMLDiagram {
 
+    // TODO: finish implementation
+
     private final List<UMLComponent> componentList;
 
     private final List<UMLComponentInterface> componentInterfaceList;

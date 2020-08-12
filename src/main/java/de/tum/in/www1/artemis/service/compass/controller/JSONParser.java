@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityElement;
@@ -212,7 +213,7 @@ public class JSONParser {
      */
     private static UMLPackage parsePackage(JsonObject packageJson) {
         String packageName = packageJson.get(JSONMapping.elementName).getAsString();
-        List<UMLClass> umlClassList = new ArrayList<>();
+        List<UMLElement> umlClassList = new ArrayList<>();
         String jsonElementId = packageJson.get(JSONMapping.elementID).getAsString();
 
         return new UMLPackage(packageName, umlClassList, jsonElementId);
@@ -251,7 +252,7 @@ public class JSONParser {
             String packageId = classJson.get(JSONMapping.elementOwner).getAsString();
             UMLPackage umlPackage = umlPackageMap.get(packageId);
             if (umlPackage != null) {
-                umlPackage.addClass(newClass);
+                umlPackage.addSubElement(newClass);
                 newClass.setUmlPackage(umlPackage);
             }
         }

@@ -8,6 +8,8 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public abstract class UMLActivityElement extends UMLElement {
 
+    // TODO: use UML Container Element instead
+
     protected String name;
 
     @Nullable

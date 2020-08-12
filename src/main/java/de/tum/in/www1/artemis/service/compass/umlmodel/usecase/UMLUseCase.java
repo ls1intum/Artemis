@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLUseCase extends UMLElement {
 
-    public final static String UML_OBJECT_TYPE = "ObjectName";
+    public final static String UML_USE_CASE_TYPE = "UseCase";
 
     private String name;
 
@@ -24,12 +24,12 @@ public class UMLUseCase extends UMLElement {
 
     @Override
     public String getType() {
-        return UML_OBJECT_TYPE;
+        return UML_USE_CASE_TYPE;
     }
 
     @Override
     public String toString() {
-        return "Object " + name;
+        return "Use Case " + name;
     }
 
     /**
