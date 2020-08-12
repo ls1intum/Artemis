@@ -148,7 +148,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     canDeactivate() {
-        return this.isOver() || this.studentExam == null || this.handInEarly;
+        return this.isOver() || this.studentExam == null || this.handInEarly || !this.examStartConfirmed;
     }
 
     get canDeactivateWarning() {
