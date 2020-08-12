@@ -33,12 +33,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    examListModificationDeleteEvent: JhiEventWithContent<string> = {
-        name: 'examListModification',
-        content: 'Deleted an exam',
-    };
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -108,7 +102,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Function is called when the delete button is pressed for an exam
-     * @fires examListModificationDeleteEvent
      * @param examId Id to be deleted
      */
     deleteExam(examId: number) {

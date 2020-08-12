@@ -16,15 +16,17 @@
                 <dd>
                     <span>{{ exam.title }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.examiner">Examiner</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.examiner">Examiner</span></dt>
                 <dd>
-                    <span>{{ exam.examiner }}</span>
+                    <span *ngIf="exam.examiner">{{ exam.examiner }}</span>
+                    <span *ngIf="!exam.examiner" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.moduleNumber">Module Number</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.moduleNumber">Module Number</span></dt>
                 <dd>
-                    <span>{{ exam.moduleNumber }}</span>
+                    <span *ngIf="exam.moduleNumber">{{ exam.moduleNumber }}</span>
+                    <span *ngIf="!exam.moduleNumber" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.visibleDate">Visible from</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.visibleDate">Visible from</span></dt>
                 <dd>
                     <span *ngIf="exam.visibleDate">{{ exam.visibleDate | artemisDate }}</span>
                     <span *ngIf="!exam.visibleDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
@@ -54,38 +56,44 @@
                     <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
                     <span *ngIf="!exam.examStudentReviewEnd" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.gracePeriod">Grace period (seconds)</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</span></dt>
                 <dd>
                     <span>{{ exam.gracePeriod }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.maxPoints">Maximum number of points in exam</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.maxPoints">Maximum number of points in exam</span></dt>
                 <dd>
-                    <span>{{ exam.maxPoints }}</span>
+                    <span *ngIf="exam.maxPoints">{{ exam.maxPoints }}</span>
+                    <span *ngIf="!exam.maxPoints" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.numberOfExercisesInExam">Number of exercises in exam</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam">Number of exercises in exam</span></dt>
                 <dd>
-                    <span>{{ exam.numberOfExercisesInExam }}</span>
+                    <span *ngIf="exam.numberOfExercisesInExam">{{ exam.numberOfExercisesInExam }}</span>
+                    <span *ngIf="!exam.numberOfExercisesInExam" jhiTranslate="artemisApp.exam.notSet"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.randomizeQuestionOrder">Randomize order of exercise groups</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder">Randomize order of exercise groups</span></dt>
                 <dd>
                     <span>{{ exam.randomizeExerciseOrder }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.registeredStudents">Registered students</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.examStudents.registeredStudents">Registered students</span></dt>
                 <dd>
-                    <span>{{ exam.registeredUsers.length }}</span>
+                    <span *ngIf="exam.registeredUsers">{{ exam.registeredUsers?.length }}</span>
+                    <span *ngIf="!exam.registeredUsers">{{ 0 }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.studentExams">Student Exams</span></dt>
-                <dd>
-                    <span>{{ exam.studentExams.length }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.startText">Exam start text</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedStartText"></dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.confirmationStartText">Exam start confirmation text</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedConfirmationStartText"></dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.startText">Exam end text</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedEndText"></dd>
-                <dt><span jhiTranslate="artemisApp.exam.examManagement.confirmationStartText">Exam end confirmation text</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedConfirmationEndText"></dd>
+                <dt><span jhiTranslate="artemisApp.examManagement.startText">Exam start text</span></dt>
+                <dd *ngIf="formattedStartText" class="editor-outline-background" [innerHTML]="formattedStartText"></dd>
+                <span *ngIf="!formattedStartText" jhiTranslate="artemisApp.exam.notSet"></span>
+
+                <dt><span jhiTranslate="artemisApp.examManagement.confirmationStartText">Exam start confirmation text</span></dt>
+                <dd *ngIf="formattedConfirmationStartText" class="editor-outline-background" [innerHTML]="formattedConfirmationStartText"></dd>
+                <span *ngIf="!formattedConfirmationStartText" jhiTranslate="artemisApp.exam.notSet"></span>
+
+                <dt><span jhiTranslate="artemisApp.examManagement.startText">Exam end text</span></dt>
+                <dd *ngIf="formattedEndText" class="editor-outline-background" [innerHTML]="formattedEndText"></dd>
+                <span *ngIf="!formattedEndText" jhiTranslate="artemisApp.exam.notSet"></span>
+
+                <dt><span jhiTranslate="artemisApp.examManagement.confirmationStartText">Exam end confirmation text</span></dt>
+                <dd *ngIf="formattedConfirmationEndText" class="editor-outline-background" [innerHTML]="formattedConfirmationEndText"></dd>
+                <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
             </dl>
             <button type="submit" (click)="previousState()" class="btn btn-info">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
@@ -93,6 +101,10 @@
 
             <button type="button" [routerLink]="getEditRoute()" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+
+            <button type="submit" *ngIf="isAtLeastInstructor" [routerLink]="getStudentExamRoute()" class="btn btn-primary">
+                <fa-icon [icon]="'eye'"></fa-icon> <span>{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </button>
         </div>
     </div>
