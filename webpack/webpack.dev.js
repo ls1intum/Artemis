@@ -57,18 +57,34 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         },
         {
             test: /\.scss$/,
-            use: ['to-string-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }],
+            use: [
+                'to-string-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
+                'postcss-loader',
+                {
+                    loader: 'sass-loader',
+                    options: { implementation: sass }
+                }
+            ],
             exclude: /(vendor\.scss|global\.scss)/
         },
         {
             test: /(vendor\.scss|global\.scss)/,
-            use: ['style-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }]
+            use: [
+                'style-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
+                'postcss-loader',
+                {
+                    loader: 'sass-loader',
+                    options: { implementation: sass }
+                }
+            ]
         }]
     },
     stats: process.env.JHI_DISABLE_WEBPACK_LOGS ? 'none' : options.stats,

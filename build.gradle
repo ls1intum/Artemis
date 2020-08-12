@@ -241,7 +241,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.16"
+    implementation "org.xmlbeam:xmlprojector:1.4.17"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
