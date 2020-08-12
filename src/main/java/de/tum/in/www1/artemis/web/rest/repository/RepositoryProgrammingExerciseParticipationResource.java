@@ -210,7 +210,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
-        if (commit.equals("true")) {
+        if ("true".equals(commit)) {
             var response = super.commitChanges(participationId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new ResponseStatusException(response.getStatusCode());
@@ -256,7 +256,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
-        if (commit.equals("true")) {
+        if ("true".equals(commit)) {
             var response = super.commitChanges(exerciseId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new ResponseStatusException(response.getStatusCode());
