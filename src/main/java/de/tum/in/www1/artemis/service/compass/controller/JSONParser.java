@@ -20,12 +20,13 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode.UMLActivityNodeType;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLControlFlow;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
@@ -34,6 +35,10 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLUseCaseDiagram;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
 public class JSONParser {
@@ -59,15 +64,104 @@ public class JSONParser {
         else if (DiagramType.ActivityDiagram.name().equals(diagramType)) {
             return buildActivityDiagramFromJSON(modelElements, relationships, modelSubmissionId);
         }
+        else if (DiagramType.UseCaseDiagram.name().equals(diagramType)) {
+            return buildUseCaseDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        }
+        else if (DiagramType.CommunicationDiagram.name().equals(diagramType)) {
+            return buildCommunicationDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        }
+        else if (DiagramType.ComponentDiagram.name().equals(diagramType)) {
+            return buildComponentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        }
+        else if (DiagramType.DeploymentDiagram.name().equals(diagramType)) {
+            return buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        }
 
-        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by Compass.");
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+    }
+
+    /**
+     * Create a UML communication diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * communication diagram containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a UML communication diagram containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static UMLCommunicationDiagram buildCommunicationDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        Map<String, UMLObject> umlObjectMap = new HashMap<>();
+        List<UMLCommunicationLink> umlCommunicationLinkList = new ArrayList<>();
+
+        // loop over all JSON elements and create the UML objects
+        for (JsonElement elem : modelElements) {
+            JsonObject element = elem.getAsJsonObject();
+
+            String elementType = element.get(JSONMapping.elementType).getAsString();
+
+            if ("ObjectName".equals(elementType)) {
+                UMLObject umlObject = parseObject(element, modelElements);
+                umlObjectMap.put(umlObject.getJSONElementID(), umlObject);
+            }
+        }
+
+        // loop over all JSON control flow elements and create UML communication links
+        for (JsonElement rel : relationships) {
+            Optional<UMLCommunicationLink> communicationLink = parseCommunicationLink(rel.getAsJsonObject(), umlObjectMap);
+            communicationLink.ifPresent(umlCommunicationLinkList::add);
+        }
+
+        return new UMLCommunicationDiagram(modelSubmissionId, new ArrayList<>(umlObjectMap.values()), umlCommunicationLinkList);
+    }
+
+    /**
+     * Create a UML use case diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * use case diagram containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a UML use case diagram containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static UMLUseCaseDiagram buildUseCaseDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+    }
+
+    /**
+     * Create a UML component diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * component diagram containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a UML component diagram containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static UMLComponentDiagram buildComponentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+    }
+
+    /**
+     * Create a UML deployment diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * deployment diagram containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a UML deployment diagram containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static UMLDeploymentDiagram buildDeploymentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
     /**
      * Create a UML class diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a class
      * diagram containing these UML model elements.
      *
-     * @param modelElements the model elements (UML classes and packages) as JSON array
+     * @param modelElements the model elements as JSON array
      * @param relationships the relationship elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML class diagram containing the parsed model elements and relationships
@@ -102,7 +196,7 @@ public class JSONParser {
             }
         }
 
-        // loop over all JSON control flow elements and create UML control flow objects
+        // loop over all JSON relationship elements and create UML relationships
         for (JsonElement rel : relationships) {
             Optional<UMLRelationship> relationship = parseRelationship(rel.getAsJsonObject(), umlClassMap, umlPackageMap);
             relationship.ifPresent(umlRelationshipList::add);
@@ -119,7 +213,7 @@ public class JSONParser {
      */
     private static UMLPackage parsePackage(JsonObject packageJson) {
         String packageName = packageJson.get(JSONMapping.elementName).getAsString();
-        List<UMLClass> umlClassList = new ArrayList<>();
+        List<UMLElement> umlClassList = new ArrayList<>();
         String jsonElementId = packageJson.get(JSONMapping.elementID).getAsString();
 
         return new UMLPackage(packageName, umlClassList, jsonElementId);
@@ -158,12 +252,36 @@ public class JSONParser {
             String packageId = classJson.get(JSONMapping.elementOwner).getAsString();
             UMLPackage umlPackage = umlPackageMap.get(packageId);
             if (umlPackage != null) {
-                umlPackage.addClass(newClass);
+                umlPackage.addSubElement(newClass);
                 newClass.setUmlPackage(umlPackage);
             }
         }
 
         return newClass;
+    }
+
+    /**
+     * Parses the given JSON representation of a UML object to a UMLObject Java object.
+     *
+     * @param objectJson the JSON object containing the UML object
+     * @param modelElements a JSON array containing all the model elements of the corresponding UML class diagram as JSON objects
+     * @return the UMLObject object parsed from the JSON object
+     */
+    private static UMLObject parseObject(JsonObject objectJson, JsonArray modelElements) {
+        Map<String, JsonObject> jsonElementMap = generateJsonElementMap(modelElements);
+        String objectName = objectJson.get(JSONMapping.elementName).getAsString();
+        List<UMLAttribute> umlAttributesList = new ArrayList<>();
+        for (JsonElement attributeId : objectJson.getAsJsonArray(JSONMapping.elementAttributes)) {
+            UMLAttribute newAttr = parseAttribute(jsonElementMap.get(attributeId.getAsString()));
+            umlAttributesList.add(newAttr);
+        }
+
+        List<UMLMethod> umlMethodList = new ArrayList<>();
+        for (JsonElement methodId : objectJson.getAsJsonArray(JSONMapping.elementMethods)) {
+            UMLMethod newMethod = parseMethod(jsonElementMap.get(methodId.getAsString()));
+            umlMethodList.add(newMethod);
+        }
+        return new UMLObject(objectName, umlAttributesList, umlMethodList, objectJson.get(JSONMapping.elementID).getAsString());
     }
 
     /**
@@ -217,7 +335,8 @@ public class JSONParser {
      * Parses the given JSON representation of a UML relationship to a UMLRelationship Java object.
      *
      * @param relationshipJson the JSON object containing the relationship
-     * @param classMap a map containing all classes of the corresponding activity diagram, necessary for assigning source and target element of the relationships
+     * @param classMap a map containing all classes of the corresponding class diagram, necessary for assigning source and target element of the relationships
+     * @param packageMap the package map contains all packages of the diagram
      * @return the UMLRelationship object parsed from the JSON object
      * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
      */
@@ -260,6 +379,43 @@ public class JSONParser {
                 return Optional.empty();
             }
 
+            throw new IOException("Relationship source or target not part of model!");
+        }
+    }
+
+    /**
+     * Parses the given JSON representation of a UML relationship to a UMLRelationship Java object.
+     *
+     * @param relationshipJson the JSON object containing the relationship
+     * @param objectMap a map containing all objects of the corresponding communication diagram, necessary for assigning source and target element of the relationships
+     * @return the UMLRelationship object parsed from the JSON object
+     * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
+     */
+    private static Optional<UMLCommunicationLink> parseCommunicationLink(JsonObject relationshipJson, Map<String, UMLObject> objectMap) throws IOException {
+
+        JsonObject relationshipSource = relationshipJson.getAsJsonObject(JSONMapping.relationshipSource);
+        JsonObject relationshipTarget = relationshipJson.getAsJsonObject(JSONMapping.relationshipTarget);
+
+        String sourceJSONID = relationshipSource.get(JSONMapping.relationshipEndpointID).getAsString();
+        String targetJSONID = relationshipTarget.get(JSONMapping.relationshipEndpointID).getAsString();
+
+        UMLObject source = objectMap.get(sourceJSONID);
+        UMLObject target = objectMap.get(targetJSONID);
+
+        List<UMLMessage> messages = new ArrayList<>();
+
+        for (JsonElement messageJson : relationshipJson.getAsJsonArray(JSONMapping.relationshipMessages)) {
+            JsonObject messageJsonObject = (JsonObject) messageJson;
+            Direction direction = messageJsonObject.get("direction").getAsString().equals("target") ? Direction.TARGET : Direction.SOURCE;
+            UMLMessage message = new UMLMessage(messageJsonObject.get("name").getAsString(), direction);
+            messages.add(message);
+        }
+
+        if (source != null && target != null) {
+            UMLCommunicationLink newCommunicationLink = new UMLCommunicationLink(source, target, messages, relationshipJson.get(JSONMapping.elementID).getAsString());
+            return Optional.of(newCommunicationLink);
+        }
+        else {
             throw new IOException("Relationship source or target not part of model!");
         }
     }
@@ -384,6 +540,7 @@ public class JSONParser {
      * @param elements a JSON array of elements from which the map should be created
      * @return a map that maps elementId -> element
      */
+    // TODO: why is this done more than once?
     private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
         Map<String, JsonObject> jsonElementMap = new HashMap<>();
         elements.forEach(element -> jsonElementMap.put(element.getAsJsonObject().get("id").getAsString(), element.getAsJsonObject()));
