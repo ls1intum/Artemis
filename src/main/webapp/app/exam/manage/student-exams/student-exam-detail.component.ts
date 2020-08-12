@@ -55,13 +55,6 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     /**
-     * Link to download the exported PDF of the students participation
-     */
-    downloadPdf() {
-        // TODO
-    }
-
-    /**
      * Get an icon for the type of the given exercise.
      * @param exercise {Exercise}
      */
