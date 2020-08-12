@@ -94,6 +94,10 @@ export class StudentExamDetailComponent implements OnInit {
         );
     }
 
+    /**
+     * Sets the student exam, and calculates the total score of the exam and achieved total score of the student.
+     * @param studentExam
+     */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
