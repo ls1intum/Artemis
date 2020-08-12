@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
@@ -13,9 +11,8 @@ public class UMLComponent extends UMLContainerElement {
 
     private final String name;
 
-    public UMLComponent(String name, List<UMLElement> subElements, String jsonElementID) {
-        super(jsonElementID, subElements);
-
+    public UMLComponent(String name, String jsonElementID) {
+        super(jsonElementID);
         this.name = name;
     }
 

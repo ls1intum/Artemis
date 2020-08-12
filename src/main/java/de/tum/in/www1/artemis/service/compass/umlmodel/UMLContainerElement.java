@@ -23,6 +23,10 @@ public abstract class UMLContainerElement extends UMLElement {
         super();
     }
 
+    public UMLContainerElement(String jsonElementID) {
+        super(jsonElementID);
+    }
+
     public UMLContainerElement(String jsonElementID, List<UMLElement> subElements) {
         super(jsonElementID);
         this.subElements = subElements;

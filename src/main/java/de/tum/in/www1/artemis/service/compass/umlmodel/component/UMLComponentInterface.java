@@ -1,18 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentInterface extends UMLElement {
-
-    public enum UMLComponentInterfaceType {
-        PROVIDED, REQUIRED, DEPENDENCY
-    }
-
-    private UMLComponentInterfaceType type;
 
     /**
      * empty constructor used to make mockito happy
@@ -21,9 +12,8 @@ public class UMLComponentInterface extends UMLElement {
         super();
     }
 
-    public UMLComponentInterface(String jsonElementID, UMLComponentInterfaceType type) {
+    public UMLComponentInterface(String jsonElementID) {
         super(jsonElementID);
-        this.type = type;
     }
 
     /**
@@ -41,11 +31,7 @@ public class UMLComponentInterface extends UMLElement {
         }
         UMLComponentInterface referenceClass = (UMLComponentInterface) reference;
 
-        if (type == referenceClass.type) {
-            similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
-        }
-
-        // TODO: take all relations with other elements into account to determine the similarity
+        // TODO: how should we compare this? (not really possible)
 
         return ensureSimilarityRange(similarity);
     }
@@ -71,7 +57,7 @@ public class UMLComponentInterface extends UMLElement {
 
     @Override
     public String toString() {
-        return "Component Interface " + type;
+        return "Component Interface ";
     }
 
     @Override
@@ -81,7 +67,7 @@ public class UMLComponentInterface extends UMLElement {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+        return null;
     }
 
     @Override
@@ -92,9 +78,6 @@ public class UMLComponentInterface extends UMLElement {
 
         UMLComponentInterface otherComponentInterface = (UMLComponentInterface) obj;
         // TODO: without a name this does not really make sense
-        if (otherComponentInterface.type.equals(this.type)) {
-            return true;
-        }
 
         return true;
     }
