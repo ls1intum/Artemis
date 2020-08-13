@@ -68,7 +68,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     commitState: CommitState;
 
     errorFiles: string[] = [];
-    annotations: Array<Annotation>;
+    annotations: Array<Annotation> = [];
 
     constructor(
         private participationService: ParticipationService,
