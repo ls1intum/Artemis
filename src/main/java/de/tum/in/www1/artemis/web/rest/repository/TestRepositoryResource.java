@@ -141,6 +141,7 @@ public class TestRepositoryResource extends RepositoryResource {
      *
      * @param exerciseId  of exercise to which the files belong
      * @param submissions information about the file updates
+     * @param commit      whether to commit after updating the files
      * @param principal   used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
