@@ -13,7 +13,7 @@ public class UMLMethod extends UMLElement {
 
     public final static String UML_METHOD_TYPE = "ClassMethod";
 
-    private UMLClass parentClass;
+    private UMLElement parentElement;
 
     private String completeName;
 
@@ -22,6 +22,13 @@ public class UMLMethod extends UMLElement {
     private String returnType;
 
     private List<String> parameters;
+
+    /**
+     * empty constructor used to make mockito happy
+     */
+    public UMLMethod() {
+        super();
+    }
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameters, String jsonElementID) {
         super(jsonElementID);
@@ -33,21 +40,21 @@ public class UMLMethod extends UMLElement {
     }
 
     /**
-     * Get the parent class of this method, i.e. the UML class that contains it.
+     * Get the parent element of this method, i.e. the UML class that contains it.
      *
      * @return  the UML class that contains this method
      */
-    public UMLClass getParentClass() {
-        return parentClass;
+    public UMLElement getParentElement() {
+        return parentElement;
     }
 
     /**
      * Set the parent class of this method, i.e. the UML class that contains it.
      *
-     * @param parentClass the UML class that contains this method
+     * @param parentElement the UML class that contains this method
      */
-    public void setParentClass(UMLClass parentClass) {
-        this.parentClass = parentClass;
+    public void setParentElement(UMLElement parentElement) {
+        this.parentElement = parentElement;
     }
 
     /**
@@ -106,16 +113,16 @@ public class UMLMethod extends UMLElement {
      * @return true if the parent classes are similar/equal, false otherwise
      */
     private boolean parentsSimilar(UMLMethod referenceMethod) {
-        if (parentClass.getSimilarityID() != -1 && referenceMethod.getParentClass().getSimilarityID() != -1) {
-            return parentClass.getSimilarityID() == referenceMethod.getParentClass().getSimilarityID();
+        if (parentElement.getSimilarityID() != -1 && referenceMethod.getParentElement().getSimilarityID() != -1) {
+            return parentElement.getSimilarityID() == referenceMethod.getParentElement().getSimilarityID();
         }
 
-        return parentClass.similarity(referenceMethod.getParentClass()) > CompassConfiguration.EQUALITY_THRESHOLD;
+        return parentElement.similarity(referenceMethod.getParentElement()) > CompassConfiguration.EQUALITY_THRESHOLD;
     }
 
     @Override
     public String toString() {
-        return "Method " + completeName + " in class " + parentClass.getName();
+        return "Method " + completeName + " in class " + parentElement.getName();
     }
 
     @Override
@@ -141,6 +148,6 @@ public class UMLMethod extends UMLElement {
             return false;
         }
 
-        return Objects.equals(otherMethod.getReturnType(), returnType) && Objects.equals(otherMethod.getParentClass().getName(), parentClass.getName());
+        return Objects.equals(otherMethod.getReturnType(), returnType) && Objects.equals(otherMethod.getParentElement().getName(), parentElement.getName());
     }
 }

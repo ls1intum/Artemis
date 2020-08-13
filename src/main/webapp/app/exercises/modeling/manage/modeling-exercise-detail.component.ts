@@ -7,8 +7,10 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from './modeling-exercise.service';
+import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { AlertService } from 'app/core/alert/alert.service';
+import { downloadFile } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -22,12 +24,14 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     gradingInstructions: SafeHtml;
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
+    checkPlagiarismInProgress: boolean;
 
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -51,6 +55,21 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    checkPlagiarism() {
+        this.checkPlagiarismInProgress = true;
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(this.handleCheckPlagiarismResponse, () => {
+            this.checkPlagiarismInProgress = false;
+        });
+    }
+
+    handleCheckPlagiarismResponse = (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
+        this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
+        this.checkPlagiarismInProgress = false;
+        const json = JSON.stringify(response.body);
+        const blob = new Blob([json], { type: 'application/json' });
+        downloadFile(blob, `check-plagiarism-modeling-exercise-${this.modelingExercise.id}.json`);
+    };
 
     previousState() {
         window.history.back();
