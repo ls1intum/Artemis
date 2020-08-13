@@ -11,6 +11,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 
 /**
  * Describes the editableField
@@ -20,6 +21,8 @@ export enum EditableField {
     BONUS_MULTIPLIER = 'bonusMultiplier',
     BONUS_POINTS = 'bonusPoints',
 }
+
+export type GradingCriteria = ProgrammingExerciseTestCase | StaticCodeAnalysisCategory;
 
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
