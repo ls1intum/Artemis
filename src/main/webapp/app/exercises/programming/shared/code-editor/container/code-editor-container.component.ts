@@ -67,7 +67,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     editorState: EditorState;
     commitState: CommitState;
 
-    errorFiles: string[];
+    errorFiles: string[] = [];
     annotations: Array<Annotation>;
 
     constructor(
