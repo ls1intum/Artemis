@@ -136,7 +136,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles(andCommit: boolean = false): Observable<any> {
+    saveChangedFiles(andCommit = false): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));

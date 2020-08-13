@@ -191,7 +191,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * @param fileUpdates the Array of updated files
      * @param thenCommit indicates the server to also commit the saved changes
      */
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit: boolean = false) {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
         const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
