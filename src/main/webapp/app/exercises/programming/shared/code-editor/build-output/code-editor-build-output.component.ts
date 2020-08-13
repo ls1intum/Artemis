@@ -100,6 +100,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         }
     }
 
+    /**
+     * Extracts annotations from
+     * - the build logs as compilation errors
+     * - the result feedbacks as static code analysis issues
+     * and emits them to the parent component
+     */
     private extractAnnotations() {
         const buildLogErrors = this.rawBuildLogs.extractErrors();
         const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({

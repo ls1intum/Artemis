@@ -209,6 +209,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
+    /**
+     * Sets the annotations for the editor.
+     * Checks for each annotation whether an updated version exists in local storage.
+     * @param annotations The new annotations array
+     */
     setAnnotations(annotations: Array<Annotation> = []) {
         if (annotations.length > 0) {
             const sessionAnnotations = this.loadAnnotations();
@@ -222,6 +227,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.displayAnnotations();
     }
 
+    /**
+     * Updates the fileSession and annotations objects for a file change. This function is called
+     * by the parent container.
+     * @param fileChange
+     */
     onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
@@ -245,6 +255,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.displayAnnotations();
     }
 
+    /**
+     * Saves the updated annotations to local storage
+     * @param savedFiles
+     */
     storeAnnotations(savedFiles: Array<string>) {
         const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
@@ -258,10 +272,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         );
     }
 
+    /**
+     * Loads annotations from local storage
+     */
     loadAnnotations() {
         return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
     }
 
+    /**
+     * Updates the annotations in the editor
+     */
     displayAnnotations() {
         this.editor
             .getEditor()

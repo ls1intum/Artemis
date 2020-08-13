@@ -225,6 +225,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
     }
 
+    /**
+     * Set the annotations and extract error files for the file browser.
+     * @param annotations The new annotations array
+     */
     onAnnotations(annotations: Array<Annotation>) {
         this.annotations = annotations;
         this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
