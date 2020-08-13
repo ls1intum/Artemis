@@ -1071,7 +1071,9 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.deleteLocalRepository(programmingExerciseParticipation);
+                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
+                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    gitService.deleteLocalRepository(repo);
                 }
             }
             catch (Exception ex) {
