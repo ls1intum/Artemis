@@ -17,7 +17,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockProgrammingExerciseTestCaseService } from '../../helpers/mocks/service/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseTestCaseModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-test-case.module';
+import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-grading.module';
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
@@ -25,7 +25,7 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases.component';
+import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
@@ -39,8 +39,8 @@ const expect = chai.expect;
 // TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
 // The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
 describe('ProgrammingExerciseManageTestCasesComponent', () => {
-    let comp: ProgrammingExerciseManageTestCasesComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseManageTestCasesComponent>;
+    let comp: ProgrammingExerciseConfigureGradingComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
     let debugElement: DebugElement;
 
     let route: ActivatedRoute;
@@ -118,7 +118,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseGradingModule],
             providers: [
                 AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
@@ -134,9 +134,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseManageTestCasesComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseConfigureGradingComponent);
                 debugElement = fixture.debugElement;
-                comp = fixture.componentInstance as ProgrammingExerciseManageTestCasesComponent;
+                comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);

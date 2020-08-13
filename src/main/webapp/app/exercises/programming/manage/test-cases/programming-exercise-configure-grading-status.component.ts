@@ -6,7 +6,7 @@ import { Component, Input } from '@angular/core';
  * - Have test cases been changed but the student submissions were not triggered?
  */
 @Component({
-    selector: 'jhi-programming-exercise-manage-test-cases-status',
+    selector: 'jhi-programming-exercise-configure-grading-status',
     template: `
         <div class="d-flex flex-column justify-content-between">
             <div id="test-case-status-unsaved-changes" *ngIf="hasUnsavedChanges; else noUnsavedChanges" class="d-flex align-items-center badge badge-warning mb-1">
@@ -48,7 +48,7 @@ import { Component, Input } from '@angular/core';
         </div>
     `,
 })
-export class ProgrammingExerciseManageTestCasesStatusComponent {
+export class ProgrammingExerciseConfigureGradingStatusComponent {
     @Input() exerciseIsReleasedAndHasResults: boolean;
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;

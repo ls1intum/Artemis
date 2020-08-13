@@ -1,8 +1,8 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="d-flex align-content-center mb-2">
-        <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
-            Manage Test Cases.
+        <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">
+            Configure Automated Grading
         </h3>
     </div>
     <ng-container *ngIf="!isLoading; else loadingContainer">
@@ -12,18 +12,18 @@
                 <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
             </label>
             <div class="d-flex align-items-center ml-auto">
-                <jhi-programming-exercise-manage-test-cases-status
+                <jhi-programming-exercise-configure-grading-status
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
-                ></jhi-programming-exercise-manage-test-cases-status>
-                <jhi-programming-exercise-manage-test-cases-actions
+                ></jhi-programming-exercise-configure-grading-status>
+                <jhi-programming-exercise-configure-grading-actions
                     [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     (onReset)="resetChanges()"
                     (onSave)="saveChanges()"
-                ></jhi-programming-exercise-manage-test-cases-actions>
+                ></jhi-programming-exercise-configure-grading-actions>
             </div>
         </div>
         <ngx-datatable

@@ -8,7 +8,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  * - Trigger the submissions for all participations of the given exercise.
  */
 @Component({
-    selector: 'jhi-programming-exercise-manage-test-cases-actions',
+    selector: 'jhi-programming-exercise-configure-grading-actions',
     template: `
         <button
             id="save-test-cases-button"
@@ -32,7 +32,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
         ></jhi-programming-exercise-trigger-all-button>
     `,
 })
-export class ProgrammingExerciseManageTestCasesActionsComponent {
+export class ProgrammingExerciseConfigureGradingActionsComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;

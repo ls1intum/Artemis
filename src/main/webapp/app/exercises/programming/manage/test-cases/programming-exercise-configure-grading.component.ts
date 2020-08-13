@@ -22,12 +22,12 @@ export enum EditableField {
 }
 
 @Component({
-    selector: 'jhi-programming-exercise-manage-test-cases',
-    templateUrl: './programming-exercise-manage-test-cases.component.html',
-    styleUrls: ['./programming-exercise-manage-test-cases.scss'],
+    selector: 'jhi-programming-exercise-configure-grading',
+    templateUrl: './programming-exercise-configure-grading.component.html',
+    styleUrls: ['./programming-exercise-configure-grading.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
     courseId: number;
