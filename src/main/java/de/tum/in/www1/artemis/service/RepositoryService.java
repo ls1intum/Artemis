@@ -216,7 +216,7 @@ public class RepositoryService {
      * @throws IOException if the repository status can't be retrieved.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
+    public boolean isClean(URL repositoryUrl) throws GitAPIException, InterruptedException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }

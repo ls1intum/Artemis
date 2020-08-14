@@ -314,7 +314,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException, InterruptedException {
         return super.getStatus(participationId);
     }
 
