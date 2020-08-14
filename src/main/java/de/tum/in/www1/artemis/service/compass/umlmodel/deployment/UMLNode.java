@@ -16,7 +16,7 @@ public class UMLNode extends UMLContainerElement {
 
     private final String stereotype;
 
-    public UMLNode(String name, String jsonElementID, String stereotype) {
+    public UMLNode(String name, String stereotype, String jsonElementID) {
         super(jsonElementID);
         this.name = name;
         this.stereotype = stereotype;
