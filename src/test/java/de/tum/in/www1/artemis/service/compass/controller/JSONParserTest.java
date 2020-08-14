@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode.UMLActivityNodeType.*;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.*;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static java.util.Collections.emptyList;
@@ -20,9 +20,9 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLControlFlow;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 class JSONParserTest {
@@ -102,8 +102,9 @@ class JSONParserTest {
     @Test
     void buildModelFromJSON_communicationDiagram_empty() throws Exception {
         JsonObject communicationDiagramJson = loadFileFromResources("test-data/model-submission/empty-communication-diagram.json");
-
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789));
+        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789);
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test

@@ -73,6 +73,8 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
             similarity += weight * similarityValue;
         }
 
+        // TODO: do we actually take the references / relationships into account?
+
         // Make sure that the similarity value is between 0 and 1.
         return Math.min(Math.max(similarity, 0), 1);
     }

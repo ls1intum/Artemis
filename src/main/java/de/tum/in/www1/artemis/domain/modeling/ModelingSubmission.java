@@ -8,6 +8,8 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Submission;
 
 /**
@@ -80,5 +82,33 @@ public class ModelingSubmission extends Submission implements Serializable {
     @Override
     public String toString() {
         return "ModelingSubmission{" + "id=" + getId() + "}";
+    }
+
+    /**
+     * checks if the modeling submission is empty by using a new object mapper.
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     *
+     * @return true if the submission is empty, false otherwise
+     */
+    public boolean isEmpty() {
+        return isEmpty(new ObjectMapper());
+    }
+
+    /**
+     * checks if the modeling submission is empty by using a predefined object mapper (in case this is invoked multiple times).
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     *
+     * @param jacksonObjectMapper a predefined jackson object mapper
+     *
+     * @return true if the submission is empty, false otherwise
+     */
+    public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
+        try {
+            // TODO: further improve this!!
+            return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("elements").isEmpty();
+        }
+        catch (JsonProcessingException ex) {
+            return false;
+        }
     }
 }

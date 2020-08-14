@@ -93,6 +93,6 @@ export class TextExerciseService {
      * @param exerciseId of the text exercise
      */
     checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<SubmissionComparisonDTO>>> {
-        return this.http.get<Array<SubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/plagiarism-checks`, { observe: 'response' });
+        return this.http.get<Array<SubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
     }
 }
