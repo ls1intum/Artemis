@@ -1,4 +1,4 @@
-const esModules = ['ngx-treeview'].join('|');
+const esModules = ['ngx-treeview', 'lodash-es'].join('|');
 module.exports = {
     globals: {
         'ts-jest': {
