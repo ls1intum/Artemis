@@ -96,7 +96,10 @@ class UMLModelParserTest {
     void buildModelFromJSON_useCaseDiagram_empty() throws Exception {
         JsonObject useCaseDiagramJson = loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> UMLModelParser.buildModelFromJSON(useCaseDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(useCaseDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test
@@ -111,14 +114,20 @@ class UMLModelParserTest {
     void buildModelFromJSON_deploymentDiagram_empty() throws Exception {
         JsonObject deploymentDiagramJson = loadFileFromResources("test-data/model-submission/empty-deployment-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> UMLModelParser.buildModelFromJSON(deploymentDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(deploymentDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test
     void buildModelFromJSON_componentDiagram_empty() throws Exception {
         JsonObject componentDiagramJson = loadFileFromResources("test-data/model-submission/empty-component-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> UMLModelParser.buildModelFromJSON(componentDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(componentDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     private JsonObject loadFileFromResources(String path) throws Exception {
