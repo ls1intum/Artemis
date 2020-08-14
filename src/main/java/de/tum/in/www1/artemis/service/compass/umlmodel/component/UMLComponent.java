@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import java.util.List;
+import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponent extends UMLContainerElement {
 
@@ -13,19 +14,24 @@ public class UMLComponent extends UMLContainerElement {
 
     private final String name;
 
-    public UMLComponent(String name, List<UMLElement> subElements, String jsonElementID) {
-        super(jsonElementID, subElements);
-
+    public UMLComponent(String name, String jsonElementID) {
+        super(jsonElementID);
         this.name = name;
     }
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLComponent)) {
+            return 0;
+        }
+
         double similarity = 0;
 
-        if (reference instanceof UMLComponent) {
-            UMLComponent referencePackage = (UMLComponent) reference;
-            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
+        UMLComponent referenceComponent = (UMLComponent) reference;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponent.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+
+        if (Objects.equals(getParentElement(), referenceComponent.getParentElement())) {
+            similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
 
         return ensureSimilarityRange(similarity);
@@ -33,7 +39,7 @@ public class UMLComponent extends UMLContainerElement {
 
     @Override
     public String toString() {
-        return "Package " + name;
+        return "Component " + name;
     }
 
     @Override

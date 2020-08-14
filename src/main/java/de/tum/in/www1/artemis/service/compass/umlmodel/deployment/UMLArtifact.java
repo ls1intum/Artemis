@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLArtifact extends UMLElement {
 
-    public final static String UML_ARTIFACT_TYPE = "Artifact";
+    public final static String UML_ARTIFACT_TYPE = "DeploymentArtifact";
 
     private final String name;
 
@@ -17,11 +20,17 @@ public class UMLArtifact extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLArtifact)) {
+            return 0;
+        }
+
         double similarity = 0;
 
-        if (reference instanceof UMLArtifact) {
-            UMLArtifact referenceArtifact = (UMLArtifact) reference;
-            similarity += NameSimilarity.levenshteinSimilarity(name, referenceArtifact.getName());
+        UMLArtifact referenceArtifact = (UMLArtifact) reference;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceArtifact.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+
+        if (Objects.equals(getParentElement(), referenceArtifact.getParentElement())) {
+            similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
 
         return ensureSimilarityRange(similarity);

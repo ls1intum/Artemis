@@ -1,30 +1,35 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.usecase;
 
-import java.util.List;
 import java.util.Objects;
 
+import com.google.common.base.CaseFormat;
+
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLMessage;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLObject;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLUseCaseAssociation extends UMLElement {
 
-    public final static String UML_COMMUNICATION_LINK_TYPE = "CommunicationLink";
+    // NOTE: this is also used in deployment diagrams
+    public enum UMLUseCaseAssociationType {
+        USE_CASE_ASSOCIATION, USE_CASE_GENERALIZATION, USE_CASE_INCLUDE, USE_CASE_EXTEND
+    }
 
-    private UMLObject source;
+    private final String name;
 
-    private UMLObject target;
+    private final UMLElement source;
 
-    private List<UMLMessage> messages;
+    private final UMLElement target;
 
-    public UMLUseCaseAssociation(UMLObject source, UMLObject target, List<UMLMessage> messages, String jsonElementID) {
+    private final UMLUseCaseAssociationType type;
+
+    public UMLUseCaseAssociation(String name, UMLElement source, UMLElement target, UMLUseCaseAssociationType type, String jsonElementID) {
         super(jsonElementID);
-
+        this.name = name;
         this.source = source;
         this.target = target;
-        this.messages = messages;
+        this.type = type;
     }
 
     @Override
@@ -33,30 +38,28 @@ public class UMLUseCaseAssociation extends UMLElement {
             return 0;
         }
 
-        UMLUseCaseAssociation referenceLink = (UMLUseCaseAssociation) reference;
+        UMLUseCaseAssociation referenceAssociation = (UMLUseCaseAssociation) reference;
 
         double similarity = 0;
 
-        double sourceWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        double targetWeight = CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        double sourceWeight = CompassConfiguration.USE_CASE_ASSOCIATION_ELEMENT_WEIGHT;
+        double targetWeight = CompassConfiguration.USE_CASE_ASSOCIATION_ELEMENT_WEIGHT;
 
-        // when there are not messages, we increase the weight so that the links can still have a similarity of 100%
-        if (messages.isEmpty()) {
-            sourceWeight = 0.5;
-            targetWeight = 0.5;
+        // only use case associations can have names where it would make sense to compare them
+        if (type == UMLUseCaseAssociationType.USE_CASE_ASSOCIATION) {
+            similarity += NameSimilarity.levenshteinSimilarity(name, referenceAssociation.name) * CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT;
+        }
+        else {
+            // increase weight in case the name is not taken into account, so that we can still reach a max of 1.0
+            sourceWeight += CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT / 2;
+            targetWeight += CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT / 2;
         }
 
-        similarity += referenceLink.getSource().similarity(source) * sourceWeight;
-        similarity += referenceLink.getTarget().similarity(target) * targetWeight;
+        similarity += referenceAssociation.getSource().similarity(source) * sourceWeight;
+        similarity += referenceAssociation.getTarget().similarity(target) * targetWeight;
 
-        if (!messages.isEmpty()) {
-            // the remaining 50% are taken into account for the messages
-            double messageWeight = (1 - 2 * CompassConfiguration.RELATION_ELEMENT_WEIGHT) / messages.size();
-
-            for (var message : messages) {
-                double similarityValue = referenceLink.messages.stream().mapToDouble(referenceLinkMessage -> referenceLinkMessage.similarity(message)).max().orElse(0);
-                similarity += messageWeight * similarityValue;
-            }
+        if (referenceAssociation.type == this.type) {
+            similarity += CompassConfiguration.RELATION_TYPE_WEIGHT;
         }
 
         return ensureSimilarityRange(similarity);
@@ -64,24 +67,24 @@ public class UMLUseCaseAssociation extends UMLElement {
 
     @Override
     public String toString() {
-        return "CommunicationLink " + getSource().getName() + "->" + getTarget().getName() + " (" + messages + ")";
+        return "UseCaseAssociation " + getSource().getName() + "->" + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override
     public String getName() {
-        return getType();
+        return name;
     }
 
     @Override
     public String getType() {
-        return UML_COMMUNICATION_LINK_TYPE;
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
     }
 
-    public UMLObject getSource() {
+    public UMLElement getSource() {
         return source;
     }
 
-    public UMLObject getTarget() {
+    public UMLElement getTarget() {
         return target;
     }
 
@@ -93,7 +96,7 @@ public class UMLUseCaseAssociation extends UMLElement {
 
         UMLUseCaseAssociation otherRelationship = (UMLUseCaseAssociation) obj;
 
-        return Objects.equals(otherRelationship.getSource(), source) && Objects.equals(otherRelationship.getTarget(), target)
-                && Objects.equals(otherRelationship.messages, messages);
+        return Objects.equals(otherRelationship.getSource(), source) && Objects.equals(otherRelationship.getTarget(), target) && Objects.equals(otherRelationship.name, name)
+                && Objects.equals(otherRelationship.type, type);
     }
 }
