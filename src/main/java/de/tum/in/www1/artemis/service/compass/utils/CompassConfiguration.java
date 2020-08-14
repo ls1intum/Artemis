@@ -14,8 +14,11 @@ public class CompassConfiguration {
     // Weight of the relationship type when calculating the similarity of two UML relationships
     public final static double RELATION_TYPE_WEIGHT = 0.3;
 
-    // Weight of the source and destination elements when calculating the similarity of two UML relationships
+    // Weight of the source and destination elements when calculating the similarity of two UML relationships (e.g. in class diagrams)
     public final static double RELATION_ELEMENT_WEIGHT = 0.25;
+
+    // Weight of the source and destination elements when calculating the similarity of two UML component relationships
+    public final static double COMPONENT_RELATION_ELEMENT_WEIGHT = 0.35;
 
     // Weight of the multiplicity when calculating the similarity of two UML relationships
     public final static double RELATION_MULTIPLICITY_WEIGHT = 0.05;

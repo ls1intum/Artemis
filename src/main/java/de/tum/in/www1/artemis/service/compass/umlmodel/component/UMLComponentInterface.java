@@ -1,19 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLComponentInterface extends UMLElement {
 
-    /**
-     * empty constructor used to make mockito happy
-     */
-    public UMLComponentInterface() {
-        super();
-    }
+    public final static String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
 
-    public UMLComponentInterface(String jsonElementID) {
+    private final String name;
+
+    public UMLComponentInterface(String name, String jsonElementID) {
         super(jsonElementID);
+        this.name = name;
     }
 
     /**
@@ -29,9 +28,9 @@ public class UMLComponentInterface extends UMLElement {
         if (!(reference instanceof UMLComponentInterface)) {
             return similarity;
         }
-        UMLComponentInterface referenceClass = (UMLComponentInterface) reference;
+        UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
 
-        // TODO: how should we compare this? (not really possible)
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponentInterface.getName());
 
         return ensureSimilarityRange(similarity);
     }
@@ -57,17 +56,17 @@ public class UMLComponentInterface extends UMLElement {
 
     @Override
     public String toString() {
-        return "Component Interface ";
+        return "Component Interface " + name;
     }
 
     @Override
     public String getName() {
-        return "";
+        return name;
     }
 
     @Override
     public String getType() {
-        return null;
+        return UML_COMPONENT_INTERFACE_TYPE;
     }
 
     @Override
@@ -77,8 +76,7 @@ public class UMLComponentInterface extends UMLElement {
         }
 
         UMLComponentInterface otherComponentInterface = (UMLComponentInterface) obj;
-        // TODO: without a name this does not really make sense
 
-        return true;
+        return otherComponentInterface.name.equals(this.name);
     }
 }

@@ -30,7 +30,7 @@ public class UMLComponent extends UMLContainerElement {
 
     @Override
     public String toString() {
-        return "Package " + name;
+        return "Component " + name;
     }
 
     @Override

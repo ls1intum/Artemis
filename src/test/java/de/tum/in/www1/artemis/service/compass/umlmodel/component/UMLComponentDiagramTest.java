@@ -1,11 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
@@ -13,15 +20,86 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     private String componentModel2 = "{\"version\":\"2.0.0\",\"type\":\"ComponentDiagram\",\"size\":{\"width\":1860,\"height\":660},\"interactive\":{\"elements\":[],\"relationships\":[]},\"elements\":[{\"id\":\"51ba313e-a5d0-46b6-8d4f-377259960275\",\"name\":\"View\",\"type\":\"Component\",\"owner\":null,\"bounds\":{\"x\":1360,\"y\":0,\"width\":380,\"height\":280}},{\"id\":\"1016dcfd-67b7-4c8b-9fad-94452a261fae\",\"name\":\"GameView\",\"type\":\"Component\",\"owner\":\"51ba313e-a5d0-46b6-8d4f-377259960275\",\"bounds\":{\"x\":1450,\"y\":119,\"width\":200,\"height\":100}},{\"id\":\"04f0a555-9af1-4b83-b4f7-a8e82417dee0\",\"name\":\"Model\",\"type\":\"Component\",\"owner\":null,\"bounds\":{\"x\":700,\"y\":10,\"width\":600,\"height\":560}},{\"id\":\"a2574389-9ca2-457e-846d-0149706b4af6\",\"name\":\"Driving Service\",\"type\":\"ComponentInterface\",\"owner\":\"04f0a555-9af1-4b83-b4f7-a8e82417dee0\",\"bounds\":{\"x\":820,\"y\":310,\"width\":20,\"height\":20}},{\"id\":\"32c3620c-4340-4f22-8dc4-fd6678c4576c\",\"name\":\"Car\",\"type\":\"Component\",\"owner\":\"04f0a555-9af1-4b83-b4f7-a8e82417dee0\",\"bounds\":{\"x\":1010,\"y\":302,\"width\":160,\"height\":40}},{\"id\":\"acc92bda-1378-4c27-9000-101929eb9d59\",\"name\":\"Position Service\",\"type\":\"ComponentInterface\",\"owner\":\"04f0a555-9af1-4b83-b4f7-a8e82417dee0\",\"bounds\":{\"x\":1080,\"y\":160,\"width\":20,\"height\":20}},{\"id\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"name\":\"Controller\",\"type\":\"Component\",\"owner\":null,\"bounds\":{\"x\":0,\"y\":0,\"width\":600,\"height\":570}},{\"id\":\"d713af95-f5ba-400c-90b0-32cd2899eef9\",\"name\":\"Mousesteering\",\"type\":\"Component\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":290,\"y\":350,\"width\":200,\"height\":100}},{\"id\":\"53b61479-14ab-49dd-af0b-c73dd1b3c0b4\",\"name\":\"GameBoard\",\"type\":\"Component\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":30,\"y\":270,\"width\":200,\"height\":100}},{\"id\":\"314f5494-0eee-450d-a242-764c84f96cda\",\"name\":\"AudioPlayer\",\"type\":\"Component\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":30,\"y\":20,\"width\":200,\"height\":100}},{\"id\":\"1154e431-36dc-40fa-9162-072fa5e7ff87\",\"name\":\"Music Service\",\"type\":\"ComponentInterface\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":120,\"y\":160,\"width\":20,\"height\":20}},{\"id\":\"e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c\",\"name\":\"Collision\",\"type\":\"Component\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":340,\"y\":40,\"width\":200,\"height\":100}},{\"id\":\"ab02bf60-0ca9-46d3-bc5b-6f46a19306df\",\"name\":\"Collision Detection Service\",\"type\":\"ComponentInterface\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":430,\"y\":210,\"width\":20,\"height\":20}},{\"id\":\"b6c62b90-3bf0-4219-801e-a3191d6d3434\",\"name\":\"Game Setup\",\"type\":\"ComponentInterface\",\"owner\":\"da4b78da-8871-42a7-9bd3-ee9b4a4f4db5\",\"bounds\":{\"x\":120,\"y\":479,\"width\":20,\"height\":20}}],\"relationships\":[{\"id\":\"f2ca2746-1d6d-4caf-bca8-41c001736936\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":490,\"y\":330,\"width\":340,\"height\":70},\"path\":[{\"x\":0,\"y\":70},{\"x\":340,\"y\":70},{\"x\":340,\"y\":0}],\"source\":{\"direction\":\"Right\",\"element\":\"d713af95-f5ba-400c-90b0-32cd2899eef9\"},\"target\":{\"direction\":\"Down\",\"element\":\"a2574389-9ca2-457e-846d-0149706b4af6\"}},{\"id\":\"46751f1b-7e9b-40b7-8ed5-e206322868c7\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":130,\"y\":120,\"width\":1,\"height\":40},\"path\":[{\"x\":0,\"y\":0},{\"x\":0,\"y\":40},{\"x\":0,\"y\":0},{\"x\":0,\"y\":40}],\"source\":{\"direction\":\"Down\",\"element\":\"314f5494-0eee-450d-a242-764c84f96cda\"},\"target\":{\"direction\":\"Up\",\"element\":\"1154e431-36dc-40fa-9162-072fa5e7ff87\"}},{\"id\":\"5b0e39db-dd7f-4268-b95d-68507bf5eccb\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":130,\"y\":180,\"width\":1,\"height\":90},\"path\":[{\"x\":0,\"y\":90},{\"x\":0,\"y\":0}],\"source\":{\"direction\":\"Up\",\"element\":\"53b61479-14ab-49dd-af0b-c73dd1b3c0b4\"},\"target\":{\"direction\":\"Down\",\"element\":\"1154e431-36dc-40fa-9162-072fa5e7ff87\"}},{\"id\":\"a12eadea-8b91-4c2b-b78f-6949ec85fd89\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":230,\"y\":230,\"width\":210,\"height\":90},\"path\":[{\"x\":0,\"y\":90},{\"x\":210,\"y\":90},{\"x\":210,\"y\":0}],\"source\":{\"direction\":\"Right\",\"element\":\"53b61479-14ab-49dd-af0b-c73dd1b3c0b4\"},\"target\":{\"direction\":\"Down\",\"element\":\"ab02bf60-0ca9-46d3-bc5b-6f46a19306df\"}},{\"id\":\"f84e1970-3414-4cb5-99a7-3c4cc18bc3b8\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":440,\"y\":140,\"width\":1,\"height\":70},\"path\":[{\"x\":0,\"y\":0},{\"x\":0,\"y\":40},{\"x\":0,\"y\":30},{\"x\":0,\"y\":70}],\"source\":{\"direction\":\"Down\",\"element\":\"e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c\"},\"target\":{\"direction\":\"Up\",\"element\":\"ab02bf60-0ca9-46d3-bc5b-6f46a19306df\"}},{\"id\":\"d7679b5a-141b-4c23-a5be-6cc2a147bb98\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":130,\"y\":370,\"width\":1,\"height\":109},\"path\":[{\"x\":0,\"y\":109},{\"x\":0,\"y\":0}],\"source\":{\"direction\":\"Up\",\"element\":\"b6c62b90-3bf0-4219-801e-a3191d6d3434\"},\"target\":{\"direction\":\"Down\",\"element\":\"53b61479-14ab-49dd-af0b-c73dd1b3c0b4\"}},{\"id\":\"aa660bd3-7f48-4f14-8895-999e472e2984\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":130,\"y\":169,\"width\":1560,\"height\":370},\"path\":[{\"x\":1520,\"y\":0},{\"x\":1560,\"y\":0},{\"x\":1560,\"y\":370},{\"x\":0,\"y\":370},{\"x\":0,\"y\":330}],\"source\":{\"direction\":\"Right\",\"element\":\"1016dcfd-67b7-4c8b-9fad-94452a261fae\"},\"target\":{\"direction\":\"Down\",\"element\":\"b6c62b90-3bf0-4219-801e-a3191d6d3434\"}},{\"id\":\"63004c15-7edf-4fb2-be04-d2fcfa00d95c\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":230,\"y\":320,\"width\":590,\"height\":1},\"path\":[{\"x\":0,\"y\":0},{\"x\":590,\"y\":0}],\"source\":{\"direction\":\"Right\",\"element\":\"53b61479-14ab-49dd-af0b-c73dd1b3c0b4\"},\"target\":{\"direction\":\"Left\",\"element\":\"a2574389-9ca2-457e-846d-0149706b4af6\"}},{\"id\":\"94d3aace-82de-440b-b936-9d939d77ec73\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":840,\"y\":320,\"width\":170,\"height\":2},\"path\":[{\"x\":0,\"y\":0},{\"x\":85,\"y\":0},{\"x\":85,\"y\":2},{\"x\":170,\"y\":2}],\"source\":{\"direction\":\"Right\",\"element\":\"a2574389-9ca2-457e-846d-0149706b4af6\"},\"target\":{\"direction\":\"Left\",\"element\":\"32c3620c-4340-4f22-8dc4-fd6678c4576c\"}},{\"id\":\"1bf5cb12-5a18-4c27-8343-8d4823136ae7\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":1090,\"y\":180,\"width\":1,\"height\":122},\"path\":[{\"x\":0,\"y\":0},{\"x\":0,\"y\":122}],\"source\":{\"direction\":\"Down\",\"element\":\"acc92bda-1378-4c27-9000-101929eb9d59\"},\"target\":{\"direction\":\"Up\",\"element\":\"32c3620c-4340-4f22-8dc4-fd6678c4576c\"}},{\"id\":\"7f47fc15-7c02-46e8-b534-5885c42222c3\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":1100,\"y\":169,\"width\":350,\"height\":1},\"path\":[{\"x\":350,\"y\":0},{\"x\":175,\"y\":0},{\"x\":175,\"y\":1},{\"x\":0,\"y\":1}],\"source\":{\"direction\":\"Left\",\"element\":\"1016dcfd-67b7-4c8b-9fad-94452a261fae\"},\"target\":{\"direction\":\"Right\",\"element\":\"acc92bda-1378-4c27-9000-101929eb9d59\"}},{\"id\":\"b1ad2e90-8bdb-432b-8492-857af6aacacb\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":540,\"y\":90,\"width\":550,\"height\":70},\"path\":[{\"x\":0,\"y\":0},{\"x\":550,\"y\":0},{\"x\":550,\"y\":70}],\"source\":{\"direction\":\"Right\",\"element\":\"e6ab93ad-94f3-4ea7-ad98-efb4799a3e5c\"},\"target\":{\"direction\":\"Up\",\"element\":\"acc92bda-1378-4c27-9000-101929eb9d59\"}},{\"id\":\"8e682b93-aa01-4f5c-9c16-a98f9affd009\",\"name\":\"\",\"type\":\"ComponentDependency\",\"owner\":null,\"bounds\":{\"x\":390,\"y\":219,\"width\":1160,\"height\":271},\"path\":[{\"x\":0,\"y\":231},{\"x\":0,\"y\":271},{\"x\":1160,\"y\":271},{\"x\":1160,\"y\":0}],\"source\":{\"direction\":\"Down\",\"element\":\"d713af95-f5ba-400c-90b0-32cd2899eef9\"},\"target\":{\"direction\":\"Down\",\"element\":\"1016dcfd-67b7-4c8b-9fad-94452a261fae\"}}],\"assessments\":[]}";
 
+    private String componentModel3 = "{\"version\":\"2.0.0\",\"type\":\"ComponentDiagram\",\"size\":{\"width\":1160,\"height\":720},\"interactive\":{\"elements\":[],\"relationships\":[]},\"elements\":[{\"id\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\",\"name\":\"A\",\"type\":\"Component\",\"owner\":null,\"bounds\":{\"x\":170,\"y\":40,\"width\":800,\"height\":460}},{\"id\":\"0db29365-aeb9-4ff3-8b46-2bbabdf0ef93\",\"name\":\"B\",\"type\":\"Component\",\"owner\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\",\"bounds\":{\"x\":280,\"y\":140,\"width\":580,\"height\":270}},{\"id\":\"acc139d3-78b3-455c-85f2-735a19ff3cf0\",\"name\":\"C\",\"type\":\"Component\",\"owner\":\"0db29365-aeb9-4ff3-8b46-2bbabdf0ef93\",\"bounds\":{\"x\":510,\"y\":230,\"width\":310,\"height\":120}},{\"id\":\"fccb5123-7a35-4367-95c8-75beb9cdaa8a\",\"name\":\"I4\",\"type\":\"ComponentInterface\",\"owner\":\"acc139d3-78b3-455c-85f2-735a19ff3cf0\",\"bounds\":{\"x\":560,\"y\":290,\"width\":20,\"height\":20}},{\"id\":\"38fbf718-6029-4590-a9f0-88d5e78df22d\",\"name\":\"I3\",\"type\":\"ComponentInterface\",\"owner\":\"0db29365-aeb9-4ff3-8b46-2bbabdf0ef93\",\"bounds\":{\"x\":360,\"y\":230,\"width\":20,\"height\":20}},{\"id\":\"dbc7f018-2618-49f5-a2d9-3e664ef85f59\",\"name\":\"I2\",\"type\":\"ComponentInterface\",\"owner\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\",\"bounds\":{\"x\":220,\"y\":110,\"width\":20,\"height\":20}},{\"id\":\"5fddf922-19db-46cd-8dfe-668d4fe08b0e\",\"name\":\"I1\",\"type\":\"ComponentInterface\",\"owner\":null,\"bounds\":{\"x\":10,\"y\":110,\"width\":20,\"height\":20}},{\"id\":\"cd8618b2-1ab2-4b5e-960d-714ed6e4f935\",\"name\":\"D\",\"type\":\"Component\",\"owner\":null,\"bounds\":{\"x\":240,\"y\":550,\"width\":200,\"height\":100}},{\"id\":\"5edf0b9a-3a7d-4975-b379-e2bfeda8bcfa\",\"name\":\"I5\",\"type\":\"ComponentInterface\",\"owner\":null,\"bounds\":{\"x\":0,\"y\":560,\"width\":20,\"height\":20}}],\"relationships\":[{\"id\":\"5c7972de-aa60-4f25-896b-b85190e7f377\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":30,\"y\":120,\"width\":190,\"height\":1},\"path\":[{\"x\":0,\"y\":0},{\"x\":190,\"y\":0}],\"source\":{\"direction\":\"Right\",\"element\":\"5fddf922-19db-46cd-8dfe-668d4fe08b0e\"},\"target\":{\"direction\":\"Left\",\"element\":\"dbc7f018-2618-49f5-a2d9-3e664ef85f59\"}},{\"id\":\"e1345c34-909c-49a1-8f0d-02159a431587\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":380,\"y\":240,\"width\":130,\"height\":50},\"path\":[{\"x\":130,\"y\":50},{\"x\":65,\"y\":50},{\"x\":65,\"y\":0},{\"x\":0,\"y\":0}],\"source\":{\"direction\":\"Left\",\"element\":\"acc139d3-78b3-455c-85f2-735a19ff3cf0\"},\"target\":{\"direction\":\"Right\",\"element\":\"38fbf718-6029-4590-a9f0-88d5e78df22d\"}},{\"id\":\"ae76c1e0-201f-47cc-968a-d37ef314ed8b\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":240,\"y\":240,\"width\":120,\"height\":35},\"path\":[{\"x\":40,\"y\":35},{\"x\":0,\"y\":35},{\"x\":80,\"y\":0},{\"x\":120,\"y\":0}],\"source\":{\"direction\":\"Left\",\"element\":\"0db29365-aeb9-4ff3-8b46-2bbabdf0ef93\"},\"target\":{\"direction\":\"Left\",\"element\":\"38fbf718-6029-4590-a9f0-88d5e78df22d\"}},{\"id\":\"dddfa7e8-e8a8-435c-b7f7-1e199c4816fd\",\"name\":\"\",\"type\":\"ComponentDependency\",\"owner\":null,\"bounds\":{\"x\":570,\"y\":0,\"width\":440,\"height\":270},\"path\":[{\"x\":400,\"y\":270},{\"x\":440,\"y\":270},{\"x\":440,\"y\":0},{\"x\":0,\"y\":0},{\"x\":0,\"y\":40}],\"source\":{\"direction\":\"Right\",\"element\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\"},\"target\":{\"direction\":\"Up\",\"element\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\"}},{\"id\":\"06b6adb0-4d84-4b92-90d8-98b889f62277\",\"name\":\"\",\"type\":\"ComponentDependency\",\"owner\":null,\"bounds\":{\"x\":340,\"y\":350,\"width\":325,\"height\":200},\"path\":[{\"x\":0,\"y\":200},{\"x\":0,\"y\":100},{\"x\":325,\"y\":100},{\"x\":325,\"y\":0}],\"source\":{\"direction\":\"Up\",\"element\":\"cd8618b2-1ab2-4b5e-960d-714ed6e4f935\"},\"target\":{\"direction\":\"Down\",\"element\":\"acc139d3-78b3-455c-85f2-735a19ff3cf0\"}},{\"id\":\"8476df26-8f57-49e1-b3b3-0ea122afad39\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":440,\"y\":500,\"width\":130,\"height\":100},\"path\":[{\"x\":130,\"y\":0},{\"x\":130,\"y\":100},{\"x\":0,\"y\":100}],\"source\":{\"direction\":\"Down\",\"element\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\"},\"target\":{\"direction\":\"Right\",\"element\":\"cd8618b2-1ab2-4b5e-960d-714ed6e4f935\"}},{\"id\":\"0e4e1075-5e58-44ef-8bbe-76229de3e79d\",\"name\":\"\",\"type\":\"ComponentInterfaceProvided\",\"owner\":null,\"bounds\":{\"x\":10,\"y\":270,\"width\":160,\"height\":290},\"path\":[{\"x\":160,\"y\":0},{\"x\":0,\"y\":0},{\"x\":0,\"y\":290}],\"source\":{\"direction\":\"Left\",\"element\":\"77282dd6-9b02-4cf8-81f3-90f4ed76d3f8\"},\"target\":{\"direction\":\"Up\",\"element\":\"5edf0b9a-3a7d-4975-b379-e2bfeda8bcfa\"}},{\"id\":\"a8dd80b9-b204-4d21-8dfa-b3b0de0b694a\",\"name\":\"\",\"type\":\"ComponentInterfaceRequired\",\"owner\":null,\"bounds\":{\"x\":20,\"y\":570,\"width\":220,\"height\":30},\"path\":[{\"x\":220,\"y\":30},{\"x\":110,\"y\":30},{\"x\":110,\"y\":0},{\"x\":0,\"y\":0}],\"source\":{\"direction\":\"Left\",\"element\":\"cd8618b2-1ab2-4b5e-960d-714ed6e4f935\"},\"target\":{\"direction\":\"Right\",\"element\":\"5edf0b9a-3a7d-4975-b379-e2bfeda8bcfa\"}}],\"assessments\":[]}";
+
     @Test
     void similarityCommunicationDiagram_EqualModels() {
-        assertThrows(IllegalArgumentException.class,
-                () -> compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel1), 0.8, 1.0));
+        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel1), 0.8, 1.0);
+    }
+
+    @Test
+    void similarityCommunicationDiagram_SimilarModels() {
+        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.9012);
     }
 
     @Test
     void similarityCommunicationDiagram_DifferentModels() {
-        assertThrows(IllegalArgumentException.class,
-                () -> compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.2241));
+        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel3), 0.0, 0.1201);
+    }
+
+    @Test
+    void parseModelCorrectly() throws IOException {
+        UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(componentModel3).getAsJsonObject(), 1L);
+        assertThat(diagram).isInstanceOf(UMLComponentDiagram.class);
+        UMLComponentDiagram componentDiagram = (UMLComponentDiagram) diagram;
+        // 4 Components A, B, C and D
+        assertThat(componentDiagram.getComponentList()).hasSize(4);
+        UMLComponent componentA = getComponent(componentDiagram, "A");
+        UMLComponent componentB = getComponent(componentDiagram, "B");
+        UMLComponent componentC = getComponent(componentDiagram, "C");
+        UMLComponent componentD = getComponent(componentDiagram, "D");
+        // 5 Interfaces: I1, I2, I3, I4, I5
+        assertThat(componentDiagram.getComponentInterfaceList()).hasSize(5);
+        UMLComponentInterface interfaceI1 = getInterface(componentDiagram, "I1");
+        UMLComponentInterface interfaceI2 = getInterface(componentDiagram, "I2");
+        UMLComponentInterface interfaceI3 = getInterface(componentDiagram, "I3");
+        UMLComponentInterface interfaceI4 = getInterface(componentDiagram, "I4");
+        UMLComponentInterface interfaceI5 = getInterface(componentDiagram, "I5");
+
+        // 8 relationships: 3 ComponentInterfaceProvided, 3 ComponentInterfaceRequired, 2 Dependencies
+        assertThat(componentDiagram.getComponentRelationshipList()).hasSize(8);
+        UMLComponentRelationship relationship1 = getRelationship(componentDiagram, componentA, componentA);
+        UMLComponentRelationship relationship2 = getRelationship(componentDiagram, interfaceI1, interfaceI2);
+        UMLComponentRelationship relationship3 = getRelationship(componentDiagram, componentA, interfaceI5);
+        UMLComponentRelationship relationship4 = getRelationship(componentDiagram, componentD, interfaceI5);
+        UMLComponentRelationship relationship5 = getRelationship(componentDiagram, componentD, componentC);
+        UMLComponentRelationship relationship6 = getRelationship(componentDiagram, componentD, componentA);
+        UMLComponentRelationship relationship7 = getRelationship(componentDiagram, componentB, interfaceI3);
+        UMLComponentRelationship relationship8 = getRelationship(componentDiagram, componentC, interfaceI3);
+
+        assertThat(relationship1.getRelationshipType()).isEqualByComparingTo(COMPONENT_DEPENDENCY);
+        assertThat(relationship2.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_PROVIDED);
+        assertThat(relationship3.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_PROVIDED);
+        assertThat(relationship4.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_REQUIRED);
+        assertThat(relationship5.getRelationshipType()).isEqualByComparingTo(COMPONENT_DEPENDENCY);
+        assertThat(relationship6.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_REQUIRED);
+        assertThat(relationship7.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_REQUIRED);
+        assertThat(relationship8.getRelationshipType()).isEqualByComparingTo(COMPONENT_INTERFACE_PROVIDED);
+
+        // check owner relationships
+        assertThat(componentA.getParentElement()).isNull();
+        assertThat(componentB.getParentElement()).isEqualTo(componentA);
+        assertThat(componentC.getParentElement()).isEqualTo(componentB);
+        assertThat(componentD.getParentElement()).isNull();
+
+        assertThat(interfaceI1.getParentElement()).isNull();
+        assertThat(interfaceI2.getParentElement()).isEqualTo(componentA);
+        assertThat(interfaceI3.getParentElement()).isEqualTo(componentB);
+        assertThat(interfaceI4.getParentElement()).isEqualTo(componentC);
+        assertThat(interfaceI5.getParentElement()).isNull();
+    }
+
+    private UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {
+        return componentDiagram.getComponentList().stream().filter(component -> component.getName().equals(name)).findFirst().get();
+    }
+
+    private UMLComponentInterface getInterface(UMLComponentDiagram componentDiagram, String name) {
+        return componentDiagram.getComponentInterfaceList().stream().filter(componentInterface -> componentInterface.getName().equals(name)).findFirst().get();
+    }
+
+    private UMLComponentRelationship getRelationship(UMLComponentDiagram componentDiagram, UMLElement source, UMLElement target) {
+        // Source and target do not really matter in this test so we can also check the other way round
+        return componentDiagram.getComponentRelationshipList().stream().filter(relationship -> (relationship.getSource().equals(source) && relationship.getTarget().equals(target))
+                || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().get();
     }
 }

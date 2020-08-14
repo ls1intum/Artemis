@@ -10,17 +10,17 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentRelationship extends UMLElement {
 
-    public enum UMLComponentInterfaceType {
-        PROVIDED, REQUIRED, DEPENDENCY
+    public enum UMLComponentRelationshipType {
+        COMPONENT_INTERFACE_PROVIDED, COMPONENT_INTERFACE_REQUIRED, COMPONENT_DEPENDENCY
     }
 
-    private UMLElement source;
+    private final UMLElement source;
 
-    private UMLElement target;
+    private final UMLElement target;
 
-    private UMLComponentInterfaceType type;
+    private final UMLComponentRelationshipType type;
 
-    public UMLComponentRelationship(UMLElement source, UMLElement target, UMLComponentInterfaceType type, String jsonElementID) {
+    public UMLComponentRelationship(UMLElement source, UMLElement target, UMLComponentRelationshipType type, String jsonElementID) {
         super(jsonElementID);
         this.source = source;
         this.target = target;
@@ -37,8 +37,8 @@ public class UMLComponentRelationship extends UMLElement {
 
         double similarity = 0;
 
-        similarity += referenceRelationship.getSource().similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-        similarity += referenceRelationship.getTarget().similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+        similarity += referenceRelationship.getSource().similarity(source) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
+        similarity += referenceRelationship.getTarget().similarity(target) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
 
         if (referenceRelationship.type == this.type) {
             similarity += CompassConfiguration.RELATION_TYPE_WEIGHT;
@@ -49,7 +49,7 @@ public class UMLComponentRelationship extends UMLElement {
 
     @Override
     public String toString() {
-        return "Relationship " + getSource().getName() + type + getTarget().getName() + " (" + getType() + ")";
+        return "Relationship " + getSource().getName() + " " + type + " " + getTarget().getName() + " (" + getType() + ")";
     }
 
     @Override
@@ -60,6 +60,10 @@ public class UMLComponentRelationship extends UMLElement {
     @Override
     public String getType() {
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+    }
+
+    public UMLComponentRelationshipType getRelationshipType() {
+        return type;
     }
 
     public UMLElement getSource() {
