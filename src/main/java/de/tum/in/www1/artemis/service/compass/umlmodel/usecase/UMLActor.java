@@ -8,7 +8,7 @@ public class UMLActor extends UMLElement {
 
     public final static String UML_ACTOR_TYPE = "Actor";
 
-    private String name;
+    private final String name;
 
     public UMLActor(String name, String jsonElementID) {
         super(jsonElementID);
@@ -30,12 +30,6 @@ public class UMLActor extends UMLElement {
         return "Actor " + name;
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;

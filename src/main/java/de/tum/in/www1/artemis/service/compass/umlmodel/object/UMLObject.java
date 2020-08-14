@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.communication;
+package de.tum.in.www1.artemis.service.compass.umlmodel.object;
 
 import java.util.List;
 
@@ -12,11 +12,11 @@ public class UMLObject extends UMLElement {
 
     public final static String UML_OBJECT_TYPE = "ObjectName";
 
-    private String name;
+    private final String name;
 
-    private List<UMLAttribute> attributes;
+    private final List<UMLAttribute> attributes;
 
-    private List<UMLMethod> methods;
+    private final List<UMLMethod> methods;
 
     public UMLObject(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID) {
         super(jsonElementID);
@@ -55,12 +55,6 @@ public class UMLObject extends UMLElement {
         return "Object " + name;
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;

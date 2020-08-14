@@ -10,8 +10,9 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentRelationship extends UMLElement {
 
+    // NOTE: this is also used in deployment diagrams
     public enum UMLComponentRelationshipType {
-        COMPONENT_INTERFACE_PROVIDED, COMPONENT_INTERFACE_REQUIRED, COMPONENT_DEPENDENCY
+        COMPONENT_INTERFACE_PROVIDED, COMPONENT_INTERFACE_REQUIRED, COMPONENT_DEPENDENCY, DEPLOYMENT_ASSOCIATION, DEPLOYMENT_DEPENDENCY
     }
 
     private final UMLElement source;

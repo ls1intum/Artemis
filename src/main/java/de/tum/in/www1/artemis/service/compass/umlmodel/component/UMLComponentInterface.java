@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentInterface extends UMLElement {
 
@@ -23,14 +26,18 @@ public class UMLComponentInterface extends UMLElement {
      */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLComponentInterface)) {
+            return 0;
+        }
+
         double similarity = 0;
 
-        if (!(reference instanceof UMLComponentInterface)) {
-            return similarity;
-        }
         UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponentInterface.getName());
+        if (Objects.equals(getParentElement(), referenceComponentInterface.getParentElement())) {
+            similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
+        }
 
         return ensureSimilarityRange(similarity);
     }

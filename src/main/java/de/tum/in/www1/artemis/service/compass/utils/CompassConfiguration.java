@@ -20,6 +20,9 @@ public class CompassConfiguration {
     // Weight of the source and destination elements when calculating the similarity of two UML component relationships
     public final static double COMPONENT_RELATION_ELEMENT_WEIGHT = 0.35;
 
+    // Weight of the source and destination elements when calculating the similarity of two UML use case associations
+    public final static double USE_CASE_ASSOCIATION_ELEMENT_WEIGHT = 0.3;
+
     // Weight of the multiplicity when calculating the similarity of two UML relationships
     public final static double RELATION_MULTIPLICITY_WEIGHT = 0.05;
 
@@ -31,6 +34,18 @@ public class CompassConfiguration {
 
     // Weight of the class name when calculating the similarity of two UML classes
     public final static double CLASS_NAME_WEIGHT = 0.7;
+
+    public final static double USE_CASE_NAME_WEIGHT = 0.1;
+
+    public final static double NODE_NAME_WEIGHT = 0.5;
+
+    public final static double NODE_STEREOTYPE_WEIGHT = 0.2;
+
+    public final static double NODE_PARENT_WEIGHT = 0.3;
+
+    public final static double COMPONENT_NAME_WEIGHT = 0.6;
+
+    public final static double COMPONENT_PARENT_WEIGHT = 0.4;
 
     // Weight of the name similarity of their attributes when calculating the similarity of two UML classes
     public final static double ATTRIBUTE_NAME_WEIGHT = 0.7;

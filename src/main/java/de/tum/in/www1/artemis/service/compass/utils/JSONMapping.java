@@ -20,6 +20,8 @@ public class JSONMapping {
 
     public static final String elementName = "name";
 
+    public static final String stereotypeName = "stereotype";
+
     public static final String elementAttributes = "attributes";
 
     public static final String elementMethods = "methods";

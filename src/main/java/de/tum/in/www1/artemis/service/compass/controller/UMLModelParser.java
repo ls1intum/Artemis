@@ -38,7 +38,11 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLArtifact;
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.UMLUseCaseDiagram;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
@@ -74,6 +78,9 @@ public class UMLModelParser {
         }
         else if (DiagramType.DeploymentDiagram.name().equals(diagramType)) {
             return buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        }
+        else if (DiagramType.ObjectDiagram.name().equals(diagramType)) {
+            return buildObjectDiagramFromJSON(modelElements, relationships, modelSubmissionId);
         }
 
         throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
@@ -123,6 +130,20 @@ public class UMLModelParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     private static UMLUseCaseDiagram buildUseCaseDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+    }
+
+    /**
+     * Create a UML object diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * object diagram containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a UML object diagram containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static UMLObjectDiagram buildObjectDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
         throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
     }
 
@@ -197,7 +218,69 @@ public class UMLModelParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     private static UMLDeploymentDiagram buildDeploymentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
-        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+        // TODO: reduce code duplication with buildComponentDiatramFromJSON
+
+        Map<String, UMLComponent> umlComponentMap = new HashMap<>();
+        Map<String, UMLNode> umlNodeMap = new HashMap<>();
+        Map<String, UMLArtifact> umlArtifactMap = new HashMap<>();
+        Map<String, UMLComponentInterface> umlComponentInterfaceMap = new HashMap<>();
+        Map<String, UMLElement> allUmlElementsMap = new HashMap<>();
+        List<UMLComponentRelationship> umlComponentRelationshipList = new ArrayList<>();
+
+        // owners might not yet be available, therefore we need to store them in a map first before we can resolve them
+        Map<UMLElement, String> ownerRelationships = new HashMap<>();
+
+        // loop over all JSON elements and create the UML objects
+        for (JsonElement jsonElement : modelElements) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            UMLElement umlElement = null;
+            String elementType = jsonObject.get(JSONMapping.elementType).getAsString();
+            if (UMLComponent.UML_COMPONENT_TYPE.equals(elementType)) {
+                UMLComponent umlComponent = parseComponent(jsonObject);
+                umlComponentMap.put(umlComponent.getJSONElementID(), umlComponent);
+                allUmlElementsMap.put(umlComponent.getJSONElementID(), umlComponent);
+                umlElement = umlComponent;
+            }
+            else if (UMLComponentInterface.UML_COMPONENT_INTERFACE_TYPE.equals(elementType)) {
+                UMLComponentInterface umlComponentInterface = parseComponentInterface(jsonObject);
+                umlComponentInterfaceMap.put(umlComponentInterface.getJSONElementID(), umlComponentInterface);
+                allUmlElementsMap.put(umlComponentInterface.getJSONElementID(), umlComponentInterface);
+                umlElement = umlComponentInterface;
+            }
+            else if (UMLNode.UML_NODE_TYPE.equals(elementType)) {
+                UMLNode umlNode = parseNode(jsonObject);
+                umlNodeMap.put(umlNode.getJSONElementID(), umlNode);
+                allUmlElementsMap.put(umlNode.getJSONElementID(), umlNode);
+                umlElement = umlNode;
+            }
+            else if (UMLArtifact.UML_ARTIFACT_TYPE.equals(elementType)) {
+                UMLArtifact umlArtifact = parseArtifact(jsonObject);
+                umlArtifactMap.put(umlArtifact.getJSONElementID(), umlArtifact);
+                allUmlElementsMap.put(umlArtifact.getJSONElementID(), umlArtifact);
+                umlElement = umlArtifact;
+            }
+            if (jsonObject.has(JSONMapping.elementOwner) && !jsonObject.get(JSONMapping.elementOwner).isJsonNull() && umlElement != null) {
+                String ownerId = jsonObject.get(JSONMapping.elementOwner).getAsString();
+                ownerRelationships.put(umlElement, ownerId);
+            }
+        }
+
+        // now we can resolve the owners: for this diagram type, uml components and uml nodes can be the actual owner
+        for (var ownerEntry : ownerRelationships.entrySet()) {
+            String ownerId = ownerEntry.getValue();
+            UMLElement umlElement = ownerEntry.getKey();
+            UMLElement parentComopnent = allUmlElementsMap.get(ownerId);
+            umlElement.setParentElement(parentComopnent);
+        }
+
+        // loop over all JSON control flow elements and create UML communication links
+        for (JsonElement rel : relationships) {
+            Optional<UMLComponentRelationship> componentRelationship = parseComponentRelationship(rel.getAsJsonObject(), allUmlElementsMap);
+            componentRelationship.ifPresent(umlComponentRelationshipList::add);
+        }
+
+        return new UMLDeploymentDiagram(modelSubmissionId, new ArrayList<>(umlComponentMap.values()), new ArrayList<>(umlComponentInterfaceMap.values()),
+                umlComponentRelationshipList, new ArrayList<>(umlNodeMap.values()), new ArrayList<>(umlArtifactMap.values()));
     }
 
     /**
@@ -461,6 +544,17 @@ public class UMLModelParser {
     private static UMLComponent parseComponent(JsonObject componentJson) {
         String componentName = componentJson.get(JSONMapping.elementName).getAsString();
         return new UMLComponent(componentName, componentJson.get(JSONMapping.elementID).getAsString());
+    }
+
+    private static UMLNode parseNode(JsonObject nodeJson) {
+        String nodeName = nodeJson.get(JSONMapping.elementName).getAsString();
+        String stereotypeName = nodeJson.get(JSONMapping.elementName).getAsString();
+        return new UMLNode(nodeName, stereotypeName, nodeJson.get(JSONMapping.elementID).getAsString());
+    }
+
+    private static UMLArtifact parseArtifact(JsonObject artifactJson) {
+        String artifactName = artifactJson.get(JSONMapping.elementName).getAsString();
+        return new UMLArtifact(artifactName, artifactJson.get(JSONMapping.elementID).getAsString());
     }
 
     /**

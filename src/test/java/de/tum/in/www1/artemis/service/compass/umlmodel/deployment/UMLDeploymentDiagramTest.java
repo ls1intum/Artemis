@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -15,13 +13,11 @@ public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityCommunicationDiagram_EqualModels() {
-        assertThrows(IllegalArgumentException.class,
-                () -> compareSubmissions(new ModelingSubmission().model(deploymentModel1), new ModelingSubmission().model(deploymentModel1), 0.8, 1.0));
+        compareSubmissions(new ModelingSubmission().model(deploymentModel1), new ModelingSubmission().model(deploymentModel1), 0.8, 1.0);
     }
 
     @Test
     void similarityCommunicationDiagram_DifferentModels() {
-        assertThrows(IllegalArgumentException.class,
-                () -> compareSubmissions(new ModelingSubmission().model(deploymentModel2), new ModelingSubmission().model(deploymentModel2), 0.0, 0.3));
+        compareSubmissions(new ModelingSubmission().model(deploymentModel2), new ModelingSubmission().model(deploymentModel2), 0.0, 0.3);
     }
 }
