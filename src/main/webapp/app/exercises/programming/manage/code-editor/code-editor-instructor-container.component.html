@@ -84,7 +84,7 @@
                 </button>
                 <button
                     *ngIf="exercise.studentParticipations && exercise.studentParticipations.length"
-                    (click)="resetAssignmentParticipation()"
+                    (click)="deleteAssignmentParticipation()"
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-danger"
                 >
@@ -99,7 +99,7 @@
                         [spin]="true"
                         class="text-white mr-2"
                     ></fa-icon>
-                    <span jhiTranslate="artemisApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                    <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
                 </button>
             </div>
         </div>

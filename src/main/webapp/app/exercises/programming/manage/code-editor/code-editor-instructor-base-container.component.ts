@@ -319,10 +319,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     /**
-     * Resets the assignment participation for this user for this exercise.
+     * Delete the assignment participation for this user for this exercise.
      * This deletes all build plans, database information, etc. and copies the current version of the template repository.
      */
-    resetAssignmentParticipation() {
+    deleteAssignmentParticipation() {
         this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
@@ -330,10 +330,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         const assignmentParticipationId = this.exercise.studentParticipations[0].id;
         this.exercise.studentParticipations = [];
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
-            .pipe(
-                catchError(() => throwError('participationCouldNotBeDeleted')),
-                tap(() => this.createAssignmentParticipation()),
-            )
+            .pipe(catchError(() => throwError('participationCouldNotBeDeleted')))
             .subscribe(
                 () => {},
                 (err) => this.onError(err),
