@@ -36,6 +36,13 @@
             <button type="button" [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <span class="mr-1">
+                <button type="button" (click)="checkPlagiarism()" class="btn btn-primary">
+                    <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                    <span *ngIf="this.checkPlagiarismInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
+                </button>
+            </span>
         </div>
     </div>
 </div>

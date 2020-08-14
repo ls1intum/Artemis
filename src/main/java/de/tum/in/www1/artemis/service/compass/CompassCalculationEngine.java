@@ -147,7 +147,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void buildModel(long modelSubmissionId, JsonObject jsonModel) {
         try {
-            UMLDiagram model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
+            UMLDiagram model = UMLModelParser.buildModelFromJSON(jsonModel, modelSubmissionId);
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         }

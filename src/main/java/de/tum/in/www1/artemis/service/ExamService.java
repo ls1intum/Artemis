@@ -346,7 +346,7 @@ public class ExamService {
         else if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
             try {
-                return !jacksonObjectMapper.readTree(modelingSubmission.getModel()).get("elements").isEmpty();
+                return !modelingSubmission.isEmpty(jacksonObjectMapper);
             }
             catch (Exception e) {
                 // Then the student most likely submitted something which breaks the model, if parsing fails
