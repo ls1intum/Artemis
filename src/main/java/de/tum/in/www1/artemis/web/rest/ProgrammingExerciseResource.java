@@ -590,8 +590,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ProgrammingExercise> exercises = programmingExerciseRepository
-                .findByCourseIdWithLatestResultForfindWithTemplateParticipationAndSolutionParticipationByIdTemplateSolutionParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

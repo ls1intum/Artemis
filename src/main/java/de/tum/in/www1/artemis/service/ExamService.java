@@ -157,15 +157,26 @@ public class ExamService {
 
     /**
      * Get one exam by id with registered users and exercise groups.
-     *
+     * Loads the template and solution participation to the exercises
      * @param examId the id of the entity
      * @return the exam with registered users and exercise groups
      */
     @NotNull
     public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with registered users and registered students : {}", examId);
-        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        for (final ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (final Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseService
+                            .findWithTemplateAndSolutionParticipationWithResultsById(exercise.getId());
+                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
+                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
+                }
+            }
+        }
+        return exam;
     }
 
     /**
