@@ -14,6 +14,7 @@ public class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
     @Test
     void similarityCommunicationDiagram_EqualModels() {
         compareSubmissions(new ModelingSubmission().model(communicationModel1), new ModelingSubmission().model(communicationModel1), 0.8, 1.0);
+        compareSubmissions(new ModelingSubmission().model(communicationModel2), new ModelingSubmission().model(communicationModel2), 0.8, 1.0);
     }
 
     @Test

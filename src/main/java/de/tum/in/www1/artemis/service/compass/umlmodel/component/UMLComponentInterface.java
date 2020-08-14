@@ -11,6 +11,8 @@ public class UMLComponentInterface extends UMLElement {
 
     public final static String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
 
+    public final static String UML_DEPLOYMENT_INTERFACE_TYPE = "DeploymentInterface";
+
     private final String name;
 
     public UMLComponentInterface(String name, String jsonElementID) {
@@ -62,6 +64,7 @@ public class UMLComponentInterface extends UMLElement {
     }
 
     @Override
+    // TODO: in case of deployment diagrams, this is not really correct, it should then be Deployment Interface
     public String toString() {
         return "Component Interface " + name;
     }
@@ -72,6 +75,7 @@ public class UMLComponentInterface extends UMLElement {
     }
 
     @Override
+    // TODO: in case of deployment diagrams, this is not really correct, it should then be UML_DEPLOYMENT_INTERFACE_TYPE
     public String getType() {
         return UML_COMPONENT_INTERFACE_TYPE;
     }

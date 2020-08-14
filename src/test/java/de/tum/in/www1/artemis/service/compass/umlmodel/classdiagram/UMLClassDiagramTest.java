@@ -150,12 +150,13 @@ class UMLClassDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
-    void similarityCommunicationDiagram_EqualModels() {
+    void similarityClassDiagram_EqualModels() {
         compareSubmissions(new ModelingSubmission().model(classModel1), new ModelingSubmission().model(classModel1), 0.8, 1.0);
+        compareSubmissions(new ModelingSubmission().model(classModel2), new ModelingSubmission().model(classModel2), 0.8, 1.0);
     }
 
     @Test
-    void similarityCommunicationDiagram_DifferentModels() {
+    void similarityClassDiagram_DifferentModels() {
         compareSubmissions(new ModelingSubmission().model(classModel1), new ModelingSubmission().model(classModel2), 0.0, 0.3095);
     }
 }

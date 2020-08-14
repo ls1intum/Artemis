@@ -241,7 +241,8 @@ public class UMLModelParser {
                 allUmlElementsMap.put(umlComponent.getJSONElementID(), umlComponent);
                 umlElement = umlComponent;
             }
-            else if (UMLComponentInterface.UML_COMPONENT_INTERFACE_TYPE.equals(elementType)) {
+            // NOTE: there is a difference in the json between ComponentInterface and DeploymentInterface
+            else if (UMLComponentInterface.UML_DEPLOYMENT_INTERFACE_TYPE.equals(elementType)) {
                 UMLComponentInterface umlComponentInterface = parseComponentInterface(jsonObject);
                 umlComponentInterfaceMap.put(umlComponentInterface.getJSONElementID(), umlComponentInterface);
                 allUmlElementsMap.put(umlComponentInterface.getJSONElementID(), umlComponentInterface);
