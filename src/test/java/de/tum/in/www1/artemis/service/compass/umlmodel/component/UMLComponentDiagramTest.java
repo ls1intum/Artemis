@@ -31,12 +31,12 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityComponentDiagram_SimilarModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.6425);
+        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.64);
     }
 
     @Test
     void similarityComponentDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel3), 0.0, 0.1335);
+        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel3), 0.0, 0.13);
     }
 
     @Test
