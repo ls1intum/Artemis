@@ -42,10 +42,18 @@ public class UMLUseCaseAssociation extends UMLElement {
 
         double similarity = 0;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceAssociation.getName()) * CompassConfiguration.USE_CASE_NAME_WEIGHT;
-
         double sourceWeight = CompassConfiguration.USE_CASE_ASSOCIATION_ELEMENT_WEIGHT;
         double targetWeight = CompassConfiguration.USE_CASE_ASSOCIATION_ELEMENT_WEIGHT;
+
+        // only use case associations can have names where it would make sense to compare them
+        if (type == UMLUseCaseAssociationType.USE_CASE_ASSOCIATION) {
+            similarity += NameSimilarity.levenshteinSimilarity(name, referenceAssociation.name) * CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT;
+        }
+        else {
+            // increase weight in case the name is not taken into account, so that we can still reach a max of 1.0
+            sourceWeight += CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT / 2;
+            targetWeight += CompassConfiguration.USE_CASE_ASSOCIATION_NAME_WEIGHT / 2;
+        }
 
         similarity += referenceAssociation.getSource().similarity(source) * sourceWeight;
         similarity += referenceAssociation.getTarget().similarity(target) * targetWeight;
@@ -64,7 +72,7 @@ public class UMLUseCaseAssociation extends UMLElement {
 
     @Override
     public String getName() {
-        return getType();
+        return name;
     }
 
     @Override

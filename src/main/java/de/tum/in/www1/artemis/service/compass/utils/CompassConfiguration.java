@@ -35,7 +35,7 @@ public class CompassConfiguration {
     // Weight of the class name when calculating the similarity of two UML classes
     public final static double CLASS_NAME_WEIGHT = 0.7;
 
-    public final static double USE_CASE_NAME_WEIGHT = 0.1;
+    public final static double USE_CASE_ASSOCIATION_NAME_WEIGHT = 0.1;
 
     public final static double NODE_NAME_WEIGHT = 0.5;
 

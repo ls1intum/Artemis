@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActor extends UMLElement {
 
-    public final static String UML_ACTOR_TYPE = "Actor";
+    public final static String UML_ACTOR_TYPE = "UseCaseActor";
 
     private final String name;
 
@@ -40,6 +40,8 @@ public class UMLActor extends UMLElement {
         UMLActor referenceObject = (UMLActor) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
+
+        // NOTE: even if it is possible in Apollon, a parent element does not really make sense here and would simply be wrong
 
         return ensureSimilarityRange(similarity);
     }
