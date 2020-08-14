@@ -59,12 +59,6 @@ public class UMLClass extends UMLElement {
         }
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
@@ -73,6 +67,8 @@ public class UMLClass extends UMLElement {
             return similarity;
         }
         UMLClass referenceClass = (UMLClass) reference;
+
+        // TODO: take the parent element into account
 
         similarity += NameSimilarity.levenshteinSimilarity(name, referenceClass.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
         // TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration

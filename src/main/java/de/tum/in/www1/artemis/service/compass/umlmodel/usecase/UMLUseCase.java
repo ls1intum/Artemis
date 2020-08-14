@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.usecase;
 
+import java.util.Objects;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLUseCase extends UMLElement {
 
     public final static String UML_USE_CASE_TYPE = "UseCase";
 
     private String name;
-
-    private UMLSystemBoundary systemBoundary;
 
     public UMLUseCase(String name, String jsonElementID) {
         super(jsonElementID);
@@ -32,22 +33,21 @@ public class UMLUseCase extends UMLElement {
         return "Use Case " + name;
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLUseCase)) {
+            return 0;
+        }
+
         double similarity = 0;
 
-        if (!(reference instanceof UMLUseCase)) {
-            return similarity;
-        }
-        UMLUseCase referenceObject = (UMLUseCase) reference;
+        UMLUseCase referenceUseCase = (UMLUseCase) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceUseCase.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+
+        if (Objects.equals(getParentElement(), referenceUseCase.getParentElement())) {
+            similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
+        }
 
         return ensureSimilarityRange(similarity);
     }
@@ -69,9 +69,5 @@ public class UMLUseCase extends UMLElement {
         double similarity = similarity(referenceObject);
 
         return ensureSimilarityRange(similarity);
-    }
-
-    public void setSystemBoundary(UMLSystemBoundary umlSystemBoundary) {
-        this.systemBoundary = systemBoundary;
     }
 }

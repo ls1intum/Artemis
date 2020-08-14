@@ -1,29 +1,23 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
-import com.google.common.base.CaseFormat;
+import java.util.Objects;
 
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLComponentInterface extends UMLElement {
 
-    public enum UMLComponentInterfaceType {
-        PROVIDED, REQUIRED, DEPENDENCY
-    }
+    public final static String UML_COMPONENT_INTERFACE_TYPE = "ComponentInterface";
 
-    private UMLComponentInterfaceType type;
+    public final static String UML_DEPLOYMENT_INTERFACE_TYPE = "DeploymentInterface";
 
-    /**
-     * empty constructor used to make mockito happy
-     */
-    public UMLComponentInterface() {
-        super();
-    }
+    private final String name;
 
-    public UMLComponentInterface(String jsonElementID, UMLComponentInterfaceType type) {
+    public UMLComponentInterface(String name, String jsonElementID) {
         super(jsonElementID);
-        this.type = type;
+        this.name = name;
     }
 
     /**
@@ -34,18 +28,18 @@ public class UMLComponentInterface extends UMLElement {
      */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLComponentInterface)) {
+            return 0;
+        }
+
         double similarity = 0;
 
-        if (!(reference instanceof UMLComponentInterface)) {
-            return similarity;
-        }
-        UMLComponentInterface referenceClass = (UMLComponentInterface) reference;
+        UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
+        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
-        if (type == referenceClass.type) {
-            similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
+        if (Objects.equals(getParentElement(), referenceComponentInterface.getParentElement())) {
+            similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
-
-        // TODO: take all relations with other elements into account to determine the similarity
 
         return ensureSimilarityRange(similarity);
     }
@@ -70,18 +64,20 @@ public class UMLComponentInterface extends UMLElement {
     }
 
     @Override
+    // TODO: in case of deployment diagrams, this is not really correct, it should then be Deployment Interface
     public String toString() {
-        return "Component Interface " + type;
+        return "Component Interface " + name;
     }
 
     @Override
     public String getName() {
-        return "";
+        return name;
     }
 
     @Override
+    // TODO: in case of deployment diagrams, this is not really correct, it should then be UML_DEPLOYMENT_INTERFACE_TYPE
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+        return UML_COMPONENT_INTERFACE_TYPE;
     }
 
     @Override
@@ -91,11 +87,7 @@ public class UMLComponentInterface extends UMLElement {
         }
 
         UMLComponentInterface otherComponentInterface = (UMLComponentInterface) obj;
-        // TODO: without a name this does not really make sense
-        if (otherComponentInterface.type.equals(this.type)) {
-            return true;
-        }
 
-        return true;
+        return otherComponentInterface.name.equals(this.name);
     }
 }

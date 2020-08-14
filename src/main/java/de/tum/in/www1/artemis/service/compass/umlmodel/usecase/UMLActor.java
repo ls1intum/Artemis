@@ -6,9 +6,9 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActor extends UMLElement {
 
-    public final static String UML_ACTOR_TYPE = "Actor";
+    public final static String UML_ACTOR_TYPE = "UseCaseActor";
 
-    private String name;
+    private final String name;
 
     public UMLActor(String name, String jsonElementID) {
         super(jsonElementID);
@@ -30,12 +30,6 @@ public class UMLActor extends UMLElement {
         return "Actor " + name;
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
@@ -46,6 +40,8 @@ public class UMLActor extends UMLElement {
         UMLActor referenceObject = (UMLActor) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
+
+        // NOTE: even if it is possible in Apollon, a parent element does not really make sense here and would simply be wrong
 
         return ensureSimilarityRange(similarity);
     }

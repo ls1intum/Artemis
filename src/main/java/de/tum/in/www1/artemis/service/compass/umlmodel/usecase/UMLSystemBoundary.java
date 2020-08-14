@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.usecase;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
@@ -9,14 +7,13 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLSystemBoundary extends UMLContainerElement {
 
-    public final static String UML_SYSTEM_BOUNDARY_TYPE = "SystemBoundary";
+    public final static String UML_SYSTEM_BOUNDARY_TYPE = "UseCaseSystem";
 
-    private String name;
+    private final String name;
 
-    public UMLSystemBoundary(String name, List<UMLElement> subElements, String jsonElementID) {
-        super(jsonElementID, subElements);
+    public UMLSystemBoundary(String name, String jsonElementID) {
+        super(jsonElementID);
         this.name = name;
-
     }
 
     @Override
@@ -27,6 +24,8 @@ public class UMLSystemBoundary extends UMLContainerElement {
             UMLSystemBoundary referencePackage = (UMLSystemBoundary) reference;
             similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
         }
+
+        // NOTE: even if it is possible in Apollon, a parent element does not really make sense here and would simply be wrong
 
         return ensureSimilarityRange(similarity);
     }
