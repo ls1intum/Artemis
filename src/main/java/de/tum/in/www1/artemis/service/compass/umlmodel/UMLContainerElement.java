@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 
 public abstract class UMLContainerElement extends UMLElement {
 
-    private List<UMLElement> subElements;
+    private List<UMLElement> subElements = new ArrayList<>();
 
     public List<UMLElement> getSubElements() {
         return subElements;
@@ -21,6 +22,10 @@ public abstract class UMLContainerElement extends UMLElement {
      */
     public UMLContainerElement() {
         super();
+    }
+
+    public UMLContainerElement(String jsonElementID) {
+        super(jsonElementID);
     }
 
     public UMLContainerElement(String jsonElementID, List<UMLElement> subElements) {
