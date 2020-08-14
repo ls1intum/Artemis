@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.service.compass.controller.JSONParser;
+import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.web.rest.dto.ModelingSubmissionComparisonDTO;
 
@@ -53,7 +53,7 @@ public class ModelingPlagiarismDetectionService {
             if (!modelingSubmission.isEmpty(objectMapper)) {
                 try {
                     log.debug("Build UML diagram from json");
-                    UMLDiagram model = JSONParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
+                    UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
                     nonEmptyModels.put(model, modelingSubmission);
                 }
                 catch (IOException e) {
