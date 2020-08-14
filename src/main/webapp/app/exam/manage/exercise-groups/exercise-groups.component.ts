@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, of, forkJoin } from 'rxjs';
+import { forkJoin, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -82,6 +82,10 @@ export class ExerciseGroupsComponent implements OnInit {
                 return of(null);
             }),
         );
+    }
+
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+        return exercise as ProgrammingExercise;
     }
 
     /**

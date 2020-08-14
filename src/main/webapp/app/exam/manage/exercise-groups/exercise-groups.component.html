@@ -137,6 +137,18 @@
                         <th>
                             <span>{{ 'artemisApp.examManagement.exerciseGroup.maxPoints' | translate }}</span>
                         </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
@@ -154,6 +166,16 @@
                         <td class="align-middle">
                             {{ exercise.maxScore }}
                         </td>
+                        <td>
+                            <span *ngIf="exercise.type == exerciseType.PROGRAMMING">
+                                <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
+                                 the links are disabled--->
+                                <a href="{{ asProgrammingExercise(exercise).templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
+                            >
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                         <td class="d-flex justify-content-end">
                             <jhi-exam-exercise-row-buttons
                                 [course]="course"
