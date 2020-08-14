@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import com.google.common.base.CaseFormat;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -45,7 +46,6 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
-import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
 public class UMLModelParser {
 
@@ -58,9 +58,9 @@ public class UMLModelParser {
      * @throws IOException on unexpected JSON formats
      */
     public static UMLDiagram buildModelFromJSON(JsonObject root, long modelSubmissionId) throws IOException {
-        String diagramType = root.get(JSONMapping.DIAGRAM_TYPE).getAsString();
-        JsonArray modelElements = root.getAsJsonArray(JSONMapping.ELEMENTS);
-        JsonArray relationships = root.getAsJsonArray(JSONMapping.RELATIONSHIPS);
+        String diagramType = root.get(DIAGRAM_TYPE).getAsString();
+        JsonArray modelElements = root.getAsJsonArray(ELEMENTS);
+        JsonArray relationships = root.getAsJsonArray(RELATIONSHIPS);
 
         if (DiagramType.ClassDiagram.name().equals(diagramType)) {
             return buildClassDiagramFromJSON(modelElements, relationships, modelSubmissionId);
@@ -104,7 +104,7 @@ public class UMLModelParser {
         // loop over all JSON elements and create the UML objects
         for (JsonElement elem : modelElements) {
             JsonObject element = elem.getAsJsonObject();
-            String elementType = element.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = element.get(ELEMENT_TYPE).getAsString();
             if ("ObjectName".equals(elementType)) {
                 UMLObject umlObject = parseObject(element, modelElements);
                 umlObjectMap.put(umlObject.getJSONElementID(), umlObject);
@@ -144,7 +144,7 @@ public class UMLModelParser {
         for (JsonElement jsonElement : modelElements) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             UMLElement umlElement = null;
-            String elementType = jsonObject.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
             if (UMLSystemBoundary.UML_SYSTEM_BOUNDARY_TYPE.equals(elementType)) {
                 UMLSystemBoundary umlSystemBoundary = parseSystemBoundary(jsonObject);
                 umlSystemBoundaryMap.put(umlSystemBoundary.getJSONElementID(), umlSystemBoundary);
@@ -163,8 +163,8 @@ public class UMLModelParser {
                 allUmlElementsMap.put(umlUseCase.getJSONElementID(), umlUseCase);
                 umlElement = umlUseCase;
             }
-            if (jsonObject.has(JSONMapping.ELEMENT_OWNER) && !jsonObject.get(JSONMapping.ELEMENT_OWNER).isJsonNull() && umlElement != null) {
-                String ownerId = jsonObject.get(JSONMapping.ELEMENT_OWNER).getAsString();
+            if (jsonObject.has(ELEMENT_OWNER) && !jsonObject.get(ELEMENT_OWNER).isJsonNull() && umlElement != null) {
+                String ownerId = jsonObject.get(ELEMENT_OWNER).getAsString();
                 ownerRelationships.put(umlElement, ownerId);
             }
         }
@@ -224,7 +224,7 @@ public class UMLModelParser {
         for (JsonElement jsonElement : modelElements) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             UMLElement umlElement = null;
-            String elementType = jsonObject.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
             if (UMLComponent.UML_COMPONENT_TYPE.equals(elementType)) {
                 UMLComponent umlComponent = parseComponent(jsonObject);
                 umlComponentMap.put(umlComponent.getJSONElementID(), umlComponent);
@@ -255,8 +255,8 @@ public class UMLModelParser {
     }
 
     private static void findOwner(Map<UMLElement, String> ownerRelationships, JsonObject jsonObject, UMLElement umlElement) {
-        if (jsonObject.has(JSONMapping.ELEMENT_OWNER) && !jsonObject.get(JSONMapping.ELEMENT_OWNER).isJsonNull()) {
-            String ownerId = jsonObject.get(JSONMapping.ELEMENT_OWNER).getAsString();
+        if (jsonObject.has(ELEMENT_OWNER) && !jsonObject.get(ELEMENT_OWNER).isJsonNull()) {
+            String ownerId = jsonObject.get(ELEMENT_OWNER).getAsString();
             ownerRelationships.put(umlElement, ownerId);
         }
     }
@@ -289,7 +289,7 @@ public class UMLModelParser {
         for (JsonElement jsonElement : modelElements) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             UMLElement umlElement = null;
-            String elementType = jsonObject.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
             if (UMLComponent.UML_COMPONENT_TYPE.equals(elementType)) {
                 UMLComponent umlComponent = parseComponent(jsonObject);
                 umlComponentMap.put(umlComponent.getJSONElementID(), umlComponent);
@@ -357,7 +357,7 @@ public class UMLModelParser {
         // loop over all JSON elements and UML package objects
         for (JsonElement elem : modelElements) {
             JsonObject element = elem.getAsJsonObject();
-            String elementType = element.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = element.get(ELEMENT_TYPE).getAsString();
 
             if (elementType.equals(UMLPackage.UML_PACKAGE_TYPE)) {
                 UMLPackage umlPackage = parsePackage(element);
@@ -369,7 +369,7 @@ public class UMLModelParser {
         for (JsonElement elem : modelElements) {
             JsonObject element = elem.getAsJsonObject();
 
-            String elementType = element.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = element.get(ELEMENT_TYPE).getAsString();
             elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
 
             if (EnumUtils.isValidEnum(UMLClassType.class, elementType)) {
@@ -394,9 +394,9 @@ public class UMLModelParser {
      * @return the UMLPackage object parsed from the JSON object
      */
     private static UMLPackage parsePackage(JsonObject packageJson) {
-        String packageName = packageJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String packageName = packageJson.get(ELEMENT_NAME).getAsString();
         List<UMLElement> umlClassList = new ArrayList<>();
-        String jsonElementId = packageJson.get(JSONMapping.ELEMENT_ID).getAsString();
+        String jsonElementId = packageJson.get(ELEMENT_ID).getAsString();
         return new UMLPackage(packageName, umlClassList, jsonElementId);
     }
 
@@ -413,15 +413,15 @@ public class UMLModelParser {
         Map<String, JsonObject> jsonElementMap = generateJsonElementMap(modelElements);
 
         UMLClassType umlClassType = UMLClassType.valueOf(classType);
-        String className = classJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String className = classJson.get(ELEMENT_NAME).getAsString();
 
         List<UMLAttribute> umlAttributesList = parseUmlAttributes(classJson, jsonElementMap);
         List<UMLMethod> umlMethodList = parseUmlMethods(classJson, jsonElementMap);
 
-        UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, classJson.get(JSONMapping.ELEMENT_ID).getAsString(), umlClassType);
+        UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, classJson.get(ELEMENT_ID).getAsString(), umlClassType);
 
-        if (classJson.has(JSONMapping.ELEMENT_OWNER) && !classJson.get(JSONMapping.ELEMENT_OWNER).isJsonNull()) {
-            String packageId = classJson.get(JSONMapping.ELEMENT_OWNER).getAsString();
+        if (classJson.has(ELEMENT_OWNER) && !classJson.get(ELEMENT_OWNER).isJsonNull()) {
+            String packageId = classJson.get(ELEMENT_OWNER).getAsString();
             UMLPackage umlPackage = umlPackageMap.get(packageId);
             if (umlPackage != null) {
                 umlPackage.addSubElement(newClass);
@@ -435,7 +435,7 @@ public class UMLModelParser {
     @NotNull
     private static List<UMLAttribute> parseUmlAttributes(JsonObject classJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLAttribute> umlAttributesList = new ArrayList<>();
-        for (JsonElement attributeId : classJson.getAsJsonArray(JSONMapping.ELEMENT_ATTRIBUTES)) {
+        for (JsonElement attributeId : classJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
             UMLAttribute newAttr = parseAttribute(jsonElementMap.get(attributeId.getAsString()));
             umlAttributesList.add(newAttr);
         }
@@ -445,7 +445,7 @@ public class UMLModelParser {
     @NotNull
     private static List<UMLMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLMethod> umlMethodList = new ArrayList<>();
-        for (JsonElement methodId : objectJson.getAsJsonArray(JSONMapping.ELEMENT_METHODS)) {
+        for (JsonElement methodId : objectJson.getAsJsonArray(ELEMENT_METHODS)) {
             UMLMethod newMethod = parseMethod(jsonElementMap.get(methodId.getAsString()));
             umlMethodList.add(newMethod);
         }
@@ -461,10 +461,10 @@ public class UMLModelParser {
      */
     private static UMLObject parseObject(JsonObject objectJson, JsonArray modelElements) {
         Map<String, JsonObject> jsonElementMap = generateJsonElementMap(modelElements);
-        String objectName = objectJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String objectName = objectJson.get(ELEMENT_NAME).getAsString();
         List<UMLAttribute> umlAttributesList = parseUmlAttributes(objectJson, jsonElementMap);
         List<UMLMethod> umlMethodList = parseUmlMethods(objectJson, jsonElementMap);
-        return new UMLObject(objectName, umlAttributesList, umlMethodList, objectJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        return new UMLObject(objectName, umlAttributesList, umlMethodList, objectJson.get(ELEMENT_ID).getAsString());
     }
 
     /**
@@ -474,7 +474,7 @@ public class UMLModelParser {
      * @return the UMLAttribute object parsed from the JSON object
      */
     private static UMLAttribute parseAttribute(JsonObject attributeJson) {
-        String[] attributeNameArray = attributeJson.get(JSONMapping.ELEMENT_NAME).getAsString().replaceAll("\\s+", "").split(":");
+        String[] attributeNameArray = attributeJson.get(ELEMENT_NAME).getAsString().replaceAll("\\s+", "").split(":");
         String attributeName = attributeNameArray[0];
         String attributeType = "";
 
@@ -482,7 +482,7 @@ public class UMLModelParser {
             attributeType = attributeNameArray[1];
         }
 
-        return new UMLAttribute(attributeName, attributeType, attributeJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        return new UMLAttribute(attributeName, attributeType, attributeJson.get(ELEMENT_ID).getAsString());
     }
 
     /**
@@ -492,7 +492,7 @@ public class UMLModelParser {
      * @return the UMLMethod object parsed from the JSON object
      */
     private static UMLMethod parseMethod(JsonObject methodJson) {
-        String completeMethodName = methodJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String completeMethodName = methodJson.get(ELEMENT_NAME).getAsString();
         String[] methodEntryArray = completeMethodName.replaceAll("\\s+", "").split(":");
         String[] methodParts = methodEntryArray[0].split("[()]");
 
@@ -511,7 +511,7 @@ public class UMLModelParser {
             methodReturnType = methodEntryArray[1];
         }
 
-        return new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), methodJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        return new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), methodJson.get(ELEMENT_ID).getAsString());
     }
 
     /**
@@ -524,39 +524,32 @@ public class UMLModelParser {
      * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
      */
     private static Optional<UMLRelationship> parseRelationship(JsonObject relationshipJson, Map<String, UMLClass> classMap, Map<String, UMLPackage> packageMap) throws IOException {
-        String relationshipType = relationshipJson.get(JSONMapping.RELATIONSHIP_TYPE).getAsString();
+        String relationshipType = relationshipJson.get(RELATIONSHIP_TYPE).getAsString();
         relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
         if (!EnumUtils.isValidEnum(UMLRelationshipType.class, relationshipType)) {
             return Optional.empty();
         }
 
-        JsonObject relationshipSource = relationshipJson.getAsJsonObject(JSONMapping.RELATIONSHIP_SOURCE);
-        JsonObject relationshipTarget = relationshipJson.getAsJsonObject(JSONMapping.RELATIONSHIP_TARGET);
+        JsonObject relationshipSource = relationshipJson.getAsJsonObject(RELATIONSHIP_SOURCE);
+        JsonObject relationshipTarget = relationshipJson.getAsJsonObject(RELATIONSHIP_TARGET);
 
-        String sourceJSONID = relationshipSource.get(JSONMapping.RELATIONSHIP_ENDPOINT_ID).getAsString();
-        String targetJSONID = relationshipTarget.get(JSONMapping.RELATIONSHIP_ENDPOINT_ID).getAsString();
-
-        UMLClass source = classMap.get(sourceJSONID);
-        UMLClass target = classMap.get(targetJSONID);
-
-        JsonElement relationshipSourceRole = relationshipSource.has(JSONMapping.RELATIONSHIP_ROLE) ? relationshipSource.get(JSONMapping.RELATIONSHIP_ROLE) : JsonNull.INSTANCE;
-        JsonElement relationshipTargetRole = relationshipTarget.has(JSONMapping.RELATIONSHIP_ROLE) ? relationshipTarget.get(JSONMapping.RELATIONSHIP_ROLE) : JsonNull.INSTANCE;
-        JsonElement relationshipSourceMultiplicity = relationshipSource.has(JSONMapping.RELATIONSHIP_MULTIPLICITY) ? relationshipSource.get(JSONMapping.RELATIONSHIP_MULTIPLICITY)
-                : JsonNull.INSTANCE;
-        JsonElement relationshipTargetMultiplicity = relationshipTarget.has(JSONMapping.RELATIONSHIP_MULTIPLICITY) ? relationshipTarget.get(JSONMapping.RELATIONSHIP_MULTIPLICITY)
-                : JsonNull.INSTANCE;
+        UMLClass source = findElement(relationshipJson, classMap, RELATIONSHIP_SOURCE);
+        UMLClass target = findElement(relationshipJson, classMap, RELATIONSHIP_TARGET);
 
         if (source != null && target != null) {
-            UMLRelationship newRelationship = new UMLRelationship(source, target, UMLRelationshipType.valueOf(relationshipType),
-                    relationshipJson.get(JSONMapping.ELEMENT_ID).getAsString(), relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
-                    relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
-                    relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
-                    relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
-
+            var type = UMLRelationshipType.valueOf(relationshipType);
+            var jsonElementId = relationshipJson.get(ELEMENT_ID).getAsString();
+            var sourceRole = relationshipSource.has(RELATIONSHIP_ROLE) ? relationshipSource.get(RELATIONSHIP_ROLE).getAsString() : null;
+            var targetRole = relationshipTarget.has(RELATIONSHIP_ROLE) ? relationshipTarget.get(RELATIONSHIP_ROLE).getAsString() : null;
+            var sourceMultiplicity = relationshipSource.has(RELATIONSHIP_MULTIPLICITY) ? relationshipSource.get(RELATIONSHIP_MULTIPLICITY).getAsString() : null;
+            var targetMultiplicity = relationshipTarget.has(RELATIONSHIP_MULTIPLICITY) ? relationshipTarget.get(RELATIONSHIP_MULTIPLICITY).getAsString() : null;
+            UMLRelationship newRelationship = new UMLRelationship(source, target, type, jsonElementId, sourceRole, targetRole, sourceMultiplicity, targetMultiplicity);
             return Optional.of(newRelationship);
         }
         else {
+            String sourceJSONID = relationshipSource.get(RELATIONSHIP_ENDPOINT_ID).getAsString();
+            String targetJSONID = relationshipTarget.get(RELATIONSHIP_ENDPOINT_ID).getAsString();
             if (source == null && packageMap.containsKey(sourceJSONID) || target == null && packageMap.containsKey(targetJSONID)) {
                 // workaround: prevent exception when a package is source or target of a relationship
                 return Optional.empty();
@@ -568,19 +561,19 @@ public class UMLModelParser {
 
     private static Optional<UMLComponentRelationship> parseComponentRelationship(JsonObject relationshipJson, Map<String, UMLElement> allUmlElementsMap) throws IOException {
 
-        String relationshipType = relationshipJson.get(JSONMapping.RELATIONSHIP_TYPE).getAsString();
+        String relationshipType = relationshipJson.get(RELATIONSHIP_TYPE).getAsString();
         relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
         if (!EnumUtils.isValidEnum(UMLComponentRelationship.UMLComponentRelationshipType.class, relationshipType)) {
             return Optional.empty();
         }
 
-        UMLElement source = findElement(relationshipJson, allUmlElementsMap, JSONMapping.RELATIONSHIP_SOURCE);
-        UMLElement target = findElement(relationshipJson, allUmlElementsMap, JSONMapping.RELATIONSHIP_TARGET);
+        UMLElement source = findElement(relationshipJson, allUmlElementsMap, RELATIONSHIP_SOURCE);
+        UMLElement target = findElement(relationshipJson, allUmlElementsMap, RELATIONSHIP_TARGET);
 
         if (source != null && target != null) {
             UMLComponentRelationship newComponentRelationship = new UMLComponentRelationship(source, target,
-                    UMLComponentRelationship.UMLComponentRelationshipType.valueOf(relationshipType), relationshipJson.get(JSONMapping.ELEMENT_ID).getAsString());
+                    UMLComponentRelationship.UMLComponentRelationshipType.valueOf(relationshipType), relationshipJson.get(ELEMENT_ID).getAsString());
             return Optional.of(newComponentRelationship);
         }
         else {
@@ -590,7 +583,7 @@ public class UMLModelParser {
 
     private static Optional<UMLUseCaseAssociation> parseUseCaseAssociation(JsonObject relationshipJson, Map<String, UMLElement> allUmlElementsMap) throws IOException {
 
-        String relationshipType = relationshipJson.get(JSONMapping.RELATIONSHIP_TYPE).getAsString();
+        String relationshipType = relationshipJson.get(RELATIONSHIP_TYPE).getAsString();
         relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
         if (!EnumUtils.isValidEnum(UMLUseCaseAssociation.UMLUseCaseAssociationType.class, relationshipType)) {
@@ -600,15 +593,14 @@ public class UMLModelParser {
         var associationType = UMLUseCaseAssociation.UMLUseCaseAssociationType.valueOf(relationshipType);
         String name = null;
         if (associationType == UMLUseCaseAssociation.UMLUseCaseAssociationType.USE_CASE_ASSOCIATION) {
-            name = relationshipJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+            name = relationshipJson.get(ELEMENT_NAME).getAsString();
         }
 
-        UMLElement source = findElement(relationshipJson, allUmlElementsMap, JSONMapping.RELATIONSHIP_SOURCE);
-        UMLElement target = findElement(relationshipJson, allUmlElementsMap, JSONMapping.RELATIONSHIP_TARGET);
+        UMLElement source = findElement(relationshipJson, allUmlElementsMap, RELATIONSHIP_SOURCE);
+        UMLElement target = findElement(relationshipJson, allUmlElementsMap, RELATIONSHIP_TARGET);
 
         if (source != null && target != null) {
-            UMLUseCaseAssociation newComponentRelationship = new UMLUseCaseAssociation(name, source, target, associationType,
-                    relationshipJson.get(JSONMapping.ELEMENT_ID).getAsString());
+            UMLUseCaseAssociation newComponentRelationship = new UMLUseCaseAssociation(name, source, target, associationType, relationshipJson.get(ELEMENT_ID).getAsString());
             return Optional.of(newComponentRelationship);
         }
         else {
@@ -616,46 +608,46 @@ public class UMLModelParser {
         }
     }
 
-    private static <T extends UMLElement> T findElement(JsonObject relationshipJson, Map<String, T> allUmlElementsMap, String jsonField) {
+    private static <T extends UMLElement> T findElement(JsonObject relationshipJson, Map<String, T> elementsMap, String jsonField) {
         JsonObject relationshipSource = relationshipJson.getAsJsonObject(jsonField);
-        String sourceJSONID = relationshipSource.get(JSONMapping.RELATIONSHIP_ENDPOINT_ID).getAsString();
-        return allUmlElementsMap.get(sourceJSONID);
+        String sourceJSONID = relationshipSource.get(RELATIONSHIP_ENDPOINT_ID).getAsString();
+        return elementsMap.get(sourceJSONID);
     }
 
     private static UMLComponentInterface parseComponentInterface(JsonObject componentInterfaceJson) {
-        String componentInterfaceName = componentInterfaceJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLComponentInterface(componentInterfaceName, componentInterfaceJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String componentInterfaceName = componentInterfaceJson.get(ELEMENT_NAME).getAsString();
+        return new UMLComponentInterface(componentInterfaceName, componentInterfaceJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLComponent parseComponent(JsonObject componentJson) {
-        String componentName = componentJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLComponent(componentName, componentJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String componentName = componentJson.get(ELEMENT_NAME).getAsString();
+        return new UMLComponent(componentName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLNode parseNode(JsonObject nodeJson) {
-        String nodeName = nodeJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        String stereotypeName = nodeJson.get(JSONMapping.STEREOTYPE_NAME).getAsString();
-        return new UMLNode(nodeName, stereotypeName, nodeJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String nodeName = nodeJson.get(ELEMENT_NAME).getAsString();
+        String stereotypeName = nodeJson.get(STEREOTYPE_NAME).getAsString();
+        return new UMLNode(nodeName, stereotypeName, nodeJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLArtifact parseArtifact(JsonObject artifactJson) {
-        String artifactName = artifactJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLArtifact(artifactName, artifactJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String artifactName = artifactJson.get(ELEMENT_NAME).getAsString();
+        return new UMLArtifact(artifactName, artifactJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLSystemBoundary parseSystemBoundary(JsonObject componentJson) {
-        String systemBoundaryName = componentJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLSystemBoundary(systemBoundaryName, componentJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String systemBoundaryName = componentJson.get(ELEMENT_NAME).getAsString();
+        return new UMLSystemBoundary(systemBoundaryName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLActor parseActor(JsonObject componentJson) {
-        String actorName = componentJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLActor(actorName, componentJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String actorName = componentJson.get(ELEMENT_NAME).getAsString();
+        return new UMLActor(actorName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
     private static UMLUseCase parseUseCase(JsonObject componentJson) {
-        String useCaseName = componentJson.get(JSONMapping.ELEMENT_NAME).getAsString();
-        return new UMLUseCase(useCaseName, componentJson.get(JSONMapping.ELEMENT_ID).getAsString());
+        String useCaseName = componentJson.get(ELEMENT_NAME).getAsString();
+        return new UMLUseCase(useCaseName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
     /**
@@ -668,12 +660,12 @@ public class UMLModelParser {
      */
     private static Optional<UMLCommunicationLink> parseCommunicationLink(JsonObject relationshipJson, Map<String, UMLObject> objectMap) throws IOException {
 
-        UMLObject source = findElement(relationshipJson, objectMap, JSONMapping.RELATIONSHIP_SOURCE);
-        UMLObject target = findElement(relationshipJson, objectMap, JSONMapping.RELATIONSHIP_TARGET);
+        UMLObject source = findElement(relationshipJson, objectMap, RELATIONSHIP_SOURCE);
+        UMLObject target = findElement(relationshipJson, objectMap, RELATIONSHIP_TARGET);
 
         List<UMLMessage> messages = new ArrayList<>();
 
-        for (JsonElement messageJson : relationshipJson.getAsJsonArray(JSONMapping.RELATIONSHIP_MESSAGES)) {
+        for (JsonElement messageJson : relationshipJson.getAsJsonArray(RELATIONSHIP_MESSAGES)) {
             JsonObject messageJsonObject = (JsonObject) messageJson;
             Direction direction = messageJsonObject.get("direction").getAsString().equals("target") ? Direction.TARGET : Direction.SOURCE;
             UMLMessage message = new UMLMessage(messageJsonObject.get("name").getAsString(), direction);
@@ -681,7 +673,7 @@ public class UMLModelParser {
         }
 
         if (source != null && target != null) {
-            UMLCommunicationLink newCommunicationLink = new UMLCommunicationLink(source, target, messages, relationshipJson.get(JSONMapping.ELEMENT_ID).getAsString());
+            UMLCommunicationLink newCommunicationLink = new UMLCommunicationLink(source, target, messages, relationshipJson.get(ELEMENT_ID).getAsString());
             return Optional.of(newCommunicationLink);
         }
         else {
@@ -709,7 +701,7 @@ public class UMLModelParser {
         for (JsonElement elem : modelElements) {
             JsonObject element = elem.getAsJsonObject();
 
-            String elementType = element.get(JSONMapping.ELEMENT_TYPE).getAsString();
+            String elementType = element.get(ELEMENT_TYPE).getAsString();
             String elementTypeUpperUnderscore = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
 
             if (EnumUtils.isValidEnum(UMLActivityNodeType.class, elementTypeUpperUnderscore)) {
@@ -728,10 +720,10 @@ public class UMLModelParser {
         for (JsonElement elem : modelElements) {
             JsonObject element = elem.getAsJsonObject();
 
-            if (element.has(JSONMapping.ELEMENT_OWNER) && !element.get(JSONMapping.ELEMENT_OWNER).isJsonNull()) {
-                String parentActivityId = element.get(JSONMapping.ELEMENT_OWNER).getAsString();
+            if (element.has(ELEMENT_OWNER) && !element.get(ELEMENT_OWNER).isJsonNull()) {
+                String parentActivityId = element.get(ELEMENT_OWNER).getAsString();
                 UMLActivity parentActivity = umlActivityMap.get(parentActivityId);
-                UMLActivityElement childElement = umlActivityElementMap.get(element.get(JSONMapping.ELEMENT_ID).getAsString());
+                UMLActivityElement childElement = umlActivityElementMap.get(element.get(ELEMENT_ID).getAsString());
 
                 if (parentActivity != null && childElement != null) {
                     parentActivity.addChildElement(childElement);
@@ -758,8 +750,8 @@ public class UMLModelParser {
      */
     private static UMLActivityNode parseActivityNode(String activityNodeType, JsonObject activityNodeJson) {
         UMLActivityNodeType nodeType = UMLActivityNodeType.valueOf(activityNodeType);
-        String jsonElementId = activityNodeJson.get(JSONMapping.ELEMENT_ID).getAsString();
-        String nodeName = activityNodeJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String jsonElementId = activityNodeJson.get(ELEMENT_ID).getAsString();
+        String nodeName = activityNodeJson.get(ELEMENT_NAME).getAsString();
         return new UMLActivityNode(nodeName, jsonElementId, nodeType);
     }
 
@@ -770,8 +762,8 @@ public class UMLModelParser {
      * @return the UMLActivity object parsed from the JSON object
      */
     private static UMLActivity parseActivity(JsonObject activityJson) {
-        String jsonElementId = activityJson.get(JSONMapping.ELEMENT_ID).getAsString();
-        String activityName = activityJson.get(JSONMapping.ELEMENT_NAME).getAsString();
+        String jsonElementId = activityJson.get(ELEMENT_ID).getAsString();
+        String activityName = activityJson.get(ELEMENT_NAME).getAsString();
         return new UMLActivity(activityName, new ArrayList<>(), jsonElementId);
     }
 
@@ -784,11 +776,11 @@ public class UMLModelParser {
      * @throws IOException when no activity elements could be found in the activityElementMap for the source and target ID in the JSON object
      */
     private static UMLControlFlow parseControlFlow(JsonObject controlFlowJson, Map<String, UMLActivityElement> activityElementMap) throws IOException {
-        UMLActivityElement source = findElement(controlFlowJson, activityElementMap, JSONMapping.RELATIONSHIP_SOURCE);
-        UMLActivityElement target = findElement(controlFlowJson, activityElementMap, JSONMapping.RELATIONSHIP_TARGET);
+        UMLActivityElement source = findElement(controlFlowJson, activityElementMap, RELATIONSHIP_SOURCE);
+        UMLActivityElement target = findElement(controlFlowJson, activityElementMap, RELATIONSHIP_TARGET);
 
         if (source != null && target != null) {
-            return new UMLControlFlow(source, target, controlFlowJson.get(JSONMapping.ELEMENT_ID).getAsString());
+            return new UMLControlFlow(source, target, controlFlowJson.get(ELEMENT_ID).getAsString());
         }
         else {
             throw new IOException("Control flow source or target not part of model!");
