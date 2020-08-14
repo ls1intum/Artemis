@@ -330,7 +330,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         const assignmentParticipationId = this.exercise.studentParticipations[0].id;
         this.exercise.studentParticipations = [];
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
-            .pipe(catchError(() => throwError('participationCouldNotBeDeleted')))
+            .pipe(
+                catchError(() => throwError('participationCouldNotBeDeleted')),
+                tap(() => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                }),
+            )
             .subscribe(
                 () => {},
                 (err) => this.onError(err),
