@@ -45,19 +45,19 @@ public class UMLRelationship extends UMLElement {
         }
     }
 
-    private UMLClass source;
+    private final UMLClass source;
 
-    private UMLClass target;
+    private final UMLClass target;
 
-    private String sourceRole;
+    private final String sourceRole;
 
-    private String targetRole;
+    private final String targetRole;
 
-    private String sourceMultiplicity;
+    private final String sourceMultiplicity;
 
-    private String targetMultiplicity;
+    private final String targetMultiplicity;
 
-    private UMLRelationshipType type;
+    private final UMLRelationshipType type;
 
     public UMLRelationship(UMLClass source, UMLClass target, UMLRelationshipType type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
             String targetMultiplicity) {

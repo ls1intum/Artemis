@@ -55,8 +55,11 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
         UMLDiagram diagramReference = (UMLDiagram) reference;
 
+        List<UMLElement> modelElements = getModelElements();
+        List<UMLElement> referenceModelElements = diagramReference.getModelElements();
+
         // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this diagram always has less or equally many elements than the reference diagram.
-        if (getModelElements().size() > diagramReference.getModelElements().size()) {
+        if (modelElements.size() > referenceModelElements.size()) {
             return diagramReference.similarity(this);
         }
 
@@ -65,10 +68,10 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
         // For calculating the weight of the similarity of every element, we consider the max. element count to reflect missing elements, i.e. it should not be possible to get a
         // similarity of 1 if the amount of elements differs. As we know that the reference diagram has at least as many elements as this diagram, we take the element count of the
         // reference.
-        int maxElementCount = diagramReference.getModelElements().size();
+        int maxElementCount = referenceModelElements.size();
         double weight = 1.0 / maxElementCount;
 
-        for (Similarity<UMLElement> element : getModelElements()) {
+        for (Similarity<UMLElement> element : modelElements) {
             double similarityValue = diagramReference.similarElementScore(element);
             similarity += weight * similarityValue;
         }
