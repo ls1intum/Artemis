@@ -30,10 +30,18 @@ module.exports = merge(commonConfig({ env: ENV }), {
         rules: [
         {
             test: /\.scss$/,
-            use: ['to-string-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }],
+            use: [
+                'to-string-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
+                'postcss-loader',
+                {
+                    loader: 'sass-loader',
+                    options: { implementation: sass }
+                }
+            ],
             exclude: /(vendor\.scss|global\.scss)/
         },
         {
@@ -45,7 +53,10 @@ module.exports = merge(commonConfig({ env: ENV }), {
                         publicPath: '../'
                     }
                 },
-                'css-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
                 'postcss-loader',
                 {
                     loader: 'sass-loader',
@@ -55,7 +66,13 @@ module.exports = merge(commonConfig({ env: ENV }), {
         },
         {
             test: /\.css$/,
-            use: ['to-string-loader', 'css-loader'],
+            use: [
+                'to-string-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                }
+            ],
             exclude: /(vendor\.css|global\.css)/
         },
         {
@@ -67,7 +84,10 @@ module.exports = merge(commonConfig({ env: ENV }), {
                         publicPath: '../'
                     }
                 },
-                'css-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
                 'postcss-loader'
             ]
         }]
