@@ -93,8 +93,11 @@ export class ExerciseGroupsComponent implements OnInit {
         return null;
     }
 
-    asModelingExercise(exercise: Exercise): ModelingExercise {
-        return exercise as ModelingExercise;
+    asModelingExercise(exercise: Exercise): ModelingExercise | null {
+        if (exercise.type === ExerciseType.MODELING) {
+            return exercise as ModelingExercise;
+        }
+        return null;
     }
 
     /**

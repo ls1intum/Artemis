@@ -272,8 +272,8 @@
                             </td>
                         </ng-container>
                         <td>
-                            <div *ngIf="exercise.type === exerciseType.MODELING" jhiTranslate="{{ 'artemisApp.DiagramType.' + asModelingExercise(exercise).diagramType }}">
-                                {{ asModelingExercise(exercise).diagramType }}
+                            <div *ngIf="asModelingExercise(exercise) as modelingExercise">
+                                {{ 'artemisApp.DiagramType.' + modelingExercise.diagramType | translate }}
                             </div>
                         </td>
                         <td class="d-flex justify-content-end">
