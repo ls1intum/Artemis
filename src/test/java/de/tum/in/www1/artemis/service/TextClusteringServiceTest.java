@@ -175,11 +175,12 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         //      parent == -1
         //      child == blocks.size()
         //      lambda_val == -1 (getLambda_val should return POSITIVE_INFINITY)
-        //      child_size == 0
+        //      child_size == blocks.size()
         TextTreeNode rootNode = textTreeNodeRepository.findAllByParentAndExercise(-1L, exercise).get(0);
         assertThat((int) rootNode.getChild(), equalTo(blocks.size()));
         assertThat(rootNode.getLambda_val(), equalTo(Double.POSITIVE_INFINITY));
         assertThat(rootNode.isBlockNode(), equalTo(false));
+        assertThat((int) rootNode.getChild_size(), equalTo(blocks.size()));
 
         // Test cascading removals
         textSubmissionRepository.deleteAll();

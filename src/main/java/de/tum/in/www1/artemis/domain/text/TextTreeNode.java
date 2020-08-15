@@ -56,7 +56,7 @@ public class TextTreeNode implements Serializable {
         return lambda_val == -1 ? Double.POSITIVE_INFINITY : lambda_val;
     }
 
-    public void setLambda_val(double lambda_val) { this.lambda_val = lambda_val; }
+    public void setLambda_val(double lambda_val) { this.lambda_val = lambda_val == Double.POSITIVE_INFINITY ? -1 : lambda_val; }
 
     public long getChild_size() { return child_size; }
 

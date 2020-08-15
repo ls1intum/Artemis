@@ -158,8 +158,6 @@ public class TextClusteringService {
                 dist.setBlock_j(j);
                 dist.setDistance(distanceMatrix.get(i).get(j));
                 dist.setExercise(exercise);
-                // The id is set to a proper value when being saved to the database
-                dist.setId(-1);
                 pairwiseDistanceRepository.save(dist);
             }
         }
