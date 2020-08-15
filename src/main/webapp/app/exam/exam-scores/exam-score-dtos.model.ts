@@ -67,6 +67,7 @@ export class AggregatedExerciseGroupResult {
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints: number | null = null;
+    public averagePercentage: number | null = null;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
     constructor(exerciseGroupId: number, title: string, maxPoints: number, totalParticipants: number) {
@@ -85,6 +86,7 @@ export class AggregatedExerciseResult {
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints: number | null = null;
+    public averagePercentage: number | null = null;
 
     constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
         this.exerciseId = exerciseId;
