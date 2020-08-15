@@ -18,8 +18,8 @@
         </div>
 
         <div class="d-flex mb-1">
-            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }},</h6>
-            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }},</h6>
+            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }} ,</h6>
+            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }} ,</h6>
             <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | translate }}</h6>
         </div>
 
@@ -64,22 +64,26 @@
                     <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | translate }}</th>
                     <td>
                         {{ aggregatedExamResults.meanPoints !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPoints, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}
+                        %)
                     </td>
                     <td>
                         {{ aggregatedExamResults.meanPointsTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotal, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}
+                        %)
                     </td>
                 </tr>
                 <tr>
                     <th scope="row">{{ 'artemisApp.examScores.medianColumn' | translate }}</th>
                     <td>
                         {{ aggregatedExamResults.median !== null ? roundAndPerformLocalConversion(aggregatedExamResults.median, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}
+                        %)
                     </td>
                     <td>
                         {{ aggregatedExamResults.medianTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianTotal, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}
+                        %)
                     </td>
                 </tr>
                 <tr>
@@ -89,19 +93,26 @@
                 </tr>
             </tbody>
         </table>
+    </div>
 
-        <!-- Histogram Table -->
-        <table class="table table-bordered table-sm table-clear-width mb-3">
-            <thead class="thead-dark">
-                <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }},{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
-            </thead>
-            <tbody>
-                <td *ngFor="let noOfStudents of histogramData">
-                    {{ noOfStudents }} ({{ noOfExamsFiltered ? roundAndPerformLocalConversion((noOfStudents * 100) / noOfExamsFiltered, 2, 2) : '-' }}%)
-                </td>
-            </tbody>
-        </table>
+    <!-- Histogram -->
+    <canvas #histogram width="1000" height="500"> </canvas>
 
+    <!-- Histogram Table -->
+    <table class="table table-bordered table-sm table-clear-width mb-3">
+        <thead class="thead-dark">
+            <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }} ,{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
+        </thead>
+        <tbody>
+            <td *ngFor="let noOfStudents of histogramData">
+                {{ noOfStudents }}
+                ({{ noOfExamsFiltered ? roundAndPerformLocalConversion((noOfStudents * 100) / noOfExamsFiltered, 2, 2) : '-' }}
+                %)
+            </td>
+        </tbody>
+    </table>
+
+    <div *ngIf="!isLoading && studentResults && exerciseGroups">
         <!-- Exercise Statistics Table -->
         <table class="table table-bordered table-sm body-striped">
             <thead class="thead-dark">
@@ -142,9 +153,11 @@
                         %)
                     </td>
                     <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
+                        {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
+                        /
                         {{ toLocaleString(exerciseGroupResult.maxPoints) }}
-                        ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }} %)
+                        ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }}
+                        %)
                     </td>
                     <td>{{ exerciseResult.title }}</td>
                     <td>
@@ -154,9 +167,11 @@
                         %)
                     </td>
                     <td>
-                        {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
+                        {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}
+                        /
                         {{ toLocaleString(exerciseResult.maxPoints) }}
-                        ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }} %)
+                        ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }}
+                        %)
                     </td>
                 </tr>
             </tbody>

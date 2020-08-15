@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, ElementRef, ViewChild, Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,6 +19,7 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
+import * as Chart from 'chart.js';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -44,6 +45,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public isLoading = true;
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
+
+    @ViewChild('histogram', { static: false })
+    histogram: ElementRef<HTMLCanvasElement>;
+    private ctx: CanvasRenderingContext2D;
 
     private languageChangeSubscription: Subscription | null;
 
@@ -101,6 +106,44 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
         this.calculateFilterDependentStatistics();
         this.changeDetector.detectChanges();
+    }
+
+    private createChart() {
+        const labels = [];
+        let i;
+        for (i = 0; i < this.histogramData.length; i++) {
+            if (i === this.histogramData.length - 1) {
+                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}]`;
+            } else {
+                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth})`;
+            }
+        }
+
+        new Chart(this.ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '# of students',
+                        data: this.histogramData,
+                        borderWidth: 1,
+                    },
+                ],
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                beginAtZero: true,
+                            },
+                        },
+                    ],
+                },
+            },
+        });
     }
 
     /**
@@ -163,6 +206,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
+
+        this.ctx = this.histogram.nativeElement.getContext('2d')!;
+        this.createChart();
+
         this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
