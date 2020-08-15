@@ -7,11 +7,11 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLObjectLink extends UMLElement {
 
-    public final static String UML_COMMUNICATION_LINK_TYPE = "ObjectLink";
+    public final static String UML_OBJECT_LINK_TYPE = "ObjectLink";
 
-    private UMLObject source;
+    private final UMLObject source;
 
-    private UMLObject target;
+    private final UMLObject target;
 
     public UMLObjectLink(UMLObject source, UMLObject target, String jsonElementID) {
         super(jsonElementID);
@@ -36,6 +36,13 @@ public class UMLObjectLink extends UMLElement {
         similarity += referenceLink.getSource().similarity(source) * sourceWeight;
         similarity += referenceLink.getTarget().similarity(target) * targetWeight;
 
+        double similarityReverse = 0;
+
+        similarityReverse += referenceLink.getSource().similarity(target) * sourceWeight;
+        similarityReverse += referenceLink.getTarget().similarity(source) * targetWeight;
+
+        similarity = Math.max(similarity, similarityReverse);
+
         return ensureSimilarityRange(similarity);
     }
 
@@ -51,7 +58,7 @@ public class UMLObjectLink extends UMLElement {
 
     @Override
     public String getType() {
-        return UML_COMMUNICATION_LINK_TYPE;
+        return UML_OBJECT_LINK_TYPE;
     }
 
     public UMLObject getSource() {
