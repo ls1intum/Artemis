@@ -25,19 +25,19 @@ public class UMLComponentDiagram extends UMLDiagram {
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLComponent component : componentList) {
+        for (UMLComponent component : getComponentList()) {
             if (component.getJSONElementID().equals(jsonElementId)) {
                 return component;
             }
         }
 
-        for (UMLComponentInterface componentInterface : componentInterfaceList) {
+        for (UMLComponentInterface componentInterface : getComponentInterfaceList()) {
             if (componentInterface.getJSONElementID().equals(jsonElementId)) {
                 return componentInterface;
             }
         }
 
-        for (UMLComponentRelationship componentRelationship : componentRelationshipList) {
+        for (UMLComponentRelationship componentRelationship : getComponentRelationshipList()) {
             if (componentRelationship.getJSONElementID().equals(jsonElementId)) {
                 return componentRelationship;
             }
