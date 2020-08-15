@@ -147,11 +147,12 @@
                         ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }} %)
                     </td>
                     <td>{{ exerciseResult.title }}</td>
-                    <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
-                    ({{
-                        roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
-                    }}
-                    %)
+                    <td>
+                        {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
+                            roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
+                        }}
+                        %)
+                    </td>
                     <td>
                         {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
                         {{ toLocaleString(exerciseResult.maxPoints) }}
