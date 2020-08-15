@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.service.compass.controller.JSONParser;
+import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.web.rest.dto.ModelingSubmissionComparisonDTO;
 
@@ -53,8 +53,10 @@ public class ModelingPlagiarismDetectionService {
             if (!modelingSubmission.isEmpty(objectMapper)) {
                 try {
                     log.debug("Build UML diagram from json");
-                    UMLDiagram model = JSONParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
-                    nonEmptyModels.put(model, modelingSubmission);
+                    UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
+                    if (model.getAllModelElements().size() > 0) {
+                        nonEmptyModels.put(model, modelingSubmission);
+                    }
                 }
                 catch (IOException e) {
                     log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
@@ -81,6 +83,8 @@ public class ModelingPlagiarismDetectionService {
                     var submission1 = nonEmptyModels.get(model1);
                     var submission2 = nonEmptyModels.get(model2);
                     modelingSubmissionComparisonResult.submissionId1(submission1.getId());
+                    modelingSubmissionComparisonResult.size1(model1.getAllModelElements().size());
+                    modelingSubmissionComparisonResult.size2(model2.getAllModelElements().size());
                     modelingSubmissionComparisonResult.submissionId2(submission2.getId());
                     modelingSubmissionComparisonResult.similarity(similarity);
                     if (submission1.getResult() != null) {

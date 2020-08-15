@@ -274,9 +274,10 @@
             >
                 {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
             </button>
-            <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations[0])) | safeUrl">{{
-                'artemisApp.exerciseActions.cloneSourceTree' | translate
-            }}</a>
+            <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations[0])) | safeUrl"
+                >{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }}
+            </a>
+            <iframe name="hidden-iframe" style="visibility: hidden; position: absolute;"></iframe>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
         </ng-template>
     </div>
