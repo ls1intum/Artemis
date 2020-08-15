@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLCl
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -89,7 +88,10 @@ class UMLModelParserTest {
     void buildModelFromJSON_objectDiagram_empty() throws Exception {
         JsonObject objectDiagramJson = loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> UMLModelParser.buildModelFromJSON(objectDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(objectDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test

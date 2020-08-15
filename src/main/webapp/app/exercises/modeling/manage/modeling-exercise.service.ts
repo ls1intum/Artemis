@@ -14,6 +14,8 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 export type ModelingSubmissionComparisonDTO = {
     submissionId1: number;
     submissionId2: number;
+    size1: number;
+    size2: number;
     score1: number;
     score2: number;
     similarity: number;
