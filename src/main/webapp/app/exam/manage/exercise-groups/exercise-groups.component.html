@@ -168,8 +168,8 @@
                         </td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="asProgrammingExercise(exercise) as programmingExercise; else emptyProgrammingCells">
-                            <td class="d-flex flex-column">
-                                <div class="d-flex justify-content-between">
+                            <td>
+                                <div>
                                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                         <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                         the links are disabled--->
@@ -195,7 +195,7 @@
                                         [exercise]="programmingExercise"
                                     ></jhi-programming-exercise-instructor-status>
                                 </div>
-                                <div class="d-flex justify-content-between">
+                                <div>
                                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
                                         <a
                                             *ngIf="
