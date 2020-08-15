@@ -86,8 +86,11 @@ export class ExerciseGroupsComponent implements OnInit {
         );
     }
 
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise | null {
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            return exercise as ProgrammingExercise;
+        }
+        return null;
     }
 
     asModelingExercise(exercise: Exercise): ModelingExercise {
