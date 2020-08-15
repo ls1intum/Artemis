@@ -136,7 +136,10 @@
                         {{ exerciseGroupResult.title }}
                     </td>
                     <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }}
+                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }} ({{
+                            roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
+                        }}
+                        %)
                     </td>
                     <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
                         {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
@@ -145,6 +148,10 @@
                     </td>
                     <td>{{ exerciseResult.title }}</td>
                     <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
+                    ({{
+                        roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
+                    }}
+                    %)
                     <td>
                         {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
                         {{ toLocaleString(exerciseResult.maxPoints) }}
