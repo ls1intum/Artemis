@@ -140,7 +140,18 @@ public class ExamService {
     @NotNull
     public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseService
+                            .findWithTemplateAndSolutionParticipationWithResultsById(exercise.getId());
+                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
+                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
+                }
+            }
+        }
+        return exam;
     }
 
     /**
@@ -164,19 +175,8 @@ public class ExamService {
     @NotNull
     public Exam findOneWithRegisteredUsersAndExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with registered users and registered students : {}", examId);
-        Exam exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
+        return examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
-        for (final ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (final Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
-                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseService
-                            .findWithTemplateAndSolutionParticipationWithResultsById(exercise.getId());
-                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
-                }
-            }
-        }
-        return exam;
     }
 
     /**
