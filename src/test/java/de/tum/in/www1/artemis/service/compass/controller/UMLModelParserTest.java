@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLCl
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-class JSONParserTest {
+class UMLModelParserTest {
 
     @BeforeEach
     void setUp() {
@@ -36,7 +35,7 @@ class JSONParserTest {
         JsonObject classDiagramJson = loadFileFromResources("test-data/model-submission/example-class-diagram.json");
         List<UMLElement> expectedElements = createExampleClassDiagramElements();
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(classDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(classDiagramJson, 123456789);
 
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).containsExactlyInAnyOrderElementsOf(expectedElements);
@@ -46,7 +45,7 @@ class JSONParserTest {
     void buildModelFromJSON_classDiagram_empty() throws Exception {
         JsonObject classDiagramJson = loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(classDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(classDiagramJson, 123456789);
 
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).isEmpty();
@@ -58,7 +57,7 @@ class JSONParserTest {
         UMLPackage umlPackage = new UMLPackage("Package", emptyList(), "94d565ec-c92c-422c-b3bd-347974936348");
         UMLClass umlClass = new UMLClass("Class", emptyList(), emptyList(), "ac9c281b-5b2c-4b3d-87c0-db798bd1f513", UMLClassType.CLASS);
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(classDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(classDiagramJson, 123456789);
 
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).containsExactlyInAnyOrder(umlClass, umlPackage);
@@ -69,7 +68,7 @@ class JSONParserTest {
         JsonObject activityDiagramJson = loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
         List<UMLElement> expectedElements = createExampleActivityDiagramElements();
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(activityDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(activityDiagramJson, 123456789);
 
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).containsExactlyInAnyOrderElementsOf(expectedElements);
@@ -79,7 +78,7 @@ class JSONParserTest {
     void buildModelFromJSON_activityDiagram_empty() throws Exception {
         JsonObject activityDiagramJson = loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
 
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(activityDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(activityDiagramJson, 123456789);
 
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).isEmpty();
@@ -89,20 +88,26 @@ class JSONParserTest {
     void buildModelFromJSON_objectDiagram_empty() throws Exception {
         JsonObject objectDiagramJson = loadFileFromResources("test-data/model-submission/empty-object-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(objectDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(objectDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test
     void buildModelFromJSON_useCaseDiagram_empty() throws Exception {
         JsonObject useCaseDiagramJson = loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(useCaseDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(useCaseDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test
     void buildModelFromJSON_communicationDiagram_empty() throws Exception {
         JsonObject communicationDiagramJson = loadFileFromResources("test-data/model-submission/empty-communication-diagram.json");
-        UMLDiagram umlDiagram = JSONParser.buildModelFromJSON(communicationDiagramJson, 123456789);
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(communicationDiagramJson, 123456789);
         assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
         assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
@@ -111,14 +116,20 @@ class JSONParserTest {
     void buildModelFromJSON_deploymentDiagram_empty() throws Exception {
         JsonObject deploymentDiagramJson = loadFileFromResources("test-data/model-submission/empty-deployment-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(deploymentDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(deploymentDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     @Test
     void buildModelFromJSON_componentDiagram_empty() throws Exception {
         JsonObject componentDiagramJson = loadFileFromResources("test-data/model-submission/empty-component-diagram.json");
 
-        assertThrows(IllegalArgumentException.class, () -> JSONParser.buildModelFromJSON(componentDiagramJson, 123456789));
+        UMLDiagram umlDiagram = UMLModelParser.buildModelFromJSON(componentDiagramJson, 123456789);
+
+        assertThat(umlDiagram.getModelSubmissionId()).isEqualTo(123456789);
+        assertThat(umlDiagram.getAllModelElements()).isEmpty();
     }
 
     private JsonObject loadFileFromResources(String path) throws Exception {

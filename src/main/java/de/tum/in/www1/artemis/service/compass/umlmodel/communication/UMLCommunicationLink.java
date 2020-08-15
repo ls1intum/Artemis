@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLCommunicationLink extends UMLElement {
@@ -62,7 +63,7 @@ public class UMLCommunicationLink extends UMLElement {
 
     @Override
     public String toString() {
-        return "CommunicationLink " + getSource().getName() + "->" + getTarget().getName() + " (" + messages + ")";
+        return "CommunicationLink " + getSource().getName() + " -> " + getTarget().getName() + " (" + messages + ")";
     }
 
     @Override

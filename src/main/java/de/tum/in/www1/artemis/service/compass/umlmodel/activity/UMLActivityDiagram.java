@@ -24,19 +24,19 @@ public class UMLActivityDiagram extends UMLDiagram {
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
-        for (UMLActivityNode activityNode : activityNodeList) {
+        for (UMLActivityNode activityNode : getActivityNodeList()) {
             if (activityNode.getJSONElementID().equals(jsonElementId)) {
                 return activityNode;
             }
         }
 
-        for (UMLActivity activity : activityList) {
+        for (UMLActivity activity : getActivityList()) {
             if (activity.getJSONElementID().equals(jsonElementId)) {
                 return activity;
             }
         }
 
-        for (UMLControlFlow controlFlow : controlFlowList) {
+        for (UMLControlFlow controlFlow : getControlFlowList()) {
             if (controlFlow.getJSONElementID().equals(jsonElementId)) {
                 return controlFlow;
             }

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -85,47 +84,6 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     * @param modelingSubmission modelingSubmission the modelingAssessment belongs to
-     * @param modelingAssessment assessment to check for conflicts
-     * @return a list of conflicts modelingAssessment causes with the current manual assessment data
-     */
-    public Map<String, List<Feedback>> getConflictingFeedbacks(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
-        HashMap<String, List<Feedback>> elementConflictingFeedbackMapping = new HashMap<>();
-
-        UMLDiagram model = getModel(modelingSubmission);
-
-        if (model == null) {
-            return elementConflictingFeedbackMapping;
-        }
-
-        modelingAssessment.forEach(currentFeedback -> {
-            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId());
-
-            assessmentIndex.getAssessmentForSimilaritySet(currentElement.getSimilarityID()).ifPresent(assessment -> {
-                List<Feedback> feedbacks = assessment.getFeedbackList();
-                List<Feedback> feedbacksInConflict = feedbacks.stream().filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
-                        .collect(Collectors.toList());
-
-                if (!feedbacksInConflict.isEmpty()) {
-                    elementConflictingFeedbackMapping.put(currentElement.getJSONElementID(), feedbacksInConflict);
-                }
-            });
-        });
-        return elementConflictingFeedbackMapping;
-    }
-
-    private UMLDiagram getModel(ModelingSubmission modelingSubmission) {
-        UMLDiagram model = modelIndex.getModel(modelingSubmission.getId());
-        // TODO properly handle this case and make sure after server restart the modelIndex is reloaded properly
-        if (model == null) {
-            // handle the case that model is null (e.g. after server restart)
-            buildModel(modelingSubmission);
-            model = modelIndex.getModel(modelingSubmission.getId());
-        }
-        return model;
-    }
-
-    /**
      * Creates a JSONObject from the model contained in the given modeling submission. Afterwards, it builds an UMLClassDiagramm from the JSONObject, analyzes the similarity and
      * sets the similarity ID of each model element and adds the model to the model index of the calculation engine. The model index contains all models of the corresponding
      * exercise.
@@ -147,7 +105,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void buildModel(long modelSubmissionId, JsonObject jsonModel) {
         try {
-            UMLDiagram model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
+            UMLDiagram model = UMLModelParser.buildModelFromJSON(jsonModel, modelSubmissionId);
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         }
@@ -319,13 +277,6 @@ public class CompassCalculationEngine implements CalculationEngine {
 
             feedbackList.add(feedback);
         }
-
-        // TODO: in the future we want to store this information as well, but for now we ignore it.
-        // jsonObject.addProperty(JSONMapping.assessmentElementConfidence,
-        // grade.getConfidence());
-        // jsonObject.addProperty(JSONMapping.assessmentElementCoverage,
-        // grade.getCoverage());
-
         return feedbackList;
     }
 
@@ -448,10 +399,6 @@ public class CompassCalculationEngine implements CalculationEngine {
         List<Feedback> feedbackList = optionalAssessment.get().getFeedbackList();
         // if not all feedback entries have the same score as the first feedback, i.e. not all scores are the same, there is a conflict in the assessment
         return !feedbackList.stream().allMatch(feedback -> feedback.getCredits().equals(feedbackList.get(0).getCredits()));
-    }
-
-    private boolean scoresAreConsideredEqual(double score1, double score2) {
-        return Math.abs(score1 - score2) < Constants.COMPASS_SCORE_EQUALITY_THRESHOLD;
     }
 
     @Override

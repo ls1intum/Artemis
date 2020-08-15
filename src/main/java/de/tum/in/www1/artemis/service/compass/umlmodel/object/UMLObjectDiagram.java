@@ -1,22 +1,21 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.communication;
+package de.tum.in.www1.artemis.service.compass.umlmodel.object;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 
-public class UMLCommunicationDiagram extends UMLDiagram {
+public class UMLObjectDiagram extends UMLDiagram {
 
     private final List<UMLObject> objectList;
 
-    private final List<UMLCommunicationLink> communicationLinkList;
+    private final List<UMLObjectLink> objectLinkList;
 
-    public UMLCommunicationDiagram(long modelSubmissionId, List<UMLObject> objectList, List<UMLCommunicationLink> communicationLinkList) {
+    public UMLObjectDiagram(long modelSubmissionId, List<UMLObject> objectList, List<UMLObjectLink> objectLinkList) {
         super(modelSubmissionId);
         this.objectList = objectList;
-        this.communicationLinkList = communicationLinkList;
+        this.objectLinkList = objectLinkList;
     }
 
     @Override
@@ -28,9 +27,9 @@ public class UMLCommunicationDiagram extends UMLDiagram {
             }
         }
 
-        for (UMLCommunicationLink communicationLink : getCommunicationLinkList()) {
-            if (communicationLink.getJSONElementID().equals(jsonElementId)) {
-                return communicationLink;
+        for (UMLObjectLink objectLink : getObjectLinkList()) {
+            if (objectLink.getJSONElementID().equals(jsonElementId)) {
+                return objectLink;
             }
         }
 
@@ -41,15 +40,15 @@ public class UMLCommunicationDiagram extends UMLDiagram {
         return objectList;
     }
 
-    public List<UMLCommunicationLink> getCommunicationLinkList() {
-        return communicationLinkList;
+    public List<UMLObjectLink> getObjectLinkList() {
+        return objectLinkList;
     }
 
     @Override
     protected List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(objectList);
-        modelElements.addAll(communicationLinkList);
+        modelElements.addAll(objectLinkList);
         return modelElements;
     }
 }

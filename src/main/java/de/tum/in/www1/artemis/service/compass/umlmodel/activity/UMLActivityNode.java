@@ -34,6 +34,8 @@ public class UMLActivityNode extends UMLActivityElement {
             return 0;
         }
 
+        // TODO: take the parent element into account
+
         return NameSimilarity.levenshteinSimilarity(name, referenceNode.getName());
     }
 
