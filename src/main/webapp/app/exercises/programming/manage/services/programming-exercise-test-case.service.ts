@@ -92,6 +92,15 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     }
 
     /**
+     * Use with care: Re-evaluate the latest automatic results of all student participations.
+     *
+     * @param exerciseId
+     */
+    public reEvaluate(exerciseId: number): Observable<number> {
+        return this.http.put<number>(`${this.testCaseUrl}/${exerciseId}/re-evaluate`, {});
+    }
+
+    /**
      * Set up the infrastructure for handling and reusing a new test case subscription.
      * @param exerciseId
      * @param initialValue

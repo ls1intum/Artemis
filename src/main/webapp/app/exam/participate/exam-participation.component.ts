@@ -148,8 +148,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     canDeactivate() {
-        // TODO: also handle the case when the student wants to finish the exam early
-        return this.isOver();
+        return this.isOver() || this.studentExam == null || this.handInEarly || !this.examStartConfirmed;
     }
 
     get canDeactivateWarning() {
@@ -159,7 +158,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any): void {
-        if (!this.isOver()) {
+        if (!this.canDeactivate()) {
             $event.returnValue = this.canDeactivateWarning;
         }
     }

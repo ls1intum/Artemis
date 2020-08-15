@@ -43,7 +43,7 @@ In this case the reviewer or PR maintainer needs to make sure to create an issue
 
 ## Development Workflow
 
-Find here [a guide](doc/setup/SETUP.md) on how to setup your local development environment.
+Find here [a guide](docs/dev/setup.rst) on how to setup your local development environment.
 
 ## Route Naming Conventions
 

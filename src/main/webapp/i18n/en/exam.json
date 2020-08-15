@@ -58,9 +58,9 @@
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Points achievable",
+            "maxPoints": "Maximum Points",
             "title": "Exam Scores",
-            "exerciseStatisticsTitle": "Exercise Statistics",
+            "examStatisticsTitle": "Exam Statistics",
             "studentResultsTitle": "Student Results",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
@@ -77,9 +77,15 @@
             "overallPointsColumn": "Overall Points",
             "overallScoreColumn": "Overall Score (%)",
             "exportCSV": "Export Results as CSV",
-            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students",
             "filterForSubmittedExams": "Include only submitted exams",
-            "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission"
+            "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standard Deviation",
+            "noOfExams": "Exams",
+            "registered": "Registered Students",
+            "noExerciseGroups": "Exercise Groups",
+            "submittedColumn": "Submitted",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Time left: ",

@@ -12,8 +12,8 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -23,32 +23,32 @@ class UMLClassTest {
 
     private UMLClass umlClass;
 
-    @Mock
-    UMLClass referenceClass;
+    @Spy
+    private UMLClass referenceClass;
 
-    @Mock
-    UMLAttribute attribute1;
+    @Spy
+    private UMLAttribute attribute1;
 
-    @Mock
-    UMLAttribute attribute2;
+    @Spy
+    private UMLAttribute attribute2;
 
-    @Mock
-    UMLAttribute attribute3;
+    @Spy
+    private UMLAttribute attribute3;
 
-    @Mock
-    UMLAttribute attribute4;
+    @Spy
+    private UMLAttribute attribute4;
 
-    @Mock
-    UMLMethod method1;
+    @Spy
+    private UMLMethod method1;
 
-    @Mock
-    UMLMethod method2;
+    @Spy
+    private UMLMethod method2;
 
-    @Mock
-    UMLMethod method3;
+    @Spy
+    private UMLMethod method3;
 
-    @Mock
-    UMLMethod method4;
+    @Spy
+    private UMLMethod method4;
 
     @BeforeEach
     void setUp() throws NoSuchFieldException {
@@ -59,32 +59,33 @@ class UMLClassTest {
         FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("type"), CLASS);
         FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("attributes"), List.of(attribute3, attribute4));
         FieldSetter.setField(referenceClass, UMLClass.class.getDeclaredField("methods"), List.of(method3, method4));
-        when(referenceClass.getName()).thenReturn("myClass");
-        when(referenceClass.getElementCount()).thenReturn(5);
 
-        when(attribute1.similarity(attribute3)).thenReturn(1.0);
-        when(attribute3.similarity(attribute1)).thenReturn(1.0);
-        when(attribute1.similarity(attribute4)).thenReturn(0.22);
-        when(attribute4.similarity(attribute1)).thenReturn(0.22);
-        when(attribute2.similarity(attribute3)).thenReturn(0.66);
-        when(attribute3.similarity(attribute2)).thenReturn(0.66);
-        when(attribute2.similarity(attribute4)).thenReturn(1.0);
-        when(attribute4.similarity(attribute2)).thenReturn(1.0);
+        doReturn("myClass").when(referenceClass).getName();
+        doReturn(5).when(referenceClass).getElementCount();
 
-        when(attribute1.getJSONElementID()).thenReturn("otherId");
-        when(attribute2.getJSONElementID()).thenReturn("attributeId");
+        doReturn(1.0).when(attribute1).similarity(attribute3);
+        doReturn(1.0).when(attribute3).similarity(attribute1);
+        doReturn(0.22).when(attribute1).similarity(attribute4);
+        doReturn(0.22).when(attribute4).similarity(attribute1);
+        doReturn(0.66).when(attribute2).similarity(attribute3);
+        doReturn(0.66).when(attribute3).similarity(attribute2);
+        doReturn(1.0).when(attribute2).similarity(attribute4);
+        doReturn(1.0).when(attribute4).similarity(attribute2);
 
-        when(method1.similarity(method3)).thenReturn(1.0);
-        when(method3.similarity(method1)).thenReturn(1.0);
-        when(method1.similarity(method4)).thenReturn(0.44);
-        when(method4.similarity(method1)).thenReturn(0.44);
-        when(method2.similarity(method3)).thenReturn(0.11);
-        when(method3.similarity(method2)).thenReturn(0.11);
-        when(method2.similarity(method4)).thenReturn(1.0);
-        when(method4.similarity(method2)).thenReturn(1.0);
+        doReturn("otherId").when(attribute1).getJSONElementID();
+        doReturn("attributeId").when(attribute2).getJSONElementID();
 
-        when(method1.getJSONElementID()).thenReturn("methodId");
-        when(method2.getJSONElementID()).thenReturn("otherId");
+        doReturn(1.0).when(method1).similarity(method3);
+        doReturn(1.0).when(method3).similarity(method1);
+        doReturn(0.44).when(method1).similarity(method4);
+        doReturn(0.44).when(method4).similarity(method1);
+        doReturn(0.11).when(method2).similarity(method3);
+        doReturn(0.11).when(method3).similarity(method2);
+        doReturn(1.0).when(method2).similarity(method4);
+        doReturn(1.0).when(method4).similarity(method2);
+
+        doReturn("methodId").when(method1).getJSONElementID();
+        doReturn("otherId").when(method2).getJSONElementID();
     }
 
     @Test

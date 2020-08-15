@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,19 +24,19 @@ public class UMLActivityDiagram extends UMLDiagram {
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
-        for (UMLActivityNode activityNode : activityNodeList) {
+        for (UMLActivityNode activityNode : getActivityNodeList()) {
             if (activityNode.getJSONElementID().equals(jsonElementId)) {
                 return activityNode;
             }
         }
 
-        for (UMLActivity activity : activityList) {
+        for (UMLActivity activity : getActivityList()) {
             if (activity.getJSONElementID().equals(jsonElementId)) {
                 return activity;
             }
         }
 
-        for (UMLControlFlow controlFlow : controlFlowList) {
+        for (UMLControlFlow controlFlow : getControlFlowList()) {
             if (controlFlow.getJSONElementID().equals(jsonElementId)) {
                 return controlFlow;
             }
@@ -51,7 +51,6 @@ public class UMLActivityDiagram extends UMLDiagram {
         modelElements.addAll(activityNodeList);
         modelElements.addAll(activityList);
         modelElements.addAll(controlFlowList);
-
         return modelElements;
     }
 

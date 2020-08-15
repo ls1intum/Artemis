@@ -180,7 +180,11 @@
             },
             "intellij": {
                 "openEditor": "Open Editor"
-            }
+            },
+            "reEvaluate": "Re-evaluate all",
+            "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
+            "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
+            "reEvaluateFailed": "The re-evaulation failed: {{message}}"
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."
