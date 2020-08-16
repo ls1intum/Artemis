@@ -141,7 +141,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     yAxes: [
                         {
                             ticks: {
+                                stepSize: 1,
                                 beginAtZero: true,
+                                max: this.noOfExamsFiltered,
+                                min: 0,
                             },
                         },
                     ],
@@ -209,11 +212,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
+        this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         if (this.chart) {
+            this.chart.options.scales!.yAxes![0].ticks!.max = this.noOfExamsFiltered;
             this.chart.update();
         }
-
-        this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
