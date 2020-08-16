@@ -1,4 +1,4 @@
-import { AfterViewInit, ElementRef, ViewChild, Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { ElementRef, ViewChild, Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -37,7 +37,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
     public binWidth = 5;
-    public histogramData: number[];
+    public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
     public predicate = 'id';
@@ -47,8 +47,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public filterForNonEmptySubmissions = false;
 
     @ViewChild('histogram', { static: false })
-    histogram: ElementRef<HTMLCanvasElement>;
+    private canvas: ElementRef<HTMLCanvasElement>;
     private ctx: CanvasRenderingContext2D;
+    private chart: Chart;
 
     private languageChangeSubscription: Subscription | null;
 
@@ -79,6 +80,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     }
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
+                    this.createChart();
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
@@ -109,6 +111,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
+        this.ctx = this.canvas.nativeElement.getContext('2d')!;
         const labels = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
@@ -119,7 +122,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         }
 
-        new Chart(this.ctx, {
+        this.chart = new Chart(this.ctx, {
             type: 'bar',
             data: {
                 labels,
@@ -128,6 +131,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         label: '# of students',
                         data: this.histogramData,
                         borderWidth: 1,
+                        barPercentage: 1,
                     },
                 ],
             },
@@ -152,8 +156,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
-        // Create data structure for histogram
-        this.histogramData = Array(100 / this.binWidth).fill(0);
+        this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
@@ -206,9 +209,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-
-        this.ctx = this.histogram.nativeElement.getContext('2d')!;
-        this.createChart();
+        if (this.chart) {
+            this.chart.update();
+        }
 
         this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         // Calculate exercise group and exercise statistics
