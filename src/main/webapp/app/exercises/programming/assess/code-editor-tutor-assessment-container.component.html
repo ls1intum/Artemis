@@ -13,110 +13,119 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
-        <jhi-programming-assessment-repo-export
-            [exerciseId]="exercise.id"
-            [singleParticipantMode]="true"
-            [participationIdList]="participation?.id"
-        ></jhi-programming-assessment-repo-export>
-        <a
-            class="ml-2"
-            href="{{ participation.repositoryUrl }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
+<jhi-assessment-layout
+    (navigateBack)="navigateBack()"
+    [isLoading]="isLoading"
+    [saveBusy]="saveBusy"
+    [submitBusy]="submitBusy"
+    [cancelBusy]="cancelBusy"
+    [nextSubmissionBusy]="nextSubmissionBusy"
+    [isTeamMode]="exercise?.teamMode"
+    [isAssessor]="isAssessor"
+    [isAtLeastInstructor]="isAtLeastInstructor"
+    [canOverride]="canOverride"
+    [result]="result"
+    [assessmentsAreValid]="assessmentsAreValid"
+    [complaint]="complaint"
+    (save)="save()"
+    (submit)="submit()"
+    (cancel)="cancel()"
+    (nextSubmission)="nextSubmission()"
+    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+>
+
+    <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
+        <div class="d-flex align-items-center ml-auto" editorNavbar>
+            <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
+            <jhi-programming-assessment-repo-export
+                [exerciseId]="exercise.id"
+                [singleParticipantMode]="true"
+                [participationIdList]="participation?.id"
+            ></jhi-programming-assessment-repo-export>
+            <a
+                class="ml-2"
+                href="{{ participation.repositoryUrl }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
             >Go to repository</a
-        >
-        <jhi-updating-result
-            *ngIf="participation"
-            [exercise]="exercise"
-            [showUngradedResults]="true"
-            [showGradedBadge]="true"
-            [participation]="participationForAssessment"
-            [short]="true"
-            class="mr-2"
-        ></jhi-updating-result>
-        <jhi-updating-result
-            *ngIf="participation"
-            [exercise]="exercise"
-            [showUngradedResults]="true"
-            [showGradedBadge]="true"
-            [participation]="participation"
-            [short]="true"
-            class="mr-2"
-        ></jhi-updating-result>
-        <jhi-programming-exercise-student-trigger-build-button
-            class="mr-2"
-            [exercise]="exercise"
-            [participation]="participation"
-            [btnSize]="ButtonSize.MEDIUM"
-        ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
-        <!--<jhi-code-editor-tutor-actions></jhi-code-editor-tutor-actions> -->
-        <jhi-code-editor-tutor-actions
+            >
+            <jhi-updating-result
+                *ngIf="participation"
+                [exercise]="exercise"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [participation]="participationForAssessment"
+                [short]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+            <jhi-updating-result
+                *ngIf="participation"
+                [exercise]="exercise"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [participation]="participation"
+                [short]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
+            <!--<jhi-code-editor-tutor-actions></jhi-code-editor-tutor-actions> -->
+            <!-- <jhi-code-editor-tutor-actions
+                [disableActions]="repositoryIsLocked"
+                [unsavedFiles]="unsavedFiles"
+                [(editorState)]="editorState"
+                [(commitState)]="commitState"
+                [result]="participation.results[participation.results.length - 1]"
+                [participation]="participation"
+                (assessmentActionStateChange)="setActionState($event)"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onError)="onError($event)"
+            ></jhi-code-editor-tutor-actions> -->
+            <!--<jhi-code-editor-actions
+                [disableActions]="repositoryIsLocked"
+                [unsavedFiles]="unsavedFiles"
+                [(editorState)]="editorState"
+                [(commitState)]="commitState"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onError)="onError($event)"
+            ></jhi-code-editor-actions> -->
+        </div>
+        <jhi-code-editor-file-browser
+            editorSidebarLeft
             [disableActions]="repositoryIsLocked"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
+            [exerciseTitle]="exercise?.title"
+            [unsavedFiles]="unsavedFiles | keys"
+            [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+            [editorState]="editorState"
+            [(selectedFile)]="selectedFile"
             [(commitState)]="commitState"
-            [result]="participation.results[participation.results.length - 1]"
+            (onFileChange)="onFileChange($event)"
+            (onError)="onError($event)"
+            (onToggleCollapse)="onToggleCollapse($event)"
+        ></jhi-code-editor-file-browser>
+        <jhi-code-editor-ace
+            editorCenter
+            [selectedFile]="selectedFile"
+            [fileChange]="fileChange"
+            [commitState]="commitState"
+            [(buildLogErrors)]="buildLogErrors"
+            [isTutorAssessment]="true"
+            (onFileContentChange)="onFileContentChange($event)"
+            (onError)="onError($event)"
+        ></jhi-code-editor-ace>
+        <jhi-code-editor-instructions
+            editorSidebarRight
             [participation]="participation"
-            (assessmentActionStateChange)="setActionState($event)"
-            (onSavedFiles)="onSavedFiles($event)"
+            [exercise]="exercise"
+            (onToggleCollapse)="onToggleCollapse($event)"
             (onError)="onError($event)"
-        ></jhi-code-editor-tutor-actions>
-        <!--<jhi-code-editor-actions
-            [disableActions]="repositoryIsLocked"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-actions> -->
-    </div>
-    <jhi-code-editor-file-browser
-        editorSidebarLeft
-        [disableActions]="repositoryIsLocked"
-        [exerciseTitle]="exercise?.title"
-        [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-        [editorState]="editorState"
-        [(selectedFile)]="selectedFile"
-        [(commitState)]="commitState"
-        (onFileChange)="onFileChange($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
-        [commitState]="commitState"
-        [(buildLogErrors)]="buildLogErrors"
-        [isTutorAssessment]="true"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        editorSidebarRight
-        [participation]="participation"
-        [exercise]="exercise"
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-instructions>
-    <jhi-programming-assessment-manual-result-in-code-editor
-        editorBottom
-        [participationId]="participation.id"
-        [result]="checkIfManualResultExist()"
-        [exercise]="exercise"
-        [assessmentActionState]="assessmentActionState"
-    ></jhi-programming-assessment-manual-result-in-code-editor>
-    <jhi-code-editor-build-output
-        editorBottomArea
-        [participation]="participation"
-        [(buildLogErrors)]="buildLogErrors"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-build-output>
-</jhi-code-editor-grid>
+        ></jhi-code-editor-instructions>
+        <jhi-programming-assessment-manual-result-in-code-editor
+            editorBottom
+            [participationId]="participation.id"
+            [result]="checkIfManualResultExist()"
+            [exercise]="exercise"
+            (onResultModified)="test($event)"
+        ></jhi-programming-assessment-manual-result-in-code-editor>
+    </jhi-code-editor-grid>
+</jhi-assessment-layout>

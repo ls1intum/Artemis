@@ -21,21 +21,26 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { CodeEditorContainer } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AssessmentActionState, AssessmentSubmitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { AssessmentActionState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { orderBy as _orderBy, cloneDeep as _cloneDeep } from 'lodash';
+import { Complaint } from 'app/entities/complaint.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { HttpResponse } from '@angular/common/http';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { JhiEventManager } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
 })
-export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
@@ -56,8 +61,20 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     participationCouldNotBeFetched = false;
     repositoryIsLocked = false;
     assessmentActionState: AssessmentActionState;
-
+    // for assessment-layout:
+    isLoading = false;
+    saveBusy = false;
+    submitBusy = false;
+    cancelBusy = false;
+    nextSubmissionBusy = false;
+    isAssessor = true;
+    isAtLeastInstructor = false;
+    result: Result;
+    assessmentsAreValid = true;
+    complaint: Complaint;
     constructor(
+        private manualResultService: ProgrammingAssessmentManualResultService,
+        private eventManager: JhiEventManager,
         private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -77,7 +94,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route!.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
@@ -110,7 +127,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     }
 
     findManualResults(results: Result[]): Result[] {
-        const manualResult = results.filter((manualResult) => manualResult.assessmentType === AssessmentType.MANUAL);
+        const manualResult = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
         return manualResult ? _orderBy(manualResult, 'completionDate', 'desc') : [];
     }
 
@@ -160,5 +177,174 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     setActionState(changedAssessmentActionState: AssessmentActionState) {
         console.log('Step2');
         this.assessmentActionState = changedAssessmentActionState;
+    }
+
+    /**
+     * Save the assessment
+     */
+    /**
+     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
+     * Sets isSaving to true
+     * Creates or updates this result in the manual result service
+     */
+    save(): void {
+        /*
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
+
+        this.saveBusy = true;
+        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
+            (error: HttpErrorResponse) => this.handleError(error),
+        );*/
+    }
+
+    /**
+     * Submit the assessment
+     */
+    submit(): void {
+        /*if (!this.result?.id) {
+            return; // We need to have saved the result before
+        }
+
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        // track feedback in athene
+        this.assessmentsService.trackAssessment(this.submission);
+
+        this.submitBusy = true;
+        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+            (error: HttpErrorResponse) => this.handleError(error),
+        );*/
+        this.submitBusy = true;
+        if (this.result.id != null) {
+            this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
+        } else {
+            // in case id is null or undefined
+            this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
+        }
+    }
+
+    /**
+     * Cancel the assessment
+     */
+    cancel(): void {
+        /*const confirmCancel = window.confirm(this.cancelConfirmationText);
+        this.cancelBusy = true;
+        if (confirmCancel && this.exercise && this.submission) {
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
+        }*/
+    }
+
+    /**
+     * Go to next submission
+     */
+    async nextSubmission(): Promise<void> {
+        /*this.nextSubmissionBusy = true;
+        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);*/
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    updateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        complaintResponse.id = 1;
+        /*this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+            },
+        );*/
+    }
+    navigateBack() {
+        /*if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
+            const teamId = (this.submission.participation as StudentParticipation).team.id;
+            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
+            this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }*/
+    }
+
+    /**
+     * Boolean which determines whether the user can override a result.
+     * If no exercise is loaded, for example during loading between exercises, we return false.
+     * Instructors can always override a result.
+     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
+     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     */
+    get canOverride(): boolean {
+        if (this.exercise) {
+            if (this.isAtLeastInstructor) {
+                // Instructors can override any assessment at any time.
+                return true;
+            }
+            if (this.complaint && this.isAssessor) {
+                // If there is a complaint, the original assessor cannot override the result anymore.
+                return false;
+            }
+            let isBeforeAssessmentDueDate = true;
+            // Add check as the assessmentDueDate must not be set for exercises
+            if (this.exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+            }
+            // tutors are allowed to override one of their assessments before the assessment due date.
+            return this.isAssessor && isBeforeAssessmentDueDate;
+        }
+        return false;
+    }
+
+    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+        this.participation!.results[0] = this.result = response.body!;
+        this.jhiAlertService.success(translationKey);
+        this.saveBusy = this.submitBusy = false;
+    }
+    test(result: Result) {
+        console.log('output event from child, result: ');
+        console.log(result);
+        this.result = result;
+    }
+
+    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
+        result.subscribe(
+            () => this.onSaveSuccess(),
+            () => this.onSaveError(),
+        );
+    }
+
+    /**
+     * Sets iSaving to false and broadcasts the corresponding message on a successful save
+     */
+    onSaveSuccess() {
+        this.saveBusy = false;
+        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
+    }
+
+    /**
+     * Only sets isSaving to false
+     */
+    onSaveError() {
+        this.saveBusy = false;
     }
 }

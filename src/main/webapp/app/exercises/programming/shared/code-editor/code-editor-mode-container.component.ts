@@ -39,7 +39,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
         protected participationService: ParticipationService | null,
         private translateService: TranslateService,
         protected route: ActivatedRoute | null,
-        private jhiAlertService: AlertService,
+        protected jhiAlertService: AlertService,
         protected sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
     ) {
