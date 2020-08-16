@@ -6,7 +6,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -19,7 +19,6 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/alert/alert.service';
-// import { AssessmentActionState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
@@ -34,8 +33,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     @Input() participationId: number;
     @Input() result: Result;
     @Input() exercise: ProgrammingExercise;
-    // check if really needed
-    // @Input() assessmentActionState: AssessmentActionState;
     @Output() onResultModified = new EventEmitter<Result>();
 
     participation: ProgrammingExerciseStudentParticipation;
@@ -80,14 +77,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
             this.checkPermissions();
         });
     }
-    /* Check if really needed
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.assessmentActionState.currentValue === AssessmentActionState.TO_SUBMIT) {
-            console.log('Step3');
-            this.save();
-        }
-    }
-    */
     /**
      * If the result has feedbacks, override the feedbacks of this instance with them.
      * Else get them from the result service and override the feedbacks of the instance.
@@ -111,7 +100,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
+        this.getParticipation();
     }
 
     /**
@@ -122,7 +111,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
         this.result.assessor = this.user;
-        // TODO: is this call really necessary?
         this.getParticipation();
     }
 
@@ -171,62 +159,19 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     }
 
     /**
-     * Emits the result if it was modified
+     * Emits the result if it was modified; TODO: Can be removed? doube check!
      */
     clear() {
         if (this.resultModified) {
             this.onResultModified.emit(this.result);
         }
     }
-
-    /**
-     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
-     * Sets isSaving to true
-     * Creates or updates this result in the manual result service
-     */
-    save() {
-        console.log('Step4');
-        this.result.feedbacks = this.feedbacks;
-        console.log(this.feedbacks);
-        this.isSaving = true;
-        for (let i = 0; i < this.result.feedbacks.length; i++) {
-            this.result.feedbacks[i].type = FeedbackType.MANUAL;
-        }
-        if (this.result.id != null) {
-            this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
-        } else {
-            // in case id is null or undefined
-            this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
-        }
-    }
-
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            () => this.onSaveError(),
-        );
-    }
-
-    /**
-     * Sets iSaving to false and broadcasts the corresponding message on a successful save
-     */
-    onSaveSuccess() {
-        this.isSaving = false;
-        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
-    }
-
-    /**
-     * Only sets isSaving to false
-     */
-    onSaveError() {
-        this.isSaving = false;
-    }
-
     /**
      * Pushes a new feedback to the feedbacks
      */
     pushFeedback() {
         this.feedbacks.push(new Feedback());
+        this.addFeedbackToResult();
     }
 
     /**
@@ -236,8 +181,9 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
         }
+        this.addFeedbackToResult();
     }
-
+    // TODO: Check should be handle by assessment-layout component
     private getComplaint(id: number): void {
         this.complaintService
             .findByResultId(id)
@@ -300,5 +246,21 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
         // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
         return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
+    }
+
+    updateResult() {
+        if (this.result.score === 100) {
+            this.result.successful = true;
+        } else {
+            this.result.successful = false;
+        }
+        this.onResultModified.emit(this.result);
+    }
+    addFeedbackToResult() {
+        this.result.feedbacks = this.feedbacks;
+        for (let i = 0; i < this.result.feedbacks.length; i++) {
+            this.result.feedbacks[i].type = FeedbackType.MANUAL;
+        }
+        this.onResultModified.emit(this.result);
     }
 }

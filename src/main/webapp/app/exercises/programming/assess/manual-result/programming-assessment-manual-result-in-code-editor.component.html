@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
+<form name="editForm" role="form" novalidate #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
     <div *ngIf="result" class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
@@ -23,6 +23,7 @@
                     name="resultString"
                     id="resultString"
                     [(ngModel)]="result.resultString"
+                    (ngModelChange)="onResultModified.emit(result)"
                     #resultString="ngModel"
                 />
                 <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired"
@@ -42,7 +43,7 @@
                     id="field_score"
                     [readOnly]="readOnly()"
                     [(ngModel)]="result.score"
-                    (ngModelChange)="result.score === 100 ? (result.successful = true) : (result.successful = false)"
+                    (ngModelChange)="updateResult()"
                     #score="ngModel"
                 />
                 <span class="text-danger" *ngIf="score.dirty && score.invalid" jhiTranslate="artemisApp.result.invalidScore">Score is required and should be a number.</span>
@@ -62,7 +63,9 @@
             <div *ngFor="let feedback of feedbacks; let i = index">
                 <div class="form-group">
                     <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"> Feedback #{{ i + 1 }} Text </label>
-                    <input type="text" class="form-control" name="feedbackText{{ i }}" [readOnly]="readOnly()" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
+                    <input type="text" class="form-control" name="feedbackText{{ i }}" [readOnly]="readOnly()" required [(ngModel)]="feedback.text"
+                           (ngModelChange)="addFeedbackToResult()"
+                           #feedbackText="ngModel" />
                     <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired"
                         >Feedback text is required.</span
                     >
@@ -79,11 +82,12 @@
                             name="feedbackErrorText{{ i }}"
                             [readOnly]="readOnly()"
                             [(ngModel)]="feedback.detailText"
+                            (ngModelChange)="addFeedbackToResult()"
                         ></textarea>
                     </div>
                     <div class="checkbox col-md-6">
                         <label class="artemis-label">
-                            <input type="checkbox" name="positive{{ i }}" [disabled]="readOnly()" [(ngModel)]="feedback.positive" />&nbsp;<span
+                            <input type="checkbox" name="positive{{ i }}" [disabled]="readOnly()" [(ngModel)]="feedback.positive" (ngModelChange)="addFeedbackToResult()"/>&nbsp;<span
                                 jhiTranslate="artemisApp.result.positive"
                                 >Positive</span
                             >
