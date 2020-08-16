@@ -94,22 +94,11 @@
             </tbody>
         </table>
 
-        <!-- Histogram -->
-        <canvas #histogram></canvas>
+        <div style="height: 500px;">
+            <!-- Histogram -->
+            <canvas #histogram></canvas>
+        </div>
 
-        <!-- Histogram Table -->
-        <table class="table table-bordered table-sm mb-3">
-            <thead class="thead-dark">
-                <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }} ,{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
-            </thead>
-            <tbody>
-                <td *ngFor="let noOfStudents of histogramData">
-                    {{ noOfStudents }}
-                    ({{ noOfExamsFiltered ? roundAndPerformLocalConversion((noOfStudents * 100) / noOfExamsFiltered, 2, 2) : '-' }}
-                    %)
-                </td>
-            </tbody>
-        </table>
         <!-- Exercise Statistics Table -->
         <table class="table table-bordered table-sm body-striped">
             <thead class="thead-dark">

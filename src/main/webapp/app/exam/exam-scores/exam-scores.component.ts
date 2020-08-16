@@ -20,6 +20,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
 import * as Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { LinearTickOptions } from 'chart.js';
 
 @Component({
@@ -123,21 +124,34 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         }
 
+        const component = this;
+
         this.chart = new Chart(this.ctx, {
             type: 'bar',
+            plugins: [ChartDataLabels],
             data: {
                 labels,
                 datasets: [
                     {
                         label: '# of students',
                         data: this.histogramData,
-                        borderWidth: 1,
-                        barPercentage: 1,
-                        categoryPercentage: 1,
                     },
                 ],
             },
             options: {
+                maintainAspectRatio: false,
+                legend: {
+                    align: 'start',
+                },
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter(value) {
+                            return `${value}\n(${component.roundAndPerformLocalConversion((value * 100) / component.noOfExamsFiltered, 2, 2)}%)`;
+                        },
+                    },
+                },
                 scales: {
                     yAxes: [
                         {
@@ -145,7 +159,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                                 maxTicksLimit: 11,
                                 beginAtZero: true,
                                 precision: 0,
-                                max: this.noOfExamsFiltered,
                                 min: 0,
                             } as LinearTickOptions,
                         },
@@ -224,7 +237,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private updateChart() {
-        this.chart.options.scales!.yAxes![0].ticks!.max = this.noOfExamsFiltered;
         this.chart.update();
     }
 
