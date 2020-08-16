@@ -133,6 +133,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         data: this.histogramData,
                         borderWidth: 1,
                         barPercentage: 1,
+                        categoryPercentage: 1,
                     },
                 ],
             },
