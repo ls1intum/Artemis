@@ -95,10 +95,10 @@
         </table>
 
         <!-- Histogram -->
-        <canvas #histogram width="1500" height="800"></canvas>
+        <canvas #histogram></canvas>
 
         <!-- Histogram Table -->
-        <table class="table table-bordered table-sm table-clear-width mb-3">
+        <table class="table table-bordered table-sm mb-3">
             <thead class="thead-dark">
                 <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }} ,{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
             </thead>

@@ -20,6 +20,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
 import * as Chart from 'chart.js';
+import { LinearTickOptions } from 'chart.js';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -136,16 +137,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 ],
             },
             options: {
-                responsive: false,
                 scales: {
                     yAxes: [
                         {
                             ticks: {
-                                stepSize: 1,
+                                maxTicksLimit: 11,
                                 beginAtZero: true,
+                                precision: 0,
                                 max: this.noOfExamsFiltered,
                                 min: 0,
-                            },
+                            } as LinearTickOptions,
                         },
                     ],
                 },
@@ -214,13 +215,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
         this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
         if (this.chart) {
-            this.chart.options.scales!.yAxes![0].ticks!.max = this.noOfExamsFiltered;
-            this.chart.update();
+            this.updateChart();
         }
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
     }
+
+    private updateChart() {
+        this.chart.options.scales!.yAxes![0].ticks!.max = this.noOfExamsFiltered;
+        this.chart.update();
+    }
+
+    private calculateTickSize() {}
 
     /**
      * Calculates statistics on exam granularity for submitted exams and for all exams.
