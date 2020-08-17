@@ -125,19 +125,22 @@ public class AutomaticTextFeedbackService {
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
                 TextTreeNode x = siblings.remove(0);
+                x.setLambda_val(sumLambdaValues(x.getLambda_val(), 1 / currentDist));
                 // If already above lambda threshold or a block node remove x directly
-                if(sumLambdaValuesToDistance(x.getLambda_val(), 1 / currentDist) > LAMBDA_THRESHOLD) {
+                if(x.getLambda_val() > LAMBDA_THRESHOLD) {
                     continue;
                 }
                 if(!x.isBlockNode()) {
                     Optional<TextCluster> clusterOptional = clusterRepository.findByTreeIdAndExercise(x.getChild(), exercise);
                     if(clusterOptional.isPresent()) {
                         TextCluster currentCluster = clusterOptional.get();
-                        final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
-                        return getFeedbackInCluster(cluster, block, feedbackForTextExerciseInCluster);
+                        final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(currentCluster);
+                        if(!feedbackForTextExerciseInCluster.isEmpty()) {
+                            return getFeedbackInCluster(currentCluster, block, feedbackForTextExerciseInCluster);
+                        }
                     }
                     for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
-                        y.setLambda_val(1 / sumLambdaValuesToDistance(y.getLambda_val(), x.getLambda_val()));
+                        y.setLambda_val(sumLambdaValues(y.getLambda_val(), x.getLambda_val()));
                         siblings.add(y);
                     }
                     siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
@@ -147,8 +150,8 @@ public class AutomaticTextFeedbackService {
             if(parentId == -1) {
                 return Optional.empty();
             }
-            currentNode = clusterTree[(int) parentId];
             currentDist = sumLambdaValuesToDistance(1 / currentDist, currentNode.getLambda_val());
+            currentNode = clusterTree[(int) parentId];
         }
         return Optional.empty();
     }
@@ -230,6 +233,16 @@ public class AutomaticTextFeedbackService {
      */
     private double sumLambdaValuesToDistance(double l1, double l2) {
         return 1 / l1 + 1 / l2;
+    }
+
+    /**
+     * Computes the sum of two lambda values (lambdaVal = 1 / distance)
+     * @param l1 - first lambdaVal
+     * @param l2 - second lambdaVal
+     * @return inverted sum of inverted lambda values
+     */
+    private double sumLambdaValues(double l1, double l2) {
+        return 1 / (1 / l1 + 1 / l2);
     }
 
 }
