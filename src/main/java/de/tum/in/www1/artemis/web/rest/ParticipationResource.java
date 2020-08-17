@@ -130,9 +130,8 @@ public class ParticipationResource {
             }
         }
 
-        // only instructors are allowed to start an exam exercise using this resource e.g. to create the assignment repository
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-        if (exercise.hasExerciseGroup() && !isAtLeastInstructor) {
+        // only instructors should be allowed to start an exam exercise using this resource e.g. to create the assignment repository
+        if (exercise.hasExerciseGroup() && !authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -152,7 +151,7 @@ public class ParticipationResource {
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, participant, true, isAtLeastInstructor);
+        StudentParticipation participation = participationService.startExercise(exercise, participant, true);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);

@@ -177,10 +177,9 @@ public class ParticipationService {
      * @param exercise the exercise which is started
      * @param participant the user or team who starts the exercise
      * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
-     * @param isInstructorParticipation indicates that the participation will be created for the instructor of the course e.g. when creating the assignment repository
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission, boolean isInstructorParticipation) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
@@ -208,7 +207,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation, isInstructorParticipation);
+            programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
@@ -282,7 +281,7 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
             programmingParticipation = copyRepository(programmingParticipation);
-            programmingParticipation = configureRepository(programmingExercise, programmingParticipation, false);
+            programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
@@ -493,11 +492,12 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
-            boolean forceAllowAccess) {
+    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // Do not allow the student to access the repository if this is an exam exercise that has not started yet.
-            boolean allowAccess = forceAllowAccess || !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise, participation));
+            // Allow instructors to access their assignment repository
+            boolean allowAccess = authCheckService.isAtLeastInstructorForExercise(exercise) || !isExamExercise(exercise)
+                    || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise, participation));
             versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);

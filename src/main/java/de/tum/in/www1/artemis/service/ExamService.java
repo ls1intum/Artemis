@@ -651,7 +651,7 @@ public class ExamService {
                             ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                         }
                         // this will create initial (empty) submissions for quiz, text, modeling and file upload
-                        var participation = participationService.startExercise(exercise, student, true, false);
+                        var participation = participationService.startExercise(exercise, student, true);
                         generatedParticipations.add(participation);
                     }
                     catch (Exception ex) {
