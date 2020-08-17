@@ -136,17 +136,27 @@
                         {{ exerciseGroupResult.title }}
                     </td>
                     <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }}
+                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }} ({{
+                            roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
+                        }}
+                        %)
                     </td>
                     <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
                         {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
                         {{ toLocaleString(exerciseGroupResult.maxPoints) }}
+                        ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }} %)
                     </td>
                     <td>{{ exerciseResult.title }}</td>
-                    <td>{{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }}</td>
+                    <td>
+                        {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
+                            roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
+                        }}
+                        %)
+                    </td>
                     <td>
                         {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
                         {{ toLocaleString(exerciseResult.maxPoints) }}
+                        ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }} %)
                     </td>
                 </tr>
             </tbody>

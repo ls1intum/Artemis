@@ -27,7 +27,7 @@ public class UMLMessage {
     }
 
     public double similarity(UMLMessage otherMessage) {
-        double similarity = 0.9 * NameSimilarity.levenshteinSimilarity(name, otherMessage.name);
+        double similarity = 0.9 * NameSimilarity.levenshteinSimilarity(getName(), otherMessage.getName());
         return similarity + (direction.equals(otherMessage.direction) ? 0.1 : 0.0);
     }
 }
