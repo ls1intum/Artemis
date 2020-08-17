@@ -77,6 +77,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     result: Result;
     assessmentsAreValid = true;
     complaint: Complaint;
+    private cancelConfirmationText: string;
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private eventManager: JhiEventManager,
@@ -96,6 +97,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
         fileService: CodeEditorFileService,
     ) {
         super(participationService, translateService, route, jhiAlertService, sessionService, fileService);
+        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     /**
@@ -246,11 +248,11 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      * Cancel the assessment
      */
     cancel(): void {
-        /*const confirmCancel = window.confirm(this.cancelConfirmationText);
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
-        }*/
+            this.manualResultService.cancelAssessment(this.submission.id).subscribe(() => this.navigateBack());
+        }
     }
 
     /**

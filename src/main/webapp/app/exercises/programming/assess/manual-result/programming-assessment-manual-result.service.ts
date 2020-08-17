@@ -9,6 +9,7 @@ import { Result } from 'app/entities/result.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
+    private resourceUrl = SERVER_API_URL + 'api';
     // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
     constructor(private http: HttpClient, private resultService: ResultService) {}
 
@@ -39,7 +40,7 @@ export class ProgrammingAssessmentManualResultService {
             copy.submission.result.submission = undefined;
         }
         return this.http
-            .put<Result>(SERVER_API_URL + 'api/participations/' + participationId + '/manual-results', copy, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/participations/${participationId}/manual-results`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
@@ -53,7 +54,7 @@ export class ProgrammingAssessmentManualResultService {
      * @return updated result with updated feedbacks and score
      */
     updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, result: Result, submissionId: number): Observable<Result> {
-        const url = `${SERVER_API_URL}api/programming-submissions/${submissionId}/assessment-after-complaint`;
+        const url = `${this.resourceUrl}/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
@@ -72,5 +73,9 @@ export class ProgrammingAssessmentManualResultService {
         newResult.successful = true;
         newResult.score = 100;
         return newResult;
+    }
+
+    cancelAssessment(submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null);
     }
 }
