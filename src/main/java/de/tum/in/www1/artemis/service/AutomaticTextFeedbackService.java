@@ -27,8 +27,7 @@ public class AutomaticTextFeedbackService {
 
     private static final double DISTANCE_THRESHOLD = 1;
 
-    // TODO: Update this value later
-    private static final double LAMBDA_THRESHOLD = 3;
+    private static final double LAMBDA_THRESHOLD = 1.3967;
 
     private final TextBlockRepository textBlockRepository;
 
@@ -116,18 +115,18 @@ public class AutomaticTextFeedbackService {
      */
     private Optional<Feedback> findFeedbackForBlockInClusterWithoutFeedback(TextTreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
         TextTreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
-        // Starting with lambda = (lambda between block and cluster) + (lambda between cluster and parent)
-        double currentLambdaVal = addLambdaValues(clusterTree[block.getTreeId()].getLambda_val(), currentNode.getLambda_val());
-        while(currentLambdaVal > LAMBDA_THRESHOLD) {
+        // Starting with dist = 1 / (lambda between block and cluster + lambda between cluster and parent)
+        double currentDist = sumLambdaValuesToDistance(clusterTree[block.getTreeId()].getLambda_val(), currentNode.getLambda_val());
+        while(currentDist <= LAMBDA_THRESHOLD) {
             // parent is not an actual TextCluster but a "cluster of (clusters of) TextClusters"
             long parentId = currentNode.getParent();
             List<TextTreeNode> siblings = treeNodeRepository.findAllByParentAndExercise(parentId, exercise);
-            siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val));
+            siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
                 TextTreeNode x = siblings.remove(0);
-                // If already below lambda threshold or a block node remove x directly
-                if(addLambdaValues(x.getLambda_val(), currentLambdaVal) < LAMBDA_THRESHOLD) {
+                // If already above lambda threshold or a block node remove x directly
+                if(sumLambdaValuesToDistance(x.getLambda_val(), 1 / currentDist) > LAMBDA_THRESHOLD) {
                     continue;
                 }
                 if(!x.isBlockNode()) {
@@ -138,10 +137,10 @@ public class AutomaticTextFeedbackService {
                         return getFeedbackInCluster(cluster, block, feedbackForTextExerciseInCluster);
                     }
                     for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
-                        y.setLambda_val(addLambdaValues(y.getLambda_val(), x.getLambda_val()));
+                        y.setLambda_val(1 / sumLambdaValuesToDistance(y.getLambda_val(), x.getLambda_val()));
                         siblings.add(y);
                     }
-                    siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val));
+                    siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
                 }
             }
             // Give up when there is no level more to expand
@@ -149,7 +148,7 @@ public class AutomaticTextFeedbackService {
                 return Optional.empty();
             }
             currentNode = clusterTree[(int) parentId];
-            currentLambdaVal = addLambdaValues(currentLambdaVal, currentNode.getLambda_val());
+            currentDist = sumLambdaValuesToDistance(1 / currentDist, currentNode.getLambda_val());
         }
         return Optional.empty();
     }
@@ -227,10 +226,10 @@ public class AutomaticTextFeedbackService {
      * Computes the sum of two lambda values (lambdaVal = 1 / distance)
      * @param l1 - first lambdaVal
      * @param l2 - second lambdaVal
-     * @return sum of both values
+     * @return sum of inverted values
      */
-    private double addLambdaValues(double l1, double l2) {
-        return 1 / ((1 / l1) + (1 / l2));
+    private double sumLambdaValuesToDistance(double l1, double l2) {
+        return 1 / l1 + 1 / l2;
     }
 
 }
