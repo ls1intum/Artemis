@@ -19,11 +19,10 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
-import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
-import { Label } from 'ng2-charts';
-import { BaseChartDirective } from 'ng2-charts/ng2-charts';
-import { createOptions } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { BaseChartDirective, Label } from 'ng2-charts';
+import * as Chart from 'chart.js';
+import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -56,7 +55,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartType: ChartType = 'bar';
     public barChartLegend = true;
     public barChartData: ChartDataSets[] = [];
-    public barChartPlugins = [pluginDataLabels];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -76,7 +74,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.examService.getExamScores(params['courseId'], params['examId']).subscribe(
                 (examResponse) => {
-                    this.examScoreDTO = examResponse.body!;
+                    this.examScoreDTO = examResponse!.body!;
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
@@ -138,15 +136,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             maintainAspectRatio: false,
             legend: {
                 align: 'start',
-            },
-            plugins: {
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    formatter(value) {
-                        return `${value}\n(${component.roundAndPerformLocalConversion((value * 100) / component.noOfExamsFiltered, 2, 2)}%)`;
-                    },
-                },
+                position: 'bottom',
             },
             scales: {
                 yAxes: [
@@ -160,12 +150,36 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     },
                 ],
             },
+            hover: {
+                animationDuration: 0,
+            },
+            animation: {
+                duration: 1,
+                onComplete() {
+                    const chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+
+                    ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
+                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        meta.data.forEach(function (bar: any, index: number) {
+                            const data = dataset.data[index];
+                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
+                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
+                        });
+                    });
+                },
+            },
         };
 
         this.barChartData = [
             {
                 label: '# of students',
                 data: this.histogramData,
+                backgroundColor: 'rgba(0,0,0,0.5)',
             },
         ];
     }
