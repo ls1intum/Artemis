@@ -8,6 +8,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 
 @NgModule({
     imports: [
@@ -18,6 +19,7 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
         ArtemisExerciseHintParticipationModule,
         ArtemisResultModule,
         ArtemisProgrammingAssessmentModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [CodeEditorStudentContainerComponent, CodeEditorTutorAssessmentContainerComponent],
 })
