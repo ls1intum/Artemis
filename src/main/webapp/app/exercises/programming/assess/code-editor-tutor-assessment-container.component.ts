@@ -26,7 +26,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AssessmentActionState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { orderBy as _orderBy, cloneDeep as _cloneDeep } from 'lodash';
@@ -60,7 +60,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     repositoryIsLocked = false;
-    assessmentActionState: AssessmentActionState;
     // for assessment-layout:
     isLoading = false;
     saveBusy = false;
@@ -172,11 +171,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
-    }
-
-    setActionState(changedAssessmentActionState: AssessmentActionState) {
-        console.log('Step2');
-        this.assessmentActionState = changedAssessmentActionState;
     }
 
     /**
