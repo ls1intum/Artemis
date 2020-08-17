@@ -119,7 +119,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
     /**
      * Returns the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
-     *
+     * This method is deprecated because the UML Diagram should not store such information. This should rather be stored somewhere else!
      * @return the most recent Compass result for this diagram
      */
     @Deprecated(since = "4.2.3", forRemoval = true)
