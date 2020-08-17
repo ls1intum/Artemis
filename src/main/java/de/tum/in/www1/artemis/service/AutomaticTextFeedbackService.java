@@ -116,7 +116,7 @@ public class AutomaticTextFeedbackService {
     private Optional<Feedback> findFeedbackForBlockInClusterWithoutFeedback(TextTreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
         TextTreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
         // Starting with dist = 1 / (lambda between block and cluster + lambda between cluster and parent)
-        double currentDist = sumLambdaValuesToDistance(clusterTree[block.getTreeId()].getLambda_val(), currentNode.getLambda_val());
+        double currentDist = 1 / clusterTree[block.getTreeId()].getLambda_val();
         while(currentDist <= LAMBDA_THRESHOLD) {
             // parent is not an actual TextCluster but a "cluster of (clusters of) TextClusters"
             long parentId = currentNode.getParent();
