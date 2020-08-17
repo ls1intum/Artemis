@@ -665,7 +665,7 @@ public class BambooService implements ContinuousIntegrationService {
                 }
                 // 3) process static code analysis feedback
                 boolean hasStaticCodeAnalysisFeedback = false;
-                if (isStaticCodeAnalysisEnabled) {
+                if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
                     hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
                 }
 

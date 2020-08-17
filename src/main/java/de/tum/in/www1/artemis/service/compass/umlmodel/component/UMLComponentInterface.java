@@ -35,7 +35,7 @@ public class UMLComponentInterface extends UMLElement {
         double similarity = 0;
 
         UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (Objects.equals(getParentElement(), referenceComponentInterface.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;

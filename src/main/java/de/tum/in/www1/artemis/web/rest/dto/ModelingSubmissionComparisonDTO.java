@@ -34,12 +34,12 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
         return score2;
     }
 
-    public Long getSize1() {
-        return score1;
+    public int getSize1() {
+        return size1;
     }
 
-    public Long getSize2() {
-        return score2;
+    public int getSize2() {
+        return size2;
     }
 
     public Double getSimilarity() {

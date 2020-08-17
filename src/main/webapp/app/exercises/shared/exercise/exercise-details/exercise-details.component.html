@@ -12,11 +12,9 @@
 <dt *ngIf="superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
 <dd *ngIf="superExerciseDetails.exerciseGroup">
     <div>
-        <!-- TODO Enable when implemented
         <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'exams', superExerciseDetails.exerciseGroup?.exam?.id, 'view']">{{
             superExerciseDetails.exerciseGroup?.exam?.title
         }}</a>
-        -->
         <span>{{ superExerciseDetails.exerciseGroup?.exam?.title }}</span>
     </div>
 </dd>
