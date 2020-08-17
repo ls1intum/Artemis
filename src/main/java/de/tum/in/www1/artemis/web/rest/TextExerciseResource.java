@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.cosine;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static java.util.stream.Collectors.toMap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +67,11 @@ import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -115,12 +122,14 @@ public class TextExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final TextPlagiarismDetectionService textPlagiarismDetectionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
-            InstanceMessageSendService instanceMessageSendService) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -138,6 +147,7 @@ public class TextExerciseResource {
         this.gradingCriterionService = gradingCriterionService;
         this.exerciseGroupService = exerciseGroupService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.textPlagiarismDetectionService = textPlagiarismDetectionService;
     }
 
     /**
@@ -551,7 +561,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // ta's are not allowed to download all participations
+        // TAs are not allowed to download all participations
         if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
             return forbidden();
         }
@@ -574,6 +584,46 @@ public class TextExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
+    }
+
+    /**
+     * GET /check-plagiarism : Run comparison metrics pair-wise against all submissions of a given exercises.
+     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
+     *
+     * @param exerciseId for which all submission should be checked
+     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
+     */
+    @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
+        textSubmissions.forEach(submission -> {
+            submission.getParticipation().setExercise(null);
+            submission.setResult(null);
+            submission.getParticipation().setSubmissions(null);
+        });
+
+        log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
+
+        // TODO: allow one more alternative using JPlag with text compare, see ProgrammingExerciseResource:961 --> checkPlagiarism()
+        // TODO: let the user specify the minimum similarity in the client
+        return ResponseEntity.ok(Stream
+                .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
+                        new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
+                .parallel()
+                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX(), strategy.getY(), 0.8).entrySet()
+                        .stream().map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
+                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
     }
 
 }

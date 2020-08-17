@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 
 public class TextSegmentationServiceTest {
 
-    private static String SEGMENTATION_ENDPOINT = "http://localhost:8000/segment";
+    private static final String SEGMENTATION_ENDPOINT = "http://localhost:8000/segment";
 
     @Test
     public void segmentSubmissions() throws NetworkingError {

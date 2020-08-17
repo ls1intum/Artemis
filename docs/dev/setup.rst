@@ -197,7 +197,7 @@ The Artemis server should startup by running the main class
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
 If you use IntelliJ (Community or Ultimate) you can set the active
 profiles by
@@ -205,7 +205,7 @@ profiles by
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
-``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis``
+``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""
@@ -216,7 +216,7 @@ configuration:
 
 ::
 
-   dev,bamboo,bitbucket,jira,artemis
+   dev,bamboo,bitbucket,jira,artemis,scheduling
 
 Run the server with the command line (Gradle wrapper)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,14 +226,14 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 ::
 
-   ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis'
+   ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling'
 
 As an alternative, you might want to use Jenkins and Gitlab with an
 internal user management in Artemis, then you would use the profiles:
 
 ::
 
-   dev,jenkins,gitlab,artemis
+   dev,jenkins,gitlab,artemis,scheduling
 
 Client Setup
 ------------
@@ -343,7 +343,7 @@ Enable the ``automaticText`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,automaticText
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,automaticText
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -58,9 +58,9 @@
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
-            "exerciseStatisticsTitle": "Aufgaben Statistik",
+            "examStatisticsTitle": "Klausur Statistik",
             "studentResultsTitle": "Studenten Ergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
@@ -77,9 +77,15 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
-            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben"
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standardabweichung",
+            "noOfExams": "Klausuren",
+            "registered": "Angemeldete Studenten",
+            "noExerciseGroups": "Aufgabengruppen",
+            "submittedColumn": "Abgegeben",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
