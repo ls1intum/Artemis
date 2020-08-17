@@ -114,7 +114,28 @@ public class AutomaticTextFeedbackService {
      * @return The feedback of a text block that fits as a candidate, if such a TextBlock is found
      */
     private Optional<Feedback> findFeedbackForBlockInClusterWithoutFeedback(TextTreeNode[] clusterTree, TextBlock block, TextCluster cluster, TextExercise exercise){
-        TextTreeNode currentNode = clusterTree[(int) cluster.getTreeId()];
+        TextTreeNode clusterNode = clusterTree[(int) cluster.getTreeId()];
+        return traverseTreeForClusterNode(clusterTree, block, clusterNode, exercise);
+    }
+
+    /**
+     * Look for feedback for a text block without a cluster, traversing the clusters in proximity
+     * @param clusterTree - Tree structure of the cluster hierarchy
+     * @param block - Text block which lacks feedback
+     * @param exercise - text exercise of the text block
+     * @return The feedback of a text block that fits as a candidate, if such a TextBlock is found
+     */
+    private Optional<Feedback> findFeedbackForBlockWithoutCluster(TextTreeNode[] clusterTree, TextBlock block, TextExercise exercise){
+        TextTreeNode blockNode = clusterTree[block.getTreeId()];
+        TextTreeNode parentNode = clusterTree[(int) blockNode.getParent()];
+        return traverseTreeForClusterNode(clusterTree, block, parentNode, exercise);
+    }
+
+    private Optional<Feedback> traverseTreeForClusterNode(TextTreeNode[] clusterTree, TextBlock block, TextTreeNode clusterNode, TextExercise exercise){
+        if(clusterNode.isBlockNode()) {
+            return Optional.empty();
+        }
+        TextTreeNode currentNode = clusterNode;
         // Starting with dist = 1 / (lambda between block and cluster + lambda between cluster and parent)
         double currentDist = 1 / clusterTree[block.getTreeId()].getLambda_val();
         while(currentDist <= LAMBDA_THRESHOLD) {
@@ -150,34 +171,9 @@ public class AutomaticTextFeedbackService {
             if(parentId == -1) {
                 return Optional.empty();
             }
-            currentDist = sumLambdaValuesToDistance(1 / currentDist, currentNode.getLambda_val());
+            currentDist = currentDist + 1 / currentNode.getLambda_val();
             currentNode = clusterTree[(int) parentId];
         }
-        return Optional.empty();
-    }
-
-    /**
-     * Look for feedback for a text block without a cluster, traversing the clusters in proximity
-     * @param clusterTree - Tree structure of the cluster hierarchy
-     * @param block - Text block which lacks feedback
-     * @param exercise - text exercise of the text block
-     * @return The feedback of a text block that fits as a candidate, if such a TextBlock is found
-     */
-    private Optional<Feedback> findFeedbackForBlockWithoutCluster(TextTreeNode[] clusterTree, TextBlock block, TextExercise exercise){
-        TextTreeNode currentNode = clusterTree[(int) block.getTreeId()];
-        Optional<TextCluster> clusterOptional = clusterRepository.findByTreeIdAndExercise(currentNode.getParent(), exercise);
-        // There is an existing cluster one level above in tree
-        if(clusterOptional.isPresent()) {
-            TextCluster cluster = clusterOptional.get();
-            final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
-            // If no feedback in cluster -> call findFeedbackForBlockInClusterWithoutFeedback for that cluster
-            if(feedbackForTextExerciseInCluster.size() == 0) {
-                return findFeedbackForBlockInClusterWithoutFeedback(clusterTree, block, cluster, exercise);
-            } else {
-                return getFeedbackInCluster(cluster, block, feedbackForTextExerciseInCluster);
-            }
-        }
-        // If no cluster one level above, return empty optional
         return Optional.empty();
     }
 
@@ -223,16 +219,6 @@ public class AutomaticTextFeedbackService {
             clusterTree[(int) node.getChild()] = node;
         }
         return clusterTree;
-    }
-
-    /**
-     * Computes the sum of two lambda values (lambdaVal = 1 / distance)
-     * @param l1 - first lambdaVal
-     * @param l2 - second lambdaVal
-     * @return sum of inverted values
-     */
-    private double sumLambdaValuesToDistance(double l1, double l2) {
-        return 1 / l1 + 1 / l2;
     }
 
     /**
