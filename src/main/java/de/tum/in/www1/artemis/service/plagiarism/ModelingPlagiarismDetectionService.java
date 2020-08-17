@@ -83,9 +83,9 @@ public class ModelingPlagiarismDetectionService {
                     var submission1 = nonEmptyModels.get(model1);
                     var submission2 = nonEmptyModels.get(model2);
                     modelingSubmissionComparisonResult.submissionId1(submission1.getId());
+                    modelingSubmissionComparisonResult.submissionId2(submission2.getId());
                     modelingSubmissionComparisonResult.size1(model1.getAllModelElements().size());
                     modelingSubmissionComparisonResult.size2(model2.getAllModelElements().size());
-                    modelingSubmissionComparisonResult.submissionId2(submission2.getId());
                     modelingSubmissionComparisonResult.similarity(similarity);
                     if (submission1.getResult() != null) {
                         modelingSubmissionComparisonResult.score1(submission1.getResult().getScore());
