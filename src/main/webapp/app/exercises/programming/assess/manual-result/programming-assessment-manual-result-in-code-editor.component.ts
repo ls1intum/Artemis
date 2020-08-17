@@ -33,6 +33,8 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     @Input() participationId: number;
     @Input() result: Result;
     @Input() exercise: ProgrammingExercise;
+    @Input() canOverride: boolean;
+
     @Output() onResultModified = new EventEmitter<Result>();
 
     participation: ProgrammingExerciseStudentParticipation;
@@ -41,9 +43,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     isSaving = false;
     isOpenForSubmission = false;
     user: User;
-    isAssessor: boolean;
-    canOverride = false;
-    isAtLeastInstructor = false;
 
     complaint: Complaint;
     resultModified: boolean;
@@ -74,7 +73,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
             } else {
                 this.initializeForResultCreation();
             }
-            this.checkPermissions();
         });
     }
     /**
@@ -97,9 +95,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
                 )
                 .subscribe(() => (this.isLoading = false));
         }
-        if (this.result.hasComplaint) {
-            this.getComplaint(this.result.id);
-        }
         this.getParticipation();
     }
 
@@ -112,20 +107,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         this.result = this.manualResultService.generateInitialManualResult();
         this.result.assessor = this.user;
         this.getParticipation();
-    }
-
-    private checkPermissions(): void {
-        this.isAssessor = this.result.assessor && this.result.assessor.id === this.user.id;
-        this.isAtLeastInstructor =
-            this.exercise && this.exercise.course
-                ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
-                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        // NOTE: the following line deviates intentionally from other exercises because currently we do not use assessmentDueDate
-        // and tutors should be able to override the created results when the assessmentDueDate is not set (also see ResultResource.isAllowedToOverrideExistingResult)
-        // TODO: make it consistent with other exercises in the future
-        const isBeforeAssessmentDueDate = this.exercise && (!this.exercise.assessmentDueDate || moment().isBefore(this.exercise.assessmentDueDate));
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     /**
@@ -171,7 +152,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
      */
     pushFeedback() {
         this.feedbacks.push(new Feedback());
-        this.addFeedbackToResult();
+        this.updateResultFeedbacks();
     }
 
     /**
@@ -181,54 +162,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
         }
-        this.addFeedbackToResult();
-    }
-    // TODO: Check should be handle by assessment-layout component
-    private getComplaint(id: number): void {
-        this.complaintService
-            .findByResultId(id)
-            .pipe(filter((res) => !!res.body))
-            .subscribe(
-                (res) => {
-                    this.complaint = res.body!;
-                },
-                (err: HttpErrorResponse) => {
-                    this.alertService.error(err.message);
-                },
-            );
-    }
-
-    /**
-     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
-     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
-     */
-    get isAllowedToRespond(): boolean {
-        if (this.complaint.team) {
-            return this.isAssessor;
-        } else {
-            return this.complaint.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
-        }
-    }
-
-    /**
-     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
-     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
-     *
-     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
-     */
-    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
-            (result: Result) => {
-                this.result = result;
-                this.resultModified = true;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-            },
-            () => {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
-            },
-        );
+        this.updateResultFeedbacks();
     }
 
     /**
@@ -247,8 +181,11 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
         return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
     }
-
-    updateResult() {
+    /**
+     * Updates if the result is successful (score of 100%) or not
+     * and emits the updated result to the parent component
+     */
+    updateResultSuccess() {
         if (this.result.score === 100) {
             this.result.successful = true;
         } else {
@@ -256,7 +193,12 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         }
         this.onResultModified.emit(this.result);
     }
-    addFeedbackToResult() {
+
+    /**
+     * Updates the attribute feedbacks of the result, sets the feedback type to manual
+     * and emits the updated result to the parent component
+     */
+    updateResultFeedbacks() {
         this.result.feedbacks = this.feedbacks;
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
