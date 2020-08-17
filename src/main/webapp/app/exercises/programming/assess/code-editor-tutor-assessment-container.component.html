@@ -31,7 +31,7 @@
     (submit)="submit()"
     (cancel)="cancel()"
     (nextSubmission)="nextSubmission()"
-    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
+    (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
 
     <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
@@ -125,6 +125,7 @@
             [participationId]="participation.id"
             [result]="checkIfManualResultExist()"
             [exercise]="exercise"
+            [canOverride]="canOverride"
             (onResultModified)="test($event)"
         ></jhi-programming-assessment-manual-result-in-code-editor>
     </jhi-code-editor-grid>

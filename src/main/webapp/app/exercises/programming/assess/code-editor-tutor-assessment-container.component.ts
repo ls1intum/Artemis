@@ -252,29 +252,24 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
         /*this.nextSubmissionBusy = true;
         await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);*/
     }
-
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
      *
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
-    updateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        complaintResponse.id = 1;
-        /*this.validateFeedback();
-        if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
-            return;
-        }
-
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-            (error: HttpErrorResponse) => {
-                console.error(error);
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.manualResultService.updateAfterComplaint(this.result.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
+            (result: Result) => {
+                this.result = result;
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
-        );*/
+            () => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            },
+        );
     }
     navigateBack() {
         /*if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
