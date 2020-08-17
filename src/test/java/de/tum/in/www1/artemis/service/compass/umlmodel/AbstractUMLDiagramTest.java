@@ -6,7 +6,9 @@ import java.util.List;
 
 import org.assertj.core.data.Offset;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
@@ -40,5 +42,16 @@ public abstract class AbstractUMLDiagramTest {
         // Source and target do not really matter in this test so we can also check the other way round
         return componentDiagram.getComponentRelationshipList().stream().filter(relationship -> (relationship.getSource().equals(source) && relationship.getTarget().equals(target))
                 || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().get();
+    }
+
+    protected ModelingSubmission modelingSubmission(String model) {
+        var submission = new ModelingSubmission();
+        submission.setModel(model);
+        var participation = new StudentParticipation();
+        var user = new User();
+        user.setLogin("student");
+        participation.setParticipant(user);
+        submission.setParticipation(participation);
+        return submission;
     }
 }
