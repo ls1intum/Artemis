@@ -143,6 +143,7 @@
             "resultETA": "Ergebnis Wartezeit: {{eta}}",
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "shortName": "Kurzname",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die geählten Bezeichnungen konsistent zu nutzen, da sie auch für Studenten sichtbar sind",
             "timeline": {

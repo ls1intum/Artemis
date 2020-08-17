@@ -22,6 +22,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -37,7 +38,7 @@ export class ExerciseGroupsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate: Moment | null;
-    exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
+    exerciseGroupToExerciseTypesDict: { [id: number]: ExerciseType[] } = {};
 
     constructor(
         private route: ActivatedRoute,
@@ -93,6 +94,20 @@ export class ExerciseGroupsComponent implements OnInit {
         return null;
     }
 
+    asQuizExercise(exercise: Exercise): QuizExercise | null {
+        if (exercise.type === ExerciseType.QUIZ) {
+            return exercise as QuizExercise;
+        }
+        return null;
+    }
+
+    asTextExercise(exercise: Exercise): TextExercise | null {
+        if (exercise.type === ExerciseType.TEXT) {
+            return exercise as TextExercise;
+        }
+        return null;
+    }
+
     asModelingExercise(exercise: Exercise): ModelingExercise | null {
         if (exercise.type === ExerciseType.MODELING) {
             return exercise as ModelingExercise;
@@ -119,9 +134,7 @@ export class ExerciseGroupsComponent implements OnInit {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
-                    if (programmingExercise) {
-                        this.setupExerciseGroupContainsProgrammingExerciseDict();
-                    }
+                    this.setupExerciseGroupContainsProgrammingExerciseDict();
                 }
             });
         }
@@ -141,7 +154,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
-                delete this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroupId];
+                delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -247,25 +260,20 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * sets up {@link exerciseGroupContainsProgrammingExerciseDict} that maps the exercise group id to whether the said exercise group contains programming exercises.
-     * Used to show the correct modal for deleting exercises.
-     * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
+     * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
+     * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
     setupExerciseGroupContainsProgrammingExerciseDict() {
-        this.exerciseGroupContainsProgrammingExerciseDict = {};
-        if (this.exerciseGroups == null) {
+        this.exerciseGroupToExerciseTypesDict = {};
+        if (!this.exerciseGroups) {
             return;
         } else {
             for (const exerciseGroup of this.exerciseGroups) {
-                if (exerciseGroup.exercises != null) {
+                this.exerciseGroupToExerciseTypesDict[exerciseGroup.id] = [];
+                if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
-                        if (exercise.type === ExerciseType.PROGRAMMING) {
-                            this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
-                            break;
-                        }
-                    }
-                    if (!(exerciseGroup.id in this.exerciseGroupContainsProgrammingExerciseDict)) {
-                        this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+                        this.exerciseGroupToExerciseTypesDict[exerciseGroup.id].push(exercise.type);
                     }
                 }
             }
