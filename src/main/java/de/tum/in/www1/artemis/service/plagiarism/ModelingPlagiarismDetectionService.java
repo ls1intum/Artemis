@@ -92,8 +92,8 @@ public class ModelingPlagiarismDetectionService {
 
                 var submission1 = models.get(model1);
                 var submission2 = models.get(model2);
-                if (submission1.getResult() != null && submission1.getResult().getScore() < minimumScore && submission2.getResult() != null
-                        && submission2.getResult().getScore() < minimumModelSize) {
+                if (submission1.getResult() != null && submission1.getResult().getScore() != null && submission1.getResult().getScore() < minimumScore
+                        && submission2.getResult() != null && submission2.getResult().getScore() != null && submission2.getResult().getScore() < minimumModelSize) {
                     // ignore comparison results with too small scores
                     continue;
                 }
