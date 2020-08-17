@@ -32,12 +32,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { orderBy as _orderBy, cloneDeep as _cloneDeep } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { JhiEventManager } from 'ng-jhipster';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Location } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -82,6 +83,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
         private router: Router,
         private location: Location,
         private accountService: AccountService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
         private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -254,9 +256,26 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     /**
      * Go to next submission
      */
-    async nextSubmission(): Promise<void> {
-        /*this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);*/
+    nextSubmission() {
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+            (response: ProgrammingSubmission) => {
+                const unassessedSubmission = response;
+                this.router.onSameUrlNavigation = 'reload';
+                // navigate to the new assessment page to trigger re-initialization of the components
+                this.router.navigateByUrl(
+                    `/course-management/${this.exercise.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.id}/assessment`,
+                    {},
+                );
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                } else {
+                    this.onError(error.message);
+                }
+            },
+        );
     }
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
