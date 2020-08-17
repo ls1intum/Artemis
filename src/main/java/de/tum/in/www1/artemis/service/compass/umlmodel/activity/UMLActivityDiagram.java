@@ -8,11 +8,18 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActivityDiagram extends UMLDiagram {
 
-    private final List<UMLActivityNode> activityNodeList;
+    private List<UMLActivityNode> activityNodeList;
 
-    private final List<UMLActivity> activityList;
+    private List<UMLActivity> activityList;
 
-    private final List<UMLControlFlow> controlFlowList;
+    private List<UMLControlFlow> controlFlowList;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLActivityDiagram() {
+        super();
+    }
 
     public UMLActivityDiagram(long modelSubmissionId, List<UMLActivityNode> activityNodeList, List<UMLActivity> activityList, List<UMLControlFlow> controlFlowList) {
         super(modelSubmissionId);
