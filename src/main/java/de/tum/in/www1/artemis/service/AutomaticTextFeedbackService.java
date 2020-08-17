@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.core.TreeNode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -136,12 +137,18 @@ public class AutomaticTextFeedbackService {
             return Optional.empty();
         }
         TextTreeNode currentNode = clusterNode;
-        // Starting with dist = 1 / (lambda between block and cluster + lambda between cluster and parent)
-        double currentDist = 1 / clusterTree[block.getTreeId()].getLambda_val();
+        // currentDist = distance between block and the node representing its cluster
+        double currentDist = 0;
+        TextTreeNode temp = clusterTree[block.getTreeId()];
+        while(temp.getChild() != currentNode.getChild()) {
+            currentDist += 1 / temp.getLambda_val();
+            temp = clusterTree[(int) temp.getParent()];
+        }
         while(currentDist <= LAMBDA_THRESHOLD) {
             // parent is not an actual TextCluster but a "cluster of (clusters of) TextClusters"
             long parentId = currentNode.getParent();
             List<TextTreeNode> siblings = treeNodeRepository.findAllByParentAndExercise(parentId, exercise);
+            siblings.remove(currentNode);
             siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
@@ -159,12 +166,13 @@ public class AutomaticTextFeedbackService {
                         if(!feedbackForTextExerciseInCluster.isEmpty()) {
                             return getFeedbackInCluster(currentCluster, block, feedbackForTextExerciseInCluster);
                         }
+                    } else {
+                        for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
+                            y.setLambda_val(sumLambdaValues(y.getLambda_val(), x.getLambda_val()));
+                            siblings.add(y);
+                        }
+                        siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
                     }
-                    for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
-                        y.setLambda_val(sumLambdaValues(y.getLambda_val(), x.getLambda_val()));
-                        siblings.add(y);
-                    }
-                    siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
                 }
             }
             // Give up when there is no level more to expand
