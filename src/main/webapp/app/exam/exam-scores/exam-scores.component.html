@@ -94,9 +94,19 @@
             </tbody>
         </table>
 
-        <div style="height: 500px;">
+        <div style="display: block;">
             <!-- Histogram -->
-            <canvas #histogram></canvas>
+            <canvas
+                baseChart
+                height="400"
+                [datasets]="barChartData"
+                [labels]="barChartLabels"
+                [options]="barChartOptions"
+                [plugins]="barChartPlugins"
+                [legend]="barChartLegend"
+                [chartType]="barChartType"
+            >
+            </canvas>
         </div>
 
         <!-- Exercise Statistics Table -->

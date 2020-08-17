@@ -1,4 +1,4 @@
-import { ElementRef, ViewChild, Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,9 +19,11 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
-import * as Chart from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { LinearTickOptions } from 'chart.js';
+import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
+import { Label } from 'ng2-charts';
+import { BaseChartDirective } from 'ng2-charts/ng2-charts';
+import { createOptions } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -48,10 +50,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
 
-    @ViewChild('histogram', { static: false })
-    private canvas: ElementRef<HTMLCanvasElement>;
-    private ctx: CanvasRenderingContext2D;
-    private chart: Chart;
+    // Histogram related properties
+    public barChartOptions: ChartOptions = {};
+    public barChartLabels: Label[] = [];
+    public barChartType: ChartType = 'bar';
+    public barChartLegend = true;
+    public barChartData: ChartDataSets[] = [];
+    public barChartPlugins = [pluginDataLabels];
+
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription: Subscription | null;
 
@@ -80,9 +87,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
                     }
+                    this.createChart();
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
-                    this.createChart();
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
@@ -113,7 +120,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
-        this.ctx = this.canvas.nativeElement.getContext('2d')!;
         const labels = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
@@ -123,49 +129,45 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth})`;
             }
         }
+        this.barChartLabels = labels;
 
         const component = this;
 
-        this.chart = new Chart(this.ctx, {
-            type: 'bar',
-            plugins: [ChartDataLabels],
-            data: {
-                labels,
-                datasets: [
+        this.barChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            legend: {
+                align: 'start',
+            },
+            plugins: {
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter(value) {
+                        return `${value}\n(${component.roundAndPerformLocalConversion((value * 100) / component.noOfExamsFiltered, 2, 2)}%)`;
+                    },
+                },
+            },
+            scales: {
+                yAxes: [
                     {
-                        label: '# of students',
-                        data: this.histogramData,
+                        ticks: {
+                            maxTicksLimit: 11,
+                            beginAtZero: true,
+                            precision: 0,
+                            min: 0,
+                        } as LinearTickOptions,
                     },
                 ],
             },
-            options: {
-                maintainAspectRatio: false,
-                legend: {
-                    align: 'start',
-                },
-                plugins: {
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        formatter(value) {
-                            return `${value}\n(${component.roundAndPerformLocalConversion((value * 100) / component.noOfExamsFiltered, 2, 2)}%)`;
-                        },
-                    },
-                },
-                scales: {
-                    yAxes: [
-                        {
-                            ticks: {
-                                maxTicksLimit: 11,
-                                beginAtZero: true,
-                                precision: 0,
-                                min: 0,
-                            } as LinearTickOptions,
-                        },
-                    ],
-                },
+        };
+
+        this.barChartData = [
+            {
+                label: '# of students',
+                data: this.histogramData,
             },
-        });
+        ];
     }
 
     /**
@@ -228,19 +230,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         }
         this.noOfExamsFiltered = SimpleStatistics.sum(this.histogramData);
-        if (this.chart) {
-            this.updateChart();
-        }
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-    }
 
-    private updateChart() {
-        this.chart.update();
+        if (this.chart) {
+            this.chart.update();
+        }
     }
-
-    private calculateTickSize() {}
 
     /**
      * Calculates statistics on exam granularity for submitted exams and for all exams.
