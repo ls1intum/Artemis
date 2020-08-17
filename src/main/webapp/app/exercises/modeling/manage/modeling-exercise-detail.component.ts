@@ -11,6 +11,8 @@ import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from './mode
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { downloadFile } from 'app/shared/util/download.util';
+import { ExportToCsv } from 'export-to-csv';
+import { SERVER_API_URL } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -56,20 +58,78 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    checkPlagiarism() {
-        this.checkPlagiarismInProgress = true;
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(this.handleCheckPlagiarismResponse, () => {
-            this.checkPlagiarismInProgress = false;
+    checkPlagiarismJson() {
+        this.checkPlagiarism((data) => {
+            const json = JSON.stringify(data);
+            const blob = new Blob([json], { type: 'application/json' });
+            downloadFile(blob, `check-plagiarism-modeling-exercise_${this.modelingExercise.id}.json`);
         });
     }
 
-    handleCheckPlagiarismResponse = (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
-        this.jhiAlertService.success('artemisApp.programmingExercise.checkPlagiarismSuccess');
-        this.checkPlagiarismInProgress = false;
-        const json = JSON.stringify(response.body);
-        const blob = new Blob([json], { type: 'application/json' });
-        downloadFile(blob, `check-plagiarism-modeling-exercise-${this.modelingExercise.id}.json`);
-    };
+    checkPlagiarismCsv() {
+        this.checkPlagiarism((data) => {
+            if (data.length > 0) {
+                const csvExporter = new ExportToCsv({
+                    fieldSeparator: ';',
+                    quoteStrings: '"',
+                    decimalSeparator: 'locale',
+                    showLabels: true,
+                    title: `Plagiarism Check for Modeling Exercise ${this.modelingExercise.id}: ${this.modelingExercise.title}`,
+                    filename: `check-plagiarism-modeling-exercise-${this.modelingExercise.id}-${this.modelingExercise.title}`,
+                    useTextFile: false,
+                    useBom: true,
+                    headers: ['Similarity', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Link 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2', 'Link 2'],
+                });
+
+                const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
+
+                const baseUrl = SERVER_API_URL + '#/course-management/';
+
+                const csvData = data.map((comparisonResult) => {
+                    return Object.assign({
+                        Similarity: comparisonResult.similarity,
+                        'Participant 1': comparisonResult.element1.studentLogin,
+                        'Submission 1': comparisonResult.element1.submissionId,
+                        'Score 1': comparisonResult.element1.score,
+                        'Size 1': comparisonResult.element1.size,
+                        'Link 1':
+                            baseUrl +
+                            courseId +
+                            '/modeling-exercises/' +
+                            this.modelingExercise.id +
+                            '/submissions/' +
+                            comparisonResult.element1.submissionId +
+                            '/assessment?optimal=false&hideBackButton=true',
+                        'Participant 2': comparisonResult.element2.studentLogin,
+                        'Submission 2': comparisonResult.element2.submissionId,
+                        'Score 2': comparisonResult.element2.score,
+                        'Size 2': comparisonResult.element2.size,
+                        'Link 2':
+                            baseUrl +
+                            courseId +
+                            '/modeling-exercises/' +
+                            this.modelingExercise.id +
+                            '/submissions/' +
+                            comparisonResult.element2.submissionId +
+                            '/assessment?optimal=false&hideBackButton=true',
+                    });
+                });
+
+                csvExporter.generateCsv(csvData);
+            }
+        });
+    }
+
+    private checkPlagiarism(completionHandler: (data: Array<ModelingSubmissionComparisonDTO>) => void) {
+        this.checkPlagiarismInProgress = true;
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(
+            (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
+                this.checkPlagiarismInProgress = false;
+                completionHandler(response.body!);
+            },
+            () => (this.checkPlagiarismInProgress = false),
+        );
+    }
 
     previousState() {
         window.history.back();

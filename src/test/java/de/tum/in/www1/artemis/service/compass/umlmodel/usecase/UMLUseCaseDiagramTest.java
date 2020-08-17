@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -20,13 +19,13 @@ public class UMLUseCaseDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityUseCaseDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(useCaseModel1), new ModelingSubmission().model(useCaseModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(useCaseModel2), new ModelingSubmission().model(useCaseModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(useCaseModel1), modelingSubmission(useCaseModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(useCaseModel2), modelingSubmission(useCaseModel2), 0.8, 1.0);
     }
 
     @Test
     void similarityUseCaseDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(useCaseModel1), new ModelingSubmission().model(useCaseModel2), 0.0, 0.1844);
+        compareSubmissions(modelingSubmission(useCaseModel1), modelingSubmission(useCaseModel2), 0.0, 0.1844);
     }
 
     @Test
