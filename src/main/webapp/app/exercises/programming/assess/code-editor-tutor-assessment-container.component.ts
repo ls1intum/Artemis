@@ -5,7 +5,7 @@ import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -35,6 +35,9 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { JhiEventManager } from 'ng-jhipster';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Location } from '@angular/common';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -53,6 +56,8 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
+    submission: ProgrammingSubmission;
+    userId: number;
 
     participationForAssessment: ProgrammingExerciseStudentParticipation;
 
@@ -74,6 +79,9 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private eventManager: JhiEventManager,
+        private router: Router,
+        private location: Location,
+        private accountService: AccountService,
         private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
@@ -93,17 +101,21 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
+        // Used to check if the assessor is the current user
+        this.accountService.identity().then((user) => {
+            this.userId = user!.id!;
+        });
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.paramSub = this.route!.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
-            console.log('ParticipationId in der richtigen Klasse');
-            console.log(participationId);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults!;
+                        this.submission = this.participation.results[0].submission as ProgrammingSubmission;
                         this.participationForAssessment = _cloneDeep(this.participation);
                         this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
                         this.exercise = this.participation.exercise as ProgrammingExercise;
@@ -266,14 +278,14 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
         );
     }
     navigateBack() {
-        /*if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
+        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
-        } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
-            this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
+        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
+            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
-        }*/
+        }
     }
 
     /**
