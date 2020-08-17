@@ -8,7 +8,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -23,19 +22,19 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityComponentDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(componentModel2), new ModelingSubmission().model(componentModel2), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(componentModel3), new ModelingSubmission().model(componentModel3), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel2), modelingSubmission(componentModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel3), modelingSubmission(componentModel3), 0.8, 1.0);
     }
 
     @Test
     void similarityComponentDiagram_SimilarModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.64);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel2), 0.0, 0.64);
     }
 
     @Test
     void similarityComponentDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel3), 0.0, 0.13);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel3), 0.0, 0.13);
     }
 
     @Test
