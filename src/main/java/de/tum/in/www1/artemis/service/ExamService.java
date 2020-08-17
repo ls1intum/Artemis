@@ -176,7 +176,7 @@ public class ExamService {
 
     /**
      * Get one exam by id with registered users and exercise groups.
-     * Loads the template and solution participation to the exercises
+     *
      * @param examId the id of the entity
      * @return the exam with registered users and exercise groups
      */
