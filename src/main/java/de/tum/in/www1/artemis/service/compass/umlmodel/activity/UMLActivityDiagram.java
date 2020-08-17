@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,11 +8,18 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActivityDiagram extends UMLDiagram {
 
-    private final List<UMLActivityNode> activityNodeList;
+    private List<UMLActivityNode> activityNodeList;
 
-    private final List<UMLActivity> activityList;
+    private List<UMLActivity> activityList;
 
-    private final List<UMLControlFlow> controlFlowList;
+    private List<UMLControlFlow> controlFlowList;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLActivityDiagram() {
+        super();
+    }
 
     public UMLActivityDiagram(long modelSubmissionId, List<UMLActivityNode> activityNodeList, List<UMLActivity> activityList, List<UMLControlFlow> controlFlowList) {
         super(modelSubmissionId);
@@ -24,19 +31,19 @@ public class UMLActivityDiagram extends UMLDiagram {
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
-        for (UMLActivityNode activityNode : activityNodeList) {
+        for (UMLActivityNode activityNode : getActivityNodeList()) {
             if (activityNode.getJSONElementID().equals(jsonElementId)) {
                 return activityNode;
             }
         }
 
-        for (UMLActivity activity : activityList) {
+        for (UMLActivity activity : getActivityList()) {
             if (activity.getJSONElementID().equals(jsonElementId)) {
                 return activity;
             }
         }
 
-        for (UMLControlFlow controlFlow : controlFlowList) {
+        for (UMLControlFlow controlFlow : getControlFlowList()) {
             if (controlFlow.getJSONElementID().equals(jsonElementId)) {
                 return controlFlow;
             }
@@ -51,7 +58,6 @@ public class UMLActivityDiagram extends UMLDiagram {
         modelElements.addAll(activityNodeList);
         modelElements.addAll(activityList);
         modelElements.addAll(controlFlowList);
-
         return modelElements;
     }
 

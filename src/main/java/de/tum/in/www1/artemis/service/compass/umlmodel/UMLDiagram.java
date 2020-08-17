@@ -8,7 +8,14 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
     private long modelSubmissionId;
 
+    @Deprecated(since = "4.2.3", forRemoval = true)
     private CompassResult lastAssessmentCompassResult = null;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLDiagram() {
+    }
 
     public UMLDiagram(long modelSubmissionId) {
         this.modelSubmissionId = modelSubmissionId;
@@ -55,8 +62,11 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
         UMLDiagram diagramReference = (UMLDiagram) reference;
 
+        List<UMLElement> modelElements = getModelElements();
+        List<UMLElement> referenceModelElements = diagramReference.getModelElements();
+
         // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this diagram always has less or equally many elements than the reference diagram.
-        if (getModelElements().size() > diagramReference.getModelElements().size()) {
+        if (modelElements.size() > referenceModelElements.size()) {
             return diagramReference.similarity(this);
         }
 
@@ -65,10 +75,10 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
         // For calculating the weight of the similarity of every element, we consider the max. element count to reflect missing elements, i.e. it should not be possible to get a
         // similarity of 1 if the amount of elements differs. As we know that the reference diagram has at least as many elements as this diagram, we take the element count of the
         // reference.
-        int maxElementCount = diagramReference.getModelElements().size();
+        int maxElementCount = referenceModelElements.size();
         double weight = 1.0 / maxElementCount;
 
-        for (Similarity<UMLElement> element : getModelElements()) {
+        for (Similarity<UMLElement> element : modelElements) {
             double similarityValue = diagramReference.similarElementScore(element);
             similarity += weight * similarityValue;
         }
@@ -102,6 +112,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @param compassResult the most recent Compass result for this diagram
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public void setLastAssessmentCompassResult(CompassResult compassResult) {
         lastAssessmentCompassResult = compassResult;
     }
@@ -111,6 +122,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return the most recent Compass result for this diagram
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public CompassResult getLastAssessmentCompassResult() {
         return lastAssessmentCompassResult;
     }
@@ -120,8 +132,9 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return true if Compass has not already calculated an automatic assessment for this diagram, false otherwise
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public boolean isUnassessed() {
-        return lastAssessmentCompassResult == null;
+        return getLastAssessmentCompassResult() == null;
     }
 
     /**
@@ -129,12 +142,13 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return The confidence of the last compass result, -1 if no compass result is available
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public double getLastAssessmentConfidence() {
         if (isUnassessed()) {
             return -1;
         }
 
-        return lastAssessmentCompassResult.getConfidence();
+        return getLastAssessmentCompassResult().getConfidence();
     }
 
     /**
@@ -142,12 +156,13 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return The coverage of the last compass result, -1 if no compass result is available
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public double getLastAssessmentCoverage() {
         if (isUnassessed()) {
             return -1;
         }
 
-        return lastAssessmentCompassResult.getCoverage();
+        return getLastAssessmentCompassResult().getCoverage();
     }
 
     /**

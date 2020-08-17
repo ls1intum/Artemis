@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.Objects;
 
@@ -8,14 +8,21 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public abstract class UMLActivityElement extends UMLElement {
 
+    // TODO: use UML Container Element instead
+
     protected String name;
 
     @Nullable
     private UMLActivity parentActivity;
 
+    /**
+     * to make mockito happy
+     */
+    public UMLActivityElement() {
+    }
+
     public UMLActivityElement(String name, String jsonElementID) {
         super(jsonElementID);
-
         this.name = name;
     }
 

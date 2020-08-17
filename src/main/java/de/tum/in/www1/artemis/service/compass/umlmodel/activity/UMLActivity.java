@@ -1,5 +1,6 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
@@ -10,13 +11,19 @@ public class UMLActivity extends UMLActivityElement {
 
     public final static String UML_ACTIVITY_TYPE = "Activity";
 
-    private List<UMLActivityElement> childElements;
+    private final List<UMLActivityElement> childElements;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLActivity() {
+        super();
+        childElements = new ArrayList<>();
+    }
 
     public UMLActivity(String name, List<UMLActivityElement> childElements, String jsonElementID) {
         super(name, jsonElementID);
-
         this.childElements = childElements;
-
         setActivityOfContainedElements();
     }
 
@@ -37,7 +44,7 @@ public class UMLActivity extends UMLActivityElement {
 
         UMLActivity referenceActivity = (UMLActivity) reference;
 
-        return NameSimilarity.levenshteinSimilarity(name, referenceActivity.getName());
+        return NameSimilarity.levenshteinSimilarity(getName(), referenceActivity.getName());
     }
 
     @Override

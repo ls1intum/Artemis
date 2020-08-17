@@ -85,7 +85,7 @@
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
             </label>
         </div>
-        <table class="table exercise-table guided-tour-exercise-table" [hidden]="exercises.length === 0">
+        <table class="table exercise-table guided-tour-exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="type">

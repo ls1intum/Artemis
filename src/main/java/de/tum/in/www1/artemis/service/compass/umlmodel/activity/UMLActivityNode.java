@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import java.util.Objects;
 
@@ -34,7 +34,9 @@ public class UMLActivityNode extends UMLActivityElement {
             return 0;
         }
 
-        return NameSimilarity.levenshteinSimilarity(name, referenceNode.getName());
+        // TODO: take the parent element into account
+
+        return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName());
     }
 
     @Override
