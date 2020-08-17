@@ -139,23 +139,23 @@
                         </th>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.PROGRAMMING)">
                             <th>
-                                <span jhiTranslate="artemisApp.programmingExercise.shortName">Repositories</span>
+                                <span>{{ 'artemisApp.exercise.shortName' | translate }}</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span>
+                                <span>{{ 'artemisApp.programmingExercise.repositories' | translate }}</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>
+                                <span>{{ 'artemisApp.programmingExercise.buildplans' | translate }}</span>
                             </th>
                             <th>
-                                <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>
+                                <span>{{ 'artemisApp.programmingExercise.participationMode' | translate }}</span>
                             </th>
                         </ng-container>
                         <th *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.QUIZ)">
-                            <span jhiTranslate="artemisApp.quizExercise.numberOfQuestions">Number of Questions</span>
+                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</span>
                         </th>
                         <th *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.MODELING)">
-                            <span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>
+                            <span>{{ 'artemisApp.modelingExercise.diagramType' | translate }}</span>
                         </th>
                         <th
                             *ngIf="
@@ -164,7 +164,7 @@
                                 exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.MODELING)
                             "
                         >
-                            <span jhiTranslate="artemisApp.assessmentMode">Assessment mode</span>
+                            <span>{{ 'artemisApp.assessmentMode' | translate }}</span>
                         </th>
                         <th></th>
                     </tr>

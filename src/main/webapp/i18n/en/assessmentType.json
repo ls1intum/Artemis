@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "assessmentMode": "Assessment mode",
+        "assessmentMode": "Assessment Mode",
         "AssessmentType": {
             "null": "",
             "AUTOMATIC": "Automatic",
