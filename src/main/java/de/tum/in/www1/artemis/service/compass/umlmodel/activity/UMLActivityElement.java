@@ -15,6 +15,12 @@ public abstract class UMLActivityElement extends UMLElement {
     @Nullable
     private UMLActivity parentActivity;
 
+    /**
+     * to make mockito happy
+     */
+    public UMLActivityElement() {
+    }
+
     public UMLActivityElement(String name, String jsonElementID) {
         super(jsonElementID);
         this.name = name;

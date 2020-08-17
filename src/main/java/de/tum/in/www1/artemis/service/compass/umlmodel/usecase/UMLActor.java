@@ -39,7 +39,7 @@ public class UMLActor extends UMLElement {
         }
         UMLActor referenceObject = (UMLActor) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceObject.getName());
 
         // NOTE: even if it is possible in Apollon, a parent element does not really make sense here and would simply be wrong
 
