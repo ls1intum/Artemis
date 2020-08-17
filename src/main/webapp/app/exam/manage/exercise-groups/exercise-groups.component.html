@@ -295,7 +295,9 @@
                         </ng-container>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.QUIZ)">
                             <td class="align-middle">
-                                <ng-container *ngIf="asQuizExercise(exercise) as quizExercise"> </ng-container>
+                                <ng-container *ngIf="asQuizExercise(exercise) as quizExercise">
+                                    {{ quizExercise.quizQuestions.length }}
+                                </ng-container>
                             </td>
                         </ng-container>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.MODELING)">
