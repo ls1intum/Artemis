@@ -142,7 +142,7 @@ public class BambooBuildPlanService {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
                 }
 
-                if (staticCodeAnalysisEnabled) {
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
                     String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
