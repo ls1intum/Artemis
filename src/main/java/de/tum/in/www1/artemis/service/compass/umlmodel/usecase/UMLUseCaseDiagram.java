@@ -28,25 +28,25 @@ public class UMLUseCaseDiagram extends UMLDiagram {
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLUseCase useCase : useCaseList) {
+        for (UMLUseCase useCase : getUseCaseList()) {
             if (useCase.getJSONElementID().equals(jsonElementId)) {
                 return useCase;
             }
         }
 
-        for (UMLSystemBoundary systemBoundary : systemBoundaryList) {
+        for (UMLSystemBoundary systemBoundary : getSystemBoundaryList()) {
             if (systemBoundary.getJSONElementID().equals(jsonElementId)) {
                 return systemBoundary;
             }
         }
 
-        for (UMLActor actor : actorList) {
+        for (UMLActor actor : getActorList()) {
             if (actor.getJSONElementID().equals(jsonElementId)) {
                 return actor;
             }
         }
 
-        for (UMLUseCaseAssociation association : useCaseAssociationList) {
+        for (UMLUseCaseAssociation association : getUseCaseAssociationList()) {
             if (association.getJSONElementID().equals(jsonElementId)) {
                 return association;
             }

@@ -8,7 +8,14 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
 
     private long modelSubmissionId;
 
+    @Deprecated(since = "4.2.3", forRemoval = true)
     private CompassResult lastAssessmentCompassResult = null;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLDiagram() {
+    }
 
     public UMLDiagram(long modelSubmissionId) {
         this.modelSubmissionId = modelSubmissionId;
@@ -105,15 +112,17 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @param compassResult the most recent Compass result for this diagram
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public void setLastAssessmentCompassResult(CompassResult compassResult) {
         lastAssessmentCompassResult = compassResult;
     }
 
     /**
      * Returns the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
-     *
+     * This method is deprecated because the UML Diagram should not store such information. This should rather be stored somewhere else!
      * @return the most recent Compass result for this diagram
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public CompassResult getLastAssessmentCompassResult() {
         return lastAssessmentCompassResult;
     }
@@ -123,8 +132,9 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return true if Compass has not already calculated an automatic assessment for this diagram, false otherwise
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public boolean isUnassessed() {
-        return lastAssessmentCompassResult == null;
+        return getLastAssessmentCompassResult() == null;
     }
 
     /**
@@ -132,12 +142,13 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return The confidence of the last compass result, -1 if no compass result is available
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public double getLastAssessmentConfidence() {
         if (isUnassessed()) {
             return -1;
         }
 
-        return lastAssessmentCompassResult.getConfidence();
+        return getLastAssessmentCompassResult().getConfidence();
     }
 
     /**
@@ -145,12 +156,13 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      *
      * @return The coverage of the last compass result, -1 if no compass result is available
      */
+    @Deprecated(since = "4.2.3", forRemoval = true)
     public double getLastAssessmentCoverage() {
         if (isUnassessed()) {
             return -1;
         }
 
-        return lastAssessmentCompassResult.getCoverage();
+        return getLastAssessmentCompassResult().getCoverage();
     }
 
     /**

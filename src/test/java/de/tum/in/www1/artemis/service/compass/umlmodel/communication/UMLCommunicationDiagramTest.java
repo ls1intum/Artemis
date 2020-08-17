@@ -1,9 +1,16 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.communication;
 
+import static com.google.gson.JsonParser.parseString;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 
 public class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
 
@@ -13,12 +20,24 @@ public class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityCommunicationDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(communicationModel1), new ModelingSubmission().model(communicationModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(communicationModel2), new ModelingSubmission().model(communicationModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(communicationModel1), modelingSubmission(communicationModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(communicationModel2), modelingSubmission(communicationModel2), 0.8, 1.0);
     }
 
     @Test
     void similarityCommunicationDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(communicationModel1), new ModelingSubmission().model(communicationModel2), 0.0, 0.2241);
+        compareSubmissions(modelingSubmission(communicationModel1), modelingSubmission(communicationModel2), 0.0, 0.2241);
+    }
+
+    @Test
+    void parseCommunicationDiagramModelCorrectly() throws IOException {
+        UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(communicationModel2).getAsJsonObject(), 1L);
+        assertThat(diagram).isInstanceOf(UMLCommunicationDiagram.class);
+        UMLCommunicationDiagram communicationDiagram = (UMLCommunicationDiagram) diagram;
+        assertThat(communicationDiagram.getObjectList()).hasSize(5);
+        assertThat(communicationDiagram.getCommunicationLinkList()).hasSize(5);
+
+        assertThat(communicationDiagram.getElementByJSONID("619ddf50-f2a6-4004-9fb3-db64ee10cd6e")).isInstanceOf(UMLObject.class);
+        assertThat(communicationDiagram.getElementByJSONID("64040203-6e35-4b42-8ab5-71b544a70fa6")).isInstanceOf(UMLCommunicationLink.class);
     }
 }

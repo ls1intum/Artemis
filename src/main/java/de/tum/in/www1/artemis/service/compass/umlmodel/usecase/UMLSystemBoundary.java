@@ -22,7 +22,7 @@ public class UMLSystemBoundary extends UMLContainerElement {
 
         if (reference instanceof UMLSystemBoundary) {
             UMLSystemBoundary referencePackage = (UMLSystemBoundary) reference;
-            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
+            similarity += NameSimilarity.levenshteinSimilarity(getName(), referencePackage.getName());
         }
 
         // NOTE: even if it is possible in Apollon, a parent element does not really make sense here and would simply be wrong
