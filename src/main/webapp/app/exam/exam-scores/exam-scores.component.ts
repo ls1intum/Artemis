@@ -219,11 +219,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // For average points for exercise groups
             if (groupResult.noOfParticipantsWithFilter) {
                 groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+                groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
             }
             // Calculate average points for exercises
             groupResult.exerciseResults.forEach((exResult) => {
                 if (exResult.noOfParticipantsWithFilter) {
                     exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                    exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
                 }
             });
         }
