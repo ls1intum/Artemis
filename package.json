@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "4.4.3",
+    "version": "4.4.4",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -43,7 +43,7 @@
         "export-to-csv": "0.2.1",
         "fingerprintjs2": "2.1.2",
         "franc-min": "5.0.0",
-        "interactjs": "1.9.21",
+        "interactjs": "1.9.22",
         "jquery": "3.5.1",
         "lodash": "4.17.20",
         "lodash.template": "4.5.0",
