@@ -325,7 +325,7 @@ public class ProgrammingExerciseService {
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
             // Keep or delete static code analysis configuration in pom.xml
-            sectionsMap.put("static-code-analysis", programmingExercise.isStaticCodeAnalysisEnabled());
+            sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";

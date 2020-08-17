@@ -89,15 +89,15 @@ public class UMLMethod extends UMLElement {
             return similarity;
         }
 
-        int elementCount = parameters.size() + 2;
+        int elementCount = getParameters().size() + 2;
         double weight = 1.0 / elementCount;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceMethod.getName()) * weight;
-        similarity += NameSimilarity.nameEqualsSimilarity(returnType, referenceMethod.getReturnType()) * weight;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceMethod.getName()) * weight;
+        similarity += NameSimilarity.nameEqualsSimilarity(getReturnType(), referenceMethod.getReturnType()) * weight;
 
         List<String> referenceParameters = referenceMethod.getParameters() != null ? referenceMethod.getParameters() : Collections.emptyList();
         for (String referenceParameter : referenceParameters) {
-            if (parameters.contains(referenceParameter)) {
+            if (getParameters().contains(referenceParameter)) {
                 similarity += weight;
             }
         }
@@ -113,8 +113,10 @@ public class UMLMethod extends UMLElement {
      * @return true if the parent classes are similar/equal, false otherwise
      */
     private boolean parentsSimilar(UMLMethod referenceMethod) {
-        if (parentElement.getSimilarityID() != -1 && referenceMethod.getParentElement().getSimilarityID() != -1) {
-            return parentElement.getSimilarityID() == referenceMethod.getParentElement().getSimilarityID();
+        if (referenceMethod.getParentElement() != null) {
+            if (parentElement.getSimilarityID() != -1 && referenceMethod.getParentElement().getSimilarityID() != -1) {
+                return parentElement.getSimilarityID() == referenceMethod.getParentElement().getSimilarityID();
+            }
         }
 
         return parentElement.similarity(referenceMethod.getParentElement()) > CompassConfiguration.EQUALITY_THRESHOLD;
@@ -143,11 +145,11 @@ public class UMLMethod extends UMLElement {
 
         UMLMethod otherMethod = (UMLMethod) obj;
 
-        if (otherMethod.getParameters().size() != parameters.size() || !otherMethod.getParameters().containsAll(parameters)
-                || !parameters.containsAll(otherMethod.getParameters())) {
+        if (otherMethod.getParameters().size() != getParameters().size() || !otherMethod.getParameters().containsAll(getParameters())
+                || !getParameters().containsAll(otherMethod.getParameters())) {
             return false;
         }
 
-        return Objects.equals(otherMethod.getReturnType(), returnType) && Objects.equals(otherMethod.getParentElement().getName(), parentElement.getName());
+        return Objects.equals(otherMethod.getReturnType(), getReturnType()) && Objects.equals(otherMethod.getParentElement().getName(), getParentElement().getName());
     }
 }

@@ -28,7 +28,7 @@ public class UMLComponent extends UMLContainerElement {
         double similarity = 0;
 
         UMLComponent referenceComponent = (UMLComponent) reference;
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceComponent.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponent.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (Objects.equals(getParentElement(), referenceComponent.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;

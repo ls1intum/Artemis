@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
@@ -89,19 +88,5 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
         assertThat(interfaceI3.getParentElement()).isEqualTo(componentB);
         assertThat(interfaceI4.getParentElement()).isEqualTo(componentC);
         assertThat(interfaceI5.getParentElement()).isNull();
-    }
-
-    private UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentList().stream().filter(component -> component.getName().equals(name)).findFirst().get();
-    }
-
-    private UMLComponentInterface getInterface(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentInterfaceList().stream().filter(componentInterface -> componentInterface.getName().equals(name)).findFirst().get();
-    }
-
-    private UMLComponentRelationship getRelationship(UMLComponentDiagram componentDiagram, UMLElement source, UMLElement target) {
-        // Source and target do not really matter in this test so we can also check the other way round
-        return componentDiagram.getComponentRelationshipList().stream().filter(relationship -> (relationship.getSource().equals(source) && relationship.getTarget().equals(target))
-                || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().get();
     }
 }

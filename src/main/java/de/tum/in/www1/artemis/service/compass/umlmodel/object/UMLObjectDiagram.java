@@ -21,15 +21,15 @@ public class UMLObjectDiagram extends UMLDiagram {
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLObject object : objectList) {
+        for (UMLObject object : getObjectList()) {
             if (object.getJSONElementID().equals(jsonElementId)) {
                 return object;
             }
         }
 
-        for (UMLObjectLink communicationLink : objectLinkList) {
-            if (communicationLink.getJSONElementID().equals(jsonElementId)) {
-                return communicationLink;
+        for (UMLObjectLink objectLink : getObjectLinkList()) {
+            if (objectLink.getJSONElementID().equals(jsonElementId)) {
+                return objectLink;
             }
         }
 

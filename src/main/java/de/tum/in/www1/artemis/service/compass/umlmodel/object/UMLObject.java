@@ -64,7 +64,7 @@ public class UMLObject extends UMLElement {
         }
         UMLObject referenceObject = (UMLObject) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceObject.getName());
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceObject.getName());
 
         return ensureSimilarityRange(similarity);
     }

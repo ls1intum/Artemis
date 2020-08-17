@@ -29,13 +29,13 @@ public class UMLDeploymentDiagram extends UMLComponentDiagram {
             return element;
         }
 
-        for (UMLNode node : nodeList) {
+        for (UMLNode node : getNodeList()) {
             if (node.getJSONElementID().equals(jsonElementId)) {
                 return node;
             }
         }
 
-        for (UMLArtifact artifact : artifactList) {
+        for (UMLArtifact artifact : getArtifactList()) {
             if (artifact.getJSONElementID().equals(jsonElementId)) {
                 return artifact;
             }

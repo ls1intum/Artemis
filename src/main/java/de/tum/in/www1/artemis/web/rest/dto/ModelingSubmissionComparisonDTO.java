@@ -12,6 +12,10 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
 
     private Long score2;
 
+    private int size1;
+
+    private int size2;
+
     private Double similarity;
 
     public Long getSubmissionId1() {
@@ -28,6 +32,14 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
 
     public Long getScore2() {
         return score2;
+    }
+
+    public int getSize1() {
+        return size1;
+    }
+
+    public int getSize2() {
+        return size2;
     }
 
     public Double getSimilarity() {
@@ -59,6 +71,16 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
         return this;
     }
 
+    public ModelingSubmissionComparisonDTO size1(int size1) {
+        this.size1 = size1;
+        return this;
+    }
+
+    public ModelingSubmissionComparisonDTO size2(int size2) {
+        this.size2 = size2;
+        return this;
+    }
+
     @Override
     public int compareTo(@NotNull ModelingSubmissionComparisonDTO other) {
         return Double.compare(similarity, other.similarity);
@@ -68,4 +90,5 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
     public String toString() {
         return "SubmissionComparisonDTO{submission1=" + submissionId1 + ", submission2=" + submissionId2 + ", similarity=" + similarity + "}";
     }
+
 }
