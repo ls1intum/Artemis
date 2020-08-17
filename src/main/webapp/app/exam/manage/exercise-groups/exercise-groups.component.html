@@ -186,7 +186,7 @@
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.PROGRAMMING)">
                             <ng-container *ngIf="asProgrammingExercise(exercise) as programmingExercise; else emptyProgrammingCells">
-                                <td>
+                                <td class="align-middle">
                                     {{ programmingExercise.shortName }}
                                 </td>
                                 <td>
@@ -294,12 +294,12 @@
                             </ng-container>
                         </ng-container>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.QUIZ)">
-                            <td>
+                            <td class="align-middle">
                                 <ng-container *ngIf="asQuizExercise(exercise) as quizExercise"> </ng-container>
                             </td>
                         </ng-container>
                         <ng-container *ngIf="exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.MODELING)">
-                            <td>
+                            <td class="align-middle">
                                 <ng-container *ngIf="asModelingExercise(exercise) as modelingExercise">
                                     {{ 'artemisApp.DiagramType.' + modelingExercise.diagramType | translate }}
                                 </ng-container>
@@ -312,7 +312,7 @@
                                 exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.MODELING)
                             "
                         >
-                            <td>
+                            <td class="align-middle">
                                 <div *ngIf="asProgrammingExercise(exercise) || asTextExercise(exercise) || asModelingExercise(exercise)">
                                     {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | translate }}
                                 </div>
