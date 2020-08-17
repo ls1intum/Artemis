@@ -23,6 +23,8 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
+    maxTotalScore = 0;
+    achievedTotalScore = 0;
 
     constructor(
         private route: ActivatedRoute,
@@ -50,13 +52,6 @@ export class StudentExamDetailComponent implements OnInit {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user;
-    }
-
-    /**
-     * Link to download the exported PDF of the students participation
-     */
-    downloadPdf() {
-        // TODO
     }
 
     /**
@@ -99,9 +94,19 @@ export class StudentExamDetailComponent implements OnInit {
         );
     }
 
+    /**
+     * Sets the student exam, and calculates the total score of the exam and achieved total score of the student.
+     * @param studentExam
+     */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
+        studentExam.exercises.forEach((exercise) => {
+            this.maxTotalScore += exercise.maxScore;
+            if (!!exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length >= 1) {
+                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score * exercise.maxScore) / 100;
+            }
+        });
     }
 
     private initWorkingTimeForm() {
