@@ -111,7 +111,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                     catchError(() => throwError('exerciseNotFound')),
                     tap((exercise) => {
                         this.exercise = exercise;
-                        this.course = exercise.course ? exercise.course : exercise.exerciseGroup!.exam!.course;
+                        this.course = exercise.course ?? exercise.exerciseGroup!.exam!.course;
                     }),
                     // Set selected participation
                     tap(() => {
