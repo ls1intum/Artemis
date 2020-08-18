@@ -85,7 +85,10 @@
                                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                             </button>
                             <button
-                                *ngIf="course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict[exerciseGroup.id]; else containsNoProgrammingExercise"
+                                *ngIf="
+                                    course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.PROGRAMMING);
+                                    else containsNoProgrammingExercise
+                                "
                                 jhiDeleteButton
                                 [entityTitle]="exerciseGroup.title"
                                 deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
