@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -129,12 +128,12 @@ class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityActivityDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(activityModel1), new ModelingSubmission().model(activityModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(activityModel2), new ModelingSubmission().model(activityModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(activityModel1), modelingSubmission(activityModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(activityModel2), modelingSubmission(activityModel2), 0.8, 1.0);
     }
 
     @Test
     void similarityActivityDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(activityModel1), new ModelingSubmission().model(activityModel2), 0.0, 0.5708);
+        compareSubmissions(modelingSubmission(activityModel1), modelingSubmission(activityModel2), 0.0, 0.5708);
     }
 }

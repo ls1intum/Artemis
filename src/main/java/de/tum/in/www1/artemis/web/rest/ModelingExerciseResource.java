@@ -422,7 +422,10 @@ public class ModelingExerciseResource {
         }
 
         // TODO: let the user specify the minimum similarity in the client
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, 0.8);
+        var minimumSimilarity = 0.8;
+        var minimumModelSize = 5;
+        var minimumScore = 0;
+        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, minimumSimilarity, minimumModelSize, minimumScore);
         return ResponseEntity.ok(comparisonResult.stream().sorted());
     }
 }
