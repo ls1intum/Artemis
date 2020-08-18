@@ -680,9 +680,9 @@ public class ExamResource {
         }
 
         exam.setExerciseGroups(orderedExerciseGroups);
-        exam = examService.save(exam);
+        examService.save(exam);
 
-        return ResponseEntity.ok(exam.getExerciseGroups());
+        return ResponseEntity.ok(orderedExerciseGroups);
     }
 
     /**
