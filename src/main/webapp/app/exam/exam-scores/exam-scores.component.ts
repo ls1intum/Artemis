@@ -121,11 +121,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const labels = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
-            if (i === this.histogramData.length - 1) {
-                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}]`;
-            } else {
-                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth})`;
-            }
+            labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
+            labels[i] += (i === this.histogramData.length - 1) ? ']' : ')';
         }
         this.barChartLabels = labels;
 
