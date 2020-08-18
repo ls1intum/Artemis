@@ -33,7 +33,6 @@
     (nextSubmission)="nextSubmission()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-
     <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
         <div class="d-flex align-items-center ml-auto" editorNavbar>
             <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
@@ -48,7 +47,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
-            >Go to repository</a
+                >Go to repository</a
             >
             <jhi-updating-result
                 *ngIf="participation"
