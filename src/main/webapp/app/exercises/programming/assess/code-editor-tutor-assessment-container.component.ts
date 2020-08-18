@@ -192,56 +192,37 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     /**
      * Save the assessment
      */
-    /**
-     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
-     * Sets isSaving to true
-     * Creates or updates this result in the manual result service
-     */
     save(): void {
-        /*
-        if (!this.assessmentsAreValid) {
+        this.saveBusy = true;
+        /*if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
-        }
-
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
-
-        this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+        }*/
+        this.manualResultService.save(this.participation.id, this.result).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.handleError(error),
-        );*/
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+        );
     }
 
     /**
      * Submit the assessment
+     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
+     * Sets submitBusy to true
+     * Creates or updates this result in the manual result service
      */
     submit(): void {
-        /*if (!this.result?.id) {
-            return; // We need to have saved the result before
-        }
-
-        if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
-            return;
-        }
-
-        // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
-
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.manualResultService.save(this.participation.id, this.result, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            (error: HttpErrorResponse) => this.handleError(error),
-        );*/
-        this.submitBusy = true;
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+        );
+        /*
         if (this.result.id != null) {
             this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
         } else {
             // in case id is null or undefined
             this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
-        }
+        }*/
     }
 
     /**
