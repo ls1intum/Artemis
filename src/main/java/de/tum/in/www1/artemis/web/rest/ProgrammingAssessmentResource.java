@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
+
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +13,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /** REST controller for managing ProgrammingAssessment. */
 @RestController
@@ -28,11 +35,21 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final WebsocketMessagingService messagingService;
+
+    private final LtiService ltiService;
+
+    private final ParticipationService participationService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService) {
+            ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService, ResultRepository resultRepository, ExamService examService,
+            WebsocketMessagingService messagingService, LtiService ltiService, ParticipationService participationService) {
         super(authCheckService, userService, exerciseService, programmingSubmissionService, programmingAssessmentService, resultRepository, examService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.messagingService = messagingService;
+        this.ltiService = ltiService;
+        this.participationService = participationService;
     }
 
     /**
@@ -82,6 +99,95 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
+    }
+
+    /**
+     * Save or submit feedback for programming exercise.
+     *
+     * @param participationId the id of the participation that should be sent to the client
+     * @param submit       defines if assessment is submitted or saved
+     * @param newResult    result with ist of feedbacks to be saved to the database
+     * @return the result saved to the database
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/participations/{participationId}/programming-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
+            @RequestBody Result newResult) {
+        log.debug("REST request to save a new result : {}", newResult);
+        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        final var latestExistingResult = participation.findLatestResult();
+        if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
+            // prevent that tutors create multiple manual results
+            forbidden();
+        }
+
+        // make sure that the participation cannot be manipulated on the client side
+        newResult.setParticipation(participation);
+
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+        checkAuthorization(exercise, userService.getUserWithGroupsAndAuthorities());
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(latestExistingResult, exercise, participation, user, isAtLeastInstructor)) {
+            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + latestExistingResult.getSubmission().getId());
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
+
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || !exercise.areManualResultsAllowed()) {
+            return forbidden();
+        }
+
+        if (newResult.getId() != null) {
+            throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
+        }
+        else if (newResult.getResultString() == null) {
+            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
+        }
+        else if (newResult.getResultString().length() > 255) {
+            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
+        }
+        else if (newResult.getScore() == null) {
+            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
+        }
+        else if (newResult.getScore() != 100 && newResult.isSuccessful()) {
+            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
+        }
+        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
+            throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
+        }
+
+        // Create manual submission with last commit hash und current time stamp.
+        ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
+                SubmissionType.MANUAL);
+        newResult.setSubmission(submission);
+
+        Result result = programmingAssessmentService.saveManualAssessment(submission, newResult);
+
+        if (submit) {
+            result = programmingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+        }
+        // remove information about the student for tutors to ensure double-blind assessment
+        if (!isAtLeastInstructor) {
+            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+        }
+        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+
+            // if it is an example result we do not have any participation (isExampleResult can be also null)
+            if (Boolean.FALSE.equals(result.isExampleResult()) || result.isExampleResult() == null) {
+
+                if (result.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
+                    ltiService.onNewResult((ProgrammingExerciseStudentParticipation) result.getParticipation());
+                }
+                messagingService.broadcastNewResult(result.getParticipation(), result);
+            }
+        }
+        return ResponseEntity.ok(result);
     }
 
     @Override
