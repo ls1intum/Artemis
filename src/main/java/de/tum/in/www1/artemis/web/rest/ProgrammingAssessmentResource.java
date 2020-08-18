@@ -171,6 +171,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             newResult.setSubmission(submission);
         } else {
             // TODO: we should basically set the submission here to prevent possible manipulation of the submission
+            submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(newResult.getSubmission().getId());
+            newResult.setSubmission(submission);
             if (newResult.getSubmission() == null) {
                 throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
             }
@@ -179,7 +181,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result = programmingAssessmentService.saveManualAssessment(/*submission,*/ newResult);
 
         if (submit) {
-            result = programmingAssessmentService.submitManualAssessment(result.getId(), exercise, result.getSubmission().getSubmissionDate());
+
+            result = programmingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
