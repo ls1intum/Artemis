@@ -127,9 +127,8 @@ export class ExerciseGroupsComponent implements OnInit {
      * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
      * @param exerciseId
      * @param exerciseGroupId
-     * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
      */
-    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise = false) {
+    removeExercise(exerciseId: number, exerciseGroupId: number) {
         if (this.exerciseGroups) {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
