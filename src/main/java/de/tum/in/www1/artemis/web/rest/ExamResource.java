@@ -682,6 +682,7 @@ public class ExamResource {
         exam.setExerciseGroups(orderedExerciseGroups);
         examService.save(exam);
 
+        // Return the original request body as it might contain exercise details (e.g. quiz questions), which would be lost otherwise
         return ResponseEntity.ok(orderedExerciseGroups);
     }
 
