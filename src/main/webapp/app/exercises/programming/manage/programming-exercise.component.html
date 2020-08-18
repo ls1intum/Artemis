@@ -71,11 +71,11 @@
                     </td>
                     <td>
                         <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.title }}</a>
-                        <jhi-programming-exercise-test-cases-dirty-warning
+                        <jhi-programming-exercise-grading-dirty-warning
                             class="ml-2"
                             [programmingExerciseId]="programmingExercise.id"
                             [hasUpdatedTestCasesInitialValue]="programmingExercise.testCasesChanged"
-                        ></jhi-programming-exercise-test-cases-dirty-warning>
+                        ></jhi-programming-exercise-grading-dirty-warning>
                     </td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
