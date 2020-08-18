@@ -12,13 +12,17 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 export type ModelingSubmissionComparisonDTO = {
-    submissionId1: number;
-    submissionId2: number;
-    size1: number;
-    size2: number;
-    score1: number;
-    score2: number;
+    element1: ModelingSubmissionComparisonElement;
+    element2: ModelingSubmissionComparisonElement;
     similarity: number;
+};
+
+export type ModelingSubmissionComparisonElement = {
+    submissionId: number;
+    size: number;
+    score: number;
+    studentLogin: string;
+    submissionLink: string;
 };
 
 @Injectable({ providedIn: 'root' })
