@@ -48,28 +48,34 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
      *
-     * @param submission the modeling submission to which the feedback belongs to
+     // * @param submission the modeling submission to which the feedback belongs to
      * @param result the new result of a programming exercise
      * @return result that was saved in the database
      */
     @Transactional
-    public Result saveManualAssessment(ProgrammingSubmission submission, Result result) {
-        if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(true);
-        }
+    public Result saveManualAssessment(/*ProgrammingSubmission submission, */Result result) {
+        Boolean isFeedbackEmpty = result.getFeedbacks().isEmpty();
+        result.setHasFeedback(!isFeedbackEmpty);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-
+        // TODO: Double check why we set here complaint false
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
+
+        result.setCompletionDate(null);
+        result.setRated(false);
 
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(result);
         });
         /*
-         * if (result.getSubmission() == null) { result.setSubmission(submission); submission.setResult(result); programmingSubmissionRepository.save(submission); }
-         */
+        if (result.getSubmission() == null) {
+            result.setSubmission(submission);
+            submission.setResult(result);
+            programmingSubmissionRepository.save(submission);
+        }*/
+
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);
     }
