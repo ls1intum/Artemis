@@ -117,12 +117,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
 
+    private calculateTickMax() {
+        const max = Math.max(...this.histogramData);
+        return Math.ceil((max + 1) / 10) * 10;
+    }
+
     private createChart() {
         const labels = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
             labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-            labels[i] += (i === this.histogramData.length - 1) ? ']' : ')';
+            labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
         }
         this.barChartLabels = labels;
 
@@ -143,6 +148,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             beginAtZero: true,
                             precision: 0,
                             min: 0,
+                            max: this.calculateTickMax(),
                         } as LinearTickOptions,
                     },
                 ],
@@ -246,6 +252,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
 
         if (this.chart) {
+            this.chart.config.options.scales.yAxes[0].ticks.max = this.calculateTickMax();
             this.chart.update();
         }
     }
