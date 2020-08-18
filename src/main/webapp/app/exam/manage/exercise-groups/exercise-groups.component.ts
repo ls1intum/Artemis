@@ -54,7 +54,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
-     * See {@link setupExerciseGroupContainsProgrammingExerciseDict}.
+     * See {@link setupExerciseGroupToExerciseTypesDict}.
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -67,7 +67,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.course = examRes.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
-                this.setupExerciseGroupContainsProgrammingExerciseDict();
+                this.setupExerciseGroupToExerciseTypesDict();
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
@@ -124,7 +124,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
-     * it calls {@link setupExerciseGroupContainsProgrammingExerciseDict} to update the dictionary
+     * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
      * @param exerciseId
      * @param exerciseGroupId
      * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
@@ -134,7 +134,7 @@ export class ExerciseGroupsComponent implements OnInit {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
-                    this.setupExerciseGroupContainsProgrammingExerciseDict();
+                    this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
         }
@@ -264,7 +264,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
      * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
-    setupExerciseGroupContainsProgrammingExerciseDict() {
+    setupExerciseGroupToExerciseTypesDict() {
         this.exerciseGroupToExerciseTypesDict = {};
         if (!this.exerciseGroups) {
             return;
