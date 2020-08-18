@@ -58,6 +58,8 @@ public class ParticipationService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final RatingRepository ratingRepository;
+
     private final TeamRepository teamRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -81,7 +83,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService) {
+            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -100,6 +102,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
+        this.ratingRepository = ratingRepository;
     }
 
     /**
@@ -1083,6 +1086,7 @@ public class ParticipationService {
 
         complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
         complaintRepository.deleteByResult_Participation_Id(participationId);
+        ratingRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 

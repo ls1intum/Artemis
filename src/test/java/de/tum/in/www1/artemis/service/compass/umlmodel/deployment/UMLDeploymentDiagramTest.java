@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -23,16 +22,16 @@ public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityDeploymentDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(deploymentModel1), new ModelingSubmission().model(deploymentModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(deploymentModel2), new ModelingSubmission().model(deploymentModel2), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(deploymentModel3), new ModelingSubmission().model(deploymentModel3), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(deploymentModel1), modelingSubmission(deploymentModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(deploymentModel2), modelingSubmission(deploymentModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(deploymentModel3), modelingSubmission(deploymentModel3), 0.8, 1.0);
     }
 
     @Test
     void similarityDeploymentDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(deploymentModel1), new ModelingSubmission().model(deploymentModel2), 0.0, 0.3688);
-        compareSubmissions(new ModelingSubmission().model(deploymentModel1), new ModelingSubmission().model(deploymentModel3), 0.0, 0.1022);
-        compareSubmissions(new ModelingSubmission().model(deploymentModel2), new ModelingSubmission().model(deploymentModel3), 0.0, 0.1099);
+        compareSubmissions(modelingSubmission(deploymentModel1), modelingSubmission(deploymentModel2), 0.0, 0.3688);
+        compareSubmissions(modelingSubmission(deploymentModel1), modelingSubmission(deploymentModel3), 0.0, 0.1022);
+        compareSubmissions(modelingSubmission(deploymentModel2), modelingSubmission(deploymentModel3), 0.0, 0.1099);
     }
 
     @Test
