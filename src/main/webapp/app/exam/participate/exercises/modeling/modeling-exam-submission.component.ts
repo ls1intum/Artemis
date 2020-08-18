@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, ChangeDetectorRef, OnInit, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, Input, ChangeDetectorRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -13,8 +13,9 @@ import { Exercise } from 'app/entities/exercise.model';
     templateUrl: './modeling-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit, AfterViewInit {
+export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -30,22 +31,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         super(changeDetectorReference);
     }
 
-    onActivate() {
-        // override methods -> do nothing
-        this.changeDetectorReference.detectChanges();
-    }
-
-    onDeactivate() {
-        // override methods -> do nothing
-    }
-
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
-    }
-
-    ngAfterViewInit(): void {
-        this.changeDetectorReference.detach();
     }
 
     getSubmission(): Submission {
