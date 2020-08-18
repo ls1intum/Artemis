@@ -6,7 +6,7 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="achievementPK"/>
             </column>
             <column name="title" type="VARCHAR(45)"/>
-            <column name="description" type="VARCHAR(45)"/>
+            <column name="description" type="VARCHAR(255)"/>
             <column name="icon" type="VARCHAR(45)"/>
             <column name="rank" type="INT"/>
         </createTable>
