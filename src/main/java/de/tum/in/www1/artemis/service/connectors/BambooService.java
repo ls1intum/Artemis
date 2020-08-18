@@ -9,16 +9,19 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -72,6 +75,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
+    private final FeedbackService feedbackService;
     private final RestTemplate restTemplate;
     private final BambooClient bambooClient;
     private final ObjectMapper mapper;
@@ -79,13 +83,14 @@ public class BambooService implements ContinuousIntegrationService {
     public BambooService(GitService gitService, ResultRepository resultRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
                          Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
-                         @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
+                         FeedbackService feedbackService, @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
+        this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
         this.bambooClient = bambooClient;
         this.mapper = mapper;
@@ -432,7 +437,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
                 // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
-                // we can still get the commit has from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
+                // we can still get the commit hash from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
                 String commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
                 log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
@@ -518,7 +523,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
         result.setParticipation((Participation) participation);
 
-        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs());
+        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
     }
 
     /**
@@ -547,11 +552,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Converts build result details into feedback and stores it in the result object
+     * Use addFeedbackToResultNew
      *
      * @param result to which to add the feedback.
      * @param failedTests All failed tests from the the rest API of bamboo
      * @return a list of feedbacks itemsstored in a result
      */
+    @Deprecated(since = "4.4.0", forRemoval = true)
     public List<Feedback> addFeedbackToResult(Result result, List<BambooTestResultDTO> failedTests) {
         if (failedTests == null) {
             return null;
@@ -623,10 +630,10 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param result the result for which the feedback should be added
      * @param jobs   the jobs list of the requestBody
-     * @return a list of feedbacks itemsstored in a result
+     * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
+     * @return a list of feedback items stored in a result
      */
-    @SuppressWarnings("unchecked")
-    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
+    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
         if (jobs == null) {
             return null;
         }
@@ -656,8 +663,14 @@ public class BambooService implements ContinuousIntegrationService {
 
                     createAutomaticFeedback(result, methodName, true, null);
                 }
+                // 3) process static code analysis feedback
+                boolean hasStaticCodeAnalysisFeedback = false;
+                if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
+                    hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
+                }
 
-                if (!job.getFailedTests().isEmpty()) {
+                // Relevant feedback exists if tests failed or static code analysis found issues
+                if (!job.getFailedTests().isEmpty() || hasStaticCodeAnalysisFeedback) {
                     result.setHasFeedback(true);
                 }
             }
@@ -667,6 +680,22 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return result;
+    }
+
+    /**
+     * Transforms build result static code analysis reports to feedback.
+     *
+     * @param result The result to which the static assessment feedback will be added
+     * @param reports Static assessment reports to be transformed
+     * @return true if static code analysis feedback was created else false
+     */
+    private boolean addStaticCodeAnalysisFeedbackToResult(Result result, List<StaticCodeAnalysisReportDTO> reports) {
+        if (reports == null) {
+            return false;
+        }
+        var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
+        result.addFeedbacks(feedbackList);
+        return feedbackList.size() > 0;
     }
 
     /**
@@ -760,10 +789,12 @@ public class BambooService implements ContinuousIntegrationService {
         if (response != null) {
             final var buildResult = response.getBody();
 
-            // Filter out build log artifacts
+            // Filter out build log and static code analysis artifacts
             if (buildResult != null && buildResult.getArtifacts() != null) {
+                List<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
+                artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts().setArtifacts(buildResult.getArtifacts().getArtifacts().stream()
-                        .filter(artifact -> !artifact.getName().equals("Build log"))
+                        .filter(artifact -> !artifactLabelFilter.contains(artifact.getName()))
                         .collect(Collectors.toList())
                 );
             }
@@ -813,7 +844,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=250",
+                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
                     HttpMethod.GET,
                     entity,
                     Map.class);
@@ -850,7 +881,9 @@ public class BambooService implements ContinuousIntegrationService {
                         logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
                         logString.startsWith("[ERROR] Re-run Maven using") ||
                         logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
-                        logString.startsWith("[ERROR] -> [Help 1]")
+                        logString.startsWith("[ERROR] -> [Help 1]") ||
+                        logString.startsWith("Unable to publish artifact") ||
+                        logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
                 ) {
                     continue;
                 }

@@ -30,12 +30,12 @@ class UMLMethodTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         method = new UMLMethod("myMethod(arg1, arg2): void", "myMethod", "void", List.of("arg1", "arg2"), "methodId");
-        method.setParentClass(parentClass);
+        method.setParentElement(parentClass);
 
-        when(referenceMethod.getParentClass()).thenReturn(referenceParentClass);
+        when(referenceMethod.getParentElement()).thenReturn(referenceParentClass);
         when(parentClass.getSimilarityID()).thenReturn(123);
         when(referenceParentClass.getSimilarityID()).thenReturn(123);
     }

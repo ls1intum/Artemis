@@ -1,16 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
 export const MAX_SCORE = 'maxScore';
 export const PRESENTATION_SCORE = 'presentationScore';
+export const REACHABLE_SCORE = 'reachableScore';
+export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
@@ -23,6 +25,7 @@ export class CourseScoreCalculationService {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
+        let reachableScore = 0;
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
@@ -36,8 +39,16 @@ export class CourseScoreCalculationService {
                             score = 0;
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                        reachableScore += exercise.maxScore;
                     }
                     presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
+
+                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
+                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
+                        reachableScore += exercise.maxScore;
+                    }
+                } else {
+                    reachableScore += exercise.maxScore;
                 }
             }
         }
@@ -47,8 +58,14 @@ export class CourseScoreCalculationService {
         } else {
             scores.set(RELATIVE_SCORE, 0);
         }
+        if (reachableScore > 0) {
+            scores.set(CURRENT_RELATIVE_SCORE, CourseScoreCalculationService.round((absoluteScore / reachableScore) * 100, 1));
+        } else {
+            scores.set(CURRENT_RELATIVE_SCORE, 0);
+        }
         scores.set(MAX_SCORE, maxScore);
         scores.set(PRESENTATION_SCORE, presentationScore);
+        scores.set(REACHABLE_SCORE, reachableScore);
         return scores;
     }
 

@@ -29,9 +29,6 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-/**
- * Created by Josias Montag on 06.10.16.
- */
 @Service
 public class ResultService {
 
@@ -59,6 +56,8 @@ public class ResultService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final RatingRepository ratingRepository;
+
     private final SubmissionRepository submissionRepository;
 
     private final ComplaintRepository complaintRepository;
@@ -66,7 +65,8 @@ public class ResultService {
     public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
             ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository) {
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -80,6 +80,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     /**
@@ -288,11 +289,7 @@ public class ResultService {
         // this call should cascade all feedback relevant changed and save them accordingly
         var savedResult = resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        Optional<Result> savedResultOpt = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
-        if (savedResultOpt.isEmpty()) {
-            throw new EntityNotFoundException("Could not retrieve result with id " + result.getId() + " after save.");
-        }
-        savedResult = savedResultOpt.get();
+        savedResult = findOneWithEagerSubmissionAndFeedback(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -319,6 +316,7 @@ public class ResultService {
     public void deleteResultWithComplaint(long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
         resultRepository.deleteById(resultId);
     }
 

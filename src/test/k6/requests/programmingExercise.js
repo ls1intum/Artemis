@@ -86,6 +86,7 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
+        staticCodeAnalysisEnabled: false,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
     };

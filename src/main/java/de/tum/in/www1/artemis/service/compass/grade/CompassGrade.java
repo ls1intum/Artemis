@@ -4,15 +4,15 @@ import java.util.Map;
 
 public class CompassGrade implements Grade {
 
-    private Map<String, String> jsonIdCommentsMapping;
+    private final Map<String, String> jsonIdCommentsMapping;
 
-    private Map<String, Double> jsonIdPointsMapping;
+    private final Map<String, Double> jsonIdPointsMapping;
 
-    private double points;
+    private final double points;
 
-    private double confidence;
+    private final double confidence;
 
-    private double coverage;
+    private final double coverage;
 
     public CompassGrade(double coverage, double confidence, double points, Map<String, String> jsonIdCommentsMapping, Map<String, Double> jsonIdPointsMapping) {
         this.coverage = coverage;

@@ -10,7 +10,6 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/core/Interactable';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,7 +27,7 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
-    providers: [FileUploadAssessmentsService, WindowRef],
+    providers: [FileUploadAssessmentsService],
     templateUrl: './file-upload-assessment.component.html',
     styleUrls: ['./file-upload-assessment.component.scss'],
     encapsulation: ViewEncapsulation.None,
@@ -75,7 +74,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private accountService: AccountService,
         private location: Location,
-        private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
@@ -194,8 +192,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.resizableMinWidth = window.screen.width / 6;
+        this.resizableMinHeight = window.screen.height / 7;
 
         this.interactResizable = interact('.resizable-submission')
             .resizable({

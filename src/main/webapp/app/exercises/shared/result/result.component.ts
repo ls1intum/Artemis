@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import * as moment from 'moment';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { getExercise, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
@@ -54,6 +54,8 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestNames = false;
+
+    ParticipationType = ParticipationType;
 
     textColorClass: string;
     hasFeedback: boolean;

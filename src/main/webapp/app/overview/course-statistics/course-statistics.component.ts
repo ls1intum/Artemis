@@ -8,10 +8,16 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import {
+    ABSOLUTE_SCORE,
+    CourseScoreCalculationService,
+    MAX_SCORE,
+    PRESENTATION_SCORE,
+    RELATIVE_SCORE,
+    REACHABLE_SCORE,
+    CURRENT_RELATIVE_SCORE,
+} from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -50,6 +56,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     // max score
     totalMaxScore = 0;
     totalMaxScores = {};
+
+    // current max score
+    reachableScore = 0;
+    reachableScores = {};
+
+    // current max score
+    currentRelativeScore = 0;
+    currentRelativeScores = {};
 
     // presentation score
     totalPresentationScore = 0;
@@ -229,9 +243,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.courseExercises = this.course!.exercises;
         this.calculateMaxScores();
+        this.calculateReachableScores();
         this.calculateAbsoluteScores();
         this.calculateRelativeScores();
         this.calculatePresentationScores();
+        this.calculateCurrentRelativeScores();
         this.groupExercisesByType();
     }
 
@@ -260,62 +276,47 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         scores: { data: [], label: 'Score', tooltips: [], footer: [] },
                         missedScores: { data: [], label: 'Missed score', tooltips: [], footer: [] },
                         notGraded: { data: [], label: 'Not graded', tooltips: [], footer: [] },
+                        reachableScore: 0,
+                        currentRelativeScore: 0,
                     };
                 }
 
-                exercise.studentParticipations.forEach((participation) => {
-                    if (participation.results && participation.results.length > 0) {
-                        const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
-                        if (participationResult && participationResult.rated) {
-                            const participationScore = participationResult.score;
-                            const missedScore = 100 - participationScore;
-                            groupedExercises[index].scores.data.push(participationScore);
-                            groupedExercises[index].missedScores.data.push(missedScore);
-                            groupedExercises[index].notGraded.data.push(0);
-                            groupedExercises[index].notGraded.tooltips.push(null);
-                            groupedExercises[index].names.push(exercise.title);
-                            groupedExercises[index].scores.footer.push(null);
-                            groupedExercises[index].missedScores.footer.push(null);
-                            groupedExercises[index].notGraded.footer.push(null);
-                            if (this.absoluteResult(participationResult) !== null) {
-                                groupedExercises[index].scores.tooltips.push(
-                                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
-                                        points: this.absoluteResult(participationResult),
-                                        percentage: participationScore,
-                                    }),
-                                );
-                                if (exercise.maxScore) {
-                                    groupedExercises[index].missedScores.tooltips.push(
-                                        this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                                            points: exercise.maxScore - this.absoluteResult(participationResult)!,
-                                            percentage: missedScore,
-                                        }),
-                                    );
-                                }
-                            } else {
-                                if (participationScore > 50) {
-                                    groupedExercises[index].scores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
-                                } else {
-                                    groupedExercises[index].missedScores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
-                                }
-                            }
-                        }
-                    } else {
-                        if (
-                            participation.initializationState === InitializationState.FINISHED &&
-                            (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
-                        ) {
-                            groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
-                        } else {
-                            groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
-                        }
-                    }
-                });
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotParticipated', false);
+                } else {
+                    exercise.studentParticipations.forEach((participation) => {
+                        if (participation.results && participation.results.length > 0) {
+                            const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
+                            if (participationResult && participationResult.rated) {
+                                const participationScore = participationResult.score;
+                                const missedScore = 100 - participationScore;
+                                groupedExercises[index].scores.data.push(participationScore);
+                                groupedExercises[index].missedScores.data.push(missedScore);
+                                groupedExercises[index].notGraded.data.push(0);
+                                groupedExercises[index].notGraded.tooltips.push(null);
+                                groupedExercises[index].names.push(exercise.title);
+                                groupedExercises[index].scores.footer.push(null);
+                                groupedExercises[index].missedScores.footer.push(null);
+                                groupedExercises[index].notGraded.footer.push(null);
+                                this.generateTooltip(participationResult, groupedExercises[index]);
+                            }
+                        } else {
+                            if (
+                                participation.initializationState === InitializationState.FINISHED &&
+                                (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
+                            ) {
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
+                            } else {
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
+                            }
+                        }
+                    });
                 }
+
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
                 groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
+                groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type];
+                groupedExercises[index].reachableScore = this.reachableScores[exercise.type];
                 groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
                 groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
                 // check if presentation score is enabled for at least one exercise
@@ -343,28 +344,85 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
-    // TODO: document the implementation of this method --> it is not really obvious
-    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
-    absoluteResult(result: Result): number | null {
+    generateTooltip(result: Result, groupedExercise: any): void {
         if (!result.resultString) {
-            return 0;
+            groupedExercise.scores.tooltips.push(
+                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                    points: 0,
+                    percentage: 0,
+                }),
+            );
+            groupedExercise.missedScores.tooltips.push(
+                this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                    points: '',
+                    percentage: 100,
+                }),
+            );
         }
-        if (result.resultString && result.resultString.indexOf('failed') !== -1) {
-            return null;
-        }
-        if (result.resultString && result.resultString.indexOf('passed') !== -1) {
-            return null;
-        }
-        if (result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed) {
-            return null;
-        }
-        if (result.resultString.indexOf('of') === -1) {
-            if (result.resultString.indexOf('points') === -1) {
-                return 0;
+
+        const replaced = result.resultString.replace(',', '.');
+        const split = replaced.split(' ');
+
+        // custom result strings
+        if (!replaced.includes('passed') && !replaced.includes('points')) {
+            if (result.score >= 50) {
+                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`(${100 - result.score}%)`);
+            } else {
+                groupedExercise.scores.tooltips.push(`(${result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score}%)`);
             }
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
+
+            return;
         }
-        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+
+        // exercise results strings are mostly 'x points' or 'x of y points'
+        if (replaced.includes('points')) {
+            if (split.length === 2) {
+                groupedExercise.scores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                        points: parseFloat(split[0]),
+                        percentage: result.score,
+                    }),
+                );
+                groupedExercise.missedScores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                        points: '',
+                        percentage: 100 - result.score,
+                    }),
+                );
+                return;
+            }
+            if (split.length === 4) {
+                groupedExercise.scores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                        points: parseFloat(split[0]),
+                        percentage: result.score,
+                    }),
+                );
+                groupedExercise.missedScores.tooltips.push(
+                    this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
+                        points: parseFloat(split[2]) - parseFloat(split[0]),
+                        percentage: 100 - result.score,
+                    }),
+                );
+                return;
+            }
+        }
+
+        // programming exercise result strings are mostly 'x passed' or 'x of y passed'
+        if (replaced.includes('passed')) {
+            if (split.length === 2) {
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.missedScores.tooltips.push('(' + (100 - result.score) + '%)');
+                return;
+            }
+            if (split.length === 4) {
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
+                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' tests failed (' + (100 - result.score) + '%).');
+                return;
+            }
+        }
     }
 
     calculateAbsoluteScores(): void {
@@ -374,7 +432,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
         this.totalScore = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
-        const totalMissedPoints = this.totalMaxScore - this.totalScore;
+        const totalMissedPoints = this.reachableScore - this.totalScore;
         const absoluteScores = {};
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
@@ -422,6 +480,38 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScores = relativeScores;
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
+    }
+
+    calculateReachableScores() {
+        const quizzesTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, REACHABLE_SCORE);
+        const programmingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, REACHABLE_SCORE);
+        const modelingExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, REACHABLE_SCORE);
+        const textExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, REACHABLE_SCORE);
+        const fileUploadExerciseTotalCurrentMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, REACHABLE_SCORE);
+        const reachableScores = {};
+        reachableScores[ExerciseType.QUIZ] = quizzesTotalCurrentMaxScore;
+        reachableScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.MODELING] = modelingExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.TEXT] = textExerciseTotalCurrentMaxScore;
+        reachableScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalCurrentMaxScore;
+        this.reachableScores = reachableScores;
+        this.reachableScore = this.calculateTotalScoreForTheCourse(REACHABLE_SCORE);
+    }
+
+    calculateCurrentRelativeScores(): void {
+        const quizzesCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, CURRENT_RELATIVE_SCORE);
+        const programmingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, CURRENT_RELATIVE_SCORE);
+        const modelingExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, CURRENT_RELATIVE_SCORE);
+        const textExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, CURRENT_RELATIVE_SCORE);
+        const fileUploadExerciseCurrentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, CURRENT_RELATIVE_SCORE);
+        const currentRelativeScores = {};
+        currentRelativeScores[ExerciseType.QUIZ] = quizzesCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.PROGRAMMING] = programmingExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.MODELING] = modelingExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
+        currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
+        this.currentRelativeScores = currentRelativeScores;
+        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(CURRENT_RELATIVE_SCORE);
     }
 
     calculatePresentationScores(): void {

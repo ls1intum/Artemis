@@ -52,6 +52,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_offline_ide", table = "programming_exercise_details")
     private Boolean allowOfflineIde;
 
+    @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
+    private Boolean staticCodeAnalysisEnabled;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
     private ProgrammingLanguage programmingLanguage;
@@ -246,6 +249,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
         this.allowOfflineIde = allowOfflineIde;
+    }
+
+    public Boolean isStaticCodeAnalysisEnabled() {
+        return this.staticCodeAnalysisEnabled;
+    }
+
+    public void setStaticCodeAnalysisEnabled(Boolean staticCodeAnalysisEnabled) {
+        this.staticCodeAnalysisEnabled = staticCodeAnalysisEnabled;
     }
 
     public String getProjectKey() {

@@ -48,6 +48,7 @@
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
             "falseName": "Entered name is incorrect. Please try again!",
+            "notSet": "Not set",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
@@ -58,12 +59,18 @@
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Points achievable",
+            "maxPoints": "Maximum Points",
             "title": "Exam Scores",
-            "titleColumn": "Title",
-            "containedExercisesColumn": "Exercises in Group",
-            "averagePointsColumn": "Average Points achieved",
-            "maximumPointsColumn": "Maximum Points achievable",
+            "examStatisticsTitle": "Exam Statistics",
+            "studentResultsTitle": "Student Results",
+            "titleExerciseGroupColumn": "Exercise Group",
+            "titleExerciseColumn": "Exercise",
+            "averagePointsColumn": "Average",
+            "participantsColumn": "Participants",
+            "averageExerciseTooltip": "(Average / Maximum) points achieved for the exercise. The activated filters affect the average.",
+            "averageExerciseGroupTooltip": "(Average / Maximum) points achieved for the exercise group. The activated filters affect the average.",
+            "participantsExerciseTooltip": "(Filtered / Total) number of participants for the exercise. The activated filters only affect the first value.",
+            "participantsExerciseGroupTooltip": "(Filtered / Total) number of participants for the exercise group. The activated filters only affect the first value.",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",
@@ -71,7 +78,15 @@
             "overallPointsColumn": "Overall Points",
             "overallScoreColumn": "Overall Score (%)",
             "exportCSV": "Export Results as CSV",
-            "examResultSummary": "{{ exercisesLength }} exercise groups, {{ studentsLength }} registered students"
+            "filterForSubmittedExams": "Include only submitted exams",
+            "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standard Deviation",
+            "noOfExams": "Exams",
+            "registered": "Registered Students",
+            "noExerciseGroups": "Exercise Groups",
+            "submittedColumn": "Submitted",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Time left: ",
@@ -240,7 +255,7 @@
                 "orderCouldNotBeSaved": "The order could not be saved"
             },
             "delete": {
-                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted. This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the Exam to confirm."
             },
             "tutorDashboard": "Tutor Exam Dashboard"

@@ -2,10 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
-import { JhiEventWithContent } from 'ng-jhipster/service/event-with-content.model';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,7 +18,6 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
-    styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
@@ -33,12 +30,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    examListModificationDeleteEvent: JhiEventWithContent<string> = {
-        name: 'examListModification',
-        content: 'Deleted an exam',
-    };
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     constructor(
         private route: ActivatedRoute,
@@ -109,7 +100,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Function is called when the delete button is pressed for an exam
-     * @fires examListModificationDeleteEvent
      * @param examId Id to be deleted
      */
     deleteExam(examId: number) {

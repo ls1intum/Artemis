@@ -119,6 +119,10 @@
                 <dd>
                     <span>{{ programmingExercise.allowOnlineEditor }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis">Enable Static Code Analysis</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.staticCodeAnalysisEnabled }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>
                     <span jhiTranslate="{{ 'artemisApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
@@ -200,7 +204,20 @@
                 </button>
                 <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | translate }}"></fa-icon>
             </span>
-            <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
+            <span
+                *ngIf="
+                    programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
+                    programmingExercise.programmingLanguage === ProgrammingLanguage.C ||
+                    programmingExercise.programmingLanguage === ProgrammingLanguage.PYTHON
+                "
+                class="mr-1"
+            >
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="checkPlagiarism()" class="btn btn-primary">
+                    <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                    <span *ngIf="this.checkPlagiarismInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
+                </button>
+            </span>
+            <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" class="mr-1">
                 <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                 </button>

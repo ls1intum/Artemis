@@ -12,7 +12,7 @@ export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
-    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+    reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,12 +83,21 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     }
 
     /**
-     * Use with care: Set all test case weights to 1.
+     * Use with care: Set all test case weights to 1, all bonus multipliers to 1 and all bonus points to 0.
      *
      * @param exerciseId
      */
-    public resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset-weights`, {});
+    public reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset`, {});
+    }
+
+    /**
+     * Use with care: Re-evaluate the latest automatic results of all student participations.
+     *
+     * @param exerciseId
+     */
+    public reEvaluate(exerciseId: number): Observable<number> {
+        return this.http.put<number>(`${this.testCaseUrl}/${exerciseId}/re-evaluate`, {});
     }
 
     /**

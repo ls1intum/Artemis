@@ -26,20 +26,20 @@ public class UMLClassDiagram extends UMLDiagram {
     public UMLElement getElementByJSONID(String jsonElementId) {
         UMLElement element;
 
-        for (UMLClass umlClass : classList) {
+        for (UMLClass umlClass : getClassList()) {
             element = umlClass.getElementByJSONID(jsonElementId);
             if (element != null) {
                 return element;
             }
         }
 
-        for (UMLRelationship relationship : relationshipList) {
+        for (UMLRelationship relationship : getRelationshipList()) {
             if (relationship.getJSONElementID().equals(jsonElementId)) {
                 return relationship;
             }
         }
 
-        for (UMLPackage umlPackage : packageList) {
+        for (UMLPackage umlPackage : getPackageList()) {
             if (umlPackage.getJSONElementID().equals(jsonElementId)) {
                 return umlPackage;
             }

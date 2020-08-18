@@ -71,10 +71,6 @@
             <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
-        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()" [disabled]="submitBusy">
-            <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
-            <span jhiTranslate="artemisApp.assessment.button.resolveConflict">Resolve Conflict</span>
-        </button>
         <button
             class="btn ml-2 btn-success"
             id="assessNextButton"
