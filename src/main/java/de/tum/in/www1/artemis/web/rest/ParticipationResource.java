@@ -130,11 +130,6 @@ public class ParticipationResource {
             }
         }
 
-        // only instructors should be allowed to start an exam exercise using this resource e.g. to create the assignment repository
-        if (exercise.hasExerciseGroup() && !authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
         // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {

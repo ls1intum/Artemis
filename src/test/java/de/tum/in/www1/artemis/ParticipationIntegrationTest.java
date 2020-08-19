@@ -175,13 +175,19 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "tutor1")
     public void participateInExamProgrammingExerciseAsTutor() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "student1")
     public void participateInExamProgrammingExerciseAsStudent() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1")
+    public void participateInExamProgrammingExerciseAsInstructor() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
     }
 
     @Test
