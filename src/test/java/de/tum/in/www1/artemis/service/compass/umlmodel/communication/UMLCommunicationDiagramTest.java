@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -21,13 +20,13 @@ public class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityCommunicationDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(communicationModel1), new ModelingSubmission().model(communicationModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(communicationModel2), new ModelingSubmission().model(communicationModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(communicationModel1), modelingSubmission(communicationModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(communicationModel2), modelingSubmission(communicationModel2), 0.8, 1.0);
     }
 
     @Test
     void similarityCommunicationDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(communicationModel1), new ModelingSubmission().model(communicationModel2), 0.0, 0.2241);
+        compareSubmissions(modelingSubmission(communicationModel1), modelingSubmission(communicationModel2), 0.0, 0.2241);
     }
 
     @Test

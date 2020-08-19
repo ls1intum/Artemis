@@ -24,7 +24,7 @@ public class UMLPackage extends UMLContainerElement {
 
         if (reference instanceof UMLPackage) {
             UMLPackage referencePackage = (UMLPackage) reference;
-            similarity += NameSimilarity.levenshteinSimilarity(name, referencePackage.getName());
+            similarity += NameSimilarity.levenshteinSimilarity(getName(), referencePackage.getName());
         }
 
         return ensureSimilarityRange(similarity);
@@ -50,9 +50,7 @@ public class UMLPackage extends UMLContainerElement {
         if (!super.equals(obj)) {
             return false;
         }
-
         UMLPackage otherPackage = (UMLPackage) obj;
-
-        return otherPackage.name.equals(this.name);
+        return otherPackage.getName().equals(this.getName());
     }
 }

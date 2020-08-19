@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
@@ -11,16 +10,15 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.internal.util.reflection.FieldSetter;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class UMLActivityTest {
 
-    private UMLActivity activity;
+    UMLActivity activity;
 
-    @Mock
+    @Spy
     UMLActivity referenceActivity;
 
     @BeforeEach
@@ -31,62 +29,51 @@ class UMLActivityTest {
     @Test
     void similarity_null() {
         double similarity = activity.similarity(null);
-
         assertThat(similarity).isEqualTo(0);
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = activity.similarity(mock(UMLControlFlow.class));
-
         assertThat(similarity).isEqualTo(0);
     }
 
     @Test
     void similarity_sameActivity() {
-        when(referenceActivity.getName()).thenReturn("myActivity");
-
+        doReturn("myActivity").when(referenceActivity).getName();
         double similarity = activity.similarity(referenceActivity);
-
         assertThat(similarity).isEqualTo(1);
     }
 
     @Test
     void similarity_differentName() {
-        when(referenceActivity.getName()).thenReturn("otherElementName");
+        doReturn("otherElementName").when(referenceActivity).getName();
         double expectedSimilarity = FuzzySearch.ratio("myActivity", "otherElementName") / 100.0;
-
         double similarity = activity.similarity(referenceActivity);
-
         assertThat(similarity).isEqualTo(expectedSimilarity);
     }
 
     @Test
     void similarity_nullReferenceName() {
-        when(referenceActivity.getName()).thenReturn(null);
-
+        doReturn(null).when(referenceActivity).getName();
         double similarity = activity.similarity(referenceActivity);
-
         assertThat(similarity).isEqualTo(0);
     }
 
     @Test
-    void similarity_bothNamesNull() throws NoSuchFieldException {
-        FieldSetter.setField(activity, UMLActivityElement.class.getDeclaredField("name"), null);
-        when(referenceActivity.getName()).thenReturn(null);
-
+    void similarity_bothNamesNull() {
+        activity = spy(UMLActivity.class); // is automatically null
+        doReturn(null).when(referenceActivity).getName();
         double similarity = activity.similarity(referenceActivity);
-
         assertThat(similarity).isEqualTo(1);
     }
 
     @Test
-    void similarity_bothNamesEmpty() throws NoSuchFieldException {
-        FieldSetter.setField(activity, UMLActivityElement.class.getDeclaredField("name"), "");
-        when(referenceActivity.getName()).thenReturn("");
-
+    void similarity_bothNamesEmpty() {
+        activity = spy(UMLActivity.class);
+        doReturn("").when(activity).getName();
+        doReturn("").when(referenceActivity).getName();
         double similarity = activity.similarity(referenceActivity);
-
         assertThat(similarity).isEqualTo(1);
     }
 }

@@ -27,7 +27,7 @@ public class UMLArtifact extends UMLElement {
         double similarity = 0;
 
         UMLArtifact referenceArtifact = (UMLArtifact) reference;
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceArtifact.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceArtifact.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (Objects.equals(getParentElement(), referenceArtifact.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
