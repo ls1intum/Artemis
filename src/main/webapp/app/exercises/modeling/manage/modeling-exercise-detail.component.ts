@@ -12,7 +12,6 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { downloadFile } from 'app/shared/util/download.util';
 import { ExportToCsv } from 'export-to-csv';
-import { SERVER_API_URL } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -83,7 +82,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
 
-                const baseUrl = SERVER_API_URL + '#/course-management/';
+                const baseUrl = location.origin + '/#/course-management/';
 
                 const csvData = data.map((comparisonResult) => {
                     return Object.assign({
