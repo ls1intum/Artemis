@@ -67,8 +67,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseExam;
-
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
@@ -94,7 +92,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         programmingExercise = exerciseRepo.save(programmingExercise);
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
-        programmingExerciseExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
 
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
@@ -170,24 +167,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
         Feature.PROGRAMMING_EXERCISES.disable();
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1")
-    public void participateInExamProgrammingExerciseAsTutor() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
-    public void participateInExamProgrammingExerciseAsStudent() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1")
-    public void participateInExamProgrammingExerciseAsInstructor() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExerciseExam.getId() + "/participations", null, HttpStatus.OK);
     }
 
     @Test
