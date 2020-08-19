@@ -3,6 +3,7 @@
         "assessmentMode": "Bewertungsmodus",
         "AssessmentType": {
             "null": "",
+            "undefined": "",
             "AUTOMATIC": "Automatisch",
             "SEMI_AUTOMATIC": "Halbautomatisch",
             "MANUAL": "Manuell"
