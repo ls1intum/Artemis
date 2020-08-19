@@ -239,7 +239,7 @@
                 "update": "Edit Exercise Group",
                 "type": "Type",
                 "title": "Title",
-                "maxPoints": "Max points",
+                "maxPoints": "Max Points",
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
