@@ -22,7 +22,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -85,34 +84,6 @@ export class ExerciseGroupsComponent implements OnInit {
                 return of(null);
             }),
         );
-    }
-
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise | null {
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            return exercise as ProgrammingExercise;
-        }
-        return null;
-    }
-
-    asQuizExercise(exercise: Exercise): QuizExercise | null {
-        if (exercise.type === ExerciseType.QUIZ) {
-            return exercise as QuizExercise;
-        }
-        return null;
-    }
-
-    asTextExercise(exercise: Exercise): TextExercise | null {
-        if (exercise.type === ExerciseType.TEXT) {
-            return exercise as TextExercise;
-        }
-        return null;
-    }
-
-    asModelingExercise(exercise: Exercise): ModelingExercise | null {
-        if (exercise.type === ExerciseType.MODELING) {
-            return exercise as ModelingExercise;
-        }
-        return null;
     }
 
     /**
