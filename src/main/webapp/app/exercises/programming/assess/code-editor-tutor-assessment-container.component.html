@@ -35,7 +35,6 @@
 >
     <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
         <div class="d-flex align-items-center ml-auto" editorNavbar>
-            <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
                 [singleParticipantMode]="true"
@@ -91,7 +90,7 @@
         </div>
         <jhi-code-editor-file-browser
             editorSidebarLeft
-            [disableActions]="repositoryIsLocked"
+            [disableActions]="true"
             [exerciseTitle]="exercise?.title"
             [unsavedFiles]="unsavedFiles | keys"
             [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
@@ -125,7 +124,7 @@
             [result]="checkIfManualResultExist()"
             [exercise]="exercise"
             [canOverride]="canOverride"
-            (onResultModified)="test($event)"
+            (onResultModified)="onResultModified($event)"
         ></jhi-programming-assessment-manual-result-in-code-editor>
     </jhi-code-editor-grid>
 </jhi-assessment-layout>

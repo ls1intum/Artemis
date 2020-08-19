@@ -26,19 +26,20 @@ import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { orderBy as _orderBy, cloneDeep as _cloneDeep } from 'lodash';
+import { cloneDeep as _cloneDeep, orderBy as _orderBy } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { JhiEventManager } from 'ng-jhipster';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Location } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -56,16 +57,11 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
+    participationForAssessment: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     submission: ProgrammingSubmission;
+    result: Result;
     userId: number;
-
-    participationForAssessment: ProgrammingExerciseStudentParticipation;
-
-    // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
-    loadingParticipation = false;
-    participationCouldNotBeFetched = false;
-    repositoryIsLocked = false;
     // for assessment-layout:
     isLoading = false;
     saveBusy = false;
@@ -74,10 +70,14 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     nextSubmissionBusy = false;
     isAssessor = true;
     isAtLeastInstructor = false;
-    result: Result;
+    // TODO: Set default to false and set true when validating the feedback
     assessmentsAreValid = true;
     complaint: Complaint;
     private cancelConfirmationText: string;
+    // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
+    loadingParticipation = false;
+    participationCouldNotBeFetched = false;
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private eventManager: JhiEventManager,
@@ -89,6 +89,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
+        private complaintService: ComplaintService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -117,15 +118,15 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
+                        // Set domain and commitState to make file editor work properly
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
+                        this.commitState = CommitState.UNDEFINED;
                         this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults!;
                         this.submission = this.participation.results[0].submission as ProgrammingSubmission;
                         this.participationForAssessment = _cloneDeep(this.participation);
                         this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
+                        this.result = this.participationForAssessment.results[0];
                         this.exercise = this.participation.exercise as ProgrammingExercise;
-                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
-                        const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
-                        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
                     }),
                 )
                 .subscribe(
@@ -194,10 +195,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      */
     save(): void {
         this.saveBusy = true;
-        /*if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
-            return;
-        }*/
         this.manualResultService.save(this.participation.id, this.result).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
@@ -206,9 +203,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
 
     /**
      * Submit the assessment
-     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
-     * Sets submitBusy to true
-     * Creates or updates this result in the manual result service
      */
     submit(): void {
         this.submitBusy = true;
@@ -216,13 +210,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
-        /*
-        if (this.result.id != null) {
-            this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
-        } else {
-            // in case id is null or undefined
-            this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
-        }*/
     }
 
     /**
@@ -246,7 +233,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.navigateByUrl(
-                    `/course-management/${this.exercise.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.id}/assessment`,
+                    `/course-management/${this.exercise.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation.id}/assessment`,
                     {},
                 );
             },
@@ -260,6 +247,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             },
         );
     }
+
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
@@ -279,6 +267,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             },
         );
     }
+
     navigateBack() {
         if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
             const teamId = (this.submission.participation as StudentParticipation).team.id;
@@ -320,34 +309,26 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participation!.results[0] = this.result = response.body!;
+        this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
-    test(result: Result) {
-        console.log('output event from child, result: ');
-        console.log(result);
+
+    onResultModified(result: Result) {
         this.result = result;
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            () => this.onSaveError(),
+    getComplaint(): void {
+        this.complaintService.findByResultId(this.result.id).subscribe(
+            (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
         );
-    }
-
-    /**
-     * Sets iSaving to false and broadcasts the corresponding message on a successful save
-     */
-    onSaveSuccess() {
-        this.saveBusy = false;
-        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
-    }
-
-    /**
-     * Only sets isSaving to false
-     */
-    onSaveError() {
-        this.saveBusy = false;
     }
 }
