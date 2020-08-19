@@ -53,7 +53,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     @Transactional
-    public Result saveManualAssessment(/*ProgrammingSubmission submission, */Result result) {
+    public Result saveManualAssessment(Result result) {
         Boolean isFeedbackEmpty = result.getFeedbacks().isEmpty();
         result.setHasFeedback(!isFeedbackEmpty);
 
@@ -69,12 +69,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(result);
         });
-        /*
-        if (result.getSubmission() == null) {
-            result.setSubmission(submission);
-            submission.setResult(result);
-            programmingSubmissionRepository.save(submission);
-        }*/
 
         // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);
@@ -85,15 +79,14 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
      *
      * @param resultId the id of the result that should be submitted
-     * @param exercise the exercise the assessment belongs to
-     * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(long resultId, ProgrammingExercise exercise, ZonedDateTime submissionDate) {
+    public Result submitManualAssessment(long resultId) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
+        // Every manual assessed programming submission is rated
+        result.setRated(true);
         result.setCompletionDate(ZonedDateTime.now());
 
         // Double calculatedScore = calculateTotalScore(result.getFeedbacks());

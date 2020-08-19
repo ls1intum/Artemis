@@ -164,13 +164,12 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         ProgrammingSubmission submission;
         if (latestExistingResult.isEmpty()) {
-            // TODO: Double check if we can create for a new result when the existing result has already a completion date (submitted)
+            // TODO: Double check if we can create a new result when the existing result has already a completion date (submitted)
             // Create manual submission with last commit hash und current time stamp.
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
             newResult.setSubmission(submission);
         } else {
-            // TODO: we should basically set the submission here to prevent possible manipulation of the submission
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(newResult.getSubmission().getId());
             newResult.setSubmission(submission);
             if (newResult.getSubmission() == null) {
@@ -178,11 +177,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             }
         }
 
-        Result result = programmingAssessmentService.saveManualAssessment(/*submission,*/ newResult);
+        Result result = programmingAssessmentService.saveManualAssessment(newResult);
 
         if (submit) {
 
-            result = programmingAssessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            result = programmingAssessmentService.submitManualAssessment(result.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
