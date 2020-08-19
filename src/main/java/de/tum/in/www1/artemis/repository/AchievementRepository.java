@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Achievement;
 
 /**
- * Spring Data JPA repository for the StudentExam entity.
+ * Spring Data JPA repository for the Achievement entity.
  */
 @Repository
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
