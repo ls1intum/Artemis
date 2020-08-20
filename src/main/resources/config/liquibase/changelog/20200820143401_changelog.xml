@@ -1,0 +1,47 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="sebastianjagla" id="20200820143400">
+        <createTable tableName="student_scores">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="student_scoresPK"/>
+            </column>
+            <column name="student_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="result_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="score" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="sebastianjagla" id="20200820143401">
+        <createTable tableName="tutor_scores">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutor_scoresPK"/>
+            </column>
+            <column name="tutor_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="assessments" type="BIGINT" defaultValue="0"/>
+            <column name="assessments_points" type="double" defaultValue="0"/>
+            <column name="all_complaints" type="BIGINT" defaultValue="0"/>
+            <column name="accepted_complaints" type="decimal" defaultValue="0"/>
+            <column name="complaints_points" type="double" defaultValue="0"/>
+            <column name="complaint_responses" type="BIGINT" defaultValue="0"/>
+            <column name="complaint_responses_points" type="double" defaultValue="0"/>
+            <column name="all_feedback_requests" type="BIGINT" defaultValue="0"/>
+            <column name="not_answered_feedback_requests" type="decimal" defaultValue="0"/>
+            <column name="feedback_requests_points" type="double" defaultValue="0"/>
+            <column name="answered_feedback_requests" type="BIGINT" defaultValue="0"/>
+            <column name="answered_feedback_requests_points" type="double" defaultValue="0"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
