@@ -47,7 +47,7 @@
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
                 >Go to repository</a
             >
-            <jhi-updating-result
+            <!-- <jhi-updating-result
                 *ngIf="participation"
                 [exercise]="exercise"
                 [showUngradedResults]="true"
@@ -55,7 +55,16 @@
                 [participation]="participationForAssessment"
                 [short]="true"
                 class="mr-2"
-            ></jhi-updating-result>
+            ></jhi-updating-result> -->
+            <jhi-result
+                *ngIf="participation"
+                [result]="automaticResult"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [isBuilding]="false"
+                [participation]="participationForAssessment"
+                [short]="true"
+                ></jhi-result>
             <jhi-updating-result
                 *ngIf="participation"
                 [exercise]="exercise"

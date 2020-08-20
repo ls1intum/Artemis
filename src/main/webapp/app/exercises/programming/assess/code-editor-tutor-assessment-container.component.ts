@@ -61,6 +61,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     exercise: ProgrammingExercise;
     submission: ProgrammingSubmission;
     result: Result;
+    automaticResult: Result;
     userId: number;
     // for assessment-layout:
     isLoading = false;
@@ -113,7 +114,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
-            this.loadParticipationWithLatestResult(participationId)
+            this.loadParticipationWithResults(participationId)
                 .pipe(
                     tap((participationWithResults) => {
                         // Set domain and commitState to make file editor work properly
@@ -124,6 +125,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                         this.participationForAssessment = _cloneDeep(this.participation);
                         this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
                         this.result = this.participationForAssessment.results[0];
+                        this.automaticResult = _orderBy(this.participation.results, 'id', 'asc')[0];
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
                         if (this.result.hasComplaint) {
@@ -166,8 +168,9 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
-        return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
+    loadParticipationWithResults(participationId: number): Observable<StudentParticipation | null> {
+        return this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId);
+        /*.pipe(
             flatMap((participation: StudentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
@@ -181,7 +184,7 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                       )
                     : Observable.of(participation),
             ),
-        );
+        );*/
     }
 
     /**
