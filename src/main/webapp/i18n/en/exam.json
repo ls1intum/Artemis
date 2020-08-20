@@ -48,6 +48,7 @@
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
             "falseName": "Entered name is incorrect. Please try again!",
+            "notSet": "Not set",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
@@ -238,7 +239,7 @@
                 "update": "Edit Exercise Group",
                 "type": "Type",
                 "title": "Title",
-                "maxPoints": "Max points",
+                "maxPoints": "Max Points",
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",

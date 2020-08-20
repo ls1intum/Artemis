@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -126,6 +127,17 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
+    }
+
+    @Test
+    public void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
+        testCaseRepository.deleteAll();
+
+        List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(0);
     }
 
     @Test

@@ -727,7 +727,7 @@ public class ProgrammingExerciseResource {
 
         Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
 
@@ -871,7 +871,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
         Course course = courseService.findOne(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {

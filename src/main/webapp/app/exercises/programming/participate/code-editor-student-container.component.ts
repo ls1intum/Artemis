@@ -29,7 +29,6 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
-    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;

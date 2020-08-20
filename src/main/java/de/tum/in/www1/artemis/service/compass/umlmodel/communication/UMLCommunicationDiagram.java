@@ -22,13 +22,13 @@ public class UMLCommunicationDiagram extends UMLDiagram {
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
-        for (UMLObject object : objectList) {
+        for (UMLObject object : getObjectList()) {
             if (object.getJSONElementID().equals(jsonElementId)) {
                 return object;
             }
         }
 
-        for (UMLCommunicationLink communicationLink : communicationLinkList) {
+        for (UMLCommunicationLink communicationLink : getCommunicationLinkList()) {
             if (communicationLink.getJSONElementID().equals(jsonElementId)) {
                 return communicationLink;
             }

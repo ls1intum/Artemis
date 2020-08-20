@@ -10,6 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import * as moment from 'moment';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -19,6 +20,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     @Input()
@@ -64,10 +66,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     reload(): void {
-        // this.ngOnInit();
-        // if (this.instructions) {
-        //     this.instructions.refreshInstructions();
-        // }
+        this.ngOnInit();
+        if (this.instructions) {
+            // Load the result of the active exercise into the UML and Task extension on exercise switch
+            this.instructions.latestResult = this.instructions.latestResult;
+            this.instructions.updateMarkdown();
+        }
     }
 
     /**

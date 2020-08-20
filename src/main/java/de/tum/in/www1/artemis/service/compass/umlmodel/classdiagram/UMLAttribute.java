@@ -73,7 +73,7 @@ public class UMLAttribute extends UMLElement {
             return similarity;
         }
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceAttribute.getName()) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceAttribute.getName()) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
         similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.getAttributeType()) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
@@ -118,6 +118,6 @@ public class UMLAttribute extends UMLElement {
 
         UMLAttribute otherAttribute = (UMLAttribute) obj;
 
-        return Objects.equals(otherAttribute.getAttributeType(), attributeType) && Objects.equals(otherAttribute.getParentElement().getName(), parentElement.getName());
+        return Objects.equals(otherAttribute.getAttributeType(), getAttributeType()) && Objects.equals(otherAttribute.getParentElement().getName(), getParentElement().getName());
     }
 }
