@@ -12,6 +12,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
+import liquibase.pro.packaged.F;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.MergeResult;
@@ -199,6 +201,49 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
+        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        var testRepoCommits = studentRepository.getAllLocalCommits();
+        assertThat(testRepoCommits.size() == 1).isTrue();
+        assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSaveFiles() throws Exception {
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+
+        List<FileSubmission> fileSubmissions = new ArrayList();
+        FileSubmission fileSubmission = new FileSubmission();
+        fileSubmission.setFileName(currentLocalFileName);
+        fileSubmission.setFileContent("updatedFileContent");
+        fileSubmissions.add(fileSubmission);
+
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", fileSubmissions, HttpStatus.OK);
+
+        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSaveFilesAndCommit() throws Exception {
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+
+        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        List<FileSubmission> fileSubmissions = new ArrayList();
+        FileSubmission fileSubmission = new FileSubmission();
+        fileSubmission.setFileName(currentLocalFileName);
+        fileSubmission.setFileContent("updatedFileContent");
+        fileSubmissions.add(fileSubmission);
+
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", fileSubmissions, HttpStatus.OK);
+
+        Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
+        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
