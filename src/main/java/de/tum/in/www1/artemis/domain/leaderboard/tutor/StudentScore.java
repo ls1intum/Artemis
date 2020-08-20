@@ -45,11 +45,8 @@ public class StudentScore {
         return score;
     }
 
-    /**
-     * Empty constructor because of @Entity
-     */
     public StudentScore() {
-
+        // Empty constructor because of @Entity
     }
 
     public StudentScore(long studentScoreId, long studentId, long exerciseId, long resultId, long score) {
