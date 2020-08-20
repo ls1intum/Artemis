@@ -111,21 +111,12 @@ public class TutorScore {
         this.exerciseId = exerciseId;
     }
 
-    /*public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints,
-                      long acceptedComplaints, double complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests,
-                      double feedbackRequestsPoints, long answeredFeedbackRequests, double answeredFeedbackRequestsPoints) {
-        this.tutorScoreId = tutorScoreId;
-        this.tutorId = tutorId;
-        this.exerciseId = exerciseId;
-        this.assessments = assessments;
-        this.assessmentsPoints = assessmentsPoints;
-        this.allComplaints = allComplaints;
-        this.acceptedComplaints = acceptedComplaints;
-        this.complaintsPoints = complaintsPoints;
-        this.allFeedbackRequests = allFeedbackRequests;
-        this.notAnsweredFeedbackRequests = notAnsweredFeedbackRequests;
-        this.feedbackRequestsPoints = feedbackRequestsPoints;
-        this.answeredFeedbackRequests = answeredFeedbackRequests;
-        this.answeredFeedbackRequestsPoints = answeredFeedbackRequestsPoints;
-    }*/
+    /*
+     * public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double
+     * complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answeredFeedbackRequests, double
+     * answeredFeedbackRequestsPoints) { this.tutorScoreId = tutorScoreId; this.tutorId = tutorId; this.exerciseId = exerciseId; this.assessments = assessments;
+     * this.assessmentsPoints = assessmentsPoints; this.allComplaints = allComplaints; this.acceptedComplaints = acceptedComplaints; this.complaintsPoints = complaintsPoints;
+     * this.allFeedbackRequests = allFeedbackRequests; this.notAnsweredFeedbackRequests = notAnsweredFeedbackRequests; this.feedbackRequestsPoints = feedbackRequestsPoints;
+     * this.answeredFeedbackRequests = answeredFeedbackRequests; this.answeredFeedbackRequestsPoints = answeredFeedbackRequestsPoints; }
+     */
 }

@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import org.springframework.stereotype.Service;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorScore;
 import de.tum.in.www1.artemis.repository.TutorScoresRepository;
-
-import static java.util.stream.Collectors.toSet;
 
 @Service
 public class TutorScoresService {
