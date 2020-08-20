@@ -21,6 +21,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -431,14 +432,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.modelingExercise && this.modelingExercise.teamMode && this.modelingExercise.course && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/teams/${teamId}`);
-        } else if (this.modelingExercise && !this.modelingExercise.teamMode && this.modelingExercise.course) {
-            this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
-        } else {
-            this.location.back();
-        }
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission);
     }
 
     /**
