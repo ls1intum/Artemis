@@ -44,7 +44,7 @@ public class TutorScore {
     private double feedbackRequestsPoints;
 
     @Column(name = "answered_feedback_requests")
-    private long answered_feedback_requests;
+    private long answeredFeedbackRequests;
 
     @Column(name = "answered_feedback_requests_points")
     private double answeredFeedbackRequestsPoints;
@@ -93,14 +93,17 @@ public class TutorScore {
         return feedbackRequestsPoints;
     }
 
-    public long getAnswered_feedback_requests() {
-        return answered_feedback_requests;
+    public long getAnsweredFeedbackRequests() {
+        return answeredFeedbackRequests;
     }
 
     public double getAnsweredFeedbackRequestsPoints() {
         return answeredFeedbackRequestsPoints;
     }
 
+    /**
+     * Empty constructor because of @Entity
+     */
     public TutorScore() {
 
     }
@@ -111,7 +114,7 @@ public class TutorScore {
         this.exerciseId = exerciseId;
     }
 
-    public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answered_feedback_requests, double answeredFeedbackRequestsPoints) {
+    public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answeredFeedbackRequests, double answeredFeedbackRequestsPoints) {
         this.tutorScoreId = tutorScoreId;
         this.tutorId = tutorId;
         this.exerciseId = exerciseId;
@@ -123,7 +126,7 @@ public class TutorScore {
         this.allFeedbackRequests = allFeedbackRequests;
         this.notAnsweredFeedbackRequests = notAnsweredFeedbackRequests;
         this.feedbackRequestsPoints = feedbackRequestsPoints;
-        this.answered_feedback_requests = answered_feedback_requests;
+        this.answeredFeedbackRequests = answeredFeedbackRequests;
         this.answeredFeedbackRequestsPoints = answeredFeedbackRequestsPoints;
     }
 }
