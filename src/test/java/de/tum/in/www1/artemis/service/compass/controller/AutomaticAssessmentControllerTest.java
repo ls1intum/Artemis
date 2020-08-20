@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 class AutomaticAssessmentControllerTest {

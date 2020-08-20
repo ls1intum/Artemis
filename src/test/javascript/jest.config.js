@@ -1,10 +1,12 @@
-const esModules = ['ngx-treeview'].join('|');
+const esModules = ['ngx-treeview', 'lodash-es'].join('|');
 module.exports = {
     globals: {
         'ts-jest': {
             tsConfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
-            astTransformers: [require.resolve('./InlineHtmlStripStylesTransformer')],
+            astTransformers: {
+                before: [require.resolve('./InlineHtmlStripStylesTransformer')],
+            },
             diagnostics: false,
         },
     },

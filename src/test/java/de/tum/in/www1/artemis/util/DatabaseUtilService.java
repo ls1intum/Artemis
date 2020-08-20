@@ -309,6 +309,7 @@ public class DatabaseUtilService {
         List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
         User admin = ModelFactory.generateActivatedUser("admin");
         admin.setGroups(Set.of("admin"));
+        admin.setAuthorities(adminAuthorities);
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);

@@ -75,9 +75,6 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        if (this.isExamMode) {
-            this.showFinishedExercises = true;
-        }
         this.accountService.identity().then((user) => (this.tutor = user!));
     }
 
@@ -96,6 +93,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         const examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.isExamMode = !!examId;
         if (this.isExamMode) {
+            this.showFinishedExercises = true;
             this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course);
@@ -169,8 +167,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
             // sort exercises by type to get a better overview in the dashboard
             this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
             this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
+            this.updateExercises();
         }
-        this.triggerFinishedExercises();
     }
 
     /**
@@ -178,7 +176,13 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      */
     triggerFinishedExercises() {
         this.showFinishedExercises = !this.showFinishedExercises;
+        this.updateExercises();
+    }
 
+    /**
+     * update the exercise array based on the option show finished exercises
+     */
+    updateExercises() {
         if (this.showFinishedExercises) {
             this.exercises = this.unfinishedExercises.concat(this.finishedExercises);
         } else {

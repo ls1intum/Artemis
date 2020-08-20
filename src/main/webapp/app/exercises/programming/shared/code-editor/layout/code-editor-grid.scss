@@ -15,15 +15,8 @@ Code-Editor Layout Styles
     }
 
     .editor-statusbar {
-        display: flex;
-        align-items: center;
         border: 1px solid #e7e7e7;
         padding: 10px;
-
-        &__title {
-            color: black;
-            font-size: 18px;
-        }
     }
 
     .editor-main {
@@ -63,6 +56,9 @@ Code-Editor Layout Styles
 
             .instructions-wrapper__content {
                 overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                flex-basis: 100px;
             }
 
             > *:last-child {

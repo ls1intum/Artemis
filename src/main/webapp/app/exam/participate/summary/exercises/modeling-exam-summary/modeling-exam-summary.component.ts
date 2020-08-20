@@ -6,7 +6,6 @@ import { UMLModel } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-modeling-exam-summary',
     templateUrl: './modeling-exam-summary.component.html',
-    styles: ['::ng-deep .apollon-editor > div:first-of-type { padding: 20px}'],
 })
 export class ModelingExamSummaryComponent implements OnInit {
     @Input()
