@@ -21,6 +21,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { Course } from 'app/entities/course.model';
 
 /**
  * Enumeration specifying the repository type
@@ -60,7 +61,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
-    isExamMode: boolean;
+    course: Course;
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
@@ -104,7 +105,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     catchError(() => throwError('exerciseNotFound')),
                     tap((exercise) => {
                         this.exercise = exercise;
-                        this.isExamMode = !exercise.course;
+                        this.course = exercise.course ?? exercise.exerciseGroup!.exam!.course;
                     }),
                     // Set selected participation
                     tap(() => {
@@ -299,7 +300,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.exercise.course!.id, this.exercise.id)
+            .startExercise(this.course.id, this.exercise.id)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap((participation) => {
@@ -314,10 +315,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Resets the assignment participation for this user for this exercise.
+     * Delete the assignment participation for this user for this exercise.
      * This deletes all build plans, database information, etc. and copies the current version of the template repository.
      */
-    resetAssignmentParticipation() {
+    deleteAssignmentParticipation() {
         this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
@@ -327,7 +328,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError('participationCouldNotBeDeleted')),
-                tap(() => this.createAssignmentParticipation()),
+                tap(() => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                }),
             )
             .subscribe(
                 () => {},

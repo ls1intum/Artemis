@@ -79,7 +79,7 @@
         <!-- action buttons -->
         <div>
             <button
-                *ngIf="!isExamMode && (!exercise.studentParticipations || !exercise.studentParticipations.length)"
+                *ngIf="!exercise.studentParticipations || !exercise.studentParticipations.length"
                 (click)="createAssignmentParticipation()"
                 [disabled]="loadingState !== LOADING_STATE.CLEAR"
                 class="btn btn-primary mr-2"
@@ -89,8 +89,8 @@
                 <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
-                *ngIf="!isExamMode && exercise.studentParticipations && exercise.studentParticipations.length"
-                (click)="resetAssignmentParticipation()"
+                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length"
+                (click)="deleteAssignmentParticipation()"
                 [disabled]="loadingState !== LOADING_STATE.CLEAR"
                 class="btn btn-danger"
             >
@@ -105,7 +105,7 @@
                     [spin]="true"
                     class="text-white mr-2"
                 ></fa-icon>
-                <span jhiTranslate="artemisApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
             </button>
         </div>
     </div>

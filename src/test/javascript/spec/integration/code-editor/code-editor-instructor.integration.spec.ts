@@ -200,6 +200,7 @@ describe('CodeEditorInstructorIntegration', () => {
             studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
             templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+            course: { id: 1 },
         } as ProgrammingExercise;
         exercise.studentParticipations = exercise.studentParticipations.map((p) => {
             p.exercise = exercise;
@@ -276,6 +277,7 @@ describe('CodeEditorInstructorIntegration', () => {
             studentParticipations: [{ id: 2 }],
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
+            course: { id: 1 },
         } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
         // @ts-ignore
@@ -315,6 +317,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
@@ -361,6 +364,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore
