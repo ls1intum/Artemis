@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.io.IOException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.*;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -190,9 +188,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
-        // Checks only apply to StudentParticipation, otherwise template and solution participation can't be edited using the code editor
+        // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
         User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        if (participation instanceof ProgrammingExerciseStudentParticipation
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
                 && !examSubmissionService.isAllowedToSubmit(programmingExerciseParticipation.getProgrammingExercise(), user)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
@@ -232,7 +230,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException, InterruptedException {
         return super.getStatus(participationId);
     }
 

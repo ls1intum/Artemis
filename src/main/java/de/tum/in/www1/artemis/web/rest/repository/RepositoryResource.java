@@ -260,12 +260,11 @@ public abstract class RepositoryResource {
      * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @throws IOException if the repository can't be checked out to retrieve the status.
      * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      * @throws InterruptedException if the repository can't be checked out to retrieve the status.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         boolean hasPermissions = canAccessRepository(domainId);
