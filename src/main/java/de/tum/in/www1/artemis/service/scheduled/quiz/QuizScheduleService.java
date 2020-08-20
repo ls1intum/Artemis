@@ -76,6 +76,7 @@ public class QuizScheduleService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
+        this.quizCache = new QuizCache(hazelcastInstance);
     }
 
     /**
