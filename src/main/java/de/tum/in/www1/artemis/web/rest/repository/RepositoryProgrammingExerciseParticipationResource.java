@@ -177,7 +177,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Git repository must be available to update a file
         Repository repository;
         try {
-            repository = gitService.getOrCheckoutRepository(programmingExerciseParticipation);
+            repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
@@ -186,6 +186,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         catch (GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+        }
+        catch (IllegalAccessException e) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
