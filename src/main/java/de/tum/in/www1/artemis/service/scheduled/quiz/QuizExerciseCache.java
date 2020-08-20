@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
@@ -10,6 +12,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
+/**
+ * Represents the cache for one specific quiz exercise.
+ */
 abstract class QuizExerciseCache {
 
     private Long exerciseId;
