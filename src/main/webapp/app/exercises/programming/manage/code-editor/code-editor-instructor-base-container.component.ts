@@ -1,18 +1,14 @@
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { OnDestroy, OnInit, Component } from '@angular/core';
+import { OnDestroy, OnInit, Component, ViewChild } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { CourseExerciseService } from '../../../../course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -23,6 +19,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 /**
  * Enumeration specifying the repository type
@@ -46,7 +44,9 @@ export enum LOADING_STATE {
 }
 
 @Component({ template: '' })
-export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
+export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -82,15 +82,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private exerciseHintService: ExerciseHintService,
         private location: Location,
-        participationService: ParticipationService,
-        translateService: TranslateService,
-        route: ActivatedRoute,
-        jhiAlertService: AlertService,
-        sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService,
-    ) {
-        super(participationService, translateService, route, jhiAlertService, sessionService, fileService);
-    }
+        private participationService: ParticipationService,
+        protected route: ActivatedRoute,
+        private jhiAlertService: AlertService,
+    ) {}
 
     /**
      * Initialize the route params subscription.
@@ -199,7 +194,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        this.initializeProperties();
+        if (this.codeEditorContainer != null) {
+            this.codeEditorContainer.initializeProperties();
+        }
         if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
@@ -336,5 +333,18 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                 () => {},
                 (err) => this.onError(err),
             );
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    canDeactivate() {
+        return this.codeEditorContainer.canDeactivate();
     }
 }
