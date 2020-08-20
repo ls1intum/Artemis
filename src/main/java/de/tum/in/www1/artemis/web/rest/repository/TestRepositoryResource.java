@@ -145,7 +145,7 @@ public class TestRepositoryResource extends RepositoryResource {
      * @param principal   used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
-    @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
+    @PutMapping("/test-repository/{exerciseId}/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam String commit, Principal principal) {
         ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
