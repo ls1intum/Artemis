@@ -8,11 +8,9 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
@@ -24,19 +22,19 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityComponentDiagram_EqualModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel1), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(componentModel2), new ModelingSubmission().model(componentModel2), 0.8, 1.0);
-        compareSubmissions(new ModelingSubmission().model(componentModel3), new ModelingSubmission().model(componentModel3), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel2), modelingSubmission(componentModel2), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(componentModel3), modelingSubmission(componentModel3), 0.8, 1.0);
     }
 
     @Test
     void similarityComponentDiagram_SimilarModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel2), 0.0, 0.64);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel2), 0.0, 0.64);
     }
 
     @Test
     void similarityComponentDiagram_DifferentModels() {
-        compareSubmissions(new ModelingSubmission().model(componentModel1), new ModelingSubmission().model(componentModel3), 0.0, 0.13);
+        compareSubmissions(modelingSubmission(componentModel1), modelingSubmission(componentModel3), 0.0, 0.13);
     }
 
     @Test
@@ -89,19 +87,5 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
         assertThat(interfaceI3.getParentElement()).isEqualTo(componentB);
         assertThat(interfaceI4.getParentElement()).isEqualTo(componentC);
         assertThat(interfaceI5.getParentElement()).isNull();
-    }
-
-    private UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentList().stream().filter(component -> component.getName().equals(name)).findFirst().get();
-    }
-
-    private UMLComponentInterface getInterface(UMLComponentDiagram componentDiagram, String name) {
-        return componentDiagram.getComponentInterfaceList().stream().filter(componentInterface -> componentInterface.getName().equals(name)).findFirst().get();
-    }
-
-    private UMLComponentRelationship getRelationship(UMLComponentDiagram componentDiagram, UMLElement source, UMLElement target) {
-        // Source and target do not really matter in this test so we can also check the other way round
-        return componentDiagram.getComponentRelationshipList().stream().filter(relationship -> (relationship.getSource().equals(source) && relationship.getTarget().equals(target))
-                || (relationship.getSource().equals(target) && relationship.getTarget().equals(source))).findFirst().get();
     }
 }

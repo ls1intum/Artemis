@@ -43,7 +43,7 @@ public class UMLUseCase extends UMLElement {
 
         UMLUseCase referenceUseCase = (UMLUseCase) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceUseCase.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceUseCase.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (Objects.equals(getParentElement(), referenceUseCase.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;

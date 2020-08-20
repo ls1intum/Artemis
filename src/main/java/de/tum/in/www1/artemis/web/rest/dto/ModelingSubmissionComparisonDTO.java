@@ -4,31 +4,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmissionComparisonDTO> {
 
-    private Long submissionId1;
+    private ModelingSubmissionComparisonElement element1;
 
-    private Long submissionId2;
-
-    private Long score1;
-
-    private Long score2;
+    private ModelingSubmissionComparisonElement element2;
 
     private Double similarity;
-
-    public Long getSubmissionId1() {
-        return submissionId1;
-    }
-
-    public Long getSubmissionId2() {
-        return submissionId2;
-    }
-
-    public Long getScore1() {
-        return score1;
-    }
-
-    public Long getScore2() {
-        return score2;
-    }
 
     public Double getSimilarity() {
         return similarity;
@@ -39,24 +19,24 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
         return this;
     }
 
-    public ModelingSubmissionComparisonDTO submissionId1(Long submissionId1) {
-        this.submissionId1 = submissionId1;
-        return this;
+    public ModelingSubmissionComparisonElement getElement1() {
+        return element1;
     }
 
-    public ModelingSubmissionComparisonDTO submissionId2(Long submissionId2) {
-        this.submissionId2 = submissionId2;
-        return this;
+    public ModelingSubmissionComparisonElement getElement2() {
+        return element2;
     }
 
-    public ModelingSubmissionComparisonDTO score1(Long score1) {
-        this.score1 = score1;
-        return this;
+    public void setElement1(ModelingSubmissionComparisonElement element1) {
+        this.element1 = element1;
     }
 
-    public ModelingSubmissionComparisonDTO score2(Long score2) {
-        this.score2 = score2;
-        return this;
+    public void setElement2(ModelingSubmissionComparisonElement element2) {
+        this.element2 = element2;
+    }
+
+    public void setSimilarity(Double similarity) {
+        this.similarity = similarity;
     }
 
     @Override
@@ -66,6 +46,6 @@ public class ModelingSubmissionComparisonDTO implements Comparable<ModelingSubmi
 
     @Override
     public String toString() {
-        return "SubmissionComparisonDTO{submission1=" + submissionId1 + ", submission2=" + submissionId2 + ", similarity=" + similarity + "}";
+        return "SubmissionComparisonDTO{submission1=" + element1.getSubmissionId() + ", submission2=" + element2.getSubmissionId() + ", similarity=" + similarity + "}";
     }
 }
