@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import java.io.IOException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.List;
@@ -132,7 +131,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException, InterruptedException {
         return super.getStatus(exerciseId);
     }
 
