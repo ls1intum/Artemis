@@ -113,13 +113,15 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         int participationsSize = participations.size();
         int submissionsSize = submissions.size();
         int resultsSize = results.size();
-        if (participationsSize > 0)
+        if (participationsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} participations cached", getExerciseId(), participationsSize);
-        if (submissionsSize > 0)
+        }
+        if (submissionsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} submissions cached", getExerciseId(), submissionsSize);
-        if (resultsSize > 0)
+        }
+        if (resultsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} results cached", getExerciseId(), resultsSize);
-
+        }
         participations.destroy();
         submissions.destroy();
         results.destroy();
