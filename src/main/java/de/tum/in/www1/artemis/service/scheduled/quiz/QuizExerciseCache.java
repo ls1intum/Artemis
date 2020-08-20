@@ -15,11 +15,11 @@ abstract class QuizExerciseCache {
     private Long exerciseId;
 
     QuizExerciseCache(Long exerciseId) {
-        this.exerciseId = Objects.requireNonNull(exerciseId, "exerciseId must not be null");
+        this.exerciseId = exerciseId;
     }
 
     /**
-     * The id of the QuizExercise
+     * The id of the QuizExercise, only <code>null</code> for the {@linkplain EmptyQuizExerciseCache empty cache}.
      */
     final Long getExerciseId() {
         return exerciseId;
@@ -88,6 +88,11 @@ abstract class QuizExerciseCache {
         return "QuizExerciseCache[" + exerciseId + "]";
     }
 
+    /**
+     * Returns an empty quiz exercise cache
+     * 
+     * @return the {@link EmptyQuizExerciseCache} instance
+     */
     static QuizExerciseCache empty() {
         return EmptyQuizExerciseCache.INSTANCE;
     }

@@ -53,7 +53,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     private transient IMap<Long, Result> results;
 
     QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart, QuizExercise exercise) {
-        super(id);
+        super(Objects.requireNonNull(id, "exerciseId must not be null"));
         setQuizStart(quizStart);
         setExercise(exercise);
         log.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
