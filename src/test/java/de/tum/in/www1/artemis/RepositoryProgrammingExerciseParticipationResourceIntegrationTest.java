@@ -207,18 +207,20 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testSaveFiles() throws Exception {
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
-
+    private List<FileSubmission> getFileSubmissions() {
         List<FileSubmission> fileSubmissions = new ArrayList();
         FileSubmission fileSubmission = new FileSubmission();
         fileSubmission.setFileName(currentLocalFileName);
         fileSubmission.setFileContent("updatedFileContent");
         fileSubmissions.add(fileSubmission);
+        return fileSubmissions;
+    }
 
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", fileSubmissions, HttpStatus.OK);
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSaveFiles() throws Exception {
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
         Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
@@ -232,19 +234,14 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
 
-        List<FileSubmission> fileSubmissions = new ArrayList();
-        FileSubmission fileSubmission = new FileSubmission();
-        fileSubmission.setFileName(currentLocalFileName);
-        fileSubmission.setFileContent("updatedFileContent");
-        fileSubmissions.add(fileSubmission);
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
 
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", fileSubmissions, HttpStatus.OK);
+        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
 
         Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
 
-        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits.size() == 1).isTrue();
         assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
