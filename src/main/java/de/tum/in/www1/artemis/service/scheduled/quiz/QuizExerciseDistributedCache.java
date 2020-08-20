@@ -135,7 +135,12 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_RESULTS);
     }
 
-    static class QuizExerciseCacheImplStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
+    /**
+     * A serializer and deserializer for distributed quiz cache objects, required for objects distributed via Hazelcast. 
+     * We cannot use standard Java-serialization here, because the individual fields of {@link QuizExerciseDistributedCache}
+     * need to use different serialization mechanisms (e.g. {@link ScheduledTaskHandler} is not {@link Serializable}).
+     */
+    static class QuizExerciseDistributedCacheStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
 
         @Override
         public int getTypeId() {
@@ -144,6 +149,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
+            // Hazelcast will choose the best fit from it's own serializers for each object
             out.writeLong(exerciseCacheImpl.getExerciseId());
             out.writeObject(exerciseCacheImpl.quizStart);
             out.writeObject(exerciseCacheImpl.exercise);
@@ -151,17 +157,17 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public QuizExerciseDistributedCache read(ObjectDataInput in) throws IOException {
-            Long id = in.readLong();
+            Long exerciseId = in.readLong();
             List<ScheduledTaskHandler> quizStart = in.readObject();
             QuizExercise exercise = in.readObject();
-            return new QuizExerciseDistributedCache(id, quizStart, exercise);
+            return new QuizExerciseDistributedCache(exerciseId, quizStart, exercise);
         }
     }
 
     static void registerSerializer(Config config) {
         SerializerConfig serializerConfig = new SerializerConfig();
         serializerConfig.setTypeClass(QuizExerciseDistributedCache.class);
-        serializerConfig.setImplementation(new QuizExerciseCacheImplStreamSerializer());
+        serializerConfig.setImplementation(new QuizExerciseDistributedCacheStreamSerializer());
         config.getSerializationConfig().addSerializerConfig(serializerConfig);
     }
 }
