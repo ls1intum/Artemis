@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.io.IOException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.*;
