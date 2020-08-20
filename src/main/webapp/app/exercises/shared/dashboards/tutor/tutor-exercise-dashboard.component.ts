@@ -438,13 +438,19 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         return;
     }
 
+    async openCodeEditorWithStudentSubmission(participationId: number) {
+        const route = `/course-management/${this.exercise.course?.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
+        await this.router.navigate([route]);
+    }
+
     /**
      * Show complaint depending on the exercise type
      * @param complaint that we want to show
      */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.openManualResultDialog(complaint.result);
+            // this.openManualResultDialog(complaint.result);
+            this.openCodeEditorWithStudentSubmission(complaint.result.participation!.id!);
         } else {
             this.openAssessmentEditor(complaint.result.submission!);
         }

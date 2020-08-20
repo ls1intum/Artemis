@@ -125,6 +125,10 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                         this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
                         this.result = this.participationForAssessment.results[0];
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
+                        if (this.result.hasComplaint) {
+                            this.getComplaint();
+                        }
                     }),
                 )
                 .subscribe(

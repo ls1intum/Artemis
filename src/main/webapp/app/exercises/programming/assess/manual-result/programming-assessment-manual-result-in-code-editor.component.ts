@@ -33,6 +33,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     @Input() result: Result;
     @Input() exercise: ProgrammingExercise;
     @Input() canOverride: boolean;
+    @Input() complaint: Complaint;
 
     @Output() onResultModified = new EventEmitter<Result>();
 
@@ -43,7 +44,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     isOpenForSubmission = false;
     user: User;
 
-    complaint: Complaint;
     resultModified: boolean;
 
     constructor(
