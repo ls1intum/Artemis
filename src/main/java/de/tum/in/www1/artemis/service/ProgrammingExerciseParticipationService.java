@@ -149,6 +149,10 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissions(Long participationId) {
+        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissions(participationId);
+    }
+
     /**
      * Try to find a programming exercise participation for the given id.
      *
@@ -291,7 +295,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Lock the repository associated with a programming participation
-     * 
+     *
      * @param programmingExercise the programming exercise
      * @param participation the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
@@ -307,7 +311,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Unlock the repository associated with a programming participation
-     * 
+     *
      * @param programmingExercise the programming exercise
      * @param participation the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
