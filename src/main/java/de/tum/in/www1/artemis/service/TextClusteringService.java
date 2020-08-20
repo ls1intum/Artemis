@@ -141,13 +141,11 @@ public class TextClusteringService {
             return;
         }
 
-        final List<TextTreeNode> treeNodes = treeNodeRepository.saveAll(clusterTree);
-
         // Update exercise of the treeNodes and store in Database
-        for(TextTreeNode node: treeNodes) {
+        for(TextTreeNode node: clusterTree) {
             node.setExercise(exercise);
         }
-        treeNodeRepository.saveAll(treeNodes);
+        treeNodeRepository.saveAll(clusterTree);
 
         // Iterate over the distances and store them in Database
         for(int i = 0; i < distanceMatrix.size(); i++) {

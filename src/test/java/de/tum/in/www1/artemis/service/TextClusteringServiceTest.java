@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
@@ -46,11 +48,11 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         "Models also allow us to visualize and understand systems that either no longer exist or that are only claimed to exist."
     };
 
-    private static String SEGMENTATION_ENDPOINT = "http://localhost:8000/segment";
+    private static final String SEGMENTATION_ENDPOINT = "http://localhost:8000/segment";
 
-    private static String EMBEDDING_ENDPOINT = "http://localhost:8001/embed";
+    private static final String EMBEDDING_ENDPOINT = "http://localhost:8001/embed";
 
-    private static String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
+    private static final String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
 
     @Autowired
     TextClusteringService textClusteringService;
@@ -85,15 +87,16 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     DatabaseUtilService database;
 
-    TextExercise exercise;
-    List<TextBlock> blocks;
-    List<TextCluster> clusters;
-    List<TextTreeNode> treeNodes;
-    List<TextPairwiseDistance> pairwiseDistances;
+    private List<TextExercise> exercises;
+    private List<TextBlock> blocks;
+    private List<TextCluster> clusters;
+    private List<TextTreeNode> treeNodes;
+    private List<TextPairwiseDistance> pairwiseDistances;
+    private TextSubmission submission;
 
 
-    @BeforeEach
-    public void init(){
+    @BeforeAll
+    public void init() {
         assumeTrue(isTextAssessmentClusteringAvailable());
         database.addUsers(10, 0, 0);
         database.addCourseWithOneFinishedTextExercise();
@@ -103,8 +106,10 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", EMBEDDING_ENDPOINT);
         ReflectionTestUtils.setField(textSimilarityClusteringService, "API_ENDPOINT", CLUSTERING_ENDPOINT);
 
-        exercise = textExerciseRepository.findAll().get(0);
+        exercises = textExerciseRepository.findAll();
 
+        // Initialize data for the main exercise
+        TextExercise exercise = exercises.get(0);
         for(int i = 1; i <= 10; i++) {
             TextSubmission submission = ModelFactory.generateTextSubmission(submissionText[i - 1], Language.ENGLISH, true);
             database.addTextSubmission(
@@ -114,56 +119,43 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             );
         }
         textClusteringService.calculateClusters(exercise);
+
+        // Initialize data for the second exercise
+        TextExercise exercise2 = exercises.get(1);
+        submission = ModelFactory.generateTextSubmission(submissionText[0], Language.ENGLISH, true);
+        database.addTextSubmission(
+            exercise2,
+            submission,
+            "student" + 1
+        );
+        TextBlock block = ModelFactory.generateTextBlock(0,1,"b1");
+        block.setSubmission(submission);
+        block.setTreeId(11);
+        textBlockRepository.save(block);
+        TextCluster cluster = new TextCluster().exercise(exercise2);
+        textClusterRepository.save(cluster);
+        TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
+        incorrectTreeNode.setId(26L);
+        incorrectTreeNode.setChild(-1);
+        textTreeNodeRepository.save(incorrectTreeNode);
+        TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
+        incorrectPairwiseDistance.setId(1001L);
+        textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
+
         blocks = textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId());
         clusters = textClusterRepository.findAllByExercise(exercise);
         treeNodes = textTreeNodeRepository.findAllByExercise(exercise);
         pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
     }
 
-    @AfterEach
+    @AfterAll
     public void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testStateAfterClustering() {
-        // Assert that the new queries are functioning properly
-        assertThat(blocks, hasSize(textBlockRepository.findAll().size()));
-        assertThat(clusters, hasSize(textClusterRepository.findAll().size()));
-        assertThat(treeNodes, hasSize(textTreeNodeRepository.findAll().size()));
-        assertThat(pairwiseDistances, hasSize(textPairwiseDistanceRepository.findAll().size()));
-
-        TextBlock block1 = ModelFactory.generateTextBlock(0,1,"b1");
-        block1.setSubmission(blocks.get(0).getSubmission());
-        textBlockRepository.save(block1);
-
-        TextBlock block2 = ModelFactory.generateTextBlock(0,1,"b2");
-        block2.setTreeId(10);
-        textBlockRepository.save(block2);
-
-        assertThat(textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId()),
-            hasSize(textBlockRepository.findAll().size() - 2));
-        textBlockRepository.delete(block1);
-        textBlockRepository.delete(block2);
-
-        TextCluster cluster = new TextCluster().exercise(textExerciseRepository.findAll().get(1));
-        textClusterRepository.save(cluster);
-        assertThat(textClusterRepository.findAllByExercise(exercise),
-            hasSize(textClusterRepository.findAll().size() - 1));
-
-        TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(textExerciseRepository.findAll().get(1));
-        incorrectTreeNode.setId(25L);
-        incorrectTreeNode.setChild(-1);
-        textTreeNodeRepository.save(incorrectTreeNode);
-        assertThat(textTreeNodeRepository.findAllByExercise(exercise),
-            hasSize(textTreeNodeRepository.findAll().size() - 1));
-
-        TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(textExerciseRepository.findAll().get(1));
-        incorrectPairwiseDistance.setId(-1L);
-        textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
-        assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise),
-            hasSize(textPairwiseDistanceRepository.findAll().size() - 1));
-
+    public void testUniqueProperties() {
+        TextExercise exercise = exercises.get(0);
         // Only half of the matrix is stored in the database, as it is symmetrical.
         int matrixSize = 0;
         for(int i = 1; i <= blocks.size(); i++) {
@@ -171,7 +163,18 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         }
         assertThat(pairwiseDistances, hasSize(matrixSize));
 
-        // The following hold for the root node:
+        // Getter and setter for lambda value tested
+        TextTreeNode testNode = new TextTreeNode();
+        testNode.setLambda_val(Double.POSITIVE_INFINITY);
+        assertThat(ReflectionTestUtils.getField(testNode, "lambda_val"), equalTo(-1.));
+        assertThat(testNode.getLambda_val(), equalTo(Double.POSITIVE_INFINITY));
+        // isBlockNode() tested
+        testNode.setChild_size(1);
+        assertThat(testNode.isBlockNode(), equalTo(true));
+        testNode.setChild_size(2);
+        assertThat(testNode.isBlockNode(), equalTo(false));
+
+        // The following should hold for the root node:
         //      parent == -1
         //      child == blocks.size()
         //      lambda_val == -1 (getLambda_val should return POSITIVE_INFINITY)
@@ -181,16 +184,67 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(rootNode.getLambda_val(), equalTo(Double.POSITIVE_INFINITY));
         assertThat(rootNode.isBlockNode(), equalTo(false));
         assertThat((int) rootNode.getChild_size(), equalTo(blocks.size()));
+    }
+
+    @Test
+    public void testStateAfterClustering() {
+        TextExercise exercise = exercises.get(0);
+        TextExercise exercise2 = exercises.get(1);
+
+        TextBlock block1 = ModelFactory.generateTextBlock(0,1,"b1");
+        block1.setSubmission(blocks.get(0).getSubmission());
+        textBlockRepository.save(block1);
+
+        TextBlock block2 = ModelFactory.generateTextBlock(0,1,"b2");
+        block2.setTreeId(10);
+        textBlockRepository.save(block2);
+
+        List<TextBlock> currentBlocks = textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId());
+        assertThat(currentBlocks, hasSize(blocks.size()));
+        assertThat(currentBlocks.contains(block1), equalTo(false));
+        assertThat(currentBlocks.contains(block2), equalTo(false));
+        textBlockRepository.delete(block1);
+        textBlockRepository.delete(block2);
+
+        TextCluster cluster = new TextCluster().exercise(exercise2);
+        textClusterRepository.save(cluster);
+        List<TextCluster> currentClusters = textClusterRepository.findAllByExercise(exercise);
+        assertThat(currentClusters, hasSize(clusters.size()));
+        assertThat(currentClusters.contains(cluster), equalTo(false));
+        textClusterRepository.delete(cluster);
+
+        TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
+        incorrectTreeNode.setId(25L);
+        incorrectTreeNode.setChild(-1);
+        textTreeNodeRepository.save(incorrectTreeNode);
+        List<TextTreeNode> currentTreeNodes = textTreeNodeRepository.findAllByExercise(exercise);
+        assertThat(currentTreeNodes, hasSize(treeNodes.size()));
+        assertThat(currentTreeNodes.contains(incorrectTreeNode), equalTo(false));
+        textTreeNodeRepository.delete(incorrectTreeNode);
+
+        TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
+        incorrectPairwiseDistance.setId(1000L);
+        textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
+        List<TextPairwiseDistance> currentPairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
+        assertThat(currentPairwiseDistances, hasSize(pairwiseDistances.size()));
+        assertThat(currentPairwiseDistances.contains(incorrectPairwiseDistance), equalTo(false));
+        textPairwiseDistanceRepository.delete(incorrectPairwiseDistance);
+    }
+
+    @Test
+    public void testRemoval() {
+        TextExercise exercise = exercises.get(1);
 
         // Test cascading removals
-        textSubmissionRepository.deleteAll();
-        assertThat(textBlockRepository.findAll(), hasSize(0));
+        textSubmissionRepository.delete(submission);
+        assertThat(textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId()), hasSize(0));
+        assertThat(textSubmissionRepository.findById(submission.getId()), equalTo(Optional.empty()));
 
         textExerciseRepository.delete(exercise);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
-        assertThat(textClusterRepository.findAll(), hasSize(1));
-        assertThat(textTreeNodeRepository.findAll(), hasSize(1));
-        assertThat(textPairwiseDistanceRepository.findAll(), hasSize(1));
+        assertThat(textClusterRepository.findAllByExercise(exercise), hasSize(0));
+        assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
+        assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
     }
 
     private static boolean isTextAssessmentClusteringAvailable() {

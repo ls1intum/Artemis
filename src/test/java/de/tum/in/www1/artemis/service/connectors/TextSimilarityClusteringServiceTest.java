@@ -73,15 +73,15 @@ public class TextSimilarityClusteringServiceTest {
         assertThat(matrix, hasSize(blocks.size()));
 
         List<TextTreeNode> clusterTree = response.clusterTree;
-        List<TextTreeNode> blocksInTree = clusterTree.stream().filter(treeNode -> treeNode.isBlockNode()).collect(toList());
+        List<TextTreeNode> blocksInTree = clusterTree.stream().filter(TextTreeNode::isBlockNode).collect(toList());
 
         // Assert that number of blockNodes in the tree equals number of blocks
         assertThat(blocksInTree, hasSize(blocks.size()));
-        List<Long> groupByChild = clusterTree.stream().map(treeNode -> treeNode.getChild()).distinct().collect(toList());
+        List<Long> groupByChild = clusterTree.stream().map(TextTreeNode::getChild).distinct().collect(toList());
 
         // Assert that child is a unique property of a TextTreeNode
         assertThat(groupByChild, hasSize(clusterTree.size()));
-        List<Long> groupByParent = clusterTree.stream().map(treeNode -> treeNode.getParent()).distinct().collect(toList());
+        List<Long> groupByParent = clusterTree.stream().map(TextTreeNode::getParent).distinct().collect(toList());
 
         // Assert that parent is not a unique property of a TextTreeNode
         assertThat(groupByParent.size(), lessThan(clusterTree.size()));
