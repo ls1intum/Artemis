@@ -1,4 +1,4 @@
-import { HostListener, ViewChild, Component } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -17,13 +17,50 @@ import {
     FileChange,
     FileType,
     RenameFileChange,
+    ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Participation } from 'app/entities/participation/participation.model';
+import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 
-@Component({ template: '' })
-export abstract class CodeEditorContainerComponent implements ComponentCanDeactivate {
+@Component({
+    selector: 'jhi-code-editor-container',
+    templateUrl: './code-editor-container.component.html',
+})
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
+
+    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
+    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
+    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
+
+    @Input()
+    editable = true;
+    @Input()
+    buildable = true;
+    @Input()
+    showEditorInstructions = true;
+    @Output()
+    onResizeEditorInstructions = new EventEmitter<void>();
+    @Output()
+    onCommitStateChange = new EventEmitter<CommitState>();
+    @Output()
+    onFileChanged = new EventEmitter<void>();
+
+    /** Work in Progress: temporary properties needed to get first prototype working */
+
+    @Input()
+    participation: Participation;
+
+    /** END WIP */
+
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
@@ -35,12 +72,12 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
     editorState: EditorState;
     commitState: CommitState;
 
-    protected constructor(
-        protected participationService: ParticipationService | null,
+    constructor(
+        private participationService: ParticipationService,
         private translateService: TranslateService,
-        protected route: ActivatedRoute | null,
+        private route: ActivatedRoute,
         private jhiAlertService: AlertService,
-        protected sessionService: CodeEditorSessionService,
+        private sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
@@ -112,6 +149,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
         this.storeSession();
         // Set the fileChange to inform other Components so they can update their references to the files
         this.fileChange = fileChange;
+        this.onFileChanged.emit();
     }
 
     /**
@@ -147,6 +185,7 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
      */
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
+        this.onFileChanged.emit();
     }
 
     /**
@@ -194,5 +233,14 @@ export abstract class CodeEditorContainerComponent implements ComponentCanDeacti
         resizableMinHeight?: number;
     }) {
         this.grid.toggleCollapse(event, horizontal, interactable, resizableMinWidth, resizableMinHeight);
+    }
+
+    onGridResize(type: ResizeType) {
+        if (type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+            this.onResizeEditorInstructions.emit();
+        }
+        if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
+            this.aceEditor.editor.getEditor().resize();
+        }
     }
 }
