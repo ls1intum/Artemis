@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
  */
 final class QuizCache {
 
-    private static final Logger log = LoggerFactory.getLogger(QuizCache.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuizCache.class);
 
     private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
@@ -128,8 +128,9 @@ final class QuizCache {
             // Check again, if no existing quiz cache can be found
             cachedQuiz = cachedQuizExercises.get(quizExerciseId);
             // If it is now not null anymore, a concurrent process created a new one in the meantime before the lock. Return that one.
-            if (cachedQuiz != null)
+            if (cachedQuiz != null) {
                 return cachedQuiz;
+            }
             // Create a new QuizExerciseDistributedCache object and initialize it.
             var newCachedQuiz = new QuizExerciseDistributedCache(quizExerciseId);
             newCachedQuiz.setHazelcastInstance(hazelcastInstance);
@@ -156,7 +157,7 @@ final class QuizCache {
     void performCacheWrite(Long quizExerciseId, UnaryOperator<QuizExerciseCache> writeOperation) {
         cachedQuizExercises.lock(quizExerciseId);
         try {
-            log.info("Write quiz cache {}", quizExerciseId);
+            LOG.info("Write quiz cache {}", quizExerciseId);
             cachedQuizExercises.set(quizExerciseId, writeOperation.apply(getTransientWriteCacheFor(quizExerciseId)));
         }
         finally {
@@ -178,7 +179,7 @@ final class QuizCache {
         try {
             QuizExerciseCache cachedQuiz = cachedQuizExercises.get(quizExerciseId);
             if (cachedQuiz != null) {
-                log.info("Write quiz cache {}", quizExerciseId);
+                LOG.info("Write quiz cache {}", quizExerciseId);
                 cachedQuizExercises.set(quizExerciseId, writeOperation.apply(cachedQuiz));
             }
         }
@@ -250,7 +251,7 @@ final class QuizCache {
      * @param quizExercise the new quiz exercise object
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
-        log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
+        LOG.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
 }
