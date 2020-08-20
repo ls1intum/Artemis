@@ -70,8 +70,6 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
     nextSubmissionBusy = false;
     isAssessor = true;
     isAtLeastInstructor = false;
-    // TODO: Set default to false and set true when validating the feedback
-    assessmentsAreValid = true;
     complaint: Complaint;
     private cancelConfirmationText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
@@ -330,5 +328,12 @@ export class CodeEditorTutorAssessmentContainerComponent extends CodeEditorConta
                 this.onError(err.message);
             },
         );
+    }
+    get assessmentsAreValid() {
+        if (this.result && this.result.resultString) {
+            return this.result.resultString.length > 0;
+        } else {
+            return false;
+        }
     }
 }
