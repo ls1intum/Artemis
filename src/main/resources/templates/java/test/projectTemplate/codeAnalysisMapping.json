@@ -1,0 +1,76 @@
+{
+    "categories": {
+        "category1": {
+            "title": "Category 1",
+            "severity": 1,
+            "issues": [
+                "checkstyle:someCheck",
+                "spotbugs:someFoundBug"
+            ]
+        }
+    },
+    "tools": {
+        "spotbugs": {
+            "title": "Spotbugs",
+            "issue_src": "https://github.com/spotbugs/spotbugs/blob/fb4cdf0b7c4ddc5fc246b71426265e6b309b3354/spotbugs/etc/messages.xml#L93-L162"
+            "issues": [
+                {
+                    "category": "CORRECTNESS",
+                    "title": "Correctness",
+                    "description": "Probable bug - an apparent coding mistake resulting in code that was probably not what the developer intended. We strive for a low false positive rate."
+                },
+                {
+                    "category": "NOISE",
+                    "title": "Bogus random noise",
+                    "description": "Bogus random noise: intended to be useful as a control in data mining experiments, not in finding actual bugs in software."
+                },
+                {
+                    "category": "SECURITY",
+                    "title": "Security",
+                    "description": "A use of untrusted input in a way that could create a remotely exploitable security vulnerability."
+                },
+                {
+                    "category": "BAD_PRACTICE",
+                    "title": "Bad practice",
+                    "description": "Violations of recommended and essential coding practice. Examples include hash code and equals problems, cloneable idiom, dropped exceptions, Serializable problems, and misuse of finalize. We strive to make this analysis accurate, although some groups may not care about some of the bad practices."
+                },
+                {
+                    "category": "STYLE",
+                    "title": "Dodgy code",
+                    "descripion": "Code that is confusing, anomalous, or written in a way that leads itself to errors. Examples include dead local stores, switch fall through, unconfirmed casts, and redundant null check of value known to be null. More false positives accepted. In previous versions of SpotBugs, this category was known as Style."
+                },
+                {
+                    "category": "PERFORMANCE",
+                    "title": "Performance",
+                    "description": "Code that is not necessarily incorrect but may be inefficient."
+                },
+                {
+                    "category": "MALICIOUS_CODE",
+                    "title": "Malicious code vulnerability",
+                    "description": "Code that is vulnerable to attacks from untrusted code."
+                },
+                {
+                    "category": "MT_CORRECTNESS",
+                    "title": "Multithreaded correctness",
+                    "description": "Code flaws having to do with threads, locks, and volatiles."
+                },
+                {
+                    "category": "I18N",
+                    "title": "Internationalization",
+                    "description": "Code flaws having to do with internationalization and locale"
+                },
+                {
+                    "category": "EXPERIMENTAL",
+                    "title": "Experimental",
+                    "description": "Experimental and not fully vetted bug patterns"
+                }
+            ]
+        },
+        "checkstyle": {
+            "title": "Checkstyle",
+            "issues": [
+
+            ]
+        }
+    }
+}
