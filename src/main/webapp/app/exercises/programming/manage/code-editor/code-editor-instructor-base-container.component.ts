@@ -62,7 +62,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
     course: Course;
-    isExamMode: boolean;
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
