@@ -126,7 +126,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             // TODO: Double check if this is the right way to do, or if we should create a new Manual Result
             newResult.setId(latestExistingResult.get().getId());
             // load assessor
-            latestExistingResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(latestExistingResult.get().getId());
+            latestExistingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(latestExistingResult.get().getId());
         }
 
         // make sure that the participation cannot be manipulated on the client side
@@ -170,7 +170,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
                 SubmissionType.MANUAL);
             newResult.setSubmission(submission);
         } else {
-            submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(newResult.getSubmission().getId());
+            submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
             newResult.setSubmission(submission);
             if (newResult.getSubmission() == null) {
                 throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
