@@ -133,16 +133,19 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param buildErrors All compile errors for the current build
      */
     onBuildFailed(buildErrors: Array<Annotation>) {
-        theWindow().orionBuildConnector.onBuildFailed(JSON.stringify({
-            errors: buildErrors.reduce( // Group annotations by filename
-                (buildLogErrors, { fileName, timestamp, ...rest }) => ({
-                    ...buildLogErrors,
-                    [fileName]: [...(buildLogErrors[fileName] || []), {...rest, ts: timestamp}],
-                }),
-                {},
-            ),
-            timestamp: buildErrors.length > 0 ? buildErrors[0].timestamp : Date.now()
-        }));
+        theWindow().orionBuildConnector.onBuildFailed(
+            JSON.stringify({
+                errors: buildErrors.reduce(
+                    // Group annotations by filename
+                    (buildLogErrors, { fileName, timestamp, ...rest }) => ({
+                        ...buildLogErrors,
+                        [fileName]: [...(buildLogErrors[fileName] || []), { ...rest, ts: timestamp }],
+                    }),
+                    {},
+                ),
+                timestamp: buildErrors.length > 0 ? buildErrors[0].timestamp : Date.now(),
+            }),
+        );
     }
 
     /**
