@@ -24,11 +24,11 @@ public class StudentScoresService {
     /**
      * Returns all StudentScores for exercise.
      *
-     * @param exercise exercise
+     * @param exerciseId id of the exercise
      * @return list of student score objects for that exercise
      */
-    public List<StudentScore> getExerciseStudentScores(Exercise exercise) {
-        return studentScoresRepository.findAllByExerciseId(exercise.getId());
+    public List<StudentScore> getStudentScoresForExercise(Long exerciseId) {
+        return studentScoresRepository.findAllByExerciseId(exerciseId);
     }
 
     /**
@@ -37,7 +37,7 @@ public class StudentScoresService {
      * @param course course
      * @return list of student score objects for that course
      */
-    public List<StudentScore> getCourseStudentScores(Course course) {
+    public List<StudentScore> getStudentScoresForCourse(Course course) {
         Set<Exercise> exercises = course.getExercises();
 
         Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(toSet());

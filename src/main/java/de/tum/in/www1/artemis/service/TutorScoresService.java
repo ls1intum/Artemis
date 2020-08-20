@@ -24,11 +24,11 @@ public class TutorScoresService {
     /**
      * Returns all TutorScores for exercise.
      *
-     * @param exercise exercise
+     * @param exerciseId id of the exercise
      * @return list of tutor score objet for that exercise
      */
-    public List<TutorScore> getExerciseTutorScores(Exercise exercise) {
-        return tutorScoresRepository.findAllByExerciseId(exercise.getId());
+    public List<TutorScore> getTutorScoresForExercise(Long exerciseId) {
+        return tutorScoresRepository.findAllByExerciseId(exerciseId);
     }
 
     /**
@@ -37,7 +37,7 @@ public class TutorScoresService {
      * @param course course
      * @return list of tutor score objects for that course
      */
-    public List<TutorScore> getCourseTutorScores(Course course) {
+    public List<TutorScore> getTutorScoresForCourse(Course course) {
         Set<Exercise> exercises = course.getExercises();
 
         Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(toSet());
