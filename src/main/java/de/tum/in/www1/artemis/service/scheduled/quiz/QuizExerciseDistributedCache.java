@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -24,6 +25,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
+/**
+ * This class represents the cache for a single quiz exercise. 
+ * <p>
+ * This includes the participations, submissions and results, but also the quiz exercise object itself and handlers for
+ * the distributed start task {@link QuizStartTask}.
+ */
 final class QuizExerciseDistributedCache extends QuizExerciseCache implements HazelcastInstanceAware {
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
@@ -34,6 +41,9 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     private static final String HAZELCAST_CACHE_RESULTS = "-results";
 
+    /**
+     * All {@link List} classes that are supported by Hazelcast {@link SerializationServiceV1}
+     */
     private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
 
     /**
@@ -41,7 +51,14 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      */
     List<ScheduledTaskHandler> quizStart;
 
+    /**
+     * The {@link QuizExercise} cached object. This is only cached locally and not distributed. 
+     */
     private transient QuizExercise exercise;
+
+    /*
+     * All three IMaps are distributed Hazelcast objects and must not be (de-)serialized, they are all set in the setHazelcastInstance method.
+     */
 
     private transient IMap<String, StudentParticipation> participations;
 
@@ -130,6 +147,10 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+        /*
+         * Distributed Hazelcast objects will be automatically created and set up by Hazelcast, and are cached by the Hazelcast instance itself globally. This is a relatively
+         * lightweight operation.
+         */
         participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_PARTICIPATIONS);
         submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_SUBMISSIONS);
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_RESULTS);
