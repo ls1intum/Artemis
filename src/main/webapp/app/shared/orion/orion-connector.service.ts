@@ -127,11 +127,22 @@ export class OrionConnectorService implements ArtemisOrionConnector {
 
     /**
      * Notify the IDE that a build failed. Alternative to onBuildFinished
+     * Transforms the annotations to the format used by orion:
+     * { errors: { [fileName: string]: Annotation[] }; timestamp: number }
      *
      * @param buildErrors All compile errors for the current build
      */
     onBuildFailed(buildErrors: Array<Annotation>) {
-        theWindow().orionBuildConnector.onBuildFailed(JSON.stringify(buildErrors));
+        theWindow().orionBuildConnector.onBuildFailed(JSON.stringify({
+            errors: buildErrors.reduce( // Group annotations by filename
+                (buildLogErrors, { fileName, timestamp, ...rest }) => ({
+                    ...buildLogErrors,
+                    [fileName]: [...(buildLogErrors[fileName] || []), {...rest, ts: timestamp}],
+                }),
+                {},
+            ),
+            timestamp: buildErrors.length > 0 ? buildErrors[0].timestamp : Date.now()
+        }));
     }
 
     /**
