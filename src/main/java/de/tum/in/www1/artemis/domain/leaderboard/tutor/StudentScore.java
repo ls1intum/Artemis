@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.domain.leaderboard.tutor;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "student_scores")
 public class StudentScore {
 
-    @EmbeddedId
+    @Id
+    @Column(name = "id")
     private long studentScoreId;
 
     @Column(name = "student_id")
@@ -40,7 +45,12 @@ public class StudentScore {
         return score;
     }
 
-    public StudentScore(long studentId, long exerciseId, long resultId, long score) {
+    public StudentScore() {
+
+    }
+
+    public StudentScore(long studentScoreId, long studentId, long exerciseId, long resultId, long score) {
+        this.studentScoreId = studentScoreId;
         this.studentId = studentId;
         this.exerciseId = exerciseId;
         this.resultId = resultId;

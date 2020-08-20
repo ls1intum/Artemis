@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.domain.leaderboard.tutor;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "tutor_scores")
 public class TutorScore {
 
-    @EmbeddedId
+    @Id
+    @Column(name = "id")
     private long tutorScoreId;
 
     @Column(name = "tutor_id")
@@ -96,12 +101,18 @@ public class TutorScore {
         return answeredFeedbackRequestsPoints;
     }
 
-    public TutorScore(long tutorId, long exerciseId) {
+    public TutorScore() {
+
+    }
+
+    public TutorScore(long tutorScoreId, long tutorId, long exerciseId) {
+        this.tutorScoreId = tutorScoreId;
         this.tutorId = tutorId;
         this.exerciseId = exerciseId;
     }
 
-    public TutorScore(long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answered_feedback_requests, double answeredFeedbackRequestsPoints) {
+    public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answered_feedback_requests, double answeredFeedbackRequestsPoints) {
+        this.tutorScoreId = tutorScoreId;
         this.tutorId = tutorId;
         this.exerciseId = exerciseId;
         this.assessments = assessments;
