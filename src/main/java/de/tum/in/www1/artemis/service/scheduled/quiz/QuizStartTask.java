@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.hazelcast.scheduledexecutor.NamedTask;
 import com.hazelcast.spring.context.SpringAware;
+
 import de.tum.in.www1.artemis.config.Constants;
 
 /**
@@ -23,7 +24,7 @@ final class QuizStartTask implements Runnable, Serializable, NamedTask {
 
     final Long quizExerciseId;
 
-    @Autowired(required = true)
+    @Autowired
     transient QuizScheduleService quizScheduleService;
 
     QuizStartTask(Long quizExerciseId) {
