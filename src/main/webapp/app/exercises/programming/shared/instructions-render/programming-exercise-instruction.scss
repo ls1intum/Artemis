@@ -12,7 +12,7 @@ Instructions wrapper styles
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
-        height: inherit;
+        height: 100%;
 
         &__markdown {
             height: inherit;
