@@ -164,9 +164,19 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void tutorScoresForExerciseTestAccessForbidden() throws Exception {
+    public void tutorScoresForExerciseTestAccessForbiddenStudent() throws Exception {
         request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
         request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(1).getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void tutorScoresForExerciseTestAccessForbiddenTutor() throws Exception {
+        course = courseRepo.findAll().get(0);
+        course.setTeachingAssistantGroupName("instructor");
+        courseRepo.save(course);
+
+        request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -202,8 +212,18 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void tutorScoresForCourseTestAccessForbidden() throws Exception {
+    public void tutorScoresForCourseTestAccessForbiddenStudent() throws Exception {
         request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
         request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(1).getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void tutorScoresForCourseTestAccessForbiddenTutor() throws Exception {
+        course = courseRepo.findAll().get(0);
+        course.setTeachingAssistantGroupName("instructor");
+        courseRepo.save(course);
+
+        request.get("/api/tutor-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
 }

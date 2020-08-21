@@ -144,6 +144,16 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void studentScoresForExerciseTestAccessForbidden() throws Exception {
+        course = courseRepo.findAll().get(0);
+        course.setStudentGroupName("tutor");
+        courseRepo.save(course);
+
+        request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void studentScoresForCourseTest() throws Exception {
         List responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -169,5 +179,15 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         responseCourseTwo = request.get("/api/student-scores/course/" + courseRepo.findAll().get(1).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseTwo.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseTwo.size()).as("response has length 1").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void studentScoresForCourseTestAccessForbidden() throws Exception {
+        course = courseRepo.findAll().get(0);
+        course.setStudentGroupName("tutor");
+        courseRepo.save(course);
+
+        request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
 }
