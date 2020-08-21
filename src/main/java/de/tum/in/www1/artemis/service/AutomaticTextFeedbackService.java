@@ -153,9 +153,8 @@ public class AutomaticTextFeedbackService {
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
                 TextTreeNode x = siblings.remove(0);
-                x.setLambda_val(sumLambdaValues(x.getLambda_val(), 1 / currentDist));
                 // If already above lambda threshold or a block node remove x directly
-                if(x.getLambda_val() > LAMBDA_THRESHOLD) {
+                if(1 / x.getLambda_val() + currentDist > LAMBDA_THRESHOLD) {
                     continue;
                 }
                 if(!x.isBlockNode()) {
