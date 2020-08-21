@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -21,8 +23,6 @@ import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.TutorScoresService;
 import de.tum.in.www1.artemis.service.UserService;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Rating.
@@ -46,7 +46,8 @@ public class TutorScoresResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public TutorScoresResource(TutorScoresService tutorScoresService, UserService userService, ExerciseService exerciseService, CourseService courseService, AuthorizationCheckService authCheckService) {
+    public TutorScoresResource(TutorScoresService tutorScoresService, UserService userService, ExerciseService exerciseService, CourseService courseService,
+            AuthorizationCheckService authCheckService) {
         this.tutorScoresService = tutorScoresService;
         this.userService = userService;
         this.exerciseService = exerciseService;

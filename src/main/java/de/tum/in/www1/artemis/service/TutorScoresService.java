@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class TutorScoresService {
         Set<Exercise> exercises = course.getExercises();
         Set<Long> exerciseIds = new HashSet<>();
 
-        for(Exercise ex: exercises) {
+        for (Exercise ex : exercises) {
             exerciseIds.add(ex.getId());
         }
 

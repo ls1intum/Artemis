@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -28,8 +30,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -75,14 +75,14 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
     public void initTestCase() {
         database.addUsers(2, 2, 2);
 
-        //course1
+        // course1
         course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
-        //exercise1
+        // exercise1
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
 
-        //score for tutor1 in exercise1 in course1
+        // score for tutor1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
@@ -93,7 +93,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         tutorScore = new TutorScore(1, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
-        //score for tutor2 in exercise1 in course1
+        // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 80).resultString("Good effort!").participation(participation);
@@ -104,14 +104,14 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         tutorScore = new TutorScore(2, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
-        //course2
+        // course2
         course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
-        //exercise2
+        // exercise2
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
 
-        //score for tutor1 in exercise2 in course2
+        // score for tutor1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 20).resultString("At least you tried!").participation(participation);
@@ -139,10 +139,10 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(responseExerciseTwo.size()).as("response has length 1").isEqualTo(1);
 
         course = courseRepo.findAll().get(0);
-        //exercise3
+        // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
-        //score for student2 in exercise3 in course1
+        // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 80).resultString("Nice effort!").participation(participation);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Really good!")).collect(Collectors.toList());
@@ -180,10 +180,10 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(responseCourseTwo.size()).as("response has length 1").isEqualTo(1);
 
         course = courseRepo.findAll().get(0);
-        //exercise3
+        // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
-        //score for student2 in exercise3 in course1
+        // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 60).resultString("Nice try!").participation(participation);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Pretty good!")).collect(Collectors.toList());

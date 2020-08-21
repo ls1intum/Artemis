@@ -40,7 +40,7 @@ public class StudentScoresService {
         Set<Exercise> exercises = course.getExercises();
         Set<Long> exerciseIds = new HashSet<>();
 
-        for(Exercise ex: exercises) {
+        for (Exercise ex : exercises) {
             exerciseIds.add(ex.getId());
         }
 
