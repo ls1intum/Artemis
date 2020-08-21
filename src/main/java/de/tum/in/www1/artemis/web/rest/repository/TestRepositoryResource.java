@@ -21,8 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -148,15 +146,14 @@ public class TestRepositoryResource extends RepositoryResource {
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam String commit, Principal principal) {
         ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
         }
-        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
 
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getURL());
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, exercise.getTestRepositoryUrlAsUrl());
         }
         catch (IllegalAccessException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
