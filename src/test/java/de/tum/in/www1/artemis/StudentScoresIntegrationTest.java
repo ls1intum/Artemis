@@ -117,7 +117,7 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void getStudentScoresForExerciseTest() throws Exception {
+    public void studentScoresForExerciseTest() throws Exception {
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
@@ -144,7 +144,7 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void getStudentScoresForCourseTest() throws Exception {
+    public void studentScoresForCourseTest() throws Exception {
         List responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseOne.size()).as("response has length 2").isEqualTo(2);

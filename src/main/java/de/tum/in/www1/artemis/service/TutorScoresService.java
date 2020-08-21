@@ -17,7 +17,7 @@ public class TutorScoresService {
 
     private final TutorScoresRepository tutorScoresRepository;
 
-    public TutorScoresService(TutorScoresRepository tutorScoresRepository, CourseService courseService) {
+    public TutorScoresService(TutorScoresRepository tutorScoresRepository) {
         this.tutorScoresRepository = tutorScoresRepository;
     }
 

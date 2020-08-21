@@ -32,7 +32,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 @RequestMapping("/api")
 public class TutorScoresResource {
 
-    private static final String ENTITY_NAME = "tutorScores";
+    // private static final String ENTITY_NAME = "tutorScores";
 
     private final Logger log = LoggerFactory.getLogger(TutorScoresResource.class);
 

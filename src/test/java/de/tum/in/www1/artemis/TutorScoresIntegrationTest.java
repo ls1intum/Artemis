@@ -130,7 +130,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getTutorScoresForExerciseTest() throws Exception {
+    public void tutorScoresForExerciseTest() throws Exception {
         List responseExerciseOne = request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
@@ -144,7 +144,9 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(exercise);
         //score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
+        result = ModelFactory.generateResult(true, 80).resultString("Nice effort!").participation(participation);
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Really good!")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
         resultRepo.save(result);
         tutorScore = new TutorScore(10, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
@@ -162,14 +164,14 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void getTutorScoresForExerciseTest_AccessForbidden() throws Exception {
+    public void tutorScoresForExerciseTestAccessForbidden() throws Exception {
         request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
         request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(1).getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getStudentScoresForCourseTest() throws Exception {
+    public void tutorScoresForCourseTest() throws Exception {
         List responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseOne.size()).as("response has length 2").isEqualTo(2);
@@ -183,9 +185,11 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(exercise);
         //score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
+        result = ModelFactory.generateResult(true, 60).resultString("Nice try!").participation(participation);
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Pretty good!")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(10, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(11, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
         responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -198,7 +202,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void getStudentScoresForCourseTest_AccessForbidden() throws Exception {
+    public void tutorScoresForCourseTestAccessForbidden() throws Exception {
         request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
         request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(1).getId(), HttpStatus.FORBIDDEN, List.class);
     }

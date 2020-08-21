@@ -16,7 +16,7 @@ public class StudentScoresService {
 
     private final StudentScoresRepository studentScoresRepository;
 
-    public StudentScoresService(StudentScoresRepository studentScoresRepository, CourseService courseService) {
+    public StudentScoresService(StudentScoresRepository studentScoresRepository) {
         this.studentScoresRepository = studentScoresRepository;
     }
 
