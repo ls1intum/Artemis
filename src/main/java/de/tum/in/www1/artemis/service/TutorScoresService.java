@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.toSet;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,7 +17,7 @@ public class TutorScoresService {
 
     private final TutorScoresRepository tutorScoresRepository;
 
-    public TutorScoresService(TutorScoresRepository tutorScoresRepository) {
+    public TutorScoresService(TutorScoresRepository tutorScoresRepository, CourseService courseService) {
         this.tutorScoresRepository = tutorScoresRepository;
     }
 
@@ -39,8 +39,11 @@ public class TutorScoresService {
      */
     public List<TutorScore> getTutorScoresForCourse(Course course) {
         Set<Exercise> exercises = course.getExercises();
+        Set<Long> exerciseIds = new HashSet<>();
 
-        Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(toSet());
+        for(Exercise ex: exercises) {
+            exerciseIds.add(ex.getId());
+        }
 
         return tutorScoresRepository.findAllByExerciseIdIn(exerciseIds);
     }

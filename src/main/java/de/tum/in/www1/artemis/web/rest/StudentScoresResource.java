@@ -14,6 +14,7 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.StudentScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -54,39 +55,41 @@ public class StudentScoresResource {
     }
 
     /**
-     * GET /studentScores/exercise/{exerciseId} : Find StudentScores by exercise id.
+     * GET /student-scores/exercise/{exerciseId} : Find StudentScores by exercise id.
      *
-     * @param exerciseId    if of the exercise
+     * @param exerciseId id of the exercise
      * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
      */
-    @GetMapping("/studentScores/exercise/{exerciseId}")
+    @GetMapping("/student-scores/exercise/{exerciseId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
     public ResponseEntity<List<StudentScore>> getStudentScoresForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get student scores for exercise : {}", exerciseId);
-
         Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
         }
+
         List<StudentScore> studentScores = studentScoresService.getStudentScoresForExercise(exerciseId);
 
         return ResponseEntity.ok(studentScores);
     }
 
     /**
-     * GET /studentScores/course/{courseId} : Find StudentScores by course id.
+     * GET /student-scores/course/{courseId} : Find StudentScores by course id.
      *
-     * @param courseId    if of the course
+     * @param courseId id of the course
      * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
      */
-    @GetMapping("/studentScores/course/{courseId}")
+    @GetMapping("/student-scores/course/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
     public ResponseEntity<List<StudentScore>> getStudentScoresForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get student scores for exercise : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorInCourse(course, userService.getUser())) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
 

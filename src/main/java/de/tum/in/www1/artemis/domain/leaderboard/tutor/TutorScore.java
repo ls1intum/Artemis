@@ -105,10 +105,12 @@ public class TutorScore {
         // Empty constructor because of @Entity
     }
 
-    public TutorScore(long tutorScoreId, long tutorId, long exerciseId) {
+    public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints) {
         this.tutorScoreId = tutorScoreId;
         this.tutorId = tutorId;
         this.exerciseId = exerciseId;
+        this.assessments = assessments;
+        this.assessmentsPoints = assessmentsPoints;
     }
 
     /*

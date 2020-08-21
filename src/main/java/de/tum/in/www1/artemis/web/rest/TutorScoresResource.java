@@ -14,6 +14,7 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -54,18 +55,19 @@ public class TutorScoresResource {
     }
 
     /**
-     * GET /tutorScores/exercise/{exerciseId} : Find TutorScores by exercise id.
+     * GET /tutor-scores/exercise/{exerciseId} : Find TutorScores by exercise id.
      *
      * @param exerciseId    id of the exercise
      * @return the ResponseEntity with status 200 (OK) and with the found tutor scores as body
      */
-    @GetMapping("/tutorScores/exercise/{exerciseId}")
+    @GetMapping("/tutor-scores/exercise/{exerciseId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<List<TutorScore>> getTutorScoresForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get student scores for exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
 
@@ -75,18 +77,19 @@ public class TutorScoresResource {
     }
 
     /**
-     * GET /tutorScores/course/{courseId} : Find TutorScores by course id.
+     * GET /tutor-scores/course/{courseId} : Find TutorScores by course id.
      *
      * @param courseId    id of the course
      * @return the ResponseEntity with status 200 (OK) and with the found tutor scores as body
      */
-    @GetMapping("/tutorScores/course/{courseId}")
+    @GetMapping("/tutor-scores/course/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<List<TutorScore>> getTutorScoresForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get student scores for exercise : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorInCourse(course, userService.getUser())) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
