@@ -113,7 +113,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     }
 
     updateViewFromSubmission(): void {
-        // Note: we just save here and do not commit, because this can lead to problems!
-        this.codeEditorContainer.actions.onSave();
+        // do nothing - the code editor itself is taking care of updating the view from submission
     }
 }
