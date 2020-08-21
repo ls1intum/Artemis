@@ -20,7 +20,6 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Component({
