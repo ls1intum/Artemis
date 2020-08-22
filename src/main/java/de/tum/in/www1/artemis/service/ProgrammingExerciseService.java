@@ -749,7 +749,7 @@ public class ProgrammingExerciseService {
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
 
-        final var exercisePage = authCheckService.isAdmin()
+        final var exercisePage = authCheckService.isAdmin(user)
                 ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
                         sorted)
                 : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);

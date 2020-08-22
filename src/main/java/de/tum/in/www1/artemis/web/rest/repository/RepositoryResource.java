@@ -62,7 +62,7 @@ public abstract class RepositoryResource {
 
     /**
      * Override this method to define how a repository can be retrieved.
-     * 
+     *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
      * @throws IOException if the repository folder can't be accessed.
@@ -247,12 +247,11 @@ public abstract class RepositoryResource {
      * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @throws IOException if the repository can't be checked out to retrieve the status.
      * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      * @throws InterruptedException if the repository can't be checked out to retrieve the status.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         boolean hasPermissions = canAccessRepository(domainId);
@@ -277,7 +276,7 @@ public abstract class RepositoryResource {
 
     /**
      * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
-     * 
+     *
      * @param executor lambda function to execute.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */

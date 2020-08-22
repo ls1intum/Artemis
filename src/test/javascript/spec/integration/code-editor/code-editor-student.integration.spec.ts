@@ -1,5 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -8,32 +7,25 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import * as ace from 'brace';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { buildLogs, extractedBuildLogErrors } from '../../helpers/sample/build-logs';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../helpers/utils/general.utils';
-import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import {
     CodeEditorBuildLogService,
@@ -42,10 +34,7 @@ import {
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
@@ -54,7 +43,6 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorSessionService } from '../../helpers/mocks/service/mock-code-editor-session.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 
@@ -67,37 +55,21 @@ describe('CodeEditorStudentIntegration', () => {
     let container: CodeEditorStudentContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
-    let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
-    let buildLogService: CodeEditorBuildLogService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let conflictService: CodeEditorConflictStateService;
-    let domainService: DomainService;
-    let submissionService: ProgrammingSubmissionService;
-    let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
-    let getRepositoryContentStub: SinonStub;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
-    let getBuildLogsStub: SinonStub;
-    let getFileStub: SinonStub;
-    let saveFilesStub: SinonStub;
-    let commitStub: SinonStub;
     let getStudentParticipationWithLatestResultStub: SinonStub;
-    let getLatestPendingSubmissionStub: SinonStub;
-    let getHintsForExerciseStub: SinonStub;
-    let guidedTourService: GuidedTourService;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let routeSubject: Subject<Params>;
-    let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
     const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
-    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -119,7 +91,6 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
-                { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
@@ -130,19 +101,12 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
-                guidedTourService = TestBed.inject(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
                 participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
                 resultService = containerDebugElement.injector.get(ResultService);
-                buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
                 programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
-                domainService = containerDebugElement.injector.get(DomainService);
-                submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
-                exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
 
@@ -150,33 +114,19 @@ describe('CodeEditorStudentIntegration', () => {
                 // @ts-ignore
                 (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
                     subscribeForLatestResultOfParticipationSubject,
                 );
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
-                getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
-                getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
-                saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
-                commitStub = stub(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-                getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
-                getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
     });
 
     afterEach(() => {
         checkIfRepositoryIsCleanStub.restore();
-        getRepositoryContentStub.restore();
         subscribeForLatestResultOfParticipationStub.restore();
         getFeedbackDetailsForResultStub.restore();
-        getBuildLogsStub.restore();
-        getFileStub.restore();
-        saveFilesStub.restore();
-        commitStub.restore();
         getStudentParticipationWithLatestResultStub.restore();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
@@ -185,344 +135,6 @@ describe('CodeEditorStudentIntegration', () => {
         routeSubject = new Subject<Params>();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-
-        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-        getLatestPendingSubmissionStub.returns(getLatestPendingSubmissionSubject);
-    });
-
-    const cleanInitialize = () => {
-        const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
-        const isCleanSubject = new Subject();
-        const getRepositoryContentSubject = new Subject();
-        const getBuildLogsSubject = new Subject();
-        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        getRepositoryContentStub.returns(getRepositoryContentSubject);
-        getFeedbackDetailsForResultStub.returns(of([]));
-        getBuildLogsStub.returns(getBuildLogsSubject);
-        getLatestPendingSubmissionStub.returns(getLatestPendingSubmissionSubject);
-
-        container.participation = participation as any;
-        container.exercise = exercise as ProgrammingExercise;
-        container.commitState = commitState;
-        // TODO: This should be replaced by testing with route params.
-        domainService.setDomain([DomainType.PARTICIPATION, participation]);
-        containerFixture.detectChanges();
-
-        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
-        getBuildLogsSubject.next(buildLogs);
-        getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
-        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null });
-
-        containerFixture.detectChanges();
-
-        // container
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.unsavedFiles).to.be.empty;
-
-        // file browser
-        expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
-        expect(getRepositoryContentStub).to.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
-
-        // ace editor
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).to.equal(CommitState.CLEAN);
-
-        // actions
-        expect(container.actions.commitState).to.equal(CommitState.CLEAN);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-        expect(container.actions.isBuilding).to.be.false;
-
-        // status
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.CLEAN);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
-
-        // build output
-        expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-
-        // instructions
-        expect(container.instructions.participation).to.deep.equal(participation);
-        expect(container.instructions.readOnlyInstructions).to.exist;
-        expect(container.instructions.editableInstructions).not.to.exist;
-        expect(container.instructions.readOnlyInstructions.exerciseHints).to.deep.equal(exerciseHints);
-
-        // called by build output & instructions
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
-
-        // called once each by instructions and exercise hint component in status bar.
-        expect(getHintsForExerciseStub).to.have.been.calledTwice;
-        expect(getHintsForExerciseStub).to.have.been.calledWithExactly(exercise.id);
-    };
-
-    const loadFile = (fileName: string, fileContent: string) => {
-        getFileStub.returns(of({ fileContent }));
-        container.fileBrowser.selectedFile = fileName;
-    };
-
-    it('should initialize all components correctly if all server calls are successful', (done) => {
-        cleanInitialize();
-        setTimeout(() => {
-            expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
-            done();
-        }, 0);
-    });
-
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
-        const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
-        const commitState = CommitState.UNDEFINED;
-        const isCleanSubject = new Subject();
-        const getBuildLogsSubject = new Subject();
-        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
-        getFeedbackDetailsForResultStub.returns(of([]));
-        getBuildLogsStub.returns(getBuildLogsSubject);
-
-        container.participation = participation;
-        container.exercise = exercise as ProgrammingExercise;
-        container.commitState = commitState;
-        // TODO: This should be replaced by testing with route params.
-        domainService.setDomain([DomainType.PARTICIPATION, participation]);
-        containerFixture.detectChanges();
-
-        isCleanSubject.error('fatal error');
-        getBuildLogsSubject.next(buildLogs);
-        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null });
-
-        containerFixture.detectChanges();
-
-        // container
-        expect(container.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.unsavedFiles).to.be.empty;
-
-        // file browser
-        expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
-        expect(getRepositoryContentStub).to.not.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
-
-        // ace editor
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.aceEditor.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-
-        // actions
-        expect(container.actions.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-        expect(container.actions.isBuilding).to.be.false;
-
-        // status
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.CLEAN);
-
-        // build output
-        expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).to.be.false;
-
-        // instructions
-        expect(container.instructions.participation).to.deep.equal(participation);
-        expect(container.instructions.readOnlyInstructions).to.exist;
-        expect(container.instructions.editableInstructions).not.to.exist;
-
-        // called by build output & instructions
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
-
-        setTimeout(() => {
-            // called by build output, instructions & result
-            expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
-            done();
-        }, 0);
-    });
-
-    it('should update the file browser and ace editor on file selection', () => {
-        cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const fileContent = 'lorem ipsum';
-        loadFile(selectedFile, fileContent);
-
-        containerFixture.detectChanges();
-
-        expect(container.selectedFile).to.equal(selectedFile);
-        expect(container.aceEditor.selectedFile).to.equal(selectedFile);
-        expect(container.aceEditor.isLoading).to.be.false;
-        expect(Object.keys(container.aceEditor.fileSession)).to.contain(selectedFile);
-        expect(getFileStub).to.have.been.calledOnceWithExactly(selectedFile);
-
-        containerFixture.detectChanges();
-        expect(container.aceEditor.editor.getEditor().getSession().getValue()).to.equal(fileContent);
-    });
-
-    it('should mark file to have unsaved changes in file tree if the file was changed in editor', () => {
-        cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const fileContent = 'lorem ipsum';
-        const newFileContent = 'new lorem ipsum';
-        loadFile(selectedFile, fileContent);
-
-        containerFixture.detectChanges();
-        container.aceEditor.onFileTextChanged(newFileContent);
-        containerFixture.detectChanges();
-
-        expect(getFileStub).to.have.been.calledOnceWithExactly(selectedFile);
-        expect(container.unsavedFiles).to.deep.equal({ [selectedFile]: newFileContent });
-        expect(container.fileBrowser.unsavedFiles).to.deep.equal([selectedFile]);
-        expect(container.editorState).to.equal(EditorState.UNSAVED_CHANGES);
-        expect(container.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
-    });
-
-    it('should save files and remove unsaved status of saved files afterwards', () => {
-        // setup
-        cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const otherFileWithUnsavedChanges = Object.keys(container.fileBrowser.repositoryFiles)[2];
-        const fileContent = 'lorem ipsum';
-        const newFileContent = 'new lorem ipsum';
-        const saveFilesSubject = new Subject();
-        saveFilesStub.returns(saveFilesSubject);
-        container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
-        loadFile(selectedFile, fileContent);
-        containerFixture.detectChanges();
-
-        // init saving
-        container.actions.saveChangedFiles().subscribe();
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.editorState).to.equal(EditorState.SAVING);
-
-        // emit saving result
-        saveFilesSubject.next({ [selectedFile]: null, [otherFileWithUnsavedChanges]: null });
-        containerFixture.detectChanges();
-
-        // check if saving result updates comps as expected
-        expect(container.unsavedFiles).to.be.empty;
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).to.be.empty;
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-    });
-
-    it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
-        cleanInitialize();
-        const repositoryFiles = { file: FileType.FILE, file2: FileType.FILE, folder: FileType.FOLDER };
-        const expectedFilesAfterDelete = { file2: FileType.FILE, folder: FileType.FOLDER };
-        const unsavedChanges = { file: 'lorem ipsum' };
-        container.fileBrowser.repositoryFiles = repositoryFiles;
-        container.unsavedFiles = unsavedChanges;
-
-        containerFixture.detectChanges();
-
-        expect(container.fileBrowser.unsavedFiles).to.deep.equal(Object.keys(unsavedChanges));
-        expect(container.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
-
-        container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
-        containerFixture.detectChanges();
-
-        expect(container.unsavedFiles).to.be.empty;
-        expect(container.fileBrowser.repositoryFiles).to.deep.equal(expectedFilesAfterDelete);
-        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
-    });
-
-    it('should wait for build result after submission if no unsaved changes exist', () => {
-        cleanInitialize();
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
-        const expectedBuildLog = new BuildLogEntryArray();
-        expect(container.unsavedFiles).to.be.empty;
-        container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.detectChanges();
-
-        // commit
-        expect(container.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        commitStub.returns(of(null));
-        getLatestPendingSubmissionSubject.next({
-            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
-            submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id,
-        });
-        container.actions.commit();
-        containerFixture.detectChanges();
-
-        // waiting for build successfulResult
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).to.be.true;
-
-        getLatestPendingSubmissionSubject.next({
-            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-            submission: null,
-            participationId: successfulResult!.participation!.id,
-        });
-        subscribeForLatestResultOfParticipationSubject.next(successfulResult);
-        containerFixture.detectChanges();
-
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).to.be.empty;
-    });
-
-    it('should first save unsaved files before triggering commit', () => {
-        cleanInitialize();
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
-        const expectedBuildLog = new BuildLogEntryArray();
-        const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
-        const saveFilesSubject = new Subject();
-        const commitSubject = new Subject();
-        saveFilesStub.returns(saveFilesSubject);
-        commitStub.returns(commitSubject);
-        container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
-        container.editorState = EditorState.UNSAVED_CHANGES;
-        container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.detectChanges();
-
-        // trying to commit
-        container.actions.commit();
-        containerFixture.detectChanges();
-
-        // saving before commit
-        expect(saveFilesStub).to.have.been.calledOnceWithExactly([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }]);
-        expect(container.editorState).to.equal(EditorState.SAVING);
-        expect(container.fileBrowser.status.editorState).to.equal(EditorState.SAVING);
-        // committing
-        expect(commitStub).to.have.been.calledOnce;
-        expect(container.commitState).to.equal(CommitState.COMMITTING);
-        expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
-        saveFilesSubject.next({ [unsavedFile]: null });
-        expect(container.editorState).to.equal(EditorState.CLEAN);
-        subscribeForLatestResultOfParticipationSubject.next(successfulResult);
-        getLatestPendingSubmissionSubject.next({
-            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
-            submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id,
-        });
-        commitSubject.next(null);
-        containerFixture.detectChanges();
-
-        // waiting for build result
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).to.be.true;
-
-        getLatestPendingSubmissionSubject.next({
-            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-            submission: null,
-            participationId: successfulResult!.participation!.id,
-        });
-        containerFixture.detectChanges();
-
-        expect(container.buildOutput.isBuilding).to.be.false;
-        expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).to.be.empty;
     });
 
     it('should initialize correctly on route change if participation can be retrieved', () => {
@@ -573,8 +185,8 @@ describe('CodeEditorStudentIntegration', () => {
         // Repository should be locked, the student can't write into it anymore.
         expect(container.repositoryIsLocked).to.be.true;
         expect(getElement(containerDebugElement, '.locked-container')).to.exist;
-        expect(container.fileBrowser.disableActions).to.be.true;
-        expect(container.actions.disableActions).to.be.true;
+        expect(container.codeEditorContainer.fileBrowser.disableActions).to.be.true;
+        expect(container.codeEditorContainer.actions.disableActions).to.be.true;
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
@@ -593,50 +205,4 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(container.participation).to.be.undefined;
     });
-
-    it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const guidedTourMapping = {} as GuidedTourMapping;
-        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
-        guidedTourService.guidedTourMapping = guidedTourMapping;
-        container.ngOnInit();
-        const successfulResult = { id: 3, successful: false };
-        const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as Participation;
-        const feedbacks = [{ id: 2 }] as Feedback[];
-        const findWithLatestResultSubject = new Subject<Participation>();
-        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
-        const isCleanSubject = new Subject();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
-        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
-        getRepositoryContentStub.returns(of([]));
-
-        routeSubject.next({ participationId: 1 });
-
-        containerFixture.detectChanges();
-
-        findWithLatestResultSubject.next(participation);
-        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
-
-        containerFixture.detectChanges();
-
-        // Create conflict.
-        isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
-        containerFixture.detectChanges();
-
-        expect(container.commitState).to.equal(CommitState.CONFLICT);
-        expect(getRepositoryContentStub).to.not.have.been.called;
-
-        // Resolve conflict.
-        conflictService.notifyConflictState(GitConflictState.OK);
-        tick();
-        containerFixture.detectChanges();
-        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
-        containerFixture.detectChanges();
-
-        expect(container.commitState).to.equal(CommitState.CLEAN);
-        expect(getRepositoryContentStub).to.calledOnce;
-
-        containerFixture.destroy();
-        flush();
-    }));
 });
