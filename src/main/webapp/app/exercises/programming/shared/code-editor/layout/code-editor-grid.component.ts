@@ -1,5 +1,5 @@
 import * as $ from 'jquery';
-import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input } from '@angular/core';
 
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -15,6 +15,8 @@ export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
+    @Input()
+    isTutorAssessment = false;
     @Output()
     onResize = new EventEmitter<ResizeType>();
 
