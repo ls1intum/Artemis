@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.StudentScore;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 @Repository
 public interface StudentScoresRepository extends JpaRepository<StudentScore, Long> {

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.leaderboard.tutor;
+package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.StudentScore;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -62,13 +62,13 @@ public class StudentScoresResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
      */
     @GetMapping("/student-scores/exercise/{exerciseId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<StudentScore>> getStudentScoresForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get student scores for exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
 
@@ -84,13 +84,13 @@ public class StudentScoresResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
      */
     @GetMapping("/student-scores/course/{courseId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<List<StudentScore>> getStudentScoresForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get student scores for exercise : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 

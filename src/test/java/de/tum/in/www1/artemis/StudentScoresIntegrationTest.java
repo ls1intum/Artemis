@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.StudentScore;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;

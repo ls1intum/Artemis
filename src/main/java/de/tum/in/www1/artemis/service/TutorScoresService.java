@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorScore;
+import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.TutorScoresRepository;
 
 @Service
