@@ -45,6 +45,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     buildable = true;
     @Input()
     showEditorInstructions = true;
+    @Input()
+    isTutorAssessment = false;
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
@@ -73,8 +75,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     constructor(
         private participationService: ParticipationService,
         private translateService: TranslateService,
-        protected route: ActivatedRoute | null,
-        protected jhiAlertService: AlertService,
+        private route: ActivatedRoute,
+        private jhiAlertService: AlertService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
