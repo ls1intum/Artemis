@@ -7,9 +7,6 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
-import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 
 @NgModule({
     imports: [
@@ -19,10 +16,8 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
         ArtemisProgrammingExerciseActionsModule,
         ArtemisExerciseHintParticipationModule,
         ArtemisResultModule,
-        ArtemisProgrammingAssessmentModule,
-        ArtemisAssessmentSharedModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
     ],
-    declarations: [CodeEditorStudentContainerComponent, CodeEditorTutorAssessmentContainerComponent],
+    declarations: [CodeEditorStudentContainerComponent],
 })
 export class ArtemisProgrammingParticipationModule {}

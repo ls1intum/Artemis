@@ -10,7 +10,13 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ArtemisProgrammingAssessmentRoutingModule } from 'app/exercises/programming/assess/programming-assessment.route';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ProgrammingAssessmentManualResultInCodeEditorComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-in-code-editor.component';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 
 @NgModule({
     imports: [
@@ -21,6 +27,11 @@ import { ProgrammingAssessmentManualResultInCodeEditorComponent } from 'app/exer
         FeatureToggleModule,
         ArtemisComplaintsForTutorModule,
         ArtemisProgrammingAssessmentRoutingModule,
+        ArtemisAssessmentSharedModule,
+        ArtemisCodeEditorModule,
+        ArtemisResultModule,
+        ArtemisExerciseHintParticipationModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
     ],
     declarations: [
         ProgrammingAssessmentManualResultButtonComponent,
@@ -28,13 +39,9 @@ import { ProgrammingAssessmentManualResultInCodeEditorComponent } from 'app/exer
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
         ProgrammingAssessmentManualResultInCodeEditorComponent,
+        CodeEditorTutorAssessmentContainerComponent,
     ],
     entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
-    exports: [
-        ProgrammingAssessmentManualResultButtonComponent,
-        ProgrammingAssessmentRepoExportButtonComponent,
-        ProgrammingAssessmentManualResultDialogComponent,
-        ProgrammingAssessmentManualResultInCodeEditorComponent,
-    ],
+    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}
