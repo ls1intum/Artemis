@@ -1,14 +1,12 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { fromPairs, toPairs } from 'lodash/fp';
+import { fromPairs, toPairs, uniq } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 import { Interactable } from '@interactjs/core/Interactable';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import {
     CommitState,
     CreateFileChange,
@@ -24,7 +22,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 
@@ -64,20 +62,19 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
-    // This variable is used to inform components that a file has changed its filename, e.g. because of renaming
-    fileChange?: FileChange;
-    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Code Editor State Variables **/
     editorState: EditorState;
     commitState: CommitState;
+
+    errorFiles: string[] = [];
+    annotations: Array<Annotation> = [];
 
     constructor(
         private participationService: ParticipationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
-        private sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
@@ -114,10 +111,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.buildLogErrors = { errors: {}, timestamp: 0 };
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
-        this.fileChange = undefined;
     };
 
     /**
@@ -133,22 +128,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             if (fileChange.fileType === FileType.FILE) {
                 this.selectedFile = fileChange.fileName;
             }
-        } else if (fileChange instanceof RenameFileChange) {
+        } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
-            this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
-        } else if (fileChange instanceof DeleteFileChange) {
-            this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
-            this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
-            this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
-            // If unsavedFiles are deleted, this can mean that the editorState becomes clean
-            if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
-                this.editorState = EditorState.CLEAN;
-            }
         }
-        this.storeSession();
-        // Set the fileChange to inform other Components so they can update their references to the files
-        this.fileChange = fileChange;
+        // If unsavedFiles are deleted, this can mean that the editorState becomes clean
+        if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
+            this.editorState = EditorState.CLEAN;
+        }
+        this.aceEditor.onFileChange(fileChange);
         this.onFileChanged.emit();
     }
 
@@ -170,7 +158,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.storeSession();
+        this.aceEditor.storeAnnotations(savedFiles);
     }
 
     /**
@@ -195,13 +183,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     onError(error: string) {
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
-    }
-
-    /**
-     * Store the build log error data in the localStorage of the browser (synchronous action).
-     */
-    storeSession() {
-        this.sessionService.storeSession(this.buildLogErrors);
     }
 
     /**
@@ -242,5 +223,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         if (type === ResizeType.SIDEBAR_LEFT || type === ResizeType.SIDEBAR_RIGHT || type === ResizeType.MAIN_BOTTOM) {
             this.aceEditor.editor.getEditor().resize();
         }
+    }
+
+    /**
+     * Set the annotations and extract error files for the file browser.
+     * @param annotations The new annotations array
+     */
+    onAnnotations(annotations: Array<Annotation>) {
+        this.annotations = annotations;
+        this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
     }
 }
