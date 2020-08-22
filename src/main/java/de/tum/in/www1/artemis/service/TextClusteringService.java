@@ -150,7 +150,7 @@ public class TextClusteringService {
         // Iterate over the distances and store them in Database
         for(int i = 0; i < distanceMatrix.size(); i++) {
             // The matrix is symmetrical, no need to store the duplicate data
-            for (int j = i; j < distanceMatrix.size(); j++) {
+            for (int j = i + 1; j < distanceMatrix.size(); j++) {
                 TextPairwiseDistance dist = new TextPairwiseDistance();
                 dist.setBlock_i(i);
                 dist.setBlock_j(j);

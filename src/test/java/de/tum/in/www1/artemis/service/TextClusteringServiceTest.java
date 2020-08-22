@@ -135,7 +135,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         TextCluster cluster = new TextCluster().exercise(exercise2);
         textClusterRepository.save(cluster);
         TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
-        incorrectTreeNode.setId(26L);
+        incorrectTreeNode.setId(1001L);
         incorrectTreeNode.setChild(-1);
         textTreeNodeRepository.save(incorrectTreeNode);
         TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
@@ -158,7 +158,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         TextExercise exercise = exercises.get(0);
         // Only half of the matrix is stored in the database, as it is symmetrical.
         int matrixSize = 0;
-        for(int i = 1; i <= blocks.size(); i++) {
+        for(int i = 1; i < blocks.size(); i++) {
             matrixSize += i;
         }
         assertThat(pairwiseDistances, hasSize(matrixSize));
@@ -214,8 +214,8 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textClusterRepository.delete(cluster);
 
         TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
-        incorrectTreeNode.setId(25L);
-        incorrectTreeNode.setChild(-1);
+        incorrectTreeNode.setId(1000L);
+        incorrectTreeNode.setChild(-2);
         textTreeNodeRepository.save(incorrectTreeNode);
         List<TextTreeNode> currentTreeNodes = textTreeNodeRepository.findAllByExercise(exercise);
         assertThat(currentTreeNodes, hasSize(treeNodes.size()));
