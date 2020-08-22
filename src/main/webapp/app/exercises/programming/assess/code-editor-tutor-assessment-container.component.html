@@ -32,8 +32,15 @@
     (nextSubmission)="nextSubmission()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
-    <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title" [isTutorAssessment]="true">
-        <div class="d-flex align-items-center ml-auto" editorNavbar>
+    <jhi-code-editor-container
+        *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
+        [editable]="false"
+        [participation]="participation"
+        [showEditorInstructions]="showEditorInstructions"
+        [isTutorAssessment]="true"
+    >
+        <span editorTitle>{{ exercise.title }}</span>
+        <div editorToolbar>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
                 [singleParticipantMode]="true"
@@ -47,24 +54,6 @@
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
                 >Go to repository</a
             >
-            <!-- <jhi-updating-result
-                *ngIf="participation"
-                [exercise]="exercise"
-                [showUngradedResults]="true"
-                [showGradedBadge]="true"
-                [participation]="participationForAssessment"
-                [short]="true"
-                class="mr-2"
-            ></jhi-updating-result> -->
-            <jhi-result
-                *ngIf="participation"
-                [result]="automaticResult"
-                [showUngradedResults]="true"
-                [showGradedBadge]="true"
-                [isBuilding]="false"
-                [participation]="participationForAssessment"
-                [short]="true"
-                ></jhi-result>
             <jhi-updating-result
                 *ngIf="participation"
                 [exercise]="exercise"
@@ -74,66 +63,36 @@
                 [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
-            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
-            <!--<jhi-code-editor-tutor-actions></jhi-code-editor-tutor-actions> -->
-            <!-- <jhi-code-editor-tutor-actions
-                [disableActions]="repositoryIsLocked"
-                [unsavedFiles]="unsavedFiles"
-                [(editorState)]="editorState"
-                [(commitState)]="commitState"
-                [result]="participation.results[participation.results.length - 1]"
-                [participation]="participation"
-                (assessmentActionStateChange)="setActionState($event)"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onError)="onError($event)"
-            ></jhi-code-editor-tutor-actions> -->
-            <!--<jhi-code-editor-actions
-                [disableActions]="repositoryIsLocked"
-                [unsavedFiles]="unsavedFiles"
-                [(editorState)]="editorState"
-                [(commitState)]="commitState"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onError)="onError($event)"
-            ></jhi-code-editor-actions> -->
+            <jhi-result
+                *ngIf="participation"
+                [result]="automaticResult"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [isBuilding]="false"
+                [participation]="participationForAssessment"
+                [short]="true"
+            ></jhi-result>
+
+            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         </div>
-        <jhi-code-editor-file-browser
-            editorSidebarLeft
-            [disableActions]="true"
-            [exerciseTitle]="exercise?.title"
-            [unsavedFiles]="unsavedFiles | keys"
-            [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-            [editorState]="editorState"
-            [(selectedFile)]="selectedFile"
-            [(commitState)]="commitState"
-            (onFileChange)="onFileChange($event)"
-            (onError)="onError($event)"
-            (onToggleCollapse)="onToggleCollapse($event)"
-        ></jhi-code-editor-file-browser>
-        <jhi-code-editor-ace
-            editorCenter
-            [selectedFile]="selectedFile"
-            [fileChange]="fileChange"
-            [commitState]="commitState"
-            [(buildLogErrors)]="buildLogErrors"
-            [isTutorAssessment]="true"
-            (onFileContentChange)="onFileContentChange($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-ace>
-        <jhi-code-editor-instructions
-            editorSidebarRight
+        <jhi-programming-exercise-instructions
+            editorSidebar
+            (onNoInstructionsAvailable)="showEditorInstructions = false"
+            [exercise]="exercise"
             [participation]="participation"
-            [exercise]="exercise"
-            (onToggleCollapse)="onToggleCollapse($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-instructions>
-        <jhi-programming-assessment-manual-result-in-code-editor
-            editorBottom
-            [participationId]="participation.id"
-            [result]="checkIfManualResultExist()"
-            [exercise]="exercise"
-            [canOverride]="canOverride"
-            [complaint]="complaint"
-            (onResultModified)="onResultModified($event)"
-        ></jhi-programming-assessment-manual-result-in-code-editor>
-    </jhi-code-editor-grid>
+            [personalParticipation]="true"
+            [exerciseHints]="exercise.exerciseHints"
+            class="instructions-wrapper__content card-body p-0"
+        ></jhi-programming-exercise-instructions>
+    </jhi-code-editor-container>
+
+    <jhi-programming-assessment-manual-result-in-code-editor
+        editorBottom
+        [participationId]="participation.id"
+        [result]="checkIfManualResultExist()"
+        [exercise]="exercise"
+        [canOverride]="canOverride"
+        [complaint]="complaint"
+        (onResultModified)="onResultModified($event)"
+    ></jhi-programming-assessment-manual-result-in-code-editor>
 </jhi-assessment-layout>
