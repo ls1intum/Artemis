@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentConflictRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictRequestDTO;
 import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictResponseDTO;
@@ -33,12 +35,15 @@ public class AutomaticTextAssessmentConflictService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final TextBlockRepository textBlockRepository;
+
     private final TextAssessmentConflictService textAssessmentConflictService;
 
     public AutomaticTextAssessmentConflictService(TextAssessmentConflictRepository textAssessmentConflictRepository, FeedbackRepository feedbackRepository,
-            TextAssessmentConflictService textAssessmentConflictService) {
+            TextBlockRepository textBlockRepository, TextAssessmentConflictService textAssessmentConflictService) {
         this.textAssessmentConflictRepository = textAssessmentConflictRepository;
         this.feedbackRepository = feedbackRepository;
+        this.textBlockRepository = textBlockRepository;
         this.textAssessmentConflictService = textAssessmentConflictService;
     }
 
@@ -56,14 +61,18 @@ public class AutomaticTextAssessmentConflictService {
         feedbackList.removeIf(f -> !f.hasReference());
 
         // Create TextAssessmentConflictRequestDTO objects that are used in service calls
-        List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = feedbackList.stream().map(feedback -> {
-            TextBlock textBlock = textBlocks.stream().filter(block -> block.getId().equals(feedback.getReference())).findFirst().get();
-            return new TextAssessmentConflictRequestDTO(textBlock.getId(), textBlock.getText(), textBlock.getCluster().getId(), feedback.getId(), feedback.getDetailText(),
-                    feedback.getCredits());
+        // If text block doesn't have a cluster id don't create an object
+        List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = feedbackList.stream().flatMap(feedback -> {
+            Optional<TextBlock> textBlock = textBlockRepository
+                    .findById(textBlocks.stream().filter(block -> block.getId().equals(feedback.getReference())).findFirst().get().getId());
+            if (textBlock.isPresent() && textBlock.get().getCluster() != null) {
+                return Stream.of(new TextAssessmentConflictRequestDTO(textBlock.get().getId(), textBlock.get().getText(), textBlock.get().getCluster().getId(), feedback.getId(),
+                        feedback.getDetailText(), feedback.getCredits()));
+            }
+            else {
+                return Stream.empty();
+            }
         }).collect(toList());
-
-        // remove the objects that have no text block cluster id
-        textAssessmentConflictRequestDTOS.removeIf(t -> t.getClusterId() == null);
 
         if (textAssessmentConflictRequestDTOS.isEmpty()) {
             return;
