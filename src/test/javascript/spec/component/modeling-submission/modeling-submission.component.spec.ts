@@ -1,6 +1,6 @@
+import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -47,6 +47,8 @@ const expect = chai.expect;
 
 describe('Component Tests', () => {
     describe('ModelingSubmission Management Component', () => {
+        // needed to make sure ace is defined
+        ace.acequire('ace/ext/modelist.js');
         let comp: ModelingSubmissionComponent;
         let fixture: ComponentFixture<ModelingSubmissionComponent>;
         let debugElement: DebugElement;
