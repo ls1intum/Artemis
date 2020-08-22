@@ -115,8 +115,9 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         database.resetDatabase();
     }
 
+    // change back to student1 USER after releasing feature for students
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForExerciseTest() throws Exception {
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -152,8 +153,9 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
+    // change back to student1 USER after releasing feature for students
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForCourseTest() throws Exception {
         List responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
