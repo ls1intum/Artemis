@@ -84,15 +84,14 @@
             [exerciseHints]="exercise.exerciseHints"
             class="instructions-wrapper__content card-body p-0"
         ></jhi-programming-exercise-instructions>
+        <jhi-programming-assessment-manual-result-in-code-editor
+            editorBottom
+            [participationId]="participation.id"
+            [result]="checkIfManualResultExist()"
+            [exercise]="exercise"
+            [canOverride]="canOverride"
+            [complaint]="complaint"
+            (onResultModified)="onResultModified($event)"
+        ></jhi-programming-assessment-manual-result-in-code-editor>
     </jhi-code-editor-container>
-
-    <jhi-programming-assessment-manual-result-in-code-editor
-        editorBottom
-        [participationId]="participation.id"
-        [result]="checkIfManualResultExist()"
-        [exercise]="exercise"
-        [canOverride]="canOverride"
-        [complaint]="complaint"
-        (onResultModified)="onResultModified($event)"
-    ></jhi-programming-assessment-manual-result-in-code-editor>
 </jhi-assessment-layout>
