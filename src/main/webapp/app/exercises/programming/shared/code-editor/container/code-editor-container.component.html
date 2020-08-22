@@ -1,4 +1,4 @@
-<jhi-code-editor-grid #grid (onResize)="onGridResize($event)">
+<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment" (onResize)="onGridResize($event)">
     <div editorNavbar class="d-flex align-items-center">
         <h4><ng-content select="[editorTitle]"></ng-content></h4>
         <ng-content select="[editorTitleActions]"></ng-content>
@@ -43,9 +43,12 @@
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
+    <div *ngIf="isTutorAssessment" editorBottom>
+        <ng-content select="[editorBottom]"></ng-content>
+    </div>
     <jhi-code-editor-build-output
         editorBottomArea
-        *ngIf="buildable"
+        *ngIf="buildable && !isTutorAssessment"
         [participation]="participation"
         (onAnnotations)="onAnnotations($event)"
         (onError)="onError($event)"
