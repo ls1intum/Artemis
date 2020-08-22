@@ -328,15 +328,27 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(participationId);
+        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
         }
 
-        Optional<Result> latestResult = participation.getResults().stream().findFirst();
+        Optional<Submission> optionalSubmission = participation.getSubmissions().stream().findFirst();
+        if (optionalSubmission.isEmpty()) {
+            // Don't return build logs if the submission doesn't exist yet
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        ProgrammingSubmission latestSubmission = (ProgrammingSubmission) optionalSubmission.get();
+        // Do not return build logs if the build hasn't failed
+        if (!latestSubmission.isBuildFailed()) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        Result latestResult = latestSubmission.getResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult.isPresent() && latestResult.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (latestResult != null && latestResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }
