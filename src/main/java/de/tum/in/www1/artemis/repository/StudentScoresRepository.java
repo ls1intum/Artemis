@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +18,8 @@ public interface StudentScoresRepository extends JpaRepository<StudentScore, Lon
 
     @Query("SELECT s FROM StudentScore s WHERE s.exerciseId IN :#{#exercises}")
     List<StudentScore> findAllByExerciseIdIn(@Param("exercises") Set<Long> exercises);
+
+    void deleteByResultId(Long resultId);
+
+    Optional<StudentScore> findByResultId(Long id);
 }

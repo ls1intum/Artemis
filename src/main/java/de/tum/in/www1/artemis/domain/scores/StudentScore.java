@@ -19,6 +19,7 @@ public class StudentScore {
     @Column(name = "exercise_id")
     private long exerciseId;
 
+    // we should think whether participation_id would be helpful here as well (or even instead of result_id)
     @Column(name = "result_id")
     private long resultId;
 
@@ -29,20 +30,40 @@ public class StudentScore {
         return studentScoreId;
     }
 
+    public void setStudentScoreId(long studentScoreId) {
+        this.studentScoreId = studentScoreId;
+    }
+
     public long getStudentId() {
         return studentId;
+    }
+
+    public void setStudentId(long studentId) {
+        this.studentId = studentId;
     }
 
     public long getExerciseId() {
         return exerciseId;
     }
 
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
     public long getResultId() {
         return resultId;
     }
 
+    public void setResultId(long resultId) {
+        this.resultId = resultId;
+    }
+
     public long getScore() {
         return score;
+    }
+
+    public void setScore(long score) {
+        this.score = score;
     }
 
     public StudentScore() {
