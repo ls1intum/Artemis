@@ -10,6 +10,10 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentScoresRepository;
 import de.tum.in.www1.artemis.service.StudentScoresService;
 import de.tum.in.www1.artemis.service.TutorScoresService;
 
@@ -23,6 +27,10 @@ public class ResultListener {
 
     private static TutorScoresService tutorScoresService;
 
+    private static StudentScoresRepository studentScoresRepository;
+
+    private static StudentParticipationRepository studentParticipationRepository;
+
     @Autowired
     // we use lazy injection here, because a EntityListener needs an empty constructor
     public void setResultService(StudentScoresService studentScoresService) {
@@ -33,6 +41,18 @@ public class ResultListener {
     // we use lazy injection here, because a EntityListener needs an empty constructor
     public void setTutorScoresService(TutorScoresService tutorScoresService) {
         ResultListener.tutorScoresService = tutorScoresService;
+    }
+
+    @Autowired
+    // we use lazy injection here, because a EntityListener needs an empty constructor
+    public void setTutorScoresService(StudentScoresRepository studentScoresRepository) {
+        ResultListener.studentScoresRepository = studentScoresRepository;
+    }
+
+    @Autowired
+    // we use lazy injection here, because a EntityListener needs an empty constructor
+    public void setTutorScoresService(StudentParticipationRepository studentParticipationRepository) {
+        ResultListener.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -84,10 +104,19 @@ public class ResultListener {
             // add to student scores (or update existing one)
             studentScoresService.addNewResult(newResult);
 
-            if (newResult.getAssessor() != null) {
+            /*StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
+            StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
+
+            if (newResult.getScore() != null) {
+                newScore.setScore(newResult.getScore());
+            }
+
+            studentScoresRepository.save(newScore);*/
+
+            /*if (newResult.getAssessor() != null) {
                 // add to tutor scores (or update existing one)
                 tutorScoresService.addNewResult(newResult);
-            }
+            }*/
         });
     }
 

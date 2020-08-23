@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoresRepository;
 
 @Service
@@ -17,8 +19,11 @@ public class StudentScoresService {
 
     private final StudentScoresRepository studentScoresRepository;
 
-    public StudentScoresService(StudentScoresRepository studentScoresRepository) {
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    public StudentScoresService(StudentScoresRepository studentScoresRepository, StudentParticipationRepository studentParticipationRepository) {
         this.studentScoresRepository = studentScoresRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -57,7 +62,6 @@ public class StudentScoresService {
         studentScoresRepository.deleteByResultId(deletedResult.getId());
     }
 
-
     /**
      * Updates all StudentScores for result updatedResult.
      *
@@ -86,5 +90,14 @@ public class StudentScoresService {
         // accordingly (this happens for programming exercises and for the 2nd/3rd correction of manual exercises) only in case the new result is rated
         // 2) there is no student score for the same participation yet: create a new one
 
+        StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
+
+        StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
+
+        if (newResult.getScore() != null) {
+            newScore.setScore(newResult.getScore());
+        }
+
+        studentScoresRepository.save(newScore);
     }
 }

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -11,6 +13,7 @@ public class StudentScore {
 
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long studentScoreId;
 
     @Column(name = "student_id")
@@ -72,6 +75,13 @@ public class StudentScore {
 
     public StudentScore(long studentScoreId, long studentId, long exerciseId, long resultId, long score) {
         this.studentScoreId = studentScoreId;
+        this.studentId = studentId;
+        this.exerciseId = exerciseId;
+        this.resultId = resultId;
+        this.score = score;
+    }
+
+    public StudentScore(long studentId, long exerciseId, long resultId, long score) {
         this.studentId = studentId;
         this.exerciseId = exerciseId;
         this.resultId = resultId;
