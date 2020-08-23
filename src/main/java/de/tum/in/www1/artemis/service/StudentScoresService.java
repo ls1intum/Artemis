@@ -48,10 +48,21 @@ public class StudentScoresService {
         return studentScoresRepository.findAllByExerciseIdIn(exerciseIds);
     }
 
+    /**
+     * Removes all StudentScores for result deletedResult.
+     *
+     * @param deletedResult result to be deleted
+     */
     public void removeResult(Result deletedResult) {
         studentScoresRepository.deleteByResultId(deletedResult.getId());
     }
 
+
+    /**
+     * Updates all StudentScores for result updatedResult.
+     *
+     * @param updatedResult result to be updated
+     */
     public void updateResult(Result updatedResult) {
         var studentScore = studentScoresRepository.findByResultId(updatedResult.getId());
         if (studentScore.isPresent()) {
@@ -60,6 +71,11 @@ public class StudentScoresService {
         }
     }
 
+    /**
+     * Adds new StudentScores for result newResult.
+     *
+     * @param newResult result to be added
+     */
     public void addNewResult(Result newResult) {
         // ignore unrated results
         if (newResult.isRated() != Boolean.TRUE) {

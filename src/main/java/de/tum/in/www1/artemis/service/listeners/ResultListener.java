@@ -35,6 +35,11 @@ public class ResultListener {
         ResultListener.tutorScoresService = tutorScoresService;
     }
 
+    /**
+     * After result gets deleted, delete all StudentScores/TutorScores with this result.
+     *
+     * @param deletedResult deleted result
+     */
     @PostRemove
     public void postRemove(Result deletedResult) {
 
@@ -46,6 +51,11 @@ public class ResultListener {
         });
     }
 
+    /**
+     * After result gets updated, update all StudentScores/TutorScores with this result.
+     *
+     * @param updatedResult updated result
+     */
     @PostUpdate
     public void postUpdate(Result updatedResult) {
 
@@ -62,6 +72,11 @@ public class ResultListener {
 
     }
 
+    /**
+     * After result gets created, add/update StudentScores/TutorScores with this result.
+     *
+     * @param newResult newly created result
+     */
     @PostPersist
     public void postPersist(Result newResult) {
 
