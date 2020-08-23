@@ -98,7 +98,13 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     }
 
     async openCodeEditorWithStudentSubmission() {
-        const route = `/course-management/${this.exercise.course?.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
+        let courseId;
+        if (!!this.exercise.exerciseGroup) {
+            courseId = this.exercise.exerciseGroup.exam?.course.id;
+        } else {
+            courseId = this.exercise.course!.id;
+        }
+        const route = `/course-management/${courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
         await this.router.navigate([route]);
     }
 }
