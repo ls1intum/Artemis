@@ -1,41 +1,34 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { CommitState, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { cloneDeep as _cloneDeep, orderBy as _orderBy } from 'lodash';
+import { orderBy as _orderBy } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { JhiEventManager } from 'ng-jhipster';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Location } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { Course } from 'app/entities/course.model';
 
 @Component({
-    selector: 'jhi-code-editor-student',
+    selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -47,38 +40,37 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participation: ProgrammingExerciseStudentParticipation;
     participationForAssessment: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
-    submission: ProgrammingSubmission;
-    result: Result;
-    automaticResult: Result;
+    submission: ProgrammingSubmission | null;
+    manualResult: Result | null;
+    automaticResult: Result | null;
     userId: number;
-    // for assessment-layout:
+    // for assessment-layout
     isLoading = false;
     saveBusy = false;
     submitBusy = false;
     cancelBusy = false;
     nextSubmissionBusy = false;
-    isAssessor = true;
     isAtLeastInstructor = false;
+    isAssessor = false;
+    assessmentsAreValid = false;
     complaint: Complaint;
     private cancelConfirmationText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
-
+    private get course(): Course | undefined {
+        return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
+    }
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
-        private eventManager: JhiEventManager,
         private router: Router,
         private location: Location,
         private accountService: AccountService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-        private resultService: ResultService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private guidedTourService: GuidedTourService,
         private complaintService: ComplaintService,
-        private participationService: ParticipationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
@@ -96,49 +88,52 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.paramSub = this.route!.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
-            this.loadParticipationWithResults(participationId)
-                .pipe(
-                    tap((participationWithResults) => {
-                        // Set domain and commitState to make file editor work properly
-                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
-                        this.commitState = CommitState.UNDEFINED;
-                        this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults!;
-                        this.submission = this.participation.results[0].submission as ProgrammingSubmission;
-                        this.participationForAssessment = _cloneDeep(this.participation);
-                        this.participationForAssessment.results = this.findManualResults(this.participationForAssessment.results);
-                        this.result = this.participationForAssessment.results[0];
-                        this.automaticResult = _orderBy(this.participation.results, 'id', 'asc')[0];
-                        this.exercise = this.participation.exercise as ProgrammingExercise;
-                        this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
-                        if (this.result.hasComplaint) {
-                            this.getComplaint();
-                        }
-                    }),
-                )
-                .subscribe(
-                    () => {
-                        this.loadingParticipation = false;
-                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
-                    },
-                    () => {
-                        this.participationCouldNotBeFetched = true;
-                        this.loadingParticipation = false;
-                    },
-                );
+            this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId).subscribe(
+                (participationWithResults: ProgrammingExerciseStudentParticipation) => {
+                    // Set domain to make file editor work properly
+                    this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
+                    this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults;
+
+                    this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
+                    this.manualResult = this.getLatestManualResult(this.participation.results);
+
+                    // Either latest manual or automatic result
+                    this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
+                    this.exercise = this.participation.exercise as ProgrammingExercise;
+
+                    this.checkPermissions();
+
+                    if (this.manualResult && this.manualResult.hasComplaint) {
+                        this.getComplaint();
+                    }
+                },
+                () => {
+                    this.participationCouldNotBeFetched = true;
+                    this.loadingParticipation = false;
+                },
+                () => {
+                    this.loadingParticipation = false;
+                },
+            );
         });
     }
 
-    findManualResults(results: Result[]): Result[] {
-        const manualResult = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        return manualResult ? _orderBy(manualResult, 'completionDate', 'desc') : [];
+    private getLatestResult(results: Result[]): Result | null {
+        return _orderBy(results, 'id', 'desc')[0] ?? null;
     }
 
-    checkIfManualResultExist(): Result | null {
-        return this.participationForAssessment.results ? this.participationForAssessment.results[0] : null;
+    private getLatestAutomaticResult(results: Result[]): Result | null {
+        const automaticResults = results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
+        return _orderBy(automaticResults, 'id', 'desc')[0] ?? null;
+    }
+
+    private getLatestManualResult(results: Result[]): Result | null {
+        const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
+        return _orderBy(manualResults, 'id', 'desc')[0] ?? null;
     }
 
     /**
@@ -151,45 +146,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Load the participation from server with the latest result.
-     * @param participationId
-     */
-    loadParticipationWithResults(participationId: number): Observable<StudentParticipation | null> {
-        return this.programmingExerciseParticipationService.getStudentParticipationWithResults(participationId);
-        /*.pipe(
-            flatMap((participation: StudentParticipation) =>
-                participation.results && participation.results.length
-                    ? this.loadResultDetails(participation.results[0]).pipe(
-                          map((feedback) => {
-                              if (feedback) {
-                                  participation.results[0].feedbacks = feedback;
-                              }
-                              return participation;
-                          }),
-                          catchError(() => Observable.of(participation)),
-                      )
-                    : Observable.of(participation),
-            ),
-        );*/
-    }
-
-    /**
-     * Fetches details for the result (if we received one) and attach them to the result.
-     * Mutates the input parameter result.
-     */
-    loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
-    }
-
-    /**
      * Save the assessment
      */
     save(): void {
         this.saveBusy = true;
-        this.manualResultService.save(this.participation.id, this.result).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-        );
+
+            this.manualResultService.save(this.participation.id, this.manualResult!).subscribe(
+                (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
+                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            );
     }
 
     /**
@@ -197,10 +162,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
-        this.manualResultService.save(this.participation.id, this.result, true).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-        );
+
+            this.manualResultService.save(this.participation.id, this.manualResult!, true).subscribe(
+                (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
+                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            );
+
     }
 
     /**
@@ -210,7 +177,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.manualResultService.cancelAssessment(this.submission.id).subscribe(() => this.navigateBack());
+            // TODO: Implement lock for programming submissions, otherwise cancel will only work when saving before.
+            // this.manualResultService.cancelAssessment(this.submission.id).subscribe(() => this.navigateBack());
+            this.navigateBack();
         }
     }
 
@@ -224,7 +193,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.navigateByUrl(
-                    `/course-management/${this.exercise.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation.id}/assessment`,
+                    `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation.id}/assessment`,
                     {},
                 );
             },
@@ -246,9 +215,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.manualResultService.updateAfterComplaint(this.result.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
+        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks, complaintResponse, this.manualResult!, this.manualResult!.submission!.id).subscribe(
             (result: Result) => {
-                this.result = result;
+                this.manualResult = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
@@ -260,14 +229,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     navigateBack() {
-        if (this.exercise && this.exercise.teamMode && this.exercise.course && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.exercise.course.id}/exercises/${this.exercise.id}/teams/${teamId}`);
-        } else if (this.exercise && !this.exercise.teamMode && this.exercise.course) {
-            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
-        } else {
-            this.location.back();
-        }
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
     }
 
     /**
@@ -299,18 +261,27 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation!.results[0] = this.result = response.body!;
+        this.participation!.results[0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
 
+    /**
+     * Updates the manualResult and checks whether it has a resultString, then the assessment is valid.
+     * @param result
+     */
     onResultModified(result: Result) {
-        this.result = result;
+        this.manualResult = result;
+        if (this.manualResult.resultString) {
+            this.assessmentsAreValid = this.manualResult.resultString.trim().length > 0;
+        } else {
+            this.assessmentsAreValid = false;
+        }
     }
 
-    getComplaint(): void {
-        this.complaintService.findByResultId(this.result.id).subscribe(
+    private getComplaint(): void {
+        this.complaintService.findByResultId(this.manualResult!.id).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
@@ -322,11 +293,29 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             },
         );
     }
-    get assessmentsAreValid() {
-        if (this.result && this.result.resultString) {
-            return this.result.resultString.length > 0;
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    /**
+     * Checks if there is a manual result and the user is the assessor. If there is no manual result, then the user is the assessor.
+     * Checks if the user is at least instructor in course.
+     * @private
+     */
+    private checkPermissions() {
+        if (this.manualResult) {
+            this.isAssessor = this.manualResult.assessor ? this.manualResult.assessor.id === this.userId : false;
         } else {
-            return false;
+            this.isAssessor = true;
+        }
+        if (this.exercise) {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
         }
     }
 }

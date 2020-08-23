@@ -23,7 +23,7 @@
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
-    [result]="result"
+    [result]="manualResult"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
     (save)="save()"
@@ -69,7 +69,7 @@
                 [showUngradedResults]="true"
                 [showGradedBadge]="true"
                 [isBuilding]="false"
-                [participation]="participationForAssessment"
+                [participation]="participation"
                 [short]="true"
             ></jhi-result>
 
@@ -87,7 +87,7 @@
         <jhi-programming-assessment-manual-result-in-code-editor
             editorBottom
             [participationId]="participation.id"
-            [result]="checkIfManualResultExist()"
+            [result]="manualResult"
             [exercise]="exercise"
             [canOverride]="canOverride"
             [complaint]="complaint"
