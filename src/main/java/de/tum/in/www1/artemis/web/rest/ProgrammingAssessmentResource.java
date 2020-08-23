@@ -121,7 +121,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findFirst();
-        if (latestExistingResult.isPresent()){
+        if (latestExistingResult.isPresent()) {
             // prevent that tutors create multiple manual results
             // TODO: Double check if this is the right way to do, or if we should create a new Manual Result
             newResult.setId(latestExistingResult.get().getId());
@@ -167,9 +167,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             // TODO: Double check if we can create a new result when the existing result has already a completion date (submitted)
             // Create manual submission with last commit hash und current time stamp.
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
-                SubmissionType.MANUAL);
+                    SubmissionType.MANUAL);
             newResult.setSubmission(submission);
-        } else {
+        }
+        else {
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
             newResult.setSubmission(submission);
             if (newResult.getSubmission() == null) {
