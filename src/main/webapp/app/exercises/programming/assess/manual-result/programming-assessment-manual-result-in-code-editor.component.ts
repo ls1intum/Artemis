@@ -129,7 +129,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
                 }),
                 catchError((err: any) => {
                     this.alertService.error(err);
-                    // this.clear();
                     return of(null);
                 }),
             )
@@ -138,14 +137,6 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
             });
     }
 
-    /**
-     * Emits the result if it was modified; TODO: Can be removed? doube check!
-     */
-    clear() {
-        if (this.resultModified) {
-            this.onResultModified.emit(this.result);
-        }
-    }
     /**
      * Pushes a new feedback to the feedbacks
      */
@@ -178,18 +169,14 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     writable() {
         // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
         // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
-        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
+        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined && this.result.assessor.id !== this.user.id);
     }
     /**
      * Updates if the result is successful (score of 100%) or not
      * and emits the updated result to the parent component
      */
     updateResultSuccess() {
-        if (this.result.score === 100) {
-            this.result.successful = true;
-        } else {
-            this.result.successful = false;
-        }
+        this.result.successful = this.result.score === 100;
         this.onResultModified.emit(this.result);
     }
 
