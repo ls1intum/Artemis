@@ -31,7 +31,7 @@
     <div *ngIf="isTutorAssessment">
         <ng-content select="[editorBottom]"></ng-content>
     </div>
-    <div class="editor-bottom collapsable">
+    <div *ngIf="!isTutorAssessment" class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
         <!-- Required for resizing; don't remove empty span -->
         <fa-icon [icon]="'grip-lines'" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
