@@ -5,6 +5,7 @@
         <div class="d-flex align-items-center ml-auto">
             <ng-content select="[editorToolbar]"></ng-content>
             <jhi-code-editor-actions
+                *ngIf="!isTutorAssessment"
                 [buildable]="buildable"
                 [disableActions]="!editable"
                 [unsavedFiles]="unsavedFiles"
