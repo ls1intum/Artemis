@@ -13,16 +13,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     private final UserService userService;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService, ProgrammingSubmissionRepository programmingSubmissionRepository, UserService userService) {
+            SubmissionRepository submissionRepository, ExamService examService, UserService userService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.userService = userService;
     }
 

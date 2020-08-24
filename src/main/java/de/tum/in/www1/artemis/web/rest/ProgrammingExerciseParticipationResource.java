@@ -58,7 +58,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
@@ -82,7 +82,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with results and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
      */
-    @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-results-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-results-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithResultsForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService

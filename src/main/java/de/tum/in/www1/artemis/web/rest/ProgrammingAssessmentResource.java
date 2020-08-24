@@ -189,7 +189,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             ltiService.onNewResult((ProgrammingExerciseStudentParticipation) result.getParticipation());
             // TODO: Is it intended that the result with information about the assessor is broadcasted (this is also for other exercises type the case)
             messagingService.broadcastNewResult(result.getParticipation(), result);
