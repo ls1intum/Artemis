@@ -1636,18 +1636,18 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
-        Result r = addResultToSubmission(submission, assessmentType, user);
-        r.setRated(rated);
-        r.setScore(score);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, assessmentType, user);
+        result.setRated(rated);
+        result.setScore(score);
+        return resultRepo.save(result);
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        Result r = addResultToSubmission(submission, null);
-        r.setAssessmentType(assessmentType);
-        r.completionDate(ZonedDateTime.now());
-        r.setAssessor(user);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, null);
+        result.setAssessmentType(assessmentType);
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessor(user);
+        return resultRepo.save(result);
     }
 
     public Set<ExerciseHint> addHintsToExercise(Exercise exercise) {
