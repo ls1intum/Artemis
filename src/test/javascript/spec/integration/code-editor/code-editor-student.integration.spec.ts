@@ -17,10 +17,9 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../helpers/utils/general.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
