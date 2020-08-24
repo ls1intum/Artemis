@@ -22,4 +22,6 @@ public interface StudentScoresRepository extends JpaRepository<StudentScore, Lon
     void deleteByResultId(Long resultId);
 
     Optional<StudentScore> findByResultId(Long resultId);
+
+    Optional<StudentScore> findByStudentIdAndExerciseId(Long studentId, Long exerciseId);
 }

@@ -85,19 +85,40 @@ public class StudentScoresService {
         if (newResult.isRated() != Boolean.TRUE) {
             return;
         }
+
         // TODO: handle 2 different cases:
         // 1) there is already an existing student score for a result with the same participation (i.e. the same exercise id and the same user id): update this student score
         // accordingly (this happens for programming exercises and for the 2nd/3rd correction of manual exercises) only in case the new result is rated
         // 2) there is no student score for the same participation yet: create a new one
 
         StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
+        var studentId = participation.getStudent().get().getId();
+        var exerciseId = participation.getExercise().getId();
 
-        StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
+        var existingStudentIdAndExerciseId = studentScoresRepository.findByStudentIdAndExerciseId(studentId, exerciseId);
 
-        if (newResult.getScore() != null) {
-            newScore.setScore(newResult.getScore());
+        if (existingStudentIdAndExerciseId.isPresent()) {
+            if (existingStudentIdAndExerciseId.get().getResultId() == newResult.getId()) {
+                updateResult(newResult);
+            } else {
+                existingStudentIdAndExerciseId.get().setResultId(newResult.getId());
+                if (newResult.getScore() != null) {
+                    existingStudentIdAndExerciseId.get().setScore(newResult.getScore());
+                } else {
+                    existingStudentIdAndExerciseId.get().setScore(0);
+                }
+                // does not work when called from PostPersist. Everything else works fine
+                studentScoresRepository.save(existingStudentIdAndExerciseId.get());
+            }
+        }else {
+            StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
+
+            if (newResult.getScore() != null) {
+                newScore.setScore(newResult.getScore());
+            }
+
+            // does not work when called from PostPersist. Everything else works fine
+            studentScoresRepository.save(newScore);
         }
-
-        studentScoresRepository.save(newScore);
     }
 }

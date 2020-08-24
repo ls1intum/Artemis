@@ -62,11 +62,13 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final StudentScoresService studentScoresService;
+
     public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
-            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            RatingRepository ratingRepository) {
+                         SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
+                         ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
+                         ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+                         RatingRepository ratingRepository, StudentScoresService studentScoresService) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -81,6 +83,7 @@ public class ResultService {
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
+        this.studentScoresService = studentScoresService;
     }
 
     /**
@@ -288,6 +291,10 @@ public class ResultService {
 
         // this call should cascade all feedback relevant changed and save them accordingly
         var savedResult = resultRepository.save(result);
+
+        // student scores can be added this way
+        // studentScoresService.addNewResult(savedResult);
+
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
         savedResult = findOneWithEagerSubmissionAndFeedback(result.getId());
 
