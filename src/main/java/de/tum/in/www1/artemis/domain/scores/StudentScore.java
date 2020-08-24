@@ -14,7 +14,7 @@ public class StudentScore {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long studentScoreId;
+    private long id;
 
     @Column(name = "student_id")
     private long studentId;
@@ -29,12 +29,12 @@ public class StudentScore {
     @Column(name = "score")
     private long score;
 
-    public long getStudentScoreId() {
-        return studentScoreId;
+    public Long getId() {
+        return id;
     }
 
-    public void setStudentScoreId(long studentScoreId) {
-        this.studentScoreId = studentScoreId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public long getStudentId() {
@@ -71,14 +71,6 @@ public class StudentScore {
 
     public StudentScore() {
         // Empty constructor because of @Entity
-    }
-
-    public StudentScore(long studentScoreId, long studentId, long exerciseId, long resultId, long score) {
-        this.studentScoreId = studentScoreId;
-        this.studentId = studentId;
-        this.exerciseId = exerciseId;
-        this.resultId = resultId;
-        this.score = score;
     }
 
     public StudentScore(long studentId, long exerciseId, long resultId, long score) {

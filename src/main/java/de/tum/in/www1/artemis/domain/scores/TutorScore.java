@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.domain.scores;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "tutor_scores")
 public class TutorScore {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private long tutorScoreId;
+    private long id;
 
     @Column(name = "tutor_id")
     private long tutorId;
@@ -49,12 +47,12 @@ public class TutorScore {
     @Column(name = "answered_feedback_requests_points")
     private double answeredFeedbackRequestsPoints;
 
-    public long getTutorScoreId() {
-        return tutorScoreId;
+    public Long getId() {
+        return id;
     }
 
-    public long getTutorId() {
-        return tutorId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public long getExerciseId() {
@@ -105,8 +103,7 @@ public class TutorScore {
         // Empty constructor because of @Entity
     }
 
-    public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints) {
-        this.tutorScoreId = tutorScoreId;
+    public TutorScore(long tutorId, long exerciseId, long assessments, double assessmentsPoints) {
         this.tutorId = tutorId;
         this.exerciseId = exerciseId;
         this.assessments = assessments;

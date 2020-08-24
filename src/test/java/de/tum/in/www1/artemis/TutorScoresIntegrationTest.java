@@ -90,7 +90,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Nice work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(1, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
         // score for tutor2 in exercise1 in course1
@@ -101,7 +101,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(2, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
         // course2
@@ -119,7 +119,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Not so good")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(3, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
     }
 
@@ -148,7 +148,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Really good!")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(10, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
         responseExerciseOne = request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -199,7 +199,7 @@ public class TutorScoresIntegrationTest extends AbstractSpringIntegrationBambooB
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Pretty good!")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         resultRepo.save(result);
-        tutorScore = new TutorScore(11, user.getId(), exercise.getId(), 1, exercise.getMaxScore());
+        tutorScore = new TutorScore(user.getId(), exercise.getId(), 1, exercise.getMaxScore());
         tutorScoresRepo.save(tutorScore);
 
         responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);

@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -16,6 +18,8 @@ import de.tum.in.www1.artemis.repository.StudentScoresRepository;
 
 @Service
 public class StudentScoresService {
+
+    private final Logger log = LoggerFactory.getLogger(StudentScoresService.class);
 
     private final StudentScoresRepository studentScoresRepository;
 
@@ -72,7 +76,8 @@ public class StudentScoresService {
         if (studentScore.isPresent()) {
             if (updatedResult.getScore() != null) {
                 studentScore.get().setScore(updatedResult.getScore());
-            } else {
+            }
+            else {
                 studentScore.get().setScore(0);
             }
             studentScoresRepository.save(studentScore.get());
@@ -104,17 +109,21 @@ public class StudentScoresService {
         if (existingStudentIdAndExerciseId.isPresent()) {
             if (existingStudentIdAndExerciseId.get().getResultId() == newResult.getId()) {
                 updateResult(newResult);
-            } else {
+            }
+            else {
                 existingStudentIdAndExerciseId.get().setResultId(newResult.getId());
                 if (newResult.getScore() != null) {
                     existingStudentIdAndExerciseId.get().setScore(newResult.getScore());
-                } else {
+                }
+                else {
                     existingStudentIdAndExerciseId.get().setScore(0);
                 }
                 // does not work when called from PostPersist. Everything else works fine
-                studentScoresRepository.save(existingStudentIdAndExerciseId.get());
+                var updatedScore = studentScoresRepository.saveAndFlush(existingStudentIdAndExerciseId.get());
+                log.info("update student score in db: " + updatedScore);
             }
-        }else {
+        }
+        else {
             StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
 
             if (newResult.getScore() != null) {
@@ -122,7 +131,8 @@ public class StudentScoresService {
             }
 
             // does not work when called from PostPersist. Everything else works fine
-            studentScoresRepository.save(newScore);
+            newScore = studentScoresRepository.saveAndFlush(newScore);
+            log.info("new student score in db: " + newScore);
         }
     }
 }
