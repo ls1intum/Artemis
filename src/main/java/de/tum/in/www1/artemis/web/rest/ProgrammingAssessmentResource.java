@@ -111,7 +111,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/participations/{participationId}/programming-assessment")
+    @PutMapping("/participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newResult) {

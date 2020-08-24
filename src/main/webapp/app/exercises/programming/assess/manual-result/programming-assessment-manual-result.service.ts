@@ -15,36 +15,6 @@ export class ProgrammingAssessmentManualResultService {
     constructor(private http: HttpClient, private resultService: ResultService) {}
 
     /**
-     * Creates a new manual result and stores it in the server
-     * @param {number} participationId - Id of the participation
-     * @param {Result} result - The result to be created and sent to the server
-     */
-    create(participationId: number, result: Result): Observable<EntityResponseType> {
-        const copy = this.resultService.convertDateFromClient(result);
-        // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
-        return this.http
-            .post<Result>(SERVER_API_URL + 'api/participations/' + participationId + '/manual-results', copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
-    }
-
-    /**
-     * Updates an existing manual result in the server
-     * @param {number} participationId - Id of the participation
-     * @param {Result} result - Updated result to be stored in the server
-     */
-    update(participationId: number, result: Result): Observable<EntityResponseType> {
-        const copy = this.resultService.convertDateFromClient(result) as any;
-        // This needs to be removed to avoid a circular serialization issue.
-        copy.participation!.results = undefined;
-        copy.participation!.submissions = undefined;
-        if (copy.submission && copy.submission.result) {
-            copy.submission.result.submission = undefined;
-        }
-        return this.http
-            .put<Result>(`${this.resourceUrl}/participations/${participationId}/manual-results`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
-    }
-    /**
      * Saves a new manual result and stores it in the server
      * @param {number} participationId - Id of the participation
      * @param {Result} result - The result to be created and sent to the server
@@ -52,7 +22,7 @@ export class ProgrammingAssessmentManualResultService {
      */
     save(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result);
-        let url = `${this.resourceUrl}/participations/${participationId}/programming-assessment`;
+        let url = `${this.resourceUrl}/participations/${participationId}//manual-results`;
         if (submit) {
             url = buildUrlWithParams(url, ['submit=true']);
         }
