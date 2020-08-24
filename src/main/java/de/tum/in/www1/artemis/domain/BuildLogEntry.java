@@ -34,14 +34,14 @@ public class BuildLogEntry {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        BuildLogEntry that = (BuildLogEntry) o;
+        BuildLogEntry that = (BuildLogEntry) object;
         if (time != null && that.time != null) {
             return Objects.equals(time.toInstant(), that.time.toInstant()) && Objects.equals(log, that.log);
         }
