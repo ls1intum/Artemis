@@ -165,25 +165,25 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
         // Getter and setter for lambda value tested
         TextTreeNode testNode = new TextTreeNode();
-        testNode.setLambda_val(Double.POSITIVE_INFINITY);
+        testNode.setLambdaVal(Double.POSITIVE_INFINITY);
         assertThat(ReflectionTestUtils.getField(testNode, "lambda_val"), equalTo(-1.));
-        assertThat(testNode.getLambda_val(), equalTo(Double.POSITIVE_INFINITY));
+        assertThat(testNode.getLambdaVal(), equalTo(Double.POSITIVE_INFINITY));
         // isBlockNode() tested
-        testNode.setChild_size(1);
+        testNode.setChildSize(1);
         assertThat(testNode.isBlockNode(), equalTo(true));
-        testNode.setChild_size(2);
+        testNode.setChildSize(2);
         assertThat(testNode.isBlockNode(), equalTo(false));
 
         // The following should hold for the root node:
         //      parent == -1
         //      child == blocks.size()
-        //      lambda_val == -1 (getLambda_val should return POSITIVE_INFINITY)
-        //      child_size == blocks.size()
+        //      lambdaVal == -1 (getLambdaVal should return POSITIVE_INFINITY)
+        //      childSize == blocks.size()
         TextTreeNode rootNode = textTreeNodeRepository.findAllByParentAndExercise(-1L, exercise).get(0);
         assertThat((int) rootNode.getChild(), equalTo(blocks.size()));
-        assertThat(rootNode.getLambda_val(), equalTo(Double.POSITIVE_INFINITY));
+        assertThat(rootNode.getLambdaVal(), equalTo(Double.POSITIVE_INFINITY));
         assertThat(rootNode.isBlockNode(), equalTo(false));
-        assertThat((int) rootNode.getChild_size(), equalTo(blocks.size()));
+        assertThat((int) rootNode.getChildSize(), equalTo(blocks.size()));
     }
 
     @Test
@@ -254,7 +254,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             httpURLConnection.setConnectTimeout(1000);
             final int responseCode = httpURLConnection.getResponseCode();
 
-            return (responseCode == 405);
+            return responseCode == 405;
         }
         catch (IOException e) {
             return false;

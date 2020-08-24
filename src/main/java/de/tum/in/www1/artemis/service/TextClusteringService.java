@@ -152,8 +152,8 @@ public class TextClusteringService {
             // The matrix is symmetrical, no need to store the duplicate data
             for (int j = i + 1; j < distanceMatrix.size(); j++) {
                 TextPairwiseDistance dist = new TextPairwiseDistance();
-                dist.setBlock_i(i);
-                dist.setBlock_j(j);
+                dist.setBlockI(i);
+                dist.setBlockJ(j);
                 dist.setDistance(distanceMatrix.get(i).get(j));
                 dist.setExercise(exercise);
                 pairwiseDistanceRepository.save(dist);

@@ -31,10 +31,10 @@ public class TextTreeNode implements Serializable {
     private long child;
 
     @Column(name = "lambda_val", nullable = false)
-    private double lambda_val;
+    private double lambdaVal;
 
     @Column(name = "child_size", nullable = false)
-    private long child_size;
+    private long childSize;
 
     @ManyToOne
     @JsonIgnore
@@ -52,15 +52,15 @@ public class TextTreeNode implements Serializable {
 
     public void setChild(long child) { this.child = child; }
 
-    public double getLambda_val() {
-        return lambda_val == -1 ? Double.POSITIVE_INFINITY : lambda_val;
+    public double getLambdaVal() {
+        return lambdaVal == -1 ? Double.POSITIVE_INFINITY : lambdaVal;
     }
 
-    public void setLambda_val(double lambda_val) { this.lambda_val = lambda_val == Double.POSITIVE_INFINITY ? -1 : lambda_val; }
+    public void setLambdaVal(double lambdaVal) { this.lambdaVal = lambdaVal == Double.POSITIVE_INFINITY ? -1 : lambdaVal; }
 
-    public long getChild_size() { return child_size; }
+    public long getChildSize() { return childSize; }
 
-    public void setChild_size(long child_size) { this.child_size = child_size; }
+    public void setChildSize(long childSize) { this.childSize = childSize; }
 
     public TextExercise getExercise() { return exercise; }
 
@@ -72,6 +72,6 @@ public class TextTreeNode implements Serializable {
     }
 
     public boolean isBlockNode() {
-        return this.child_size == 1;
+        return this.childSize == 1;
     }
 }
