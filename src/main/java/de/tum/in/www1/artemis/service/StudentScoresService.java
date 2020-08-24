@@ -70,7 +70,11 @@ public class StudentScoresService {
     public void updateResult(Result updatedResult) {
         var studentScore = studentScoresRepository.findByResultId(updatedResult.getId());
         if (studentScore.isPresent()) {
-            studentScore.get().setScore(updatedResult.getScore());
+            if (updatedResult.getScore() != null) {
+                studentScore.get().setScore(updatedResult.getScore());
+            } else {
+                studentScore.get().setScore(0);
+            }
             studentScoresRepository.save(studentScore.get());
         }
     }

@@ -215,6 +215,6 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         // responseExerciseOne.size() is 2 because @PostPersist is not working as intended
-        // assertThat(responseExerciseOne.size()).as("response has length 3").isEqualTo(3);
+        assertThat(responseExerciseOne.size()).as("response has length 3").isEqualTo(3);
     }
 }
