@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { SERVER_API_URL } from 'app/app.constants';
 import { BuildLogEntry } from 'app/entities/build-log.model';
 
@@ -16,10 +17,18 @@ export class BuildLogService implements IBuildLogService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Returns build logs that match the parameter.
-     * @param participationId.
+     * Retrieves the build logs for a given participation.
+     * @param participationId The identifier of the participation.
      */
     getBuildLogs(participationId: number): Observable<BuildLogEntry[]> {
-        return this.http.get<BuildLogEntry[]>(`${this.assignmentResourceUrl}/${participationId}/buildlogs`);
+        return this.http.get<BuildLogEntry[]>(`${this.assignmentResourceUrl}/${participationId}/buildlogs`).pipe(
+            catchError((err: HttpErrorResponse) => {
+                // Suppress forbidden response
+                if (err.status === 403) {
+                    return of([]);
+                }
+                return throwError(err);
+            }),
+        );
     }
 }

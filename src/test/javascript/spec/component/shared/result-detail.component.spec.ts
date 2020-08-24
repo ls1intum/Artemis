@@ -4,7 +4,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -14,6 +13,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +23,7 @@ describe('ResultDetailComponent', () => {
     let fixture: ComponentFixture<ResultDetailComponent>;
     let debugElement: DebugElement;
 
-    let repositoryService: RepositoryService;
+    let buildLogService: BuildLogService;
     let resultService: ResultService;
     let buildlogsStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
@@ -53,10 +53,10 @@ describe('ResultDetailComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                repositoryService = debugElement.injector.get(RepositoryService);
+                buildLogService = debugElement.injector.get(BuildLogService);
                 resultService = debugElement.injector.get(ResultService);
 
-                buildlogsStub = stub(repositoryService, 'buildlogs').returns(of([]));
+                buildlogsStub = stub(buildLogService, 'getBuildLogs').returns(of([]));
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult').returns(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
             });
     });

@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -8,6 +7,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 
 // Modal -> Result details view
 @Component({
@@ -28,7 +28,7 @@ export class ResultDetailComponent implements OnInit {
     staticCodeAnalysisFeedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService) {}
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -110,7 +110,7 @@ export class ResultDetailComponent implements OnInit {
     }
 
     private fetchAndSetBuildLogs = (participationId: number) => {
-        return this.repositoryService.buildlogs(participationId).pipe(
+        return this.buildLogService.getBuildLogs(participationId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
                 this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
             }),

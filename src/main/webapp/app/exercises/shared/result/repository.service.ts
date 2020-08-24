@@ -35,14 +35,6 @@ export class RepositoryService {
     pull(participationId: number): Observable<void> {
         return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
-
-    /**
-     * Retrieves the build logs for a given participation.
-     * @param participationId The identifier of the participation.
-     */
-    buildlogs(participationId: number): Observable<BuildLogEntry[]> {
-        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
-    }
 }
 
 export interface IRepositoryFileService {
