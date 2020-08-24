@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
  * Created by Josias Montag on 11.11.16.
@@ -32,4 +33,28 @@ public class BuildLogEntry {
         this.log = log;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        BuildLogEntry that = (BuildLogEntry) o;
+        if (time != null && that.time != null) {
+            return Objects.equals(time.toInstant(), that.time.toInstant()) && Objects.equals(log, that.log);
+        }
+        else if (time == null && that.time == null) {
+            return Objects.equals(log, that.log);
+        }
+        else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(time, log);
+    }
 }
