@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -127,11 +127,25 @@ export class OrionConnectorService implements ArtemisOrionConnector {
 
     /**
      * Notify the IDE that a build failed. Alternative to onBuildFinished
+     * Transforms the annotations to the format used by orion:
+     * { errors: { [fileName: string]: Annotation[] }; timestamp: number }
      *
      * @param buildErrors All compile errors for the current build
      */
-    onBuildFailed(buildErrors: BuildLogErrors) {
-        theWindow().orionBuildConnector.onBuildFailed(JSON.stringify(buildErrors));
+    onBuildFailed(buildErrors: Array<Annotation>) {
+        theWindow().orionBuildConnector.onBuildFailed(
+            JSON.stringify({
+                errors: buildErrors.reduce(
+                    // Group annotations by filename
+                    (buildLogErrors, { fileName, timestamp, ...rest }) => ({
+                        ...buildLogErrors,
+                        [fileName]: [...(buildLogErrors[fileName] || []), { ...rest, ts: timestamp }],
+                    }),
+                    {},
+                ),
+                timestamp: buildErrors.length > 0 ? buildErrors[0].timestamp : Date.now(),
+            }),
+        );
     }
 
     /**
