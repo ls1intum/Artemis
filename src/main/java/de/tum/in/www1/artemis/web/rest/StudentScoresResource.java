@@ -72,7 +72,7 @@ public class StudentScoresResource {
             return forbidden();
         }
 
-        List<StudentScore> studentScores = studentScoresService.getStudentScoresForExercise(exerciseId);
+        List<StudentScore> studentScores = studentScoresService.getStudentScoresForExercise(exercise);
 
         return ResponseEntity.ok(studentScores);
     }

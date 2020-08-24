@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 @Repository
 public interface StudentScoresRepository extends JpaRepository<StudentScore, Long> {
 
-    List<StudentScore> findAllByExerciseId(long exerciseId);
+    List<StudentScore> findAllByExercise(Exercise exercise);
 
     @Query("SELECT s FROM StudentScore s WHERE s.exercise IN :#{#exercises}")
     List<StudentScore> findAllByExerciseIdIn(@Param("exercises") Set<Exercise> exercises);

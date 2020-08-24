@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
@@ -33,11 +34,11 @@ public class StudentScoresService {
     /**
      * Returns all StudentScores for exercise.
      *
-     * @param exerciseId id of the exercise
+     * @param exercise the exercise
      * @return list of student score objects for that exercise
      */
-    public List<StudentScore> getStudentScoresForExercise(Long exerciseId) {
-        return studentScoresRepository.findAllByExerciseId(exerciseId);
+    public List<StudentScore> getStudentScoresForExercise(Exercise exercise) {
+        return studentScoresRepository.findAllByExercise(exercise);
     }
 
     /**
