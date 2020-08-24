@@ -199,7 +199,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateSubject = new Subject<FileSubmission>();
         return this.http
             .put<FileSubmission>(currentFileUpdateUrl, fileUpdates, {
-                params: { commit: thenCommit ? 'true' : 'false' },
+                params: { commit: thenCommit ? 'yes' : 'no' },
             })
             .pipe(
                 handleErrorResponse(this.conflictService),

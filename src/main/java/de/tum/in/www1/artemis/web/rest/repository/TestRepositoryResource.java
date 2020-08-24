@@ -144,7 +144,7 @@ public class TestRepositoryResource extends RepositoryResource {
      */
     @PutMapping("/test-repository/{exerciseId}/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam String commit, Principal principal) {
+            @RequestParam Boolean commit, Principal principal) {
         ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
 
         if (versionControlService.isEmpty()) {
@@ -169,7 +169,7 @@ public class TestRepositoryResource extends RepositoryResource {
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
-        if ("true".equals(commit)) {
+        if (commit) {
             var response = super.commitChanges(exerciseId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new ResponseStatusException(response.getStatusCode());

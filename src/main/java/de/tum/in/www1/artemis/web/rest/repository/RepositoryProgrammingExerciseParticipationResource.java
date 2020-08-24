@@ -151,7 +151,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam String commit, Principal principal) {
+            @RequestParam Boolean commit, Principal principal) {
         Participation participation;
         try {
             participation = participationService.findParticipation(participationId);
@@ -201,7 +201,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
-        if ("true".equals(commit)) {
+        if (commit) {
             var response = super.commitChanges(participationId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new ResponseStatusException(response.getStatusCode());
