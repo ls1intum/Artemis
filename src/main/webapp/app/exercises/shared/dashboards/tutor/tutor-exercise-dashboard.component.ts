@@ -24,11 +24,8 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { cloneDeep } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -425,19 +422,6 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
-    private openManualResultDialog(result: Result) {
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.participationId = result.participation!.id;
-        modalRef.componentInstance.result = cloneDeep(result);
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
-        modalRef.result.then(
-            () => this.loadAll(),
-            () => {},
-        );
-        return;
-    }
-
     async openCodeEditorWithStudentSubmission(participationId: number) {
         const route = `/course-management/${this.exercise.course?.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
         await this.router.navigate([route]);
@@ -449,7 +433,6 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            // this.openManualResultDialog(complaint.result);
             this.openCodeEditorWithStudentSubmission(complaint.result.participation!.id!);
         } else {
             this.openAssessmentEditor(complaint.result.submission!);

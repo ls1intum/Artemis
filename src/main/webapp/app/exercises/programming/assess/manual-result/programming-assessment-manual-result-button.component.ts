@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { filter } from 'rxjs/operators';
-import { cloneDeep } from 'lodash';
 import { User } from 'app/core/user/user.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -77,24 +75,6 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         if (this.latestResultSubscription) {
             this.latestResultSubscription.unsubscribe();
         }
-    }
-
-    /**
-     * Stops the propagation of the mouse event, updates the component instance of the modalRef with
-     * this instance's values and emits the result if it is modified
-     * @param {MouseEvent} event - Mouse event
-     */
-    openManualResultDialog(event: MouseEvent) {
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.participationId = this.participationId;
-        modalRef.componentInstance.result = cloneDeep(this.latestResult);
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.onResultModified.subscribe(($event: Result) => this.onResultModified.emit($event));
-        modalRef.result.then(
-            (result) => this.onResultModified.emit(result),
-            () => {},
-        );
     }
 
     async openCodeEditorWithStudentSubmission() {
