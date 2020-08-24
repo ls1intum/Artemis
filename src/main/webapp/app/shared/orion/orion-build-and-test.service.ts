@@ -9,6 +9,8 @@ import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
@@ -69,12 +71,14 @@ export class OrionBuildAndTestService {
                 tap((result) => {
                     this.latestResult = result;
                     // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
-                    if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-                        result.feedbacks.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
+                    if ((result.submission as ProgrammingSubmission).buildFailed) {
+                        this.forwardBuildLogs(participationId);
+                    } else {
+                        // TODO: Deal with static code analysis feedback in Orion
+                        const testCaseFeedback = result.feedbacks.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
+                        testCaseFeedback.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
                         this.javaBridge.onBuildFinished();
                         this.buildFinished.next();
-                    } else {
-                        this.forwardBuildLogs(participationId);
                     }
                     this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
                 }),
