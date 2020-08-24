@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 @Repository
@@ -16,12 +19,12 @@ public interface StudentScoresRepository extends JpaRepository<StudentScore, Lon
 
     List<StudentScore> findAllByExerciseId(long exerciseId);
 
-    @Query("SELECT s FROM StudentScore s WHERE s.exerciseId IN :#{#exercises}")
-    List<StudentScore> findAllByExerciseIdIn(@Param("exercises") Set<Long> exercises);
+    @Query("SELECT s FROM StudentScore s WHERE s.exercise IN :#{#exercises}")
+    List<StudentScore> findAllByExerciseIdIn(@Param("exercises") Set<Exercise> exercises);
 
     void deleteByResultId(Long resultId);
 
-    Optional<StudentScore> findByResultId(Long resultId);
+    Optional<StudentScore> findByResult(Result result);
 
-    Optional<StudentScore> findByStudentIdAndExerciseId(Long studentId, Long exerciseId);
+    List<StudentScore> findByStudentAndExercise(User student, Exercise exercise);
 }

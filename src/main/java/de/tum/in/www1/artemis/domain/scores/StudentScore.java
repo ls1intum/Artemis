@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.domain.scores;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "student_scores")
@@ -16,15 +15,17 @@ public class StudentScore {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "student_id")
-    private long studentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User student;
 
-    @Column(name = "exercise_id")
-    private long exerciseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Exercise exercise;
 
-    // we should think whether participation_id would be helpful here as well (or even instead of result_id)
-    @Column(name = "result_id")
-    private long resultId;
+    /**
+     * A submission can have a result and therefore, results are persisted and removed with a submission.
+     */
+    @OneToOne(fetch = FetchType.LAZY)
+    private Result result;
 
     @Column(name = "score")
     private long score;
@@ -37,28 +38,28 @@ public class StudentScore {
         this.id = id;
     }
 
-    public long getStudentId() {
-        return studentId;
+    public User getStudent() {
+        return student;
     }
 
-    public void setStudentId(long studentId) {
-        this.studentId = studentId;
+    public void setStudent(User student) {
+        this.student = student;
     }
 
-    public long getExerciseId() {
-        return exerciseId;
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public void setExerciseId(long exerciseId) {
-        this.exerciseId = exerciseId;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
-    public long getResultId() {
-        return resultId;
+    public Result getResult() {
+        return result;
     }
 
-    public void setResultId(long resultId) {
-        this.resultId = resultId;
+    public void setResult(Result result) {
+        this.result = result;
     }
 
     public long getScore() {
@@ -73,10 +74,10 @@ public class StudentScore {
         // Empty constructor because of @Entity
     }
 
-    public StudentScore(long studentId, long exerciseId, long resultId, long score) {
-        this.studentId = studentId;
-        this.exerciseId = exerciseId;
-        this.resultId = resultId;
+    public StudentScore(User student, Exercise exercise, Result result, long score) {
+        this.student = student;
+        this.exercise = exercise;
+        this.result = result;
         this.score = score;
     }
 }

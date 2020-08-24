@@ -43,12 +43,12 @@ public class ResultListener {
     @PostRemove
     public void postRemove(Result deletedResult) {
 
-        wrapInSuccessfulTransactionSynchronization(() -> {
-            log.info("Result " + deletedResult + " was deleted");
-            // remove from Student Scores and Tutor Scores
-            studentScoresService.removeResult(deletedResult);
-            tutorScoresService.removeResult(deletedResult);
-        });
+        // wrapInSuccessfulTransactionSynchronization(() -> {
+        log.info("Result " + deletedResult + " was deleted");
+        // remove from Student Scores and Tutor Scores
+        studentScoresService.removeResult(deletedResult);
+        tutorScoresService.removeResult(deletedResult);
+        // });
     }
 
     /**
@@ -59,16 +59,16 @@ public class ResultListener {
     @PostUpdate
     public void postUpdate(Result updatedResult) {
 
-        wrapInSuccessfulTransactionSynchronization(() -> {
-            log.info("Result " + updatedResult + " was updated");
-            // update existing student score
-            studentScoresService.updateResult(updatedResult);
+        // wrapInSuccessfulTransactionSynchronization(() -> {
+        log.info("Result " + updatedResult + " was updated");
+        // update existing student score
+        studentScoresService.updateResult(updatedResult);
 
-            if (updatedResult.getAssessor() != null) {
-                // update existing tutor scores
-                tutorScoresService.updateResult(updatedResult);
-            }
-        });
+        if (updatedResult.getAssessor() != null) {
+            // update existing tutor scores
+            tutorScoresService.updateResult(updatedResult);
+        }
+        // });
 
     }
 
@@ -80,15 +80,15 @@ public class ResultListener {
     @PostPersist
     public void postPersist(Result newResult) {
 
-        wrapInSuccessfulTransactionSynchronization(() -> {
-            // add to student scores (or update existing one)
-            studentScoresService.addNewResult(newResult);
+        // wrapInSuccessfulTransactionSynchronization(() -> {
+        // add to student scores (or update existing one)
+        studentScoresService.addNewResult(newResult);
 
-            if (newResult.getAssessor() != null) {
-                // add to tutor scores (or update existing one)
-                tutorScoresService.addNewResult(newResult);
-            }
-        });
+        if (newResult.getAssessor() != null) {
+            // add to tutor scores (or update existing one)
+            tutorScoresService.addNewResult(newResult);
+        }
+        // });
     }
 
     /**

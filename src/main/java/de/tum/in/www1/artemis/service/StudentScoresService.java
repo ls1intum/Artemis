@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
@@ -47,14 +47,7 @@ public class StudentScoresService {
      * @return list of student score objects for that course
      */
     public List<StudentScore> getStudentScoresForCourse(Course course) {
-        Set<Exercise> exercises = course.getExercises();
-        Set<Long> exerciseIds = new HashSet<>();
-
-        for (Exercise exercise : exercises) {
-            exerciseIds.add(exercise.getId());
-        }
-
-        return studentScoresRepository.findAllByExerciseIdIn(exerciseIds);
+        return studentScoresRepository.findAllByExerciseIdIn(course.getExercises());
     }
 
     /**
@@ -72,7 +65,7 @@ public class StudentScoresService {
      * @param updatedResult result to be updated
      */
     public void updateResult(Result updatedResult) {
-        var studentScore = studentScoresRepository.findByResultId(updatedResult.getId());
+        var studentScore = studentScoresRepository.findByResult(updatedResult);
         if (studentScore.isPresent()) {
             if (updatedResult.getScore() != null) {
                 studentScore.get().setScore(updatedResult.getScore());
@@ -89,6 +82,7 @@ public class StudentScoresService {
      *
      * @param newResult result to be added
      */
+    @Transactional(propagation = Propagation.REQUIRED)
     public void addNewResult(Result newResult) {
         // ignore unrated results
         if (newResult.isRated() != Boolean.TRUE) {
@@ -101,37 +95,38 @@ public class StudentScoresService {
         // 2) there is no student score for the same participation yet: create a new one
 
         StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
-        var studentId = participation.getStudent().get().getId();
-        var exerciseId = participation.getExercise().getId();
 
-        var existingStudentIdAndExerciseId = studentScoresRepository.findByStudentIdAndExerciseId(studentId, exerciseId);
+        // TODO: this call does not work
+        // var existingStudentScores = studentScoresRepository.findByStudentAndExercise(participation.getStudent().get(), participation.getExercise());
+        var existingStudentScores = new ArrayList<StudentScore>();
 
-        if (existingStudentIdAndExerciseId.isPresent()) {
-            if (existingStudentIdAndExerciseId.get().getResultId() == newResult.getId()) {
+        if (existingStudentScores.size() > 0) {
+            var existingStudentScore = existingStudentScores.get(0);
+            if (existingStudentScore.getResult().getId().equals(newResult.getId())) {
                 updateResult(newResult);
             }
             else {
-                existingStudentIdAndExerciseId.get().setResultId(newResult.getId());
+                existingStudentScore.setResult(newResult);
                 if (newResult.getScore() != null) {
-                    existingStudentIdAndExerciseId.get().setScore(newResult.getScore());
+                    existingStudentScore.setScore(newResult.getScore());
                 }
                 else {
-                    existingStudentIdAndExerciseId.get().setScore(0);
+                    existingStudentScore.setScore(0);
                 }
                 // does not work when called from PostPersist. Everything else works fine
-                var updatedScore = studentScoresRepository.saveAndFlush(existingStudentIdAndExerciseId.get());
+                var updatedScore = studentScoresRepository.save(existingStudentScore);
                 log.info("update student score in db: " + updatedScore);
             }
         }
         else {
-            StudentScore newScore = new StudentScore(participation.getStudent().get().getId(), participation.getExercise().getId(), newResult.getId(), 0);
+            StudentScore newScore = new StudentScore(participation.getStudent().get(), participation.getExercise(), newResult, 0);
 
             if (newResult.getScore() != null) {
                 newScore.setScore(newResult.getScore());
             }
 
             // does not work when called from PostPersist. Everything else works fine
-            newScore = studentScoresRepository.saveAndFlush(newScore);
+            newScore = studentScoresRepository.save(newScore);
             log.info("new student score in db: " + newScore);
         }
     }
