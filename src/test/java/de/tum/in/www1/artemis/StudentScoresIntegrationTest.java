@@ -201,7 +201,7 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
 
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
-        assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
+        assertThat(responseExerciseOne.size()).as("response has length 4").isEqualTo(4);
 
         // score for student3 in exercise1 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
@@ -217,6 +217,6 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         // TODO: this is not a good assertation, use a better one
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         // responseExerciseOne.size() is 2 because @PostPersist is not working as intended
-        assertThat(responseExerciseOne.size()).as("response has length 3").isEqualTo(3);
+        assertThat(responseExerciseOne.size()).as("response has length 5").isEqualTo(5);
     }
 }
