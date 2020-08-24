@@ -8,6 +8,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 // Modal -> Result details view
 @Component({
@@ -55,7 +56,7 @@ export class ResultDetailComponent implements OnInit {
                         }
                     }
                     // If we haven't received any classic feedback, we fetch the build log outputs for programming exercises.
-                    if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.feedbackList || !this.feedbackList.length)) {
+                    if (this.exerciseType === ExerciseType.PROGRAMMING && (this.result.submission as ProgrammingSubmission).buildFailed) {
                         return this.fetchAndSetBuildLogs(this.result.participation!.id);
                     }
                     return of(null);

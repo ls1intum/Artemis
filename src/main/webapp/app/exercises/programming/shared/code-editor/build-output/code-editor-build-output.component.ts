@@ -13,6 +13,7 @@ import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Annotation } from '../ace/code-editor-ace.component';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -182,15 +183,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /**
      * Decides if the build log should be shown.
-     * If All tests were successful or there is test feedback -> don't show build logs.
-     * Else -> show build logs.
+     * Fetch the build logs only if the submission could not be build
      * @param result
      */
     fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
-        if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-            return of([]);
-        } else {
+        if ((result?.submission as ProgrammingSubmission).buildFailed) {
             return this.getBuildLogs();
+        } else {
+            return of([]);
         }
     }
 
