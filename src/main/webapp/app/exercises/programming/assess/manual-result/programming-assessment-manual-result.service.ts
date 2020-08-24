@@ -22,7 +22,7 @@ export class ProgrammingAssessmentManualResultService {
      */
     save(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result);
-        let url = `${this.resourceUrl}/participations/${participationId}//manual-results`;
+        let url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
         if (submit) {
             url = buildUrlWithParams(url, ['submit=true']);
         }

@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { orderBy as _orderBy } from 'lodash';
+import { orderBy as _orderBy, cloneDeep } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -38,7 +38,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
-    participationForAssessment: ProgrammingExerciseStudentParticipation;
+    participationForManualResult: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     submission: ProgrammingSubmission | null;
     manualResult: Result | null;
@@ -97,9 +97,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     // Set domain to make file editor work properly
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults;
-
                     this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
                     this.manualResult = this.getLatestManualResult(this.participation.results);
+
+                    // Add participation with manual results to display manual result in navbar
+                    this.participationForManualResult = cloneDeep(this.participation);
+                    this.participationForManualResult.results = this.manualResult ? [this.manualResult] : [];
 
                     // Either latest manual or automatic result
                     this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
