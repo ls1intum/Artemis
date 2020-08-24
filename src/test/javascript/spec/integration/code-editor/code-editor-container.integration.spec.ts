@@ -15,7 +15,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { buildLogs, extractedBuildLogErrors } from '../../helpers/sample/build-logs';
+import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
@@ -39,7 +39,6 @@ import {
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
@@ -49,10 +48,10 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorSessionService } from '../../helpers/mocks/service/mock-code-editor-session.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { omit } from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -101,7 +100,6 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
-                { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
@@ -192,19 +190,17 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
         expect(container.unsavedFiles).to.be.empty;
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
         expect(getRepositoryContentStub).to.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
+        expect(container.fileBrowser.errorFiles).to.deep.equal(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).to.be.empty;
 
         // ace editor
         expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
         expect(container.aceEditor.commitState).to.equal(CommitState.CLEAN);
 
         // actions
@@ -218,7 +214,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors()).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
 
         // instructions
@@ -270,19 +266,18 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.editorState).to.equal(EditorState.CLEAN);
-        expect(container.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
         expect(container.unsavedFiles).to.be.empty;
 
         // file browser
         expect(checkIfRepositoryIsCleanStub).to.have.been.calledOnce;
         expect(getRepositoryContentStub).to.not.have.been.calledOnce;
-        expect(container.fileBrowser.errorFiles).to.deep.equal(Object.keys(extractedBuildLogErrors.errors));
+        expect(container.fileBrowser.errorFiles).to.deep.equal(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).to.be.empty;
 
         // ace editor
         expect(container.aceEditor.isLoading).to.be.false;
-        expect(container.aceEditor.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.aceEditor.annotationsArray.map((a) => omit(a, 'hash'))).to.deep.equal(extractedBuildLogErrors);
         expect(container.aceEditor.commitState).to.equal(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
@@ -296,7 +291,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.buildLogErrors).to.deep.equal(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors()).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
 
         // instructions
@@ -502,6 +497,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
         getRepositoryContentStub.returns(of([]));
 
+        container.participation = participation;
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
         containerFixture.detectChanges();
