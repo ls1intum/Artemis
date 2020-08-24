@@ -325,7 +325,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getBuildLogs(@PathVariable Long participationId) {
+    public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
@@ -336,7 +336,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         Optional<Submission> optionalSubmission = participation.getSubmissions().stream().findFirst();
         if (optionalSubmission.isEmpty()) {
-            // Don't return build logs if a submission doesn't exist yet
+            // Can't return build logs if a submission doesn't exist yet
             return ResponseEntity.ok(new ArrayList<>());
         }
 
