@@ -226,10 +226,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
-
-
-
-
     @ParameterizedTest
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
