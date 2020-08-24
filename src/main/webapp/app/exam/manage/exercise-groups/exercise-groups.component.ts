@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, of, forkJoin } from 'rxjs';
+import { forkJoin, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -21,6 +21,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -36,13 +37,14 @@ export class ExerciseGroupsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate: Moment | null;
-    exerciseGroupContainsProgrammingExerciseDict: { [id: number]: boolean } = {};
+    exerciseGroupToExerciseTypesDict: { [id: number]: ExerciseType[] } = {};
 
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -51,7 +53,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
-     * See {@link setupExerciseGroupContainsProgrammingExerciseDict}.
+     * See {@link setupExerciseGroupToExerciseTypesDict}.
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -64,7 +66,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.course = examRes.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
-                this.setupExerciseGroupContainsProgrammingExerciseDict();
+                this.setupExerciseGroupToExerciseTypesDict();
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
         );
@@ -93,19 +95,16 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
-     * it calls {@link setupExerciseGroupContainsProgrammingExerciseDict} to update the dictionary
+     * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
      * @param exerciseId
      * @param exerciseGroupId
-     * @param programmingExercise flag that indicates if the deleted exercise was a programming exercise. Default value is false.
      */
-    removeExercise(exerciseId: number, exerciseGroupId: number, programmingExercise = false) {
+    removeExercise(exerciseId: number, exerciseGroupId: number) {
         if (this.exerciseGroups) {
             this.exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
-                    if (programmingExercise) {
-                        this.setupExerciseGroupContainsProgrammingExerciseDict();
-                    }
+                    this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
         }
@@ -125,7 +124,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
-                delete this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroupId];
+                delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -231,28 +230,37 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * sets up {@link exerciseGroupContainsProgrammingExerciseDict} that maps the exercise group id to whether the said exercise group contains programming exercises.
-     * Used to show the correct modal for deleting exercises.
-     * In case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
+     * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
+     * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
-    setupExerciseGroupContainsProgrammingExerciseDict() {
-        this.exerciseGroupContainsProgrammingExerciseDict = {};
-        if (this.exerciseGroups == null) {
+    setupExerciseGroupToExerciseTypesDict() {
+        this.exerciseGroupToExerciseTypesDict = {};
+        if (!this.exerciseGroups) {
             return;
         } else {
             for (const exerciseGroup of this.exerciseGroups) {
-                if (exerciseGroup.exercises != null) {
+                this.exerciseGroupToExerciseTypesDict[exerciseGroup.id] = [];
+                if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
-                        if (exercise.type === ExerciseType.PROGRAMMING) {
-                            this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = true;
-                            break;
-                        }
-                    }
-                    if (!(exerciseGroup.id in this.exerciseGroupContainsProgrammingExerciseDict)) {
-                        this.exerciseGroupContainsProgrammingExerciseDict[exerciseGroup.id] = false;
+                        this.exerciseGroupToExerciseTypesDict[exerciseGroup.id].push(exercise.type);
                     }
                 }
             }
         }
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * Checks if the url includes the string "nolocalsetup', which is an indication
+     * that the particular programming exercise has no local setup
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+     * @param urlToCheck the url which will be check if it contains the substring
+     */
+    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
+        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

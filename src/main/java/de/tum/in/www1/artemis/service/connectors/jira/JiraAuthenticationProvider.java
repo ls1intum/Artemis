@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
@@ -74,8 +73,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final AuditEventRepository auditEventRepository;
 
-    public JiraAuthenticationProvider(UserRepository userRepository, CourseRepository courseRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
+    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService,
+            AuditEventRepository auditEventRepository) {
         super(userRepository);
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;

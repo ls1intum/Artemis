@@ -58,7 +58,7 @@ public class ModelingExerciseService {
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
         final Page<ModelingExercise> exercisePage;
-        if (authCheckService.isAdmin()) {
+        if (authCheckService.isAdmin(user)) {
             exercisePage = modelingExerciseRepository
                     .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
                             searchTerm, searchTerm, searchTerm, searchTerm, sorted);
