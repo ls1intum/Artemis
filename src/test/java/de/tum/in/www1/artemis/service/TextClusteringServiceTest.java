@@ -166,7 +166,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         // Getter and setter for lambda value tested
         TextTreeNode testNode = new TextTreeNode();
         testNode.setLambdaVal(Double.POSITIVE_INFINITY);
-        assertThat(ReflectionTestUtils.getField(testNode, "lambda_val"), equalTo(-1.));
+        assertThat(ReflectionTestUtils.getField(testNode, "lambdaVal"), equalTo(-1.));
         assertThat(testNode.getLambdaVal(), equalTo(Double.POSITIVE_INFINITY));
         // isBlockNode() tested
         testNode.setChildSize(1);
