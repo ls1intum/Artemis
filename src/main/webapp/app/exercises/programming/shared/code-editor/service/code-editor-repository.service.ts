@@ -189,26 +189,31 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * Currently we only handle {@link GitConflictState#CHECKOUT_CONFLICT}
      *
      * @param fileUpdates the Array of updated files
+     * @param thenCommit indicates the server to also commit the saved changes
      */
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>) {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
         const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
-        return this.http.put<FileSubmission>(currentFileUpdateUrl, fileUpdates).pipe(
-            handleErrorResponse(this.conflictService),
-            tap((fileSubmission: FileSubmission | FileSubmissionError) => {
-                if (checkIfSubmissionIsError(fileSubmission)) {
-                    this.fileUpdateSubject.error(fileSubmission);
-                    if (fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
-                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+        return this.http
+            .put<FileSubmission>(currentFileUpdateUrl, fileUpdates, {
+                params: { commit: thenCommit ? 'yes' : 'no' },
+            })
+            .pipe(
+                handleErrorResponse(this.conflictService),
+                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
+                    if (checkIfSubmissionIsError(fileSubmission)) {
+                        this.fileUpdateSubject.error(fileSubmission);
+                        if (fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
+                            this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                        }
+                        return;
                     }
-                    return;
-                }
-                this.fileUpdateSubject.next(fileSubmission);
-            }),
-        );
+                    this.fileUpdateSubject.next(fileSubmission);
+                }),
+            );
     }
 
     renameFile = (currentFilePath: string, newFilename: string) => {

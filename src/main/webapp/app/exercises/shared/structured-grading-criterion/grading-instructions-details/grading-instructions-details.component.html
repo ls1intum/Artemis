@@ -1,6 +1,6 @@
 <jhi-markdown-editor
     #markdownEditor
-    style="height: 350px;"
+    style="height: 350px"
     class="markdown-editor"
     [markdown]="questionEditorText"
     [showPreviewButton]="true"
@@ -25,11 +25,11 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
-                            <td style="width: 5%;" [innerHTML]="instruction.credits"></td>
-                            <td style="width: 10%;" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                            <td style="width: 40%;" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                            <td style="width: 35%;" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                            <td style="width: 10%;" [innerHTML]="instruction.usageCount"></td>
+                            <td style="width: 5%" [innerHTML]="instruction.credits"></td>
+                            <td style="width: 10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                            <td style="width: 40%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
+                            <td style="width: 35%" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
+                            <td style="width: 10%" [innerHTML]="instruction.usageCount"></td>
                         </tr>
                     </tbody>
                 </table>
