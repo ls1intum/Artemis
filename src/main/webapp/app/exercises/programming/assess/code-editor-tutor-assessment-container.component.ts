@@ -275,6 +275,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onResultModified(result: Result) {
         this.manualResult = result;
+        this.participationForManualResult.results = [this.manualResult];
         if (this.manualResult.resultString) {
             this.assessmentsAreValid = this.manualResult.resultString.trim().length > 0;
         } else {
