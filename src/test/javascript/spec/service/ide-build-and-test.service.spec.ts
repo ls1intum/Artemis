@@ -1,8 +1,8 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../helpers/mocks/service/mock-programming-submission.service';
 import { Result } from 'app/entities/result.model';
@@ -18,14 +18,13 @@ import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-c
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ArtemisTestModule } from '../test.module';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('IdeBuildAndTestService', () => {
-    let comp: OrionBuildAndTestService;
-    let fixture: ComponentFixture<OrionBuildAndTestService>;
-    let debugElement: DebugElement;
+    let serviceUnderTest: OrionBuildAndTestService;
 
     let onBuildFinishedSpy: SinonSpy;
     let onBuildStartedSpy: SinonSpy;
@@ -52,33 +51,30 @@ describe('IdeBuildAndTestService', () => {
     ];
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
             providers: [
+                OrionBuildAndTestService,
                 { provide: SubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(OrionBuildAndTestService);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
+        });
 
-                const javaBridge = debugElement.injector.get(OrionConnectorService);
-                const buildLogService = debugElement.injector.get(BuildLogService);
-                const participationService = debugElement.injector.get(MockParticipationWebsocketService);
+        serviceUnderTest = TestBed.inject(OrionBuildAndTestService);
+        const javaBridge = TestBed.inject(OrionConnectorService);
+        const buildLogService = TestBed.inject(BuildLogService);
+        const participationService = TestBed.inject(ParticipationWebsocketService);
 
-                onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
-                onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
-                onTestResultSpy = spy(javaBridge, 'onTestResult');
-                onBuildFailedSpy = spy(javaBridge, 'onBuildFailed');
-                buildLogsStub = stub(buildLogService, 'getBuildLogs');
-                participationSubscriptionStub = stub(participationService, 'subscribeForLatestResultOfParticipation');
-            });
+        onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
+        onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
+        onTestResultSpy = spy(javaBridge, 'onTestResult');
+        onBuildFailedSpy = spy(javaBridge, 'onBuildFailed');
+        buildLogsStub = stub(buildLogService, 'getBuildLogs');
+        participationSubscriptionStub = stub(participationService, 'subscribeForLatestResultOfParticipation');
     });
 
     afterEach(() => {
@@ -96,7 +92,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        comp.listenOnBuildOutputAndForwardChanges(exercise);
+        serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -113,7 +109,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        comp.listenOnBuildOutputAndForwardChanges(exercise);
+        serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -129,7 +125,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        comp.listenOnBuildOutputAndForwardChanges(exercise);
+        serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -145,7 +141,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        comp.listenOnBuildOutputAndForwardChanges(exercise);
+        serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
