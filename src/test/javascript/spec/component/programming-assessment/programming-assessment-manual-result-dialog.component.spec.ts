@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
@@ -45,7 +45,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { delay } from 'rxjs/operators';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,12 +60,11 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
     let complaintService: ComplaintService;
     let accountService: AccountService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let domainService: DomainService;
 
     let updateAfterComplaintStub: SinonStub;
     let getStudentParticipationWithResultsStub: SinonStub;
-    let findByResultId: SinonStub;
-    let getIdentity: SinonStub;
+    let findByResultIdStub: SinonStub;
+    let getIdentityStub: SinonStub;
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
         feedbacks: [new Feedback()],
@@ -120,65 +119,65 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
+
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint');
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResults').returns(of(participation));
-                findByResultId = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
-                getIdentity = stub(accountService, 'identity').returns(new Promise(() => user) as Promise<User | null>);
-                domainService = debugElement.injector.get(DomainService);
+                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResults').returns(
+                    of(participation).pipe(delay(100)),
+                );
+                findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
+                getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
             });
     });
 
-    afterEach(() => {
+    afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
-        findByResultId.restore();
+        findByResultIdStub.restore();
         getStudentParticipationWithResultsStub.restore();
-    });
+    }));
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).to.exist;
     });
-    /*
+
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
-        // domainService.setDomain([DomainType.PARTICIPATION, participation]);
         comp.manualResult = result;
         comp.exercise = exercise;
-        // Somehow the userId is not loaded
-        // comp.userId = user.id!;
-
         comp.ngOnInit();
-        tick();
-        expect(findByResultId.calledOnce).to.be.true;
+        tick(100);
+
+        expect(getIdentityStub.calledOnce).to.be.true;
+        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(findByResultIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
-
         fixture.detectChanges();
 
-        const assessmentLayout = debugElement.query(By.css('jhi-assessment-layout'));
-        expect(assessmentLayout).to.exist;
-        // const fixtureAssessmentLayout = TestBed.createComponent(AssessmentLayoutComponent);
-        // fixtureAssessmentLayout.componentInstance.complaint = comp.complaint;
-        // fixtureAssessmentLayout.detectChanges();
-        const complaintsForm = assessmentLayout.query(By.css('jhi-complaints-for-tutor-form'));
+        const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.exist;
         expect(comp.complaint).to.exist;
 
-        fixture.destroy();
-        flush();
+        // Wait until periodic timer has passed out
+        tick(100);
     }));
 
     it("should not show complaint when result doesn't have it", fakeAsync(() => {
-        // getIdentity.returns(new Promise((resolve) => resolve(user)));
         result.hasComplaint = false;
         comp.manualResult = result;
         comp.exercise = exercise;
         comp.ngOnInit();
-        tick();
-        expect(findByResultId.notCalled).to.be.true;
+        tick(100);
+
+        expect(getIdentityStub.calledOnce).to.be.true;
+        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(findByResultIdStub.notCalled).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
+
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.not.exist;
+
+        // Wait until periodic timer has passed out
+        tick(100);
     }));
-    */
 });
