@@ -14,7 +14,7 @@ export const isLegacyResult = (result: Result) => {
     if (result.completionDate) {
         return result.completionDate.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
     } else {
-        return true;
+        return false;
     }
 };
 

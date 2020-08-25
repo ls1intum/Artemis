@@ -176,7 +176,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
      * and emits the updated result to the parent component
      */
     updateResultSuccess() {
-        this.result.successful = this.result.score === 100;
+        this.result.successful = this.result.score >= 100;
         this.onResultModified.emit(this.result);
     }
 

@@ -162,19 +162,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         ProgrammingSubmission submission;
         if (latestExistingResult.isEmpty()) {
-            // Create manual submission with last commit hash und current time stamp.
+            // Create manual submission with last commit hash and current time stamp.
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                     SubmissionType.MANUAL);
             newResult.setSubmission(submission);
         }
         else {
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
-            if (submission == null) {
-                throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
-            }
-            else {
-                newResult.setSubmission(submission);
-            }
+            newResult.setSubmission(submission);
         }
 
         Result result = programmingAssessmentService.saveManualAssessment(newResult);

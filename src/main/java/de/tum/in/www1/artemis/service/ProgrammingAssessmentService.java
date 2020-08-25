@@ -50,8 +50,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveManualAssessment(Result result) {
-        Boolean isFeedbackEmpty = result.getFeedbacks().isEmpty();
-        result.setHasFeedback(!isFeedbackEmpty);
+        result.setHasFeedback(!result.getFeedbacks().isEmpty());
 
         User user = userService.getUserWithGroupsAndAuthorities();
         result.setHasComplaint(false);
