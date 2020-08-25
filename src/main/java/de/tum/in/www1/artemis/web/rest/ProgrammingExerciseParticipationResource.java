@@ -83,7 +83,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-results-and-feedbacks")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithResultsForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
                 .findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
