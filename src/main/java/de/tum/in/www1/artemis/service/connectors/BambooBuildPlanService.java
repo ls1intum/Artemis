@@ -154,13 +154,12 @@ public class BambooBuildPlanService {
 
                 if (!sequentialBuildRuns) {
                     return defaultStage.jobs(defaultJob.tasks(checkoutTask, createCompileTask(), createTestCompileTask(),
-                            new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                            new MavenTask().goal("test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
                 }
                 else {
                     return defaultStage.jobs(defaultJob.tasks(checkoutTask, createCompileTask(), createTestCompileTask(),
-                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
-                                    .hasTests(true),
-                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                            new MavenTask().goal("test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                            new MavenTask().goal("test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
                 }
             }
             case PYTHON:
