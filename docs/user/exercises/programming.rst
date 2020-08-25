@@ -54,6 +54,24 @@ particularly helpful for programming beginners.
 
    Online Editor
 
+Testing with Artemis Java Test Sandbox
+--------------------------------------
+
+Artemis Java Test Sandbox *(abbr. AJTS)* is a JUnit 5 extension for easy and secure Java testing
+on Artemis.
+
+Its main features are
+
+* a security manager to prevent students crashing the tests or cheating
+* more robust tests and builds due to limits on time, threads and io
+* support for public and hidden Artemis tests, where hidden ones obey a custom deadline
+* utilities for improved feedback in Artemis like processing multiline error messages
+  or pointing to a possible location that caused an Exception
+* utilities to test exercises using System.out and System.in comfortably
+
+**For more information see https://github.com/ls1intum/artemis-java-test-sandbox**
+
+
 Using adapters to support multiple VCS
 --------------------------------------
 
