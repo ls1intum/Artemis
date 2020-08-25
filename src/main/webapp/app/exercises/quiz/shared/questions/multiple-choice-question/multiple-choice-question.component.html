@@ -6,7 +6,7 @@
         <span>{{ questionIndex }})</span> {{ question.title }}
     </h4>
     <p [innerHTML]="renderedQuestion.text"></p>
-    <span style="color: red;" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+    <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     <h6>{{ 'artemisApp.quizQuestion.allOptions' | translate }}</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
@@ -113,7 +113,7 @@
                 <fa-icon
                     ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | translate }}"
                     placement="top"
-                    style="color: black;"
+                    style="color: black"
                     [icon]="'question-circle'"
                     *ngIf="answerOption.invalid || question.invalid"
                 ></fa-icon>
