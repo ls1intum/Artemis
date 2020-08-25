@@ -33,8 +33,21 @@ describe('IdeBuildAndTestService', () => {
     let participationSubscriptionStub: SinonStub;
 
     const feedbacks = [{ id: 2, positive: false, detailText: 'abc' } as Feedback, { id: 3, positive: true, detailText: 'cde' } as Feedback];
+    const feedbacksWithStaticCodeAnalysis = [
+        ...feedbacks,
+        { id: 3, positive: false, detailText: 'fgh', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'a' } as Feedback,
+        { id: 4, positive: false, detailText: 'ijk', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'b' } as Feedback,
+    ];
     const result = { id: 1 } as Result;
+    const submissionFailed = { id: 1, buildFailed: true } as ProgrammingSubmission;
+    const submissionSuccess = { id: 1, buildFailed: false } as ProgrammingSubmission;
     const exercise = { id: 42, studentParticipations: [{ id: 32 }] } as ProgrammingExercise;
+    const logs = [
+        {
+            time: '2019-05-15T10:32:11+02:00',
+            log: '[ERROR] COMPILATION ERROR : ',
+        },
+    ];
 
     beforeEach(() => {
         submissionService = new MockProgrammingSubmissionService();
@@ -61,51 +74,9 @@ describe('IdeBuildAndTestService', () => {
         participationSubscriptionStub.restore();
     });
 
-    it('should forward all results for positive results', () => {
-        result.feedbacks = feedbacks;
-        result.successful = true;
-        result.hasFeedback = true;
-        const subject = new BehaviorSubject(result);
-        participationSubscriptionStub.returns(subject);
-
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
-
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
-        expect(onBuildStartedSpy).to.have.been.called.calledOnce;
-        expect(onTestResultSpy).to.have.been.calledTwice;
-        expect(onBuildFinishedSpy).to.have.been.calledOnce;
-        expect(onBuildFailedSpy).to.not.have.been.called;
-        expect(buildLogsStub).to.not.have.been.called;
-    });
-
-    it('should should forward all results for negative results', () => {
-        result.feedbacks = feedbacks;
-        result.successful = false;
-        result.hasFeedback = true;
-        const subject = new BehaviorSubject(result);
-        participationSubscriptionStub.returns(subject);
-
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
-
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
-        expect(onBuildStartedSpy).to.have.been.called.calledOnce;
-        expect(onTestResultSpy).to.have.been.calledTwice;
-        expect(onBuildFinishedSpy).to.have.been.calledOnce;
-        expect(onBuildFailedSpy).to.not.have.been.called;
-        expect(buildLogsStub).to.not.have.been.called;
-    });
-
-    it('should forward compile errors if the build failed', () => {
-        const logs = [
-            {
-                time: '2019-05-15T10:32:11+02:00',
-                log: '[ERROR] COMPILATION ERROR : ',
-            },
-        ];
+    it('should fetch the build logs if submission is not available', () => {
         buildLogsStub.returns(of(logs));
-        result.feedbacks = [];
-        result.successful = false;
-        result.hasFeedback = false;
+        result.feedbacks = feedbacks;
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
@@ -117,5 +88,57 @@ describe('IdeBuildAndTestService', () => {
         expect(onBuildFinishedSpy).to.not.have.been.called;
         expect(onBuildFailedSpy).to.have.been.calledOnce;
         expect(buildLogsStub).to.have.been.calledOnce;
+    });
+
+    it('should fetch the build logs if submission is available and the submission could not be build', () => {
+        buildLogsStub.returns(of(logs));
+        result.feedbacks = feedbacks;
+        result.submission = submissionFailed;
+        const subject = new BehaviorSubject(result);
+        participationSubscriptionStub.returns(subject);
+
+        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(onBuildStartedSpy).to.have.been.called.calledOnce;
+        expect(onTestResultSpy).to.not.have.been.called;
+        expect(onBuildFinishedSpy).to.not.have.been.called;
+        expect(onBuildFailedSpy).to.have.been.calledOnce;
+        expect(buildLogsStub).to.have.been.calledOnce;
+    });
+
+    it('should forward all testcase feedback if build was successful', () => {
+        result.feedbacks = feedbacks;
+        result.submission = submissionSuccess;
+        const subject = new BehaviorSubject(result);
+        participationSubscriptionStub.returns(subject);
+
+        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(onBuildStartedSpy).to.have.been.called.calledOnce;
+        expect(onTestResultSpy).to.have.been.calledTwice;
+        expect(onBuildFinishedSpy).to.have.been.calledOnce;
+        expect(onBuildFailedSpy).to.not.have.been.called;
+        expect(buildLogsStub).to.not.have.been.called;
+    });
+
+    it('should filter out static code analysis feedback before forwarding the test case feedback', () => {
+        result.feedbacks = feedbacksWithStaticCodeAnalysis;
+        result.submission = submissionSuccess;
+        const subject = new BehaviorSubject(result);
+        participationSubscriptionStub.returns(subject);
+
+        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(onBuildStartedSpy).to.have.been.called.calledOnce;
+        expect(onTestResultSpy).to.have.been.calledTwice;
+        feedbacks.forEach((feedback, index) => {
+            expect(onTestResultSpy.getCall(index)).to.have.been.calledWithExactly(feedback.positive, feedback.text, feedback.detailText);
+        });
+        expect(onBuildFinishedSpy).to.have.been.calledOnce;
+        expect(onBuildFailedSpy).to.not.have.been.called;
+        expect(buildLogsStub).to.not.have.been.called;
     });
 });
