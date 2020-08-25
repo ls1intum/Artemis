@@ -41,28 +41,6 @@
     >
         <span editorTitle>{{ exercise.title }}</span>
         <div editorToolbar>
-            <jhi-programming-assessment-repo-export
-                [exerciseId]="exercise.id"
-                [singleParticipantMode]="true"
-                [participationIdList]="participation?.id"
-            ></jhi-programming-assessment-repo-export>
-            <a
-                class="ml-2 mr-5"
-                href="{{ participation.repositoryUrl }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
-                >Go to repository</a
-            >
-            <jhi-updating-result
-                *ngIf="participation"
-                [exercise]="exercise"
-                [showUngradedResults]="true"
-                [showGradedBadge]="true"
-                [participation]="participationForManualResult"
-                [short]="true"
-                class="mr-2"
-            ></jhi-updating-result>
             <jhi-result
                 *ngIf="participation"
                 [result]="automaticResult"
@@ -84,14 +62,39 @@
             [exerciseHints]="exercise.exerciseHints"
             class="instructions-wrapper__content card-body p-0"
         ></jhi-programming-exercise-instructions>
-        <jhi-programming-assessment-manual-result-in-code-editor
-            editorBottom
-            [participationId]="participation.id"
-            [result]="manualResult"
-            [exercise]="exercise"
-            [canOverride]="canOverride"
-            [complaint]="complaint"
-            (onResultModified)="onResultModified($event)"
-        ></jhi-programming-assessment-manual-result-in-code-editor>
+        <div class="mt-3" editorBottom>
+            <jhi-programming-assessment-repo-export
+                [exerciseId]="exercise.id"
+                [singleParticipantMode]="true"
+                [participationIdList]="participation?.id"
+            ></jhi-programming-assessment-repo-export>
+            <a
+                class="ml-2 mr-5"
+                href="{{ participation.repositoryUrl }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
+            >Go to repository</a
+            >
+            <jhi-updating-result
+                *ngIf="participation"
+                [exercise]="exercise"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [participation]="participationForManualResult"
+                [short]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+            <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
+            <jhi-programming-assessment-manual-result-in-code-editor
+                editorBottom
+                [participationId]="participation.id"
+                [result]="manualResult"
+                [exercise]="exercise"
+                [canOverride]="canOverride"
+                [complaint]="complaint"
+                (onResultModified)="onResultModified($event)"
+            ></jhi-programming-assessment-manual-result-in-code-editor>
+        </div>
     </jhi-code-editor-container>
 </jhi-assessment-layout>
