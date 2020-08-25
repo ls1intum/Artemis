@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonValue;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -278,6 +281,8 @@ public class BambooBuildResultNotificationDTO {
             return successfulTests;
         }
 
+        private List<BambooTaskDTO> tasks;
+
         public void setSuccessfulTests(List<BambooTestJobDTO> successfulTests) {
             this.successfulTests = successfulTests;
         }
@@ -304,6 +309,14 @@ public class BambooBuildResultNotificationDTO {
 
         public void setStaticAssessmentReports(List<StaticCodeAnalysisReportDTO> staticAssessmentReports) {
             this.staticAssessmentReports = staticAssessmentReports;
+        }
+
+        public List<BambooTaskDTO> getTasks() {
+            return tasks;
+        }
+
+        public void setTasks(List<BambooTaskDTO> tasks) {
+            this.tasks = tasks;
         }
     }
 
@@ -348,6 +361,52 @@ public class BambooBuildResultNotificationDTO {
 
         public void setErrors(List<String> errors) {
             this.errors = errors;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class BambooTaskDTO {
+
+        private enum TaskState {
+
+            SUCCESS("Success"), FAILED("Failed"), ERROR("Error");
+
+            private String state;
+
+            TaskState(String state) {
+                this.state = state;
+            }
+
+            @JsonCreator
+            public static TaskState fromState(String state) {
+                return Arrays.stream(values()).filter(taskState -> taskState.getState().equals(state)).findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("No TaskState with state String " + state));
+            }
+
+            @JsonValue
+            public String getState() {
+                return state;
+            }
+        };
+
+        private String name;
+
+        private TaskState taskState;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public TaskState getTaskState() {
+            return taskState;
+        }
+
+        public void setState(TaskState taskState) {
+            this.taskState = taskState;
         }
     }
 }
