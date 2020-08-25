@@ -1,11 +1,7 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div>
-        <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">
-            Create a new Text Exercise
-        </h4>
-        <h4 *ngIf="!isImport && textExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel">
-            Edit Text Exercise
-        </h4>
+        <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">Create a new Text Exercise</h4>
+        <h4 *ngIf="!isImport && textExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4>
         <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h4>
     </div>
     <div>
@@ -135,13 +131,13 @@
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
                         [icon]="'chalkboard-teacher'"
-                        style="margin-left: 10px;"
+                        style="margin-left: 10px"
                         [title]="'artemisApp.exampleSubmission.usedForTutorial' | translate"
                     ></fa-icon>
                     <fa-icon
                         *ngIf="exampleSubmission.submission?.result?.exampleResult"
                         [icon]="'check-circle'"
-                        style="margin-left: 10px;"
+                        style="margin-left: 10px"
                         title="An assessment is available"
                     ></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">

@@ -94,7 +94,7 @@
             </tbody>
         </table>
 
-        <div style="display: block;">
+        <div style="display: block">
             <!-- Histogram -->
             <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
             </canvas>
@@ -225,9 +225,7 @@
                                 %)
                             </td>
                             <ng-template #empty>
-                                <td>
-                                    -
-                                </td>
+                                <td>-</td>
                             </ng-template>
                         </ng-container>
                         <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved, 1) }}</td>

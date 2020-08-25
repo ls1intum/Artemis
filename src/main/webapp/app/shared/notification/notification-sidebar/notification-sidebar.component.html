@@ -32,9 +32,7 @@
                 <div>
                     <h5>
                         {{ notification.title }}
-                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)">
-                            new
-                        </span>
+                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="mb-1">
                         {{ notification.text }}
@@ -49,7 +47,7 @@
                     </div>
                 </div>
             </div>
-            <div class="loading-spinner text-center mx-3 my-2" style="font-size: large;" *ngIf="loading">
+            <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
                 <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
             </div>
             <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
