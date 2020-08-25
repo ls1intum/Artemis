@@ -6,7 +6,7 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../helpers/mocks/service/mock-programming-submission.service';
 import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IBuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
@@ -14,6 +14,7 @@ import { MockCodeEditorBuildLogService } from '../helpers/mocks/service/mock-cod
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-connector.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
