@@ -389,24 +389,54 @@ public class BambooBuildResultNotificationDTO {
             }
         };
 
-        private String name;
+        private String description;
 
-        private TaskState taskState;
+        private String pluginKey;
 
-        public String getName() {
-            return name;
+        private boolean isEnabled;
+
+        private boolean isFinal;
+
+        private TaskState state;
+
+        public String getPluginKey() {
+            return pluginKey;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public void setPluginKey(String pluginKey) {
+            this.pluginKey = pluginKey;
         }
 
-        public TaskState getTaskState() {
-            return taskState;
+        public boolean isEnabled() {
+            return isEnabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.isEnabled = enabled;
+        }
+
+        public boolean isFinal() {
+            return isFinal;
+        }
+
+        public void setFinal(boolean isFinal) {
+            this.isFinal = isFinal;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public TaskState getState() {
+            return state;
         }
 
         public void setState(TaskState taskState) {
-            this.taskState = taskState;
+            this.state = taskState;
         }
     }
 }
