@@ -218,7 +218,7 @@ public class BambooBuildPlanService {
      * @return the task that only compiles the students code
      */
     private Task createCompileTask() {
-        return new MavenTask().goal("compile").jdk("JDK").executableLabel("Maven 3").description("Compile").hasTests(false);
+        return new MavenTask().goal("compile").jdk("JDK").executableLabel("Maven 3").description("compile").hasTests(false);
     }
 
     /**
@@ -228,7 +228,7 @@ public class BambooBuildPlanService {
      * @return the task that compiles the students code & test code
      */
     private Task createTestCompileTask() {
-        return new MavenTask().goal("test-compile").jdk("JDK").executableLabel("Maven 3").description("Test-Compile").hasTests(false);
+        return new MavenTask().goal("test-compile").jdk("JDK").executableLabel("Maven 3").description("test-compile").hasTests(false);
     }
 
     private PlanBranchManagement createPlanBranchManagement() {

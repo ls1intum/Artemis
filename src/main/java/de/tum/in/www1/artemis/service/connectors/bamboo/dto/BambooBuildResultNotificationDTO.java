@@ -369,7 +369,7 @@ public class BambooBuildResultNotificationDTO {
 
         private enum TaskState {
 
-            SUCCESS("Success"), FAILED("Failed"), ERROR("Error");
+            SUCCESS("SUCCESS"), FAILED("FAILED"), ERROR("ERROR");
 
             private String state;
 
