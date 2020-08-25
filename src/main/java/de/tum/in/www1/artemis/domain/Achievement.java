@@ -8,6 +8,8 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,15 +37,17 @@ public class Achievement implements Serializable {
     @Column(name = "rank")
     private Integer rank;
 
-    @ManyToMany(mappedBy = "achievements")
+    @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Course course;
+
+    @ManyToOne
+    private Exercise exercise;
+
+    @ManyToMany(mappedBy = "achievements", cascade = CascadeType.DETACH)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "achievements" })
     private Set<User> users = new HashSet<>();
-
-    @ManyToMany(mappedBy = "achievements")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties({ "achievements" })
-    private Set<Course> courses = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -93,36 +97,20 @@ public class Achievement implements Serializable {
         this.users = users;
     }
 
-    public Set<Course> getCourses() {
-        return courses;
+    public Course getCourse() {
+        return course;
     }
 
-    public void setCourses(Set<Course> courses) {
-        this.courses = courses;
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
-    public Achievement addUser(User user) {
-        this.users.add(user);
-        user.getAchievements().add(this);
-        return this;
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public Achievement removeUser(User user) {
-        this.users.remove(user);
-        user.getAchievements().remove(this);
-        return this;
-    }
-
-    public Achievement addCourse(Course course) {
-        this.courses.add(course);
-        course.getAchievements().add(this);
-        return this;
-    }
-
-    public Achievement removeCourse(Course course) {
-        this.courses.remove(course);
-        course.getAchievements().remove(this);
-        return this;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     @Override

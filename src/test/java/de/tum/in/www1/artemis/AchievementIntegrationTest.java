@@ -63,21 +63,4 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(achievement.getUsers().size()).isEqualTo(0).as("Number of users for achievement should be 0");
         assertThat(achievement.getUsers().contains(user)).isFalse().as("Achievement does not have incorrect user");
     }
-
-    @Test
-    public void testManyToManyRelationToCourse() {
-        assertThat(course.getAchievements().size()).isEqualTo(0).as("Number of achievements for course should be 0");
-
-        course.addAchievement(achievement);
-        assertThat(course.getAchievements().size()).isEqualTo(1).as("Number of achievements for course should be 1");
-        assertThat(course.getAchievements().contains(achievement)).isTrue().as("Course has correct achievement");
-        assertThat(achievement.getCourses().size()).isEqualTo(1).as("Number of courses for achievement should be 1");
-        assertThat(achievement.getCourses().contains(course)).isTrue().as("Achievement has correct course");
-
-        course.removeAchievement(achievement);
-        assertThat(course.getAchievements().size()).isEqualTo(0).as("Number of achievements for course should be 0");
-        assertThat(course.getAchievements().contains(achievement)).isFalse().as("Course does not have removed achievement");
-        assertThat(achievement.getCourses().size()).isEqualTo(0).as("Number of courses for achievement should be 0");
-        assertThat(achievement.getCourses().contains(course)).isFalse().as("Achievement does not have incorrect course");
-    }
 }

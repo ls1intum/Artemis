@@ -38,11 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -53,18 +49,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ComplaintService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorDashboardService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
-import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -128,12 +113,14 @@ public class CourseResource {
 
     private final Environment env;
 
+    private final AchievementService achievementService;
+
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            TutorDashboardService tutorDashboardService) {
+            TutorDashboardService tutorDashboardService, AchievementService achievementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -153,6 +140,7 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.tutorDashboardService = tutorDashboardService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -993,5 +981,19 @@ public class CourseResource {
         else {
             return forbidden();
         }
+    }
+
+    /**
+     * GET /courses/{courseId}/achievements : Get all achievements for course.
+     *
+     * @param courseId the course to which the achievements belong to
+     * @return the ResponseEntity with status 200 (OK) and with the found achievements as body
+     */
+    @GetMapping("/courses/{courseId}/achievements")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Achievement>> getAchievementsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get achievements for course : {}", courseId);
+        Set<Achievement> achievements = achievementService.findAllForCourse(courseId);
+        return ResponseEntity.ok(achievements);
     }
 }
