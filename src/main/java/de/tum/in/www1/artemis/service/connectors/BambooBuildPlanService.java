@@ -152,19 +152,12 @@ public class BambooBuildPlanService {
                     defaultJob.artifacts(artifacts);
                 }
 
-                // This task will compile the student's code but not execute it or the tests -> We can detect if the student changed the code in a way that it won't compile anymore
-                Task compileTask = new MavenTask().goal("compile").jdk("JDK").executableLabel("Maven 3").description("Compile").hasTests(false);
-
-                // This task will compile the test code (together with the student's code) but will not execute the tests -> We can detect if the student's code might compile by
-                // itself but not in combination with the test code
-                Task testCompileTask = new MavenTask().goal("test-compile").jdk("JDK").executableLabel("Maven 3").description("Test-Compile").hasTests(false);
-
                 if (!sequentialBuildRuns) {
-                    return defaultStage.jobs(defaultJob.tasks(checkoutTask, compileTask, testCompileTask,
+                    return defaultStage.jobs(defaultJob.tasks(checkoutTask, createCompileTask(), createTestCompileTask(),
                             new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
                 }
                 else {
-                    return defaultStage.jobs(defaultJob.tasks(checkoutTask, compileTask, testCompileTask,
+                    return defaultStage.jobs(defaultJob.tasks(checkoutTask, createCompileTask(), createTestCompileTask(),
                             new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
                                     .hasTests(true),
                             new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
@@ -218,6 +211,25 @@ public class BambooBuildPlanService {
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
                 // NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo for Java programming exercises
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));
+    }
+
+    /**
+     * This task will compile the student's code but not execute it or the tests -> We can detect if the student changed the code in a way that it won't compile anymore.
+     * Currently only available for JAVA (Maven).
+     * @return the task that only compiles the students code
+     */
+    private Task createCompileTask() {
+        return new MavenTask().goal("compile").jdk("JDK").executableLabel("Maven 3").description("Compile").hasTests(false);
+    }
+
+    /**
+     * This task will compile the test code (together with the student's code) but will not execute the tests -> We can detect if the student's code might compile by
+     * itself but not in combination with the test code
+     * Currently only available for JAVA (Maven).
+     * @return the task that compiles the students code & test code
+     */
+    private Task createTestCompileTask() {
+        return new MavenTask().goal("test-compile").jdk("JDK").executableLabel("Maven 3").description("Test-Compile").hasTests(false);
     }
 
     private PlanBranchManagement createPlanBranchManagement() {
