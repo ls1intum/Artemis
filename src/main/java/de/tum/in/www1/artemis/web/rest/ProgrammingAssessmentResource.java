@@ -171,9 +171,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         else {
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
-            newResult.setSubmission(submission);
-            if (newResult.getSubmission() == null) {
+            if (submission == null) {
                 throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
+            } else {
+                newResult.setSubmission(submission);
             }
         }
 
