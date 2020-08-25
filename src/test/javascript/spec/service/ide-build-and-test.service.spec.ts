@@ -1,30 +1,31 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { IProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../helpers/mocks/service/mock-programming-submission.service';
 import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { IBuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
 import { MockCodeEditorBuildLogService } from '../helpers/mocks/service/mock-code-editor-build-log.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockOrionConnectorService } from '../helpers/mocks/service/mock-orion-connector.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ArtemisTestModule } from '../test.module';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('IdeBuildAndTestService', () => {
-    let submissionService: IProgrammingSubmissionService;
-    let participationService: IParticipationWebsocketService;
-    let javaBridge: OrionConnectorService;
-    let buildLogService: IBuildLogService;
-    let ideBuildAndTestService: OrionBuildAndTestService;
+    let comp: OrionBuildAndTestService;
+    let fixture: ComponentFixture<OrionBuildAndTestService>;
+    let debugElement: DebugElement;
 
     let onBuildFinishedSpy: SinonSpy;
     let onBuildStartedSpy: SinonSpy;
@@ -51,19 +52,33 @@ describe('IdeBuildAndTestService', () => {
     ];
 
     beforeEach(() => {
-        submissionService = new MockProgrammingSubmissionService();
-        participationService = new MockParticipationWebsocketService();
-        javaBridge = new MockOrionConnectorService();
-        buildLogService = new MockCodeEditorBuildLogService();
+        return TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                { provide: SubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
+                { provide: BuildLogService, useClass: MockCodeEditorBuildLogService },
+            ],
+        })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(OrionBuildAndTestService);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
 
-        ideBuildAndTestService = new OrionBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);
+                const javaBridge = debugElement.injector.get(OrionConnectorService);
+                const buildLogService = debugElement.injector.get(BuildLogService);
+                const participationService = debugElement.injector.get(MockParticipationWebsocketService);
 
-        onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
-        onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
-        onTestResultSpy = spy(javaBridge, 'onTestResult');
-        onBuildFailedSpy = spy(javaBridge, 'onBuildFailed');
-        buildLogsStub = stub(buildLogService, 'getBuildLogs');
-        participationSubscriptionStub = stub(participationService, 'subscribeForLatestResultOfParticipation');
+                onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
+                onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
+                onTestResultSpy = spy(javaBridge, 'onTestResult');
+                onBuildFailedSpy = spy(javaBridge, 'onBuildFailed');
+                buildLogsStub = stub(buildLogService, 'getBuildLogs');
+                participationSubscriptionStub = stub(participationService, 'subscribeForLatestResultOfParticipation');
+            });
     });
 
     afterEach(() => {
@@ -81,7 +96,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+        comp.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -98,7 +113,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+        comp.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -114,7 +129,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+        comp.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
@@ -130,7 +145,7 @@ describe('IdeBuildAndTestService', () => {
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);
 
-        ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
+        comp.listenOnBuildOutputAndForwardChanges(exercise);
 
         expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
