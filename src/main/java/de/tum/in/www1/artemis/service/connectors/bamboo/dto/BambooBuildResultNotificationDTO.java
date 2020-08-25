@@ -277,11 +277,11 @@ public class BambooBuildResultNotificationDTO {
 
         private List<StaticCodeAnalysisReportDTO> staticAssessmentReports;
 
+        private List<BambooTaskDTO> tasks;
+
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
         }
-
-        private List<BambooTaskDTO> tasks;
 
         public void setSuccessfulTests(List<BambooTestJobDTO> successfulTests) {
             this.successfulTests = successfulTests;
