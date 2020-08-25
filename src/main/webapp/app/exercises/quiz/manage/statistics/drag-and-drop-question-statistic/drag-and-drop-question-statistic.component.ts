@@ -15,6 +15,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { calculateTickMax } from '../quiz-statistic/quiz-statistic.component';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -299,6 +300,8 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
                 backgroundColor: this.colors,
             },
         ];
+
+        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 
     /**
