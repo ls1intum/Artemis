@@ -70,8 +70,8 @@ export class OrionBuildAndTestService {
                 filter((result) => !this.latestResult || this.latestResult.id < result.id),
                 tap((result) => {
                     this.latestResult = result;
-                    // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
-                    if ((result.submission as ProgrammingSubmission).buildFailed) {
+                    // If there was a compile error or we don't have an submission, we have to fetch the error output, otherwise we can forward the test results
+                    if (!result.submission || (result.submission as ProgrammingSubmission).buildFailed) {
                         this.forwardBuildLogs(participationId);
                     } else {
                         // TODO: Deal with static code analysis feedback in Orion
