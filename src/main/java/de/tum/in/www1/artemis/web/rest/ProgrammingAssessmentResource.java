@@ -140,8 +140,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || !exercise.areManualResultsAllowed()) {
+        if (!exercise.areManualResultsAllowed()) {
             return forbidden();
         }
 
@@ -163,7 +162,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         ProgrammingSubmission submission;
         if (latestExistingResult.isEmpty()) {
-            // TODO: Double check if we can create a new result when the existing result has already a completion date (submitted)
             // Create manual submission with last commit hash und current time stamp.
             submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                     SubmissionType.MANUAL);
@@ -173,7 +171,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             submission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(latestExistingResult.get().getSubmission().getId());
             if (submission == null) {
                 throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
-            } else {
+            }
+            else {
                 newResult.setSubmission(submission);
             }
         }
@@ -185,12 +184,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             ltiService.onNewResult((ProgrammingExerciseStudentParticipation) result.getParticipation());
-            // TODO: Is it intended that the result with information about the assessor is broadcasted (this is also for other exercises type the case)
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
