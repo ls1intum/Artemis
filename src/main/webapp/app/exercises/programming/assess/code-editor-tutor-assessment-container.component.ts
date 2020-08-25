@@ -125,20 +125,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         });
     }
 
-    private getLatestResult(results: Result[]): Result | null {
-        return _orderBy(results, 'id', 'desc')[0] ?? null;
-    }
-
-    private getLatestAutomaticResult(results: Result[]): Result | null {
-        const automaticResults = results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
-        return _orderBy(automaticResults, 'id', 'desc')[0] ?? null;
-    }
-
-    private getLatestManualResult(results: Result[]): Result | null {
-        const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        return _orderBy(manualResults, 'id', 'desc')[0] ?? null;
-    }
-
     /**
      * If a subscription exists for paramSub, unsubscribe
      */
@@ -254,7 +240,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = moment().isBefore(this.exercise.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor && isBeforeAssessmentDueDate;
@@ -283,20 +269,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private getComplaint(): void {
-        this.complaintService.findByResultId(this.manualResult!.id).subscribe(
-            (res) => {
-                if (!res.body) {
-                    return;
-                }
-                this.complaint = res.body;
-            },
-            (err: HttpErrorResponse) => {
-                this.onError(err.message);
-            },
-        );
-    }
-
     /**
      * Show an error as an alert in the top of the editor html.
      * Used by other components to display errors.
@@ -304,6 +276,20 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onError(error: string) {
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    private getLatestResult(results: Result[]): Result | null {
+        return _orderBy(results, 'id', 'desc')[0] ?? null;
+    }
+
+    private getLatestAutomaticResult(results: Result[]): Result | null {
+        const automaticResults = results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
+        return _orderBy(automaticResults, 'id', 'desc')[0] ?? null;
+    }
+
+    private getLatestManualResult(results: Result[]): Result | null {
+        const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
+        return _orderBy(manualResults, 'id', 'desc')[0] ?? null;
     }
 
     /**
@@ -320,5 +306,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (this.exercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
         }
+    }
+
+    private getComplaint(): void {
+        this.complaintService.findByResultId(this.manualResult!.id).subscribe(
+            (res) => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
     }
 }

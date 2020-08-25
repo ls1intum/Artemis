@@ -45,7 +45,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
      *
-     // * @param submission the modeling submission to which the feedback belongs to
      * @param result the new result of a programming exercise
      * @return result that was saved in the database
      */
@@ -55,7 +54,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.setHasFeedback(!isFeedbackEmpty);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        // TODO: Double check why we set here complaint false
         result.setHasComplaint(false);
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
@@ -85,7 +83,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // Every manual assessed programming submission is rated
         result.setRated(true);
         result.setCompletionDate(ZonedDateTime.now());
-
+        // TODO: Make it possible to give scores/points for manual results
         // Double calculatedScore = calculateTotalScore(result.getFeedbacks());
         // return submitResult(result, exercise, calculatedScore);
 

@@ -23,9 +23,9 @@
                 (ngModelChange)="onResultModified.emit(result)"
                 #resultString="ngModel"
             />
-            <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired"
-                >Result text is required.</span
-            >
+            <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired">
+                Result text is required.
+            </span>
         </div>
     </div>
     <div class="form-group row align-items-end">
@@ -47,9 +47,9 @@
         </div>
         <div class="checkbox col-md-6">
             <label class="artemis-label">
-                <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="artemisApp.result.successful"
-                    >Successful</span
-                >
+                <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="artemisApp.result.successful">
+                    Successful
+                </span>
             </label>
         </div>
     </div>
@@ -70,9 +70,9 @@
                     (ngModelChange)="updateResultFeedbacks()"
                     #feedbackText="ngModel"
                 />
-                <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired"
-                    >Feedback text is required.</span
-                >
+                <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired">
+                    Feedback text is required.
+                </span>
             </div>
             <div class="form-group row align-items-end">
                 <div class="col-md-6">

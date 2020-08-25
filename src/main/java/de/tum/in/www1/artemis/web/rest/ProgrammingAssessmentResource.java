@@ -123,7 +123,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Optional<Result> latestExistingResult = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findFirst();
         if (latestExistingResult.isPresent()) {
             // prevent that tutors create multiple manual results
-            // TODO: Double check if this is the right way to do, or if we should create a new Manual Result
             newResult.setId(latestExistingResult.get().getId());
             // load assessor
             latestExistingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(latestExistingResult.get().getId());
@@ -181,7 +180,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result = programmingAssessmentService.saveManualAssessment(newResult);
 
         if (submit) {
-
             result = programmingAssessmentService.submitManualAssessment(result.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment

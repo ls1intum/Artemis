@@ -149,8 +149,8 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
     }
 
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissions(participationId);
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
+        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
     }
 
     /**
