@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
  */
 final class EmptyQuizExerciseCache extends QuizExerciseCache {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EmptyQuizExerciseCache.class);
+    private static final Logger log = LoggerFactory.getLogger(EmptyQuizExerciseCache.class);
 
     static final EmptyQuizExerciseCache INSTANCE = new EmptyQuizExerciseCache();
 
@@ -64,19 +64,19 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
 
     @Override
     void setExercise(QuizExercise newExercise) {
-        LOG.error("EmptyQuizExerciseCache cannot have an exercise set");
+        log.error("EmptyQuizExerciseCache cannot have an exercise set");
         throwModificationAttemptException();
     }
 
     @Override
     void setQuizStart(List<ScheduledTaskHandler> quizStart) {
-        LOG.error("EmptyQuizExerciseCache cannot have the quiz start set");
+        log.error("EmptyQuizExerciseCache cannot have the quiz start set");
         throwModificationAttemptException();
     }
 
     @Override
     void clear() {
-        LOG.error("EmptyQuizExerciseCache cannot be cleared");
+        log.error("EmptyQuizExerciseCache cannot be cleared");
         throwModificationAttemptException();
     }
 

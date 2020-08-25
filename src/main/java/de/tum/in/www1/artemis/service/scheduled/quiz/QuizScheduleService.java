@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.service.UserService;
 @Service
 public class QuizScheduleService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuizScheduleService.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
     private static final String HAZELCAST_PROCESS_CACHE_HANDLER = QuizProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
 
@@ -129,7 +129,7 @@ public class QuizScheduleService {
      * @param result the result, which should be added
      */
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
-        LOG.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
+        log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
         if (quizExerciseId != null && result != null) {
             quizCache.getTransientWriteCacheFor(quizExerciseId).getResults().put(result.getId(), result);
         }
@@ -221,16 +221,16 @@ public class QuizScheduleService {
             try {
                 var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                LOG.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+                log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                LOG.debug("Quiz process cache task already redistered");
+                log.debug("Quiz process cache task already redistered");
                 // this is expected if we run on multiple nodes
             }
 
             // schedule quiz start for all existing quizzes that are planned to start in the future
             List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFuture();
-            LOG.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
+            log.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
             for (QuizExercise quizExercise : quizExercises) {
                 if (quizExercise.hasCourse()) {
                     // only schedule quiz exercises in courses, not in exams
@@ -240,7 +240,7 @@ public class QuizScheduleService {
             }
         }
         else {
-            LOG.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
+            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
@@ -249,17 +249,17 @@ public class QuizScheduleService {
      */
     public void stopSchedule() {
         if (!scheduledProcessQuizSubmissions.isNull()) {
-            LOG.info("Try to stop quiz schedule service");
+            log.info("Try to stop quiz schedule service");
             var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessQuizSubmissions.get());
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
                 boolean cancelSuccess = scheduledFuture.cancel(false);
                 scheduledFuture.dispose();
                 scheduledProcessQuizSubmissions.set(null);
-                LOG.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
+                log.info("Stop Quiz Schedule Service was successful: {}", cancelSuccess);
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                LOG.info("Stop Quiz Schedule Service already disposed/cancelled");
+                log.info("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
             for (QuizExerciseCache cachedQuiz : quizCache.getAllQuizExerciseCaches()) {
@@ -270,7 +270,7 @@ public class QuizScheduleService {
             threadPoolTaskScheduler.destroy();
         }
         else {
-            LOG.debug("Cannot stop quiz exercise schedule service, it was already STOPPED");
+            log.debug("Cannot stop quiz exercise schedule service, it was already STOPPED");
         }
     }
 
@@ -298,7 +298,7 @@ public class QuizScheduleService {
                 });
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                LOG.debug("Quiz {} task already redistered", quizExerciseId);
+                log.debug("Quiz {} task already redistered", quizExerciseId);
                 // this is expected if we run on multiple nodes
             }
         }
@@ -321,11 +321,11 @@ public class QuizScheduleService {
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
-                    LOG.info("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
+                    log.info("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                LOG.info("Stop scheduled quiz start for quiz " + quizExerciseId + " already disposed/cancelled");
+                log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
         });
@@ -341,10 +341,10 @@ public class QuizScheduleService {
     void executeQuizStartNowTask(Long quizExerciseId) {
         quizCache.performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
             quizExerciseCache.getQuizStart().clear();
-            LOG.debug("Removed quiz {} start tasks", quizExerciseId);
+            log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
-        LOG.debug("Sending quiz {} start", quizExerciseId);
+        log.debug("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         updateQuizExercise(quizExercise);
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
@@ -383,7 +383,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        LOG.debug("Process cached quiz submissions");
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Long quizExerciseId : quizCache.getAllCachedQuizExerciseIds()) {
@@ -396,7 +396,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    LOG.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
+                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
@@ -437,7 +437,7 @@ public class QuizScheduleService {
                         hasNewParticipations = true;
                         hasNewResults = true;
 
-                        LOG.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, formatDurationFrom(start), quizExercise.getTitle());
+                        log.info("Saved {} submissions to database in {} in quiz {}", numberOfSubmittedSubmissions, formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -451,7 +451,7 @@ public class QuizScheduleService {
                     finishedParticipations.parallelStream().forEach(entry -> {
                         StudentParticipation participation = entry.getValue();
                         if (participation.getParticipant() == null || participation.getParticipantIdentifier() == null) {
-                            LOG.error("Participation is missing student (or student is missing username): {}", participation);
+                            log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
                             sendQuizResultToUser(quizExerciseId, participation);
@@ -459,7 +459,7 @@ public class QuizScheduleService {
                         }
                     });
                     if (finishedParticipations.size() > 0) {
-                        LOG.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
+                        log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
 
@@ -473,20 +473,20 @@ public class QuizScheduleService {
                         Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                        LOG.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
+                        log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());
                         // Remove only processed results
                         for (Result result : newResultsForQuiz) {
                             cachedQuiz.getResults().remove(result.getId());
                         }
                     }
                     catch (Exception e) {
-                        LOG.error("Exception in StatisticService.updateStatistics(): {}", e.getMessage(), e);
+                        log.error("Exception in StatisticService.updateStatistics(): {}", e.getMessage(), e);
                     }
                 }
             }
         }
         catch (Exception e) {
-            LOG.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
+            log.error("Exception in Quiz Schedule: {}", e.getMessage(), e);
         }
     }
 
@@ -605,7 +605,7 @@ public class QuizScheduleService {
                 addResultForStatisticUpdate(quizExercise.getId(), result);
             }
             catch (Exception e) {
-                LOG.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
+                log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
             }
         }
 

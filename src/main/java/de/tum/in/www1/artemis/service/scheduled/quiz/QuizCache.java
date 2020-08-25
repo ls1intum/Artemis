@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
  */
 final class QuizCache {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuizCache.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizCache.class);
 
     private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
@@ -157,7 +157,7 @@ final class QuizCache {
     void performCacheWrite(Long quizExerciseId, UnaryOperator<QuizExerciseCache> writeOperation) {
         cachedQuizExercises.lock(quizExerciseId);
         try {
-            LOG.info("Write quiz cache {}", quizExerciseId);
+            log.info("Write quiz cache {}", quizExerciseId);
             cachedQuizExercises.set(quizExerciseId, writeOperation.apply(getTransientWriteCacheFor(quizExerciseId)));
         }
         finally {
@@ -179,7 +179,7 @@ final class QuizCache {
         try {
             QuizExerciseCache cachedQuiz = cachedQuizExercises.get(quizExerciseId);
             if (cachedQuiz != null) {
-                LOG.info("Write quiz cache {}", quizExerciseId);
+                log.info("Write quiz cache {}", quizExerciseId);
                 cachedQuizExercises.set(quizExerciseId, writeOperation.apply(cachedQuiz));
             }
         }
@@ -251,7 +251,7 @@ final class QuizCache {
      * @param quizExercise the new quiz exercise object
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
-        LOG.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
+        log.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
 }

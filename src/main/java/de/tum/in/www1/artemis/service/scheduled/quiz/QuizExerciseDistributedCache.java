@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
  */
 final class QuizExerciseDistributedCache extends QuizExerciseCache implements HazelcastInstanceAware {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
 
     private static final String HAZELCAST_CACHE_PARTICIPATIONS = "-participations";
 
@@ -73,7 +73,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         super(Objects.requireNonNull(exerciseId, "exerciseId must not be null"));
         setQuizStart(quizStart);
         setExercise(exercise);
-        LOG.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
+        log.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
     }
 
     QuizExerciseDistributedCache(Long exerciseId, List<ScheduledTaskHandler> quizStart) {
@@ -131,13 +131,13 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         int submissionsSize = submissions.size();
         int resultsSize = results.size();
         if (participationsSize > 0) {
-            LOG.warn("Cache for Quiz {} destroyed with {} participations cached", getExerciseId(), participationsSize);
+            log.warn("Cache for Quiz {} destroyed with {} participations cached", getExerciseId(), participationsSize);
         }
         if (submissionsSize > 0) {
-            LOG.warn("Cache for Quiz {} destroyed with {} submissions cached", getExerciseId(), submissionsSize);
+            log.warn("Cache for Quiz {} destroyed with {} submissions cached", getExerciseId(), submissionsSize);
         }
         if (resultsSize > 0) {
-            LOG.warn("Cache for Quiz {} destroyed with {} results cached", getExerciseId(), resultsSize);
+            log.warn("Cache for Quiz {} destroyed with {} results cached", getExerciseId(), resultsSize);
         }
         participations.destroy();
         submissions.destroy();
