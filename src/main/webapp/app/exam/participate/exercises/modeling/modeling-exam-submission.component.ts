@@ -13,6 +13,7 @@ import { Exercise } from 'app/entities/exercise.model';
     templateUrl: './modeling-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
+    // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
