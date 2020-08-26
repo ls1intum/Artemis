@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
@@ -12,9 +11,6 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges {
     @Input()
     selectedFile: string;
-    @Input()
-    sessionId: number;
-
     @Output()
     onError = new EventEmitter<string>();
 
@@ -24,12 +20,11 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
 
     isLoading = false;
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
      * @function ngOnChanges
-     * @desc New clean state       => reset the editor and file update subscriptions
-     *       New selectedFile      => load the file from the repository and open it in the editor
+     * @desc New selectedFile      => load the file from the repository and opens it
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -45,8 +40,7 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     }
 
     /**
-     * Setup the ace editor after a file change occurred.
-     * Makes sure previous settings are restored and the correct language service is used.
+     * Setup the component after a file change occurred.
      **/
     initEditorAfterFileChange() {
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
