@@ -48,22 +48,12 @@ public abstract class QuizStatisticCounter implements Serializable {
         return ratedCounter;
     }
 
-    public QuizStatisticCounter ratedCounter(Integer ratedCounter) {
-        this.ratedCounter = ratedCounter;
-        return this;
-    }
-
     public void setRatedCounter(Integer ratedCounter) {
         this.ratedCounter = ratedCounter;
     }
 
     public Integer getUnRatedCounter() {
         return unRatedCounter;
-    }
-
-    public QuizStatisticCounter unRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
-        return this;
     }
 
     public void setUnRatedCounter(Integer unRatedCounter) {
@@ -88,10 +78,5 @@ public abstract class QuizStatisticCounter implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizStatisticCounter{" + "id=" + getId() + ", ratedCounter='" + getRatedCounter() + "'" + ", unRatedCounter='" + getUnRatedCounter() + "'" + "}";
     }
 }
