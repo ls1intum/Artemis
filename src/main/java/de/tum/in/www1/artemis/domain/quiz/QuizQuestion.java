@@ -117,22 +117,12 @@ public abstract class QuizQuestion implements Serializable {
         return hint;
     }
 
-    public QuizQuestion hint(String hint) {
-        this.hint = hint;
-        return this;
-    }
-
     public void setHint(String hint) {
         this.hint = hint;
     }
 
     public String getExplanation() {
         return explanation;
-    }
-
-    public QuizQuestion explanation(String explanation) {
-        this.explanation = explanation;
-        return this;
     }
 
     public void setExplanation(String explanation) {
@@ -156,22 +146,12 @@ public abstract class QuizQuestion implements Serializable {
         return scoringType;
     }
 
-    public QuizQuestion scoringType(ScoringType scoringType) {
-        this.scoringType = scoringType;
-        return this;
-    }
-
     public void setScoringType(ScoringType scoringType) {
         this.scoringType = scoringType;
     }
 
     public Boolean isRandomizeOrder() {
         return randomizeOrder;
-    }
-
-    public QuizQuestion randomizeOrder(Boolean randomizeOrder) {
-        this.randomizeOrder = randomizeOrder;
-        return this;
     }
 
     public void setRandomizeOrder(Boolean randomizeOrder) {
@@ -182,11 +162,6 @@ public abstract class QuizQuestion implements Serializable {
         return invalid == null ? false : invalid;
     }
 
-    public QuizQuestion invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
-    }
-
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
     }
@@ -195,22 +170,12 @@ public abstract class QuizQuestion implements Serializable {
         return quizQuestionStatistic;
     }
 
-    public QuizQuestion questionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
-        this.quizQuestionStatistic = quizQuestionStatistic;
-        return this;
-    }
-
     public void setQuizQuestionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
         this.quizQuestionStatistic = quizQuestionStatistic;
     }
 
     public QuizExercise getExercise() {
         return exercise;
-    }
-
-    public QuizQuestion exercise(QuizExercise quizExercise) {
-        this.exercise = quizExercise;
-        return this;
     }
 
     public void setExercise(QuizExercise quizExercise) {
@@ -281,13 +246,6 @@ public abstract class QuizQuestion implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizQuestion{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='"
-                + getExplanation() + "'" + ", score='" + getScore() + "'" + ", scoringType='" + getScoringType() + "'" + ", randomizeOrder='" + isRandomizeOrder() + "'"
-                + ", invalid='" + isInvalid() + "'" + "}";
     }
 
     /**

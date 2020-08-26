@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -30,11 +29,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implemen
         return dropLocationCounters;
     }
 
-    public DragAndDropQuestionStatistic dropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.dropLocationCounters = dropLocationCounters;
-        return this;
-    }
-
     public DragAndDropQuestionStatistic addDropLocationCounters(DropLocationCounter dropLocationCounter) {
         this.dropLocationCounters.add(dropLocationCounter);
         dropLocationCounter.setDragAndDropQuestionStatistic(this);
@@ -49,26 +43,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implemen
 
     public void setDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
         this.dropLocationCounters = dropLocationCounters;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropQuestionStatistic dragAndDropQuestionStatistic = (DragAndDropQuestionStatistic) o;
-        if (dragAndDropQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

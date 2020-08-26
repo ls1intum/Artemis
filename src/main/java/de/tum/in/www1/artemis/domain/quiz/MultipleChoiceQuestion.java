@@ -36,11 +36,6 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
         return answerOptions;
     }
 
-    public MultipleChoiceQuestion answerOptions(List<AnswerOption> answerOptions) {
-        this.answerOptions = answerOptions;
-        return this;
-    }
-
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
     }
@@ -194,26 +189,6 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
         }
         // no correct answer option exists
         return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) o;
-        if (multipleChoiceQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), multipleChoiceQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
