@@ -18,7 +18,6 @@ import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { Feedback } from 'app/entities/feedback.model';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
