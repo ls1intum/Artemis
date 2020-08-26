@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs/Observable';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
-import { BuildLogEntry } from 'app/entities/build-log.model';
 import { SERVER_API_URL } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
@@ -34,14 +33,6 @@ export class RepositoryService {
      */
     pull(participationId: number): Observable<void> {
         return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
-    }
-
-    /**
-     * Retrieves the build logs for a given participation.
-     * @param participationId The identifier of the participation.
-     */
-    buildlogs(participationId: number): Observable<BuildLogEntry[]> {
-        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
 }
 

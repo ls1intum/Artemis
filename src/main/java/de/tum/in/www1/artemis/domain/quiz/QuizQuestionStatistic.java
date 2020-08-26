@@ -42,11 +42,6 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
         return ratedCorrectCounter;
     }
 
-    public QuizQuestionStatistic ratedCorrectCounter(Integer ratedCorrectCounter) {
-        this.ratedCorrectCounter = ratedCorrectCounter;
-        return this;
-    }
-
     public void setRatedCorrectCounter(Integer ratedCorrectCounter) {
         this.ratedCorrectCounter = ratedCorrectCounter;
     }
@@ -55,22 +50,12 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
         return unRatedCorrectCounter;
     }
 
-    public QuizQuestionStatistic unRatedCorrectCounter(Integer unRatedCorrectCounter) {
-        this.unRatedCorrectCounter = unRatedCorrectCounter;
-        return this;
-    }
-
     public void setUnRatedCorrectCounter(Integer unRatedCorrectCounter) {
         this.unRatedCorrectCounter = unRatedCorrectCounter;
     }
 
     public QuizQuestion getQuizQuestion() {
         return quizQuestion;
-    }
-
-    public QuizQuestionStatistic question(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
-        return this;
     }
 
     public void setQuizQuestion(QuizQuestion quizQuestion) {
@@ -95,12 +80,6 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizQuestionStatistic{" + "id=" + getId() + ", ratedCorrectCounter='" + getRatedCorrectCounter() + "'" + ", unRatedCorrectCounter='" + getUnRatedCorrectCounter()
-                + "'" + "}";
     }
 
     public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);
