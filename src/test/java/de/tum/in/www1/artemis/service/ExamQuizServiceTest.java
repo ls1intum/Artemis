@@ -74,7 +74,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     private List<User> users;
 
-    private int numberOfParticipants = 12;
+    private final int numberOfParticipants = 12;
 
     @BeforeEach
     public void init() {
@@ -86,7 +86,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setNumberOfExercisesInExam(1);
         exerciseGroup = exam.getExerciseGroups().get(0);
 
-        quizExercise = database.createQuizForExam(exerciseGroup, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        quizExercise = database.createQuizForExam(exerciseGroup);
         exerciseGroup.addExercise(quizExercise);
 
         // Add an instructor who is not in the course

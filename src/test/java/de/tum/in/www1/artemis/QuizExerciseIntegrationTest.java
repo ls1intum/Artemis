@@ -10,7 +10,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -75,7 +74,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     private QuizExercise quizExercise;
 
     @BeforeEach
-    public void init() throws Exception {
+    public void init() {
         database.addUsers(15, 5, 1);
         quizScheduleService.startSchedule(5 * 1000);
     }
@@ -162,7 +161,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseForExam() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were saved").isEqualTo(3);
@@ -330,7 +329,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExerciseForExam() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
@@ -443,7 +442,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateQuizExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
         database.addExerciseGroupWithExamAndCourse(true);
-        QuizExercise quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = createQuizOnServerForExam();
 
         quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
@@ -482,10 +481,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         return quizExerciseServer;
     }
 
-    private QuizExercise createQuizOnServerForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate) throws Exception {
+    private QuizExercise createQuizOnServerForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
-        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup, releaseDate, dueDate);
+        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
@@ -634,7 +633,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamQuizExercise() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
@@ -648,7 +647,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup, ZonedDateTime.now().plusHours(5), null);
+        quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
@@ -730,8 +729,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
-    // TODO: Deactivated for now as this test is flaky. Maybe double comparisons cause that
-    @Disabled
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
@@ -751,25 +748,19 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
                 QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
-
                 database.addSubmission(quizExercise, quizSubmission, "student" + i);
-
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
             }
         }
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
-
         database.addSubmission(quizExercise, quizSubmission, "student1");
-
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         // submission with nothing selected
         quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
-
         database.addSubmission(quizExercise, quizSubmission, "student5");
-
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         assertThat(studentParticipationRepository.findAll().size()).isEqualTo(10);
@@ -784,8 +775,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         // remove wrong answer option and reevaluate
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.getAnswerOptions().remove(1);
+        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        multipleChoiceQuestion.getAnswerOptions().remove(1);
 
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
@@ -805,8 +796,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
 
         // set a question invalid and reevaluate
-        ShortAnswerQuestion sq = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sq.setInvalid(true);
+        var shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        shortAnswerQuestion.setInvalid(true);
 
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
@@ -850,8 +841,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
-    @Disabled
-    // TODO: this is a flaky test and it's unclear why. We skip it for now.
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {
 
