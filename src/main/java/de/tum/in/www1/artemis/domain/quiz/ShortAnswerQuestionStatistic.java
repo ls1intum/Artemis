@@ -24,7 +24,6 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "shortAnswerQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerSpotCounter> shortAnswerSpotCounters = new HashSet<>();
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public Set<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
         return shortAnswerSpotCounters;

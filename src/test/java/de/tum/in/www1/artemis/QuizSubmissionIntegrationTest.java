@@ -260,7 +260,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExerciseServer.getQuizQuestions()) {
             for (int i = 1; i <= 10; i++) {
-                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
+                var answer = database.generateSubmittedAnswerFor(question, i % 2 == 0);
+                quizSubmission.addSubmittedAnswers(answer);
+                // also remove once
+                quizSubmission.removeSubmittedAnswers(answer);
+                quizSubmission.addSubmittedAnswers(answer);
             }
         }
         quizSubmission.setSubmitted(true);

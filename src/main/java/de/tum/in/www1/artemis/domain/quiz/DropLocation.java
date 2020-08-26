@@ -141,17 +141,7 @@ public class DropLocation implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
-    }
-
-    public DropLocation question(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-        return this;
-    }
-
-    public DropLocation invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
@@ -164,11 +154,6 @@ public class DropLocation implements Serializable {
 
     public void setInvalid(Boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public DropLocation mappings(Set<DragAndDropMapping> mappings) {
-        this.mappings = mappings;
-        return this;
     }
 
     public DropLocation addMappings(DragAndDropMapping mapping) {
