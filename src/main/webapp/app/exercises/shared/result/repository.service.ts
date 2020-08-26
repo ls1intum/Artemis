@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs/Observable';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
-import { BuildLogEntry } from 'app/entities/build-log.model';
 import { SERVER_API_URL } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
