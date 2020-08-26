@@ -439,7 +439,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
 
         // check that submission fails
-        QuizSubmission quizSubmission = database.generateSubmission(quizExercise, 1, false, null);
+        QuizSubmission quizSubmission = database.generateSubmission(quizExercise, 1, true, null);
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
 
         quizScheduleService.processCachedQuizSubmissions();
