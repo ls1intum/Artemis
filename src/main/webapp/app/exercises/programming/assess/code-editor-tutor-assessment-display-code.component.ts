@@ -6,7 +6,8 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-display-code',
-    templateUrl: './code-editor-tutor-assessment-display-codet.html',
+    templateUrl: './code-editor-tutor-assessment-display-code.component.html',
+    styles: ['pre { display: inline; border: none; background-color: white; border-radius: unset ; padding: 1px; font-size: 11px} table {font-size: 11px}'],
 })
 export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges {
     @Input()

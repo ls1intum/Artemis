@@ -21,6 +21,6 @@ import { CodeEditorTutorAssessmentDisplayCodeComponent } from 'app/exercises/pro
         CodeEditorTutorAssessmentDisplayCodeComponent,
     ],
     entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
-    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
+    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent, CodeEditorTutorAssessmentDisplayCodeComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}
