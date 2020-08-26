@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.security.Principal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +104,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
-        for (int i = 1; i <= numberOfParticipants; i++) {
+        // only half of the students submit manually
+        for (int i = 1; i <= numberOfParticipants / 2; i++) {
             quizSubmission = database.generateSubmission(quizExercise, i, true, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
@@ -111,7 +116,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         // before the quiz submissions are processed, none of them ends up in the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.count()).isEqualTo(0);
+
+        // process first half of the submissions
+        quizScheduleService.processCachedQuizSubmissions();
+        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants / 2);
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -121,7 +130,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizScheduleService.processCachedQuizSubmissions();
 
         // after the quiz submissions have been processed, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
+        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants);
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -164,6 +173,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
         }
+
+        // execute the scheduler again, this should remove the quiz exercise from the cache
+        quizScheduleService.processCachedQuizSubmissions();
+        // but of course keep all submissions
+        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants);
     }
 
     @Test
@@ -393,4 +407,82 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizSubmitScheduledAndDeleted() throws Exception {
+        // change config to make test faster
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        Course course = courses.get(0);
+        String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(150, ChronoUnit.MILLIS), null);
+        quizExercise.duration(60);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+
+        // also schedules the quiz
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // check that quiz has not started now
+        verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
+
+        // wait a bit
+        TimeUnit.MILLISECONDS.sleep(50);
+
+        // reschedule
+        quizExercise.releaseDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // wait for the old release date to pass
+        TimeUnit.MILLISECONDS.sleep(150);
+
+        // check that quiz has still not started now
+        verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
+
+        // check that submission fails
+        QuizSubmission quizSubmission = database.generateSubmission(quizExercise, 1, false, null);
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
+
+        quizScheduleService.processCachedQuizSubmissions();
+        assertThat(quizSubmissionRepository.count()).isZero();
+
+        // wait for the new release date to pass
+        TimeUnit.MILLISECONDS.sleep(100);
+
+        // check that quiz has started
+        verify(messagingTemplate, times(1)).send(eq(publishQuizPath), any());
+
+        // process cached submissions
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // save submissions
+        int numberOfParticipants = 10;
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            quizSubmission = database.generateSubmission(quizExercise, i, false, null);
+            final var username = "student" + i;
+            final Principal principal = () -> username;
+            // save
+            quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        }
+
+        // process the saved but not submitted quiz submissions
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // before the quiz submissions are submitted, none of them ends up in the database
+        assertThat(quizSubmissionRepository.count()).isZero();
+
+        // set the quiz end to now and ...
+        quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        exerciseRepository.saveAndFlush(quizExercise);
+        // ... directly delete the quiz
+        exerciseRepository.delete(quizExercise);
+
+        // the deleted quiz should get removed, no submissions should be saved
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // quiz is not cached anymore
+        assertThat(quizScheduleService.getQuizExercise(quizExercise.getId())).isNull();
+        // no submissions were marked as submitted and saved
+        assertThat(quizSubmissionRepository.count()).isZero();
+    }
 }
