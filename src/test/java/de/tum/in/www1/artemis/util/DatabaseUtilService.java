@@ -139,27 +139,27 @@ import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 @Service
 public class DatabaseUtilService {
 
-    private static ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
-    private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
-    private static ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+    private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
-    private static Authority userAuthority = new Authority(AuthoritiesConstants.USER);
+    private static final Authority userAuthority = new Authority(AuthoritiesConstants.USER);
 
-    private static Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private static final Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
-    private static Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+    private static final Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
 
-    private static Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+    private static final Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
 
-    private static Set<Authority> studentAuthorities = Set.of(userAuthority);
+    private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
-    private static Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
+    private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
 
-    private static Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority);
+    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority);
 
-    private static Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
+    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
     CourseRepository courseRepo;
@@ -405,7 +405,7 @@ public class DatabaseUtilService {
         Course course = createCourse();
         Exam exam = addExam(course, user, visible, start, end);
         course.addExam(exam);
-        addExerciseGroupsAndExercisesToExam(exam, start, end, false);
+        addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
     }
 
@@ -413,7 +413,7 @@ public class DatabaseUtilService {
         Course course = createCourse();
         Exam exam = addExam(course, user, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
-        addExerciseGroupsAndExercisesToExam(exam, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(1), false);
+        addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
     }
 
@@ -535,7 +535,7 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() throws Exception {
+    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -645,7 +645,7 @@ public class DatabaseUtilService {
 
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        ModelFactory.generateExerciseGroup(mandatory, exam);
         examRepository.save(exam);
         return exam;
     }
@@ -680,7 +680,7 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
-    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, ZonedDateTime examStartDate, ZonedDateTime examEndDate, boolean withProgrammingExercise) {
+    public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         ModelFactory.generateExerciseGroup(true, exam); // text
         ModelFactory.generateExerciseGroup(true, exam); // quiz
         ModelFactory.generateExerciseGroup(true, exam); // file upload
@@ -699,8 +699,8 @@ public class DatabaseUtilService {
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
 
-        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
-        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1, examStartDate, examEndDate);
+        QuizExercise quizExercise1 = createQuizForExam(exerciseGroup1);
+        QuizExercise quizExercise2 = createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
         exerciseRepo.save(quizExercise1);
         exerciseRepo.save(quizExercise2);
@@ -870,8 +870,9 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Result addResultToSubmission(Submission submission) {
-        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
+    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType) {
+        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L)
+                .assessmentType(assessmentType);
         resultRepo.save(result);
         return result;
     }
@@ -949,8 +950,9 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation) {
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
         programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         programmingSubmission.setParticipation(participation);
@@ -958,7 +960,6 @@ public class DatabaseUtilService {
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
@@ -968,7 +969,6 @@ public class DatabaseUtilService {
     }
 
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
@@ -978,7 +978,6 @@ public class DatabaseUtilService {
     }
 
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
-        var now = ZonedDateTime.now();
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         final var exercisesNrBefore = exerciseRepo.count();
@@ -1068,23 +1067,6 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(numberOfExercises + 1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(numberOfCourses + 1);
         return course;
-    }
-
-    public void addCourseWithOneModelingAndOneTextExercise() {
-        long numberOfCourses = courseRepo.count();
-        long numberOfExercises = exerciseRepo.count();
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        course.addExercises(modelingExercise);
-        course.addExercises(textExercise);
-        courseRepo.save(course);
-        exerciseRepo.save(modelingExercise);
-        exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(numberOfExercises + 2);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(numberOfCourses + 1);
     }
 
     public Course addCourseWithDifferentModelingExercises() {
@@ -1324,7 +1306,6 @@ public class DatabaseUtilService {
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
-        submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
         return submission;
     }
@@ -1347,17 +1328,6 @@ public class DatabaseUtilService {
         submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
-        return submission;
-    }
-
-    public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, Result result, String login) {
-        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
-        participation.addSubmissions(submission);
-        submission.setParticipation(participation);
-        submission.setResult(result);
-        programmingSubmissionRepo.save(submission);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         return submission;
@@ -1391,7 +1361,7 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public Submission addSubmission(StudentParticipation participation, Submission submission, String login) {
+    public Submission addSubmission(StudentParticipation participation, Submission submission) {
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -1546,13 +1516,13 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.get().getModel(), sentModel);
     }
 
-    public void checkModelsAreEqual(String storedModel, String sentModel) throws Exception {
+    public void checkModelsAreEqual(String storedModel, String sentModel) {
         JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parseString(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
@@ -1576,9 +1546,9 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @param path path relative to the test resources foldercomplaint
+     * @param path path relative to the test resources folder complaint
      * @return string representation of given file
-     * @throws Exception
+     * @throws Exception if the resource cannot be loaded
      */
     public String loadFileFromResources(String path) throws Exception {
         java.io.File file = ResourceUtils.getFile("classpath:" + path);
@@ -1590,8 +1560,7 @@ public class DatabaseUtilService {
 
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = loadFileFromResources(path);
-        List<Feedback> modelingAssessment = mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
-        return modelingAssessment;
+        return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 
     public User getUserByLogin(String login) {
@@ -1635,18 +1604,18 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
-        Result r = addResultToSubmission(submission, assessmentType, user);
-        r.setRated(rated);
-        r.setScore(score);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, assessmentType, user);
+        result.setRated(rated);
+        result.setScore(score);
+        return resultRepo.save(result);
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        Result r = addResultToSubmission(submission);
-        r.setAssessmentType(assessmentType);
-        r.completionDate(ZonedDateTime.now());
-        r.setAssessor(user);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, null);
+        result.setAssessmentType(assessmentType);
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessor(user);
+        return resultRepo.save(result);
     }
 
     public Set<ExerciseHint> addHintsToExercise(Exercise exercise) {
@@ -1775,7 +1744,7 @@ public class DatabaseUtilService {
     }
 
     @NotNull
-    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+    public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
@@ -1799,11 +1768,23 @@ public class DatabaseUtilService {
         shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
         shortAnswerSolution2.setTempID(generateTempId());
-        sa.getSolutions().add(shortAnswerSolution1);
-        sa.getSolutions().add(shortAnswerSolution2);
-        sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0)));
-        sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1)));
+        sa.addSolution(shortAnswerSolution1);
+        // also invoke remove once
+        sa.removeSolution(shortAnswerSolution1);
+        sa.addSolution(shortAnswerSolution1);
+        sa.addSolution(shortAnswerSolution2);
+        var solution1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
+        var solution2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
+        sa.addCorrectMapping(solution1);
+        sa.removeCorrectMapping(solution1);
+        sa.addCorrectMapping(solution1);
+        sa.addCorrectMapping(solution2);
         sa.setExplanation("Explanation");
+        sa.setRandomizeOrder(true);
+        // invoke some util methods
+        System.out.println(sa.toString());
+        System.out.println(sa.hashCode());
+        sa.copyQuestionId();
         return sa;
     }
 
@@ -1815,17 +1796,31 @@ public class DatabaseUtilService {
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
-        dnd.getDropLocations().add(dropLocation1);
-        dnd.getDropLocations().add(dropLocation2);
+        dnd.addDropLocation(dropLocation1);
+        // also invoke remove once
+        dnd.removeDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation2);
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
-        dnd.getDragItems().add(dragItem1);
-        dnd.getDragItems().add(dragItem2);
-        dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
-        dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+        dnd.addDragItem(dragItem1);
+        // also invoke remove once
+        dnd.removeDragItem(dragItem1);
+        dnd.addDragItem(dragItem1);
+        dnd.addDragItem(dragItem2);
+        var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+        dnd.addCorrectMapping(mapping1);
+        dnd.removeCorrectMapping(mapping1);
+        dnd.addCorrectMapping(mapping1);
+        var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
+        dnd.addCorrectMapping(mapping2);
         dnd.setExplanation("Explanation");
+        // invoke some util methods
+        System.out.println(dnd.toString());
+        System.out.println(dnd.hashCode());
+        dnd.copyQuestionId();
         return dnd;
     }
 
@@ -1840,6 +1835,10 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
+        // invoke some util methods
+        System.out.println(mc.toString());
+        System.out.println(mc.hashCode());
+        mc.copyQuestionId();
         return mc;
     }
 

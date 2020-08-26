@@ -17,8 +17,6 @@
         {{ selectedDate | artemisDate: 'long-date' }}<br />
         {{ selectedDate | artemisDate: 'time' }}
     </div>
-    <div *ngIf="!selectedDate" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">
-        not set
-    </div>
+    <div *ngIf="!selectedDate" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">not set</div>
     <owl-date-time [startAt]="startAt" #dt></owl-date-time>
 </div>

@@ -1,5 +1,5 @@
 <div *ngIf="exercise">
-    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px;">
+    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px">
         <div [innerHTML]="'artemisApp.exercise.welcome' | translate"></div>
     </div>
     <!-- HEADER INFORMATION START -->
@@ -24,9 +24,7 @@
         <!-- These buttons will be only shown in dev environment and if the programming exercise has no
         connection to the VCS and CI
         This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">
-            Submission
-        </button>
+        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
         <button
             class="dev-button"
             [disabled]="!wasSubmissionSimulated"

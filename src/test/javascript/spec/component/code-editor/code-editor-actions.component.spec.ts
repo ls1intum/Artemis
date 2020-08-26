@@ -166,7 +166,7 @@ describe('CodeEditorActionsComponent', () => {
         // receive result for save
         saveObservable.next(savedFilesResult);
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }]);
+        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(onSavedFilesSpy).to.have.been.calledOnceWith(savedFilesResult);
 
         fixture.detectChanges();
@@ -190,7 +190,7 @@ describe('CodeEditorActionsComponent', () => {
         saveButton.nativeElement.click();
 
         // waiting for save result
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }]);
+        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
 
         fixture.detectChanges();
@@ -268,9 +268,8 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
-    it('should not commit if unsavedFiles exist, instead should save files first and then try to commit', () => {
+    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
-        const commitObservable = new Subject<null>();
         const saveObservable = new Subject<null>();
         const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -281,7 +280,6 @@ describe('CodeEditorActionsComponent', () => {
         comp.saveChangedFiles = saveChangedFilesStub;
         fixture.detectChanges();
 
-        commitStub.returns(commitObservable);
         saveChangedFilesStub.returns(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
@@ -289,15 +287,14 @@ describe('CodeEditorActionsComponent', () => {
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
+
         expect(commitStub).to.not.have.been.called;
         expect(saveChangedFilesStub).to.have.been.calledOnce;
-
-        // save completed
-        saveObservable.next(null);
         expect(comp.commitState).to.equal(CommitState.COMMITTING);
 
-        // commit result returns
-        commitObservable.next(null);
+        // save + commit completed
+        saveObservable.next(null);
+
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 

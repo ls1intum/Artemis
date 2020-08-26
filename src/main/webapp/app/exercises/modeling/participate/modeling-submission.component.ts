@@ -2,13 +2,13 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { Selection, UMLModel, UMLRelationshipType, UMLElementType } from '@ls1intum/apollon';
+import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { omit } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -566,5 +566,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
+    }
+
+    /**
+     * Prepare a result that contains a participation which is needed in the rating component
+     */
+    get resultForRating(): Result | null {
+        const ratingResult = cloneDeep(this.result);
+        if (ratingResult) {
+            // remove circular dependency
+            const ratingParticipation = cloneDeep(this.participation);
+            ratingParticipation.exercise.studentParticipations = [];
+
+            ratingResult.participation = ratingParticipation;
+        }
+        return ratingResult;
     }
 }

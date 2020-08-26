@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -186,6 +188,48 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        var testRepoCommits = testRepo.getAllLocalCommits();
+        assertThat(testRepoCommits.size() == 1).isTrue();
+        assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+    }
+
+    private List<FileSubmission> getFileSubmissions() {
+        List<FileSubmission> fileSubmissions = new ArrayList();
+        FileSubmission fileSubmission = new FileSubmission();
+        fileSubmission.setFileName(currentLocalFileName);
+        fileSubmission.setFileContent("updatedFileContent");
+        fileSubmissions.add(fileSubmission);
+        return fileSubmissions;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSaveFiles() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
+
+        Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
+        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSaveFilesAndCommit() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+
+        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
+
+        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+
+        Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
+        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits.size() == 1).isTrue();
         assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
