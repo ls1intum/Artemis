@@ -414,7 +414,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(150, ChronoUnit.MILLIS), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(300, ChronoUnit.MILLIS), null);
         quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
@@ -426,14 +426,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
 
         // wait a bit
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(100);
 
         // reschedule
-        quizExercise.releaseDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
+        quizExercise.releaseDate(ZonedDateTime.now().plus(300, ChronoUnit.MILLIS));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
-        TimeUnit.MILLISECONDS.sleep(150);
+        TimeUnit.MILLISECONDS.sleep(250);
 
         // check that quiz has still not started now
         verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
@@ -446,7 +446,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isZero();
 
         // wait for the new release date to pass
-        TimeUnit.MILLISECONDS.sleep(100);
+        TimeUnit.MILLISECONDS.sleep(150);
 
         // check that quiz has started
         verify(messagingTemplate, times(1)).send(eq(publishQuizPath), any());
