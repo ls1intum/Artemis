@@ -385,12 +385,9 @@ public class QuizScheduleService {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            for (Long quizExerciseId : quizCache.getAllCachedQuizExerciseIds()) {
+            for (QuizExerciseCache cachedQuiz : quizCache.getAllQuizExerciseCaches()) {
                 // this way near cache is used (values will deserialize new objects)
-                QuizExerciseCache cachedQuiz = quizCache.getCacheFor(quizExerciseId);
-                // safety check because of concurrent and distributed processes
-                if (cachedQuiz == null)
-                    continue;
+                Long quizExerciseId = cachedQuiz.getExerciseId();
                 // Get fresh QuizExercise from DB
                 QuizExercise quizExercise = quizExerciseService.findOne(quizExerciseId);
                 // check if quiz has been deleted
