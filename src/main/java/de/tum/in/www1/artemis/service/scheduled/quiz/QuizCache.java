@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.quiz;
 
 import java.util.*;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,9 @@ final class QuizCache {
      * @implNote This is the {@linkplain Map#values() value collection} of the map of this cache.
      */
     Collection<QuizExerciseCache> getAllQuizExerciseCaches() {
-        return cachedQuizExercises.values();
+        // We do that here to avoid the distributed query of IMap.values() and its deserialization and benefit from the near cache
+        return cachedQuizExercises.keySet().stream().map(this::getCacheFor).filter(Objects::nonNull) // due to concurrency, we need the filter here
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
@@ -159,6 +162,8 @@ final class QuizCache {
         try {
             log.info("Write quiz cache {}", quizExerciseId);
             cachedQuizExercises.set(quizExerciseId, writeOperation.apply(getTransientWriteCacheFor(quizExerciseId)));
+            // We do this get here to deserialize and load the newly written instance into the near cache directly after the write
+            cachedQuizExercises.get(quizExerciseId);
         }
         finally {
             cachedQuizExercises.unlock(quizExerciseId);
@@ -181,6 +186,8 @@ final class QuizCache {
             if (cachedQuiz != null) {
                 log.info("Write quiz cache {}", quizExerciseId);
                 cachedQuizExercises.set(quizExerciseId, writeOperation.apply(cachedQuiz));
+                // We do this get here to deserialize and load the newly written instance into the near cache directly after the write
+                cachedQuizExercises.get(quizExerciseId);
             }
         }
         finally {
