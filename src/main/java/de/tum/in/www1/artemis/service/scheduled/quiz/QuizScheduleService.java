@@ -156,7 +156,6 @@ public class QuizScheduleService {
      *         username is null
      */
     public QuizSubmission getQuizSubmission(Long quizExerciseId, String username) {
-
         if (quizExerciseId == null || username == null) {
             return null;
         }
@@ -608,7 +607,6 @@ public class QuizScheduleService {
                 log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
             }
         }
-
         return count;
     }
 }
