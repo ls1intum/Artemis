@@ -786,10 +786,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
         for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
+                // TODO: sometimes this value is flaky and will be 3 instead of 2
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(2); // one less
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else if (pointCounter.getPoints() == 4.0) {
+                // TODO: sometimes this value is flaky and will be 2 instead of 3
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(3); // one more
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
