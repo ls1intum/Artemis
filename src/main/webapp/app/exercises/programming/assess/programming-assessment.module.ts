@@ -9,6 +9,7 @@ import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/pr
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { CodeEditorTutorAssessmentDisplayCodeComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-display-code.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, FormsModule, FeatureToggleModule, ArtemisComplaintsForTutorModule],
@@ -17,6 +18,7 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/pr
         ProgrammingAssessmentManualResultDialogComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
+        CodeEditorTutorAssessmentDisplayCodeComponent,
     ],
     entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
     exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
