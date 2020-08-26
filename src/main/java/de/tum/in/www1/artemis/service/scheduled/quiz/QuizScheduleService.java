@@ -283,8 +283,6 @@ public class QuizScheduleService {
         cancelScheduledQuizStart(quizExerciseId);
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-        updateQuizExercise(quizExercise);
-
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
             try {
@@ -301,6 +299,8 @@ public class QuizScheduleService {
                 // this is expected if we run on multiple nodes
             }
         }
+        // Do that at the end because this runs asynchronously and could interfere with the cache write above
+        updateQuizExercise(quizExercise);
     }
 
     /**
