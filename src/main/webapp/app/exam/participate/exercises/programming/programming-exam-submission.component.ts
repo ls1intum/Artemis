@@ -80,6 +80,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
+    onActivate() {
+        super.onActivate();
+        this.instructions.updateMarkdown();
+    }
+
     /**
      * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
