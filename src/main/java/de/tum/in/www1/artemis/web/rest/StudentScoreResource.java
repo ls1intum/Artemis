@@ -106,16 +106,16 @@ public class StudentScoreResource {
     }
 
     /**
-     * GET /student-scores/course/{courseId} : Find StudentScores by course id.
+     * GET /student-scores/exercise/{exerciseId}/student/{studentLogin} : Find StudentScores by exercise id and student login.
      *
      * @param exerciseId id of the exercise
-     * @param studentLogin id of the student
+     * @param studentLogin login of the student
      * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
      */
     @GetMapping("/student-scores/exercise/{exerciseId}/student/{studentLogin}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Optional<StudentScore>> getStudentScoresForExerciseAndStudent(@PathVariable Long exerciseId, @PathVariable String studentLogin) {
-        log.debug("REST request to get student scores for student and exercise {}", studentLogin, exerciseId);
+    public ResponseEntity<Optional<StudentScore>> getStudentScoreForExerciseAndStudent(@PathVariable Long exerciseId, @PathVariable String studentLogin) {
+        log.debug("REST request to get student score for student and exercise {}", studentLogin, exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<User> student = userService.getUserByLogin(studentLogin);

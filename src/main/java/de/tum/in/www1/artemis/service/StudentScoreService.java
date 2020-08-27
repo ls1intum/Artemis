@@ -56,7 +56,7 @@ public class StudentScoreService {
     /**
      * Returns one StudentScores for exercise and student if there is one.
      *
-     * @param student course
+     * @param student student user
      * @param exercise exercise
      * @return list of student score objects for that course
      */
