@@ -25,6 +25,10 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
 
+    getStudentParticipationWithResults(participationId: number) {
+        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-results-and-feedbacks');
+    }
+
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }
