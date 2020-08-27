@@ -55,7 +55,7 @@ public class ResultListener {
     public void postUpdate(Result updatedResult) {
         log.info("Result " + updatedResult + " was updated");
         // update existing student score
-        studentScoreService.updateResult(updatedResult);
+        // studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
             // update existing tutor scores
