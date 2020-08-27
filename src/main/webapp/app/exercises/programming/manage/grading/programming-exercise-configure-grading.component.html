@@ -38,104 +38,103 @@
 
         <div class="grading-body-container">
             <div *ngIf="activeTab == 'test-cases'">
-        <ngx-datatable
-            id="testCaseTable"
-            class="bootstrap"
-            [headerHeight]="50"
-            [limit]="20"
-            [columnMode]="'force'"
-            [footerHeight]="50"
-            [rowHeight]="'auto'"
-            [rows]="filteredTestCases"
-            [sorts]="[{ prop: 'testName', dir: 'asc' }]"
-            [rowClass]="getRowClass"
-        >
-            <ngx-datatable-column name="Id" prop="id">
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Test Name" prop="testName">
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Weight" prop="weight">
-                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                    <jhi-table-editable-field
-                        [value]="value"
-                        [canEdit]="!editing"
-                        [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.WEIGHT"
-                        (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"
-                        (onValueUpdate)="updateEditedField($event)"
-                        (onCancel)="leaveEditingWithoutSaving()"
-                    ></jhi-table-editable-field>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
-                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                    <jhi-table-editable-field
-                        [value]="value"
-                        [canEdit]="!editing"
-                        [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_MULTIPLIER"
-                        (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_MULTIPLIER)"
-                        (onValueUpdate)="updateEditedField($event)"
-                        (onCancel)="leaveEditingWithoutSaving()"
-                    ></jhi-table-editable-field>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
-                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                    <jhi-table-editable-field
-                        [value]="value"
-                        [canEdit]="!editing"
-                        [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_POINTS"
-                        (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_POINTS)"
-                        (onValueUpdate)="updateEditedField($event)"
-                        (onCancel)="leaveEditingWithoutSaving()"
-                    ></jhi-table-editable-field>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="After Due Date" prop="afterDueDate">
-                <ng-template ngx-datatable-header-template>
-                    <span>After Due Date</span
-                    ><fa-icon
-                        *ngIf="buildAfterDueDateActive === false"
-                        [icon]="'question-circle'"
-                        class="text-secondary ml-2"
-                        [ngbPopover]="popoverContent"
-                        placement="bottom"
-                        container="body"
-                    ></fa-icon>
-                    <ng-template #popoverContent>
-                        <div class="d-flex flex-column run-after-due-date-disabled">
-                            <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
-                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
-                                <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
-                            </a>
-                        </div>
-                    </ng-template>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                    <jhi-table-editable-checkbox
-                        [value]="value"
-                        [disabled]="!buildAfterDueDateActive"
-                        (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"
-                    ></jhi-table-editable-checkbox>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Is Active" prop="active">
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-        </ngx-datatable>
+                <ngx-datatable
+                    id="testCaseTable"
+                    class="bootstrap"
+                    [headerHeight]="50"
+                    [limit]="20"
+                    [columnMode]="'force'"
+                    [footerHeight]="50"
+                    [rowHeight]="'auto'"
+                    [rows]="filteredTestCases"
+                    [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+                    [rowClass]="getRowClass"
+                >
+                    <ngx-datatable-column name="Id" prop="id">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Test Name" prop="testName">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Weight" prop="weight">
+                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                            <jhi-table-editable-field
+                                [value]="value"
+                                [canEdit]="!editing"
+                                [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.WEIGHT"
+                                (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.WEIGHT)"
+                                (onValueUpdate)="updateEditedField($event)"
+                                (onCancel)="leaveEditingWithoutSaving()"
+                            ></jhi-table-editable-field>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
+                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                            <jhi-table-editable-field
+                                [value]="value"
+                                [canEdit]="!editing"
+                                [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_MULTIPLIER"
+                                (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_MULTIPLIER)"
+                                (onValueUpdate)="updateEditedField($event)"
+                                (onCancel)="leaveEditingWithoutSaving()"
+                            ></jhi-table-editable-field>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
+                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                            <jhi-table-editable-field
+                                [value]="value"
+                                [canEdit]="!editing"
+                                [isEditing]="editing && editing[0] === filteredTestCases[filteredTestCases.indexOf(row)] && editing[1] === EditableField.BONUS_POINTS"
+                                (onEditStart)="enterEditing(filteredTestCases.indexOf(row), EditableField.BONUS_POINTS)"
+                                (onValueUpdate)="updateEditedField($event)"
+                                (onCancel)="leaveEditingWithoutSaving()"
+                            ></jhi-table-editable-field>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="After Due Date" prop="afterDueDate">
+                        <ng-template ngx-datatable-header-template>
+                            <span>After Due Date</span
+                            ><fa-icon
+                                *ngIf="buildAfterDueDateActive === false"
+                                [icon]="'question-circle'"
+                                class="text-secondary ml-2"
+                                [ngbPopover]="popoverContent"
+                                placement="bottom"
+                                container="body"
+                            ></fa-icon>
+                            <ng-template #popoverContent>
+                                <div class="d-flex flex-column run-after-due-date-disabled">
+                                    <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
+                                    <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
+                                        <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
+                                    </a>
+                                </div>
+                            </ng-template>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+                            <jhi-table-editable-checkbox
+                                [value]="value"
+                                [disabled]="!buildAfterDueDateActive"
+                                (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"
+                            ></jhi-table-editable-checkbox>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Is Active" prop="active">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                </ngx-datatable>
             </div>
             <div *ngIf="activeTab == 'code-analysis'">
                 TODO
             </div>
         </div>
-
     </ng-container>
     <ng-template #loadingContainer>
         <div class="d-flex justify-content-center mt-4">
