@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
@@ -53,6 +53,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     isLoading = false;
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
+    activeTab: string;
 
     /**
      * Returns the value of testcases
@@ -95,6 +96,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private alertService: AlertService,
         private translateService: TranslateService,
         private http: HttpClient,
+        private router: Router,
     ) {}
 
     /**
@@ -114,6 +116,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             }
             if (this.testCaseChangedSubscription) {
                 this.testCaseChangedSubscription.unsubscribe();
+            }
+
+            if (this.router.url.endsWith('/test-cases')) {
+                this.activeTab = 'test-cases';
+            } else if (this.router.url.endsWith('/code-analysis')) {
+                this.activeTab = 'code-analysis';
             }
 
             const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
@@ -348,7 +356,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .get(`${testRepoUrl}/file`, { params: new HttpParams().set('file', mappingFileName), responseType: 'text' })
             .pipe(
                 map((data) => JSON.parse(data)),
-                catchError((err) => {
+                catchError(() => {
                     this.alertService.error(`Could not load code analysis categories.`);
                     return of([]);
                 }),
