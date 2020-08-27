@@ -18,6 +18,9 @@ artemis:
             user-dn: <user-dn>
             password: <password>
             base: <base>
+        internal-admin:
+            username: artemis_admin
+            password: artemis_admin
     version-control:
         user: <username>    # e.g. ga12abc
         password: <password>

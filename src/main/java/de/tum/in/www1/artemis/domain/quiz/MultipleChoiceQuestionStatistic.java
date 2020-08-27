@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -30,11 +29,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
         return answerCounters;
     }
 
-    public MultipleChoiceQuestionStatistic answerCounters(Set<AnswerCounter> answerCounters) {
-        this.answerCounters = answerCounters;
-        return this;
-    }
-
     public MultipleChoiceQuestionStatistic addAnswerCounters(AnswerCounter answerCounter) {
         this.answerCounters.add(answerCounter);
         answerCounter.setMultipleChoiceQuestionStatistic(this);
@@ -52,26 +46,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) o;
-        if (multipleChoiceQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), multipleChoiceQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
         return "MultipleChoiceQuestionStatistic{" + "id=" + getId() + "}";
     }
@@ -82,11 +56,9 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
     public void addAnswerOption(AnswerOption answer) {
-
         if (answer == null) {
             return;
         }
-
         for (AnswerCounter counter : answerCounters) {
             if (answer.equals(counter.getAnswer())) {
                 return;
@@ -136,7 +108,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
         }
 
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);

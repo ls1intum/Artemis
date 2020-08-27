@@ -160,8 +160,8 @@ public class ProgrammingExerciseParticipationService {
      * @return the casted participation
      * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
      */
-    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(Long participationId) throws EntityNotFoundException {
-        Optional<Participation> participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
         }
