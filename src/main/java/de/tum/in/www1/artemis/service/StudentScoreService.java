@@ -69,6 +69,7 @@ public class StudentScoreService {
      *
      * @param deletedResult result to be deleted
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
         studentScoreRepository.deleteByResultId(deletedResult.getId());
     }
@@ -78,6 +79,7 @@ public class StudentScoreService {
      *
      * @param updatedResult result to be updated
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         var existingStudentScore = studentScoreRepository.findByResult(updatedResult);
         if (existingStudentScore.isPresent()) {

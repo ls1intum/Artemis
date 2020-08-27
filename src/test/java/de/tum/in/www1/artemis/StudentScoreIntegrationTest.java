@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -212,19 +211,42 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         user = userRepo.findAllInGroup("tumuser").get(0);
         exercise = exerciseRepo.findAll().get(0);
 
-        Optional<StudentScore> response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, Optional.class);
-        assertThat(response.isEmpty()).as("response is not empty").isFalse();
+        List<StudentScore> list = studentScoresRepo.findAll();
+        StudentScore studentScore = list.get(0);
+
+        StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getId()).as("response id is as expected").isEqualTo(studentScore.getId());
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreUpdateTest() throws Exception {
+        user = userRepo.findAllInGroup("tumuser").get(0);
         exercise = exerciseRepo.findAll().get(0);
         result = resultRepo.findAll().get(0);
+
+        StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getScore()).as("response score is old score").isEqualTo(result.getScore());
+
         result.setScore(100L);
         resultRepo.save(result);
 
-        Optional<StudentScore> response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, Optional.class);
-        assertThat(response.isEmpty()).as("response is not empty").isFalse();
+        response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getScore()).as("response score is new score").isEqualTo(result.getScore());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoreDeleteByResultTest() throws Exception {
+        List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
+        assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
+        assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
+
+        result = resultRepo.findAll().get(0);
+        resultRepo.deleteById(result.getId());
+
+        responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
+        assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
+        assertThat(responseExerciseOne.size()).as("response has length 1").isEqualTo(1);
     }
 }
