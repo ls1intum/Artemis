@@ -30,7 +30,6 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
@@ -45,7 +44,6 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorSessionService } from '../../helpers/mocks/service/mock-code-editor-session.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
@@ -103,7 +101,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
-                { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
@@ -198,8 +195,9 @@ describe('CodeEditorInstructorIntegration', () => {
             id: 1,
             problemStatement,
             studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
+            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+            course: { id: 1 },
         } as ProgrammingExercise;
         exercise.studentParticipations = exercise.studentParticipations.map((p) => {
             p.exercise = exercise;
@@ -232,7 +230,7 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
         containerFixture.detectChanges();
 
-        // Result is successful, build logs should not be retrieved
+        // Submission could be built
         expect(getBuildLogsStub).to.not.have.been.called;
         // Once called by each build-output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
@@ -276,6 +274,7 @@ describe('CodeEditorInstructorIntegration', () => {
             studentParticipations: [{ id: 2 }],
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
+            course: { id: 1 },
         } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
         // @ts-ignore
@@ -315,6 +314,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
@@ -361,6 +361,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore

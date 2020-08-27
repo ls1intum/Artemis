@@ -13,9 +13,7 @@
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
-                Import new programming exercise
-            </span>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel"> Import new programming exercise </span>
         </button>
         <button
             jhiOrionFilter
@@ -27,9 +25,7 @@
             [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
-                Generate new Programming Exercise
-            </span>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel"> Generate new Programming Exercise </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>

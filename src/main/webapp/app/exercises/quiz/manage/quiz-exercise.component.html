@@ -9,9 +9,7 @@
             id="create-quiz-button"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.quizExercise.home.createLabel">
-                Create new Quiz
-            </span>
+            <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </button>
         <button
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastInstructor"
@@ -19,15 +17,11 @@
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.quizExercise.home.exportLabel">
-                Export Quiz Exercises
-            </span>
+            <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </button>
         <button *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop">
-                Create new Drag and Drop Model Quiz
-            </span>
+            <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
