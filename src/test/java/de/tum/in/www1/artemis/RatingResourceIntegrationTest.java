@@ -63,6 +63,9 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     SubmissionRepository submissionRepo;
 
+    @Autowired
+    UserRepository userRepo;
+
     private TextExercise exercise;
 
     private List<User> users;
@@ -92,6 +95,9 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         rating = new Rating();
         rating.setResult(result);
         rating.setRating(2);
+
+        // add instructor of other course
+        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
     }
 
     @AfterEach
@@ -194,6 +200,12 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
         request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 }
