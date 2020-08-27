@@ -125,9 +125,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             } else if (this.router.url.endsWith('/code-analysis')) {
                 this.activeTab = 'code-analysis';
             } else {
-                this.activeTab = 'test-cases';
-                const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
-                this.location.replaceState(parentUrl + `/test-cases`);
+                this.activeTab = '';
             }
 
             const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
