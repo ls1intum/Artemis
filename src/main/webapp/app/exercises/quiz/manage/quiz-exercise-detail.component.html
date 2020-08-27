@@ -47,7 +47,7 @@
                         <div class="d-flex align-items-center">
                             <input
                                 id="quiz-duration-minutes"
-                                style="width: 70px;"
+                                style="width: 70px"
                                 class="form-control mb-2 mr-2"
                                 title="Duration"
                                 type="number"
@@ -59,7 +59,7 @@
                             <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
                             <input
                                 id="quiz-duration-seconds"
-                                style="width: 70px;"
+                                style="width: 70px"
                                 class="form-control mb-2 mr-2 ml-2"
                                 title="Duration"
                                 type="number"
@@ -311,7 +311,7 @@
                                 <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
                             </td>
                             <td colspan="3" width="70%">
-                                <select class="form-control" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width: 100%;">
+                                <select class="form-control" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width: 100%">
                                     <option *ngFor="let course of courses" [value]="course.id">{{ course.title }}</option>
                                 </select>
                             </td>

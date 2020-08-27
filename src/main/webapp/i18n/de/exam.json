@@ -48,6 +48,7 @@
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
+            "notSet": "Nicht gesetzt",
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
@@ -58,12 +59,18 @@
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
-            "titleColumn": "Titel",
-            "containedExercisesColumn": "Aufgaben in Gruppe",
-            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
-            "maximumPointsColumn": "Maximal erreichbare Punkte",
+            "examStatisticsTitle": "Klausur Statistik",
+            "studentResultsTitle": "Studenten Ergebnisse",
+            "titleExerciseGroupColumn": "Aufgabengruppe",
+            "titleExerciseColumn": "Aufgabe",
+            "averageColumn": "Durchschnitt",
+            "participantsColumn": "Teilnehmer",
+            "averageExerciseTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "averageExerciseGroupTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabengruppe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "participantsExerciseTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
+            "participantsExerciseGroupTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabegruppe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",
@@ -71,7 +78,15 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
+            "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standardabweichung",
+            "noOfExams": "Klausuren",
+            "registered": "Angemeldete Studenten",
+            "noExerciseGroups": "Aufgabengruppen",
+            "submittedColumn": "Abgegeben",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -240,7 +255,7 @@
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
             "delete": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "tutorDashboard": "Tutor Klausur Dashboard"

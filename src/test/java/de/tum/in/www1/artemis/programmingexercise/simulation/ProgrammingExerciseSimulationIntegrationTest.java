@@ -56,14 +56,14 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutConnectionToVCSandCI_exerciseIsNull_badRequest() throws Exception {
+    public void createProgrammingExerciseWithoutConnectionToVCSandCI_exerciseIsNull_badRequest() throws Exception {
         request.post(ROOT + EXERCISES_SIMULATION, null, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
+    public void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         assertThat(programmingExerciseRepository.count()).isEqualTo(0);
         final var generatedExercise = request.postWithResponseBody(

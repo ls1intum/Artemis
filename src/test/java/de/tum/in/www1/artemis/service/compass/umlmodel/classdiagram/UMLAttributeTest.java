@@ -28,12 +28,12 @@ class UMLAttributeTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         attribute = new UMLAttribute("myAttribute", "String", "attributeId");
-        attribute.setParentClass(parentClass);
+        attribute.setParentElement(parentClass);
 
-        when(referenceAttribute.getParentClass()).thenReturn(referenceParentClass);
+        when(referenceAttribute.getParentElement()).thenReturn(referenceParentClass);
         when(parentClass.getSimilarityID()).thenReturn(123);
         when(referenceParentClass.getSimilarityID()).thenReturn(123);
     }

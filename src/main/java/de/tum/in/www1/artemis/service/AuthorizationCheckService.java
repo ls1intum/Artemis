@@ -4,15 +4,13 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -59,7 +57,7 @@ public class AuthorizationCheckService {
 
     /**
      * checks if the passed user is at least a teaching assistant in the course of the given exercise
-     * The course is identified from either {@link Exercise#getCourse()} or {@link Exam#getCourse()}
+     * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
      *
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
@@ -110,7 +108,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin();
+        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
     }
 
     /**
@@ -126,7 +124,7 @@ public class AuthorizationCheckService {
             user = userService.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin();
+                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin(user);
     }
 
     /**
@@ -163,7 +161,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin();
+        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
     }
 
     /**
@@ -303,23 +301,36 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
-        if (isAdmin()) {
-            return true;
-        }
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();
+        }
+        if (isAdmin(user)) {
+            return true;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
     /**
-     * checks if the currently logged in user is an admin user
+     * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
+     * Preferably use the method isAdmin(user) below
+     *
+     * Checks if the currently logged in user is an admin user
      *
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin() {
         return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
+    }
+
+    /**
+     * checks if the currently logged in user is an admin user
+     * @param user the user with authorities. Both cannot be null
+     *
+     * @return true, if user is admin, otherwise false
+     */
+    public boolean isAdmin(@NotNull User user) {
+        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
     }
 
     /**

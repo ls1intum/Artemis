@@ -73,9 +73,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         id: exerciseId,
     } as ProgrammingExercise;
     const testCases1 = [
-        { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
-        { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
-        { id: 3, testName: 'otherTest', active: false, weight: 1, afterDueDate: false },
+        { id: 1, testName: 'testBubbleSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
+        { id: 2, testName: 'testMergeSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: true },
+        { id: 3, testName: 'otherTest', active: false, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
 
     const getExerciseTestCasteStateDTO = (
@@ -186,9 +186,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
-        expect(saveWeightsButton).to.exist;
-        expect(saveWeightsButton.nativeElement.disabled).to.be.true;
+        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        expect(saveButton).to.exist;
+        expect(saveButton.nativeElement.disabled).to.be.true;
 
         tick();
         fixture.destroy();
@@ -210,15 +210,15 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.length);
 
-        const saveWeightsButton = debugElement.query(By.css(saveTestCasesButton));
-        expect(saveWeightsButton).to.exist;
-        expect(saveWeightsButton.nativeElement.disabled).to.be.true;
+        const saveButton = debugElement.query(By.css(saveTestCasesButton));
+        expect(saveButton).to.exist;
+        expect(saveButton.nativeElement.disabled).to.be.true;
 
         tick();
         fixture.destroy();
     }));
 
-    it('should enter edit mode when an edit button is clicked to edit weights', fakeAsync(() => {
+    it('should enter edit mode when an edit button is clicked to edit weights, bonus multiplier or bonus points', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
@@ -232,7 +232,8 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
         const table = debugElement.query(By.css(testCaseTableId));
         const editIcons = table.queryAll(By.css('.table-editable-field__edit'));
-        expect(editIcons).to.have.lengthOf(testCases1.length);
+        // For weight, bonus multiplier and bonus points
+        expect(editIcons).to.have.lengthOf(testCases1.length * 3);
         editIcons[0].nativeElement.click();
 
         fixture.detectChanges();
@@ -248,6 +249,34 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
         fixture.detectChanges();
 
+        // Set new bonus multiplier
+        editIcons[1].nativeElement.click();
+
+        fixture.detectChanges();
+
+        editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
+        expect(editingInput).to.exist;
+        expect(comp.editing).to.deep.equal([{ ...orderedTests[0], weight: '20' }, EditableField.BONUS_MULTIPLIER]);
+
+        editingInput.value = '2';
+        editingInput.dispatchEvent(new Event('blur'));
+
+        fixture.detectChanges();
+
+        // Set new bonus multiplier
+        editIcons[2].nativeElement.click();
+
+        fixture.detectChanges();
+
+        editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
+        expect(editingInput).to.exist;
+        expect(comp.editing).to.deep.equal([{ ...orderedTests[0], weight: '20', bonusMultiplier: '2' }, EditableField.BONUS_POINTS]);
+
+        editingInput.value = '1';
+        editingInput.dispatchEvent(new Event('blur'));
+
+        fixture.detectChanges();
+
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
 
         // Trigger button should be disabled.
@@ -255,7 +284,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         expectElementToBeDisabled(triggerButton);
 
         // Save weight.
-        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20 }]));
+        updateTestCasesStub.returns(of([{ ...orderedTests[0], weight: 20, bonusMultiplier: 2, bonusPoints: 1 }]));
         const saveButton = getSaveButton();
         expectElementToBeEnabled(saveButton);
         saveButton.click();
@@ -264,7 +293,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         editingInput = debugElement.query(By.css(tableEditingInput));
-        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [{ id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20' }]);
+        expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
+            { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20', bonusMultiplier: '2', bonusPoints: '1' },
+        ]);
         expect(editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
@@ -325,7 +356,13 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            { id: testThatWasUpdated.id, weight: testThatWasUpdated.weight, afterDueDate: testThatWasUpdated.afterDueDate },
+            {
+                id: testThatWasUpdated.id,
+                weight: testThatWasUpdated.weight,
+                afterDueDate: testThatWasUpdated.afterDueDate,
+                bonusMultiplier: testThatWasUpdated.bonusMultiplier,
+                bonusPoints: testThatWasUpdated.bonusPoints,
+            },
         ]);
 
         await new Promise((resolve) => setTimeout(resolve));

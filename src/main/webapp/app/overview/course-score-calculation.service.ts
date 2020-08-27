@@ -35,7 +35,8 @@ export class CourseScoreCalculationService {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
                     if (result !== null && result.rated) {
                         let score = result.score;
-                        if (score === null) {
+                        // this should cover score is undefined and score is null
+                        if (score == null) {
                             score = 0;
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;

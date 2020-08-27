@@ -31,6 +31,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.Job;
 import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
 import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
@@ -50,6 +51,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -93,8 +95,8 @@ public class BambooBuildPlanService {
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName, programmingExercise.getProgrammingLanguage())
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName).stages(
+                createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled()));
 
         bambooServer.publish(plan);
 
@@ -121,7 +123,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
@@ -139,6 +141,17 @@ public class BambooBuildPlanService {
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
                 }
+
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                    // Create artifacts and a final task for the execution of static code analysis
+                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
+                    String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                    defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+                    defaultJob.artifacts(artifacts);
+                }
+
                 if (!sequentialBuildRuns) {
                     return defaultStage
                             .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
@@ -176,8 +189,7 @@ public class BambooBuildPlanService {
         }
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
-            ProgrammingLanguage programmingLanguage) {
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));

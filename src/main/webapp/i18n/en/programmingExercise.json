@@ -49,6 +49,7 @@
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
+            "enableStaticCodeAnalysis": "Enable Static Code Analysis",
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
@@ -56,6 +57,8 @@
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
             "combineTemplateCommits": "Combine Template Commits",
+            "checkPlagiarism": "Check Plagiarism",
+            "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
@@ -94,12 +97,12 @@
                 "title": "Manage Test Cases",
                 "hideInactive": "Hide inactive test cases",
                 "showInactive": "Show inactivate test cases",
-                "resetWeights": "Reset weights",
-                "weightsReset": "The weights were reset successfully.",
-                "weightsResetFailed": "The weights could not be reset.",
-                "saveWeights": "Save weights",
-                "weightsUpdated": "The weights were updated successfully.",
-                "weightCouldNotBeUpdated": "The weights for the following test cases could not be updated: {{testCases}}.",
+                "reset": "Reset",
+                "resetSuccessful": "The tests were reset successfully.",
+                "resetFailed": "The tests could not be reset.",
+                "save": "Save tests",
+                "testsUpdated": "The tests were updated successfully.",
+                "testsCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
                 "saveTestCases": "Save test cases",
                 "testCasesUpdated": "The test cases were updated successfully.",
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
@@ -177,7 +180,11 @@
             },
             "intellij": {
                 "openEditor": "Open Editor"
-            }
+            },
+            "reEvaluate": "Re-evaluate all",
+            "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
+            "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
+            "reEvaluateFailed": "The re-evaulation failed: {{message}}"
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

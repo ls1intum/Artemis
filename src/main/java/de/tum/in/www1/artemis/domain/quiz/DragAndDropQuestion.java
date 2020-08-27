@@ -57,14 +57,8 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     @JsonView(QuizView.After.class)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public String getBackgroundFilePath() {
         return backgroundFilePath;
-    }
-
-    public DragAndDropQuestion backgroundFilePath(String backgroundFilePath) {
-        this.backgroundFilePath = backgroundFilePath;
-        return this;
     }
 
     public void setBackgroundFilePath(String backgroundFilePath) {
@@ -75,8 +69,15 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
         return dropLocations;
     }
 
-    public DragAndDropQuestion dropLocations(List<DropLocation> dropLocations) {
-        this.dropLocations = dropLocations;
+    public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
+        this.dropLocations.add(dropLocation);
+        dropLocation.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
+        this.dropLocations.remove(dropLocation);
+        dropLocation.setQuestion(null);
         return this;
     }
 
@@ -88,18 +89,13 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
         return dragItems;
     }
 
-    public DragAndDropQuestion dragItems(List<DragItem> dragItems) {
-        this.dragItems = dragItems;
-        return this;
-    }
-
-    public DragAndDropQuestion addDragItems(DragItem dragItem) {
+    public DragAndDropQuestion addDragItem(DragItem dragItem) {
         this.dragItems.add(dragItem);
         dragItem.setQuestion(this);
         return this;
     }
 
-    public DragAndDropQuestion removeDragItems(DragItem dragItem) {
+    public DragAndDropQuestion removeDragItem(DragItem dragItem) {
         this.dragItems.remove(dragItem);
         dragItem.setQuestion(null);
         return this;
@@ -113,18 +109,13 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
         return correctMappings;
     }
 
-    public DragAndDropQuestion correctMappings(List<DragAndDropMapping> dragAndDropMappings) {
-        this.correctMappings = dragAndDropMappings;
-        return this;
-    }
-
-    public DragAndDropQuestion addCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+    public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
         this.correctMappings.add(dragAndDropMapping);
         dragAndDropMapping.setQuestion(this);
         return this;
     }
 
-    public DragAndDropQuestion removeCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+    public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
         this.correctMappings.remove(dragAndDropMapping);
         dragAndDropMapping.setQuestion(null);
         return this;
@@ -133,7 +124,6 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
         this.correctMappings = dragAndDropMappings;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Boolean isValid() {
@@ -422,26 +412,6 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
         setCorrectMappings(null);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) o;
-        if (dragAndDropQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

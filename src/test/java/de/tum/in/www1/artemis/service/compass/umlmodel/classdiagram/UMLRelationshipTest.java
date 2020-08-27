@@ -1,56 +1,58 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.reflection.FieldSetter;
-
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
+import org.mockito.Spy;
 
 class UMLRelationshipTest {
 
     private UMLRelationship relationship;
 
-    @Mock
+    @Spy
     UMLRelationship referenceRelationship;
 
-    @Mock
+    @Spy
     UMLClass source1;
 
-    @Mock
+    @Spy
     UMLClass source2;
 
-    @Mock
+    @Spy
     UMLClass target1;
 
-    @Mock
+    @Spy
     UMLClass target2;
 
     @BeforeEach
-    void setUp() throws NoSuchFieldException {
-        MockitoAnnotations.initMocks(this);
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        relationship = new UMLRelationship(source1, target1, CLASS_BIDIRECTIONAL, "relationshipId", "sourceRole", "targetRole", "*", "0..1");
 
-        relationship = new UMLRelationship(source1, target1, UMLRelationshipType.CLASS_BIDIRECTIONAL, "relationshipId", "sourceRole", "targetRole", "*", "0..1");
+        doReturn(CLASS_BIDIRECTIONAL).when(referenceRelationship).getRelationshipType();
+        mockReferenceRelationship("sourceRole", "targetRole", "*", "0..1", source2, target2);
 
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("type"), UMLRelationshipType.CLASS_BIDIRECTIONAL);
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "sourceRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "targetRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "*");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "0..1");
-        when(referenceRelationship.getSource()).thenReturn(source2);
-        when(referenceRelationship.getTarget()).thenReturn(target2);
+        mockSimilarity(source1, source2, 1.0);
+        mockSimilarity(source2, source1, 1.0);
+        mockSimilarity(source1, target2, 1.0);
+        mockSimilarity(source2, target1, 1.0);
+    }
 
-        when(source1.similarity(source2)).thenReturn(1.0);
-        when(source2.similarity(source1)).thenReturn(1.0);
-        when(target1.similarity(target2)).thenReturn(1.0);
-        when(target2.similarity(target1)).thenReturn(1.0);
+    @AfterEach
+    void tearDown() {
+        Mockito.reset(referenceRelationship, source1, source2, target1, target2);
+    }
+
+    private void mockSimilarity(UMLClass umlClass1, UMLClass umlClass2, double similarity) {
+        doReturn(similarity).when(umlClass1).similarity(umlClass2);
     }
 
     @Test
@@ -72,136 +74,117 @@ class UMLRelationshipTest {
     }
 
     @Test
-    void similarity_sameSymmetricBidirectionalRelationship() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "targetRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "sourceRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "0..1");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "*");
-        when(referenceRelationship.getSource()).thenReturn(target2);
-        when(referenceRelationship.getTarget()).thenReturn(source2);
-
+    void similarity_sameSymmetricBidirectionalRelationship() {
+        mockReferenceRelationship("targetRole", "sourceRole", "0..1", "*", target2, source2);
         double similarity = relationship.similarity(referenceRelationship);
-
         similarity = Math.round(similarity * 1000000) / 1000000.0;
         assertThat(similarity).isEqualTo(1.0);
     }
 
     @Test
-    void similarity_noSameSymmetricUnidirectionalRelationship() throws NoSuchFieldException {
-        relationship = new UMLRelationship(source1, target1, UMLRelationshipType.CLASS_UNIDIRECTIONAL, "relationshipId", "sourceRole", "targetRole", "*", "0..1");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("type"), UMLRelationshipType.CLASS_UNIDIRECTIONAL);
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "targetRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "sourceRole");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "0..1");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "*");
-        when(referenceRelationship.getSource()).thenReturn(target2);
-        when(referenceRelationship.getTarget()).thenReturn(source2);
-        double expectedSimilarity = RELATION_TYPE_WEIGHT;
-
+    void similarity_noSameSymmetricUnidirectionalRelationship() {
+        relationship = new UMLRelationship(source1, target1, CLASS_UNIDIRECTIONAL, "relationshipId", "sourceRole", "targetRole", "*", "0..1");
+        doReturn(CLASS_UNIDIRECTIONAL).when(referenceRelationship).getRelationshipType();
+        mockReferenceRelationship("targetRole", "sourceRole", "0..1", "*", source2, target2);
+        mockSimilarity(source1, source2, 0.0);
+        mockSimilarity(source2, source1, 0.0);
+        mockSimilarity(target1, target2, 0.0);
+        mockSimilarity(target2, target1, 0.0);
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isNotEqualTo(1);
-        assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
+        assertThat(similarity).isEqualTo(RELATION_TYPE_WEIGHT, offset(0.01));
+    }
+
+    private void mockReferenceRelationship(String sourceRole, String targetRole, String sourceMultiplicity, String targetMultiplicity, UMLClass source, UMLClass target) {
+        doReturn(sourceRole).when(referenceRelationship).getSourceRole();
+        doReturn(targetRole).when(referenceRelationship).getTargetRole();
+        doReturn(sourceMultiplicity).when(referenceRelationship).getSourceMultiplicity();
+        doReturn(targetMultiplicity).when(referenceRelationship).getTargetMultiplicity();
+        doReturn(source).when(referenceRelationship).getSource();
+        doReturn(target).when(referenceRelationship).getTarget();
     }
 
     @Test
-    void similarity_differentSourceAndTargetElements() throws NoSuchFieldException {
-        when(source1.similarity(source2)).thenReturn(0.12);
-        when(source2.similarity(source1)).thenReturn(0.12);
-        when(target1.similarity(target2)).thenReturn(0.34);
-        when(target2.similarity(target1)).thenReturn(0.34);
+    void similarity_differentSourceAndTargetElements() {
+        mockSimilarity(source1, source2, 0.12);
+        mockSimilarity(source2, source1, 0.12);
+        mockSimilarity(source1, target2, 0.12);
+        mockSimilarity(target2, source1, 0.12);
+
+        mockSimilarity(target1, source2, 0.34);
+        mockSimilarity(source2, target1, 0.34);
+        mockSimilarity(target1, target2, 0.34);
+        mockSimilarity(target2, target1, 0.34);
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 0.12 * RELATION_ELEMENT_WEIGHT + 0.34 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT
                 + 2 * RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity);
     }
 
     @Test
-    void similarity_differentRelationshipType() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("type"), UMLRelationshipType.CLASS_UNIDIRECTIONAL);
+    void similarity_differentRelationshipType() {
+        doReturn(CLASS_UNIDIRECTIONAL).when(referenceRelationship).getRelationshipType();
         double expectedSimilarity = 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         expectedSimilarity = Math.round(expectedSimilarity * 1000000) / 1000000.0;
         assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
-    void similarity_differentSourceRole() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "differentRole");
+    void similarity_differentSourceRole() {
+        doReturn("differentRole").when(referenceRelationship).getSourceRole();
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
-    void similarity_differentTargetRole() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "differentRole");
+    void similarity_differentTargetRole() {
+        doReturn("differentRole").when(referenceRelationship).getTargetRole();
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + 2 * RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
-    void similarity_differentSourceMultiplicity() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "differentMultiplicity");
+    void similarity_differentSourceMultiplicity() {
+        doReturn("differentMultiplicity").when(referenceRelationship).getSourceMultiplicity();
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
-    void similarity_differentTargetMultiplicity() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "differentMultiplicity");
+    void similarity_differentTargetMultiplicity() {
+        doReturn("differentMultiplicity").when(referenceRelationship).getTargetMultiplicity();
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT + 2 * RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity, offset(0.01));
     }
 
     @Test
-    void similarity_nullReferenceValues() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), null);
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), null);
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), null);
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), null);
+    void similarity_nullReferenceValues() {
+        mockReferenceRelationship(null, null, null, null, source2, target2);
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity);
     }
 
     @Test
-    void similarity_emptyReferenceValues() throws NoSuchFieldException {
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetRole"), "");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceMultiplicity"), "");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "");
+    void similarity_emptyReferenceValues() {
+        mockReferenceRelationship("", "", "", "", source2, target2);
         double expectedSimilarity = RELATION_TYPE_WEIGHT + 2 * RELATION_ELEMENT_WEIGHT;
-
         double similarity = relationship.similarity(referenceRelationship);
-
         assertThat(similarity).isEqualTo(expectedSimilarity);
     }
 
     @Test
-    void similarity_missingAndDifferentValues() throws NoSuchFieldException {
-        relationship = new UMLRelationship(source1, target1, UMLRelationshipType.CLASS_BIDIRECTIONAL, "relationshipId", "", "targetRole", "different", "");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("sourceRole"), "");
-        FieldSetter.setField(referenceRelationship, UMLRelationship.class.getDeclaredField("targetMultiplicity"), "");
-        when(target1.similarity(target2)).thenReturn(0.42);
-        when(target2.similarity(target1)).thenReturn(0.42);
+    void similarity_missingAndDifferentValues() {
+        relationship = new UMLRelationship(source1, target1, CLASS_BIDIRECTIONAL, "relationshipId", "", "targetRole", "different", "");
+        doReturn("").when(referenceRelationship).getSourceRole();
+        doReturn("").when(referenceRelationship).getTargetMultiplicity();
+        mockSimilarity(target1, target2, 0.42);
+        mockSimilarity(target2, target1, 0.42);
         double expectedSimilarity = RELATION_TYPE_WEIGHT + RELATION_ELEMENT_WEIGHT + 0.42 * RELATION_ELEMENT_WEIGHT + RELATION_ROLE_WEIGHT + RELATION_MULTIPLICITY_WEIGHT
                 + RELATION_MULTIPLICITY_WEIGHT;
 

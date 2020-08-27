@@ -63,9 +63,16 @@ describe('RatingComponent', () => {
         expect(ratingComponent.result.id).to.equal(89);
     });
 
-    it('should return due to missing submission', () => {
+    it('should return due to missing result', () => {
         sinon.spy(ratingService, 'getRating');
-        ratingComponent.result.submission = null;
+        delete ratingComponent.result;
+        ratingComponent.ngOnInit();
+        expect(ratingService.getRating).to.not.have.been.called;
+    });
+
+    it('should return due to missing participation', () => {
+        sinon.spy(ratingService, 'getRating');
+        delete ratingComponent.result.participation;
         ratingComponent.ngOnInit();
         expect(ratingService.getRating).to.not.have.been.called;
     });

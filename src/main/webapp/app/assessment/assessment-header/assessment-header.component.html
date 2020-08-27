@@ -10,7 +10,7 @@
             id="assessmentLocked"
             *ngIf="!isAssessor && !hasComplaint"
             class="text-danger ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
@@ -20,7 +20,7 @@
             id="assessmentReadOnlyUnhandledComplaint"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !complaintHandled"
             class="ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
         >
             There is a complaint for this assessment. Another tutor must respond.
@@ -29,7 +29,7 @@
             id="assessmentReadOnlyhandled"
             *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
             class="ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
         >
             The complaint about your assessment has been resolved.
@@ -37,7 +37,7 @@
         <span
             *ngIf="!isAssessor && hasComplaint"
             class="ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
@@ -47,7 +47,7 @@
             id="assessmentLockedCurrentUser"
             *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
             class="text-danger ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
         >
             You have the lock for this assessment
@@ -70,10 +70,6 @@
         <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || submitBusy">
             <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
-        </button>
-        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()" [disabled]="submitBusy">
-            <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
-            <span jhiTranslate="artemisApp.assessment.button.resolveConflict">Resolve Conflict</span>
         </button>
         <button
             class="btn ml-2 btn-success"

@@ -2,11 +2,15 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,10 +27,12 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -51,18 +57,25 @@ public abstract class RepositoryResource {
 
     protected final RepositoryService repositoryService;
 
+    protected final ProgrammingExerciseService programmingExerciseService;
+
+    protected final Optional<VersionControlService> versionControlService;
+
     public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
+        this.programmingExerciseService = programmingExerciseService;
+        this.versionControlService = versionControlService;
     }
 
     /**
      * Override this method to define how a repository can be retrieved.
-     * 
+     *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
      * @throws IOException if the repository folder can't be accessed.
@@ -247,12 +260,11 @@ public abstract class RepositoryResource {
      * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @throws IOException if the repository can't be checked out to retrieve the status.
      * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      * @throws InterruptedException if the repository can't be checked out to retrieve the status.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         boolean hasPermissions = canAccessRepository(domainId);
@@ -277,7 +289,7 @@ public abstract class RepositoryResource {
 
     /**
      * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
-     * 
+     *
      * @param executor lambda function to execute.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
@@ -302,5 +314,48 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;
+    }
+
+    /**
+     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
+     * Map.
+     *
+     * @param submissions the file submissions (changes) that should be saved in the repository
+     * @param repository the git repository in which the file changes should be saved
+     * @return a map of <filename, error | null>
+     */
+    protected Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
+        // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
+        Map<String, String> fileSaveResult = new HashMap<>();
+        submissions.forEach((submission) -> {
+            try {
+                fetchAndUpdateFile(submission, repository);
+                fileSaveResult.put(submission.getFileName(), null);
+            }
+            catch (IOException ex) {
+                fileSaveResult.put(submission.getFileName(), ex.getMessage());
+            }
+        });
+        return fileSaveResult;
+    }
+
+    /**
+     * Retrieve the file from repository and update its content with the submission's content. Throws exceptions if the user doesn't have permissions, the file can't be retrieved
+     * or it can't be updated.
+     *
+     * @param submission information about file update
+     * @param repository repository in which to fetch and update the file
+     * @throws IOException exception when the file in the file submission parameter is empty
+     */
+    private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
+        Optional<File> file = gitService.getFileByName(repository, submission.getFileName());
+
+        if (file.isEmpty()) {
+            throw new IOException("File could not be found.");
+        }
+
+        InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
+        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+        inputStream.close();
     }
 }

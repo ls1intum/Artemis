@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/entities/course.model';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -136,7 +137,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.userId = identity ? identity.id : null;
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -272,14 +272,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.exercise && this.exercise.teamMode && this.course?.id && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.course?.id}/exercises/${this.exercise.id}/teams/${teamId}`);
-        } else if (this.exercise && !this.exercise.teamMode && this.course?.id) {
-            this.router.navigateByUrl(`/course-management/${this.course?.id}/exercises/${this.exercise.id}/tutor-dashboard`);
-        } else {
-            this.location.back();
-        }
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
     }
 
     private computeTotalScore() {

@@ -104,7 +104,7 @@
             "repoSelect": {
                 "assignmentRepo": "Assignment Repository",
                 "createAssignmentRepo": "Create Assignment Repository",
-                "resetAssignmentRepo": "Reset Assignment Repository",
+                "deleteAssignmentRepo": "Delete Assignment Repository",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
                 "testRepo": "Test Repository",

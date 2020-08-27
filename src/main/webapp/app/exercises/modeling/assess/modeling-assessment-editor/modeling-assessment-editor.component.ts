@@ -21,7 +21,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
+import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -37,7 +37,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
-    conflicts: Conflict[] | null;
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
 
@@ -315,7 +314,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -324,28 +323,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
 
                 this.highlightMissingFeedback = false;
-
-                this.conflicts = null;
-                this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
-                if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
-                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
-                    this.updateHighlightedConflictingElements();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                } else {
-                    let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
-                    if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
-                    }
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error(errorMessage);
+                let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
+                if (error.error && error.error.entityName && error.error.message) {
+                    errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error(errorMessage);
             },
         );
     }
@@ -370,12 +355,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
-    }
-
-    onShowConflictResolution() {
-        this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
-        this.jhiAlertService.clear();
-        this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -428,15 +407,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         );
     }
 
-    private updateHighlightedConflictingElements() {
-        this.highlightedElements = new Map<string, string>();
-        if (this.conflicts) {
-            this.conflicts.forEach((conflict: Conflict) => {
-                this.highlightedElements.set(conflict.causingConflictingResult.modelElementId, FeedbackHighlightColor.RED);
-            });
-        }
-    }
-
     /**
      * Validates the feedback:
      *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
@@ -462,14 +432,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        if (this.modelingExercise && this.modelingExercise.teamMode && this.modelingExercise.course && this.submission) {
-            const teamId = (this.submission.participation as StudentParticipation).team.id;
-            this.router.navigateByUrl(`/courses/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/teams/${teamId}`);
-        } else if (this.modelingExercise && !this.modelingExercise.teamMode && this.modelingExercise.course) {
-            this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
-        } else {
-            this.location.back();
-        }
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission);
     }
 
     /**
