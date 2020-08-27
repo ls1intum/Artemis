@@ -55,6 +55,14 @@ public class BuildLogEntry {
         this.log = log;
     }
 
+    public ProgrammingSubmission getProgrammingSubmission() {
+        return programmingSubmission;
+    }
+
+    public void setProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        this.programmingSubmission = programmingSubmission;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {
