@@ -13,7 +13,6 @@ import { getExercise, Participation, ParticipationType } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
@@ -36,7 +35,6 @@ enum ResultTemplateStatus {
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styles: ['span { display: inline-block; line-height: 1.25 }'],
-    providers: [ResultService],
 })
 
 /**
@@ -68,7 +66,6 @@ export class ResultComponent implements OnInit, OnChanges {
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
-        private resultService: ResultService,
         private participationService: ParticipationService,
         private translate: TranslateService,
         private http: HttpClient,

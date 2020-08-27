@@ -436,7 +436,7 @@ public class QuizExerciseService {
         }
 
         for (DragAndDropMapping mapping : mappingsToBeRemoved) {
-            dragAndDropQuestion.removeCorrectMappings(mapping);
+            dragAndDropQuestion.removeCorrectMapping(mapping);
         }
     }
 
@@ -485,7 +485,7 @@ public class QuizExerciseService {
         }
 
         for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
-            shortAnswerQuestion.removeCorrectMappings(mapping);
+            shortAnswerQuestion.removeCorrectMapping(mapping);
         }
     }
 

@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -120,16 +119,6 @@ public class QuizSubmission extends Submission implements Serializable {
         // set total score
 
         setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
-    }
-
-    /**
-     * Remove all values for scoreInPoints in this submission and all its submitted answers
-     */
-    public void removeScores() {
-        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
-            submittedAnswer.setScoreInPoints(null);
-        }
-        setScoreInPoints(null);
     }
 
     @Override
