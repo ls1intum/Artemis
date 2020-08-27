@@ -42,7 +42,7 @@ public class ResultListener {
     public void postRemove(Result deletedResult) {
         log.info("Result " + deletedResult + " was deleted");
         // remove from Student Scores and Tutor Scores
-        studentScoreService.removeResult(deletedResult);
+        // studentScoreService.removeResult(deletedResult);
         // tutorScoreService.removeResult(deletedResult);
     }
 
@@ -72,7 +72,7 @@ public class ResultListener {
     public void postPersist(Result newResult) {
         log.info("Result " + newResult + " was created");
         // add to student scores (or update existing one)
-        studentScoreService.addNewResult(newResult);
+        // studentScoreService.addNewResult(newResult);
 
         if (newResult.getAssessor() != null) {
             // add to tutor scores (or update existing one)
