@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -36,6 +37,15 @@ public class RatingService {
      */
     public Optional<Rating> findRatingByResultId(Long resultId) {
         return ratingRepository.findRatingByResultId(resultId);
+    }
+
+    /**
+     * Get all ratings for the "courseId" Course
+     * @param courseId - Id of the course that the ratings are fetched for
+     * @return List of Ratings for the course
+     */
+    public List<Rating> getAllRatingsByCourse(Long courseId) {
+        return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
     /**
