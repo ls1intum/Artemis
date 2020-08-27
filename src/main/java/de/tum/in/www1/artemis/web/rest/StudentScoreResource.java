@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.StudentScoresService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.StudentScoreService;
 import de.tum.in.www1.artemis.service.UserService;
 
 /**
@@ -30,13 +33,13 @@ import de.tum.in.www1.artemis.service.UserService;
 @Validated
 @RestController
 @RequestMapping("/api")
-public class StudentScoresResource {
+public class StudentScoreResource {
 
     // private static final String ENTITY_NAME = "studentScores";
 
-    private final Logger log = LoggerFactory.getLogger(StudentScoresResource.class);
+    private final Logger log = LoggerFactory.getLogger(StudentScoreResource.class);
 
-    private final StudentScoresService studentScoresService;
+    private final StudentScoreService studentScoreService;
 
     private final UserService userService;
 
@@ -44,14 +47,17 @@ public class StudentScoresResource {
 
     private final CourseService courseService;
 
+    private final ResultService resultService;
+
     private final AuthorizationCheckService authCheckService;
 
-    public StudentScoresResource(StudentScoresService studentScoresService, UserService userService, ExerciseService exerciseService, CourseService courseService,
-            AuthorizationCheckService authCheckService) {
-        this.studentScoresService = studentScoresService;
+    public StudentScoreResource(StudentScoreService studentScoreService, UserService userService, ExerciseService exerciseService, CourseService courseService,
+                                ResultService resultService, AuthorizationCheckService authCheckService) {
+        this.studentScoreService = studentScoreService;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
+        this.resultService = resultService;
         this.authCheckService = authCheckService;
     }
 
@@ -72,7 +78,7 @@ public class StudentScoresResource {
             return forbidden();
         }
 
-        List<StudentScore> studentScores = studentScoresService.getStudentScoresForExercise(exercise);
+        List<StudentScore> studentScores = studentScoreService.getStudentScoresForExercise(exercise);
 
         return ResponseEntity.ok(studentScores);
     }
@@ -94,8 +100,31 @@ public class StudentScoresResource {
             return forbidden();
         }
 
-        List<StudentScore> studentScores = studentScoresService.getStudentScoresForCourse(course);
+        List<StudentScore> studentScores = studentScoreService.getStudentScoresForCourse(course);
 
         return ResponseEntity.ok(studentScores);
+    }
+
+    /**
+     * GET /student-scores/course/{courseId} : Find StudentScores by course id.
+     *
+     * @param exerciseId id of the exercise
+     * @param studentLogin id of the student
+     * @return the ResponseEntity with status 200 (OK) and with the found student scores as body
+     */
+    @GetMapping("/student-scores/exercise/{exerciseId}/student/{studentLogin}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Optional<StudentScore>> getStudentScoresForExerciseAndStudent(@PathVariable Long exerciseId, @PathVariable String studentLogin) {
+        log.debug("REST request to get student scores for student and exercise {}", studentLogin, exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userService.getUserByLogin(studentLogin);
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            return forbidden();
+        }
+
+        Optional<StudentScore> studentScore = studentScoreService.getStudentScoreForStudentAndExercise(student.get(), exercise);
+        return ResponseEntity.ok(studentScore);
     }
 }

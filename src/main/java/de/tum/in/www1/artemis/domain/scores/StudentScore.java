@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "student_scores")
+@Table(name = "student_score")
 public class StudentScore {
 
     @Id
@@ -15,16 +15,16 @@ public class StudentScore {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private User student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private Exercise exercise;
 
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     private Result result;
 
     @Column(name = "score")

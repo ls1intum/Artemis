@@ -1,0 +1,38 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="sebastianjagla" id="20200820143400">
+        <createTable tableName="student_score">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="student_scorePK"/>
+            </column>
+            <column name="student_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT"/>
+            <column name="result_id" type="BIGINT"/>
+            <column name="score" type="BIGINT"/>
+        </createTable>
+        <createTable tableName="tutor_score">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutor_scorePK"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+            <column name="tutor_id" type="BIGINT"/>
+            <column name="assessments" type="BIGINT" defaultValue="0"/>
+            <column name="assessments_points" type="double" defaultValue="0"/>
+            <column name="all_complaints" type="BIGINT" defaultValue="0"/>
+            <column name="accepted_complaints" type="decimal" defaultValue="0"/>
+            <column name="complaints_points" type="double" defaultValue="0"/>
+            <column name="complaint_responses" type="BIGINT" defaultValue="0"/>
+            <column name="complaint_responses_points" type="double" defaultValue="0"/>
+            <column name="all_feedback_requests" type="BIGINT" defaultValue="0"/>
+            <column name="not_answered_feedback_requests" type="decimal" defaultValue="0"/>
+            <column name="feedback_requests_points" type="double" defaultValue="0"/>
+            <column name="answered_feedback_requests" type="BIGINT" defaultValue="0"/>
+            <column name="answered_feedback_requests_points" type="double" defaultValue="0"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="tutor_id" baseTableName="tutor_score" constraintName="FK5cjyvteh8xg64yv9ywxitrdcm" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_score" constraintName="FKbl1q55dqcr5m8qnxs9ta1hnf7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="student_score" constraintName="FKlqi6ql8srgre78nccie75vims" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="student_score" constraintName="FKpehjk77snvdy4ietgoh0v8rwj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="tutor_score" constraintName="FKrufnht4pw50ynme3kn9s3wb5y" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+    </changeSet>
+</databaseChangeLog>

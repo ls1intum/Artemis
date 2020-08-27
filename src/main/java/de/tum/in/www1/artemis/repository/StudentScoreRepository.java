@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 @Repository
-public interface StudentScoresRepository extends JpaRepository<StudentScore, Long> {
+public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 
     List<StudentScore> findAllByExercise(Exercise exercise);
 
@@ -26,5 +26,5 @@ public interface StudentScoresRepository extends JpaRepository<StudentScore, Lon
 
     Optional<StudentScore> findByResult(Result result);
 
-    List<StudentScore> findByStudentAndExercise(User student, Exercise exercise);
+    Optional<StudentScore> findByStudentAndExercise(@Param("student") User student, @Param("exercise") Exercise exercise);
 }

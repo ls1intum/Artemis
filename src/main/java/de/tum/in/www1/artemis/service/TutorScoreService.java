@@ -10,25 +10,25 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
-import de.tum.in.www1.artemis.repository.TutorScoresRepository;
+import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
-public class TutorScoresService {
+public class TutorScoreService {
 
-    private final TutorScoresRepository tutorScoresRepository;
+    private final TutorScoreRepository tutorScoreRepository;
 
-    public TutorScoresService(TutorScoresRepository tutorScoresRepository) {
-        this.tutorScoresRepository = tutorScoresRepository;
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository) {
+        this.tutorScoreRepository = tutorScoreRepository;
     }
 
     /**
      * Returns all TutorScores for exercise.
      *
-     * @param exerciseId id of the exercise
+     * @param exercise the exercise
      * @return list of tutor score objet for that exercise
      */
-    public List<TutorScore> getTutorScoresForExercise(Long exerciseId) {
-        return tutorScoresRepository.findAllByExerciseId(exerciseId);
+    public List<TutorScore> getTutorScoresForExercise(Exercise exercise) {
+        return tutorScoreRepository.findAllByExercise(exercise);
     }
 
     /**
@@ -38,14 +38,7 @@ public class TutorScoresService {
      * @return list of tutor score objects for that course
      */
     public List<TutorScore> getTutorScoresForCourse(Course course) {
-        Set<Exercise> exercises = course.getExercises();
-        Set<Long> exerciseIds = new HashSet<>();
-
-        for (Exercise exercise : exercises) {
-            exerciseIds.add(exercise.getId());
-        }
-
-        return tutorScoresRepository.findAllByExerciseIdIn(exerciseIds);
+        return tutorScoreRepository.findAllByExerciseIn(course.getExercises());
     }
 
     public void removeResult(Result deletedResult) {

@@ -8,13 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 
 @Repository
-public interface TutorScoresRepository extends JpaRepository<TutorScore, Long> {
+public interface TutorScoreRepository extends JpaRepository<TutorScore, Long> {
 
-    List<TutorScore> findAllByExerciseId(long exerciseId);
+    List<TutorScore> findAllByExercise(Exercise exercise);
 
-    @Query("SELECT t FROM TutorScore t WHERE t.exerciseId IN :#{#exercises}")
-    List<TutorScore> findAllByExerciseIdIn(@Param("exercises") Set<Long> exercises);
+    @Query("SELECT t FROM TutorScore t WHERE t.exercise IN :#{#exercises}")
+    List<TutorScore> findAllByExerciseIn(@Param("exercises") Set<Exercise> exercises);
 }

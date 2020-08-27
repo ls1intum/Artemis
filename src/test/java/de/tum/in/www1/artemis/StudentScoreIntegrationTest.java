@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,13 +24,13 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentScoresRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -41,7 +42,7 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
     ResultRepository resultRepo;
 
     @Autowired
-    StudentScoresRepository studentScoresRepo;
+    StudentScoreRepository studentScoresRepo;
 
     @Autowired
     ParticipationRepository participationRepo;
@@ -83,16 +84,12 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        studentScoresRepo.save(studentScore);
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 80).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        studentScoresRepo.save(studentScore);
 
         // course2
         course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
@@ -106,8 +103,6 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        studentScoresRepo.save(studentScore);
     }
 
     @AfterEach
@@ -119,7 +114,7 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForExerciseTest() throws Exception {
-        List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0), HttpStatus.OK, List.class);
+        List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
 
@@ -131,8 +126,6 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        studentScoresRepo.save(studentScore);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -172,8 +165,6 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        studentScoresRepo.save(studentScore);
 
         responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -201,22 +192,39 @@ public class StudentScoresIntegrationTest extends AbstractSpringIntegrationBambo
 
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
-        assertThat(responseExerciseOne.size()).as("response has length 4").isEqualTo(4);
+        assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
 
         // score for student3 in exercise1 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).resultString("Good effort!").participation(participation);
         resultRepo.save(result);
 
-        studentScore = new StudentScore(user, exercise, result, result.getScore());
-        // damit passt es, aber das ist nicht das erwartete, da resultRepo.save() das mit @PostPersist ausführen sollte
-        // studentScoresRepo.save(studentScore);
-
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
 
-        // TODO: this is not a good assertation, use a better one
+        // TODO: this is not a good assertion, use a better one
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
-        // responseExerciseOne.size() is 2 because @PostPersist is not working as intended
-        assertThat(responseExerciseOne.size()).as("response has length 5").isEqualTo(5);
+        assertThat(responseExerciseOne.size()).as("response has length 3").isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoreForStudentAndExerciseTest() throws Exception {
+        user = userRepo.findAllInGroup("tumuser").get(0);
+        exercise = exerciseRepo.findAll().get(0);
+
+        Optional<StudentScore> response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, Optional.class);
+        assertThat(response.isEmpty()).as("response is not empty").isFalse();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoreUpdateTest() throws Exception {
+        exercise = exerciseRepo.findAll().get(0);
+        result = resultRepo.findAll().get(0);
+        result.setScore(100L);
+        resultRepo.save(result);
+
+        Optional<StudentScore> response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, Optional.class);
+        assertThat(response.isEmpty()).as("response is not empty").isFalse();
     }
 }

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.TutorScoresService;
+import de.tum.in.www1.artemis.service.TutorScoreService;
 import de.tum.in.www1.artemis.service.UserService;
 
 /**
@@ -30,13 +30,13 @@ import de.tum.in.www1.artemis.service.UserService;
 @Validated
 @RestController
 @RequestMapping("/api")
-public class TutorScoresResource {
+public class TutorScoreResource {
 
     // private static final String ENTITY_NAME = "tutorScores";
 
-    private final Logger log = LoggerFactory.getLogger(TutorScoresResource.class);
+    private final Logger log = LoggerFactory.getLogger(TutorScoreResource.class);
 
-    private final TutorScoresService tutorScoresService;
+    private final TutorScoreService tutorScoreService;
 
     private final UserService userService;
 
@@ -46,9 +46,9 @@ public class TutorScoresResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public TutorScoresResource(TutorScoresService tutorScoresService, UserService userService, ExerciseService exerciseService, CourseService courseService,
-            AuthorizationCheckService authCheckService) {
-        this.tutorScoresService = tutorScoresService;
+    public TutorScoreResource(TutorScoreService tutorScoreService, UserService userService, ExerciseService exerciseService, CourseService courseService,
+                              AuthorizationCheckService authCheckService) {
+        this.tutorScoreService = tutorScoreService;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -72,7 +72,7 @@ public class TutorScoresResource {
             return forbidden();
         }
 
-        List<TutorScore> tutorScores = tutorScoresService.getTutorScoresForExercise(exerciseId);
+        List<TutorScore> tutorScores = tutorScoreService.getTutorScoresForExercise(exercise);
 
         return ResponseEntity.ok(tutorScores);
     }
@@ -94,7 +94,7 @@ public class TutorScoresResource {
             return forbidden();
         }
 
-        List<TutorScore> tutorScores = tutorScoresService.getTutorScoresForCourse(course);
+        List<TutorScore> tutorScores = tutorScoreService.getTutorScoresForCourse(course);
 
         return ResponseEntity.ok(tutorScores);
     }

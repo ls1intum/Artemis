@@ -2,8 +2,11 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+
 @Entity
-@Table(name = "tutor_scores")
+@Table(name = "tutor_score")
 public class TutorScore {
 
     @Id
@@ -11,11 +14,11 @@ public class TutorScore {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "tutor_id")
-    private long tutorId;
+    @ManyToOne
+    private User tutor;
 
-    @Column(name = "exercise_id")
-    private long exerciseId;
+    @ManyToOne
+    private Exercise exercise;
 
     @Column(name = "assessments")
     private long assessments;
@@ -55,8 +58,12 @@ public class TutorScore {
         this.id = id;
     }
 
-    public long getExerciseId() {
-        return exerciseId;
+    public User getTutor() {
+        return tutor;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
     }
 
     public long getAssessments() {
@@ -103,19 +110,10 @@ public class TutorScore {
         // Empty constructor because of @Entity
     }
 
-    public TutorScore(long tutorId, long exerciseId, long assessments, double assessmentsPoints) {
-        this.tutorId = tutorId;
-        this.exerciseId = exerciseId;
+    public TutorScore(User tutor, Exercise exercise, long assessments, double assessmentsPoints) {
+        this.tutor = tutor;
+        this.exercise = exercise;
         this.assessments = assessments;
         this.assessmentsPoints = assessmentsPoints;
     }
-
-    /*
-     * public TutorScore(long tutorScoreId, long tutorId, long exerciseId, long assessments, double assessmentsPoints, long allComplaints, long acceptedComplaints, double
-     * complaintsPoints, long allFeedbackRequests, long notAnsweredFeedbackRequests, double feedbackRequestsPoints, long answeredFeedbackRequests, double
-     * answeredFeedbackRequestsPoints) { this.tutorScoreId = tutorScoreId; this.tutorId = tutorId; this.exerciseId = exerciseId; this.assessments = assessments;
-     * this.assessmentsPoints = assessmentsPoints; this.allComplaints = allComplaints; this.acceptedComplaints = acceptedComplaints; this.complaintsPoints = complaintsPoints;
-     * this.allFeedbackRequests = allFeedbackRequests; this.notAnsweredFeedbackRequests = notAnsweredFeedbackRequests; this.feedbackRequestsPoints = feedbackRequestsPoints;
-     * this.answeredFeedbackRequests = answeredFeedbackRequests; this.answeredFeedbackRequestsPoints = answeredFeedbackRequestsPoints; }
-     */
 }
