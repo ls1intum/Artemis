@@ -95,20 +95,24 @@ public class TutorScoreService {
             if (deletedResult.hasComplaint()) {
                 Complaint complaint = complaintRepository.findByResult_Id(deletedResult.getId()).get();
 
-                // complaint responses currently not included
-                // complaint response
-                Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-
-                if (complaintResponse.isPresent()) {
-                    // var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
-                }
-
                 if (complaint.isAccepted()) {
                     tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() - 1);
                 }
 
                 tutorScore.setAllComplaints(tutorScore.getAllComplaints() - 1);
                 tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() - exercise.getMaxScore());
+
+                // complaint response
+                Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+
+                if (complaintResponse.isPresent()) {
+                    var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+
+                    fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
+                    fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+
+                    tutorScoreRepository.save(fromComplaintResponse);
+                }
             }
 
             tutorScoreRepository.save(tutorScore);

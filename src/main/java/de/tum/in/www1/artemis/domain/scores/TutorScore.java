@@ -35,6 +35,12 @@ public class TutorScore {
     @Column(name = "complaints_points")
     private double complaintsPoints;
 
+    @Column(name = "complaint_responses")
+    private long complaintResponses;
+
+    @Column(name = "complaint_responses_points")
+    private double complaintResponsesPoints;
+
     @Column(name = "all_feedback_requests")
     private long allFeedbackRequests;
 
@@ -84,6 +90,14 @@ public class TutorScore {
 
     public double getComplaintsPoints() {
         return complaintsPoints;
+    }
+
+    public long getComplaintResponses() {
+        return complaintResponses;
+    }
+
+    public double getComplaintResponsesPoints() {
+        return complaintResponsesPoints;
     }
 
     public long getAllFeedbackRequests() {
@@ -136,6 +150,14 @@ public class TutorScore {
 
     public void setComplaintsPoints(double complaintsPoints) {
         this.complaintsPoints = complaintsPoints;
+    }
+
+    public void setComplaintResponses(long complaintResponses) {
+        this.complaintResponses = complaintResponses;
+    }
+
+    public void setComplaintResponsesPoints(double complaintResponsesPoints) {
+        this.complaintResponsesPoints = complaintResponsesPoints;
     }
 
     public void setAllFeedbackRequests(long allFeedbackRequests) {
