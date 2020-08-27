@@ -43,6 +43,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly commitState: CommitState;
     @Input()
     readonly editorState: EditorState;
+    @Input()
+    isTutorAssessment = false;
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
@@ -163,6 +165,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param code {string} Current editor code
      */
     onFileTextChanged(code: string) {
+        if (this.isTutorAssessment) {
+            this.editor.setReadOnly(true);
+        }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             if (this.fileSession[this.selectedFile].code !== code) {

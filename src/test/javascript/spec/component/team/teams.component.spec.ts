@@ -1,3 +1,4 @@
+import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
@@ -37,6 +38,9 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamsComponent', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist.js');
+
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;
