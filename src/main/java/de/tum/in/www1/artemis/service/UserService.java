@@ -856,26 +856,38 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group
+     * add the user to the specified group and update in VCS (like GitLab) if used
      * @param user the user
      * @param group the group
      */
     public void addUserToGroup(User user, String group) {
-        final var oldGroups = new TreeSet<>(user.getGroups());
-        artemisAuthenticationProvider.addUserToGroup(user, group);
-        updateUserInConnectorsAndAuthProvider(user, oldGroups);
+        if (optionalVcsUserManagementService.isPresent()) {
+            final var oldGroups = new TreeSet<>(user.getGroups());
+            artemisAuthenticationProvider.addUserToGroup(user, group);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups);
+        }
+        else {
+            artemisAuthenticationProvider.addUserToGroup(user, group);
+        }
+
     }
 
     /**
-     * remove the user from the specified group
+     * remove the user from the specified group and update in VCS (like GitLab) if used
      *
      * @param user the user
      * @param group the group
      */
     public void removeUserFromGroup(User user, String group) {
-        final var oldGroups = new TreeSet<>(user.getGroups());
-        artemisAuthenticationProvider.removeUserFromGroup(user, group);
-        updateUserInConnectorsAndAuthProvider(user, oldGroups);
+
+        if (optionalVcsUserManagementService.isPresent()) {
+            final var oldGroups = new TreeSet<>(user.getGroups());
+            artemisAuthenticationProvider.removeUserFromGroup(user, group);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups);
+        }
+        else {
+            artemisAuthenticationProvider.removeUserFromGroup(user, group);
+        }
     }
 
     /**
