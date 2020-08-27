@@ -9,7 +9,7 @@
             <div class="d-flex mb-1">
                 <button
                     class="btn btn-primary"
-                    style="height: 40px;"
+                    style="height: 40px"
                     (click)="handleGenerateStudentExams()"
                     *ngIf="course?.isAtLeastInstructor"
                     [disabled]="isLoading || isExamStarted"
@@ -19,7 +19,7 @@
                 </button>
                 <button
                     class="btn btn-primary ml-1"
-                    style="height: 40px;"
+                    style="height: 40px"
                     (click)="generateMissingStudentExams()"
                     *ngIf="course?.isAtLeastInstructor"
                     [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
@@ -27,23 +27,23 @@
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
                 </button>
-                <button class="btn btn-primary ml-1" style="height: 40px;" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
+                <button class="btn btn-primary ml-1" style="height: 40px" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
                 </button>
-                <button class="btn btn-danger ml-1" style="height: 40px;" (click)="handleUnlockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                <button class="btn btn-danger ml-1" style="height: 40px" (click)="handleUnlockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
                     <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
                 </button>
-                <button class="btn btn-danger ml-1" style="height: 40px;" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                <button class="btn btn-danger ml-1" style="height: 40px" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
                     <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
                 </button>
                 <button
                     class="btn btn-primary ml-1"
-                    style="height: 40px;"
+                    style="height: 40px"
                     (click)="evaluateQuizExercises()"
                     *ngIf="course?.isAtLeastInstructor"
                     [disabled]="isLoading || !isExamOver"
