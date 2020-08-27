@@ -13,7 +13,8 @@
             "assessmentType": "Bewertungstyp",
             "openSubmission": "Abgabe anzeigen",
             "title": "Liste von Ratings",
-            "pageTitle": "Ratings"
+            "pageTitle": "Ratings",
+            "noRatingToShow": "Es gibt noch keine Ratings."
         }
     }
 }

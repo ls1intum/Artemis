@@ -13,7 +13,11 @@
     <jhi-alert></jhi-alert>
 
     <div class="row table-responsive">
-        <table class="table" [hidden]="ratings.length === 0">
+        <div [hidden]="ratings.length === 0">
+            <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
+        </div>
+
+        <table class="table" [hidden]="ratings.length !== 0">
             <thead>
                 <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id">
