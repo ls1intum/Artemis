@@ -3,18 +3,18 @@
         <h3 *ngIf="quizExercise.title !== question.title">{{ quizExercise.title }}</h3>
         <div class="row">
             <div *ngIf="question" class="col">
-                <h3>{{ question.title }} <span style="color: red;" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
+                <h3>{{ question.title }} <span style="color: red" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
                 <h4 [innerHTML]="questionTextRendered"></h4>
                 <div>
                     <div class="row">
                         <div class="col-md-8 text-left">
-                            <p id="text" style="font-size: large;">
+                            <p id="text" style="font-size: large">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
                         <div class="col-md-3 text-right">
-                            <p style="font-size: large;">
+                            <p style="font-size: large">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>

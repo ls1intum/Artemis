@@ -23,9 +23,7 @@
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
-                    <strong [jhiTranslate]="'instructorDashboard.exportSubmissions.downloadAllStudents'">
-                        Or download the submissions of all students }}
-                    </strong>
+                    <strong [jhiTranslate]="'instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students }} </strong>
                 </label>
             </div>
         </ng-container>

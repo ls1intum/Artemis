@@ -3,14 +3,15 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 
+import java.awt.*;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,18 +21,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.DropLocation;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.PointCounter;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -74,8 +64,33 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     private QuizExercise quizExercise;
 
+    // helper attributes for shorter code in assert statements
+    private final PointCounter pc01 = pc(0, 1);
+
+    private final PointCounter pc02 = pc(0, 2);
+
+    private final PointCounter pc03 = pc(0, 3);
+
+    private final PointCounter pc04 = pc(0, 4);
+
+    private final PointCounter pc05 = pc(0, 5);
+
+    private final PointCounter pc06 = pc(0, 6);
+
+    private final PointCounter pc10 = pc(1, 0);
+
+    private final PointCounter pc20 = pc(2, 0);
+
+    private final PointCounter pc30 = pc(3, 0);
+
+    private final PointCounter pc40 = pc(4, 0);
+
+    private final PointCounter pc50 = pc(5, 0);
+
+    private final PointCounter pc60 = pc(6, 0);
+
     @BeforeEach
-    public void init() throws Exception {
+    public void init() {
         database.addUsers(15, 5, 1);
         quizScheduleService.startSchedule(5 * 1000);
     }
@@ -162,7 +177,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseForExam() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were saved").isEqualTo(3);
@@ -330,7 +345,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExerciseForExam() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
@@ -443,7 +458,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateQuizExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
         database.addExerciseGroupWithExamAndCourse(true);
-        QuizExercise quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = createQuizOnServerForExam();
 
         quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
@@ -482,10 +497,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         return quizExerciseServer;
     }
 
-    private QuizExercise createQuizOnServerForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate) throws Exception {
+    private QuizExercise createQuizOnServerForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
-        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup, releaseDate, dueDate);
+        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
@@ -634,7 +649,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamQuizExercise() throws Exception {
-        quizExercise = createQuizOnServerForExam(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServerForExam();
 
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
@@ -648,7 +663,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup, ZonedDateTime.now().plusHours(5), null);
+        quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
@@ -730,13 +745,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
-    // TODO: Deactivated for now as this test is flaky. Maybe double comparisons cause that
-    @Disabled
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
-        // var now = ZonedDateTime.now();
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -751,25 +763,19 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
                 QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
-
                 database.addSubmission(quizExercise, quizSubmission, "student" + i);
-
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
             }
         }
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
-
         database.addSubmission(quizExercise, quizSubmission, "student1");
-
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         // submission with nothing selected
         quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
-
         database.addSubmission(quizExercise, quizSubmission, "student5");
-
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         assertThat(studentParticipationRepository.findAll().size()).isEqualTo(10);
@@ -784,74 +790,59 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         // remove wrong answer option and reevaluate
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.getAnswerOptions().remove(1);
+        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        multipleChoiceQuestion.getAnswerOptions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+
+        // load the exercise again after it was re-evaluated
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+
+        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
+        assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
+
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
+        System.out.println(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().hashCode());
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2); // one less
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(3); // one more
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
+        // TODO: sometimes 0.0 is flaky and will be pc30 instead of pc20
+        // TODO: sometimes 4.0 is flaky and will be pc20 instead of pc30
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
 
         // set a question invalid and reevaluate
-        ShortAnswerQuestion sq = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sq.setInvalid(true);
+        var shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        shortAnswerQuestion.setInvalid(true);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        // load the exercise again after it was re-evaluated
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+
+        var shortAnswerQuestionAfterReevaluation = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        assertThat(shortAnswerQuestionAfterReevaluation.isInvalid()).isTrue();
 
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 2.0 || pointCounter.getPoints() == 5.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 9.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
 
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        // load the exercise again after it was re-evaluated
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 
         // max score should be less
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 2.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(4);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(6);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
     }
 
-    @Disabled
-    // TODO: this is a flaky test and it's unclear why. We skip it for now.
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {
 
@@ -868,8 +859,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // generate unrated submissions for each student
         int numberOfParticipants = 10;
-
-        // TODO: maybe the test is flaky because the submissions and results are directly added to the database instead of using the REST calls?
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
@@ -916,24 +905,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
 
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0 || pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
-            }
-            else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
-            }
-            else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
+
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc02, 3.0, pc02, 4.0, pc03, 6.0, pc02, 7.0, pc01));
 
         // set a question invalid and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(2).setInvalid(true);
@@ -945,20 +918,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 2.0 || pointCounter.getPoints() == 5.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
-            }
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(5);
-            }
-            else if (pointCounter.getPoints() == 9.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
-            }
-        }
+
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc02, 5.0, pc02, 6.0, pc05, 9.0, pc01));
 
         // delete a question and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().remove(1);
@@ -970,14 +931,29 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
-        for (PointCounter pointCounter : quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 2.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(4);
+
+        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc04, 6.0, pc06));
+    }
+
+    private PointCounter pc(int rated, int unrated) {
+        var pointCounter = new PointCounter();
+        pointCounter.setRatedCounter(rated);
+        pointCounter.setUnRatedCounter(unrated);
+        return pointCounter;
+    }
+
+    private void assertQuizPointStatisticsPointCounters(QuizExercise quizExercise, Map<Double, PointCounter> expectedPointCounters) {
+        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
+            var expectedPointCounter = expectedPointCounters.get(pointCounter.getPoints());
+            if (expectedPointCounter != null) {
+                assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of " + expectedPointCounter.getRatedCounter())
+                        .isEqualTo(expectedPointCounter.getRatedCounter());
+                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have an unrated counter of " + expectedPointCounter.getUnRatedCounter())
+                        .isEqualTo(expectedPointCounter.getUnRatedCounter());
             }
-            else if (pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(6);
+            else {
+                assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isEqualTo(0);
             }
         }
     }
@@ -1052,6 +1028,34 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(pointCounterAfter.getPoints()).isEqualTo(pointCounterBefore.getPoints());
             assertThat(pointCounterAfter.getRatedCounter()).isEqualTo(pointCounterBefore.getRatedCounter());
             assertThat(pointCounterAfter.getUnRatedCounter()).isEqualTo(pointCounterBefore.getUnRatedCounter());
+        }
+
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            var statistic = quizQuestion.getQuizQuestionStatistic();
+            if (statistic instanceof MultipleChoiceQuestionStatistic) {
+                var mcStatistic = (MultipleChoiceQuestionStatistic) statistic;
+                assertThat(mcStatistic.getAnswerCounters()).isNotEmpty();
+                for (var counter : mcStatistic.getAnswerCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getMultipleChoiceQuestionStatistic());
+                }
+            }
+            if (statistic instanceof DragAndDropQuestionStatistic) {
+                var dndStatistic = (DragAndDropQuestionStatistic) statistic;
+                assertThat(dndStatistic.getDropLocationCounters()).isNotEmpty();
+                for (var counter : dndStatistic.getDropLocationCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getDragAndDropQuestionStatistic());
+                }
+            }
+            if (statistic instanceof ShortAnswerQuestionStatistic) {
+                var saStatistic = (ShortAnswerQuestionStatistic) statistic;
+                assertThat(saStatistic.getShortAnswerSpotCounters()).isNotEmpty();
+                for (var counter : saStatistic.getShortAnswerSpotCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getShortAnswerQuestionStatistic());
+                }
+            }
         }
     }
 

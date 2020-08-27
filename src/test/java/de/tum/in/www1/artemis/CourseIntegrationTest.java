@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -285,7 +286,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         jiraRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
+        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(true));
+        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null);
+        course3.setStudentGroupName(course3.getDefaultStudentGroupName());
+        course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
+        course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
+        course3 = courseRepo.save(course3);
+        courses.add(course3);
         database.addExamWithExerciseGroup(courses.get(0), true);
         // mock certain requests to JIRA Bitbucket and Bamboo
         for (Course course : courses) {

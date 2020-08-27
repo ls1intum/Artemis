@@ -195,7 +195,7 @@ describe('CodeEditorInstructorIntegration', () => {
             id: 1,
             problemStatement,
             studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
+            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
             course: { id: 1 },
         } as ProgrammingExercise;
@@ -230,7 +230,7 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
         containerFixture.detectChanges();
 
-        // Result is successful, build logs should not be retrieved
+        // Submission could be built
         expect(getBuildLogsStub).to.not.have.been.called;
         // Once called by each build-output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;

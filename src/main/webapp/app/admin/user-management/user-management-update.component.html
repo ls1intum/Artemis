@@ -1,9 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="myUserLabel" jhiTranslate="userManagement.home.createOrEditLabel">
-                Create or edit a User
-            </h2>
+            <h2 id="myUserLabel" jhiTranslate="userManagement.home.createOrEditLabel">Create or edit a User</h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!user.id">
@@ -26,9 +24,7 @@
                     />
 
                     <div *ngIf="loginInput.dirty && loginInput.invalid">
-                        <small class="form-text text-danger" *ngIf="loginInput.errors?.required" jhiTranslate="entity.validation.required">
-                            This field is required.
-                        </small>
+                        <small class="form-text text-danger" *ngIf="loginInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
 
                         <small class="form-text text-danger" *ngIf="loginInput.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }">
                             This field cannot be longer than 50 characters.
@@ -110,9 +106,7 @@
                     <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="254" email />
 
                     <div *ngIf="emailInput.dirty && emailInput.invalid">
-                        <small class="form-text text-danger" *ngIf="emailInput.errors?.required" jhiTranslate="entity.validation.required">
-                            This field is required.
-                        </small>
+                        <small class="form-text text-danger" *ngIf="emailInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
 
                         <small class="form-text text-danger" *ngIf="emailInput.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }">
                             This field cannot be longer than 100 characters.
@@ -122,9 +116,7 @@
                             This field is required to be at least 5 characters.
                         </small>
 
-                        <small class="form-text text-danger" *ngIf="emailInput.errors?.email" jhiTranslate="global.messages.validate.email.invalid">
-                            Your email is invalid.
-                        </small>
+                        <small class="form-text text-danger" *ngIf="emailInput.errors?.email" jhiTranslate="global.messages.validate.email.invalid"> Your email is invalid. </small>
                     </div>
                 </div>
                 <div class="form-check">

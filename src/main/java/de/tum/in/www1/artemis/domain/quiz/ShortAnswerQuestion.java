@@ -43,15 +43,8 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public List<ShortAnswerSpot> getSpots() {
         return spots;
-    }
-
-    public ShortAnswerQuestion spots(List<ShortAnswerSpot> shortAnswerSpots) {
-        this.spots = shortAnswerSpots;
-        return this;
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
@@ -62,18 +55,13 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return solutions;
     }
 
-    public ShortAnswerQuestion solutions(List<ShortAnswerSolution> shortAnswerSolutions) {
-        this.solutions = shortAnswerSolutions;
-        return this;
-    }
-
-    public ShortAnswerQuestion addSolutions(ShortAnswerSolution shortAnswerSolution) {
+    public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
         this.solutions.add(shortAnswerSolution);
         shortAnswerSolution.setQuestion(this);
         return this;
     }
 
-    public ShortAnswerQuestion removeSolutions(ShortAnswerSolution shortAnswerSolution) {
+    public ShortAnswerQuestion removeSolution(ShortAnswerSolution shortAnswerSolution) {
         this.solutions.remove(shortAnswerSolution);
         shortAnswerSolution.setQuestion(null);
         return this;
@@ -87,18 +75,13 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return correctMappings;
     }
 
-    public ShortAnswerQuestion correctMappings(List<ShortAnswerMapping> shortAnswerMappings) {
-        this.correctMappings = shortAnswerMappings;
-        return this;
-    }
-
-    public ShortAnswerQuestion addCorrectMappings(ShortAnswerMapping shortAnswerMapping) {
+    public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
         this.correctMappings.add(shortAnswerMapping);
         shortAnswerMapping.setQuestion(this);
         return this;
     }
 
-    public ShortAnswerQuestion removeCorrectMappings(ShortAnswerMapping shortAnswerMapping) {
+    public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
         this.correctMappings.remove(shortAnswerMapping);
         shortAnswerMapping.setQuestion(null);
         return this;
@@ -188,6 +171,7 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         if (originalQuizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
+            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
         }
     }
 
@@ -339,26 +323,6 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
         setCorrectMappings(null);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) o;
-        if (shortAnswerQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
