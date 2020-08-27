@@ -32,6 +32,7 @@
             "createManual": "Erstelle manuelles Ergebnis",
             "updateManual": "Manuelles Ergebnis aktualisieren",
             "viewManual": "Manuelles Ergebnis anzeigen",
+            "manualResult": "Manuelles Ergebnis",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
             "resultStringRequired": "Ein Ergebnis Text ist erforderlich.",
             "studentLogin": "Studenten Login",

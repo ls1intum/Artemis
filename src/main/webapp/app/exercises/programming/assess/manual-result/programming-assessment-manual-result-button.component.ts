@@ -1,15 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { filter } from 'rxjs/operators';
-import { cloneDeep } from 'lodash';
 import { User } from 'app/core/user/user.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -20,7 +19,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
             [title]="latestResult ? (latestResult.hasComplaint ? 'entity.action.viewResult' : 'entity.action.updateResult') : 'entity.action.newResult'"
-            (onClick)="openManualResultDialog($event)"
+            (onClick)="openCodeEditorWithStudentSubmission()"
         ></jhi-button>
     `,
 })
@@ -34,7 +33,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
 
     latestResultSubscription: Subscription;
 
-    constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService, private router: Router) {}
 
     /**
      * - Check that the inserted result is of type MANUAL, otherwise set it to null
@@ -78,21 +77,14 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         }
     }
 
-    /**
-     * Stops the propagation of the mouse event, updates the component instance of the modalRef with
-     * this instance's values and emits the result if it is modified
-     * @param {MouseEvent} event - Mouse event
-     */
-    openManualResultDialog(event: MouseEvent) {
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.participationId = this.participationId;
-        modalRef.componentInstance.result = cloneDeep(this.latestResult);
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.onResultModified.subscribe(($event: Result) => this.onResultModified.emit($event));
-        modalRef.result.then(
-            (result) => this.onResultModified.emit(result),
-            () => {},
-        );
+    async openCodeEditorWithStudentSubmission() {
+        let courseId;
+        if (!!this.exercise.exerciseGroup) {
+            courseId = this.exercise.exerciseGroup.exam?.course.id;
+        } else {
+            courseId = this.exercise.course!.id;
+        }
+        const route = `/course-management/${courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
+        await this.router.navigate([route]);
     }
 }
