@@ -26,6 +26,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
+    providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
