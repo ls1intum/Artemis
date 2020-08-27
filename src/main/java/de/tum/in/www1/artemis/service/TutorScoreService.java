@@ -125,7 +125,7 @@ public class TutorScoreService {
         StudentParticipation participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId()).get();
         Exercise exercise = participation.getExercise();
 
-        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
+        /*var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
 
         if (existingTutorScore.isPresent()) {
             // same assessor do nothing
@@ -136,7 +136,7 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + exercise.getMaxScore());
 
             tutorScoreRepository.save(tutorScore);
-        }
+        }*/
     }
 
     /**
