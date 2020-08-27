@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -72,10 +73,12 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     private Rating rating;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1);
-        database.addCourseWithOneReleasedTextExercise();
+        course = database.addCourseWithOneReleasedTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
         database.addParticipationForExercise(exercise, student1.getLogin());
@@ -170,5 +173,27 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         // check that rating is not updated
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
         assertThat(updatedRating.getRating()).isNotEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
+
+        assertThat(ratings.size()).isEqualTo(1);
+        assertThat(ratings.get(0).getId()).isEqualTo(savedRating.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 }
