@@ -105,12 +105,7 @@ public class ShortAnswerSpot implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid;
-    }
-
-    public ShortAnswerSpot invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -121,19 +116,12 @@ public class ShortAnswerSpot implements Serializable {
         return question;
     }
 
-    public ShortAnswerSpot question(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-        return this;
-    }
-
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public ShortAnswerSpot mappings(Set<ShortAnswerMapping> mappings) {
-        this.mappings = mappings;
-        return this;
+    public Set<ShortAnswerMapping> getMappings() {
+        return mappings;
     }
 
     public ShortAnswerSpot addMappings(ShortAnswerMapping mapping) {

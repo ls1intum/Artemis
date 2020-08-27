@@ -47,7 +47,7 @@ public class ModelingPlagiarismDetectionService {
      *
      * @param modelingSubmissions List of modeling submissions
      * @param minimumSimilarity the minimum similarity so that the result is considered
-     * @param minimumModelSize the miminum number of model elements to be considered as plagiarism
+     * @param minimumModelSize the minimum number of model elements to be considered as plagiarism
      * @param minimumScore the minimum result score (if available) to be considered as plagiarism
      * @return List of submission id pairs and similarity score
      */

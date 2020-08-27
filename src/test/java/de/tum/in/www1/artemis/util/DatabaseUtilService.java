@@ -870,8 +870,9 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Result addResultToSubmission(Submission submission) {
-        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
+    public Result addResultToSubmission(Submission submission, AssessmentType assessmentType) {
+        Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L)
+                .assessmentType(assessmentType);
         resultRepo.save(result);
         return result;
     }
@@ -949,8 +950,9 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingSubmission createProgrammingSubmission(Participation participation) {
-        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+    public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed) {
+        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setBuildFailed(buildFailed);
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now());
         programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         programmingSubmission.setParticipation(participation);
@@ -1304,7 +1306,6 @@ public class DatabaseUtilService {
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
-        submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
         return submission;
     }
@@ -1603,18 +1604,18 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
-        Result r = addResultToSubmission(submission, assessmentType, user);
-        r.setRated(rated);
-        r.setScore(score);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, assessmentType, user);
+        result.setRated(rated);
+        result.setScore(score);
+        return resultRepo.save(result);
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        Result r = addResultToSubmission(submission);
-        r.setAssessmentType(assessmentType);
-        r.completionDate(ZonedDateTime.now());
-        r.setAssessor(user);
-        return resultRepo.save(r);
+        Result result = addResultToSubmission(submission, null);
+        result.setAssessmentType(assessmentType);
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessor(user);
+        return resultRepo.save(result);
     }
 
     public Set<ExerciseHint> addHintsToExercise(Exercise exercise) {
@@ -1692,13 +1693,17 @@ public class DatabaseUtilService {
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
             dragItem1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem1.toString());
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem2.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation1.toString());
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation2.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
@@ -1724,6 +1729,9 @@ public class DatabaseUtilService {
                 else {
                     submittedText.setText("wrong short answer");
                 }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
                 submittedAnswer.addSubmittedTexts(submittedText);
             }
             return submittedAnswer;
@@ -1757,12 +1765,14 @@ public class DatabaseUtilService {
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());
         var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
         shortAnswerSpot2.setTempID(generateTempId());
         sa.getSpots().add(shortAnswerSpot1);
         sa.getSpots().add(shortAnswerSpot2);
+
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
         shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
@@ -1772,12 +1782,26 @@ public class DatabaseUtilService {
         sa.removeSolution(shortAnswerSolution1);
         sa.addSolution(shortAnswerSolution1);
         sa.addSolution(shortAnswerSolution2);
-        var solution1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
-        var solution2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
-        sa.addCorrectMapping(solution1);
-        sa.removeCorrectMapping(solution1);
-        sa.addCorrectMapping(solution1);
-        sa.addCorrectMapping(solution2);
+
+        var mapping1 = new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0));
+        shortAnswerSolution1.addMappings(mapping1);
+        shortAnswerSpot1.addMappings(mapping1);
+        // also invoke remove once
+        shortAnswerSolution1.removeMappings(mapping1);
+        shortAnswerSpot1.removeMappings(mapping1);
+        shortAnswerSolution1.addMappings(mapping1);
+        shortAnswerSpot1.addMappings(mapping1);
+        assertThat(shortAnswerSolution1.getMappings()).isNotEmpty();
+        assertThat(shortAnswerSpot1.getMappings()).isNotEmpty();
+        System.out.println(shortAnswerSolution1.toString());
+        System.out.println(shortAnswerSpot1.toString());
+
+        var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
+        sa.addCorrectMapping(mapping1);
+        assertThat(sa).isEqualTo(mapping1.getQuestion());
+        sa.removeCorrectMapping(mapping1);
+        sa.addCorrectMapping(mapping1);
+        sa.addCorrectMapping(mapping2);
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
@@ -1791,6 +1815,7 @@ public class DatabaseUtilService {
     public DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
@@ -1800,16 +1825,25 @@ public class DatabaseUtilService {
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
+
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
+        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
+
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+        dragItem1.addMappings(mapping1);
+        // also invoke remove
+        dragItem1.removeMappings(mapping1);
+        dragItem1.addMappings(mapping1);
+        assertThat(dragItem1.getMappings()).isNotEmpty();
+
         dnd.addCorrectMapping(mapping1);
         dnd.removeCorrectMapping(mapping1);
         dnd.addCorrectMapping(mapping1);

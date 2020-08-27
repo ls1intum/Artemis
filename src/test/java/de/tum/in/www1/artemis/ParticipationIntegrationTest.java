@@ -191,7 +191,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
         Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
-        database.addResultToSubmission(submissionWithResult);
+        database.addResultToSubmission(submissionWithResult, null);
 
         // Participation should now exist.
         assertThat(participationRepo.existsById(participationId)).isTrue();

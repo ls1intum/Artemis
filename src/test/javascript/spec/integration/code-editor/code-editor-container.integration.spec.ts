@@ -397,7 +397,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
+        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).to.be.empty;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -433,7 +435,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should first save unsaved files before triggering commit', () => {
         cleanInitialize();
+        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
@@ -490,11 +494,10 @@ describe('CodeEditorContainerIntegration', () => {
         const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
-        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
         getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+        getFeedbackDetailsForResultStub.returns(of(feedbacks));
         getRepositoryContentStub.returns(of([]));
 
         container.participation = participation;
@@ -503,7 +506,6 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         findWithLatestResultSubject.next(participation);
-        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         containerFixture.detectChanges();
 
