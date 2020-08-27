@@ -15,7 +15,8 @@ import de.tum.in.www1.artemis.domain.Achievement;
 @Repository
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
-    Set<Achievement> getAllByCourseId(Long courseId);
+    @Query("SELECT a FROM Achievement a WHERE a.course.id = :#{#courseId}")
+    Set<Achievement> getAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("SELECT a FROM Achievement a JOIN a.users u WHERE u.id = :#{#userId}")
     Set<Achievement> getAllByUserId(@Param("userId") Long userId);

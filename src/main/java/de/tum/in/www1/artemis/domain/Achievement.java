@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -44,7 +45,7 @@ public class Achievement implements Serializable {
     @ManyToOne
     private Exercise exercise;
 
-    @ManyToMany(mappedBy = "achievements", cascade = CascadeType.DETACH)
+    @ManyToMany(mappedBy = "achievements")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "achievements" })
     private Set<User> users = new HashSet<>();
@@ -117,5 +118,21 @@ public class Achievement implements Serializable {
     public String toString() {
         return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank=" + getRank()
                 + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Achievement that = (Achievement) o;
+        return id.equals(that.id) && title.equals(that.title) && description.equals(that.description) && icon.equals(that.icon) && rank.equals(that.rank)
+                && course.equals(that.course);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title, description, icon, rank, course, exercise);
     }
 }
