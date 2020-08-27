@@ -12,6 +12,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { SERVER_API_URL } from 'app/app.constants';
 
 /**
  * Describes the editableField
@@ -21,8 +23,6 @@ export enum EditableField {
     BONUS_MULTIPLIER = 'bonusMultiplier',
     BONUS_POINTS = 'bonusPoints',
 }
-
-export type GradingCriteria = ProgrammingExerciseTestCase | StaticCodeAnalysisCategory;
 
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
@@ -43,6 +43,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     testCasesValue: ProgrammingExerciseTestCase[] = [];
     changedTestCaseIds: number[] = [];
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
+
+    staticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
 
     buildAfterDueDateActive: boolean;
     isReleasedAndHasResults: boolean;
@@ -92,6 +94,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private route: ActivatedRoute,
         private alertService: AlertService,
         private translateService: TranslateService,
+        private http: HttpClient,
     ) {}
 
     /**
@@ -336,5 +339,22 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             ? this.translateService.instant('pendingChanges')
             : this.translateService.instant('artemisApp.programmingExercise.manageTestCases.updatedTestCases');
         return confirm(warning);
+    }
+
+    loadCodeAnalysisMapping() {
+        const testRepoUrl = `${SERVER_API_URL}/api/test-repository/${this.exercise.id}`;
+        const mappingFileName = 'codeAnalysisMapping.json'; // TODO: make global constant
+        this.http
+            .get(`${testRepoUrl}/file`, { params: new HttpParams().set('file', mappingFileName), responseType: 'text' })
+            .pipe(
+                map((data) => JSON.parse(data)),
+                catchError((err) => {
+                    this.alertService.error(`Could not load code analysis categories.`);
+                    return of([]);
+                }),
+            )
+            .subscribe((categories: StaticCodeAnalysisCategory[]) => {
+                this.staticCodeAnalysisCategories = categories;
+            });
     }
 }

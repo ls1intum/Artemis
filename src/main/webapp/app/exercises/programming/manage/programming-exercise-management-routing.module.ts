@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Injectable, NgModule } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
-import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-configure-grading.component';
+import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';

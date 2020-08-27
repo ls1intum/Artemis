@@ -17,7 +17,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockProgrammingExerciseTestCaseService } from '../../helpers/mocks/service/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-grading.module';
+import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/service/mock-programming-exercise-websocket.service';
@@ -25,7 +25,7 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-configure-grading.component';
+import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
