@@ -109,6 +109,7 @@ export const courseManagementRoute: Routes = [
         component: RatingListComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.ratingList.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },

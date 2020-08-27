@@ -12,7 +12,8 @@
             "actions": "Actions",
             "assessmentType": "Assessment Type",
             "openSubmission": "Show the submission",
-            "title": "List of ratings"
+            "title": "List of ratings",
+            "pageTitle": "Ratings"
         }
     }
 }

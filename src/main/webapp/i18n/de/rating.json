@@ -12,7 +12,8 @@
             "actions": "Aktionen",
             "assessmentType": "Bewertungstyp",
             "openSubmission": "Abgabe anzeigen",
-            "title": "Liste von Ratings"
+            "title": "Liste von Ratings",
+            "pageTitle": "Ratings"
         }
     }
 }
