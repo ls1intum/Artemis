@@ -30,7 +30,7 @@ public class StudentScore {
     @Column(name = "score")
     private long score;
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 

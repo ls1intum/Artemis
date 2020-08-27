@@ -76,7 +76,6 @@ public class TutorScoreService {
      *
      * @param deletedResult result to be deleted
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
         // TODO: change the entry that is based on this result: find it based on the exercise id and subtract the max points from assessmentPoints, reduce assessments by one
         // in case, there has been a complaint, complaint response or feedback request, adjust those values as well
@@ -124,7 +123,6 @@ public class TutorScoreService {
      *
      * @param updatedResult result to be updated
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         StudentParticipation participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId()).get();
         Exercise exercise = participation.getExercise();
@@ -148,7 +146,6 @@ public class TutorScoreService {
      *
      * @param newResult result to be added
      */
-    @Transactional(propagation = Propagation.REQUIRED)
     public void addNewResult(Result newResult) {
         StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
         Exercise exercise = participation.getExercise();

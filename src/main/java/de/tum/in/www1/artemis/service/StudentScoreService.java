@@ -65,13 +65,13 @@ public class StudentScoreService {
     }
 
     /**
-     * Removes all StudentScores for result deletedResult.
+     * Removes StudentScore for result deletedResult.
      *
      * @param deletedResult result to be deleted
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
-        studentScoreRepository.deleteByResultId(deletedResult.getId());
+        studentScoreRepository.deleteByResult(deletedResult);
     }
 
     /**
@@ -81,16 +81,19 @@ public class StudentScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
+        // ignore results without score
+        if (updatedResult.getScore() == null) {
+            return;
+        }
+
         var existingStudentScore = studentScoreRepository.findByResult(updatedResult);
         if (existingStudentScore.isPresent()) {
             StudentScore studentScore = existingStudentScore.get();
-            if (updatedResult.getScore() != null) {
-                studentScore.setScore(updatedResult.getScore());
-            }
-            else {
-                studentScore.setScore(0);
-            }
-            studentScoreRepository.save(studentScore);
+
+            studentScore.setScore(updatedResult.getScore());
+
+            studentScore = studentScoreRepository.save(studentScore);
+            log.info("updated student score in db: " + studentScore);
         }
     }
 
@@ -99,7 +102,6 @@ public class StudentScoreService {
      *
      * @param newResult result to be added
      */
-    @Transactional(propagation = Propagation.REQUIRED)
     public void addNewResult(Result newResult) {
         // ignore unrated results
         if (newResult.isRated() != Boolean.TRUE) {

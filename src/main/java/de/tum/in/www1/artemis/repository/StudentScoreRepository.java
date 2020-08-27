@@ -22,7 +22,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     @Query("SELECT s FROM StudentScore s WHERE s.exercise IN :#{#exercises}")
     List<StudentScore> findAllByExerciseIdIn(@Param("exercises") Set<Exercise> exercises);
 
-    void deleteByResultId(Long resultId);
+    void deleteByResult(Result result);
 
     Optional<StudentScore> findByResult(Result result);
 
