@@ -132,7 +132,32 @@
                 </ngx-datatable>
             </div>
             <div *ngIf="activeTab == 'code-analysis'">
-                TODO
+                <ngx-datatable
+                    id="codeAnalysisTable"
+                    class="bootstrap"
+                    [headerHeight]="50"
+                    [limit]="20"
+                    [columnMode]="'force'"
+                    [footerHeight]="50"
+                    [rowHeight]="'auto'"
+                    [rows]="staticCodeAnalysisCategories"
+                >
+                    <ngx-datatable-column name="Category" prop="name">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Description" prop="description">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Checks" prop="checks">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value.length }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                </ngx-datatable>
             </div>
         </div>
     </ng-container>

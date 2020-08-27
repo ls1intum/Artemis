@@ -150,6 +150,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     this.subscribeForTestCaseUpdates();
                     // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                     this.subscribeForExerciseTestCasesChangedUpdates();
+                    this.loadCodeAnalysisMapping();
                     this.isLoading = false;
                 });
         });
