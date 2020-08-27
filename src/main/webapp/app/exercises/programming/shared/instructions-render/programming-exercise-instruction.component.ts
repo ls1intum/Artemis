@@ -26,7 +26,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
-    providers: [ProgrammingExerciseTaskExtensionWrapper, ProgrammingExercisePlantUmlExtensionWrapper],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
@@ -212,6 +211,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Render the markdown into html.
      */
     updateMarkdown(): void {
+        // make sure that always the correct result is set, before updating markdown
+        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
         // Wait a tick for the template to render before injecting the content.
