@@ -3,14 +3,36 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Created by Josias Montag on 11.11.16.
  */
+@Entity
+@Table(name = "build_log_entry")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildLogEntry {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "time")
     private ZonedDateTime time;
 
+    @Column(name = "log")
     private String log;
+
+    @ManyToOne
+    @JsonIgnoreProperties("buildLogEntries")
+    private ProgrammingSubmission programmingSubmission;
 
     public BuildLogEntry(ZonedDateTime time, String log) {
         this.time = time;

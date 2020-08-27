@@ -1,11 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
+
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A ProgrammingSubmission.
@@ -24,6 +30,14 @@ public class ProgrammingSubmission extends Submission implements Serializable {
 
     @Column(name = "build_artifact")
     private boolean buildArtifact;
+
+    // Only present if buildFailed == true
+    @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderColumn
+    @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
+    @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
+    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -55,6 +69,14 @@ public class ProgrammingSubmission extends Submission implements Serializable {
 
     public void setBuildArtifact(boolean buildArtifact) {
         this.buildArtifact = buildArtifact;
+    }
+
+    public List<BuildLogEntry> getBuildLogEntries() {
+        return buildLogEntries;
+    }
+
+    public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+        this.buildLogEntries = buildLogEntries;
     }
 
     @Override
