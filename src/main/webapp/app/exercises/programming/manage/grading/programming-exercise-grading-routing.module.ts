@@ -6,6 +6,16 @@ import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 const routes: Routes = [
     {
+        path: '',
+        component: ProgrammingExerciseConfigureGradingComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [CanDeactivateGuard],
+    },
+    {
         path: 'test-cases',
         component: ProgrammingExerciseConfigureGradingComponent,
         data: {

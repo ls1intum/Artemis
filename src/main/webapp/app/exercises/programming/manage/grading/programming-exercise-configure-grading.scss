@@ -5,6 +5,7 @@ $border-color: #979797;
 .test-case--inactive {
     color: grey;
 }
+
 .run-after-due-date-disabled {
     max-width: 200px;
 }
@@ -13,8 +14,8 @@ $border-color: #979797;
     display: flex;
     align-items: center;
     min-height: 60px;
-    margin: 0 -1.25rem;
     $padding-y: 11px;
+
     padding-top: $padding-y;
     padding-bottom: $padding-y;
     border-bottom: 1px solid $border-color;

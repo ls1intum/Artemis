@@ -14,6 +14,7 @@ import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/ma
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { SERVER_API_URL } from 'app/app.constants';
+import { Location } from '@angular/common';
 
 /**
  * Describes the editableField
@@ -96,6 +97,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private alertService: AlertService,
         private translateService: TranslateService,
         private http: HttpClient,
+        private location: Location,
         private router: Router,
     ) {}
 
@@ -122,6 +124,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.activeTab = 'test-cases';
             } else if (this.router.url.endsWith('/code-analysis')) {
                 this.activeTab = 'code-analysis';
+            } else {
+                this.activeTab = 'test-cases';
+                const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                this.location.replaceState(parentUrl + `/test-cases`);
             }
 
             const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
@@ -364,5 +370,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe((categories: StaticCodeAnalysisCategory[]) => {
                 this.staticCodeAnalysisCategories = categories;
             });
+    }
+
+    selectTab(tab: string) {
+        this.router.navigate(['..', tab], { relativeTo: this.route });
     }
 }

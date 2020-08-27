@@ -28,10 +28,10 @@
         </div>
 
         <div class="tab-bar">
-            <div class="tab-item test-cases" routerLink="test-cases" routerLinkActive="active">
+            <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
                 <b>Test Cases</b>
             </div>
-            <div class="tab-item code-analysis" routerLink="code-analysis" routerLinkActive="active">
+            <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
                 <b>Code Analysis</b>
             </div>
         </div>
