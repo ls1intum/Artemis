@@ -21,18 +21,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.DropLocation;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.PointCounter;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSolution;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSpot;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -812,6 +801,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
+        System.out.println(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().hashCode());
+
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
@@ -1036,6 +1028,34 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(pointCounterAfter.getPoints()).isEqualTo(pointCounterBefore.getPoints());
             assertThat(pointCounterAfter.getRatedCounter()).isEqualTo(pointCounterBefore.getRatedCounter());
             assertThat(pointCounterAfter.getUnRatedCounter()).isEqualTo(pointCounterBefore.getUnRatedCounter());
+        }
+
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            var statistic = quizQuestion.getQuizQuestionStatistic();
+            if (statistic instanceof MultipleChoiceQuestionStatistic) {
+                var mcStatistic = (MultipleChoiceQuestionStatistic) statistic;
+                assertThat(mcStatistic.getAnswerCounters()).isNotEmpty();
+                for (var counter : mcStatistic.getAnswerCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getMultipleChoiceQuestionStatistic());
+                }
+            }
+            if (statistic instanceof DragAndDropQuestionStatistic) {
+                var dndStatistic = (DragAndDropQuestionStatistic) statistic;
+                assertThat(dndStatistic.getDropLocationCounters()).isNotEmpty();
+                for (var counter : dndStatistic.getDropLocationCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getDragAndDropQuestionStatistic());
+                }
+            }
+            if (statistic instanceof ShortAnswerQuestionStatistic) {
+                var saStatistic = (ShortAnswerQuestionStatistic) statistic;
+                assertThat(saStatistic.getShortAnswerSpotCounters()).isNotEmpty();
+                for (var counter : saStatistic.getShortAnswerSpotCounters()) {
+                    System.out.println(counter.toString());
+                    System.out.println(counter.getShortAnswerQuestionStatistic());
+                }
+            }
         }
     }
 

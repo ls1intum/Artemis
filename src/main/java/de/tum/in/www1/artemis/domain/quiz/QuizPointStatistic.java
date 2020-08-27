@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -33,11 +32,6 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
         return pointCounters;
     }
 
-    public QuizPointStatistic pointCounters(Set<PointCounter> pointCounters) {
-        this.pointCounters = pointCounters;
-        return this;
-    }
-
     public QuizPointStatistic addPointCounters(PointCounter pointCounter) {
         this.pointCounters.add(pointCounter);
         pointCounter.setQuizPointStatistic(this);
@@ -58,33 +52,8 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
         return quiz;
     }
 
-    public QuizPointStatistic quiz(QuizExercise quizExercise) {
-        this.quiz = quizExercise;
-        return this;
-    }
-
     public void setQuiz(QuizExercise quizExercise) {
         this.quiz = quizExercise;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizPointStatistic quizPointStatistic = (QuizPointStatistic) o;
-        if (quizPointStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizPointStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

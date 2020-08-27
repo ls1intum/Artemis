@@ -159,7 +159,7 @@ public abstract class QuizQuestion implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {

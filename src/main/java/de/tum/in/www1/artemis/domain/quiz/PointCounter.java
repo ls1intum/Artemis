@@ -7,9 +7,6 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -17,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "PC")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class PointCounter extends QuizStatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;

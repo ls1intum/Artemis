@@ -56,11 +56,9 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
     public void addAnswerOption(AnswerOption answer) {
-
         if (answer == null) {
             return;
         }
-
         for (AnswerCounter counter : answerCounters) {
             if (answer.equals(counter.getAnswer())) {
                 return;
@@ -110,7 +108,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
         }
 
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);

@@ -43,8 +43,6 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public List<ShortAnswerSpot> getSpots() {
         return spots;
     }

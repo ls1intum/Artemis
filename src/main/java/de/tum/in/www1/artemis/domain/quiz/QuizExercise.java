@@ -75,22 +75,12 @@ public class QuizExercise extends Exercise implements Serializable {
         return randomizeQuestionOrder;
     }
 
-    public QuizExercise randomizeQuestionOrder(Boolean randomizeQuestionOrder) {
-        this.randomizeQuestionOrder = randomizeQuestionOrder;
-        return this;
-    }
-
     public void setRandomizeQuestionOrder(Boolean randomizeQuestionOrder) {
         this.randomizeQuestionOrder = randomizeQuestionOrder;
     }
 
     public Integer getAllowedNumberOfAttempts() {
         return allowedNumberOfAttempts;
-    }
-
-    public QuizExercise allowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
-        this.allowedNumberOfAttempts = allowedNumberOfAttempts;
-        return this;
     }
 
     public void setAllowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
@@ -101,22 +91,12 @@ public class QuizExercise extends Exercise implements Serializable {
         return isVisibleBeforeStart;
     }
 
-    public QuizExercise isVisibleBeforeStart(Boolean isVisibleBeforeStart) {
-        this.isVisibleBeforeStart = isVisibleBeforeStart;
-        return this;
-    }
-
     public void setIsVisibleBeforeStart(Boolean isVisibleBeforeStart) {
         this.isVisibleBeforeStart = isVisibleBeforeStart;
     }
 
     public Boolean isIsOpenForPractice() {
         return isOpenForPractice;
-    }
-
-    public QuizExercise isOpenForPractice(Boolean isOpenForPractice) {
-        this.isOpenForPractice = isOpenForPractice;
-        return this;
     }
 
     public void setIsOpenForPractice(Boolean isOpenForPractice) {
@@ -151,11 +131,6 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public QuizPointStatistic getQuizPointStatistic() {
         return quizPointStatistic;
-    }
-
-    public QuizExercise quizPointStatistic(QuizPointStatistic quizPointStatistic) {
-        this.quizPointStatistic = quizPointStatistic;
-        return this;
     }
 
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
@@ -272,18 +247,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * 1. replace the old QuizQuestion-List with the new one 2. recalculate the PointCounters in quizPointStatistic
-     *
-     * @param quizQuestions the List of QuizQuestion objects which will be set
-     * @return this QuizExercise-object
-     */
-    public QuizExercise questions(List<QuizQuestion> quizQuestions) {
-        this.quizQuestions = quizQuestions;
-        return this;
-    }
-
-    /**
-     * 1. add the new QuizQuestion object to the QuizQuestion-List 2. add backward relation in the quizQuestion-object 3. recalculate the PointCounters in quizPointStatistic
+     * 1. add the new QuizQuestion object to the QuizQuestion-List
+     * 2. add backward relation in the quizQuestion-object
      *
      * @param quizQuestion the new QuizQuestion object which will be added
      * @return this QuizExercise-object
@@ -295,8 +260,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * 1. remove the given QuizQuestion object in the QuizQuestion-List 2. remove backward relation in the quizQuestion-object 3. recalculate the PointCounters in
-     * quizPointStatistic
+     * 1. remove the given QuizQuestion object in the QuizQuestion-List
+     * 2. remove backward relation in the quizQuestion-object
      *
      * @param quizQuestion the QuizQuestion object which should be removed
      * @return this QuizExercise-object
@@ -307,11 +272,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return this;
     }
 
-    /**
-     * 1. replace the old QuizQuestion-List with the new one 2. recalculate the PointCounters in quizPointStatistic
-     *
-     * @param quizQuestions the List of QuizQuestion objects which will be set
-     */
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
     }
