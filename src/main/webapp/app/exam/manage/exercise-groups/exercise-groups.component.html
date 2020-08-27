@@ -5,9 +5,7 @@
     <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="d-flex justify-content-end" style="flex: 1;">
         <button *ngIf="course?.isAtLeastInstructor" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create">
-                Create new Exercise Group
-            </span>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
         </button>
     </div>
 </div>

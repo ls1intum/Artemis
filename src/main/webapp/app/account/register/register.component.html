@@ -17,9 +17,7 @@
                 <strong>Email is already in use!</strong> Please choose another one.
             </div>
 
-            <div class="alert alert-danger" *ngIf="doNotMatch" jhiTranslate="global.messages.error.dontmatch">
-                The password and its confirmation do not match!
-            </div>
+            <div class="alert alert-danger" *ngIf="doNotMatch" jhiTranslate="global.messages.error.dontmatch">The password and its confirmation do not match!</div>
         </div>
     </div>
     <div class="row justify-content-center">
@@ -71,12 +69,8 @@
                         required
                     />
                     <div *ngIf="email.dirty && email.invalid">
-                        <small class="form-text text-danger" *ngIf="email.errors?.required" jhiTranslate="global.messages.validate.email.required">
-                            Your email is required.
-                        </small>
-                        <small class="form-text text-danger" *ngIf="email.errors?.invalid" jhiTranslate="global.messages.validate.email.invalid">
-                            Your email is invalid.
-                        </small>
+                        <small class="form-text text-danger" *ngIf="email.errors?.required" jhiTranslate="global.messages.validate.email.required"> Your email is required. </small>
+                        <small class="form-text text-danger" *ngIf="email.errors?.invalid" jhiTranslate="global.messages.validate.email.invalid"> Your email is invalid. </small>
                         <small class="form-text text-danger" *ngIf="email.errors?.minlength" jhiTranslate="global.messages.validate.email.minlength">
                             Your email is required to be at least 5 characters.
                         </small>

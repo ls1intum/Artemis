@@ -132,7 +132,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases
@@ -154,7 +154,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
@@ -568,7 +568,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textExerciseRepository.save(textExercise);
         TextSubmission textSubmission = new TextSubmission();
         database.addSubmission(textExercise, textSubmission, "student1");
-        Result result = database.addResultToSubmission(textSubmission);
+        Result result = database.addResultToSubmission(textSubmission, null);
         Result returnedResult = request.get("/api/results/submission/" + textSubmission.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isEqualTo(result);
     }

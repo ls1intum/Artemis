@@ -19,12 +19,7 @@ export class RatingComponent implements OnInit {
     constructor(private ratingService: RatingService, private accountService: AccountService) {}
 
     ngOnInit(): void {
-        if (
-            !this.result ||
-            !this.result.submission ||
-            !this.result.participation ||
-            !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)
-        ) {
+        if (!this.result || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
             return;
         }
 

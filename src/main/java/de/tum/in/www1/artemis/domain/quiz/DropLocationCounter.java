@@ -28,22 +28,12 @@ public class DropLocationCounter extends QuizStatisticCounter implements Seriali
         return dragAndDropQuestionStatistic;
     }
 
-    public DropLocationCounter dragAndDropQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
-        this.dragAndDropQuestionStatistic = dragAndDropQuestionStatistic;
-        return this;
-    }
-
     public void setDragAndDropQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
         this.dragAndDropQuestionStatistic = dragAndDropQuestionStatistic;
     }
 
     public DropLocation getDropLocation() {
         return dropLocation;
-    }
-
-    public DropLocationCounter dropLocation(DropLocation dropLocation) {
-        this.dropLocation = dropLocation;
-        return this;
     }
 
     public void setDropLocation(DropLocation dropLocation) {

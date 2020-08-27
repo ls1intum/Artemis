@@ -32,9 +32,7 @@
                 <div>
                     <h5>
                         {{ notification.title }}
-                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)">
-                            new
-                        </span>
+                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="mb-1">
                         {{ notification.text }}

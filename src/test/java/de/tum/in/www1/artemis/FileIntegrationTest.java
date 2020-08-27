@@ -167,7 +167,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
         String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
-                fileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
 
         fileUploadSubmission.setFilePath(filePath);
 

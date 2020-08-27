@@ -1,9 +1,7 @@
 <form id="studentsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importStudents()">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.importStudents.dialogTitle'">
-                Import students into:
-            </span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.importStudents.dialogTitle'"> Import students into: </span>
             <span>{{ exam.title }}</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
@@ -12,9 +10,7 @@
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
         <div class="form-group">
-            <p class="intro-text" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.introText">
-                This dialog can be used to import students into this exam.
-            </p>
+            <p class="intro-text" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.introText">This dialog can be used to import students into this exam.</p>
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">

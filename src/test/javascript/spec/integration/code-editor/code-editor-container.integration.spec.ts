@@ -397,7 +397,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
+        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).to.be.empty;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -433,13 +435,13 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should first save unsaved files before triggering commit', () => {
         cleanInitialize();
+        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const saveFilesSubject = new Subject();
-        const commitSubject = new Subject();
         saveFilesStub.returns(saveFilesSubject);
-        commitStub.returns(commitSubject);
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -450,11 +452,11 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         // saving before commit
-        expect(saveFilesStub).to.have.been.calledOnceWithExactly([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }]);
+        expect(saveFilesStub).to.have.been.calledOnceWithExactly([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true);
         expect(container.editorState).to.equal(EditorState.SAVING);
         expect(container.fileBrowser.status.editorState).to.equal(EditorState.SAVING);
         // committing
-        expect(commitStub).to.have.been.calledOnce;
+        expect(commitStub).to.not.have.been.called;
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: null });
@@ -465,7 +467,6 @@ describe('CodeEditorContainerIntegration', () => {
             submission: {} as ProgrammingSubmission,
             participationId: successfulResult!.participation!.id,
         });
-        commitSubject.next(null);
         containerFixture.detectChanges();
 
         // waiting for build result
@@ -493,11 +494,10 @@ describe('CodeEditorContainerIntegration', () => {
         const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
-        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
         getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+        getFeedbackDetailsForResultStub.returns(of(feedbacks));
         getRepositoryContentStub.returns(of([]));
 
         container.participation = participation;
@@ -506,7 +506,6 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         findWithLatestResultSubject.next(participation);
-        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         containerFixture.detectChanges();
 

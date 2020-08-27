@@ -114,12 +114,7 @@ public class AnswerOption implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
-    }
-
-    public AnswerOption invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -128,11 +123,6 @@ public class AnswerOption implements Serializable {
 
     public MultipleChoiceQuestion getQuestion() {
         return question;
-    }
-
-    public AnswerOption question(MultipleChoiceQuestion multipleChoiceQuestion) {
-        this.question = multipleChoiceQuestion;
-        return this;
     }
 
     public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
