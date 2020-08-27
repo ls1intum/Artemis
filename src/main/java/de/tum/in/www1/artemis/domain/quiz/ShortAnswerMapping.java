@@ -66,11 +66,6 @@ public class ShortAnswerMapping implements Serializable {
         return shortAnswerSpotIndex;
     }
 
-    public ShortAnswerMapping shortAnswerSpotIndex(Integer shortAnswerSpotIndex) {
-        this.shortAnswerSpotIndex = shortAnswerSpotIndex;
-        return this;
-    }
-
     public void setShortAnswerSpotIndex(Integer shortAnswerSpotIndex) {
         this.shortAnswerSpotIndex = shortAnswerSpotIndex;
     }
@@ -79,22 +74,12 @@ public class ShortAnswerMapping implements Serializable {
         return shortAnswerSolutionIndex;
     }
 
-    public ShortAnswerMapping shortAnswerSolutionIndex(Integer shortAnswerSolutionIndex) {
-        this.shortAnswerSolutionIndex = shortAnswerSolutionIndex;
-        return this;
-    }
-
     public void setShortAnswerSolutionIndex(Integer shortAnswerSolutionIndex) {
         this.shortAnswerSolutionIndex = shortAnswerSolutionIndex;
     }
 
     public Boolean isInvalid() {
-        return invalid;
-    }
-
-    public ShortAnswerMapping invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -129,11 +114,6 @@ public class ShortAnswerMapping implements Serializable {
 
     public ShortAnswerQuestion getQuestion() {
         return question;
-    }
-
-    public ShortAnswerMapping question(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-        return this;
     }
 
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {

@@ -57,14 +57,8 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     @JsonView(QuizView.After.class)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public String getBackgroundFilePath() {
         return backgroundFilePath;
-    }
-
-    public DragAndDropQuestion backgroundFilePath(String backgroundFilePath) {
-        this.backgroundFilePath = backgroundFilePath;
-        return this;
     }
 
     public void setBackgroundFilePath(String backgroundFilePath) {
@@ -130,7 +124,6 @@ public class DragAndDropQuestion extends QuizQuestion implements Serializable {
     public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
         this.correctMappings = dragAndDropMappings;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Boolean isValid() {

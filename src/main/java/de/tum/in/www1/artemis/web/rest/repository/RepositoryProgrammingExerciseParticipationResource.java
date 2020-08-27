@@ -151,7 +151,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam Boolean commit, Principal principal) {
+            @RequestParam(defaultValue = "false") boolean commit, Principal principal) {
         Participation participation;
         try {
             participation = participationService.findParticipation(participationId);
