@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -89,9 +90,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(0);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Nice work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
+        result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-        tutorScore = new TutorScore(user, exercise, 1, exercise.getMaxScore());
-        tutorScoresRepo.save(tutorScore);
 
         // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
@@ -100,9 +100,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(1);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
+        result.setAssessor(userRepo.findAllInGroup("tutor").get(1));
         resultRepo.save(result);
-        tutorScore = new TutorScore(user, exercise, 1, exercise.getMaxScore());
-        tutorScoresRepo.save(tutorScore);
 
         // course2
         course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
@@ -118,9 +117,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(0);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Not so good")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
+        result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-        tutorScore = new TutorScore(user, exercise, 1, exercise.getMaxScore());
-        tutorScoresRepo.save(tutorScore);
     }
 
     @AfterEach
@@ -131,6 +129,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForExerciseTest() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+
         List responseExerciseOne = request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
@@ -142,14 +142,13 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
-        // score for student2 in exercise3 in course1
+        // score for tutor0 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 80).resultString("Nice effort!").participation(participation);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Really good!")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
+        result.setAssessor(user);
         resultRepo.save(result);
-        tutorScore = new TutorScore(user, exercise, 1, exercise.getMaxScore());
-        tutorScoresRepo.save(tutorScore);
 
         responseExerciseOne = request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -182,6 +181,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForCourseTest() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+
         List responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseOne.size()).as("response has length 2").isEqualTo(2);
@@ -193,14 +194,13 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
-        // score for student2 in exercise3 in course1
+        // score for tutor1 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 60).resultString("Nice try!").participation(participation);
         feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Pretty good!")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
+        result.setAssessor(user);
         resultRepo.save(result);
-        tutorScore = new TutorScore(user, exercise, 1, exercise.getMaxScore());
-        tutorScoresRepo.save(tutorScore);
 
         responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -225,5 +225,18 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         courseRepo.save(course);
 
         request.get("/api/tutor-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void tutorScoreForCourseTutorAndExercise() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+        exercise = exerciseRepo.findAll().get(0);
+
+        List<TutorScore> list = tutorScoresRepo.findAll();
+        TutorScore tutorScore = list.get(0);
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getId()).as("response id is as expected").isEqualTo(tutorScore.getId());
     }
 }

@@ -106,6 +106,58 @@ public class TutorScore {
         return answeredFeedbackRequestsPoints;
     }
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setTutor(User tutor) {
+        this.tutor = tutor;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public void setAssessments(long assessments) {
+        this.assessments = assessments;
+    }
+
+    public void setAssessmentsPoints(double assessmentsPoints) {
+        this.assessmentsPoints = assessmentsPoints;
+    }
+
+    public void setAllComplaints(long allComplaints) {
+        this.allComplaints = allComplaints;
+    }
+
+    public void setAcceptedComplaints(long acceptedComplaints) {
+        this.acceptedComplaints = acceptedComplaints;
+    }
+
+    public void setComplaintsPoints(double complaintsPoints) {
+        this.complaintsPoints = complaintsPoints;
+    }
+
+    public void setAllFeedbackRequests(long allFeedbackRequests) {
+        this.allFeedbackRequests = allFeedbackRequests;
+    }
+
+    public void setNotAnsweredFeedbackRequests(long notAnsweredFeedbackRequests) {
+        this.notAnsweredFeedbackRequests = notAnsweredFeedbackRequests;
+    }
+
+    public void setFeedbackRequestsPoints(double feedbackRequestsPoints) {
+        this.feedbackRequestsPoints = feedbackRequestsPoints;
+    }
+
+    public void setAnsweredFeedbackRequests(long answeredFeedbackRequests) {
+        this.answeredFeedbackRequests = answeredFeedbackRequests;
+    }
+
+    public void setAnsweredFeedbackRequestsPoints(double answeredFeedbackRequestsPoints) {
+        this.answeredFeedbackRequestsPoints = answeredFeedbackRequestsPoints;
+    }
+
     public TutorScore() {
         // Empty constructor because of @Entity
     }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -97,5 +99,28 @@ public class TutorScoreResource {
         List<TutorScore> tutorScores = tutorScoreService.getTutorScoresForCourse(course);
 
         return ResponseEntity.ok(tutorScores);
+    }
+
+    /**
+     * GET /tutor-scores/exercise/{exerciseId}/tutor/{tutorLogin} : Find TutorScores by exercise id and tutor login.
+     *
+     * @param exerciseId id of the exercise
+     * @param tutorLogin login of the tutor
+     * @return the ResponseEntity with status 200 (OK) and with the found tutor score as body
+     */
+    @GetMapping("/tutor-scores/exercise/{exerciseId}/tutor/{tutorLogin}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
+    public ResponseEntity<Optional<TutorScore>> getTutorScoreForExerciseAndStudent(@PathVariable Long exerciseId, @PathVariable String tutorLogin) {
+        log.debug("REST request to get tutor score for tutor and exercise {}", tutorLogin, exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> tutor = userService.getUserByLogin(tutorLogin);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
+
+        Optional<TutorScore> tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(tutor.get(), exercise);
+        return ResponseEntity.ok(tutorScore);
     }
 }
