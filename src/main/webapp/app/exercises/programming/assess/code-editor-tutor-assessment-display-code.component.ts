@@ -45,7 +45,7 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     initEditorAfterFileChange() {
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.studentCode = this.fileSession[this.selectedFile].code;
-            this.studentCodePerLine = this.studentCode.split('\n');
+            this.studentCodePerLine = this.studentCode.split(/\r?\n/);
         }
     }
 
