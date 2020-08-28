@@ -88,7 +88,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
             ctx.textBaseline = 'bottom';
             const participants = dataSetProvider.getParticipants();
 
-            dataSetProvider.getDataSets().forEach(function (dataset: DataSet, i: number) {
+            dataSetProvider.getDataSets().forEach((dataset: DataSet, i: number) =>  {
                 const meta = chartInstance.getDatasetMeta(i);
                 meta.data.forEach((bar: any, index: number) => {
                     const data = (Math.round(dataset.data[index] * 100) / 100).toString();
