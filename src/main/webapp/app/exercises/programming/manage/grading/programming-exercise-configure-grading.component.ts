@@ -113,11 +113,42 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
             this.editing = null;
-            if (this.testCaseSubscription) {
-                this.testCaseSubscription.unsubscribe();
-            }
-            if (this.testCaseChangedSubscription) {
-                this.testCaseChangedSubscription.unsubscribe();
+
+            if (this.exercise == null || this.exercise.id !== exerciseId) {
+                if (this.testCaseSubscription) {
+                    this.testCaseSubscription.unsubscribe();
+                }
+                if (this.testCaseChangedSubscription) {
+                    this.testCaseChangedSubscription.unsubscribe();
+                }
+
+                const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
+                    map((res) => res.body!),
+                    tap((exercise) => (this.exercise = exercise)),
+                    catchError(() => of(null)),
+                );
+
+                const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
+                    tap((releaseState) => {
+                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                        this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
+                    }),
+                    catchError(() => of(null)),
+                );
+
+                zip(loadExercise, loadExerciseTestCaseState)
+                    .pipe(take(1))
+                    .subscribe(() => {
+                        // This subscription e.g. adds new new tests to the table that were just created.
+                        this.subscribeForTestCaseUpdates();
+                        // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
+                        this.subscribeForExerciseTestCasesChangedUpdates();
+                        this.loadCodeAnalysisMapping();
+                        this.isLoading = false;
+                    });
+            } else {
+                this.isLoading = false;
             }
 
             if (this.router.url.endsWith('/test-cases')) {
@@ -127,32 +158,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             } else {
                 this.activeTab = '';
             }
-
-            const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
-                map((res) => res.body!),
-                tap((exercise) => (this.exercise = exercise)),
-                catchError(() => of(null)),
-            );
-
-            const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
-                tap((releaseState) => {
-                    this.hasUpdatedTestCases = releaseState.testCasesChanged;
-                    this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
-                    this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
-                }),
-                catchError(() => of(null)),
-            );
-
-            zip(loadExercise, loadExerciseTestCaseState)
-                .pipe(take(1))
-                .subscribe(() => {
-                    // This subscription e.g. adds new new tests to the table that were just created.
-                    this.subscribeForTestCaseUpdates();
-                    // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
-                    this.subscribeForExerciseTestCasesChangedUpdates();
-                    this.loadCodeAnalysisMapping();
-                    this.isLoading = false;
-                });
         });
     }
 
