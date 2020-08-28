@@ -432,21 +432,21 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void searchTextExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
 
-        final var result = configurSearchAndReturnResult("");
+        final var result = configureSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchTextExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
+    public void searchTextExercises_instructor_getResultsFromOwningCourses_notEmpty() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
 
-        final var result = configurSearchAndReturnResult("Text");
+        final var result = configureSearchAndReturnResult("Text");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
     @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<TextExercise> configurSearchAndReturnResult(String searchTerm) throws Exception {
+    private SearchResultPageDTO<TextExercise> configureSearchAndReturnResult(String searchTerm) throws Exception {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);

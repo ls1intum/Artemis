@@ -394,19 +394,19 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void searchModelingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var result = configurSearchAndReturnResult("");
+        final var result = configureSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchModelingExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
-        final var result = configurSearchAndReturnResult("ClassDiagram");
+    public void searchModelingExercises_instructor_getResultsFromOwningCourses_notEmpty() throws Exception {
+        final var result = configureSearchAndReturnResult("ClassDiagram");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
     @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<ModelingExercise> configurSearchAndReturnResult(String searchTerm) throws Exception {
+    private SearchResultPageDTO<ModelingExercise> configureSearchAndReturnResult(String searchTerm) throws Exception {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);

@@ -206,14 +206,14 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void searchProgrammingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var result = configurSearchAndReturnResult("");
+        final var result = configureSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void searchProgrammingExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
-        final var result = configurSearchAndReturnResult("Programming");
+    public void searchProgrammingExercises_instructor_getResultsFromOwningCourses_notEmpty() throws Exception {
+        final var result = configureSearchAndReturnResult("Programming");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
@@ -223,13 +223,13 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
-        final var resultSearchPython = configurSearchAndReturnResult("Python");
+        final var resultSearchPython = configureSearchAndReturnResult("Python");
         assertThat(resultSearchPython.getResultsOnPage().size()).isEqualTo(1);
 
-        final var resultSearchJava = configurSearchAndReturnResult("Java");
+        final var resultSearchJava = configureSearchAndReturnResult("Java");
         assertThat(resultSearchJava.getResultsOnPage().size()).isEqualTo(2);
 
-        final var resultSearchSwift = configurSearchAndReturnResult("Swift");
+        final var resultSearchSwift = configureSearchAndReturnResult("Swift");
         assertThat(resultSearchSwift.getResultsOnPage()).isEmpty();
     }
 
@@ -243,7 +243,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<ProgrammingExerciseService> configurSearchAndReturnResult(String searchTerm) throws Exception {
+    private SearchResultPageDTO<ProgrammingExerciseService> configureSearchAndReturnResult(String searchTerm) throws Exception {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
         search.setPageSize(10);
