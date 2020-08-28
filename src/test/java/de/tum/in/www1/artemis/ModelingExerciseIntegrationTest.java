@@ -393,14 +393,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void searchModelingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         final var result = configurSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+    public void searchModelingExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
         final var result = configurSearchAndReturnResult("ClassDiagram");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }

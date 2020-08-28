@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.annotation.Testable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -206,21 +205,21 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void searchProgrammingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         final var result = configurSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+    public void searchProgrammingExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
         final var result = configurSearchAndReturnResult("Programming");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void searchExercisesWithProperSearchTerm() throws Exception {
+    public void searchProgrammingExercisesWithProperSearchTerm() throws Exception {
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");

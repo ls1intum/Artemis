@@ -209,7 +209,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(actualTeamsAfterImport).as("Teams were correctly imported.")
             .usingRecursiveComparison()
             .ignoringFields("id", "exercise", "createdDate", "lastModifiedDate")
-//            .usingOverriddenEquals()
+            .usingOverriddenEquals()
             .ignoringOverriddenEqualsForTypes(Team.class).isEqualTo(expectedTeamsAfterImport);
     }
 

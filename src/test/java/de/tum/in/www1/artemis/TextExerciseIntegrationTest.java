@@ -429,7 +429,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructorother1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void searchTextExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
 
         final var result = configurSearchAndReturnResult("");
@@ -438,7 +438,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+    public void searchTextExercises_instructor_getResultsFromOwningCoursesThatIsNotEmpty() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
 
         final var result = configurSearchAndReturnResult("Text");
