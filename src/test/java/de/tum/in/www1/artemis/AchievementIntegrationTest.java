@@ -89,13 +89,13 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "student1", roles = "USER")
     public void testManyToManyRelationToUserRepository() throws Exception {
         user.addAchievement(achievement);
-        userRepository.save(user);
+        user = userRepository.save(user);
 
         var achievements = request.get("/api/achievements", HttpStatus.OK, Set.class);
         assertThat(achievements.size()).isEqualTo(1).as("Number of achievements for user should be 1");
 
         userRepository.delete(user);
-        assertThat(achievementRepository.findAll().contains(achievement)).as("Achievement does not get deleted if user does");
+        assertThat(achievementRepository.findAll().contains(achievement)).isTrue().as("Achievement does not get deleted if user does");
     }
 
     @Test
@@ -121,15 +121,17 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testDeleteAchievement() {
         user.addAchievement(achievement);
-        userRepository.save(user);
-        achievementRepository.delete(achievement);
+        user = userRepository.save(user);
+        achievement = achievementRepository.save(achievement);
+        achievementService.delete(achievement);
 
         assertThat(achievementRepository.findAll().size()).isEqualTo(0).as("Achievement is deleted");
-        assertThat(userRepository.getOne(user.getId())).isNotNull().as("User is not deleted");
-        assertThat(userRepository.getOne(user.getId()).getAchievements().size()).isEqualTo(0).as("User has no achievements");
-        assertThat(courseRepository.getOne(course.getId())).isNotNull().as("Course is not deleted");
+        assertThat(userRepository.findById(user.getId()).isPresent()).isTrue().as("User is not deleted");
+        assertThat(userRepository.findById(user.getId()).get().getAchievements().size()).isEqualTo(0).as("User has no achievements");
+        assertThat(courseRepository.findById(course.getId()).isPresent()).isTrue().as("Course is not deleted");
         assertThat(achievementService.findAllForCourse(course.getId()).size()).isEqualTo(0).as("Course has no achievements");
     }
 }

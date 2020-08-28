@@ -5,15 +5,20 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Achievement;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class AchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    public AchievementService(AchievementRepository achievementRepository) {
+    private final UserRepository userRepository;
+
+    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository) {
         this.achievementRepository = achievementRepository;
+        this.userRepository = userRepository;
     }
 
     public Set<Achievement> findAllForCourse(Long courseId) {
@@ -22,5 +27,13 @@ public class AchievementService {
 
     public Set<Achievement> findAllForUser(Long userId) {
         return achievementRepository.getAllByUserId(userId);
+    }
+
+    public void delete(Achievement achievement) {
+        for (User user : achievement.getUsers()) {
+            user.removeAchievement(achievement);
+            userRepository.save(user);
+        }
+        achievementRepository.delete(achievement);
     }
 }

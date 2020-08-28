@@ -118,7 +118,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "user_achievement", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "achievement_id", referencedColumnName = "id") })
