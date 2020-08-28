@@ -5,8 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +34,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import org.springframework.util.LinkedMultiValueMap;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -58,6 +65,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
+        database.addInstructor("other-instructors", "instructorother");
     }
 
     @AfterEach
@@ -418,4 +426,40 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithoutLocation("/api/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
     }
+
+    @Test
+    @WithMockUser(value = "instructorother1", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+
+        final var result = configurSearchAndReturnResult("");
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+
+        final var result = configurSearchAndReturnResult("Text");
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private SearchResultPageDTO<TextExercise> configurSearchAndReturnResult(String searchTerm) throws Exception {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+        return request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+    }
+
 }

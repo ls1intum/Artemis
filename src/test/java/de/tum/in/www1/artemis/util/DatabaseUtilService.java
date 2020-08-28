@@ -1122,7 +1122,29 @@ public class DatabaseUtilService {
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
+    public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle);
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        course.addExercises(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+
+        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+    }
+
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
+        populateProgrammingExercise(programmingExercise, shortName, "Programming");
+    }
+
+    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title) {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -1136,7 +1158,7 @@ public class DatabaseUtilService {
         programmingExercise.setProblemStatement("Lorem Ipsum");
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
-        programmingExercise.setTitle("Programming");
+        programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setPackageName("de.test");
@@ -1180,6 +1202,17 @@ public class DatabaseUtilService {
 
         return courseRepo.findById(course.getId()).get();
     }
+
+    public Course addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
+        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+
+        return courseRepo.findById(course.getId()).get();
+    }
+
+
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();

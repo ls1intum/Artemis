@@ -6,7 +6,14 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -383,4 +390,37 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+        final var result = configurSearchAndReturnResult("");
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+        final var result = configurSearchAndReturnResult("ClassDiagram");
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private SearchResultPageDTO<ModelingExercise> configurSearchAndReturnResult(String searchTerm) throws Exception {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+
+        return request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+    }
+
 }

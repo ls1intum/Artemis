@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.annotation.Testable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -206,21 +207,31 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm("");
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
-
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+        final var result = configurSearchAndReturnResult("");
         assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void searchExercises_instructor_getResultsFromOwningCourses_thatIsNotEmpty() throws Exception {
+        final var result = configurSearchAndReturnResult("Programming");
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void searchExercisesWithProperSearchTerm() throws Exception {
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var resultSearchPython = configurSearchAndReturnResult("Python");
+        assertThat(resultSearchPython.getResultsOnPage().size()).isEqualTo(1);
+
+        final var resultSearchJava = configurSearchAndReturnResult("Java");
+        assertThat(resultSearchJava.getResultsOnPage().size()).isEqualTo(2);
+
+        final var resultSearchSwift = configurSearchAndReturnResult("Swift");
+        assertThat(resultSearchSwift.getResultsOnPage()).isEmpty();
     }
 
     private ProgrammingExercise importExerciseBase() {
@@ -231,4 +242,22 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
+
+    @SuppressWarnings("unchecked")
+    private SearchResultPageDTO<ProgrammingExerciseService> configurSearchAndReturnResult(String searchTerm) throws Exception {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        search.setSortingOrder(SortingOrder.ASCENDING);
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+        return request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+    }
+
 }
