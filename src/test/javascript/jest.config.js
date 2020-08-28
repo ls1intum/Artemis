@@ -10,6 +10,15 @@ module.exports = {
             diagnostics: false,
         },
     },
+    coverageThreshold: {
+        global: {
+            branches: 33,
+            functions: 40,
+            lines: 59,
+            // TODO: in the future, the following value should be increase to 80%
+            statements: 60,
+        },
+    },
     preset: 'jest-preset-angular',
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/jest.ts'],
     modulePaths: ['<rootDir>/src/main/webapp/'],
