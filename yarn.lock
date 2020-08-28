@@ -1677,10 +1677,10 @@
   resolved "https://registry.yarnpkg.com/@types/color-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
   integrity sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==
 
-"@types/dompurify@2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-2.0.3.tgz#dfd5601d7356dac8adf20ef23fd3a85359604e58"
-  integrity sha512-sK52Cwj9nJh186Tt/My7WzCWsJlJWAtcUig1fp/7s7/T2t4xMgpNHYdgjXlCUsXpmGc1OZWPqUFpZ35o6xs5lQ==
+"@types/dompurify@2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-2.0.4.tgz#25fce15f1f4b1bc0df0ad957040cf226416ac2d7"
+  integrity sha512-y6K7NyXTQvjr8hJNsAFAD8yshCsIJ0d+OYEFzULuIqWyWOKL2hRru1I+rorI5U0K4SLAROTNuSUFXPDTu278YA==
   dependencies:
     "@types/trusted-types" "*"
 
@@ -4631,10 +4631,10 @@ domhandler@^3.0.0:
   dependencies:
     domelementtype "^2.0.1"
 
-dompurify@2.0.13:
-  version "2.0.13"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-2.0.13.tgz#c1f44170e6e992062e78483f13c335a3da3a3e23"
-  integrity sha512-LfjcAo63niQH1Z5Htvqt0a9TDuZPCOSM2UePrlOcyKvMLahq5OVlZqC3PpfbmbJlWKbk/e9bd/kxGd0qKeqRCQ==
+dompurify@2.0.14:
+  version "2.0.14"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-2.0.14.tgz#792f72e95bc643999e7ae81baf6e9c6d9de02429"
+  integrity sha512-oqcjyCLHLjWugZ6VwK0YfmRND/DFy/CuZhdasmymMfnxbzaaQxBSA1ATZIXWESGDj/nvq1vKLmRa7rTdbGgrmQ==
 
 domutils@1.5.1:
   version "1.5.1"
@@ -8683,12 +8683,12 @@ ngx-cookie-service@10.0.1:
   dependencies:
     tslib "^2.0.0"
 
-ngx-device-detector@1.4.6:
-  version "1.4.6"
-  resolved "https://registry.yarnpkg.com/ngx-device-detector/-/ngx-device-detector-1.4.6.tgz#886d3e9b2fb37edc6061f4ccf114a63f1f4b50de"
-  integrity sha512-tYbd5HCNGjJc0U7nFjuy/ZZjKp5L4WP7Fo0O62DELyqPsCkqEkOgZxUeiheyZCCYFbXQRQ7PvQO5jnJBWMQxxA==
+ngx-device-detector@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-device-detector/-/ngx-device-detector-2.0.0.tgz#1a239d0d65f3cb155221fcdde531b6df4c774863"
+  integrity sha512-0minaW2+Y6dJSKhQrcE3yi8lRa2oAhttgLY5K/K1KRcAPy5yhojY/hpuJko7ANYhttOSxrzxEWhf3novEiSXcg==
   dependencies:
-    tslib "^1.9.0"
+    tslib "^2.0.0"
 
 ngx-image-cropper@3.2.1:
   version "3.2.1"

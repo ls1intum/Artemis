@@ -7,12 +7,13 @@
     <module name="TreeWalker">
         <module name="JavadocMethod">
             <property name="scope" value="public" />
-            <property name="allowMissingParamTags" value="false"  />
-            <property name="allowMissingThrowsTags" value="false" />
-            <property name="allowMissingReturnTag" value="false" />
-            <property name="minLineCount" value="4" />
+            <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="MissingJavadocMethod">
+            <property name="scope" value="public" />
             <property name="allowMissingPropertyJavadoc" value="true"/>
-            <property name="allowThrowsTagsForSubclasses" value="true" />
+            <property name="minLineCount" value="4" />
             <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
             <property name="severity" value="error"/>
         </module>
