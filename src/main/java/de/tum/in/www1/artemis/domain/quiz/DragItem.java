@@ -90,11 +90,6 @@ public class DragItem implements Serializable {
         return pictureFilePath;
     }
 
-    public DragItem pictureFilePath(String pictureFilePath) {
-        this.pictureFilePath = pictureFilePath;
-        return this;
-    }
-
     public void setPictureFilePath(String pictureFilePath) {
         this.pictureFilePath = pictureFilePath;
     }
@@ -117,17 +112,7 @@ public class DragItem implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
-    }
-
-    public DragItem question(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-        return this;
-    }
-
-    public DragItem invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
@@ -140,11 +125,6 @@ public class DragItem implements Serializable {
 
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
-    }
-
-    public DragItem mappings(Set<DragAndDropMapping> mappings) {
-        this.mappings = mappings;
-        return this;
     }
 
     public DragItem addMappings(DragAndDropMapping mapping) {

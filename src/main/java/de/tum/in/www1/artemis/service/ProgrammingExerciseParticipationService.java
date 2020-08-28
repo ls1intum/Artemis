@@ -149,6 +149,10 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
+        return studentParticipationRepository.findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
+    }
+
     /**
      * Try to find a programming exercise participation for the given id.
      *
@@ -156,8 +160,8 @@ public class ProgrammingExerciseParticipationService {
      * @return the casted participation
      * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
      */
-    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(Long participationId) throws EntityNotFoundException {
-        Optional<Participation> participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
         }
@@ -291,7 +295,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Lock the repository associated with a programming participation
-     * 
+     *
      * @param programmingExercise the programming exercise
      * @param participation the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
@@ -307,7 +311,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Unlock the repository associated with a programming participation
-     * 
+     *
      * @param programmingExercise the programming exercise
      * @param participation the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -14,13 +13,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-/**
- * A QuizQuestionStatistic.
- */
 @Entity
 @DiscriminatorValue(value = "Q")
 @DiscriminatorOptions(force = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
@@ -60,26 +56,6 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
 
     public void setQuizQuestion(QuizQuestion quizQuestion) {
         this.quizQuestion = quizQuestion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizQuestionStatistic quizQuestionStatistic = (QuizQuestionStatistic) o;
-        if (quizQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);

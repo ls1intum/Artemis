@@ -351,10 +351,38 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetResultDetails() throws Exception {
+    public void testBuildLogsNoSubmission() throws Exception {
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
+        database.createProgrammingSubmission(participation, false);
+        request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsWithManualResult() throws Exception {
+        var submission = database.createProgrammingSubmission(participation, true);
+        database.addResultToSubmission(submission, AssessmentType.MANUAL);
+        var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogs() throws Exception {
+        var submission = database.createProgrammingSubmission(participation, true);
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(1);
+        assertThat(receivedLogs).isEqualTo(logs);
     }
 
     @Test

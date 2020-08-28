@@ -11,11 +11,26 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import * as moment from 'moment';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
     templateUrl: './programming-exam-submission.component.html',
-    providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
+    providers: [
+        { provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent },
+        CodeEditorConflictStateService,
+        CodeEditorSubmissionService,
+        CodeEditorBuildLogService,
+        CodeEditorRepositoryFileService,
+        CodeEditorRepositoryService,
+        DomainService,
+    ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
@@ -65,15 +80,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
-    reload(): void {
-        this.ngOnInit();
-        if (this.instructions) {
-            // Load the result of the active exercise into the UML and Task extension on exercise switch
-            this.instructions.latestResult = this.instructions.latestResult;
-            this.instructions.updateMarkdown();
-        }
-    }
-
     /**
      * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
@@ -102,9 +108,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
     }
 
-    onActivate(): void {
-        this.reload();
-    }
+    onActivate(): void {}
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
