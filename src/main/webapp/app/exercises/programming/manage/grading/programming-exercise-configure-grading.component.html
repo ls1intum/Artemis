@@ -7,10 +7,6 @@
     </div>
     <ng-container *ngIf="!isLoading; else loadingContainer">
         <div class="d-flex">
-            <label class="d-flex align-items-center mb-0">
-                <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
-                <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
-            </label>
             <div class="d-flex align-items-center ml-auto">
                 <jhi-programming-exercise-configure-grading-status
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
@@ -38,6 +34,10 @@
 
         <div class="grading-body-container">
             <div *ngIf="activeTab == 'test-cases'">
+                <label class="d-flex align-items-center mb-0">
+                    <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
+                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
+                </label>
                 <ngx-datatable
                     id="testCaseTable"
                     class="bootstrap"
