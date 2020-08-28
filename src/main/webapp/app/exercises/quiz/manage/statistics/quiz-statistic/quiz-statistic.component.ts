@@ -110,8 +110,8 @@ export function calculateTickMax(datasetProvider: DataSetProvider) {
     const data = datasetProvider.getDataSets().map((dataset) => {
         return dataset.data;
     });
-    const merged = [].concat.apply([], data);
-    const max = Math.max(...merged);
+    const flattened = [].concat(...data);
+    const max = Math.max(...flattened);
     return Math.ceil((max + 1) / 10) * 10 + 20;
 }
 
