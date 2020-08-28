@@ -57,17 +57,12 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        switch (ARTEMIS_SERVER_URL) {
-            case "https://artemis.ase.in.tum.de":
-                return "prod";
-            case "https://artemistest.ase.in.tum.de":
-                return "test";
-            case "https://artemistest2.ase.in.tum.de":
-                return "test";
-            case "https://vmbruegge60.in.tum.de":
-                return "test";
-            default:
-                return "local";
-        }
+        return switch (ARTEMIS_SERVER_URL) {
+            case "https://artemis.ase.in.tum.de" -> "prod";
+            case "https://artemistest.ase.in.tum.de" -> "test";
+            case "https://artemistest2.ase.in.tum.de" -> "test";
+            case "https://vmbruegge60.in.tum.de" -> "test";
+            default -> "local";
+        };
     }
 }

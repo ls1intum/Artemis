@@ -47,13 +47,13 @@ While Artemis includes generic adapters to these three external systems with a d
 
 ## Building for production
 
-To optimize the Artemis application for production, run:
+To build and optimize the Artemis application for production, run:
 
 ```
 ./gradlew -Pprod -Pwar clean bootWar
 ```
 
-This will compile the TypeScript into JavaScript files, concatenate and minify them and the CSS files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:
+This will create a Artemis-<version>.war file in the folder `build/libs`. The build command compiles the TypeScript into JavaScript files, concatenates and minifies the created files (including HTML and CSS files). It will also modify `index.html` so it references these new files. To ensure everything worked, run the following command to start the application on your local computer:
 
 ```
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
@@ -64,6 +64,12 @@ java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
 Refer to [Using JHipster in production](http://www.jhipster.tech/production) for more details.
+
+The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
+
+```
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-4.4.5.war
+```
 
 ## Deployment
 

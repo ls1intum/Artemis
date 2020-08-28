@@ -212,13 +212,10 @@ public class TeamService {
      * @return TeamImportStrategy
      */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
-        switch (importStrategyType) {
-            case PURGE_EXISTING:
-                return new PurgeExistingStrategy(teamRepository, participationService);
-            case CREATE_ONLY:
-                return new CreateOnlyStrategy(teamRepository);
-            default:
-                throw new Error("Unknown team import strategy type: " + importStrategyType);
-        }
+        return switch (importStrategyType) {
+            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationService);
+            case CREATE_ONLY -> new CreateOnlyStrategy(teamRepository);
+            default -> throw new Error("Unknown team import strategy type: " + importStrategyType);
+        };
     }
 }
