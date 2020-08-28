@@ -9,16 +9,13 @@ module.exports = {
             },
             diagnostics: false,
         },
-        jest: {
-            coverageThreshold: {
-                global: {
-                    branches: 33,
-                    functions: 40,
-                    lines: 59,
-                    // TODO: in the future the following value should become at least 80
-                    statements: 61,
-                },
-            },
+    },
+    coverageThreshold: {
+        global: {
+            branches: 33,
+            functions: 40,
+            lines: 59,
+            statements: 60,
         },
     },
     preset: 'jest-preset-angular',
