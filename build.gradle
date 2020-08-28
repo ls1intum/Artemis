@@ -35,7 +35,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.4.5"
+version = "4.4.6"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -78,9 +78,10 @@ spotless {
             exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
         }
         importOrderFile "artemis-spotless.importorder"
-        removeUnusedImports()
-
         eclipse().configFile "artemis-spotless-style.xml"
+
+        // the following command is not compatible with Java14 switch expressions
+//        removeUnusedImports()
     }
 }
 
@@ -90,9 +91,14 @@ springBoot {
     mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
+
 // Execute the test cases: ./gradlew executeTests
 
 test {
+    jvmArgs(['--enable-preview'])
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
     testLogging.showStandardStreams = true
@@ -332,7 +338,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.6"
+    gradleVersion = "6.6.1"
 }
 
 task stage(dependsOn: "bootWar") {
