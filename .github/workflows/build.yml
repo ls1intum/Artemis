@@ -103,7 +103,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn_install -x webpack
+      run: ./gradlew --console=plain executeTests jacocoTestReport -x yarn_install -x webpack jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
