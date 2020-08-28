@@ -68,17 +68,12 @@ public class MetricsBean {
      * @return a double corresponding to the health status
      */
     private double mapHealthToDouble(Health health) {
-        switch (health.getStatus().getCode()) {
-            case "UP":
-                return 1;
-            case "DOWN":
-                return 0;
-            case "OUT_OF_SERVICE":
-                return -1;
-            case "UNKNOWN":
-                return -2;
-            default:
-                return -3;
-        }
+        return switch (health.getStatus().getCode()) {
+            case "UP" -> 1;
+            case "DOWN" -> 0;
+            case "OUT_OF_SERVICE" -> -1;
+            case "UNKNOWN" -> -2;
+            default -> -3;
+        };
     }
 }
