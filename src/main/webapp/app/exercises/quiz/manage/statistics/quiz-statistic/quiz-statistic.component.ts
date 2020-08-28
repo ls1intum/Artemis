@@ -88,11 +88,11 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
             ctx.textBaseline = 'bottom';
             const participants = dataSetProvider.getParticipants();
 
-            dataSetProvider.getDataSets().forEach((dataset: DataSet, i: number) =>  {
-                const meta = chartInstance.getDatasetMeta(i);
-                meta.data.forEach((bar: any, index: number) => {
-                    const data = (Math.round(dataset.data[index] * 100) / 100).toString();
-                    const dataPercentage = Math.round((dataset.data[index] / participants) * 1000) / 10 || 0;
+            dataSetProvider.getDataSets().forEach((dataset: DataSet, datasetIndex: number) => {
+                const meta = chartInstance.getDatasetMeta(datasetIndex);
+                meta.data.forEach((bar: any, dataIndex: number) => {
+                    const data = (Math.round(dataset.data[dataIndex] * 100) / 100).toString();
+                    const dataPercentage = Math.round((dataset.data[dataIndex] / participants) * 1000) / 10 || 0;
                     ctx.fillText(data, bar._model.x, bar._model.y - 20);
                     ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
                 });
