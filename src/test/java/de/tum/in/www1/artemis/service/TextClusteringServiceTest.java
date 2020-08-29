@@ -2,25 +2,24 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.TextEmbeddingService;
-import de.tum.in.www1.artemis.service.connectors.TextSegmentationService;
-import de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,43 +27,19 @@ import java.util.Optional;
 public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
-    private static final String[] submissionText = {
-        "The purpose of science is to describe and understand complex systems, such as a system of atoms, a society of human beings, or a solar system.",
+    private static final String[] blockText = {
+        "The purpose of science is to describe and understand complex systems,",
+        "such as a system of atoms, a society of human beings, or a solar system.",
         "Traditionally, a distinction is made between natural sciences and social sciences to distinguish between two major types of systems.",
-        "The purpose of natural sciences is to understand nature and its subsystems. " +
-            "Natural sciences include, for example, biology, chemistry, physics, and paleontology.",
-        "The purpose of the social sciences is to understand human beings. " +
-            "Social sciences include psychology and sociology.",
-        "There is another type of system that we call an artificial system. " +
-            "Examples of artificial systems include the space shuttle, airline reservation systems, and stock trading systems.",
-        "Herbert Simon coined the term sciences of the artificial to describe the sciences that deal with artificial systems [Simon, 1970]. " +
-            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent.",
-        "Computer science, for example, the science of understanding computer systems, is a child of the twentieth century. " +
-            "Many methods that have been successfully applied in the natural sciences and humanities can be applied to the sciences of the artificial as well.",
-        "By looking at the other sciences, we can learn quite a bit. " +
-            "One of the basic methods of science is modeling.",
-        "A model is an abstract representation of a system that enables us to answer questions about the system. " +
-            "Models are useful when dealing with systems that are too large, too small, too complicated, or too expensive to experience firsthand.",
-        "Models also allow us to visualize and understand systems that either no longer exist or that are only claimed to exist."
+        "The purpose of natural sciences is to understand nature and its subsystems.",
+        "Natural sciences include, for example, biology, chemistry, physics, and paleontology.",
+        "The purpose of the social sciences is to understand human beings.",
+        "Social sciences include psychology and sociology.",
+        "There is another type of system that we call an artificial system.",
+        "Examples of artificial systems include the space shuttle, airline reservation systems, and stock trading systems.",
+        "Herbert Simon coined the term sciences of the artificial to describe the sciences that deal with artificial systems [Simon, 1970].",
+        "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent.",
     };
-
-    private static final String SEGMENTATION_ENDPOINT = "http://localhost:8000/segment";
-
-    private static final String EMBEDDING_ENDPOINT = "http://localhost:8001/embed";
-
-    private static final String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
-
-    @Autowired
-    TextClusteringService textClusteringService;
-
-    @Autowired
-    TextSegmentationService textSegmentationService;
-
-    @Autowired
-    TextEmbeddingService textEmbeddingService;
-
-    @Autowired
-    TextSimilarityClusteringService textSimilarityClusteringService;
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
@@ -85,11 +60,25 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
+    ExerciseService exerciseService;
+
+    /*
+    @Autowired
+    CourseService courseService;
+
+    @Autowired
+    ExamService examService;
+
+    @Autowired
+    ExerciseGroupService exerciseGroupService;
+     */
+
+    @Autowired
     DatabaseUtilService database;
 
     private List<TextExercise> exercises;
-    private List<TextBlock> blocks;
-    private List<TextCluster> clusters;
+    private List<TextBlock> blocks = new ArrayList<>();
+    private List<TextCluster> clusters = new ArrayList<>();
     private List<TextTreeNode> treeNodes;
     private List<TextPairwiseDistance> pairwiseDistances;
     private TextSubmission submission;
@@ -97,36 +86,114 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeAll
     public void init() {
-        assumeTrue(isTextAssessmentClusteringAvailable());
-        database.addUsers(10, 0, 0);
+        database.addUsers(10, 0, 1);
         database.addCourseWithOneFinishedTextExercise();
         database.addCourseWithOneFinishedTextExercise();
-
-        ReflectionTestUtils.setField(textSegmentationService, "API_ENDPOINT", SEGMENTATION_ENDPOINT);
-        ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", EMBEDDING_ENDPOINT);
-        ReflectionTestUtils.setField(textSimilarityClusteringService, "API_ENDPOINT", CLUSTERING_ENDPOINT);
+        database.addCourseWithOneFinishedTextExercise();
+        database.addCourseExamExerciseGroupWithOneTextExercise();
+        database.addCourseExamExerciseGroupWithOneTextExercise();
 
         exercises = textExerciseRepository.findAll();
 
         // Initialize data for the main exercise
         TextExercise exercise = exercises.get(0);
-        for(int i = 1; i <= 10; i++) {
-            TextSubmission submission = ModelFactory.generateTextSubmission(submissionText[i - 1], Language.ENGLISH, true);
+
+        // Create first submission, save text blocks and submission
+        submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
+        database.addTextSubmission(
+            exercise,
+            submission,
+            "student1"
+        );
+
+        TextBlock bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[0]);
+        bl.computeId();
+        bl.setTreeId(0);
+        blocks.add(bl);
+        textBlockRepository.save(bl);
+        submission.addBlock(bl);
+        textSubmissionRepository.save(submission);
+
+        bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(blockText[1]);
+        bl.computeId();
+        bl.setTreeId(1);
+        blocks.add(bl);
+        textBlockRepository.save(bl);
+        submission.addBlock(bl);
+        textSubmissionRepository.save(submission);
+
+        // Create submissions, save text blocks and submissions
+        for(int i = 2; i <= 10; i++) {
+            submission = ModelFactory.generateTextSubmission(blockText[i], Language.ENGLISH, true);
             database.addTextSubmission(
                 exercise,
                 submission,
                 "student" + i
             );
+            bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[i]);
+            bl.computeId();
+            bl.setTreeId(i);
+            blocks.add(bl);
+            textBlockRepository.save(bl);
+            submission.addBlock(bl);
+            textSubmissionRepository.save(submission);
         }
-        textClusteringService.calculateClusters(exercise);
+
+        // Initialize Clusters
+        TextCluster cluster1 = new TextCluster().exercise(exercise);
+        cluster1.addBlocks(blocks.get(1));
+        cluster1.addBlocks(blocks.get(7));
+        cluster1.setTreeId(13);
+        blocks.add(1, blocks.remove(1).cluster(cluster1));
+        blocks.add(7, blocks.remove(7).cluster(cluster1));
+
+        TextCluster cluster2 = new TextCluster().exercise(exercise);
+        cluster2.addBlocks(blocks.get(4));
+        cluster2.addBlocks(blocks.get(6));
+        cluster2.setTreeId(15);
+        blocks.add(4, blocks.remove(4).cluster(cluster2));
+        blocks.add(6, blocks.remove(6).cluster(cluster2));
+
+        TextCluster cluster3 = new TextCluster().exercise(exercise);
+        cluster3.addBlocks(blocks.get(2));
+        cluster3.addBlocks(blocks.get(9));
+        cluster3.addBlocks(blocks.get(10));
+        cluster3.setTreeId(16);
+        blocks.add(2, blocks.remove(2).cluster(cluster3));
+        blocks.add(9, blocks.remove(9).cluster(cluster3));
+        blocks.add(10, blocks.remove(10).cluster(cluster3));
+
+        TextCluster cluster4 = new TextCluster().exercise(exercise);
+        cluster4.addBlocks(blocks.get(0));
+        cluster4.addBlocks(blocks.get(3));
+        cluster4.addBlocks(blocks.get(5));
+        cluster4.setTreeId(17);
+        blocks.add(0, blocks.remove(0).cluster(cluster4));
+        blocks.add(3, blocks.remove(3).cluster(cluster4));
+        blocks.add(5, blocks.remove(5).cluster(cluster3));
+
+        clusters.add(cluster1);
+        clusters.add(cluster2);
+        clusters.add(cluster3);
+        clusters.add(cluster4);
+
+        // Read pre-computed results from JSON
+        treeNodes = parseClusterTree(exercise);
+        pairwiseDistances = parsePairwiseDistances(exercise);
+
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(blocks);
+        textTreeNodeRepository.saveAll(treeNodes);
+        textPairwiseDistanceRepository.saveAll(pairwiseDistances);
+        textExerciseRepository.save(exercise);
 
         // Initialize data for the second exercise
         TextExercise exercise2 = exercises.get(1);
-        submission = ModelFactory.generateTextSubmission(submissionText[0], Language.ENGLISH, true);
+        submission = ModelFactory.generateTextSubmission(blockText[0], Language.ENGLISH, true);
         database.addTextSubmission(
             exercise2,
             submission,
-            "student" + 1
+            "student1"
         );
         TextBlock block = ModelFactory.generateTextBlock(0,1,"b1");
         block.setSubmission(submission);
@@ -135,17 +202,10 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         TextCluster cluster = new TextCluster().exercise(exercise2);
         textClusterRepository.save(cluster);
         TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
-        incorrectTreeNode.setId(1001L);
         incorrectTreeNode.setChild(-1);
         textTreeNodeRepository.save(incorrectTreeNode);
         TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
-        incorrectPairwiseDistance.setId(1001L);
         textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
-
-        blocks = textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId());
-        clusters = textClusterRepository.findAllByExercise(exercise);
-        treeNodes = textTreeNodeRepository.findAllByExercise(exercise);
-        pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
     }
 
     @AfterAll
@@ -154,6 +214,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testUniqueProperties() {
         TextExercise exercise = exercises.get(0);
         // Only half of the matrix is stored in the database, as it is symmetrical.
@@ -187,7 +248,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testStateAfterClustering() {
+
         TextExercise exercise = exercises.get(0);
         TextExercise exercise2 = exercises.get(1);
 
@@ -214,7 +277,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textClusterRepository.delete(cluster);
 
         TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
-        incorrectTreeNode.setId(1000L);
         incorrectTreeNode.setChild(-2);
         textTreeNodeRepository.save(incorrectTreeNode);
         List<TextTreeNode> currentTreeNodes = textTreeNodeRepository.findAllByExercise(exercise);
@@ -223,7 +285,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textTreeNodeRepository.delete(incorrectTreeNode);
 
         TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
-        incorrectPairwiseDistance.setId(1000L);
         textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
         List<TextPairwiseDistance> currentPairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
         assertThat(currentPairwiseDistances, hasSize(pairwiseDistances.size()));
@@ -232,32 +293,117 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    public void testRemoval() {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExerciseRemoval() {
         TextExercise exercise = exercises.get(1);
 
-        // Test cascading removals
-        textSubmissionRepository.delete(submission);
+        // Test cascading removals for exercise
+        exerciseService.delete(exercise.getId(), true, true);
         assertThat(textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId()), hasSize(0));
         assertThat(textSubmissionRepository.findById(submission.getId()), equalTo(Optional.empty()));
-
-        textExerciseRepository.delete(exercise);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textClusterRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
     }
 
-    private static boolean isTextAssessmentClusteringAvailable() {
-        try {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(CLUSTERING_ENDPOINT).openConnection();
-            httpURLConnection.setRequestMethod("HEAD");
-            httpURLConnection.setConnectTimeout(1000);
-            final int responseCode = httpURLConnection.getResponseCode();
+    /*
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCourseRemoval() {
+        // Test cascading removals for course
+        TextExercise exercise = exercises.get(2);
 
-            return responseCode == 405;
+        TextTreeNode newNode = new TextTreeNode().exercise(exercise);
+        newNode.setChild(111);
+        TextPairwiseDistance newDist = new TextPairwiseDistance().exercise(exercise);
+        textPairwiseDistanceRepository.save(newDist);
+        textTreeNodeRepository.save(newNode);
+
+        courseService.delete(exercise.getCourseViaExerciseGroupOrCourseMember());
+        assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
+        assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
+        assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExamRemoval() {
+        // Test cascading removals for exam
+        TextExercise exercise = exercises.get(3);
+
+        TextTreeNode newNode = new TextTreeNode().exercise(exercise);
+        newNode.setChild(112);
+        TextPairwiseDistance newDist = new TextPairwiseDistance().exercise(exercise);
+        textPairwiseDistanceRepository.save(newDist);
+        textTreeNodeRepository.save(newNode);
+
+        examService.delete(exercise.getExerciseGroup().getExam());
+        assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
+        assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
+        assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExerciseGroupRemoval() {
+        // Test cascading removals for exercise group
+        TextExercise exercise = exercises.get(4);
+
+        TextTreeNode newNode = new TextTreeNode().exercise(exercise);
+        newNode.setChild(113);
+        newNode.setChildSize(0);
+        newNode.setParent(112);
+        newNode.setLambdaVal(-1);
+        TextPairwiseDistance newDist = new TextPairwiseDistance().exercise(exercise);
+        textPairwiseDistanceRepository.save(newDist);
+        textTreeNodeRepository.save(newNode);
+
+        exerciseGroupService.delete(exercise.getExerciseGroup().getId());
+        assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
+        assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
+        assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
+    }
+     */
+
+    private static List<TextTreeNode> parseClusterTree(TextExercise exercise) {
+        List<TextTreeNode> result = new ArrayList<>();
+        JSONParser jsonParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/test/resources/test-data/clustering/clusterTree.json")) {
+            JSONArray treeList = (JSONArray) jsonParser.parse(reader);
+            for(int i = 0; i < treeList.size(); i++) {
+                JSONObject n = (JSONObject) treeList.get(i);
+                TextTreeNode node = new TextTreeNode();
+                node.setExercise(exercise);
+                node.setParent((long) n.get("parent"));
+                node.setLambdaVal((double) n.get("lambdaVal"));
+                node.setChildSize((long) n.get("childSize"));
+                node.setChild((long) n.get("child"));
+                result.add(node);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch (IOException e) {
-            return false;
+        return result;
+    }
+
+    private static List<TextPairwiseDistance> parsePairwiseDistances(TextExercise exercise) {
+        List<TextPairwiseDistance> result = new ArrayList<>();
+        JSONParser jsonParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/test/resources/test-data/clustering/pairwiseDistances.json")) {
+            JSONArray distList = (JSONArray) jsonParser.parse(reader);
+            for(int i = 0; i < distList.size(); i++) {
+                JSONObject d = (JSONObject) distList.get(i);
+                TextPairwiseDistance dist = new TextPairwiseDistance();
+                dist.setExercise(exercise);
+                dist.setDistance((double) d.get("distance"));
+                dist.setBlockI((long) d.get("blockI"));
+                dist.setBlockJ((long) d.get("blockJ"));
+                result.add(dist);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return result;
     }
 }
