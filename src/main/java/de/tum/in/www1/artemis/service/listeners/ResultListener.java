@@ -72,7 +72,7 @@ public class ResultListener {
     public void postPersist(Result newResult) {
         log.info("Result " + newResult + " was created");
         // add to student scores (or update existing one)
-        // studentScoreService.addNewResult(newResult);
+        studentScoreService.addNewResult(newResult);
 
         if (newResult.getAssessor() != null) {
             // add to tutor scores (or update existing one)

@@ -249,4 +249,23 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 1").isEqualTo(1);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoreNewResultForExistingScore() throws Exception {
+        user = userRepo.findAllInGroup("tumuser").get(0);
+        course = courseRepo.findAll().get(0);
+        exercise = exerciseRepo.findAll().get(0);
+        Result oldResult = resultRepo.findAll().get(0);
+        participation = participationRepo.findAll().get(0);
+
+        StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getResult().getId()).as("response result id is old result id").isEqualTo(oldResult.getId());
+
+        Result newResult = ModelFactory.generateResult(true, 20).resultString("Not good!").participation(participation);
+        resultRepo.save(newResult);
+
+        response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getResult().getId()).as("response result id is new result id").isEqualTo(newResult.getId());
+    }
 }

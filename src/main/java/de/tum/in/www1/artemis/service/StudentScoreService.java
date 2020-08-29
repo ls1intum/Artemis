@@ -112,7 +112,7 @@ public class StudentScoreService {
         StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
 
         // TODO: this call does not work
-        //var existingStudentScores = getStudentScoreForStudentAndExercise(participation.getStudent().get(), participation.getExercise());
+        // var existingStudentScores = getStudentScoreForStudentAndExercise(participation.getStudent().get(), participation.getExercise());
         var existingStudentScores = new ArrayList<StudentScore>();
 
         if (existingStudentScores.size() > 0) {
