@@ -63,9 +63,7 @@ public class TextSimilarityClusteringService {
     public Response clusterTextBlocks(List<TextEmbedding> embeddings, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to cluster student text answers.");
         final Request request = new Request(embeddings);
-        final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
-
-        return response;
+        return connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
     }
 
 }

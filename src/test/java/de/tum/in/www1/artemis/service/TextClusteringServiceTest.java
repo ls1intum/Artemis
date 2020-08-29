@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -13,12 +14,14 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +88,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
 
     @BeforeAll
+    @WithMockUser(value = "admin", roles = "ADMIN")
     public void init() {
         database.addUsers(10, 0, 1);
         database.addCourseWithOneFinishedTextExercise();
@@ -98,88 +102,17 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         // Initialize data for the main exercise
         TextExercise exercise = exercises.get(0);
 
-        // Create first submission, save text blocks and submission
-        submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
-        database.addTextSubmission(
-            exercise,
-            submission,
-            "student1"
-        );
-
-        TextBlock bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[0]);
-        bl.computeId();
-        bl.setTreeId(0);
-        blocks.add(bl);
-        textBlockRepository.save(bl);
-        submission.addBlock(bl);
-        textSubmissionRepository.save(submission);
-
-        bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(blockText[1]);
-        bl.computeId();
-        bl.setTreeId(1);
-        blocks.add(bl);
-        textBlockRepository.save(bl);
-        submission.addBlock(bl);
-        textSubmissionRepository.save(submission);
-
-        // Create submissions, save text blocks and submissions
-        for(int i = 2; i <= 10; i++) {
-            submission = ModelFactory.generateTextSubmission(blockText[i], Language.ENGLISH, true);
-            database.addTextSubmission(
-                exercise,
-                submission,
-                "student" + i
-            );
-            bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[i]);
-            bl.computeId();
-            bl.setTreeId(i);
-            blocks.add(bl);
-            textBlockRepository.save(bl);
-            submission.addBlock(bl);
-            textSubmissionRepository.save(submission);
-        }
-
-        // Initialize Clusters
-        TextCluster cluster1 = new TextCluster().exercise(exercise);
-        cluster1.addBlocks(blocks.get(1));
-        cluster1.addBlocks(blocks.get(7));
-        cluster1.setTreeId(13);
-        blocks.add(1, blocks.remove(1).cluster(cluster1));
-        blocks.add(7, blocks.remove(7).cluster(cluster1));
-
-        TextCluster cluster2 = new TextCluster().exercise(exercise);
-        cluster2.addBlocks(blocks.get(4));
-        cluster2.addBlocks(blocks.get(6));
-        cluster2.setTreeId(15);
-        blocks.add(4, blocks.remove(4).cluster(cluster2));
-        blocks.add(6, blocks.remove(6).cluster(cluster2));
-
-        TextCluster cluster3 = new TextCluster().exercise(exercise);
-        cluster3.addBlocks(blocks.get(2));
-        cluster3.addBlocks(blocks.get(9));
-        cluster3.addBlocks(blocks.get(10));
-        cluster3.setTreeId(16);
-        blocks.add(2, blocks.remove(2).cluster(cluster3));
-        blocks.add(9, blocks.remove(9).cluster(cluster3));
-        blocks.add(10, blocks.remove(10).cluster(cluster3));
-
-        TextCluster cluster4 = new TextCluster().exercise(exercise);
-        cluster4.addBlocks(blocks.get(0));
-        cluster4.addBlocks(blocks.get(3));
-        cluster4.addBlocks(blocks.get(5));
-        cluster4.setTreeId(17);
-        blocks.add(0, blocks.remove(0).cluster(cluster4));
-        blocks.add(3, blocks.remove(3).cluster(cluster4));
-        blocks.add(5, blocks.remove(5).cluster(cluster3));
-
-        clusters.add(cluster1);
-        clusters.add(cluster2);
-        clusters.add(cluster3);
-        clusters.add(cluster4);
+        initializeBlocksAndSubmissions(exercise);
+        initializeClusters(exercise);
 
         // Read pre-computed results from JSON
-        treeNodes = parseClusterTree(exercise);
-        pairwiseDistances = parsePairwiseDistances(exercise);
+        try {
+            treeNodes = parseClusterTree(exercise);
+            pairwiseDistances = parsePairwiseDistances(exercise);
+        } catch (ParseException | IOException e) {
+            database.resetDatabase();
+            fail("JSON files for clusterTree or pairwiseDistances not successfully read/parsed.");
+        }
 
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(blocks);
@@ -209,6 +142,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterAll
+    @WithMockUser(value = "admin", roles = "ADMIN")
     public void tearDown() {
         database.resetDatabase();
     }
@@ -366,44 +300,146 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
      */
 
-    private static List<TextTreeNode> parseClusterTree(TextExercise exercise) {
+    /**
+     * Reads and parses the cluster tree from json file for given exercise
+     * @param exercise
+     * @return list of tree nodes
+     * @throws IOException
+     * @throws ParseException
+     */
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    private static List<TextTreeNode> parseClusterTree(TextExercise exercise) throws IOException, ParseException {
         List<TextTreeNode> result = new ArrayList<>();
         JSONParser jsonParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/test/resources/test-data/clustering/clusterTree.json")) {
-            JSONArray treeList = (JSONArray) jsonParser.parse(reader);
-            for(int i = 0; i < treeList.size(); i++) {
-                JSONObject n = (JSONObject) treeList.get(i);
-                TextTreeNode node = new TextTreeNode();
-                node.setExercise(exercise);
-                node.setParent((long) n.get("parent"));
-                node.setLambdaVal((double) n.get("lambdaVal"));
-                node.setChildSize((long) n.get("childSize"));
-                node.setChild((long) n.get("child"));
-                result.add(node);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        FileReader reader = new FileReader("src/test/resources/test-data/clustering/clusterTree.json");
+        JSONArray treeList = (JSONArray) jsonParser.parse(reader);
+        for(int i = 0; i < treeList.size(); i++) {
+            JSONObject n = (JSONObject) treeList.get(i);
+            TextTreeNode node = new TextTreeNode();
+            node.setExercise(exercise);
+            node.setParent((long) n.get("parent"));
+            node.setLambdaVal((double) n.get("lambdaVal"));
+            node.setChildSize((long) n.get("childSize"));
+            node.setChild((long) n.get("child"));
+            result.add(node);
         }
         return result;
     }
 
-    private static List<TextPairwiseDistance> parsePairwiseDistances(TextExercise exercise) {
+    /**
+     * Reads and parses the pairwise distances from json file for given exercise
+     * @param exercise
+     * @return list of pairwise distances
+     * @throws IOException
+     * @throws ParseException
+     */
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    private static List<TextPairwiseDistance> parsePairwiseDistances(TextExercise exercise) throws IOException, ParseException {
         List<TextPairwiseDistance> result = new ArrayList<>();
         JSONParser jsonParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/test/resources/test-data/clustering/pairwiseDistances.json")) {
-            JSONArray distList = (JSONArray) jsonParser.parse(reader);
-            for(int i = 0; i < distList.size(); i++) {
-                JSONObject d = (JSONObject) distList.get(i);
-                TextPairwiseDistance dist = new TextPairwiseDistance();
-                dist.setExercise(exercise);
-                dist.setDistance((double) d.get("distance"));
-                dist.setBlockI((long) d.get("blockI"));
-                dist.setBlockJ((long) d.get("blockJ"));
-                result.add(dist);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        FileReader reader = new FileReader("src/test/resources/test-data/clustering/pairwiseDistances.json");
+        JSONArray distList = (JSONArray) jsonParser.parse(reader);
+        for(int i = 0; i < distList.size(); i++) {
+            JSONObject d = (JSONObject) distList.get(i);
+            TextPairwiseDistance dist = new TextPairwiseDistance();
+            dist.setExercise(exercise);
+            dist.setDistance((double) d.get("distance"));
+            dist.setBlockI((long) d.get("blockI"));
+            dist.setBlockJ((long) d.get("blockJ"));
+            result.add(dist);
         }
         return result;
+    }
+
+    /**
+     * Initializes TextBlocks and TextSubmissions from the static blockText array for given exercise
+     * @param exercise
+     */
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    private void initializeBlocksAndSubmissions(TextExercise exercise) {
+        // Create first submission, save text blocks and submission
+        submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
+        database.addTextSubmission(
+            exercise,
+            submission,
+            "student1"
+        );
+
+        TextBlock bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[0]);
+        bl.computeId();
+        bl.setTreeId(0);
+        blocks.add(bl);
+        textBlockRepository.save(bl);
+        submission.addBlock(bl);
+        textSubmissionRepository.save(submission);
+
+        bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(blockText[1]);
+        bl.computeId();
+        bl.setTreeId(1);
+        blocks.add(bl);
+        textBlockRepository.save(bl);
+        submission.addBlock(bl);
+        textSubmissionRepository.save(submission);
+
+        // Create submissions, save text blocks and submissions
+        for(int i = 2; i <= 10; i++) {
+            submission = ModelFactory.generateTextSubmission(blockText[i], Language.ENGLISH, true);
+            database.addTextSubmission(
+                exercise,
+                submission,
+                "student" + i
+            );
+            bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[i]);
+            bl.computeId();
+            bl.setTreeId(i);
+            blocks.add(bl);
+            textBlockRepository.save(bl);
+            submission.addBlock(bl);
+            textSubmissionRepository.save(submission);
+        }
+    }
+
+    /**
+     * Initializes TextClusters for given exercise
+     * @param exercise
+     */
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    private void initializeClusters(TextExercise exercise) {
+        TextCluster cluster1 = new TextCluster().exercise(exercise);
+        cluster1.addBlocks(blocks.get(1));
+        cluster1.addBlocks(blocks.get(7));
+        cluster1.setTreeId(13);
+        blocks.add(1, blocks.remove(1).cluster(cluster1));
+        blocks.add(7, blocks.remove(7).cluster(cluster1));
+
+        TextCluster cluster2 = new TextCluster().exercise(exercise);
+        cluster2.addBlocks(blocks.get(4));
+        cluster2.addBlocks(blocks.get(6));
+        cluster2.setTreeId(15);
+        blocks.add(4, blocks.remove(4).cluster(cluster2));
+        blocks.add(6, blocks.remove(6).cluster(cluster2));
+
+        TextCluster cluster3 = new TextCluster().exercise(exercise);
+        cluster3.addBlocks(blocks.get(2));
+        cluster3.addBlocks(blocks.get(9));
+        cluster3.addBlocks(blocks.get(10));
+        cluster3.setTreeId(16);
+        blocks.add(2, blocks.remove(2).cluster(cluster3));
+        blocks.add(9, blocks.remove(9).cluster(cluster3));
+        blocks.add(10, blocks.remove(10).cluster(cluster3));
+
+        TextCluster cluster4 = new TextCluster().exercise(exercise);
+        cluster4.addBlocks(blocks.get(0));
+        cluster4.addBlocks(blocks.get(3));
+        cluster4.addBlocks(blocks.get(5));
+        cluster4.setTreeId(17);
+        blocks.add(0, blocks.remove(0).cluster(cluster4));
+        blocks.add(3, blocks.remove(3).cluster(cluster4));
+        blocks.add(5, blocks.remove(5).cluster(cluster3));
+
+        clusters.add(cluster1);
+        clusters.add(cluster2);
+        clusters.add(cluster3);
+        clusters.add(cluster4);
     }
 }
