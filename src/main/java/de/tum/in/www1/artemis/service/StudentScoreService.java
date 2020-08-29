@@ -109,6 +109,10 @@ public class StudentScoreService {
         // accordingly (this happens for programming exercises and for the 2nd/3rd correction of manual exercises) only in case the new result is rated
         // 2) there is no student score for the same participation yet: create a new one -> DONE
 
+        if (newResult.getParticipation() == null) {
+            return;
+        }
+
         StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
 
         // TODO: this call does not work
