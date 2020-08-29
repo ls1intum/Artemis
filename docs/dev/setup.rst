@@ -148,8 +148,6 @@ information about the setup for programming exercises provided:
    1) Create a file named ``application-local.yml`` under ``src/main/resources/config``.
    2) Copy the contents of ``application-artemis.yml`` into the new file.
    3) Update configuration values in ``application-local.yml``.
-   4) In your local run configuration, add the ``local`` profile to the list of active spring profiles.
-      Make sure it's the last profile in the list so that it overwrites any existing values.
 
    By default, changes to ``application-local.yml`` will be ignored by git so you don't accidentally
    share your credentials or other local configuration options.
