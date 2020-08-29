@@ -39,6 +39,14 @@ public class BuildLogEntry {
         this.log = log;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public ZonedDateTime getTime() {
         return time;
     }
