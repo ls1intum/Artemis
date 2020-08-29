@@ -694,6 +694,8 @@ public class BambooService implements ContinuousIntegrationService {
             return false;
         }
         var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
+        log.debug("Created static code analysis feedback for participation " + result.getParticipation().getId()
+            + " and result " + result.getId() + ":" + feedbackList);
         result.addFeedbacks(feedbackList);
         return feedbackList.size() > 0;
     }
