@@ -50,6 +50,11 @@ public class FeedbackService {
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
      *
+     * Mapping ({} marks optional content as not all static code analysis tools support all attributes):
+     * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER:tool:category:rule
+     * - reference: filePath:startLine-endLine:{startColumn-endColumn}
+     * - detailText: message
+     *
      * @param reports Static code analysis reports to be transformed
      * @return Feedback objects representing the static code analysis findings
      */
@@ -60,14 +65,31 @@ public class FeedbackService {
 
             for (final var issue : report.getIssues()) {
                 Feedback feedback = new Feedback();
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name());
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name() + ":" + issue.getCategory() + ":" + issue.getRule());
+                feedback.setReference(createSourceLocation(issue));
                 feedback.setDetailText(issue.getMessage());
-                feedback.setReference(issue.getClassname() + ':' + issue.getLine());
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setPositive(false);
                 feedbackList.add(feedback);
             }
         }
         return feedbackList;
+    }
+
+    private String createSourceLocation(StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue issue) {
+        StringBuilder sourceLocation = new StringBuilder();
+
+        // The file path is always present
+        sourceLocation.append(issue.getFilePath());
+
+        // Start and end line is always present
+        sourceLocation.append(":").append(issue.getStartLine()).append("-").append(issue.getEndLine());
+
+        // Columns are not reported by all static code analysis tools. If startColumn is present then endColumn is too
+        if (issue.getStartColumn() == null) {
+            return sourceLocation.toString();
+        }
+        sourceLocation.append(":").append(issue.getStartColumn()).append(issue.getEndColumn());
+        return sourceLocation.toString();
     }
 }
