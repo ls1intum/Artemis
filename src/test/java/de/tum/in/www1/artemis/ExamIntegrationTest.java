@@ -1092,7 +1092,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Find the original exerciseGroup of the exam using the id in ExerciseGroupId
             ExerciseGroup originalExerciseGroup = exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId().equals(exerciseGroupDTO.id)).findFirst().get();
 
-            // Assume that all exercises in a group have the same max score
+            // Assume that all exercises in a group have the same Points
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore();
             assertThat(exerciseGroupDTO.maxPoints).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxScore());
             assertEquals(exerciseGroupDTO.maxPoints, groupMaxScoreFromExam, EPSILON);

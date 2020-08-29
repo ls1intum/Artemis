@@ -836,7 +836,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 
-        // max score should be less
+        // Points should be less
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
@@ -927,7 +927,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
-        // max score should be less
+        // Points should be less
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
@@ -1008,7 +1008,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.getQuizQuestions()).as("Same amount of questions saved").hasSize(quizExercise2.getQuizQuestions().size());
         assertThat(quizExercise.getTitle()).as("Title saved correctly").isEqualTo(quizExercise2.getTitle());
         assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Number of attempts saved correctly").isEqualTo(quizExercise2.getAllowedNumberOfAttempts());
-        assertThat(quizExercise.getMaxScore()).as("Max score saved correctly").isEqualTo(quizExercise2.getMaxScore());
+        assertThat(quizExercise.getMaxScore()).as("Points saved correctly").isEqualTo(quizExercise2.getMaxScore());
         assertThat(quizExercise.getDuration()).as("Duration saved correctly").isEqualTo(quizExercise2.getDuration());
         assertThat(quizExercise.getType()).as("Type saved correctly").isEqualTo(quizExercise2.getType());
     }

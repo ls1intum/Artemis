@@ -123,7 +123,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Group the exercises by type and gather statistics for each type (titles, maxScore, accumulated max Score).
+     * Group the exercises by type and gather statistics for each type (titles, maxScore, accumulated Points).
      */
     groupExercises() {
         for (const exerciseType of this.exerciseTypes) {

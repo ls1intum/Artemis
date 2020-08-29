@@ -53,15 +53,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     totalRelativeScore = 0;
     relativeScores = {};
 
-    // max score
+    // Points
     totalMaxScore = 0;
     totalMaxScores = {};
 
-    // current max score
+    // current Points
     reachableScore = 0;
     reachableScores = {};
 
-    // current max score
+    // current Points
     currentRelativeScore = 0;
     currentRelativeScores = {};
 

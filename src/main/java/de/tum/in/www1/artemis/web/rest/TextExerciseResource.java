@@ -170,7 +170,7 @@ public class TextExerciseResource {
         }
 
         if (textExercise.getMaxScore() == null) {
-            throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
+            throw new BadRequestAlertException("A new textExercise needs a Points", ENTITY_NAME, "missingmaxscore");
         }
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {

@@ -110,7 +110,7 @@ public abstract class Exercise implements Serializable {
     private Double maxScore;
 
     @Column(name = "bonus_points")
-    private Double bonusPoints;
+    private Double bonusPoints = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")

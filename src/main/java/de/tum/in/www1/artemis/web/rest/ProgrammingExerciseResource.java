@@ -245,9 +245,9 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        // Check if max score is set
+        // Check if Points is set
         if (programmingExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The Points is invalid", "maxscoreInvalid")).body(null);
         }
 
         if (programmingExercise.getBonusPoints() == null) {
@@ -380,9 +380,9 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        // Check if max score is set
+        // Check if Points is set
         if (newExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The Points is invalid", "maxscoreInvalid")).body(null);
         }
 
         if (newExercise.getBonusPoints() == null) {
