@@ -27,7 +27,7 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
 
-    // need bamboo service and resultrepository to create and store from old feedbacks
+    // need bamboo service and result repository to create and store from old feedbacks
     public FeedbackService(FeedbackRepository feedbackRepository) {
         this.feedbackRepository = feedbackRepository;
     }
