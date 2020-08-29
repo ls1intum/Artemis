@@ -452,6 +452,12 @@ public class BambooService implements ContinuousIntegrationService {
             final var hasArtifact = buildResult.getBuild().isArtifact();
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
+
+            // Store logs into database. Append logs of multiple jobs.
+            for (BambooBuildResultNotificationDTO.BambooJobDTO job : buildResult.getBuild().getJobs()) {
+                programmingSubmission.getBuildLogEntries().addAll(job.getLogs().stream().map(dto -> new BuildLogEntry(dto.getDate(), dto.getLog())).collect(Collectors.toList()));
+            }
+
             programmingSubmissionRepository.save(programmingSubmission);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
