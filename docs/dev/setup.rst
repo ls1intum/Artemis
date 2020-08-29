@@ -126,7 +126,7 @@ have to configure the file ``application-artemis.yml`` in the folder
            clustering-url: http://localhost:8002/cluster
            secret: null
 
-Change all entries with ``<...>`` with proper values, e.g. your TUM
+Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
 Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA,
 Bitbucket and Bamboo instances. It’s not necessary to fill all the
@@ -142,8 +142,17 @@ information about the setup for programming exercises provided:
 
 
 .. note::
-   Be careful that you don’t commit changes in this file.
-   Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
+   Be careful that you don’t commit changes to ``application-artemis.yml``.
+   To avoid this, follow the best practice when configuring your local development environment:
+
+   1) Create a file named ``application-local.yml`` under ``src/main/resources/config``.
+   2) Copy the contents of ``application-artemis.yml`` into the new file.
+   3) Update configuration values in ``application-local.yml``.
+   4) In your local run configuration, add the ``local`` profile to the list of active spring profiles.
+      Make sure it's the last profile in the list so that it overwrites any existing values.
+
+   By default, changes to ``application-local.yml`` will be ignored by git so you don't accidentally
+   share your credentials or other local configuration options.
 
 If you use a password, you need to adapt it in
 ``gradle/liquibase.gradle``.
