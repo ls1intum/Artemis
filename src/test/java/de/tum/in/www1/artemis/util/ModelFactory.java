@@ -642,7 +642,7 @@ public class ModelFactory {
             List<String> failedTestNames) {
         final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
         final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport));
         return notification;
     }
 
@@ -651,14 +651,14 @@ public class ModelFactory {
         final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         report.setTool(tool);
-        issue1.setType("Error1");
+        issue1.setRule("Error1");
         issue1.setMessage("Error1 - Message");
-        issue1.setClassname("Class1");
-        issue1.setLine(1);
-        issue2.setType("Error2");
+        issue1.setFilePath("www/packagename/Class1");
+        issue1.setStartLine(1);
+        issue2.setRule("Error2");
         issue2.setMessage("Error2 - Message");
-        issue1.setClassname("Class2");
-        issue1.setLine(2);
+        issue1.setFilePath("Class2");
+        issue1.setStartLine(2);
         report.setIssues(List.of(issue1, issue2));
         return report;
     }

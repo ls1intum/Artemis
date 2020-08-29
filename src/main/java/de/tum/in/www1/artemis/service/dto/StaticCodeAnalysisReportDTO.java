@@ -31,48 +31,71 @@ public class StaticCodeAnalysisReportDTO {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class StaticCodeAnalysisIssue {
 
-        private String classname;
+        // Path to source file containing the error. Uses unix file separators
+        private String filePath;
 
-        private Integer line;
+        private Integer startLine;
 
-        private String type;
+        private Integer endLine;
 
-        private String priority;
+        private Integer startColumn;
+
+        private Integer endColumn;
+
+        private String rule;
 
         private String category;
 
         private String message;
 
-        public String getClassname() {
-            return classname;
+        private String priority;
+
+        public String getFilePath() {
+            return filePath;
         }
 
-        public void setClassname(String classname) {
-            this.classname = classname;
+        public void setFilePath(String filePath) {
+            this.filePath = filePath;
         }
 
-        public Integer getLine() {
-            return line;
+        public Integer getStartLine() {
+            return startLine;
         }
 
-        public void setLine(Integer line) {
-            this.line = line;
+        public void setStartLine(Integer startLine) {
+            this.startLine = startLine;
         }
 
-        public String getType() {
-            return type;
+        public Integer getEndLine() {
+            return endLine;
         }
 
-        public void setType(String type) {
-            this.type = type;
+        public void setEndLine(Integer endLine) {
+            this.endLine = endLine;
         }
 
-        public String getPriority() {
-            return priority;
+        public Integer getStartColumn() {
+            return startColumn;
         }
 
-        public void setPriority(String priority) {
-            this.priority = priority;
+        public void setStartColumn(Integer startColumn) {
+            this.startColumn = startColumn;
+        }
+
+        public Integer getEndColumn() {
+            return endColumn;
+        }
+
+        public void setEndColumn(Integer endColumn) {
+            this.endColumn = endColumn;
+        }
+
+        public String getRule() {
+            return rule;
+        }
+
+        public void setRule(String rule) {
+            this.rule = rule;
         }
 
         public String getCategory() {
@@ -89,6 +112,14 @@ public class StaticCodeAnalysisReportDTO {
 
         public void setMessage(String message) {
             this.message = message;
+        }
+
+        public String getPriority() {
+            return priority;
+        }
+
+        public void setPriority(String priority) {
+            this.priority = priority;
         }
     }
 }
