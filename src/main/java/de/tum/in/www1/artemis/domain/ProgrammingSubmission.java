@@ -10,8 +10,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A ProgrammingSubmission.
@@ -36,7 +34,6 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     @OrderColumn
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
