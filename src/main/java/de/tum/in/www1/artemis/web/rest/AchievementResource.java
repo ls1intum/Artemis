@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -71,11 +71,10 @@ public class AchievementResource {
      * @param achievement the achievement to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated achievement, or with status 500
      *         (Internal Server Error) if the achievement couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/achievements")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Achievement> updateAchievement(@RequestBody Achievement achievement) throws URISyntaxException {
+    public ResponseEntity<Achievement> updateAchievement(@RequestBody Achievement achievement) {
         log.debug("REST request to update Achievement : {}", achievement);
 
         Course course = achievement.getCourse();
@@ -100,6 +99,7 @@ public class AchievementResource {
      */
     @DeleteMapping("/achievements/{achievementId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Transactional
     public ResponseEntity<Void> deleteAchievement(@PathVariable long achievementId) {
         log.info("REST request to delete Achievement : {}", achievementId);
         User user = userService.getUserWithGroupsAndAuthorities();
