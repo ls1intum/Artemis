@@ -23,6 +23,8 @@ export enum EditableField {
     WEIGHT = 'weight',
     BONUS_MULTIPLIER = 'bonusMultiplier',
     BONUS_POINTS = 'bonusPoints',
+    PENALTY = 'penalty',
+    MAX_PENALTY = 'maxPenalty',
 }
 
 @Component({
@@ -36,7 +38,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     courseId: number;
     exercise: ProgrammingExercise;
-    editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
@@ -46,6 +47,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
     staticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
+    changedCategoryIds: number[] = [];
 
     buildAfterDueDateActive: boolean;
     isReleasedAndHasResults: boolean;
@@ -84,7 +86,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param showInactive the value which should be set
      */
     set showInactive(showInactive: boolean) {
-        this.editing = null;
         this.showInactiveValue = showInactive;
         this.updateTestCaseFilter();
     }
@@ -112,7 +113,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
-            this.editing = null;
 
             if (this.exercise == null || this.exercise.id !== exerciseId) {
                 if (this.testCaseSubscription) {
@@ -216,51 +216,53 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
-     * Show an input to edit the test cases weight.
-     * @param rowIndex
-     */
-    enterEditing(rowIndex: number, field: EditableField) {
-        this.editing = [this.filteredTestCases[rowIndex], field];
-    }
-
-    /**
-     * Hide input.
-     */
-    leaveEditingWithoutSaving() {
-        this.editing = null;
-    }
-
-    /**
-     * Update the weight of the edited test case in the component state (does not persist the value on the server!).
-     * Adds the currently edited weight to the list of unsaved changes.
+     * Update a field of a test case in the component state (does not persist the value on the server!).
+     * Adds the currently edited test case to the list of unsaved changes.
      *
-     * @param newValue of updated field;
+     * @param newValue          of updated field;
+     * @param editedTestCase    the edited test case;
+     * @param field             the edited field;
      */
-    updateEditedField(newValue: any) {
-        if (!this.editing) {
-            return;
-        }
+    updateEditedField(newValue: any, editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
         // Don't allow an empty string as a value!
         if (!newValue) {
-            this.editing = null;
             return;
         }
-        const [editedTestCase, field] = this.editing;
         // If the weight has not changed, don't do anything besides closing the input.
         if (newValue === editedTestCase[field]) {
-            this.editing = null;
             return;
         }
         this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
         this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
-        this.editing = null;
+    }
+
+    /**
+     * Update a field of a sca category in the component state (does not persist the value on the server!).
+     * Adds the currently edited category to the list of unsaved changes.
+     *
+     * @param newValue          of updated field;
+     * @param editedCategory    the edited category;
+     * @param field             the edited field;
+     */
+    updateEditedCategoryField(newValue: any, editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
+        // Don't allow an empty string as a value!
+        if (!newValue) {
+            return;
+        }
+        // If the weight has not changed, don't do anything besides closing the input.
+        if (newValue === editedCategory[field]) {
+            return;
+        }
+        this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
+        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+            category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
+        );
     }
 
     /**
      * Save the unsaved (edited) changes of the test cases.
      */
     saveChanges() {
-        this.editing = null;
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
@@ -309,7 +311,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Reset all test cases.
      */
     resetChanges() {
-        this.editing = null;
         this.isSaving = true;
         this.testCaseService
             .reset(this.exercise.id)
