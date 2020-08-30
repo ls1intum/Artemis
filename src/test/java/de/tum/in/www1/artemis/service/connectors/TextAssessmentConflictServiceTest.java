@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,10 +45,10 @@ public class TextAssessmentConflictServiceTest {
 
         List<TextAssessmentConflictResponseDTO> feedbackConflicts = textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, -1L, 0);
         assertThat(feedbackConflicts, is(not(empty())));
-        assertThat(feedbackConflicts, hasItem(Matchers.either(hasProperty("firstFeedbackId", is(firstRequestObject.getFeedbackId())))
-                .or(hasProperty("secondFeedbackId", is(firstRequestObject.getFeedbackId())))));
-        assertThat(feedbackConflicts, hasItem(Matchers.either(hasProperty("firstFeedbackId", is(secondRequestObject.getFeedbackId())))
-                .or(hasProperty("secondFeedbackId", is(secondRequestObject.getFeedbackId())))));
+        assertThat(feedbackConflicts, hasItem(
+                either(hasProperty("firstFeedbackId", is(firstRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(firstRequestObject.getFeedbackId())))));
+        assertThat(feedbackConflicts, hasItem(
+                either(hasProperty("firstFeedbackId", is(secondRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(secondRequestObject.getFeedbackId())))));
         assertThat(feedbackConflicts, hasItem(hasProperty("type", is(TextAssessmentConflictType.INCONSISTENT_SCORE))));
     }
 
@@ -65,7 +64,7 @@ public class TextAssessmentConflictServiceTest {
             httpURLConnection.setConnectTimeout(1000);
             final int responseCode = httpURLConnection.getResponseCode();
 
-            return (responseCode == 405);
+            return responseCode == 405;
         }
         catch (IOException e) {
             return false;

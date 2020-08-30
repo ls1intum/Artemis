@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -55,12 +56,18 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
     TextExercise textExercise;
 
     @BeforeEach
-    void init() {
+    public void init() {
         database.addUsers(2, 1, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
     }
 
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
+    }
+
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createFeedbackConflicts() throws NetworkingError {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
@@ -96,8 +103,8 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         verify(textAssessmentConflictService, timeout(100).times(1)).checkFeedbackConsistencies(any(), anyLong(), anyInt());
 
         assertThat(textAssessmentConflictRepository.findAll(), hasSize(1));
-        assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), Matchers.either(is(feedback1)).or(is(feedback2)));
-        assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), Matchers.either(is(feedback1)).or(is(feedback2)));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
         feedbackRepository.deleteAll();
         assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
     }
