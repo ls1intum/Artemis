@@ -152,7 +152,22 @@
                             {{ value }}
                         </ng-template>
                     </ngx-datatable-column>
+                    <ngx-datatable-column name="State" prop="state">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
                     <ngx-datatable-column name="Checks" prop="checks">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value.length }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Penalty" prop="penalty">
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value.length }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
                         <ng-template ngx-datatable-cell-template let-value="value">
                             {{ value.length }}
                         </ng-template>
