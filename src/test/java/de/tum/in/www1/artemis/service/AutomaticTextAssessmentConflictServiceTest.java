@@ -66,6 +66,12 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         database.resetDatabase();
     }
 
+    /**
+     * Creates two text submissions with text blocks and feedback, adds text blocks to a cluster.
+     * Mocks TextAssessmentConflictService class to not to connect to remote Athene service
+     * Then checks if the text assessment conflicts are created and stored correctly.
+     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void createFeedbackConflicts() throws NetworkingError {

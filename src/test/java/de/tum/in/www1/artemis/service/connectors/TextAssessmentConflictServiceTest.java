@@ -23,6 +23,11 @@ public class TextAssessmentConflictServiceTest {
 
     private static final String TEXT_ASSESSMENT_CONFLICT_ENDPOINT = "http://localhost:8001/feedback_consistency";
 
+    /**
+     * Creates two submissions with feedback and send them to remote Athene service to check feedback consistency.
+     * Checks if the consistency is found correctly.
+     * @throws NetworkingError if the request isn't successful
+     */
     @Test
     public void checkFeedbackConsistency() throws NetworkingError {
         final TextAssessmentConflictService textAssessmentConflictService = new TextAssessmentConflictService();
@@ -53,7 +58,7 @@ public class TextAssessmentConflictServiceTest {
     }
 
     @BeforeAll
-    public static void runClassOnlyIfTextAssessmentClusteringIsAvailable() {
+    public static void runClassOnlyIfTextAssessmentConflictServiceIsAvailable() {
         assumeTrue(isTextAssessmentConflictServiceAvailable());
     }
 
