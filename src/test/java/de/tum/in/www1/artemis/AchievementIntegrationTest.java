@@ -109,24 +109,22 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    public void testUpdateAchievement() {
+    public void testUpdateAchievement() throws Exception {
         user.addAchievement(achievement);
         userRepository.save(user);
-        var achievementToUpdate = achievementRepository.findById(achievement.getId());
-        if (achievementToUpdate.isPresent()) {
-            achievementToUpdate.get().setDescription("Updated achievement");
-            achievementRepository.save(achievementToUpdate.get());
-            assertThat(achievementRepository.findById(achievement.getId()).get()).isEqualTo(achievementToUpdate.get()).as("Achievement is updated correctly");
-        }
+        var achievementToUpdate = achievementRepository.findById(achievement.getId()).get();
+        achievementToUpdate.setDescription("Updated achievement");
+        request.put("/api/achievements", achievementToUpdate, HttpStatus.OK);
+        assertThat(achievementRepository.findById(achievement.getId()).get()).isEqualTo(achievementToUpdate).as("Achievement is updated correctly");
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testDeleteAchievement() {
+    public void testDeleteAchievement() throws Exception {
         user.addAchievement(achievement);
         user = userRepository.save(user);
         achievement = achievementRepository.save(achievement);
-        achievementService.delete(achievement);
+        request.delete("/achievements/{achievementId}", HttpStatus.OK);
 
         assertThat(achievementRepository.findAll().size()).isEqualTo(0).as("Achievement is deleted");
         assertThat(userRepository.findById(user.getId()).isPresent()).isTrue().as("User is not deleted");

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -21,12 +22,16 @@ public class AchievementService {
         this.userRepository = userRepository;
     }
 
-    public Set<Achievement> findAllForCourse(Long courseId) {
-        return achievementRepository.getAllByCourseId(courseId);
+    public Optional<Achievement> findById(Long achievementId) {
+        return achievementRepository.findById(achievementId);
+    }
+
+    public Set<Achievement> findAllForCourse(Long courseId, Long userId) {
+        return hideUsersInAchievements(achievementRepository.getAllByCourseId(courseId), userId);
     }
 
     public Set<Achievement> findAllForUser(Long userId) {
-        return achievementRepository.getAllByUserId(userId);
+        return hideUsersInAchievements(achievementRepository.getAllByUserId(userId), userId);
     }
 
     public void delete(Achievement achievement) {
@@ -35,5 +40,16 @@ public class AchievementService {
             userRepository.save(user);
         }
         achievementRepository.delete(achievement);
+    }
+
+    private Set<Achievement> hideUsersInAchievements(Set<Achievement> achievements, Long userId) {
+        for (Achievement achievement : achievements) {
+            for (User userToRemove : achievement.getUsers()) {
+                if (userToRemove.getId() != userId) {
+                    achievement.getUsers().remove(userToRemove);
+                }
+            }
+        }
+        return achievements;
     }
 }

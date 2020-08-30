@@ -993,7 +993,8 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<Achievement>> getAchievementsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get achievements for course : {}", courseId);
-        Set<Achievement> achievements = achievementService.findAllForCourse(courseId);
+        User user = userService.getUser();
+        Set<Achievement> achievements = achievementService.findAllForCourse(courseId, user.getId());
         return ResponseEntity.ok(achievements);
     }
 }
