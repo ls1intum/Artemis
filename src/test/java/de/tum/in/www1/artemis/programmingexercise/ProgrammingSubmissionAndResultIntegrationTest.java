@@ -486,14 +486,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
-        switch (participationType) {
-            case TEMPLATE:
-                return "BASE";
-            case SOLUTION:
-                return "SOLUTION";
-            default:
-                return getStudentLoginFromParticipation(participationNumber);
-        }
+        return switch (participationType) {
+            case TEMPLATE -> "BASE";
+            case SOLUTION -> "SOLUTION";
+            default -> getStudentLoginFromParticipation(participationNumber);
+        };
     }
 
     private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
@@ -545,14 +542,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {
-        switch (participationType) {
-            case SOLUTION:
-                return solutionParticipationId;
-            case TEMPLATE:
-                return templateParticipationId;
-            default:
-                return participationIds.get(participationNumber);
-        }
+        return switch (participationType) {
+            case SOLUTION -> solutionParticipationId;
+            case TEMPLATE -> templateParticipationId;
+            default -> participationIds.get(participationNumber);
+        };
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {

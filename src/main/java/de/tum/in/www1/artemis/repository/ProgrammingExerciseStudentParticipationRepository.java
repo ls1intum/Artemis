@@ -24,6 +24,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
 
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission left join fetch pr.assessor where p.id = :participationId")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(@Param("participationId") Long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
