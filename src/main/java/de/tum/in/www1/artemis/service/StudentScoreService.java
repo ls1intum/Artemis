@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -67,6 +69,7 @@ public class StudentScoreService {
      *
      * @param deletedResult result to be deleted
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
         studentScoreRepository.deleteByResult(deletedResult);
     }
@@ -76,6 +79,7 @@ public class StudentScoreService {
      *
      * @param updatedResult result to be updated
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         // ignore results without score
         if (updatedResult.getScore() == null) {
