@@ -116,7 +116,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.checkPlagiarism((data) => {
             const json = JSON.stringify(data);
             const blob = new Blob([json], { type: 'application/json' });
-            downloadFile(blob, `check-plagiarism-textExercise_${this.textExercise.id}.json`);
+            downloadFile(blob, `check-plagiarism-text-exercise_${this.textExercise.id}.json`);
         });
     }
 

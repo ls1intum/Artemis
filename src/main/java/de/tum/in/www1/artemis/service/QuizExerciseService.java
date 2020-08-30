@@ -220,7 +220,7 @@ public class QuizExerciseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
         });
         return authorizedExercises.collect(Collectors.toList());
     }
@@ -284,7 +284,7 @@ public class QuizExerciseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
                 return new LinkedList<>();
             }
         }
@@ -370,7 +370,7 @@ public class QuizExerciseService {
     public boolean userHasTAPermissions(QuizExercise quizExercise) {
         Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
     }
 
     /**
@@ -436,7 +436,7 @@ public class QuizExerciseService {
         }
 
         for (DragAndDropMapping mapping : mappingsToBeRemoved) {
-            dragAndDropQuestion.removeCorrectMappings(mapping);
+            dragAndDropQuestion.removeCorrectMapping(mapping);
         }
     }
 
@@ -485,7 +485,7 @@ public class QuizExerciseService {
         }
 
         for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
-            shortAnswerQuestion.removeCorrectMappings(mapping);
+            shortAnswerQuestion.removeCorrectMapping(mapping);
         }
     }
 

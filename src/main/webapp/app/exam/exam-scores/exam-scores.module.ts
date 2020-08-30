@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { ChartsModule } from 'ng2-charts';
 import { ExamScoresComponent } from './exam-scores.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
@@ -10,6 +11,15 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 @NgModule({
     declarations: [ExamScoresComponent],
-    imports: [ArtemisSharedModule, MomentModule, ArtemisExamScoresRoutingModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedComponentModule],
+    imports: [
+        ArtemisSharedModule,
+        ChartsModule,
+        MomentModule,
+        ArtemisExamScoresRoutingModule,
+        ArtemisDataTableModule,
+        NgxDatatableModule,
+        ArtemisResultModule,
+        ArtemisSharedComponentModule,
+    ],
 })
 export class ArtemisExamScoresModule {}

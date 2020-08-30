@@ -1,0 +1,72 @@
+package de.tum.in.www1.artemis.service.compass.umlmodel.deployment;
+
+import java.util.Objects;
+
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+
+public class UMLNode extends UMLContainerElement {
+
+    public final static String UML_NODE_TYPE = "DeploymentNode";
+
+    private final String name;
+
+    private final String stereotype;
+
+    public UMLNode(String name, String stereotype, String jsonElementID) {
+        super(jsonElementID);
+        this.name = name;
+        this.stereotype = stereotype;
+    }
+
+    @Override
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLNode)) {
+            return 0;
+        }
+        double similarity = 0;
+
+        UMLNode referenceNode = (UMLNode) reference;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * CompassConfiguration.NODE_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(stereotype, referenceNode.getStereotype()) * CompassConfiguration.NODE_STEREOTYPE_WEIGHT;
+
+        if (Objects.equals(getParentElement(), referenceNode.getParentElement())) {
+            similarity += CompassConfiguration.NODE_PARENT_WEIGHT;
+        }
+
+        return ensureSimilarityRange(similarity);
+    }
+
+    @Override
+    public String toString() {
+        return "Node " + name;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public String getStereotype() {
+        return stereotype;
+    }
+
+    @Override
+    public String getType() {
+        return UML_NODE_TYPE;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLNode otherNode = (UMLNode) obj;
+
+        return otherNode.name.equals(this.name) && otherNode.stereotype.equals(this.stereotype);
+    }
+}

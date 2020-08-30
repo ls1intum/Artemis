@@ -48,6 +48,7 @@
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
+            "notSet": "Nicht gesetzt",
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
@@ -58,9 +59,9 @@
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
-            "exerciseStatisticsTitle": "Aufgaben Statistik",
+            "examStatisticsTitle": "Klausur Statistik",
             "studentResultsTitle": "Studenten Ergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
@@ -77,9 +78,15 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
-            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben"
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standardabweichung",
+            "noOfExams": "Klausuren",
+            "registered": "Angemeldete Studenten",
+            "noExerciseGroups": "Aufgabengruppen",
+            "submittedColumn": "Abgegeben",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Restzeit: ",

@@ -23,7 +23,6 @@ export class ExamExerciseRowButtonsComponent {
     @Input() exerciseGroupId: number;
     @Input() latestIndividualEndDate: moment.Moment | null;
     @Output() onDeleteExercise = new EventEmitter<void>();
-    @Output() onDeleteProgrammingExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -135,7 +134,7 @@ export class ExamExerciseRowButtonsComponent {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
-                this.onDeleteProgrammingExercise.emit();
+                this.onDeleteExercise.emit();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

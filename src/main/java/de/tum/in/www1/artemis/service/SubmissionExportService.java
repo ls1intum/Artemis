@@ -124,10 +124,14 @@ public abstract class SubmissionExportService {
             Set<Submission> submissions = participation.getSubmissions();
             Submission latestSubmission = null;
 
-            for (Submission s : submissions) {
-                if (lateSubmissionFilter == null || s.getSubmissionDate().isBefore(lateSubmissionFilter)) {
-                    if (latestSubmission == null || s.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
-                        latestSubmission = s;
+            for (Submission submission : submissions) {
+                if (submission.getSubmissionDate() == null) {
+                    // ignore unsubmitted submissions
+                    continue;
+                }
+                if (lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
+                    if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
+                        latestSubmission = submission;
                     }
                 }
             }

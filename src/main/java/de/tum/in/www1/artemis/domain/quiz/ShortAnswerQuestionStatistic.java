@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -25,15 +24,9 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "shortAnswerQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerSpotCounter> shortAnswerSpotCounters = new HashSet<>();
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public Set<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
         return shortAnswerSpotCounters;
-    }
-
-    public ShortAnswerQuestionStatistic shortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
-        this.shortAnswerSpotCounters = shortAnswerSpotCounters;
-        return this;
     }
 
     public ShortAnswerQuestionStatistic addShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
@@ -50,27 +43,6 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
 
     public void setShortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
         this.shortAnswerSpotCounters = shortAnswerSpotCounters;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerQuestionStatistic shortAnswerQuestionStatistic = (ShortAnswerQuestionStatistic) o;
-        if (shortAnswerQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -24,13 +24,12 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
@@ -45,7 +44,6 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorSessionService } from '../../helpers/mocks/service/mock-code-editor-session.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
@@ -54,6 +52,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { ArtemisCodeEditorManagementModule } from 'app/exercises/programming/manage/code-editor/code-editor-management.module';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,16 +63,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let container: CodeEditorInstructorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorContainerComponent>;
     let containerDebugElement: DebugElement;
-    let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
-    let codeEditorRepositoryService: CodeEditorRepositoryService;
-    let participationWebsocketService: ParticipationWebsocketService;
-    let resultService: ResultService;
-    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let buildLogService: CodeEditorBuildLogService;
-    let participationService: ParticipationService;
-    let programmingExerciseService: ProgrammingExerciseService;
     let domainService: DomainService;
-    let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -81,10 +71,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFeedbackDetailsForResultStub: SinonStub;
     let getBuildLogsStub: SinonStub;
-    let getFileStub: SinonStub;
-    let saveFilesStub: SinonStub;
-    let commitStub: SinonStub;
-    let findWithLatestResultStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
     let getLatestResultWithFeedbacksStub: SinonStub;
     let getHintsForExerciseStub: SinonStub;
@@ -99,7 +85,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorManagementModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorManagementModule, ArtemisCodeEditorModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
@@ -115,7 +101,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
-                { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
@@ -131,17 +116,16 @@ describe('CodeEditorInstructorIntegration', () => {
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
 
-                codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-                participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                resultService = containerDebugElement.injector.get(ResultService);
-                buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                participationService = containerDebugElement.injector.get(ParticipationService);
-                programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-                programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
+                const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
+                const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
+                const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
+                const resultService = containerDebugElement.injector.get(ResultService);
+                const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
+                const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
+                const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
-                exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
+                const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
@@ -159,10 +143,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
                 getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback').returns(throwError('no result'));
                 getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
-                getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
-                saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
-                commitStub = stub(codeEditorRepositoryService, 'commit');
-                findWithLatestResultStub = stub(participationService, 'findWithLatestResult');
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
@@ -180,10 +160,6 @@ describe('CodeEditorInstructorIntegration', () => {
         subscribeForLatestResultOfParticipationStub.restore();
         getFeedbackDetailsForResultStub.restore();
         getBuildLogsStub.restore();
-        getFileStub.restore();
-        saveFilesStub.restore();
-        commitStub.restore();
-        findWithLatestResultStub.restore();
         findWithParticipationsStub.restore();
         getLatestResultWithFeedbacksStub.restore();
 
@@ -204,6 +180,14 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentStub.returns(getRepositoryContentSubject);
     });
 
+    const initContainer = (exercise: ProgrammingExercise) => {
+        container.ngOnInit();
+        routeSubject.next({ exerciseId: 1 });
+        expect(container.codeEditorContainer).to.be.undefined;
+        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
+        expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
+    };
+
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
         // @ts-ignore
@@ -211,8 +195,9 @@ describe('CodeEditorInstructorIntegration', () => {
             id: 1,
             problemStatement,
             studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
+            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+            course: { id: 1 },
         } as ProgrammingExercise;
         exercise.studentParticipations = exercise.studentParticipations.map((p) => {
             p.exercise = exercise;
@@ -225,12 +210,7 @@ describe('CodeEditorInstructorIntegration', () => {
         const setDomainSpy = spy(domainService, 'setDomain');
         // @ts-ignore
         (container.router as MockRouter).setUrl('code-editor-instructor/1');
-        container.ngOnInit();
-        routeSubject.next({ exerciseId: 1 });
-
-        expect(container.grid).not.to.exist;
-        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
+        initContainer(exercise);
 
         findWithParticipationsSubject.next({ body: exercise });
 
@@ -244,25 +224,25 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.domainChangeSubscription).to.exist;
 
         containerFixture.detectChanges();
-        expect(container.grid).to.exist;
+        expect(container.codeEditorContainer.grid).to.exist;
 
         checkIfRepositoryIsCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
         containerFixture.detectChanges();
 
-        // Result is successful, build logs should not be retrieved
+        // Submission could be built
         expect(getBuildLogsStub).to.not.have.been.called;
         // Once called by each build-output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
 
-        expect(container.grid).to.exist;
-        expect(container.fileBrowser).to.exist;
-        expect(container.actions).to.exist;
-        expect(container.instructions).to.exist;
-        expect(container.instructions.participation.id).to.deep.equal(exercise.templateParticipation.id);
+        expect(container.codeEditorContainer.grid).to.exist;
+        expect(container.codeEditorContainer.fileBrowser).to.exist;
+        expect(container.codeEditorContainer.actions).to.exist;
+        expect(container.editableInstructions).to.exist;
+        expect(container.editableInstructions.participation.id).to.deep.equal(exercise.templateParticipation.id);
         expect(container.resultComp).to.exist;
-        expect(container.buildOutput).to.exist;
-        expect(container.instructions.editableInstructions.exerciseHints).to.deep.equal(exerciseHints);
+        expect(container.codeEditorContainer.buildOutput).to.exist;
+        expect(container.editableInstructions.exerciseHints).to.deep.equal(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
@@ -275,12 +255,7 @@ describe('CodeEditorInstructorIntegration', () => {
     it('should go into error state when loading the exercise failed', () => {
         const exercise = { id: 1, studentParticipations: [{ id: 2 }], templateParticipation: { id: 3 }, solutionParticipation: { id: 4 } } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
-        container.ngOnInit();
-        routeSubject.next({ exerciseId: 1 });
-
-        expect(container.grid).not.to.exist;
-        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
+        initContainer(exercise);
 
         findWithParticipationsSubject.error('fatal error');
 
@@ -289,7 +264,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.selectedRepository).to.be.undefined;
 
         containerFixture.detectChanges();
-        expect(container.grid).not.to.exist;
+        expect(container.codeEditorContainer).to.be.undefined;
     });
 
     it('should load test repository if specified in url', () => {
@@ -299,17 +274,13 @@ describe('CodeEditorInstructorIntegration', () => {
             studentParticipations: [{ id: 2 }],
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
+            course: { id: 1 },
         } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
         // @ts-ignore
         (container.router as MockRouter).setUrl('code-editor-instructor/1/test');
         container.ngOnDestroy();
-        container.ngOnInit();
-        routeSubject.next({ exerciseId: 1 });
-
-        expect(container.grid).not.to.exist;
-        expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
-        expect(container.loadingState).to.equal(container.LOADING_STATE.INITIALIZING);
+        initContainer(exercise);
 
         findWithParticipationsSubject.next({ body: exercise });
 
@@ -321,19 +292,29 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(container.grid).to.exist;
-        expect(container.fileBrowser).to.exist;
-        expect(container.actions).to.exist;
-        expect(container.instructions).to.exist;
-        expect(container.instructions.participation).to.deep.equal(exercise.templateParticipation);
+        expect(container.codeEditorContainer).to.exist;
+        expect(container.editableInstructions).to.exist;
+        expect(container.editableInstructions.participation).to.deep.equal(exercise.templateParticipation);
         expect(container.resultComp).not.to.exist;
-        expect(container.buildOutput).not.to.exist;
+        expect(container.codeEditorContainer.buildOutput).not.to.exist;
     });
+
+    const checkSolutionRepository = (exercise: ProgrammingExercise) => {
+        expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
+        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
+        expect(container.codeEditorContainer).to.exist;
+        expect(container.editableInstructions).to.exist;
+        expect(container.resultComp).to.exist;
+        expect(container.codeEditorContainer.buildOutput).to.exist;
+        expect(container.codeEditorContainer.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
+        expect(container.editableInstructions.participation).to.deep.equal(exercise.solutionParticipation);
+    };
 
     it('should be able to switch between the repos and update the child components accordingly', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
@@ -354,14 +335,12 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(container.selectedRepository).to.equal(container.REPOSITORY.ASSIGNMENT);
         expect(container.selectedParticipation).to.deep.equal(exercise.studentParticipations[0]);
-        expect(container.grid).to.exist;
-        expect(container.fileBrowser).to.exist;
-        expect(container.actions).to.exist;
-        expect(container.instructions).to.exist;
+        expect(container.codeEditorContainer).to.exist;
+        expect(container.editableInstructions).to.exist;
         expect(container.resultComp).to.exist;
-        expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal(exercise.studentParticipations[0]);
-        expect(container.instructions.participation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.codeEditorContainer.buildOutput).to.exist;
+        expect(container.codeEditorContainer.buildOutput.participation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.editableInstructions.participation).to.deep.equal(exercise.studentParticipations[0]);
 
         // New select solution repository
         // @ts-ignore
@@ -370,16 +349,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
-        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.grid).to.exist;
-        expect(container.fileBrowser).to.exist;
-        expect(container.actions).to.exist;
-        expect(container.instructions).to.exist;
-        expect(container.resultComp).to.exist;
-        expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.instructions.participation).to.deep.equal(exercise.solutionParticipation);
+        checkSolutionRepository(exercise);
 
         expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(setDomainSpy).to.have.been.calledTwice;
@@ -391,6 +361,7 @@ describe('CodeEditorInstructorIntegration', () => {
         // @ts-ignore
         const exercise = {
             id: 1,
+            course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore
@@ -411,15 +382,6 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(setDomainSpy).to.have.been.calledOnce;
         expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.solutionParticipation]);
-        expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
-        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.grid).to.exist;
-        expect(container.fileBrowser).to.exist;
-        expect(container.actions).to.exist;
-        expect(container.instructions).to.exist;
-        expect(container.resultComp).to.exist;
-        expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
-        expect(container.instructions.participation).to.deep.equal(exercise.solutionParticipation);
+        checkSolutionRepository(exercise);
     });
 });

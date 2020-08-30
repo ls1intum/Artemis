@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -209,8 +210,10 @@ public class GitService {
             // Create the JGit repository object
             Repository repository = new Repository(builder);
             repository.setLocalPath(localPath);
-            // disable auto garbage collection because it can lead to problems
-            repository.getConfig().setString("gc", null, "auto", "0");
+            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+            repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             // Cache the JGit repository object for later use
             // Avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
@@ -335,39 +338,6 @@ public class GitService {
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex.getMessage());
-        }
-    }
-
-    /**
-     * checkout branch
-     *
-     * @param repo Local Repository Object.
-     */
-    public void checkoutBranch(Repository repo) {
-        try {
-            Git git = new Git(repo);
-            git.checkout().setForceRefUpdate(true).setName("master").call();
-            git.close();
-        }
-        catch (GitAPIException ex) {
-            log.error("Cannot checkout branch in repo " + repo.getLocalPath() + " due to the following exception: " + ex);
-        }
-    }
-
-    /**
-     * Remove branch from local repository.
-     *
-     * @param repo Local Repository Object.
-     * @param branch to delete from the repo.
-     */
-    public void deleteLocalBranch(Repository repo, String branch) {
-        try {
-            Git git = new Git(repo);
-            git.branchDelete().setBranchNames(branch).setForce(true).call();
-            git.close();
-        }
-        catch (GitAPIException ex) {
-            log.error("Cannot remove branch " + branch + " from the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 

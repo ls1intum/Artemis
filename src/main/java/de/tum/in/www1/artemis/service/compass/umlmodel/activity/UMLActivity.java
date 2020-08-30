@@ -1,0 +1,75 @@
+package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+
+public class UMLActivity extends UMLActivityElement {
+
+    public final static String UML_ACTIVITY_TYPE = "Activity";
+
+    private final List<UMLActivityElement> childElements;
+
+    /**
+     * to make mockito happy
+     */
+    public UMLActivity() {
+        super();
+        childElements = new ArrayList<>();
+    }
+
+    public UMLActivity(String name, List<UMLActivityElement> childElements, String jsonElementID) {
+        super(name, jsonElementID);
+        this.childElements = childElements;
+        setActivityOfContainedElements();
+    }
+
+    /**
+     * Sets the parent activity of all activity elements contained in this UML activity.
+     */
+    private void setActivityOfContainedElements() {
+        for (UMLActivityElement childElement : childElements) {
+            childElement.setParentActivity(this);
+        }
+    }
+
+    @Override
+    public double similarity(Similarity<UMLElement> reference) {
+        if (!(reference instanceof UMLActivity)) {
+            return 0;
+        }
+
+        UMLActivity referenceActivity = (UMLActivity) reference;
+
+        return NameSimilarity.levenshteinSimilarity(getName(), referenceActivity.getName());
+    }
+
+    @Override
+    public String getType() {
+        return UML_ACTIVITY_TYPE;
+    }
+
+    /**
+     * Add an activity element to the list of child elements contained in this UML activity.
+     *
+     * @param childElement the activity element that should be added
+     */
+    public void addChildElement(UMLActivityElement childElement) {
+        childElements.add(childElement);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        UMLActivity otherActivity = (UMLActivity) obj;
+
+        return otherActivity.childElements.size() == childElements.size() && otherActivity.childElements.containsAll(childElements)
+                && childElements.containsAll(otherActivity.childElements);
+    }
+}

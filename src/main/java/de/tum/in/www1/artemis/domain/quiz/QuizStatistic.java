@@ -48,22 +48,12 @@ public abstract class QuizStatistic implements Serializable {
         return participantsRated;
     }
 
-    public QuizStatistic participantsRated(Integer participantsRated) {
-        this.participantsRated = participantsRated;
-        return this;
-    }
-
     public void setParticipantsRated(Integer participantsRated) {
         this.participantsRated = participantsRated;
     }
 
     public Integer getParticipantsUnrated() {
         return participantsUnrated;
-    }
-
-    public QuizStatistic participantsUnrated(Integer participantsUnrated) {
-        this.participantsUnrated = participantsUnrated;
-        return this;
     }
 
     public void setParticipantsUnrated(Integer participantsUnrated) {
@@ -88,10 +78,5 @@ public abstract class QuizStatistic implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizStatistic{" + "id=" + getId() + ", participantsRated='" + getParticipantsRated() + "'" + ", participantsUnrated='" + getParticipantsUnrated() + "'" + "}";
     }
 }

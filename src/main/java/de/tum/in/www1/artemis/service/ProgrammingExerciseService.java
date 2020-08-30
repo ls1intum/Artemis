@@ -325,7 +325,7 @@ public class ProgrammingExerciseService {
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
             // Keep or delete static code analysis configuration in pom.xml
-            sectionsMap.put("static-code-analysis", programmingExercise.isStaticCodeAnalysisEnabled());
+            sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
@@ -749,7 +749,7 @@ public class ProgrammingExerciseService {
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
 
-        final var exercisePage = authCheckService.isAdmin()
+        final var exercisePage = authCheckService.isAdmin(user)
                 ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
                         sorted)
                 : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);

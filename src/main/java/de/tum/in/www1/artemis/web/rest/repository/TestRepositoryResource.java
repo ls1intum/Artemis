@@ -1,27 +1,30 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import java.io.IOException;
 import java.net.URL;
+import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -38,8 +41,9 @@ public class TestRepositoryResource extends RepositoryResource {
     private final ExerciseService exerciseService;
 
     public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
+            Optional<VersionControlService> versionControlService, ProgrammingExerciseService programmingExerciseService) {
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
         this.exerciseService = exerciseService;
     }
 
@@ -125,7 +129,54 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException, InterruptedException {
         return super.getStatus(exerciseId);
     }
+
+    /**
+     * Update a list of files in a test repository based on the submission's content.
+     *
+     * @param exerciseId  of exercise to which the files belong
+     * @param submissions information about the file updates
+     * @param commit      whether to commit after updating the files
+     * @param principal   used to check if the user can update the files
+     * @return {Map<String, String>} file submissions or the appropriate http error
+     */
+    @PutMapping("/test-repository/{exerciseId}/files")
+    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
+            @RequestParam Boolean commit, Principal principal) {
+        ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        if (versionControlService.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
+        }
+
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, exercise.getTestRepositoryUrlAsUrl());
+        }
+        catch (IllegalAccessException e) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
+        }
+        catch (GitAPIException | InterruptedException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+        }
+        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+
+        if (commit) {
+            var response = super.commitChanges(exerciseId);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new ResponseStatusException(response.getStatusCode());
+            }
+        }
+
+        return ResponseEntity.ok(fileSaveResult);
+    }
+
 }
