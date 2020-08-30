@@ -41,7 +41,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     CourseRepository courseRepository;
 
-    private User user;
+    private User student;
+
+    private User instructor;
 
     private Course course;
 
@@ -49,7 +51,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     public void initTestCase() {
-        user = database.addUsers(1, 0, 0).get(0);
+        var users = database.addUsers(1, 0, 1);
+        student = users.get(0);
+        instructor = users.get(1);
         course = database.addEmptyCourse();
 
         achievement = new Achievement();
@@ -70,31 +74,31 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     public void testManyToManyRelationToUser() {
-        assertThat(user.getAchievements().size()).isEqualTo(0).as("Number of achievements for user should be 0");
+        assertThat(student.getAchievements().size()).isEqualTo(0).as("Number of achievements for user should be 0");
 
-        user.addAchievement(achievement);
-        assertThat(user.getAchievements().size()).isEqualTo(1).as("Number of achievements for user should be 1");
-        assertThat(user.getAchievements().contains(achievement)).isTrue().as("User has correct achievement");
+        student.addAchievement(achievement);
+        assertThat(student.getAchievements().size()).isEqualTo(1).as("Number of achievements for user should be 1");
+        assertThat(student.getAchievements().contains(achievement)).isTrue().as("User has correct achievement");
         assertThat(achievement.getUsers().size()).isEqualTo(1).as("Number of users for achievement should be 1");
-        assertThat(achievement.getUsers().contains(user)).isTrue().as("Achievement has correct user");
+        assertThat(achievement.getUsers().contains(student)).isTrue().as("Achievement has correct user");
 
-        user.removeAchievement(achievement);
-        assertThat(user.getAchievements().size()).isEqualTo(0).as("Number of achievements for user should be 0");
-        assertThat(user.getAchievements().contains(achievement)).isFalse().as("User does not have removed achievement");
+        student.removeAchievement(achievement);
+        assertThat(student.getAchievements().size()).isEqualTo(0).as("Number of achievements for user should be 0");
+        assertThat(student.getAchievements().contains(achievement)).isFalse().as("User does not have removed achievement");
         assertThat(achievement.getUsers().size()).isEqualTo(0).as("Number of users for achievement should be 0");
-        assertThat(achievement.getUsers().contains(user)).isFalse().as("Achievement does not have incorrect user");
+        assertThat(achievement.getUsers().contains(student)).isFalse().as("Achievement does not have incorrect user");
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testManyToManyRelationToUserRepository() throws Exception {
-        user.addAchievement(achievement);
-        user = userRepository.save(user);
+        student.addAchievement(achievement);
+        student = userRepository.save(student);
 
         var achievements = request.get("/api/achievements", HttpStatus.OK, Set.class);
         assertThat(achievements.size()).isEqualTo(1).as("Number of achievements for user should be 1");
 
-        userRepository.delete(user);
+        userRepository.delete(student);
         assertThat(achievementRepository.findAll().contains(achievement)).isTrue().as("Achievement does not get deleted if user does");
     }
 
@@ -109,9 +113,10 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateAchievement() throws Exception {
-        user.addAchievement(achievement);
-        userRepository.save(user);
+        instructor.addAchievement(achievement);
+        userRepository.save(instructor);
         var achievementToUpdate = achievementRepository.findById(achievement.getId()).get();
         achievementToUpdate.setDescription("Updated achievement");
         request.put("/api/achievements", achievementToUpdate, HttpStatus.OK);
@@ -119,17 +124,17 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteAchievement() throws Exception {
-        user.addAchievement(achievement);
-        user = userRepository.save(user);
+        instructor.addAchievement(achievement);
+        instructor = userRepository.save(instructor);
         achievement = achievementRepository.save(achievement);
-        request.delete("/achievements/{achievementId}", HttpStatus.OK);
+        request.delete("/api/achievements/" + achievement.getId(), HttpStatus.OK);
 
         assertThat(achievementRepository.findAll().size()).isEqualTo(0).as("Achievement is deleted");
-        assertThat(userRepository.findById(user.getId()).isPresent()).isTrue().as("User is not deleted");
-        assertThat(userRepository.findById(user.getId()).get().getAchievements().size()).isEqualTo(0).as("User has no achievements");
+        assertThat(userRepository.findById(instructor.getId()).isPresent()).isTrue().as("User is not deleted");
+        assertThat(userRepository.findById(instructor.getId()).get().getAchievements().size()).isEqualTo(0).as("User has no achievements");
         assertThat(courseRepository.findById(course.getId()).isPresent()).isTrue().as("Course is not deleted");
-        assertThat(achievementService.findAllForCourse(course.getId(), user.getId()).size()).isEqualTo(0).as("Course has no achievements");
+        assertThat(achievementService.findAllForCourse(course.getId(), instructor.getId()).size()).isEqualTo(0).as("Course has no achievements");
     }
 }
