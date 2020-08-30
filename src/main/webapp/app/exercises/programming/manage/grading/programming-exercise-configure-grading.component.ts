@@ -378,6 +378,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     selectTab(tab: string) {
-        this.router.navigate(['..', tab], { relativeTo: this.route });
+        const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+        this.location.replaceState(`${parentUrl}/${tab}`);
+        this.activeTab = tab;
     }
 }
