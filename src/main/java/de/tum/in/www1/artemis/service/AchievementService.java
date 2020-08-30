@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.User;
@@ -27,16 +26,12 @@ public class AchievementService {
         return achievementRepository.findById(achievementId);
     }
 
-    @Transactional
-    public Set<Achievement> findAllForCourse(Long courseId, Long userId) {
-        var achievements = achievementRepository.getAllByCourseId(courseId);
-        return hideUsersInAchievements(achievements, userId);
+    public Set<Achievement> findAllForCourse(Long courseId) {
+        return achievementRepository.getAllByCourseId(courseId);
     }
 
-    @Transactional
     public Set<Achievement> findAllForUser(Long userId) {
-        var achievements = achievementRepository.getAllByUserId(userId);
-        return hideUsersInAchievements(achievements, userId);
+        return achievementRepository.getAllByUserId(userId);
     }
 
     public void delete(Achievement achievement) {
@@ -45,12 +40,5 @@ public class AchievementService {
             userRepository.save(user);
         }
         achievementRepository.delete(achievement);
-    }
-
-    private Set<Achievement> hideUsersInAchievements(Set<Achievement> achievements, Long userId) {
-        for (Achievement achievement : achievements) {
-            achievement.getUsers().removeIf(userToRemove -> !userToRemove.getId().equals(userId));
-        }
-        return achievements;
     }
 }

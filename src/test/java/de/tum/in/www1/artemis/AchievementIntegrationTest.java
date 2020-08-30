@@ -94,7 +94,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testManyToManyRelationToUserRepository() throws Exception {
+    public void testDeleteUser() throws Exception {
         student.addAchievement(achievement);
         student = userRepository.save(student);
 
@@ -107,7 +107,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testManyToOneRelationToCourseRepository() throws Exception {
+    public void testDeleteCourse() throws Exception {
         var achievements = request.get("/api/courses/" + course.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievements.size()).as("Number of achievements for course should be 1").isEqualTo(1);
 

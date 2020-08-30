@@ -66,6 +66,20 @@ public class AchievementResource {
     }
 
     /**
+     * GET /courses/{courseId}/achievements : Get all achievements for course.
+     *
+     * @param courseId the course to which the achievements belong to
+     * @return the ResponseEntity with status 200 (OK) and with the found achievements as body
+     */
+    @GetMapping("/courses/{courseId}/achievements")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Achievement>> getAchievementsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get achievements for course : {}", courseId);
+        Set<Achievement> achievements = achievementService.findAllForCourse(courseId);
+        return ResponseEntity.ok(achievements);
+    }
+
+    /**
      * PUT /achievements : Updates an existing achievement.
      *
      * @param achievement the achievement to update
