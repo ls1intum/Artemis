@@ -212,7 +212,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void searchProgrammingExercises_instructor_getResultsFromOwningCourses_notEmpty() throws Exception {
+    public void searchProgrammingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
         final var result = configureSearchAndReturnResult("Programming");
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }

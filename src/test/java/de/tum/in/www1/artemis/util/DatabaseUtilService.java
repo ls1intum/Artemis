@@ -1212,8 +1212,6 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
-
-
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(
