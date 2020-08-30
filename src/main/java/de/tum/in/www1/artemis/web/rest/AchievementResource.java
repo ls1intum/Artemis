@@ -87,8 +87,8 @@ public class AchievementResource {
             return ResponseEntity.badRequest().build();
         }
 
-        Achievement result = achievementRepository.save(achievement);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        Achievement savedAchievement = achievementRepository.save(achievement);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, savedAchievement.getId().toString())).body(result);
     }
 
     /**
