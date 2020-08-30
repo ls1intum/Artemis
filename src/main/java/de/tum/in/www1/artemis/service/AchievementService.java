@@ -34,6 +34,10 @@ public class AchievementService {
         return achievementRepository.getAllByUserId(userId);
     }
 
+    /**
+     * Deletes an achievement by also removing it from all users
+     * @param achievement achievement to be deleted
+     */
     public void delete(Achievement achievement) {
         for (User user : achievement.getUsers()) {
             user.removeAchievement(achievement);
