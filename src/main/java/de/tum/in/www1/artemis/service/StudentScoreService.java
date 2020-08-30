@@ -104,7 +104,7 @@ public class StudentScoreService {
      */
     public void addNewResult(Result newResult) {
         // ignore unrated results
-        if (newResult.isRated() != Boolean.TRUE) {
+        if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
             return;
         }
 
@@ -113,14 +113,14 @@ public class StudentScoreService {
         // accordingly (this happens for programming exercises and for the 2nd/3rd correction of manual exercises) only in case the new result is rated
         // 2) there is no student score for the same participation yet: create a new one -> DONE
 
-        if (newResult.getParticipation() == null) {
+        var participation = studentParticipationRepository.findById(newResult.getParticipation().getId());
+
+        if (participation.isEmpty()) {
             return;
         }
 
-        StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
-
         // TODO: this call does not work
-        // var existingStudentScores = getStudentScoreForStudentAndExercise(participation.getStudent().get(), participation.getExercise());
+        // var existingStudentScores = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.getExercise());
         var existingStudentScores = new ArrayList<StudentScore>();
 
         if (existingStudentScores.size() > 0) {
@@ -143,8 +143,8 @@ public class StudentScoreService {
         }
         else {
             StudentScore newScore = new StudentScore();
-            newScore.setStudent(participation.getStudent().get());
-            newScore.setExercise(participation.getExercise());
+            newScore.setStudent(participation.get().getStudent().get());
+            newScore.setExercise(participation.get().getExercise());
             newScore.setResult(newResult);
 
             if (newResult.getScore() != null) {
