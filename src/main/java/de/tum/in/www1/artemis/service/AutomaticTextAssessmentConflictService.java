@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -14,9 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextAssessmentConflict;
-import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentConflictRepository;
@@ -60,7 +60,6 @@ public class AutomaticTextAssessmentConflictService {
         // remove the feedback that does not belong to any text block
         feedbackList.removeIf(f -> !f.hasReference());
 
-        // Create TextAssessmentConflictRequestDTO objects that are used in service calls
         // If text block doesn't have a cluster id don't create an object
         List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = feedbackList.stream().flatMap(feedback -> {
             Optional<TextBlock> textBlock = textBlockRepository
@@ -108,5 +107,23 @@ public class AutomaticTextAssessmentConflictService {
             });
             textAssessmentConflictRepository.saveAll(textAssessmentConflicts);
         }
+    }
+
+    /**
+     * Finds and returns the submissions which have the conflicting feedback with the feedback of passed result
+     *
+     * @param result - A result object to find its feedback
+     * @return Set of text submissions
+     */
+    public Set<TextSubmission> getConflictingSubmissions(Result result) {
+        List<Long> feedbackIdList = result.getFeedbacks().stream().map(Feedback::getId).collect(toList());
+        List<TextAssessmentConflict> textAssessmentConflicts = this.textAssessmentConflictRepository.findAllByFeedback(feedbackIdList);
+        Set<TextSubmission> textSubmissionSet1 = textAssessmentConflicts.stream().map(conflict -> (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission())
+                .collect(toSet());
+        Set<TextSubmission> textSubmissionSet2 = textAssessmentConflicts.stream().map(conflict -> (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission())
+                .collect(toSet());
+        textSubmissionSet1.addAll(textSubmissionSet2);
+        textSubmissionSet1.removeIf(textSubmission -> textSubmission.equals(result.getSubmission()));
+        return textSubmissionSet1;
     }
 }
