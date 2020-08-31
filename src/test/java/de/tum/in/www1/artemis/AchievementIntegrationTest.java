@@ -153,7 +153,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         emptyAchievement.setId(2L);
         emptyAchievement.setCourse(course);
         request.put("/api/achievements", emptyAchievement, HttpStatus.FORBIDDEN);
-        request.delete("/api/achievements/1", HttpStatus.FORBIDDEN);
+        request.delete("/api/achievements/" + achievement.getId(), HttpStatus.FORBIDDEN);
     }
 
 }
