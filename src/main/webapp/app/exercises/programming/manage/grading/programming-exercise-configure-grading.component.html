@@ -141,8 +141,10 @@
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="State" prop="state">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <select [ngModel]="value" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
+                                <option *ngFor="let s of categoryStateList" [value]="s.value">{{s.name}}</option>
+                            </select>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Checks" prop="checks">
