@@ -2,13 +2,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.*;
 
@@ -26,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.*;
@@ -49,20 +42,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
-    private final Optional<VersionControlService> versionControlService;
-
     private final ExamSubmissionService examSubmissionService;
 
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseService programmingExerciseService, ExamSubmissionService examSubmissionService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseService);
         this.participationService = participationService;
-        this.programmingExerciseService = programmingExerciseService;
         this.examSubmissionService = examSubmissionService;
-        this.versionControlService = versionControlService;
     }
 
     @Override
@@ -158,12 +145,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *
      * @param participationId id of participation to which the files belong
      * @param submissions     information about the file updates
+     * @param commit          whether to commit after updating the files
      * @param principal       used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
-            Principal principal) {
+            @RequestParam(defaultValue = "false") boolean commit, Principal principal) {
         Participation participation;
         try {
             participation = participationService.findParticipation(participationId);
@@ -189,7 +177,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Git repository must be available to update a file
         Repository repository;
         try {
-            repository = gitService.getOrCheckoutRepository(programmingExerciseParticipation);
+            repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
@@ -198,6 +186,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         catch (GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
+        }
+        catch (IllegalAccessException e) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
@@ -208,87 +200,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
-        return ResponseEntity.ok(fileSaveResult);
-    }
 
-    /**
-     * Update a list of files in a test repository based on the submission's content.
-     *
-     * @param exerciseId  of exercise to which the files belong
-     * @param submissions information about the file updates
-     * @param principal   used to check if the user can update the files
-     * @return {Map<String, String>} file submissions or the appropriate http error
-     */
-    @PutMapping(value = "/test-repository/" + "{exerciseId}" + "/files")
-    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions, Principal principal) {
-        ProgrammingExercise exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        if (versionControlService.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
-        }
-        VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
-
-        Repository repository;
-        try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl.getURL());
-        }
-        catch (IllegalAccessException e) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
-        }
-        catch (GitAPIException | InterruptedException ex) {
-            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
-        }
-        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
-        return ResponseEntity.ok(fileSaveResult);
-    }
-
-    /**
-     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
-     * Map.
-     *
-     * @param submissions the file submissions (changes) that should be saved in the repository
-     * @param repository the git repository in which the file changes should be saved
-     * @return a map of <filename, error | null>
-     */
-    private Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
-        // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
-        Map<String, String> fileSaveResult = new HashMap<>();
-        submissions.forEach((submission) -> {
-            try {
-                fetchAndUpdateFile(submission, repository);
-                fileSaveResult.put(submission.getFileName(), null);
+        if (commit) {
+            var response = super.commitChanges(participationId);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new ResponseStatusException(response.getStatusCode());
             }
-            catch (IOException ex) {
-                fileSaveResult.put(submission.getFileName(), ex.getMessage());
-            }
-        });
-        return fileSaveResult;
-    }
-
-    /**
-     * Retrieve the file from repository and update its content with the submission's content. Throws exceptions if the user doesn't have permissions, the file can't be retrieved
-     * or it can't be updated.
-     *
-     * @param submission information about file update
-     * @param repository repository in which to fetch and update the file
-     * @throws IOException exception when the file in the file submission parameter is empty
-     */
-    private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
-        Optional<File> file = gitService.getFileByName(repository, submission.getFileName());
-
-        if (file.isEmpty()) {
-            throw new IOException("File could not be found.");
         }
 
-        InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
-        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
-        inputStream.close();
+        return ResponseEntity.ok(fileSaveResult);
     }
 
     /**
@@ -325,18 +245,30 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
+    public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(participationId);
+        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
         }
 
-        Optional<Result> latestResult = participation.getResults().stream().findFirst();
+        Optional<Submission> optionalSubmission = participation.getSubmissions().stream().findFirst();
+        if (optionalSubmission.isEmpty()) {
+            // Can't return build logs if a submission doesn't exist yet
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        ProgrammingSubmission latestSubmission = (ProgrammingSubmission) optionalSubmission.get();
+        // Do not return build logs if the build hasn't failed
+        if (!latestSubmission.isBuildFailed()) {
+            return forbidden();
+        }
+
+        Result latestResult = latestSubmission.getResult();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult.isPresent() && latestResult.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (latestResult != null && latestResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }

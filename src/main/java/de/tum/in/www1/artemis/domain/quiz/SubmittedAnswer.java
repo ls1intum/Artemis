@@ -65,11 +65,6 @@ public abstract class SubmittedAnswer implements Serializable {
         return scoreInPoints;
     }
 
-    public SubmittedAnswer scoreInPoints(Double scoreInPoints) {
-        this.scoreInPoints = scoreInPoints;
-        return this;
-    }
-
     public void setScoreInPoints(Double scoreInPoints) {
         this.scoreInPoints = scoreInPoints;
     }
@@ -78,22 +73,12 @@ public abstract class SubmittedAnswer implements Serializable {
         return quizQuestion;
     }
 
-    public SubmittedAnswer question(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
-        return this;
-    }
-
     public void setQuizQuestion(QuizQuestion quizQuestion) {
         this.quizQuestion = quizQuestion;
     }
 
     public QuizSubmission getSubmission() {
         return submission;
-    }
-
-    public SubmittedAnswer submission(QuizSubmission quizSubmission) {
-        this.submission = quizSubmission;
-        return this;
     }
 
     public void setSubmission(QuizSubmission quizSubmission) {
@@ -118,11 +103,6 @@ public abstract class SubmittedAnswer implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "SubmittedAnswer{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
 
     /**
