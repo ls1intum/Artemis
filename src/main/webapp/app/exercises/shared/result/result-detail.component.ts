@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -62,7 +63,6 @@ export class ResultDetailComponent implements OnInit {
                     return of(null);
                 }),
                 catchError(() => {
-                    // TODO: When the server would give better error information, we could improve the UI.
                     this.loadingFailed = true;
                     return of(null);
                 }),
@@ -114,6 +114,12 @@ export class ResultDetailComponent implements OnInit {
         return this.buildLogService.getBuildLogs(participationId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
                 this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
+            }),
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    return of(null);
+                }
+                return throwError(error);
             }),
         );
     };
