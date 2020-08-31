@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
@@ -54,48 +57,42 @@ public class FeedbackService {
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
      *
-     * Mapping ({} marks optional content as not all static code analysis tools support all attributes):
-     * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER:tool:category:rule
-     * - reference: filePath:startLine-endLine:{startColumn-endColumn}
-     * - detailText: message
+     * Mapping:
+     * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
+     * - reference: Tool
+     * - detailText: Issue object as JSON
      *
      * @param reports Static code analysis reports to be transformed
      * @return Feedback objects representing the static code analysis findings
      */
     public List<Feedback> createFeedbackFromStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> reports) {
+        ObjectMapper mapper = new ObjectMapper();
         List<Feedback> feedbackList = new ArrayList<>();
         for (final var report : reports) {
             StaticCodeAnalysisTool tool = report.getTool();
 
             for (final var issue : report.getIssues()) {
+                // Remove CI specific path segments
+                issue.setFilePath(removeCIDirectoriesFromPath(issue.getFilePath()));
+
                 Feedback feedback = new Feedback();
-                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name() + ":" + issue.getCategory() + ":" + issue.getRule());
-                feedback.setReference(encodeIssueLocation(issue));
-                feedback.setDetailText(issue.getMessage());
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
+                feedback.setReference(tool.name());
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setPositive(false);
+
+                // Store static code analysis in JSON format
+                try {
+                    feedback.setDetailText(mapper.writeValueAsString(issue));
+                }
+                catch (JsonProcessingException e) {
+                    log.error("Failed to serialize static code analysis issue: " + issue);
+                    continue;
+                }
                 feedbackList.add(feedback);
             }
         }
         return feedbackList;
-    }
-
-    private String encodeIssueLocation(StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue issue) {
-        StringBuilder sourceLocation = new StringBuilder();
-
-        // The file path is always present but is reported as a absolute path. We cut of unnecessary segments
-        String shortenedPath = removeCIDirectoriesFromPath(issue.getFilePath());
-        sourceLocation.append(shortenedPath);
-
-        // Start and end line is always present
-        sourceLocation.append(":").append(issue.getStartLine()).append("-").append(issue.getEndLine());
-
-        // Columns are not reported by all static code analysis tools. If startColumn is present then endColumn is too
-        if (issue.getStartColumn() == null) {
-            return sourceLocation.toString();
-        }
-        sourceLocation.append(":").append(issue.getStartColumn()).append("-").append(issue.getEndColumn());
-        return sourceLocation.toString();
     }
 
     private String removeCIDirectoriesFromPath(String sourcePath) {

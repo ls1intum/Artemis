@@ -121,5 +121,12 @@ public class StaticCodeAnalysisReportDTO {
         public void setPriority(String priority) {
             this.priority = priority;
         }
+
+        @Override
+        public String toString() {
+            return "StaticCodeAnalysisIssue{" + "filePath='" + filePath + '\'' + ", startLine=" + startLine + ", endLine=" + endLine + ", startColumn=" + startColumn
+                    + ", endColumn=" + endColumn + ", rule='" + rule + '\'' + ", category='" + category + '\'' + ", message='" + message + '\'' + ", priority='" + priority + '\''
+                    + '}';
+        }
     }
 }
