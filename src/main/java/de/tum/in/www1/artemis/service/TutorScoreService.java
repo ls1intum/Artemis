@@ -153,9 +153,7 @@ public class TutorScoreService {
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
 
-        if (existingTutorScore.isEmpty()) {
-            // same assessor do nothing
-        } else {
+        if (existingTutorScore.isPresent()) {
             // changed assessor
             TutorScore tutorScore = existingTutorScore.get();
 

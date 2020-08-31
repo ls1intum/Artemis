@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StudentScoreService;
 import de.tum.in.www1.artemis.service.UserService;
 
@@ -46,17 +45,14 @@ public class StudentScoreResource {
 
     private final CourseService courseService;
 
-    private final ResultService resultService;
-
     private final AuthorizationCheckService authCheckService;
 
     public StudentScoreResource(StudentScoreService studentScoreService, UserService userService, ExerciseService exerciseService, CourseService courseService,
-                                ResultService resultService, AuthorizationCheckService authCheckService) {
+                                AuthorizationCheckService authCheckService) {
         this.studentScoreService = studentScoreService;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
-        this.resultService = resultService;
         this.authCheckService = authCheckService;
     }
 
