@@ -122,6 +122,11 @@ public class AchievementResource {
             return ResponseEntity.notFound().build();
         }
         Achievement achievement = optionalAchievement.get();
+        Course course = achievement.getCourse();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
         log.info("User " + user.getLogin() + " has requested to delete the achievement {}", achievement.getId());
         achievementService.delete(achievement);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, achievement.getId().toString())).build();

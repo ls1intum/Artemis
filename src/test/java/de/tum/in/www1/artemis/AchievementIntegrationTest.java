@@ -141,4 +141,19 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         var achievements = request.get("/api/courses/" + course.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievements.size()).as("Course has no achievements").isEqualTo(0);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testBadRequests() throws Exception {
+        var emptyAchievement = new Achievement();
+        request.put("/api/achievements", emptyAchievement, HttpStatus.BAD_REQUEST);
+        request.delete("/api/achievements/17", HttpStatus.NOT_FOUND);
+        instructor.setGroups(new HashSet<>());
+        userRepository.save(instructor);
+        emptyAchievement.setId(2L);
+        emptyAchievement.setCourse(course);
+        request.put("/api/achievements", emptyAchievement, HttpStatus.FORBIDDEN);
+        request.delete("/api/achievements/1", HttpStatus.FORBIDDEN);
+    }
+
 }
