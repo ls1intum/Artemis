@@ -91,14 +91,14 @@ public class AchievementResource {
     public ResponseEntity<Achievement> updateAchievement(@RequestBody Achievement achievement) {
         log.debug("REST request to update Achievement : {}", achievement);
 
+        if (achievement.getId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         Course course = achievement.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-
-        if (achievement.getId() == null) {
-            return ResponseEntity.badRequest().build();
         }
 
         Achievement savedAchievement = achievementRepository.save(achievement);
