@@ -1,9 +1,7 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="d-flex align-content-center mb-2">
-        <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">
-            Configure Automated Grading
-        </h3>
+        <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
     </div>
     <ng-container *ngIf="!isLoading; else loadingContainer">
         <div class="d-flex">
@@ -62,26 +60,17 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Weight" prop="weight">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                [value]="value"
-                                (onValueUpdate)="updateEditedField($event, row, EditableField.WEIGHT)"
-                            ></jhi-table-editable-field>
+                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.WEIGHT)"></jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                [value]="value"
-                                (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_MULTIPLIER)"
-                            ></jhi-table-editable-field>
+                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_MULTIPLIER)"></jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                [value]="value"
-                                (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_POINTS)"
-                            ></jhi-table-editable-field>
+                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedField($event, row, EditableField.BONUS_POINTS)"></jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="After Due Date" prop="afterDueDate">
@@ -143,7 +132,7 @@
                     <ngx-datatable-column name="State" prop="state">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <select [ngModel]="value" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
-                                <option *ngFor="let s of categoryStateList" [value]="s.value">{{s.name}}</option>
+                                <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
                             </select>
                         </ng-template>
                     </ngx-datatable-column>
@@ -154,10 +143,7 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Penalty" prop="penalty">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                [value]="value"
-                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
-                            ></jhi-table-editable-field>
+                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"></jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
