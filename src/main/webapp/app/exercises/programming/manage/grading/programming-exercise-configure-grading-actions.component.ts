@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
         <button
             id="save-test-cases-button"
             class="btn btn-primary ml-3"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             (click)="onSave.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
@@ -22,7 +22,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             class="btn btn-secondary ml-3"
             (click)="onReset.emit()"
             [disabled]="isSaving"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.reset"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
         ></button>
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving"></jhi-programming-exercise-re-evaluate-button>
         <jhi-programming-exercise-trigger-all-button
