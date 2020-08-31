@@ -453,12 +453,19 @@ public class BambooService implements ContinuousIntegrationService {
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
 
-            // Store logs into database. Append logs of multiple jobs.
-            for (BambooBuildResultNotificationDTO.BambooJobDTO job : buildResult.getBuild().getJobs()) {
-                programmingSubmission.getBuildLogEntries().addAll(job.getLogs().stream().map(dto -> new BuildLogEntry(dto.getDate(), dto.getLog())).collect(Collectors.toList()));
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+            Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntries(programmingSubmission.getId());
+            if (optionalProgrammingSubmission.isPresent()) {
+                programmingSubmission = optionalProgrammingSubmission.get();
+                // Store logs into database. Append logs of multiple jobs.
+                for (BambooBuildResultNotificationDTO.BambooJobDTO job : buildResult.getBuild().getJobs()) {
+                    programmingSubmission.getBuildLogEntries().addAll(job.getLogs().stream().map(dto -> new BuildLogEntry(dto.getDate(), dto.getLog())).collect(Collectors.toList()));
+                }
+                programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             }
 
-            programmingSubmissionRepository.save(programmingSubmission);
+
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
