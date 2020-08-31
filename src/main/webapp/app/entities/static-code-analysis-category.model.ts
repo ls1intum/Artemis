@@ -5,13 +5,13 @@ export class StaticCodeAnalysisCategory implements BaseEntity {
     name: string;
     description: string;
     state: StaticCodeAnalysisCategoryState;
-    checks: [{ tool: string; check: string }];
+    checks: { tool: string; check: string }[];
     penalty: number;
     maxPenalty: number;
 }
 
 export enum StaticCodeAnalysisCategoryState {
-    Inactive,
-    Feedback,
-    Graded,
+    Inactive = 'inactive',
+    Feedback = 'feedback',
+    Graded = 'graded',
 }

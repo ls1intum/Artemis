@@ -11,10 +11,9 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
-import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { SERVER_API_URL } from 'app/app.constants';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
+import { Mapping } from './codeAnalysisMapping';
 
 /**
  * Describes the editableField
@@ -25,6 +24,7 @@ export enum EditableField {
     BONUS_POINTS = 'bonusPoints',
     PENALTY = 'penalty',
     MAX_PENALTY = 'maxPenalty',
+    STATE = 'state',
 }
 
 @Component({
@@ -57,6 +57,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
     activeTab: string;
+
+    categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
     /**
      * Returns the value of testcases
@@ -97,7 +99,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         private route: ActivatedRoute,
         private alertService: AlertService,
         private translateService: TranslateService,
-        private http: HttpClient,
         private location: Location,
         private router: Router,
     ) {}
@@ -249,7 +250,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         if (!newValue) {
             return;
         }
-        // If the weight has not changed, don't do anything besides closing the input.
+        // If the field has not changed, don't do anything
         if (newValue === editedCategory[field]) {
             return;
         }
@@ -361,20 +362,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     loadCodeAnalysisMapping() {
-        const testRepoUrl = `${SERVER_API_URL}/api/test-repository/${this.exercise.id}`;
-        const mappingFileName = 'codeAnalysisMapping.json'; // TODO: make global constant
-        this.http
-            .get(`${testRepoUrl}/file`, { params: new HttpParams().set('file', mappingFileName), responseType: 'text' })
-            .pipe(
-                map((data) => JSON.parse(data)),
-                catchError(() => {
-                    this.alertService.error(`Could not load code analysis categories.`);
-                    return of([]);
-                }),
-            )
-            .subscribe((categories: StaticCodeAnalysisCategory[]) => {
-                this.staticCodeAnalysisCategories = categories;
-            });
+        this.staticCodeAnalysisCategories = Mapping;
     }
 
     selectTab(tab: string) {
