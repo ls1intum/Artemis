@@ -169,12 +169,13 @@ public class TutorScoreService {
      * @param newResult result to be added
      */
     public void addNewResult(Result newResult) {
-        // ignore unrated results and results without participation
-        if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
+        // ignore unrated results and results without score
+        if (newResult.isRated() != Boolean.TRUE || newResult.getScore() == null) {
             return;
         }
 
-        if (newResult.getParticipation().getClass() != StudentParticipation.class) {
+        // ignore results without participation
+        if (newResult.getParticipation() == null || newResult.getParticipation().getId() == null || newResult.getParticipation().getClass() != StudentParticipation.class) {
             return;
         }
 
