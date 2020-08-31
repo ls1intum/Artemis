@@ -58,7 +58,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     RequestUtilService request;
 
-    private TutorScore tutorScore;
+    // private TutorScore tutorScore;
 
     private User user;
 

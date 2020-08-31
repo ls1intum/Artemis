@@ -55,7 +55,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     RequestUtilService request;
 
-    private StudentScore studentScore;
+    // private StudentScore studentScore;
 
     private User user;
 
@@ -200,7 +200,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
 
-        // TODO: this is not a good assertion, use a better one
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 3").isEqualTo(3);
     }

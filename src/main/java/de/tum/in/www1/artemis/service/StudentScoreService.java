@@ -103,15 +103,10 @@ public class StudentScoreService {
      * @param newResult result to be added
      */
     public void addNewResult(Result newResult) {
-        // ignore unrated results
+        // ignore unrated results and results without participation
         if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
             return;
         }
-
-        // TODO: handle 2 different cases:
-        // 1) there is already an existing student score for a result with the same participation (i.e. the same exercise id and the same user id): update this student score
-        // accordingly (this happens for programming exercises and for the 2nd/3rd correction of manual exercises) only in case the new result is rated
-        // 2) there is no student score for the same participation yet: create a new one -> DONE
 
         if (newResult.getParticipation().getClass() != StudentParticipation.class) {
             return;

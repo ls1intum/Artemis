@@ -43,7 +43,7 @@ public class ResultListener {
         log.info("Result " + deletedResult + " was deleted");
         // remove from Student Scores and Tutor Scores
         studentScoreService.removeResult(deletedResult);
-        // tutorScoreService.removeResult(deletedResult);
+        tutorScoreService.removeResult(deletedResult);
     }
 
     /**
@@ -59,7 +59,7 @@ public class ResultListener {
 
         if (updatedResult.getAssessor() != null) {
             // update existing tutor scores
-            // tutorScoreService.updateResult(updatedResult);
+            tutorScoreService.updateResult(updatedResult);
         }
     }
 
@@ -76,7 +76,7 @@ public class ResultListener {
 
         if (newResult.getAssessor() != null) {
             // add to tutor scores (or update existing one)
-            // tutorScoreService.addNewResult(newResult);
+            tutorScoreService.addNewResult(newResult);
         }
     }
 }

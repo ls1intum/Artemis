@@ -76,11 +76,25 @@ public class TutorScoreService {
      *
      * @param deletedResult result to be deleted
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
         // TODO: change the entry that is based on this result: find it based on the exercise id and subtract the max points from assessmentPoints, reduce assessments by one
         // in case, there has been a complaint, complaint response or feedback request, adjust those values as well
-        StudentParticipation participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId()).get();
-        Exercise exercise = participation.getExercise();
+        if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
+            return;
+        }
+
+        if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
+            return;
+        }
+
+        var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
+
+        if (participation.isEmpty()) {
+            return;
+        }
+
+        Exercise exercise = participation.get().getExercise();
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 
@@ -123,13 +137,23 @@ public class TutorScoreService {
      *
      * @param updatedResult result to be updated
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
-        StudentParticipation participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId()).get();
-        Exercise exercise = participation.getExercise();
+        if (updatedResult.getParticipation() == null || updatedResult.getParticipation().getId() == null || updatedResult.getParticipation().getClass() != StudentParticipation.class) {
+            return;
+        }
 
-        /*var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
+        var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
-        if (existingTutorScore.isPresent()) {
+        if (participation.isEmpty()) {
+            return;
+        }
+
+        Exercise exercise = participation.get().getExercise();
+
+        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
+
+        if (existingTutorScore.isEmpty()) {
             // same assessor do nothing
         } else {
             // changed assessor
@@ -138,7 +162,7 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + exercise.getMaxScore());
 
             tutorScoreRepository.save(tutorScore);
-        }*/
+        }
     }
 
     /**
@@ -147,8 +171,22 @@ public class TutorScoreService {
      * @param newResult result to be added
      */
     public void addNewResult(Result newResult) {
-        StudentParticipation participation = studentParticipationRepository.findById(newResult.getParticipation().getId()).get();
-        Exercise exercise = participation.getExercise();
+        // ignore unrated results and results without participation
+        if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
+            return;
+        }
+
+        if (newResult.getParticipation().getClass() != StudentParticipation.class) {
+            return;
+        }
+
+        var participation = studentParticipationRepository.findById(newResult.getParticipation().getId());
+
+        if (participation.isEmpty()) {
+            return;
+        }
+
+        Exercise exercise = participation.get().getExercise();
 
         // TODO: probably not working either
         // Optional<TutorScore> existingScore = getTutorScoreForTutorAndExercise(newResult.getAssessor(), exercise);
