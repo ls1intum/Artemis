@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -88,8 +89,8 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
 
     @BeforeAll
-    @WithMockUser(value = "admin", roles = "ADMIN")
     public void init() {
+        SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
         database.addUsers(10, 0, 1);
         database.addCourseWithOneFinishedTextExercise();
         database.addCourseWithOneFinishedTextExercise();
