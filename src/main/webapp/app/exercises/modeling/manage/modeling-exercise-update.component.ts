@@ -151,14 +151,24 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * Sanitize attributes of `modelingExercise`
+     */
+    sanitizeModelingExercise() {
+        this.modelingExercise.title = this.modelingExercise.title.trim();
+    }
+
+    /**
      * Sends a request to either update, create or import a modeling exercise
      */
     save(): void {
+        this.sanitizeModelingExercise();
+
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
         } else if (this.modelingExercise.id !== undefined) {
             const requestOptions = {} as any;
+
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
