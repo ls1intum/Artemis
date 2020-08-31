@@ -27,7 +27,7 @@
                     </tr>
                     <tr *ngIf="lineOfCodeForInlineComment === i && toggleInlineComment">
                         <td colspan="4">
-                            <jhi-code-editor-tutor-assessment-inline-feedback></jhi-code-editor-tutor-assessment-inline-feedback>
+                            <jhi-code-editor-tutor-assessment-inline-feedback (onCancelFeedback)="onCancel()"></jhi-code-editor-tutor-assessment-inline-feedback>
                         </td>
                     </tr>
                 </ng-container>

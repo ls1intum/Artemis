@@ -83,4 +83,8 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
         this.toggleInlineComment = true;
         console.log('openInlineFeedback');
     }
+
+    onCancel() {
+        this.toggleInlineComment = false;
+    }
 }
