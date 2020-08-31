@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -24,6 +25,9 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 public class FeedbackService {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
+
+    @Value("${artemis.programming-exercise-student-working-directory}")
+    private String STUDENT_WORKING_DIRECTORY;
 
     private final FeedbackRepository feedbackRepository;
 
@@ -66,7 +70,7 @@ public class FeedbackService {
             for (final var issue : report.getIssues()) {
                 Feedback feedback = new Feedback();
                 feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + tool.name() + ":" + issue.getCategory() + ":" + issue.getRule());
-                feedback.setReference(createSourceLocation(issue));
+                feedback.setReference(encodeIssueLocation(issue));
                 feedback.setDetailText(issue.getMessage());
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setPositive(false);
@@ -76,10 +80,10 @@ public class FeedbackService {
         return feedbackList;
     }
 
-    private String createSourceLocation(StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue issue) {
+    private String encodeIssueLocation(StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue issue) {
         StringBuilder sourceLocation = new StringBuilder();
 
-        // The file path is always present
+        // The file path is always present but is reported as a absolute path. We cut of unnecessary segments
         sourceLocation.append(issue.getFilePath());
 
         // Start and end line is always present
@@ -91,5 +95,16 @@ public class FeedbackService {
         }
         sourceLocation.append(":").append(issue.getStartColumn()).append(issue.getEndColumn());
         return sourceLocation.toString();
+    }
+
+    private String shortenSourceFilePath(String sourcePath) {
+        if (sourcePath == null || sourcePath.isEmpty()) {
+            return "notAvailable";
+        }
+        int workingDirectoryStart = sourcePath.indexOf(STUDENT_WORKING_DIRECTORY);
+        if (workingDirectoryStart == -1) {
+            return sourcePath;
+        }
+        return sourcePath.substring(workingDirectoryStart + STUDENT_WORKING_DIRECTORY.length());
     }
 }

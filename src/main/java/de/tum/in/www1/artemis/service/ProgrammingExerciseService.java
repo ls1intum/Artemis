@@ -16,6 +16,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -39,6 +40,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
+
+    @Value("${artemis.programming-exercise-student-working-directory}")
+    private String STUDENT_WORKING_DIRECTORY;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -409,6 +413,9 @@ public class ProgrammingExerciseService {
 
         fileTargets.add("${exerciseName}");
         fileReplacements.add(programmingExercise.getTitle());
+
+        fileTargets.add("${studentWorkingDirectory}");
+        fileReplacements.add(STUDENT_WORKING_DIRECTORY);
 
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
     }
