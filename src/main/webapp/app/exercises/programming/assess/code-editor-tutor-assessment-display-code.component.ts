@@ -6,7 +6,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-display-code',
     templateUrl: './code-editor-tutor-assessment-display-code.component.html',
-    styles: ['pre { display: inline; border: none; background-color: white; border-radius: unset ; padding: 1px; font-size: 11px} table {font-size: 11px}'],
+    styleUrls: ['./code-editor-tutor-assessment-display-code.component.scss'],
 })
 export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges {
     @Input()
@@ -19,6 +19,7 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     studentCodePerLine: string[];
 
     isLoading = false;
+    lineOfCodeHovered: number | null;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
 

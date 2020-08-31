@@ -1,0 +1,20 @@
+pre {
+    display: inline;
+    border: none;
+    background-color: white;
+    border-radius: unset;
+    padding: 1px;
+    font-size: 11px;
+}
+table {
+    font-size: 11px;
+}
+
+.btn-inline-comment {
+    display: none;
+    color: #3e8acc; // btn-primary color
+}
+
+.btn-inline-comment-hover {
+    display: block;
+}
