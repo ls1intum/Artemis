@@ -84,7 +84,8 @@ public class FeedbackService {
         StringBuilder sourceLocation = new StringBuilder();
 
         // The file path is always present but is reported as a absolute path. We cut of unnecessary segments
-        sourceLocation.append(issue.getFilePath());
+        String shortenedPath = removeCIDirectoriesFromPath(issue.getFilePath());
+        sourceLocation.append(shortenedPath);
 
         // Start and end line is always present
         sourceLocation.append(":").append(issue.getStartLine()).append("-").append(issue.getEndLine());
@@ -93,11 +94,11 @@ public class FeedbackService {
         if (issue.getStartColumn() == null) {
             return sourceLocation.toString();
         }
-        sourceLocation.append(":").append(issue.getStartColumn()).append(issue.getEndColumn());
+        sourceLocation.append(":").append(issue.getStartColumn()).append("-").append(issue.getEndColumn());
         return sourceLocation.toString();
     }
 
-    private String shortenSourceFilePath(String sourcePath) {
+    private String removeCIDirectoriesFromPath(String sourcePath) {
         if (sourcePath == null || sourcePath.isEmpty()) {
             return "notAvailable";
         }
