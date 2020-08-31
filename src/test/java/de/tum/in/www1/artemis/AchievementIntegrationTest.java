@@ -136,7 +136,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
         assertThat(achievementRepository.findAll().size()).as("Achievement is deleted").isEqualTo(0);
         assertThat(userRepository.findById(instructor.getId()).isPresent()).as("User is not deleted").isTrue();
-        assertThat(userRepository.findById(instructor.getId()).get().getAchievements().size()).as("User has no achievements").isEqualTo(0);
+        assertThat(request.get("/api/achievements", HttpStatus.OK, Set.class).size()).as("User has no achievements").isEqualTo(0);
         assertThat(courseRepository.findById(course.getId()).isPresent()).as("Course is not deleted").isTrue();
         var achievements = request.get("/api/courses/" + course.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievements.size()).as("Course has no achievements").isEqualTo(0);
