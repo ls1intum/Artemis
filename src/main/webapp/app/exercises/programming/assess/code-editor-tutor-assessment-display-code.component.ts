@@ -20,6 +20,8 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
 
     isLoading = false;
     lineOfCodeHovered: number | null;
+    toggleInlineComment = false;
+    lineOfCodeForInlineComment: number;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
 
@@ -74,5 +76,11 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
             .subscribe(() => {
                 this.isLoading = false;
             });
+    }
+
+    openInlineFeedback(i: number) {
+        this.lineOfCodeForInlineComment = i;
+        this.toggleInlineComment = true;
+        console.log('openInlineFeedback');
     }
 }
