@@ -153,10 +153,16 @@ public class TutorScoreService {
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
 
-        if (existingTutorScore.isPresent()) {
-            // changed assessor
+        // handle remove from old assessor
+        if (existingTutorScore.isEmpty()) {
+            TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, exercise.getMaxScore());
+
+            tutorScoreRepository.save(newScore);
+        } else {
+            // handle other results than the first
             TutorScore tutorScore = existingTutorScore.get();
 
+            tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + exercise.getMaxScore());
 
             tutorScoreRepository.save(tutorScore);
