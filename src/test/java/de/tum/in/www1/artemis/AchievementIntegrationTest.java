@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.Rank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -69,9 +69,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         instructor.setGroups(new HashSet<>(Arrays.asList("instructor")));
         first_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
         second_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        first_achievement = achievementService.create("Test Achievement", "Create correct relations", "test-icon", Rank.UNRANKED, first_course);
-        second_achievement = achievementService.create("Test Achievement", "Get 100 percent test coverage", "test-icon", Rank.GOLD, first_course);
-        third_achievement = achievementService.create("Test Achievement", "Get PR ready to be merged", "test-icon", Rank.SILVER, second_course);
+        first_achievement = achievementService.create("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, first_course);
+        second_achievement = achievementService.create("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, first_course);
+        third_achievement = achievementService.create("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, second_course);
 
         first_exercise = first_course.getExercises().stream().findFirst().get();
         first_achievement.setExercise(first_exercise);

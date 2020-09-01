@@ -9,12 +9,10 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.enumeration.Rank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 
 @Entity
 @Table(name = "achievement")
@@ -38,7 +36,7 @@ public class Achievement implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rank")
-    private Rank rank;
+    private AchievementRank rank;
 
     @ManyToOne
     private Course course;
@@ -83,11 +81,11 @@ public class Achievement implements Serializable {
         this.icon = icon;
     }
 
-    public Rank getRank() {
+    public AchievementRank getRank() {
         return rank;
     }
 
-    public void setRank(Rank rank) {
+    public void setRank(AchievementRank rank) {
         this.rank = rank;
     }
 

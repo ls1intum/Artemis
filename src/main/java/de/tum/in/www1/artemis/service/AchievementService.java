@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.Rank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
@@ -49,7 +49,7 @@ public class AchievementService {
         return achievementRepository.save(achievement);
     }
 
-    public Achievement create(String title, String description, String icon, Rank rank, Course course) {
+    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course) {
         Achievement achievement = new Achievement();
         achievement.setTitle(title);
         achievement.setDescription(description);
