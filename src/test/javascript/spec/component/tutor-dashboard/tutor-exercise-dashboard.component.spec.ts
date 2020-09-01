@@ -1,3 +1,4 @@
+import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
@@ -46,6 +47,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TutorExerciseDashboardComponent', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist.js');
     let comp: TutorExerciseDashboardComponent;
     let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;

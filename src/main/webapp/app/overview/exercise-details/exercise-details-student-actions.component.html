@@ -237,12 +237,12 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-        <ng-template #popContent style="max-width: 660px;">
+        <ng-template #popContent style="max-width: 660px">
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
             <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
-            <div class="row" style="margin: 0; max-width: 100%;">
+            <div class="row" style="margin: 0; max-width: 100%">
                 <pre
-                    style="flex: 1;"
+                    style="flex: 1"
                     [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
                     ngxClipboard
                     [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
@@ -253,7 +253,7 @@
                 <pre
                     *ngIf="sshEnabled"
                     class="btn btn-primary d-inline-flex align-items-center ml-0"
-                    style="border-top-left-radius: 0; border-bottom-left-radius: 0;"
+                    style="border-top-left-radius: 0; border-bottom-left-radius: 0"
                     (click)="useSsh = !useSsh"
                     >{{ useSsh ? 'USE HTTPS' : 'USE SSH' }}</pre
                 >
@@ -270,14 +270,14 @@
                 [class.btn-success]="wasCopied"
                 class="btn btn-primary btn-sm mr-2"
                 type="button"
-                style="min-width: 90px;"
+                style="min-width: 90px"
             >
                 {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
             </button>
             <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations[0])) | safeUrl"
                 >{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }}
             </a>
-            <iframe name="hidden-iframe" style="visibility: hidden; position: absolute;"></iframe>
+            <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
         </ng-template>
     </div>

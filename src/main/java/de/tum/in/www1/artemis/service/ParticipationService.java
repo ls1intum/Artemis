@@ -500,7 +500,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise, participation));
+            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
             versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
@@ -572,22 +572,15 @@ public class ParticipationService {
      * Currently, exercise start dates are the same for all users
      *
      * @param exercise that is possibly part of an exam
-     * @param participation the participation of the student
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
      */
-    public ZonedDateTime getIndividualReleaseDate(Exercise exercise, StudentParticipation participation) {
-        var studentExam = findStudentExam(exercise, participation).orElse(null);
-        // this is the case for all non-exam exercises
-        if (studentExam == null) {
+    public ZonedDateTime getIndividualReleaseDate(Exercise exercise) {
+        if (isExamExercise(exercise)) {
+            return exercise.getExerciseGroup().getExam().getStartDate();
+        }
+        else {
             return exercise.getReleaseDate();
         }
-        var exerciseReleaseDate = exercise.getReleaseDate();
-        var examStartDate = studentExam.getExam().getStartDate();
-        // use the exerciseReleaseDate if it was explicitly set to start after the exam
-        if (exerciseReleaseDate != null && exerciseReleaseDate.isAfter(examStartDate)) {
-            return exerciseReleaseDate;
-        }
-        return examStartDate;
     }
 
     /**
@@ -1076,7 +1069,9 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.deleteLocalRepository(programmingExerciseParticipation);
+                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
+                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    gitService.deleteLocalRepository(repo);
                 }
             }
             catch (Exception ex) {

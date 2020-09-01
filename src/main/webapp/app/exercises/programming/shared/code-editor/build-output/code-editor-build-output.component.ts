@@ -2,8 +2,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
@@ -14,8 +12,8 @@ import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-
-export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+import { Annotation } from '../ace/code-editor-ace.component';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -25,29 +23,21 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()
     participation: Participation;
-    @Input()
-    get buildLogErrors() {
-        return this.buildLogErrorsValue;
-    }
+
+    @Output()
+    onAnnotations = new EventEmitter<Array<Annotation>>();
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
-    @Output()
-    buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
     onError = new EventEmitter<string>();
 
     isBuilding: boolean;
     rawBuildLogs = new BuildLogEntryArray();
-    buildLogErrorsValue: BuildLogErrors;
+    result: Result;
 
     /** Resizable constants **/
     resizableMinHeight = 150;
     interactResizable: Interactable;
-
-    set buildLogErrors(buildLogErrors: BuildLogErrors) {
-        this.buildLogErrorsValue = buildLogErrors;
-        this.buildLogErrorsChange.emit(buildLogErrors);
-    }
 
     private resultSubscription: Subscription;
     private submissionSubscription: Subscription;
@@ -55,7 +45,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     constructor(
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
-        private sessionService: CodeEditorSessionService,
         private participationWebsocketService: ParticipationWebsocketService,
         private submissionService: CodeEditorSubmissionService,
     ) {}
@@ -93,31 +82,42 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
+                    tap((result) => (this.result = result)),
                     switchMap((result) => this.fetchBuildResults(result)),
                     map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
-                        const buildLogErrors = this.rawBuildLogs.extractErrors();
-                        // Only load errors from session if the last result has build errors
-                        if (this.rawBuildLogs.length) {
-                            const sessionBuildLogs = this.loadSession();
-                            this.buildLogErrors = !sessionBuildLogs || buildLogErrors.timestamp > sessionBuildLogs.timestamp ? buildLogErrors : sessionBuildLogs;
-                        } else {
-                            this.buildLogErrors = buildLogErrors;
-                        }
                     }),
                     catchError(() => {
                         this.rawBuildLogs = new BuildLogEntryArray();
-                        this.buildLogErrors = this.rawBuildLogs.extractErrors();
                         return Observable.of();
                     }),
                 )
-                .subscribe();
+                .subscribe(() => this.extractAnnotations());
         } else {
             if (!this.resultSubscription && this.participation) {
                 this.setupResultWebsocket();
             }
         }
+    }
+
+    /**
+     * Extracts annotations from
+     * - the build logs as compilation errors
+     * - the result feedbacks as static code analysis issues
+     * and emits them to the parent component
+     */
+    private extractAnnotations() {
+        const buildLogErrors = this.rawBuildLogs.extractErrors();
+        const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
+            text: f.detailText || '',
+            fileName: 'src/' + (f.reference?.split(':')[0] || '').split('.').join('/') + '.java', // TODO support other files
+            row: parseInt(f.reference?.split(':')[1] || '0', 10) - 1,
+            column: 0,
+            type: 'warning', // TODO encode type in feedback
+            timestamp: this.result.completionDate != null ? new Date(this.result.completionDate.toString()).valueOf() : 0,
+        }));
+        this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisIssues]);
     }
 
     /**
@@ -143,19 +143,18 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .pipe(
                 // Ignore initial null result from service
                 filter((result) => !!result),
+                tap((result) => (this.result = result!)),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);
-                    this.buildLogErrors = this.rawBuildLogs.extractErrors();
                 }),
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
-                    this.buildLogErrors = this.rawBuildLogs.extractErrors();
                     return Observable.of(null);
                 }),
             )
-            .subscribe();
+            .subscribe(() => this.extractAnnotations());
     }
 
     /**
@@ -184,15 +183,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /**
      * Decides if the build log should be shown.
-     * If All tests were successful or there is test feedback -> don't show build logs.
-     * Else -> show build logs.
+     * Fetch the build logs if a result is available and no submission is available or the submission could not be build
      * @param result
      */
     fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
-        if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-            return of([]);
-        } else {
+        if (result && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
             return this.getBuildLogs();
+        } else {
+            return of([]);
         }
     }
 
@@ -210,14 +208,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             resizableMinWidth: undefined,
             resizableMinHeight: this.resizableMinHeight,
         });
-    }
-
-    /**
-     * @function loadSession
-     * @desc Gets the user's session data from localStorage to load editor settings
-     */
-    loadSession() {
-        return this.sessionService.loadSession();
     }
 
     ngOnDestroy() {

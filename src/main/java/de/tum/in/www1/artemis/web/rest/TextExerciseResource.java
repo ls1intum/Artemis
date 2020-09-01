@@ -188,7 +188,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
 
@@ -233,7 +233,7 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
-        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
 
@@ -470,7 +470,7 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
-    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, user));
     }

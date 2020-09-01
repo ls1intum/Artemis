@@ -4,8 +4,19 @@ module.exports = {
         'ts-jest': {
             tsConfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
-            astTransformers: [require.resolve('./InlineHtmlStripStylesTransformer')],
+            astTransformers: {
+                before: [require.resolve('./InlineHtmlStripStylesTransformer')],
+            },
             diagnostics: false,
+        },
+    },
+    coverageThreshold: {
+        global: {
+            branches: 33,
+            functions: 40,
+            lines: 59,
+            // TODO: in the future, the following value should be increase to 80%
+            statements: 60,
         },
     },
     preset: 'jest-preset-angular',

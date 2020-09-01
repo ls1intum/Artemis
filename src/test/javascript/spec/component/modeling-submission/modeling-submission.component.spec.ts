@@ -1,6 +1,6 @@
+import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -25,6 +25,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
+import { stub } from 'sinon';
 import { MockComponent } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -36,17 +37,19 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
-import { stub } from 'sinon';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Component Tests', () => {
     describe('ModelingSubmission Management Component', () => {
+        // needed to make sure ace is defined
+        ace.acequire('ace/ext/modelist.js');
         let comp: ModelingSubmissionComponent;
         let fixture: ComponentFixture<ModelingSubmissionComponent>;
         let debugElement: DebugElement;
@@ -73,6 +76,7 @@ describe('Component Tests', () => {
                     ArtemisFullscreenModule,
                     ArtemisTeamSubmissionSyncModule,
                     ArtemisHeaderExercisePageWithDetailsModule,
+                    RatingModule,
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],

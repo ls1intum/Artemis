@@ -84,7 +84,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         submission = database.addTextSubmission(exercise, submission, student1.getLogin());
 
         result = ModelFactory.generateResult(true, 0);
-        result = database.addResultToSubmission(submission);
+        result = database.addResultToSubmission(submission, null);
 
         rating = new Rating();
         rating.setResult(result);

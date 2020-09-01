@@ -80,7 +80,7 @@ public class TextExerciseService {
         final var sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         final var searchTerm = search.getSearchTerm();
         final Page<TextExercise> exercisePage;
-        if (authCheckService.isAdmin()) {
+        if (authCheckService.isAdmin(user)) {
             exercisePage = textExerciseRepository
                     .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
                             searchTerm, searchTerm, searchTerm, searchTerm, sorted);

@@ -1,5 +1,5 @@
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { safeUnescape } from 'app/shared/util/security-util';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export enum BuildLogType {
     ERROR = 'ERROR',
@@ -40,14 +40,13 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
     }
 
     /**
-     * Filters compilation errors from build log and groups them by filename.
+     * Filters compilation errors from build log.
      * Safely unescapes messages within the build log to avoid vulnerability to injection.
      *
      */
-    extractErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
-        if (this.length) {
-            const timestamp = Date.parse(this[0].time);
-            const errors = this
+    extractErrors(): Array<Annotation> {
+        return (
+            this
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(this.errorLogRegex), time }))
                 // Remove entries that could not be parsed, are too short or not errors
@@ -59,19 +58,8 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     row: Math.max(parseInt(row, 10) - 1, 0),
                     column: Math.max(parseInt(column, 10) - 1, 0),
                     text: safeUnescape(text) || '',
-                    ts: Date.parse(time),
+                    timestamp: Date.parse(time),
                 }))
-                // Group annotations by filename
-                .reduce(
-                    (buildLogErrors, { fileName, ...rest }) => ({
-                        ...buildLogErrors,
-                        [fileName]: new AnnotationArray(...(buildLogErrors[fileName] || []), rest),
-                    }),
-                    {},
-                );
-            return { timestamp, errors };
-        } else {
-            return { timestamp: Date.now(), errors: {} };
-        }
+        );
     }
 }

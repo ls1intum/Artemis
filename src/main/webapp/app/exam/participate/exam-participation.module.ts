@@ -21,7 +21,6 @@ import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-e
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
-import { ExamCodeEditorStudentContainerComponent } from 'app/exam/participate/exercises/programming/code-editor/exam-code-editor-student-container.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -58,7 +57,6 @@ const ENTITY_STATES = [...examParticipationState];
         TextExamSubmissionComponent,
         ModelingExamSubmissionComponent,
         ExamNavigationBarComponent,
-        ExamCodeEditorStudentContainerComponent,
         ExamTimerComponent,
     ],
 })

@@ -176,7 +176,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate, true);
+        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, true);
 
         // register users
         Set<User> registeredStudents = new HashSet<>(users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toCollection(ArrayList::new)));
@@ -312,7 +312,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
@@ -337,7 +337,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));

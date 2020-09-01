@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,6 +19,10 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
+import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
+import { BaseChartDirective, Label } from 'ng2-charts';
+import * as Chart from 'chart.js';
+import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -36,7 +40,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
     public binWidth = 5;
-    public histogramData: number[];
+    public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
     public predicate = 'id';
@@ -44,6 +48,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public isLoading = true;
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
+
+    // Histogram related properties
+    public barChartOptions: ChartOptions = {};
+    public barChartLabels: Label[] = [];
+    public barChartType: ChartType = 'bar';
+    public barChartLegend = true;
+    public barChartData: ChartDataSets[] = [];
+
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription: Subscription | null;
 
@@ -61,7 +74,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.examService.getExamScores(params['courseId'], params['examId']).subscribe(
                 (examResponse) => {
-                    this.examScoreDTO = examResponse.body!;
+                    this.examScoreDTO = examResponse!.body!;
                     if (this.examScoreDTO) {
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
@@ -72,6 +85,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
                     }
+                    this.createChart();
                     this.isLoading = false;
                     this.changeDetector.detectChanges();
                 },
@@ -103,14 +117,83 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
 
+    private calculateTickMax() {
+        const max = Math.max(...this.histogramData);
+        return Math.ceil((max + 1) / 10) * 10 + 20;
+    }
+
+    private createChart() {
+        const labels = [];
+        let i;
+        for (i = 0; i < this.histogramData.length; i++) {
+            labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
+            labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+        }
+        this.barChartLabels = labels;
+
+        const component = this;
+
+        this.barChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            legend: {
+                align: 'start',
+                position: 'bottom',
+            },
+            scales: {
+                yAxes: [
+                    {
+                        ticks: {
+                            maxTicksLimit: 11,
+                            beginAtZero: true,
+                            precision: 0,
+                            min: 0,
+                            max: this.calculateTickMax(),
+                        } as LinearTickOptions,
+                    },
+                ],
+            },
+            hover: {
+                animationDuration: 0,
+            },
+            animation: {
+                duration: 1,
+                onComplete() {
+                    const chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+
+                    ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
+                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        meta.data.forEach(function (bar: any, index: number) {
+                            const data = dataset.data[index];
+                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
+                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
+                        });
+                    });
+                },
+            },
+        };
+
+        this.barChartData = [
+            {
+                label: '# of students',
+                data: this.histogramData,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+            },
+        ];
+    }
+
     /**
      * Calculates filter dependent exam statistics. Must be triggered if filter settings change.
      * 1. The average points and number of participants for each exercise group and exercise
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
-        // Create data structure for histogram
-        this.histogramData = Array(100 / this.binWidth).fill(0);
+        this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
@@ -167,6 +250,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
+
+        if (this.chart) {
+            this.chart!.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.chart.update();
+        }
     }
 
     /**

@@ -1003,7 +1003,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
 
         // TODO: it would be nice if we can support programming exercises here as well
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, false);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));

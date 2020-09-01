@@ -11,21 +11,15 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Ou
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
-import {
-    CommitState,
-    CreateFileChange,
-    DeleteFileChange,
-    EditorState,
-    FileChange,
-    RenameFileChange,
-    ResizeType,
-} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
+import { LocalStorageService } from 'ngx-webstorage';
+import { fromPairs, pickBy } from 'lodash';
+
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -40,19 +34,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     selectedFile: string;
     @Input()
-    fileChange: FileChange;
+    sessionId: number;
+    @Input()
+    set annotations(annotations: Array<Annotation>) {
+        this.setAnnotations(annotations);
+    }
     @Input()
     readonly commitState: CommitState;
     @Input()
     readonly editorState: EditorState;
     @Input()
-    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
-        return this.buildLogErrorsValue;
-    }
+    isTutorAssessment = false;
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
-    @Output()
-    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timestamp: number }>();
     @Output()
     onError = new EventEmitter<string>();
 
@@ -61,19 +55,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
+    annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
-    resizeSubscription: Subscription;
-    buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-    // We store changes in the editor since the last content emit to update annotation positions.
-    editorChangeLog: TextChange[] = [];
 
-    set buildLogErrors(buildLogErrors) {
-        this.buildLogErrorsValue = buildLogErrors;
-        this.buildLogErrorsChange.emit(this.buildLogErrors);
-    }
-
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
     /**
      * @function ngAfterViewInit
@@ -86,17 +72,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
         });
-        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_LEFT, ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
-            this.editor.getEditor().resize();
-        });
     }
 
     /**
      * @function ngOnChanges
-     * @desc New participation     => reset the file update subscriptions
-     *       File has happened     => update internal variables to reflect change
+     * @desc New clean state       => reset the editor and file update subscriptions
      *       New selectedFile      => load the file from the repository and open it in the editor
-     *       New buildLogErrors    => update the ui with the annotations
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -110,14 +91,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
             this.editor.getEditor().getSession().setValue('');
         }
-        if (changes.fileChange && changes.fileChange.currentValue) {
-            if (this.fileChange instanceof RenameFileChange || this.fileChange instanceof DeleteFileChange) {
-                this.fileSession = this.fileService.updateFileReferences(this.fileSession, this.fileChange);
-            } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
-                this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
-                this.initEditorAfterFileChange();
-            }
-        } else if (
+        if (
             (changes.selectedFile && this.selectedFile) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
@@ -128,9 +102,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             } else {
                 this.initEditorAfterFileChange();
             }
-        } else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
-            // Build log errors have changed - this can be new build results, but also a file change that has updated the object
-            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
     }
 
@@ -146,7 +117,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
-                this.editorChangeLog.push(change);
+                this.updateAnnotations(change);
             });
 
             // Restore the previous cursor position
@@ -157,9 +128,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.getEditor().focus();
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
-            if (this.buildLogErrors) {
-                this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
-            }
+            this.displayAnnotations();
         }
     }
 
@@ -196,21 +165,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param code {string} Current editor code
      */
     onFileTextChanged(code: string) {
+        if (this.isTutorAssessment) {
+            this.editor.setReadOnly(true);
+        }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             if (this.fileSession[this.selectedFile].code !== code) {
                 const cursor = this.editor.getEditor().getCursorPosition();
                 this.fileSession[this.selectedFile] = { code, cursor };
-                if (this.buildLogErrors.errors[this.selectedFile]) {
-                    this.buildLogErrors = {
-                        ...this.buildLogErrors,
-                        errors: {
-                            ...this.buildLogErrors.errors,
-                            [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
-                        },
-                    };
-                }
-                this.editorChangeLog = [];
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
@@ -220,8 +182,120 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        if (this.resizeSubscription) {
-            this.resizeSubscription.unsubscribe();
+    }
+
+    /**
+     * Recalculates the position of annotations according to changes in the editor.
+     * Annotations are affected by changes in previous rows for row updates,
+     * in the same row and previous columns for column updates.
+     * @param change
+     */
+    updateAnnotations(change: TextChange) {
+        const {
+            start: { row: rowStart, column: columnStart },
+            end: { row: rowEnd, column: columnEnd },
+            action,
+        } = change;
+        if (action === 'remove' || action === 'insert') {
+            const sign = action === 'remove' ? -1 : 1;
+            const updateRowDiff = sign * (rowEnd - rowStart);
+            const updateColDiff = sign * (columnEnd - columnStart);
+
+            this.annotationsArray = this.annotationsArray.map((a) => {
+                return this.selectedFile !== a.fileName
+                    ? a
+                    : {
+                          ...a,
+                          row: a.row > rowStart ? a.row + updateRowDiff : a.row,
+                          column: a.column > columnStart && a.row === rowStart && a.row === rowEnd ? a.column + updateColDiff : a.column,
+                      };
+            });
+            this.displayAnnotations();
         }
+    }
+
+    /**
+     * Sets the annotations for the editor.
+     * Checks for each annotation whether an updated version exists in local storage.
+     * @param annotations The new annotations array
+     */
+    setAnnotations(annotations: Array<Annotation> = []) {
+        if (annotations.length > 0) {
+            const sessionAnnotations = this.loadAnnotations();
+            this.annotationsArray = annotations.map((a) => {
+                const hash = a.fileName + a.row + a.column + a.text;
+                if (sessionAnnotations[hash] == null || sessionAnnotations[hash].timestamp < a.timestamp) {
+                    return { ...a, hash };
+                } else {
+                    return sessionAnnotations[hash];
+                }
+            });
+        } else {
+            this.annotationsArray = annotations;
+        }
+
+        this.displayAnnotations();
+    }
+
+    /**
+     * Updates the fileSession and annotations objects for a file change. This function is called
+     * by the parent container.
+     * @param fileChange
+     */
+    onFileChange(fileChange: FileChange) {
+        if (fileChange instanceof RenameFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.annotationsArray = this.annotationsArray.map((a) =>
+                a.fileName !== fileChange.oldFileName
+                    ? a
+                    : {
+                          ...a,
+                          fileName: fileChange.newFileName,
+                      },
+            );
+            this.storeAnnotations([fileChange.newFileName]);
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.annotationsArray = this.annotationsArray.filter((a) => a.fileName === fileChange.fileName);
+            this.storeAnnotations([fileChange.fileName]);
+        } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
+            this.initEditorAfterFileChange();
+        }
+        this.displayAnnotations();
+    }
+
+    /**
+     * Saves the updated annotations to local storage
+     * @param savedFiles
+     */
+    storeAnnotations(savedFiles: Array<string>) {
+        const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
+        const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
+
+        this.localStorageService.store(
+            'annotations-' + this.sessionId,
+            JSON.stringify({
+                ...toKeep,
+                ...toUpdate,
+            }),
+        );
+    }
+
+    /**
+     * Loads annotations from local storage
+     */
+    loadAnnotations() {
+        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+    }
+
+    /**
+     * Updates the annotations in the editor
+     */
+    displayAnnotations() {
+        this.editor
+            .getEditor()
+            .getSession()
+            .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
     }
 }

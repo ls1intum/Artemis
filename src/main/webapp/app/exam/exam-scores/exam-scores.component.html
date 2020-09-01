@@ -18,8 +18,8 @@
         </div>
 
         <div class="d-flex mb-1">
-            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }},</h6>
-            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }},</h6>
+            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }} ,</h6>
+            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }} ,</h6>
             <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | translate }}</h6>
         </div>
 
@@ -64,22 +64,26 @@
                     <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | translate }}</th>
                     <td>
                         {{ aggregatedExamResults.meanPoints !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPoints, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}
+                        %)
                     </td>
                     <td>
                         {{ aggregatedExamResults.meanPointsTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotal, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}
+                        %)
                     </td>
                 </tr>
                 <tr>
                     <th scope="row">{{ 'artemisApp.examScores.medianColumn' | translate }}</th>
                     <td>
                         {{ aggregatedExamResults.median !== null ? roundAndPerformLocalConversion(aggregatedExamResults.median, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}
+                        %)
                     </td>
                     <td>
                         {{ aggregatedExamResults.medianTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianTotal, 2, 2) : '-' }}
-                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}%)
+                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}
+                        %)
                     </td>
                 </tr>
                 <tr>
@@ -90,77 +94,78 @@
             </tbody>
         </table>
 
-        <!-- Histogram Table -->
-        <table class="table table-bordered table-sm table-clear-width mb-3">
-            <thead class="thead-dark">
-                <th *ngFor="let _ of histogramData; let i = index; last as isLast">[{{ i * binWidth }},{{ (i + 1) * binWidth }}{{ isLast ? ']' : ')' }}</th>
-            </thead>
-            <tbody>
-                <td *ngFor="let noOfStudents of histogramData">
-                    {{ noOfStudents }} ({{ noOfExamsFiltered ? roundAndPerformLocalConversion((noOfStudents * 100) / noOfExamsFiltered, 2, 2) : '-' }}%)
-                </td>
-            </tbody>
-        </table>
+        <div style="display: block">
+            <!-- Histogram -->
+            <canvas baseChart height="400" [datasets]="barChartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="barChartLegend" [chartType]="barChartType">
+            </canvas>
+        </div>
 
         <!-- Exercise Statistics Table -->
-        <table class="table table-bordered table-sm body-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>
-                        {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
-                    </th>
-                    <th>
-                        {{ 'artemisApp.examScores.participantsColumn' | translate }}
-                        <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
-                    </th>
-                    <th>
-                        {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
-                        <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
-                    </th>
-                    <th>
-                        {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
-                    </th>
-                    <th>
-                        {{ 'artemisApp.examScores.participantsColumn' | translate }}
-                        <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
-                    </th>
-                    <th>
-                        {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
-                        <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
-                    </th>
-                </tr>
-            </thead>
-            <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
-                <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
-                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.title }}
-                    </td>
-                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.noOfParticipantsWithFilter }} / {{ exerciseGroupResult.totalParticipants }} ({{
-                            roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
-                        }}
-                        %)
-                    </td>
-                    <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                        {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }} /
-                        {{ toLocaleString(exerciseGroupResult.maxPoints) }}
-                        ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }} %)
-                    </td>
-                    <td>{{ exerciseResult.title }}</td>
-                    <td>
-                        {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
-                            roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
-                        }}
-                        %)
-                    </td>
-                    <td>
-                        {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }} /
-                        {{ toLocaleString(exerciseResult.maxPoints) }}
-                        ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }} %)
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm body-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>
+                            {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
+                        </th>
+                        <th>
+                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
+                        </th>
+                        <th>
+                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
+                        </th>
+                        <th>
+                            {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
+                        </th>
+                        <th>
+                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
+                        </th>
+                        <th>
+                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults">
+                    <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                            {{ exerciseGroupResult.title }}
+                        </td>
+                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                            {{ exerciseGroupResult.noOfParticipantsWithFilter }}
+                            / {{ exerciseGroupResult.totalParticipants }} ({{
+                                roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
+                            }}
+                            %)
+                        </td>
+                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                            {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
+                            /
+                            {{ toLocaleString(exerciseGroupResult.maxPoints) }}
+                            ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }}
+                            %)
+                        </td>
+                        <td>{{ exerciseResult.title }}</td>
+                        <td>
+                            {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
+                                roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
+                            }}
+                            %)
+                        </td>
+                        <td>
+                            {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}
+                            /
+                            {{ toLocaleString(exerciseResult.maxPoints) }}
+                            ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }}
+                            %)
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <!-- Student Result Table -->
         <h4>
@@ -220,9 +225,7 @@
                                 %)
                             </td>
                             <ng-template #empty>
-                                <td>
-                                    -
-                                </td>
+                                <td>-</td>
                             </ng-template>
                         </ng-container>
                         <td>{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved, 1) }}</td>
