@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
@@ -28,9 +29,6 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 public class FeedbackService {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
-
-    @Value("${artemis.programming-exercise-student-working-directory}")
-    private String STUDENT_WORKING_DIRECTORY;
 
     private final FeedbackRepository feedbackRepository;
 
@@ -99,11 +97,10 @@ public class FeedbackService {
         if (sourcePath == null || sourcePath.isEmpty()) {
             return "notAvailable";
         }
-        String assignmentDirectory = STUDENT_WORKING_DIRECTORY + "/";
-        int workingDirectoryStart = sourcePath.indexOf(assignmentDirectory);
+        int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
         if (workingDirectoryStart == -1) {
             return sourcePath;
         }
-        return sourcePath.substring(workingDirectoryStart + assignmentDirectory.length());
+        return sourcePath.substring(workingDirectoryStart + Constants.ASSIGNMENT_DIRECTORY.length());
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -40,9 +41,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
-
-    @Value("${artemis.programming-exercise-student-working-directory}")
-    private String STUDENT_WORKING_DIRECTORY;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -415,7 +413,7 @@ public class ProgrammingExerciseService {
         fileReplacements.add(programmingExercise.getTitle());
 
         fileTargets.add("${studentWorkingDirectory}");
-        fileReplacements.add(STUDENT_WORKING_DIRECTORY);
+        fileReplacements.add(Constants.STUDENT_WORKING_DIRECTORY);
 
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
     }

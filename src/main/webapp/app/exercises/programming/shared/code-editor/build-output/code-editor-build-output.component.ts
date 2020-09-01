@@ -115,7 +115,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
         const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
             text: issue.message || '',
-            fileName: 'src/' + (issue.filePath || ''),
+            fileName: issue.filePath || '',
             // TODO: Support endLine and endColumn
             row: (issue.startLine || 1) - 1,
             column: (issue.startColumn || 1) - 1,
