@@ -13,13 +13,13 @@
         <table>
             <tbody>
                 <ng-container *ngFor="let lineOfCode of studentCodePerLine; let i = index">
-                    <tr id="code-line-{{ i + 1 }}" (mouseover)="lineOfCodeHovered = i" (mouseleave)="lineOfCodeHovered = null">
+                    <tr  id="code-line-{{ i + 1 }}">
                         <td [style.width]="'20px'">
-                            <div class="btn-inline-comment" [class.btn-inline-comment-hover]="lineOfCodeHovered === i" (click)="openInlineFeedback(i)">
+                            <div class="btn-inline-comment" (click)="openInlineFeedback(i)">
                                 <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
                             </div>
                         </td>
-                        <td class="" [style.width]="'20px'">{{ i + 1 }}</td>
+                        <td [style.width]="'20px'">{{ i + 1 }}</td>
                         <td class="border-right"></td>
                         <td class="pl-2">
                             <pre>{{ lineOfCode }}</pre>
