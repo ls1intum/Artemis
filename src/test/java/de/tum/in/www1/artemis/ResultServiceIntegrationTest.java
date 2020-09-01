@@ -132,7 +132,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases
@@ -154,7 +154,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation);
+        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
@@ -226,27 +226,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void programmingExerciseManualResultUpdate_noManualReviewsAllowed_forbidden() throws Exception {
-        request.post("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        result.setSubmission(programmingSubmission);
-
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
-    public void programmingExerciseManualResultNew_noManualReviewsWithoutSubmission_badRequest() throws Exception {
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.BAD_REQUEST);
-    }
-
     @ParameterizedTest
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
@@ -286,102 +265,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult() throws Exception {
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-        result.setParticipation(participation);
-
-        Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.CREATED);
-        assertThat(response.getResultString()).isEqualTo(result.getResultString());
-        assertThat(response.getSubmission()).isNotNull();
-        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
-        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
-        var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
-        result.setParticipation(participation);
-
-        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_resultExists() throws Exception {
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-        result.setParticipation(participation);
-        result = resultRepository.save(result);
-
-        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-        Result result = new Result();
-
-        // Result string is missing
-        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Result score is missing
-        result.setResultString("Good work here");
-        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Feedbacks have empty text
-        result.setScore(100L);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback();
-        result.setFeedbacks(feedbacks);
-        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void updateManualProgrammingExerciseResult() throws Exception {
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-
-        result.setParticipation(participation);
-        result = resultRepository.save(result);
-        result.setSubmission(programmingSubmission);
-
-        // Remove feedbacks, change text and score.
-        result.setFeedbacks(result.getFeedbacks().subList(0, 1));
-        result.setResultString("Changed text");
-        result.setScore(77L);
-
-        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
-        assertThat(response.getResultString()).isEqualTo(result.getResultString());
-        assertThat(response.getSubmission()).isEqualTo(result.getSubmission());
-        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
-        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void updateManualProgrammingExerciseResult_newResult() throws Exception {
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
-        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-
-        result.setParticipation(participation);
-        result.setSubmission(programmingSubmission);
-
-        // Remove feedbacks, change text and score.
-        result.setFeedbacks(result.getFeedbacks().subList(0, 1));
-        result.setResultString("Changed text");
-        result.setScore(77L);
-
-        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.CREATED);
-        assertThat(response.getResultString()).isEqualTo(result.getResultString());
-        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
-        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
     }
 
     @Test
@@ -568,7 +451,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textExerciseRepository.save(textExercise);
         TextSubmission textSubmission = new TextSubmission();
         database.addSubmission(textExercise, textSubmission, "student1");
-        Result result = database.addResultToSubmission(textSubmission);
+        Result result = database.addResultToSubmission(textSubmission, null);
         Result returnedResult = request.get("/api/results/submission/" + textSubmission.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isEqualTo(result);
     }
@@ -631,13 +514,5 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         var result = database.addResultToParticipation(participation);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
-    }
-
-    private ProgrammingExerciseStudentParticipation setParticipationForProgrammingExercise(AssessmentType assessmentType) {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setAssessmentType(assessmentType);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        return database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
     }
 }

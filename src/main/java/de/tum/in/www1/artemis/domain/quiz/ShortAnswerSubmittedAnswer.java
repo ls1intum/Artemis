@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -36,11 +35,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
         return submittedTexts;
     }
 
-    public ShortAnswerSubmittedAnswer submittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
-        this.submittedTexts = shortAnswerSubmittedTexts;
-        return this;
-    }
-
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
         this.submittedTexts.add(shortAnswerSubmittedText);
         shortAnswerSubmittedText.setSubmittedAnswer(this);
@@ -56,7 +50,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     public void setSubmittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
         this.submittedTexts = shortAnswerSubmittedTexts;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Delete all references to question, solutions and spots if the question was changed
@@ -113,26 +106,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) o;
-        if (shortAnswerSubmittedAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSubmittedAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
