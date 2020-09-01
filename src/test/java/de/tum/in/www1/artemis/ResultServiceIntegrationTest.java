@@ -169,7 +169,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
-        // Create comparator
+        // Create comparator to explicitly compare feedback attributes (equals only compares id)
         Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
             if (Objects.equals(fb1.getDetailText(), fb2.getDetailText()) && Objects.equals(fb1.getText(), fb2.getText())
                     && Objects.equals(fb1.getReference(), fb2.getReference())) {
