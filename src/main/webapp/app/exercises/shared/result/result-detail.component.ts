@@ -10,6 +10,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 // Modal -> Result details view
 @Component({
@@ -27,7 +28,7 @@ export class ResultDetailComponent implements OnInit {
     isLoading = false;
     loadingFailed = false;
     feedbackList: Feedback[];
-    staticCodeAnalysisFeedbackList: Feedback[];
+    staticCodeAnalysisIssues: StaticCodeAnalysisIssue[];
     buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService) {}
@@ -98,16 +99,16 @@ export class ResultDetailComponent implements OnInit {
      */
     private partitionAndSetFeedback(feedbackList: Feedback[]) {
         const testCaseFeedback: Feedback[] = [];
-        const staticCodeAnalysisFeedback: Feedback[] = [];
+        const staticCodeAnalysisFeedback: StaticCodeAnalysisIssue[] = [];
         feedbackList.forEach((feedback) => {
             if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                staticCodeAnalysisFeedback.push(feedback);
+                staticCodeAnalysisFeedback.push(JSON.parse(feedback.detailText!));
             } else {
                 testCaseFeedback.push(feedback);
             }
         });
         this.feedbackList = testCaseFeedback;
-        this.staticCodeAnalysisFeedbackList = staticCodeAnalysisFeedback;
+        this.staticCodeAnalysisIssues = staticCodeAnalysisFeedback;
     }
 
     private fetchAndSetBuildLogs = (participationId: number) => {
