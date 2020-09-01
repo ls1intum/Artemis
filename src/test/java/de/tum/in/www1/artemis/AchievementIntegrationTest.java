@@ -69,13 +69,11 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         instructor.setGroups(new HashSet<>(Arrays.asList("instructor")));
         first_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
         second_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        first_achievement = achievementService.create("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, first_course);
-        second_achievement = achievementService.create("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, first_course);
-        third_achievement = achievementService.create("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, second_course);
-
         first_exercise = first_course.getExercises().stream().findFirst().get();
-        first_achievement.setExercise(first_exercise);
-        third_achievement.setExercise(first_exercise);
+
+        first_achievement = achievementService.create("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, first_course, first_exercise);
+        second_achievement = achievementService.create("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, first_course, null);
+        third_achievement = achievementService.create("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, second_course, first_exercise);
 
         achievementService.save(first_achievement);
         achievementService.save(third_achievement);
@@ -139,8 +137,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(achievements.size()).as("Number of achievements for course should be 2").isEqualTo(2);
 
         exerciseService.delete(first_exercise.getId(), false, false);
-        assertThat(achievementService.findById(first_achievement.getId())).as("Achievement does not get deleted if exercise does").isPresent();
-        assertThat(achievementService.findById(third_achievement.getId())).as("Achievement does not get deleted if exercise does").isPresent();
+        assertThat(achievementService.findById(first_achievement.getId())).as("Achievement gets deleted if exercise does").isNotPresent();
+        assertThat(achievementService.findById(third_achievement.getId())).as("Achievement gets deleted if exercise does").isNotPresent();
     }
 
     @Test

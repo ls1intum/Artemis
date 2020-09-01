@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
@@ -56,14 +57,16 @@ public class AchievementService {
      * @param icon the font awesome icon string identifier
      * @param rank rank of the achievement
      * @param course course which the achievement belongs to
+     * @param exercise which the achievement belongs to
      */
-    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course) {
+    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course, Exercise exercise) {
         Achievement achievement = new Achievement();
         achievement.setTitle(title);
         achievement.setDescription(description);
         achievement.setIcon(icon);
         achievement.setRank(rank);
         achievement.setCourse(course);
+        achievement.setExercise(exercise);
         return achievementRepository.save(achievement);
     }
 
