@@ -173,3 +173,4 @@ repos-download/
 /coverage
 /exports
 /src/main/resources/config/application-local.yml
+/src/main/resources/config/application-local2.yml
