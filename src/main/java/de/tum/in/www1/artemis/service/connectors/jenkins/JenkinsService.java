@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -129,13 +129,14 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        updatePlanRepository(projectKey, planKey, null /* not important */, null /* not important */, participation.getRepositoryUrl(), Optional.empty());
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, null /* not important */, participation.getRepositoryUrl(), Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
     // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
     public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
+
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final var config = jobXml(projectKey, planName);
@@ -143,7 +144,14 @@ public class JenkinsService implements ContinuousIntegrationService {
         if (urlElements.getLength() != 2) {
             throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
         }
-        urlElements.item(1).getFirstChild().setNodeValue(repoUrl);
+
+        // TODO: we should rather identify those repositories in the section source code management in Jenkins with a unique name instead of using the order
+        if (repoNameInCI.equals(TEST_REPO_NAME)) {
+            urlElements.item(1).getFirstChild().setNodeValue(repoUrl);
+        }
+        else {
+            urlElements.item(0).getFirstChild().setNodeValue(repoUrl);
+        }
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
         postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
@@ -600,7 +608,6 @@ public class JenkinsService implements ContinuousIntegrationService {
             final var transformer = tf.newTransformer();
             final var writer = new StringWriter();
             transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
             return writer.getBuffer().toString();
         }
         catch (TransformerException e) {
