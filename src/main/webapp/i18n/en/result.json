@@ -32,6 +32,7 @@
             "createManual": "Create manual result",
             "updateManual": "Update manual result",
             "viewManual": "View manual result",
+            "manualResult": "Manual result",
             "invalidScore": "Score is required and should be a number between 0 and 100.",
             "resultStringRequired": "Result text is required.",
             "studentLogin": "Student Login",
