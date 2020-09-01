@@ -16,11 +16,14 @@ import de.tum.in.www1.artemis.domain.Achievement;
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
     @Query("SELECT a FROM Achievement a WHERE a.course.id = :#{#courseId}")
-    Set<Achievement> getAllByCourseId(@Param("courseId") Long courseId);
+    Set<Achievement> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("SELECT a FROM Achievement a WHERE a.exercise.id = :#{#exerciseId}")
+    Set<Achievement> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("SELECT a FROM Achievement a JOIN a.users u WHERE u.id = :#{#userId}")
-    Set<Achievement> getAllByUserId(@Param("userId") Long userId);
+    Set<Achievement> findAllByUserId(@Param("userId") Long userId);
 
     @Query("SELECT a FROM Achievement a JOIN a.users u WHERE u.id = :#{#userId} AND a.course.id = :#{#courseId}")
-    Set<Achievement> getAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    Set<Achievement> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 }

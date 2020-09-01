@@ -8,13 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -41,14 +39,10 @@ public class AchievementResource {
 
     private final UserService userService;
 
-    private final AchievementRepository achievementRepository;
-
-    public AchievementResource(AuthorizationCheckService authCheckService, AchievementService achievementService, UserService userService,
-            AchievementRepository achievementRepository) {
+    public AchievementResource(AuthorizationCheckService authCheckService, AchievementService achievementService, UserService userService) {
         this.authCheckService = authCheckService;
         this.achievementService = achievementService;
         this.userService = userService;
-        this.achievementRepository = achievementRepository;
     }
 
     /**
@@ -61,7 +55,7 @@ public class AchievementResource {
     public ResponseEntity<Set<Achievement>> getAchievementsForUser() {
         User user = userService.getUser();
         log.debug("REST request to get achievements for user : {}", user.getLogin());
-        Set<Achievement> achievements = achievementService.findAllForUser(user.getId());
+        Set<Achievement> achievements = achievementService.findAllByUserId(user.getId());
         return ResponseEntity.ok(achievements);
     }
 
@@ -75,7 +69,7 @@ public class AchievementResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<Achievement>> getAchievementsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get achievements for course : {}", courseId);
-        Set<Achievement> achievements = achievementService.findAllForCourse(courseId);
+        Set<Achievement> achievements = achievementService.findAllByCourseId(courseId);
         return ResponseEntity.ok(achievements);
     }
 
@@ -101,7 +95,7 @@ public class AchievementResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Achievement savedAchievement = achievementRepository.save(achievement);
+        Achievement savedAchievement = achievementService.save(achievement);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, savedAchievement.getId().toString())).body(savedAchievement);
     }
 
@@ -113,7 +107,6 @@ public class AchievementResource {
      */
     @DeleteMapping("/achievements/{achievementId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<Void> deleteAchievement(@PathVariable long achievementId) {
         log.info("REST request to delete Achievement : {}", achievementId);
         User user = userService.getUserWithGroupsAndAuthorities();

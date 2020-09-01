@@ -41,7 +41,6 @@ public class Achievement implements Serializable {
     private Rank rank;
 
     @ManyToOne
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Course course;
 
     @ManyToOne
