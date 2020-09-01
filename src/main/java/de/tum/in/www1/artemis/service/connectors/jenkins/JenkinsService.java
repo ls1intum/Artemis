@@ -428,7 +428,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
+    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
+        String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+        String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+
         try {
             final var build = job(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();

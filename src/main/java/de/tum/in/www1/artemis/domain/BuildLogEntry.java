@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -31,12 +32,22 @@ public class BuildLogEntry {
     private String log;
 
     @ManyToOne
-    @JsonIgnoreProperties("buildLogEntries")
+    @JsonIgnore
     private ProgrammingSubmission programmingSubmission;
+
+    // Required for Hibernate
+    public BuildLogEntry() {
+    }
 
     public BuildLogEntry(ZonedDateTime time, String log) {
         this.time = time;
         this.log = log;
+    }
+
+    public BuildLogEntry(ZonedDateTime time, String log, ProgrammingSubmission programmingSubmission) {
+        this.time = time;
+        this.log = log;
+        this.programmingSubmission = programmingSubmission;
     }
 
     public Long getId() {
