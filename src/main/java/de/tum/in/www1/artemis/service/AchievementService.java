@@ -49,6 +49,9 @@ public class AchievementService {
         return achievementRepository.save(achievement);
     }
 
+    /**
+     * Creates an achievement and persist it
+     */
     public Achievement create(String title, String description, String icon, AchievementRank rank, Course course) {
         Achievement achievement = new Achievement();
         achievement.setTitle(title);
