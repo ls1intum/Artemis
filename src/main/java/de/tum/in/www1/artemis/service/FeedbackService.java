@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 @Service
 public class FeedbackService {
 
+    public static final String DEFAULT_FILEPATH = "notAvailable";
+
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
     private final FeedbackRepository feedbackRepository;
@@ -100,7 +102,7 @@ public class FeedbackService {
      */
     private String removeCIDirectoriesFromPath(String sourcePath) {
         if (sourcePath == null || sourcePath.isEmpty()) {
-            return "notAvailable";
+            return DEFAULT_FILEPATH;
         }
         int workingDirectoryStart = sourcePath.indexOf(Constants.ASSIGNMENT_DIRECTORY);
         if (workingDirectoryStart == -1) {

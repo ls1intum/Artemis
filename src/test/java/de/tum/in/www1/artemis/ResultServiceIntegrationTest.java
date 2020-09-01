@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -162,8 +163,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipationStaticCodeAnalysis, false);
-
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
@@ -186,6 +185,52 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testRemoveCIDirectoriesFromPath() throws Exception {
+        // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
+        String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
+
+        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        for (var reports : resultNotification1.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports()) {
+            for (var issue : reports.getIssues()) {
+                issue.setFilePath(pathWithoutWorkingDir);
+            }
+        }
+        var staticCodeAnalysisFeedback1 = feedbackService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+
+        for (var feedback : staticCodeAnalysisFeedback1) {
+            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
+            assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
+        }
+
+        // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
+        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var reports2 = resultNotification2.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports();
+        for (int i = 0; i < reports2.size(); i++) {
+            var report = reports2.get(i);
+            // Set null or empty String to test both
+            if (i % 2 == 0) {
+                for (var issue : report.getIssues()) {
+                    issue.setFilePath("");
+                }
+            }
+            else {
+                for (var issue : report.getIssues()) {
+                    issue.setFilePath(null);
+                }
+            }
+        }
+        final var staticCodeAnalysisFeedback2 = feedbackService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+
+        for (var feedback : staticCodeAnalysisFeedback2) {
+            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
+            assertThat(FeedbackService.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+        }
     }
 
     @Test
