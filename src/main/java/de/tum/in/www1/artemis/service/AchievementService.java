@@ -64,7 +64,7 @@ public class AchievementService {
      * @param achievement achievement to be deleted
      */
     public void delete(Achievement achievement) {
-        var users = userRepository.findAllWithEagerAchievements(achievement.getId());
+        var users = userRepository.findAllByAchievementId(achievement.getId());
         achievement.setUsers(users);
         for (User user : users) {
             user.removeAchievement(achievement);

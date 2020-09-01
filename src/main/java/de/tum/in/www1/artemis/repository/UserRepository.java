@@ -98,5 +98,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     @Query("SELECT u FROM User u JOIN FETCH u.achievements a WHERE a.id = :#{#achievementId}")
-    Set<User> findAllWithEagerAchievements(@Param("achievementId") Long achievementId);
+    Set<User> findAllByAchievementId(@Param("achievementId") Long achievementId);
 }
