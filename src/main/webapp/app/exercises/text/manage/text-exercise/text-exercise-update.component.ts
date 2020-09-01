@@ -154,9 +154,18 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * Sanitize attributes of `textExercise`
+     */
+    sanitizeTextExercise() {
+        this.textExercise.title = this.textExercise.title.trim();
+    }
+
+    /**
      * Sends a request to either update or create a text exercise
      */
     save() {
+        this.sanitizeTextExercise();
+
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
