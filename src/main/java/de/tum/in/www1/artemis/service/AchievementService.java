@@ -58,6 +58,7 @@ public class AchievementService {
      * @param rank rank of the achievement
      * @param course course which the achievement belongs to
      * @param exercise which the achievement belongs to
+     * @return the created and persisted achievement
      */
     public Achievement create(String title, String description, String icon, AchievementRank rank, Course course, Exercise exercise) {
         Achievement achievement = new Achievement();
