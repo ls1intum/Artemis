@@ -2067,7 +2067,8 @@ public class DatabaseUtilService {
         search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
         if ("".equals(searchTerm)) {
             search.setSortingOrder(SortingOrder.ASCENDING);
-        } else {
+        }
+        else {
             search.setSortingOrder(SortingOrder.DESCENDING);
         }
         return search;
