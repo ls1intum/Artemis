@@ -274,12 +274,12 @@ public class BambooService implements ContinuousIntegrationService {
         // Load the logs from the database
         List<BuildLogEntry> buildLogsFromDatabase = retrieveLatestBuildLogsFromDatabase(programmingSubmission);
 
-        // If there are logs present in the database, return them
+        // If there are logs present in the database, return them (they were already filtered when inserted)
         if (!buildLogsFromDatabase.isEmpty()) {
-            return filterBuildLogs(buildLogsFromDatabase);
+            return buildLogsFromDatabase;
         }
 
-        // Otherwise return the logs from Bamboo
+        // Otherwise return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         return filterBuildLogs(retrieveLatestBuildLogsFromJenkins(programmingExerciseParticipation.getBuildPlanId()));
     }
@@ -470,16 +470,19 @@ public class BambooService implements ContinuousIntegrationService {
             if (optionalProgrammingSubmission.isPresent()) {
                 programmingSubmission = optionalProgrammingSubmission.get();
 
-                // Clear logs that are currently stored as we received new logs and don't want logs to be stored twice
-                programmingSubmission.getBuildLogEntries().clear();
+                List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
                 // Store logs into database. Append logs of multiple jobs.
                 for (var job : buildResult.getBuild().getJobs()) {
                     for (var bambooLog : job.getLogs()) {
                         // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                        programmingSubmission.getBuildLogEntries().add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
+                        buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
                     }
                 }
+
+                // Set logs that as we received new logs and don't want logs to be stored twice
+                programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
+
                 programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             }
 
@@ -949,7 +952,7 @@ public class BambooService implements ContinuousIntegrationService {
             //Replace some unnecessary information and hide complex details to make it easier to read the important information
             logString = logString.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
 
-            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString));
+            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
         }
 
         return filteredBuildLogs;
