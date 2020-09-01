@@ -173,22 +173,22 @@ public class JenkinsService implements ContinuousIntegrationService {
         org.w3c.dom.Node urlNode = null;
         for (int i = 0; i < nodeList.getLength(); i++) {
             var childElement = nodeList.item(i);
-            if (childElement.getNodeName().equalsIgnoreCase("name")) {
+            if ("name".equalsIgnoreCase(childElement.getNodeName())) {
                 var nameValue = childElement.hasChildNodes() ? childElement.getFirstChild().getNodeValue() : null;
                 // this name was added recently, so we cannot assume that all job xml files include this name
                 if (repoNameInCI.equalsIgnoreCase(nameValue)) {
                     found = true;
                 }
             }
-            else if (childElement.getNodeName().equalsIgnoreCase("url")) {
+            else if ("url".equalsIgnoreCase(childElement.getNodeName())) {
                 urlNode = childElement;
                 if (!found) {
                     // fallback for old xmls
                     var urlValue = childElement.hasChildNodes() ? childElement.getFirstChild().getNodeValue() : null;
-                    if (urlValue != null && repoNameInCI.equals(ASSIGNMENT_REPO_NAME) && ((urlValue.contains("-exercise.git")) || (urlValue.contains("-solution.git")))) {
+                    if (urlValue != null && repoNameInCI.equals(ASSIGNMENT_REPO_NAME) && ((urlValue.contains("-exercise.git") || (urlValue.contains("-solution.git"))))) {
                         found = true;
                     }
-                    else if (urlValue != null && repoNameInCI.equals(TEST_REPO_NAME) && (urlValue.contains("-tests.git"))) {
+                    else if (urlValue != null && repoNameInCI.equals(TEST_REPO_NAME) && urlValue.contains("-tests.git")) {
                         found = true;
                     }
                 }
