@@ -157,7 +157,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             } else {
                 this.selectTab('test-cases');
             }
-
         });
     }
 
