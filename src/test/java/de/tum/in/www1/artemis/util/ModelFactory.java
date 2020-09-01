@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -458,8 +459,8 @@ public class ModelFactory {
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
         feedback.setReference("Tool");
-        feedback.setDetailText(
-                "{\"filePath\":\"www/withSCA/MergeSort.java\",\"startLine\":9,\"endLine\":9,\"startColumn\":11,\"endColumn\":11,\"rule\":\"rule\",\"category\":\"category\",\"message\":\"message\"}");
+        feedback.setDetailText("{\"filePath\":\"" + Constants.STUDENT_WORKING_DIRECTORY
+                + "/www/withSCA/MergeSort.java\",\"startLine\":9,\"endLine\":9,\"startColumn\":11,\"endColumn\":11,\"rule\":\"rule\",\"category\":\"category\",\"message\":\"message\"}");
         return feedback;
     }
 
@@ -658,7 +659,7 @@ public class ModelFactory {
 
     private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        issue.setFilePath("www/packagename/Class1.java");
+        issue.setFilePath(Constants.ASSIGNMENT_REPO_NAME + "/www/packagename/Class1.java");
         issue.setStartLine(1);
         issue.setEndLine(2);
         issue.setStartColumn(1);
