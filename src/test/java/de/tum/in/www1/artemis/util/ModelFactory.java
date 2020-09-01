@@ -659,7 +659,7 @@ public class ModelFactory {
 
     private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        issue.setFilePath(Constants.ASSIGNMENT_REPO_NAME + "/www/packagename/Class1.java");
+        issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
         issue.setStartLine(1);
         issue.setEndLine(2);
         issue.setStartColumn(1);
