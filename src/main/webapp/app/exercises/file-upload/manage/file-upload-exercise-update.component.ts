@@ -73,9 +73,18 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * Sanitize attributes of `fileUploadExercise`
+     */
+    sanitizeFileUploadExercise() {
+        this.fileUploadExercise.title = this.fileUploadExercise.title.trim();
+    }
+
+    /**
      * Creates or updates file upload exercise
      */
     save() {
+        this.sanitizeFileUploadExercise();
+
         this.isSaving = true;
         if (this.fileUploadExercise.id !== undefined) {
             this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise, this.fileUploadExercise.id));
