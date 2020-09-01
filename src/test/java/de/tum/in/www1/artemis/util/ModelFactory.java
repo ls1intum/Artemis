@@ -447,18 +447,19 @@ public class ModelFactory {
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (int i = 0; i < numOfFeedback; i++) {
-            feedbackList.add(generateStaticCodeAnalysisFeedback(i));
+            feedbackList.add(generateStaticCodeAnalysisFeedback());
         }
         return feedbackList;
     }
 
-    private static Feedback generateStaticCodeAnalysisFeedback(int index) {
+    private static Feedback generateStaticCodeAnalysisFeedback() {
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setType(FeedbackType.AUTOMATIC);
-        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
-        feedback.setReference("Class:Line" + index);
-        feedback.setDetailText("This is a DetailText " + index);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
+        feedback.setReference("Tool");
+        feedback.setDetailText(
+                "{\"filePath\":\"www/withSCA/MergeSort.java\",\"startLine\":9,\"endLine\":9,\"startColumn\":11,\"endColumn\":11,\"rule\":\"rule\",\"category\":\"category\",\"message\":\"message\"}");
         return feedback;
     }
 
