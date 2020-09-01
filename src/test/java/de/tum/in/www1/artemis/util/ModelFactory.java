@@ -640,27 +640,33 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
-        final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport));
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        var checkstyleReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.CHECKSTYLE);
+        var pmdReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.PMD);
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport, checkstyleReport, pmdReport));
         return notification;
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
-        final var report = new StaticCodeAnalysisReportDTO();
-        final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        var report = new StaticCodeAnalysisReportDTO();
         report.setTool(tool);
-        issue1.setRule("Error1");
-        issue1.setMessage("Error1 - Message");
-        issue1.setFilePath("www/packagename/Class1");
-        issue1.setStartLine(1);
-        issue2.setRule("Error2");
-        issue2.setMessage("Error2 - Message");
-        issue1.setFilePath("Class2");
-        issue1.setStartLine(2);
-        report.setIssues(List.of(issue1, issue2));
+        report.setIssues(List.of(generateStaticCodeAnalysisIssue()));
         return report;
+    }
+
+    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
+        var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        issue.setFilePath("www/packagename/Class1.java");
+        issue.setStartLine(1);
+        issue.setEndLine(2);
+        issue.setStartColumn(1);
+        issue.setEndColumn(10);
+        issue.setRule("Rule");
+        issue.setCategory("Category");
+        issue.setMessage("Message");
+        issue.setPriority("Priority");
+        return issue;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
