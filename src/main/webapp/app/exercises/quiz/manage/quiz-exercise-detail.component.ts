@@ -1109,12 +1109,22 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
+     * Sanitize attributes of `quizExercise`
+     */
+    sanitizeQuizExercise() {
+        this.quizExercise.title = this.quizExercise.title.trim();
+    }
+
+    /**
      * Save the quiz to the server and invoke callback functions depending of result
      */
     save(): void {
         if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
             return;
         }
+
+        this.sanitizeQuizExercise();
+
         this.isSaving = true;
         this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
