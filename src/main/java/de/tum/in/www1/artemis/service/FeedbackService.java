@@ -99,10 +99,11 @@ public class FeedbackService {
         if (sourcePath == null || sourcePath.isEmpty()) {
             return "notAvailable";
         }
-        int workingDirectoryStart = sourcePath.indexOf(STUDENT_WORKING_DIRECTORY);
+        String assignmentDirectory = STUDENT_WORKING_DIRECTORY + "/";
+        int workingDirectoryStart = sourcePath.indexOf(assignmentDirectory);
         if (workingDirectoryStart == -1) {
             return sourcePath;
         }
-        return sourcePath.substring(workingDirectoryStart + STUDENT_WORKING_DIRECTORY.length());
+        return sourcePath.substring(workingDirectoryStart + assignmentDirectory.length());
     }
 }
