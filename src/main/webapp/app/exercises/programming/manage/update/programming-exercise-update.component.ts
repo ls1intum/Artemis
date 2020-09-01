@@ -209,6 +209,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * Sanitize attributes of `programmingExercise`
+     */
+    sanitizeProgrammingExercise() {
+        this.programmingExercise.title = this.programmingExercise.title.trim();
+    }
+
+    /**
      * Saves the programming exercise with the provided input
      */
     save() {
@@ -219,7 +226,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 return;
             }
         }
+
+        this.sanitizeProgrammingExercise();
+
         this.isSaving = true;
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
         } else if (this.programmingExercise.id !== undefined) {
