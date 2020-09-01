@@ -14,6 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.Rank;
 
 @Entity
 @Table(name = "achievement")
@@ -35,8 +36,9 @@ public class Achievement implements Serializable {
     @Column(name = "icon")
     private String icon;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "rank")
-    private Integer rank;
+    private Rank rank;
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -82,11 +84,11 @@ public class Achievement implements Serializable {
         this.icon = icon;
     }
 
-    public Integer getRank() {
+    public Rank getRank() {
         return rank;
     }
 
-    public void setRank(Integer rank) {
+    public void setRank(Rank rank) {
         this.rank = rank;
     }
 

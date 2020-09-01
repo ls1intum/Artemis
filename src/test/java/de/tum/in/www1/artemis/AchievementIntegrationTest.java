@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Rank;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -64,7 +65,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         achievement.setTitle("Test Achievement");
         achievement.setDescription("Create correct relations");
         achievement.setIcon("test-icon");
-        achievement.setRank(1);
+        achievement.setRank(Rank.UNRANKED);
         achievement.setCourse(course);
 
         achievement = achievementRepository.save(achievement);

@@ -7,7 +7,7 @@
             </column>
             <column name="description" type="VARCHAR(255)"/>
             <column name="icon" type="VARCHAR(255)"/>
-            <column name="rank" type="INT"/>
+            <column name="rank" type="VARCHAR(8)"/>
             <column name="title" type="VARCHAR(255)"/>
             <column name="course_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
