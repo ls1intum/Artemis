@@ -457,4 +457,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(resultNon.getResultsOnPage()).isEmpty();
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void searchTextExercise_admin_getResultsFromAllCourses() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+        database.addCourseInOtherInstructionGroupAndExercise("Text");
+
+        final var search = database.configureSearch("Text");
+        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
 }

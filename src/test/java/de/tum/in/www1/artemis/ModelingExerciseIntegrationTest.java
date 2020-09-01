@@ -409,4 +409,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void searchModelingExercise_admin_getResultsFromAllCourses() throws Exception {
+        database.addCourseInOtherInstructionGroupAndExercise("ClassDiagram");
+
+        final var search = database.configureSearch("ClassDiagram");
+        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
+
 }

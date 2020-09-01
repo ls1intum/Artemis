@@ -1170,6 +1170,42 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseInOtherInstructionGroupAndExercise(String title) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "other-instructors");
+        if (title.equals("Programming")) {
+            course = courseRepo.save(course);
+
+            var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+            populateProgrammingExercise(programmingExercise, "TSTEXC");
+            programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            course.addExercises(programmingExercise);
+            programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+            assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+        }
+        else if (title.equals("Text")) {
+            TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+            textExercise.setTitle("Text");
+            course.addExercises(textExercise);
+            courseRepo.save(course);
+            exerciseRepo.save(textExercise);
+        }
+        else if (title.equals("ClassDiagram")) {
+            ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+            modelingExercise.setTitle("ClassDiagram");
+            course.addExercises(modelingExercise);
+            courseRepo.save(course);
+            exerciseRepo.save(modelingExercise);
+        }
+        else {
+        }
+
+        return course;
+    }
+
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");

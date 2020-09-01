@@ -238,6 +238,15 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(resultSwift.getResultsOnPage()).isEmpty();
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void searchProgrammingExercise_admin_getResultsFromAllCourses() throws Exception {
+        databse.addCourseInOtherInstructionGroupAndExercise("Programming");
+        final var search = databse.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
+
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
         return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
