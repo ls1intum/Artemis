@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -152,12 +153,13 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(value = "student1", roles = "USER")
     public void testUniqueProperties() {
         TextExercise exercise = exercises.get(0);
-        // Only half of the matrix is stored in the database, as it is symmetrical.
-        int matrixSize = 0;
-        for(int i = 1; i < blocks.size(); i++) {
-            matrixSize += i;
-        }
+        // Only half of the matrix is stored in the database, as it is symmetrical (Main diagonal also not stored).
+        int matrixSize = (blocks.size() - 1) * blocks.size() / 2; // Gives sum of numbers from 1 to (blocks.size() - 1)
         assertThat(pairwiseDistances, hasSize(matrixSize));
+        // BlockI < BlockJ should hold
+        for(TextPairwiseDistance dist: pairwiseDistances) {
+            assertThat(dist.getBlockI(), lessThan(dist.getBlockJ()));
+        }
 
         // Getter and setter for lambda value tested
         TextTreeNode testNode = new TextTreeNode();
@@ -171,15 +173,14 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         assertThat(testNode.isBlockNode(), equalTo(false));
 
         // The following should hold for the root node:
-        //      parent == -1
-        //      child == blocks.size()
-        //      lambdaVal == -1 (getLambdaVal should return POSITIVE_INFINITY)
-        //      childSize == blocks.size()
         TextTreeNode rootNode = textTreeNodeRepository.findAllByParentAndExercise(-1L, exercise).get(0);
         assertThat((int) rootNode.getChild(), equalTo(blocks.size()));
         assertThat(rootNode.getLambdaVal(), equalTo(Double.POSITIVE_INFINITY));
         assertThat(rootNode.isBlockNode(), equalTo(false));
         assertThat((int) rootNode.getChildSize(), equalTo(blocks.size()));
+
+        // TreeIds of clusters not null
+        assertThat(clusters.stream().map(x -> x.getTreeId()).collect(Collectors.toList()), everyItem(notNullValue()));
     }
 
     @Test
