@@ -13,7 +13,11 @@ export class StaticCodeAnalysisLocationTextPipe implements PipeTransform {
      * @returns {string} Static Code analysis issue location
      */
     transform(issue: StaticCodeAnalysisIssue): string {
-        const lineText = `${issue.filePath} at line(s) ${issue.startLine}-${issue.endLine}`;
-        return issue.startColumn ? lineText + ` and column(s) ${issue.startColumn}-${issue.endColumn}` : lineText;
+        const lineText = issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at line(s) ${issue.startLine}-${issue.endLine}`;
+        let columnText = '';
+        if (issue.startColumn) {
+            columnText = issue.startColumn === issue.endColumn ? ` and column ${issue.startColumn}` : ` and column(s) ${issue.startColumn}-${issue.endColumn}`;
+        }
+        return issue.filePath + lineText + columnText;
     }
 }
