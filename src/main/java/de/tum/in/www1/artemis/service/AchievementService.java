@@ -51,6 +51,11 @@ public class AchievementService {
 
     /**
      * Creates an achievement and persist it
+     * @param title title of the achievement
+     * @param description description of the achievement
+     * @param icon the font awesome icon string identifier
+     * @param rank rank of the achievement
+     * @param course course which the achievement belongs to
      */
     public Achievement create(String title, String description, String icon, AchievementRank rank, Course course) {
         Achievement achievement = new Achievement();
