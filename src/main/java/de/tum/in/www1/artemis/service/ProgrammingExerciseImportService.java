@@ -140,7 +140,7 @@ public class ProgrammingExerciseImportService {
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
-        updateBaseBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey);
+        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey);
 
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
@@ -152,7 +152,7 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void updateBaseBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
+    private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey) {
         // update 2 repositories for the template (BASE) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
