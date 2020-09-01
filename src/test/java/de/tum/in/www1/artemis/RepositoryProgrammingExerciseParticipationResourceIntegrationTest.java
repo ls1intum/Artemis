@@ -25,13 +25,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -384,6 +389,30 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(1);
         assertThat(receivedLogs).isEqualTo(logs);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testBuildLogsFromDatabase() throws Exception {
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission.setLanguage(Language.ENGLISH);
+        submission.setSubmitted(true);
+        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setType(SubmissionType.MANUAL);
+        submission.setBuildFailed(true);
+
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry1", submission));
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
+        submission.setBuildLogEntries(buildLogEntries);
+        database.addProgrammingSubmission(programmingExercise, submission, "student1");
+
+        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        assertThat(receivedLogs).isNotNull();
+        assertThat(receivedLogs).hasSize(3);
+        assertThat(receivedLogs).isEqualTo(buildLogEntries);
     }
 
     @Test
