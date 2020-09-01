@@ -6,7 +6,7 @@ import * as sinonChai from 'sinon-chai';
 import { sortBy as _sortBy } from 'lodash';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie-service';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -32,13 +32,14 @@ import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/ma
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 // TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
 // The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
-describe('ProgrammingExerciseManageTestCasesComponent', () => {
+describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
     let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
     let debugElement: DebugElement;
@@ -129,6 +130,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
@@ -140,22 +142,23 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 route = debugElement.injector.get(ActivatedRoute);
+                const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
                 updateTestCasesStub = stub(testCaseService, 'updateTestCase');
                 notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
 
+                // @ts-ignore
+                (router as MockRouter).setUrl('/');
                 routeSubject = new Subject();
-                (route as any).setSubject(routeSubject);
+                // @ts-ignore
+                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
                 loadExerciseStub = stub(programmingExerciseService, 'find');
 
-                routeSubject = new Subject();
-                // @ts-ignore
-                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
                 getExerciseTestCaseStateSubject = new Subject();
 
                 testCasesChangedSubject = new Subject<boolean>();
@@ -218,7 +221,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         fixture.destroy();
     }));
 
-    it('should enter edit mode when an edit button is clicked to edit weights, bonus multiplier or bonus points', fakeAsync(() => {
+    it('should update test case when an input field is updated', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
@@ -231,49 +234,34 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         fixture.detectChanges();
 
         const table = debugElement.query(By.css(testCaseTableId));
-        const editIcons = table.queryAll(By.css('.table-editable-field__edit'));
-        // For weight, bonus multiplier and bonus points
-        expect(editIcons).to.have.lengthOf(testCases1.length * 3);
-        editIcons[0].nativeElement.click();
 
-        fixture.detectChanges();
+        // get first weight input
+        const editingInputs = table.queryAll(By.css(tableEditingInput));
+        expect(editingInputs).to.have.lengthOf(testCases1.length * 3);
 
-        let editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
-
-        expect(editingInput).to.exist;
-        expect(comp.editing).to.deep.equal([orderedTests[0], EditableField.WEIGHT]);
+        const weightInput = editingInputs[0].nativeElement;
+        expect(weightInput).to.exist;
+        weightInput.focus();
 
         // Set new weight.
-        editingInput.value = '20';
-        editingInput.dispatchEvent(new Event('blur'));
+        weightInput.value = '20';
+        weightInput.dispatchEvent(new Event('blur'));
 
-        fixture.detectChanges();
+        const multiplierInput = editingInputs[1].nativeElement;
+        expect(multiplierInput).to.exist;
+        multiplierInput.focus();
 
-        // Set new bonus multiplier
-        editIcons[1].nativeElement.click();
+        // Set new multiplier.
+        multiplierInput.value = '2';
+        multiplierInput.dispatchEvent(new Event('blur'));
 
-        fixture.detectChanges();
+        const bonusInput = editingInputs[2].nativeElement;
+        expect(bonusInput).to.exist;
+        bonusInput.focus();
 
-        editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
-        expect(editingInput).to.exist;
-        expect(comp.editing).to.deep.equal([{ ...orderedTests[0], weight: '20' }, EditableField.BONUS_MULTIPLIER]);
-
-        editingInput.value = '2';
-        editingInput.dispatchEvent(new Event('blur'));
-
-        fixture.detectChanges();
-
-        // Set new bonus multiplier
-        editIcons[2].nativeElement.click();
-
-        fixture.detectChanges();
-
-        editingInput = debugElement.query(By.css(tableEditingInput)).nativeElement;
-        expect(editingInput).to.exist;
-        expect(comp.editing).to.deep.equal([{ ...orderedTests[0], weight: '20', bonusMultiplier: '2' }, EditableField.BONUS_POINTS]);
-
-        editingInput.value = '1';
-        editingInput.dispatchEvent(new Event('blur'));
+        // Set new bonus.
+        bonusInput.value = '1';
+        bonusInput.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
 
@@ -292,11 +280,9 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
         fixture.detectChanges();
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
-        editingInput = debugElement.query(By.css(tableEditingInput));
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
             { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20', bonusMultiplier: '2', bonusPoints: '1' },
         ]);
-        expect(editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
 
