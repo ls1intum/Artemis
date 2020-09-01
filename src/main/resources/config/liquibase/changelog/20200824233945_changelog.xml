@@ -12,8 +12,6 @@
             <column name="course_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="balazs-czopf" id="1598305196706-35">
         <createTable tableName="user_achievement">
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
@@ -22,17 +20,9 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="balazs-czopf" id="1598305196706-56">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-    </changeSet>
-    <changeSet author="balazs-czopf" id="1598305196706-57">
         <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement" validate="true"/>
-    </changeSet>
-    <changeSet author="balazs-czopf" id="1598305196706-58">
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="achievement" constraintName="FKqdk7gj5csvsa1dq48aihd4lk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-    </changeSet>
-    <changeSet author="balazs-czopf" id="1598305196706-59">
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="achievement" constraintName="FKqivnrtxjebaum2opd716t7nhf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
     </changeSet>
 </databaseChangeLog>
