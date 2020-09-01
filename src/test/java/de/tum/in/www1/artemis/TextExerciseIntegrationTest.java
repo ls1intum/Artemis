@@ -432,7 +432,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructorother1", roles = "INSTRUCTOR")
     public void searchTextExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        final var result = configureSearchAndReturnResult("");
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
@@ -440,25 +441,20 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void searchTextExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        final var result = configureSearchAndReturnResult("Text");
-        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
-    }
+        database.addCourseWithOneReleasedTextExercise("Essay Bachelor");
+        database.addCourseWithOneReleasedTextExercise("Essay Master");
 
-    @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<TextExercise> configureSearchAndReturnResult(String searchTerm) throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm(searchTerm);
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
-        return request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+        final var searchText = database.configureSearch("Text");
+        final var resultText = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchText));
+        assertThat(resultText.getResultsOnPage().size()).isEqualTo(1);
+
+        final var searchEssay = database.configureSearch("Essay");
+        final var resultEssay = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchEssay));
+        assertThat(resultEssay.getResultsOnPage().size()).isEqualTo(2);
+
+        final var searchNon = database.configureSearch("Non");
+        final var resultNon = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchNon));
+        assertThat(resultNon.getResultsOnPage()).isEmpty();
     }
 
 }

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,16 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -35,7 +30,6 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -395,33 +389,26 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void searchModelingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var result = configureSearchAndReturnResult("");
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void searchModelingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var result = configureSearchAndReturnResult("ClassDiagram");
-        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
-    }
+        database.addCourseWithOneModelingExercise();
+        database.addCourseWithOneModelingExercise("Activity Diagram");
+        final var searchClassDiagram = database.configureSearch("ClassDiagram");
+        final var resultClassDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchClassDiagram));
+        assertThat(resultClassDiagram.getResultsOnPage().size()).isEqualTo(2);
 
-    @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<ModelingExercise> configureSearchAndReturnResult(String searchTerm) throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm(searchTerm);
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
+        final var searchActivityDiagram = database.configureSearch("Activity Diagram");
+        final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchActivityDiagram));
+        assertThat(resultActivityDiagram.getResultsOnPage().size()).isEqualTo(1);
 
-        return request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+
     }
 
 }

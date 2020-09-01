@@ -206,14 +206,16 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void searchProgrammingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var result = configureSearchAndReturnResult("");
+        final var search = databse.configureSearch("");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void searchProgrammingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var result = configureSearchAndReturnResult("Programming");
+        final var search = databse.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
@@ -223,14 +225,17 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
-        final var resultSearchPython = configureSearchAndReturnResult("Python");
-        assertThat(resultSearchPython.getResultsOnPage().size()).isEqualTo(1);
+        final var searchPython = databse.configureSearch("Python");
+        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchPython));
+        assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
 
-        final var resultSearchJava = configureSearchAndReturnResult("Java");
-        assertThat(resultSearchJava.getResultsOnPage().size()).isEqualTo(2);
+        final var searchJava = databse.configureSearch("Java");
+        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchJava));
+        assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
 
-        final var resultSearchSwift = configureSearchAndReturnResult("Swift");
-        assertThat(resultSearchSwift.getResultsOnPage()).isEmpty();
+        final var searchSwift = databse.configureSearch("Swift");
+        final var resultSwift= request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
+        assertThat(resultSwift.getResultsOnPage()).isEmpty();
     }
 
     private ProgrammingExercise importExerciseBase() {
@@ -240,23 +245,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
-    }
-
-    @SuppressWarnings("unchecked")
-    private SearchResultPageDTO<ProgrammingExerciseService> configureSearchAndReturnResult(String searchTerm) throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm(searchTerm);
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
-        return request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
     }
 
 }
