@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
@@ -407,7 +406,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         final var searchActivityDiagram = database.configureSearch("Activity Diagram");
         final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage().size()).isEqualTo(1);
-
 
     }
 

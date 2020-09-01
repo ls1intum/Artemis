@@ -234,7 +234,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
 
         final var searchSwift = databse.configureSearch("Swift");
-        final var resultSwift= request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
+        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isEmpty();
     }
 
