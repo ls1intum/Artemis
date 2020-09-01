@@ -16,7 +16,6 @@ import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exe
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ProgrammingAssessmentManualResultInCodeEditorComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-in-code-editor.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
-import { CodeEditorTutorAssessmentDisplayCodeComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-display-code.component';
 
 @NgModule({
     imports: [
@@ -39,7 +38,6 @@ import { CodeEditorTutorAssessmentDisplayCodeComponent } from 'app/exercises/pro
         ProgrammingAssessmentRepoExportDialogComponent,
         ProgrammingAssessmentManualResultInCodeEditorComponent,
         CodeEditorTutorAssessmentContainerComponent,
-        CodeEditorTutorAssessmentDisplayCodeComponent,
     ],
     entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
     exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],

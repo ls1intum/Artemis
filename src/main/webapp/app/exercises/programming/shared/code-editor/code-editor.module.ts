@@ -20,6 +20,8 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { CodeEditorTutorAssessmentDisplayCodeComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-display-code.component';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
 @NgModule({
     imports: [AceEditorModule, MomentModule, ArtemisSharedModule, FeatureToggleModule, TreeviewModule.forRoot(), ArtemisProgrammingExerciseInstructionsEditorModule],
@@ -39,6 +41,8 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
         CodeEditorResolveConflictModalComponent,
         CodeEditorConfirmRefreshModalComponent,
         CodeEditorContainerComponent,
+        CodeEditorTutorAssessmentDisplayCodeComponent,
+        CodeEditorTutorAssessmentInlineFeedbackComponent,
     ],
     exports: [
         CodeEditorGridComponent,
