@@ -257,13 +257,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getAlllProgrammingSubmissions_asUser_forbidden() throws Exception {
+    public void getAllProgrammingSubmissions_asUser_forbidden() throws Exception {
         request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllProgramminSubmissions_asInstructor_allSubmissionsReturned() throws Exception {
+    public void getAllProgrammingSubmissions_asInstructor_allSubmissionsReturned() throws Exception {
         final var submissions = new LinkedList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
             final var submission = ModelFactory.generateProgrammingSubmission(true);
