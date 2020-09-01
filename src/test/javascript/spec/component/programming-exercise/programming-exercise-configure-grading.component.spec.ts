@@ -68,6 +68,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
     const testCasesNoUpdated = '#test-case-status-no-updated';
+    const codeAnalysisTableId = '#codeAnalysisTable';
 
     const exerciseId = 1;
     const exercise = {
@@ -224,7 +225,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should update test case when an input field is updated', fakeAsync(() => {
         comp.ngOnInit();
         comp.showInactive = true;
-        routeSubject.next({ exerciseId });
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
 
         const orderedTests = _sortBy(testCases1, 'testName');
@@ -438,6 +439,44 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(getNoUpdatedTestCaseBadge()).not.to.exist;
 
         tick();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should update sca category when an input field is updated', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId, tab: 'code-analysis' });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+
+        fixture.detectChanges();
+
+        const table = debugElement.query(By.css(codeAnalysisTableId));
+
+        // get inputs
+        const editingInputs = table.queryAll(By.css(tableEditingInput));
+        expect(editingInputs).to.have.lengthOf(comp.staticCodeAnalysisCategories.length * 2);
+
+        const penaltyInput = editingInputs[0].nativeElement;
+        expect(penaltyInput).to.exist;
+        penaltyInput.focus();
+
+        // Set new penalty.
+        penaltyInput.value = '20';
+        penaltyInput.dispatchEvent(new Event('blur'));
+
+        const maxPenaltyInput = editingInputs[1].nativeElement;
+        expect(maxPenaltyInput).to.exist;
+        maxPenaltyInput.focus();
+
+        // Set new max penalty.
+        maxPenaltyInput.value = '100';
+        maxPenaltyInput.dispatchEvent(new Event('blur'));
+
+        fixture.detectChanges();
+
+        expect(comp.changedCategoryIds).to.deep.equal([comp.staticCodeAnalysisCategories[0].id]);
+        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({...comp.staticCodeAnalysisCategories[0], penalty: '20', maxPenalty: '100'});
+
         fixture.destroy();
         flush();
     }));
