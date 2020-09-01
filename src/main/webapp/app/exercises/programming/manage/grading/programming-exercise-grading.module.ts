@@ -9,7 +9,6 @@ import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/prog
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-dirty-warning.component';
-import { ArtemisProgrammingExerciseGradingRoutingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading-routing.module';
 
 @NgModule({
     imports: [
@@ -22,7 +21,6 @@ import { ArtemisProgrammingExerciseGradingRoutingModule } from 'app/exercises/pr
         ArtemisTableModule,
         // programming exercise sub modules.
         ArtemisProgrammingExerciseActionsModule,
-        ArtemisProgrammingExerciseGradingRoutingModule,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

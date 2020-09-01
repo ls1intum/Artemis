@@ -8,6 +8,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -70,6 +72,16 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
+        component: ProgrammingExerciseConfigureGradingComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [CanDeactivateGuard],
     },
 ];
 

@@ -28,10 +28,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
                 },
                 {
-                    path: 'course-management/:courseId/programming-exercises/:exerciseId/grading',
-                    loadChildren: () => import('./exercises/programming/manage/grading/programming-exercise-grading.module').then((m) => m.ArtemisProgrammingExerciseGradingModule),
-                },
-                {
                     path: 'course-management/:courseId/text-exercises/:exerciseId/submissions',
                     loadChildren: () => import('./exercises/text/assess-new/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
                 },

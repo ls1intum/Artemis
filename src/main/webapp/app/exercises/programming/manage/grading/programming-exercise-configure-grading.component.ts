@@ -152,13 +152,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (this.router.url.endsWith('/test-cases')) {
-                this.activeTab = 'test-cases';
-            } else if (this.router.url.endsWith('/code-analysis')) {
-                this.activeTab = 'code-analysis';
+            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis') {
+                this.activeTab = params['tab'];
             } else {
-                this.activeTab = '';
+                this.selectTab('test-cases');
             }
+
         });
     }
 
