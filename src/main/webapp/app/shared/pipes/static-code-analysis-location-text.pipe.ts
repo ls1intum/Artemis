@@ -16,7 +16,7 @@ export class StaticCodeAnalysisLocationTextPipe implements PipeTransform {
         const lineText = issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at line(s) ${issue.startLine}-${issue.endLine}`;
         let columnText = '';
         if (issue.startColumn) {
-            columnText = issue.startColumn === issue.endColumn ? ` and column ${issue.startColumn}` : ` and column(s) ${issue.startColumn}-${issue.endColumn}`;
+            columnText = issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` column(s) ${issue.startColumn}-${issue.endColumn}`;
         }
         return issue.filePath + lineText + columnText;
     }
