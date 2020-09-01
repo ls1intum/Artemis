@@ -35,8 +35,8 @@ public class BuildLogEntry {
     @JsonIgnore
     private ProgrammingSubmission programmingSubmission;
 
-    // Required for Hibernate
     public BuildLogEntry() {
+        // Required for Hibernate
     }
 
     public BuildLogEntry(ZonedDateTime time, String log) {

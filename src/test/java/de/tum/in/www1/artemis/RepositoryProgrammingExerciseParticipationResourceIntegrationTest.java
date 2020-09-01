@@ -105,8 +105,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
 
         logs.add(buildLogEntry);
-        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(programmingExercise.getProjectKey(),
-                ((ProgrammingExerciseParticipation) participation).getBuildPlanId());
     }
 
     @AfterEach
@@ -378,6 +376,9 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testBuildLogs() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
+
+        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
+
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
