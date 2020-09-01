@@ -92,6 +92,12 @@ public class FeedbackService {
         return feedbackList;
     }
 
+    /**
+     * Removes CI specific path segments. Uses the assignment directory to decide where to cut the path.
+     *
+     * @param sourcePath Path to be shortened
+     * @return Shortened path if it contains an assignment directory, otherwise the full path
+     */
     private String removeCIDirectoriesFromPath(String sourcePath) {
         if (sourcePath == null || sourcePath.isEmpty()) {
             return "notAvailable";
