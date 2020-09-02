@@ -12,12 +12,14 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -67,16 +69,8 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     ExerciseService exerciseService;
 
-    /*
     @Autowired
-    CourseService courseService;
-
-    @Autowired
-    ExamService examService;
-
-    @Autowired
-    ExerciseGroupService exerciseGroupService;
-     */
+    RequestUtilService request;
 
     @Autowired
     DatabaseUtilService database;
@@ -124,7 +118,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
         // Initialize data for the second exercise
         TextExercise exercise2 = exercises.get(1);
-        submission = ModelFactory.generateTextSubmission(blockText[0], Language.ENGLISH, true);
+        submission = ModelFactory.generateTextSubmission("Submission to be deleted...", Language.ENGLISH, true);
         database.addTextSubmission(
             exercise2,
             submission,
@@ -159,6 +153,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         // BlockI < BlockJ should hold
         for(TextPairwiseDistance dist: pairwiseDistances) {
             assertThat(dist.getBlockI(), lessThan(dist.getBlockJ()));
+            assertThat(dist.getDistance(), greaterThanOrEqualTo(0.));
         }
 
         // Getter and setter for lambda value tested
@@ -230,23 +225,23 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExerciseRemoval() {
+    public void testExerciseRemoval() throws Exception {
         TextExercise exercise = exercises.get(1);
 
         // Test cascading removals for exercise
         exerciseService.delete(exercise.getId(), true, true);
+        assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textBlockRepository.findAllBySubmission_Participation_Exercise_IdAndTreeIdNotNull(exercise.getId()), hasSize(0));
         assertThat(textSubmissionRepository.findById(submission.getId()), equalTo(Optional.empty()));
-        assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textClusterRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
     }
 
-    /*
+
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCourseRemoval() {
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCourseRemoval() throws Exception {
         // Test cascading removals for course
         TextExercise exercise = exercises.get(2);
 
@@ -256,7 +251,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
-        courseService.delete(exercise.getCourseViaExerciseGroupOrCourseMember());
+        request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
@@ -264,7 +259,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExamRemoval() {
+    public void testExamRemoval() throws Exception {
         // Test cascading removals for exam
         TextExercise exercise = exercises.get(3);
 
@@ -274,7 +269,8 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
-        examService.delete(exercise.getExerciseGroup().getExam());
+        request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
+            + "/exams/" + exercise.getExerciseGroup().getExam().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
@@ -282,7 +278,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExerciseGroupRemoval() {
+    public void testExerciseGroupRemoval() throws Exception {
         // Test cascading removals for exercise group
         TextExercise exercise = exercises.get(4);
 
@@ -295,12 +291,13 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
-        exerciseGroupService.delete(exercise.getExerciseGroup().getId());
+        request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
+            + "/exams/" + exercise.getExerciseGroup().getExam().getId()
+            + "/exerciseGroups/" + exercise.getExerciseGroup().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
     }
-     */
 
     /**
      * Reads and parses the cluster tree from json file for given exercise
@@ -309,7 +306,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      * @throws IOException
      * @throws ParseException
      */
-    @WithMockUser(value = "admin", roles = "ADMIN")
     private static List<TextTreeNode> parseClusterTree(TextExercise exercise) throws IOException, ParseException {
         List<TextTreeNode> result = new ArrayList<>();
         JSONParser jsonParser = new JSONParser();
@@ -335,7 +331,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      * @throws IOException
      * @throws ParseException
      */
-    @WithMockUser(value = "admin", roles = "ADMIN")
     private static List<TextPairwiseDistance> parsePairwiseDistances(TextExercise exercise) throws IOException, ParseException {
         List<TextPairwiseDistance> result = new ArrayList<>();
         JSONParser jsonParser = new JSONParser();
@@ -357,7 +352,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      * Initializes TextBlocks and TextSubmissions from the static blockText array for given exercise
      * @param exercise
      */
-    @WithMockUser(value = "admin", roles = "ADMIN")
     private void initializeBlocksAndSubmissions(TextExercise exercise) {
         // Create first submission, save text blocks and submission
         submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
@@ -405,7 +399,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      * Initializes TextClusters for given exercise
      * @param exercise
      */
-    @WithMockUser(value = "admin", roles = "ADMIN")
     private void initializeClusters(TextExercise exercise) {
         TextCluster cluster1 = new TextCluster().exercise(exercise);
         cluster1.addBlocks(blocks.get(1));
