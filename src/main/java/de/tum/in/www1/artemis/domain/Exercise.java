@@ -239,7 +239,7 @@ public abstract class Exercise implements Serializable {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title.strip();
     }
 
     public String getShortName() {
