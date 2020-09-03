@@ -232,6 +232,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         if (!newValue) {
             return;
         }
+        if (typeof editedTestCase[field] === 'number') {
+            newValue = Number(newValue);
+        }
         // If the weight has not changed, don't do anything besides closing the input.
         if (newValue === editedTestCase[field]) {
             return;
@@ -252,6 +255,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         // Don't allow an empty string as a value!
         if (!newValue) {
             return;
+        }
+        if (typeof editedCategory[field] === 'number') {
+            newValue = Number(newValue);
         }
         // If the field has not changed, don't do anything
         if (newValue === editedCategory[field]) {
