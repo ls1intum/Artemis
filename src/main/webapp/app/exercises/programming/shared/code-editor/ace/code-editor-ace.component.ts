@@ -7,7 +7,7 @@ import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
@@ -30,9 +30,9 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
-    @ViewChild('lineWidgets')
+    @ViewChild('lineWidgets', { read: ElementRef })
     lineWidgetsElement: HTMLDivElement;
-    @ViewChild('lineIcon')
+    @ViewChild('lineIcon', { read: ElementRef })
     lineIconElement: HTMLDivElement;
 
     @Input()
@@ -322,8 +322,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.lineWidgetObserver) {
             this.lineWidgetObserver.disconnect();
         }
-        // @ts-ignore
-        const rowElement = this.lineWidgetsElement.nativeElement.children.item(0);
+        const rowElement = this.lineWidgetsElement.children.item(0);
         if (rowElement) {
             this.lineWidgetObserver = new MutationObserver((mutations) => {
                 if (mutations.some((m) => m.type === 'attributes' && m.attributeName === 'row')) {
