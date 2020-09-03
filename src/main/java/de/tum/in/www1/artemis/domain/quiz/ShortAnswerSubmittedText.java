@@ -95,7 +95,7 @@ public class ShortAnswerSubmittedText implements Serializable {
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
-        return FuzzySearch.ratio(submittedText.toLowerCase(), solution.toLowerCase()) > 85;
+        return FuzzySearch.ratio(submittedText.toLowerCase().trim(), solution.toLowerCase().trim()) > 85;
     }
 
     @Override
