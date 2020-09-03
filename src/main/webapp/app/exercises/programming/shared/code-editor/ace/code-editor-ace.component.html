@@ -8,6 +8,9 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
+        <div #lineWidgets>
+            <ng-content select="[lineWidget]"></ng-content>
+        </div>
         <ace-editor
             #editor
             id="ace-code-editor"

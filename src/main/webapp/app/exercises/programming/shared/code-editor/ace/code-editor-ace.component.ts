@@ -30,6 +30,8 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
+    @ViewChild('lineWidgets')
+    lineWidgetsElement: HTMLDivElement;
 
     @Input()
     selectedFile: string;
@@ -52,12 +54,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
+    readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+
+    private lineWidget: any;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -129,6 +134,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
+            this.loadLineWidgets();
         }
     }
 
@@ -297,5 +303,24 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .getEditor()
             .getSession()
             .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
+    }
+
+    loadLineWidgets() {
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        if (this.lineWidget) {
+            session.widgetManager.removeLineWidget(this.lineWidget);
+        }
+        const row = this.lineWidgetsElement.children.item(0)?.attributes.getNamedItem('row')?.value || '0';
+        this.lineWidget = {
+            row: parseInt(row, 10) || 0,
+            fixedWidth: true,
+            coverGutter: true,
+            el: this.lineWidgetsElement,
+        };
+        session.widgetManager.addLineWidget(this.lineWidget);
     }
 }

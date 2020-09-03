@@ -40,7 +40,9 @@
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
-    ></jhi-code-editor-ace>
+    >
+        <span lineWidget row="2">The selected file is {{selectedFile}}</span>
+    </jhi-code-editor-ace>
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>
