@@ -73,6 +73,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const exerciseId = 1;
     const exercise = {
         id: exerciseId,
+        staticCodeAnalysisEnabled: true,
     } as ProgrammingExercise;
     const testCases1 = [
         { id: 1, testName: 'testBubbleSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
@@ -475,7 +476,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         expect(comp.changedCategoryIds).to.deep.equal([comp.staticCodeAnalysisCategories[0].id]);
-        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({...comp.staticCodeAnalysisCategories[0], penalty: '20', maxPenalty: '100'});
+        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({ ...comp.staticCodeAnalysisCategories[0], penalty: '20', maxPenalty: '100' });
 
         fixture.destroy();
         flush();
