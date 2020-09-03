@@ -3,7 +3,7 @@
     <div class="d-flex align-content-center mb-2">
         <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
     </div>
-    <ng-container *ngIf="!isLoading; else loadingContainer">
+    <ng-container *ngIf="!isLoading">
         <div class="d-flex">
             <div class="d-flex align-items-center ml-auto">
                 <jhi-programming-exercise-configure-grading-status
@@ -158,9 +158,4 @@
             </div>
         </div>
     </ng-container>
-    <ng-template #loadingContainer>
-        <div class="d-flex justify-content-center mt-4">
-            <fa-icon [icon]="'circle-notch'" [spin]="true" size="lg"></fa-icon>
-        </div>
-    </ng-template>
 </div>
