@@ -76,7 +76,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Sanitize attributes of `fileUploadExercise`
      */
     sanitizeFileUploadExercise() {
-        this.fileUploadExercise.title = this.fileUploadExercise.title.trim();
+        this.fileUploadExercise.title = this.fileUploadExercise.title?.trim();
     }
 
     /**

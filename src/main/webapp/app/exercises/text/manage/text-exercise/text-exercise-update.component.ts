@@ -157,7 +157,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Sanitize attributes of `textExercise`
      */
     sanitizeTextExercise() {
-        this.textExercise.title = this.textExercise.title.trim();
+        this.textExercise.title = this.textExercise.title?.trim();
     }
 
     /**

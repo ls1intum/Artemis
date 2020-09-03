@@ -1112,7 +1112,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * Sanitize attributes of `quizExercise`
      */
     sanitizeQuizExercise() {
-        this.quizExercise.title = this.quizExercise.title.trim();
+        this.quizExercise.title = this.quizExercise.title?.trim();
     }
 
     /**

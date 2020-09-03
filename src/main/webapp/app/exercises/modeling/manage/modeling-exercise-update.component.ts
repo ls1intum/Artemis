@@ -154,7 +154,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Sanitize attributes of `modelingExercise`
      */
     sanitizeModelingExercise() {
-        this.modelingExercise.title = this.modelingExercise.title.trim();
+        this.modelingExercise.title = this.modelingExercise.title?.trim();
     }
 
     /**

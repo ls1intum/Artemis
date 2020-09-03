@@ -212,7 +212,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Sanitize attributes of `programmingExercise`
      */
     sanitizeProgrammingExercise() {
-        this.programmingExercise.title = this.programmingExercise.title.trim();
+        this.programmingExercise.title = this.programmingExercise.title?.trim();
     }
 
     /**
