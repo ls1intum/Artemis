@@ -9,7 +9,7 @@
 
     <div class="card-body code-editor-ace__content">
         <div #lineWidgets><ng-content select="[lineWidget]"></ng-content></div>
-        <div #lineIcon><ng-content select="[lineIcon]"></ng-content></div>
+        <div #lineIcon class="gutter-icon"><ng-content select="[lineIcon]"></ng-content></div>
         <ace-editor
             #editor
             id="ace-code-editor"

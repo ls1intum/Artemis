@@ -7,7 +7,7 @@ import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
@@ -25,6 +25,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     styleUrls: ['./code-editor-ace.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -338,7 +339,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 row: parseInt(row, 10) || 0,
                 fixedWidth: true,
                 coverGutter: true,
-                el: this.lineWidgetsElement,
+                el: this.lineWidgetsElement.nativeElement,
             };
             this.lineWidgetsElement.nativeElement.remove();
             session.widgetManager.addLineWidget(this.lineWidget);
