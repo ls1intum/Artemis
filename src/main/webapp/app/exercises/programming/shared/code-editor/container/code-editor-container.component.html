@@ -41,7 +41,8 @@
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
     >
-        <span lineWidget row="2">The selected file is {{selectedFile}}</span>
+        <span lineWidget [attr.row]="Object.keys(unsavedFiles).length">The selected file is {{ selectedFile }}</span>
+        <span lineIcon><fa-icon [icon]="'plus'"></fa-icon></span>
     </jhi-code-editor-ace>
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>

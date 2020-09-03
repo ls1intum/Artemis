@@ -32,6 +32,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editor: AceEditorComponent;
     @ViewChild('lineWidgets')
     lineWidgetsElement: HTMLDivElement;
+    @ViewChild('lineIcon')
+    lineIconElement: HTMLDivElement;
 
     @Input()
     selectedFile: string;
@@ -63,6 +65,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
 
     private lineWidget: any;
+    private lineWidgetObserver: MutationObserver | null;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -135,6 +138,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
             this.loadLineWidgets();
+            this.setupLineIcons();
         }
     }
 
@@ -182,6 +186,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
+        this.setupLineIcons();
     }
 
     ngOnDestroy() {
@@ -314,13 +319,42 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.lineWidget) {
             session.widgetManager.removeLineWidget(this.lineWidget);
         }
-        const row = this.lineWidgetsElement.children.item(0)?.attributes.getNamedItem('row')?.value || '0';
-        this.lineWidget = {
-            row: parseInt(row, 10) || 0,
-            fixedWidth: true,
-            coverGutter: true,
-            el: this.lineWidgetsElement,
-        };
-        session.widgetManager.addLineWidget(this.lineWidget);
+        if (this.lineWidgetObserver) {
+            this.lineWidgetObserver.disconnect();
+        }
+        // @ts-ignore
+        const rowElement = this.lineWidgetsElement.nativeElement.children.item(0);
+        if (rowElement) {
+            this.lineWidgetObserver = new MutationObserver((mutations) => {
+                if (mutations.some((m) => m.type === 'attributes' && m.attributeName === 'row')) {
+                    this.loadLineWidgets();
+                }
+            });
+            this.lineWidgetObserver.observe(rowElement, { attributes: true });
+            const row = rowElement.attributes.getNamedItem('row')?.value || '0';
+            this.lineWidget = {
+                row: parseInt(row, 10) || 0,
+                fixedWidth: true,
+                coverGutter: true,
+                el: this.lineWidgetsElement,
+            };
+            this.lineWidgetsElement.remove();
+            session.widgetManager.addLineWidget(this.lineWidget);
+        }
+    }
+
+    setupLineIcons() {
+        const container = this.editor.getEditor().container;
+        const lines = container.querySelectorAll('.ace_line');
+        const gutters = container.querySelectorAll('.ace_gutter-cell');
+        lines.forEach((line: HTMLElement, i: number) => {
+            line.addEventListener('mouseenter', () => gutters[i].append(this.lineIconElement));
+            line.addEventListener('mouseleave', () => this.lineIconElement.remove());
+        });
+        gutters.forEach((gutter: HTMLElement) => {
+            gutter.addEventListener('mouseenter', () => gutter.append(this.lineIconElement));
+            gutter.addEventListener('mouseleave', () => this.lineIconElement.remove());
+        });
+        this.lineIconElement.remove();
     }
 }
