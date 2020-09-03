@@ -18,6 +18,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 
 /**
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 @Entity
 @Table(name = "static_code_analysis_category")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisCategory implements Serializable {
 
     private static final long serialVersionUID = 1L;

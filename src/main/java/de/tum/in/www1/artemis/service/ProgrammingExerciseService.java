@@ -447,6 +447,17 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    public ProgrammingExercise findById(Long programmingExerciseId) {
+        return programmingExerciseRepository.findById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming exercise not found with id " + programmingExerciseId));
+    }
+
+    /**
      * Find a programming exercise by its id, including template and solution but without results.
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
