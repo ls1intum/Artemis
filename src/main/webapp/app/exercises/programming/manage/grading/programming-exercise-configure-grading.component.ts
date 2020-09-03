@@ -126,6 +126,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
                     map((res) => res.body!),
                     tap((exercise) => (this.exercise = exercise)),
+                    tap(() => {
+                        if (!this.exercise.staticCodeAnalysisEnabled) {
+                            this.selectTab('test-cases');
+                        }
+                    }),
                     catchError(() => of(null)),
                 );
 
