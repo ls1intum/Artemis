@@ -30,10 +30,10 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
-    @ViewChild('lineWidgets', { read: ElementRef })
-    lineWidgetsElement: HTMLDivElement;
-    @ViewChild('lineIcon', { read: ElementRef })
-    lineIconElement: HTMLDivElement;
+    @ViewChild('lineWidgets')
+    lineWidgetsElement: { nativeElement: HTMLDivElement };
+    @ViewChild('lineIcon')
+    lineIconElement: { nativeElement: HTMLDivElement };
 
     @Input()
     selectedFile: string;
@@ -80,6 +80,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
         });
+
+        this.lineWidgetsElement.nativeElement.remove();
+        this.lineIconElement.nativeElement.remove();
     }
 
     /**
@@ -322,7 +325,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.lineWidgetObserver) {
             this.lineWidgetObserver.disconnect();
         }
-        const rowElement = this.lineWidgetsElement.children.item(0);
+        const rowElement = this.lineWidgetsElement.nativeElement.children.item(0);
         if (rowElement) {
             this.lineWidgetObserver = new MutationObserver((mutations) => {
                 if (mutations.some((m) => m.type === 'attributes' && m.attributeName === 'row')) {
@@ -337,7 +340,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 coverGutter: true,
                 el: this.lineWidgetsElement,
             };
-            this.lineWidgetsElement.remove();
+            this.lineWidgetsElement.nativeElement.remove();
             session.widgetManager.addLineWidget(this.lineWidget);
         }
     }
@@ -347,13 +350,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         const lines = container.querySelectorAll('.ace_line');
         const gutters = container.querySelectorAll('.ace_gutter-cell');
         lines.forEach((line: HTMLElement, i: number) => {
-            line.addEventListener('mouseenter', () => gutters[i].append(this.lineIconElement));
-            line.addEventListener('mouseleave', () => this.lineIconElement.remove());
+            line.addEventListener('mouseenter', () => gutters[i].append(this.lineIconElement.nativeElement));
+            line.addEventListener('mouseleave', () => this.lineIconElement.nativeElement.remove());
         });
         gutters.forEach((gutter: HTMLElement) => {
-            gutter.addEventListener('mouseenter', () => gutter.append(this.lineIconElement));
-            gutter.addEventListener('mouseleave', () => this.lineIconElement.remove());
+            gutter.addEventListener('mouseenter', () => gutter.append(this.lineIconElement.nativeElement));
+            gutter.addEventListener('mouseleave', () => this.lineIconElement.nativeElement.remove());
         });
-        this.lineIconElement.remove();
+        this.lineIconElement.nativeElement.remove();
     }
 }
