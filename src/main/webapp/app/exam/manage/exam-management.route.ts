@@ -30,6 +30,7 @@ import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
+import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -214,6 +215,15 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/student-exams',
         component: StudentExamsComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs',
+        component: TestRunManagementComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',

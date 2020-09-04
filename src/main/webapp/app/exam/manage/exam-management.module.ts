@@ -32,6 +32,7 @@ import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
+import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -67,6 +68,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamStudentsComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
+        TestRunManagementComponent,
         StudentsExamImportDialogComponent,
         StudentsExamImportButtonComponent,
         StudentExamDetailComponent,
