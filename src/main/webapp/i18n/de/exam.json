@@ -196,9 +196,14 @@
             "confirmationStartText": "Klausurbeginn Bestätigungstext",
             "confirmationEndText": "Klausurende Bestätigungstext",
             "assessmentDashboard": "Bewertungstafel",
-            "testRun": "Testlauf",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
+            "testRun": {
+                "testRun": "Testlauf",
+                "title": "Testlaufverwaltung: ",
+                "setup": "Testlauf Erstellen",
+                "assess": "Bewerten"
+            },
             "examStudents": {
                 "registeredStudents": "Angemeldete Studenten",
                 "searchResults": "Suchergebnisse",
