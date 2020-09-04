@@ -283,7 +283,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: '20', bonusMultiplier: '2', bonusPoints: '1' },
+            { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: 20, bonusMultiplier: 2, bonusPoints: 1 },
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
@@ -476,7 +476,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         expect(comp.changedCategoryIds).to.deep.equal([comp.staticCodeAnalysisCategories[0].id]);
-        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({ ...comp.staticCodeAnalysisCategories[0], penalty: '20', maxPenalty: '100' });
+        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({ ...comp.staticCodeAnalysisCategories[0], penalty: 20, maxPenalty: 100 });
 
         fixture.destroy();
         flush();
