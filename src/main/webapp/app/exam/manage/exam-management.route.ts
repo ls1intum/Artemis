@@ -224,9 +224,21 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/test-runs',
         component: TestRunManagementComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/assess',
+        component: TutorCourseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],
     },
