@@ -27,7 +27,9 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     course: Course;
     exam: Exam;
+    examTestRun = false;
     courseId: number;
+    examId: number;
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
@@ -74,6 +76,13 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.isExamMode = !!this.examId;
+        if (this.isExamMode) {
+            console.log(this.route.snapshot.url.length);
+            this.examTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+            console.log(this.examTestRun);
+        }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
     }
@@ -90,11 +99,9 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
-        const examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.isExamMode = !!examId;
         if (this.isExamMode) {
             this.showFinishedExercises = true;
-            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
+            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, this.examId).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course);
                 this.courseService.checkAndSetCourseRights(this.course);
