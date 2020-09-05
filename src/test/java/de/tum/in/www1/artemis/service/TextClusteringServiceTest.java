@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -138,7 +140,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterAll
-    @WithMockUser(value = "admin", roles = "ADMIN")
     public void tearDown() {
         database.resetDatabase();
     }
@@ -269,8 +270,10 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
+        ExerciseGroup group = (ExerciseGroup) ReflectionTestUtils.getField( exercise, "exerciseGroup");
+        Exam exam = (Exam)  ReflectionTestUtils.getField(group, "exam");
         request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
-            + "/exams/" + exercise.getExerciseGroup().getExam().getId(), HttpStatus.OK);
+            + "/exams/" + exam.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
@@ -291,9 +294,11 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
+        ExerciseGroup group = (ExerciseGroup) ReflectionTestUtils.getField( exercise, "exerciseGroup");
+        Exam exam = (Exam)  ReflectionTestUtils.getField(group, "exam");
         request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
-            + "/exams/" + exercise.getExerciseGroup().getExam().getId()
-            + "/exerciseGroups/" + exercise.getExerciseGroup().getId(), HttpStatus.OK);
+            + "/exams/" + exam.getId()
+            + "/exerciseGroups/" + group.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
