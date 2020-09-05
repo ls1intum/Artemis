@@ -16,10 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.text.TextBlock;
 import de.tum.in.www1.artemis.domain.text.TextCluster;
 import de.tum.in.www1.artemis.domain.text.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
@@ -63,17 +63,17 @@ public class AutomaticTextFeedbackService {
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
 
-                        // Filter all other blocks in the cluster for those with Feedback
-                        .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
+                            // Filter all other blocks in the cluster for those with Feedback
+                            .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
 
-                        // Find the closest block
-                        .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
+                            // Find the closest block
+                            .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
-                        && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
+                            && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
                         return new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
-                            .type(FeedbackType.AUTOMATIC);
+                                .type(FeedbackType.AUTOMATIC);
                     }
                 }
             }

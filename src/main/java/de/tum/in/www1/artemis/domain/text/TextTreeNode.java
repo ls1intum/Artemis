@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain.text;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.NaturalId;
+import java.io.Serializable;
 
 import javax.persistence.*;
-import java.io.Serializable;
+
+import org.hibernate.annotations.NaturalId;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *  An node in the cluster tree. The nodes here actually have the properties of edges.
@@ -40,31 +41,53 @@ public class TextTreeNode implements Serializable {
     @JsonIgnore
     private TextExercise exercise;
 
-    public Long getId() { return id; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public long getParent() { return parent; }
+    public long getParent() {
+        return parent;
+    }
 
-    public void setParent(long parent) { this.parent = parent; }
+    public void setParent(long parent) {
+        this.parent = parent;
+    }
 
-    public long getChild() { return child; }
+    public long getChild() {
+        return child;
+    }
 
-    public void setChild(long child) { this.child = child; }
+    public void setChild(long child) {
+        this.child = child;
+    }
 
     public double getLambdaVal() {
         return lambdaVal == -1 ? Double.POSITIVE_INFINITY : lambdaVal;
     }
 
-    public void setLambdaVal(double lambdaVal) { this.lambdaVal = lambdaVal == Double.POSITIVE_INFINITY ? -1 : lambdaVal; }
+    public void setLambdaVal(double lambdaVal) {
+        this.lambdaVal = lambdaVal == Double.POSITIVE_INFINITY ? -1 : lambdaVal;
+    }
 
-    public long getChildSize() { return childSize; }
+    public long getChildSize() {
+        return childSize;
+    }
 
-    public void setChildSize(long childSize) { this.childSize = childSize; }
+    public void setChildSize(long childSize) {
+        this.childSize = childSize;
+    }
 
-    public TextExercise getExercise() { return exercise; }
+    public TextExercise getExercise() {
+        return exercise;
+    }
 
-    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+    public void setExercise(TextExercise exercise) {
+        this.exercise = exercise;
+    }
 
     public TextTreeNode exercise(TextExercise exercise) {
         setExercise(exercise);

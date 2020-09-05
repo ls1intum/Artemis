@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.text;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.io.Serializable;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *  Pairwise distance between two TextBlocks
@@ -41,21 +41,37 @@ public class TextPairwiseDistance implements Serializable {
         this.id = id;
     }
 
-    public long getBlockI() { return blockI; }
+    public long getBlockI() {
+        return blockI;
+    }
 
-    public long getBlockJ() { return blockJ; }
+    public long getBlockJ() {
+        return blockJ;
+    }
 
-    public void setBlockI(long blockI) { this.blockI = blockI; }
+    public void setBlockI(long blockI) {
+        this.blockI = blockI;
+    }
 
-    public void setBlockJ(long blockJ) { this.blockJ = blockJ; }
+    public void setBlockJ(long blockJ) {
+        this.blockJ = blockJ;
+    }
 
-    public double getDistance() { return distance; }
+    public double getDistance() {
+        return distance;
+    }
 
-    public void setDistance(double distance) { this.distance = distance; }
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
 
-    public TextExercise getExercise() { return exercise; }
+    public TextExercise getExercise() {
+        return exercise;
+    }
 
-    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+    public void setExercise(TextExercise exercise) {
+        this.exercise = exercise;
+    }
 
     public TextPairwiseDistance exercise(TextExercise exercise) {
         setExercise(exercise);

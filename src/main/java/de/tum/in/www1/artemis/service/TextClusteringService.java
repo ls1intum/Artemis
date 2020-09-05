@@ -11,9 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.text.*;
-import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
-import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,9 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
+import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 import de.tum.in.www1.artemis.service.connectors.TextEmbeddingService;
 import de.tum.in.www1.artemis.service.connectors.TextSegmentationService;
 import de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService;
@@ -59,9 +59,9 @@ public class TextClusteringService {
     private int embeddingChunkSize;
 
     public TextClusteringService(TextBlockService textBlockService, TextSubmissionService textSubmissionService, TextClusterRepository textClusterRepository,
-                                 TextBlockRepository textBlockRepository, TextTreeNodeRepository treeNodeRepository, TextPairwiseDistanceRepository pairwiseDistanceRepository,
-                                 TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
-                                 TextAssessmentQueueService textAssessmentQueueService, TextSegmentationService textSegmentationService) {
+            TextBlockRepository textBlockRepository, TextTreeNodeRepository treeNodeRepository, TextPairwiseDistanceRepository pairwiseDistanceRepository,
+            TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService, TextAssessmentQueueService textAssessmentQueueService,
+            TextSegmentationService textSegmentationService) {
         this.textBlockService = textBlockService;
         this.textSubmissionService = textSubmissionService;
         this.textClusterRepository = textClusterRepository;
@@ -120,7 +120,7 @@ public class TextClusteringService {
 
         List<TextEmbedding> embeddings = computeEmbeddings(blocks, exercise);
 
-        for(int i = 0; i < blocks.size(); i++) {
+        for (int i = 0; i < blocks.size(); i++) {
             TextBlock block = blocks.get(i);
             block.setTreeId(i);
             textBlockRepository.save(block);
@@ -142,13 +142,13 @@ public class TextClusteringService {
         }
 
         // Update exercise of the treeNodes and store in Database
-        for(TextTreeNode node: clusterTree) {
+        for (TextTreeNode node : clusterTree) {
             node.setExercise(exercise);
         }
         treeNodeRepository.saveAll(clusterTree);
 
         // Iterate over the distances and store them in Database
-        for(int i = 0; i < distanceMatrix.size(); i++) {
+        for (int i = 0; i < distanceMatrix.size(); i++) {
             // The matrix is symmetrical, no need to store the duplicate data
             for (int j = i + 1; j < distanceMatrix.size(); j++) {
                 TextPairwiseDistance dist = new TextPairwiseDistance();
