@@ -11,8 +11,9 @@
                 </button>
                 <button
                     class="btn btn-primary btn-sm mr-1 mb-1"
-                    [disabled]="!testRunCanBeAssessed"
                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
+                    *ngIf="course?.isAtLeastInstructor"
+                    [disabled]="isLoading || !testRunCanBeAssessed"
                 >
                     <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Test Runs</span>
                 </button>

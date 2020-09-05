@@ -34,6 +34,7 @@ export class TestRunManagementComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
+            this.isExamStarted = this.exam.started;
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
                 (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
