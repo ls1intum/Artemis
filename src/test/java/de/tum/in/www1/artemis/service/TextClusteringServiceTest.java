@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -91,9 +89,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         database.addUsers(10, 0, 1);
         database.addCourseWithOneFinishedTextExercise();
         database.addCourseWithOneFinishedTextExercise();
-        database.addCourseWithOneFinishedTextExercise();
-        database.addCourseExamExerciseGroupWithOneTextExercise();
-        database.addCourseExamExerciseGroupWithOneTextExercise();
 
         exercises = textExerciseRepository.findAll();
 
@@ -244,7 +239,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCourseRemoval() throws Exception {
         // Test cascading removals for course
-        TextExercise exercise = exercises.get(2);
+        database.addCourseWithOneFinishedTextExercise();
+        List<TextExercise> exercises = textExerciseRepository.findAll();
+        TextExercise exercise = exercises.get(exercises.size() - 1);
 
         TextTreeNode newNode = new TextTreeNode().exercise(exercise);
         newNode.setChild(111);
@@ -262,7 +259,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testExamRemoval() throws Exception {
         // Test cascading removals for exam
-        TextExercise exercise = exercises.get(3);
+        database.addCourseExamExerciseGroupWithOneTextExercise();
+        List<TextExercise> exercises = textExerciseRepository.findAll();
+        TextExercise exercise = exercises.get(exercises.size() - 1);
 
         TextTreeNode newNode = new TextTreeNode().exercise(exercise);
         newNode.setChild(112);
@@ -270,10 +269,8 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
-        ExerciseGroup group = (ExerciseGroup) ReflectionTestUtils.getField( exercise, "exerciseGroup");
-        Exam exam = (Exam)  ReflectionTestUtils.getField(group, "exam");
         request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
-            + "/exams/" + exam.getId(), HttpStatus.OK);
+            + "/exams/" + exercise.getExerciseGroup().getExam().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
@@ -283,7 +280,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testExerciseGroupRemoval() throws Exception {
         // Test cascading removals for exercise group
-        TextExercise exercise = exercises.get(4);
+        database.addCourseExamExerciseGroupWithOneTextExercise();
+        List<TextExercise> exercises = textExerciseRepository.findAll();
+        TextExercise exercise = exercises.get(exercises.size() - 1);
 
         TextTreeNode newNode = new TextTreeNode().exercise(exercise);
         newNode.setChild(113);
@@ -294,11 +293,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textPairwiseDistanceRepository.save(newDist);
         textTreeNodeRepository.save(newNode);
 
-        ExerciseGroup group = (ExerciseGroup) ReflectionTestUtils.getField( exercise, "exerciseGroup");
-        Exam exam = (Exam)  ReflectionTestUtils.getField(group, "exam");
         request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId()
-            + "/exams/" + exam.getId()
-            + "/exerciseGroups/" + group.getId(), HttpStatus.OK);
+            + "/exams/" + exercise.getExerciseGroup().getExam().getId()
+            + "/exerciseGroups/" + exercise.getExerciseGroup().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));
