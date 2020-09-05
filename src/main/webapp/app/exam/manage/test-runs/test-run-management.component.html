@@ -5,9 +5,16 @@
         </div>
         <div class="ml-auto">
             <div class="d-flex mb-1">
-                <button class="btn btn-primary" style="height: 40px" (click)="openTestRunModal()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
+                <button class="btn btn-primary" style="height: 40px" (click)="openCreateTestRunModal()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.examManagement.testRun.setup">Setup Test Run</span>
+                </button>
+                <button
+                    class="btn btn-primary btn-sm mr-1 mb-1"
+                    [disabled]="!testRunCanBeAssessed"
+                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
+                >
+                    <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Test Runs</span>
                 </button>
             </div>
         </div>
@@ -52,28 +59,14 @@
                     <td [width]="350">
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
-                                <ng-container *ngIf="testRun.started && testRun.submitted; else notSubmitted">
-                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/courses', course.id, 'exams', exam.id]">
-                                        <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                <button *ngIf="testRun.started; else notStarted" class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/courses', course.id, 'exams', exam.id]">
+                                    <span *ngIf="testRun.submitted" jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                    <span *ngIf="!testRun.submitted" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
+                                </button>
+                                <ng-template #notStarted>
+                                    <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="startTestRun(testRun)">
+                                        <span jhiTranslate="artemisApp.course.startDate">Start</span>
                                     </button>
-                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']">
-                                        <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess</span>
-                                    </button>
-                                </ng-container>
-                                <ng-template #notSubmitted>
-                                    <button
-                                        *ngIf="testRun.started; else notStarted"
-                                        class="btn btn-primary btn-sm mr-1 mb-1"
-                                        [routerLink]="['/courses', course.id, 'exams', exam.id]"
-                                    >
-                                        <span *ngIf="testRun.submitted" jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                        <span *ngIf="!testRun.submitted" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
-                                    </button>
-                                    <ng-template #notStarted>
-                                        <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="startTestRun(testRun)">
-                                            <span jhiTranslate="artemisApp.course.startDate">Start</span>
-                                        </button>
-                                    </ng-template>
                                 </ng-template>
                             </div>
                         </div>

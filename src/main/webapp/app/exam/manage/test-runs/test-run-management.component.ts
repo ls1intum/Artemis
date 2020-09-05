@@ -79,6 +79,21 @@ export class TestRunManagementComponent implements OnInit {
         this.sortService.sortByProperty(this.testRuns, this.predicate, this.ascending);
     }
 
+    /**
+     * Get function to determine if a test run has been submitted.
+     * Used to enable the assess test run button.
+     */
+    get testRunCanBeAssessed(): boolean {
+        if (!!this.testRuns && this.testRuns.length > 0) {
+            for (let testRun of this.testRuns) {
+                if (testRun.submitted) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
