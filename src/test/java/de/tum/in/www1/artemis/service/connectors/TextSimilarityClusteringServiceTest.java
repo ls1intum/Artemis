@@ -12,47 +12,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.TextClusteringService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TextSimilarityClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
 
-    @Autowired
-    TextSimilarityClusteringService textSimilarityClusteringService;
+    private final TextSimilarityClusteringService textSimilarityClusteringService = new TextSimilarityClusteringService();
 
-    @Autowired
-    TextEmbeddingService textEmbeddingService;
-
-    @Autowired
-    TextSegmentationService textSegmentationService;
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    TextClusteringService textClusteringService;
-
-    @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private final TextEmbeddingService textEmbeddingService = new TextEmbeddingService();
 
     // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
     private final String[] sentences = {
@@ -81,7 +58,6 @@ public class TextSimilarityClusteringServiceTest extends AbstractSpringIntegrati
     private TextSimilarityClusteringService.Response response;
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
     public void clusterTextBlocks() {
         // TODO: Split tests of embedding and clustering
         final Map<Integer, TextCluster> clusterDictionary = response.clusters;
@@ -103,38 +79,15 @@ public class TextSimilarityClusteringServiceTest extends AbstractSpringIntegrati
         assertThat(groupByParent.size(), lessThan(clusterTree.size()));
     }
 
-    /**
-     * Call calculateClusters to check TextClusteringService.
-     * (Expected functionality is tested separately in TextClusteringServiceTest)
-     */
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void checkCalculateClusters() {
-        database.addCourseWithOneFinishedTextExercise();
-        TextExercise exercise = textExerciseRepository.findAll().get(0);
-        for (int i = 0; i < 17; i++) {
-            database.addTextSubmission(exercise, ModelFactory.generateTextSubmission(sentences[i], Language.ENGLISH, true), "student" + (i + 1));
-        }
-        textClusteringService.calculateClusters(exercise);
-    }
-
     @BeforeAll
     public void init() throws NetworkingError {
         assumeTrue(isTextAssessmentClusteringAvailable());
         ReflectionTestUtils.setField(textSimilarityClusteringService, "API_ENDPOINT", CLUSTERING_ENDPOINT);
         ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", "http://localhost:8001/embed");
-        ReflectionTestUtils.setField(textSegmentationService, "API_ENDPOINT", "http://localhost:8000/segment");
         course.setId(1L);
         exercise.setId(2L);
         List<TextEmbedding> embeddings = textEmbeddingService.embedTextBlocks(blocks, exercise);
         response = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
-        SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
-        database.addUsers(17, 0, 0);
-    }
-
-    @AfterAll
-    public void tearDown() {
-        database.resetDatabase();
     }
 
     private static boolean isTextAssessmentClusteringAvailable() {
