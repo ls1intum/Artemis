@@ -1,20 +1,28 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
     templateUrl: './create-test-run-modal.component.html',
+    providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
 })
-export class CreateTestRunModal {
+export class CreateTestRunModal implements OnInit {
     exam: Exam;
+    workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
 
-    constructor(private activeModal: NgbActiveModal) {}
+    constructor(private activeModal: NgbActiveModal, private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
+
+    ngOnInit(): void {
+        this.initWorkingTimeForm();
+    }
 
     /**
      * Creates a test run student exam based on the test run configuration, {@link testRunConfiguration}.
@@ -25,6 +33,7 @@ export class CreateTestRunModal {
             let testRun = new StudentExam();
             testRun.exam = this.exam;
             testRun.exercises = Object.values(this.testRunConfiguration);
+            testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
             this.activeModal.close(testRun);
         }
     }
@@ -60,5 +69,22 @@ export class CreateTestRunModal {
      */
     cancel() {
         this.activeModal.dismiss('cancel');
+    }
+
+    private initWorkingTimeForm() {
+        const defaultWorkingTime = this.exam.endDate?.diff(this.exam.startDate, 'seconds');
+        const workingTime = this.artemisDurationFromSecondsPipe.transform(defaultWorkingTime ?? 0);
+        const workingTimeParts = workingTime.split(':');
+        this.workingTimeForm = new FormGroup({
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.exam.visible }, [
+                Validators.min(0),
+                Validators.required,
+            ]),
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.exam.visible }, [
+                Validators.min(0),
+                Validators.max(59),
+                Validators.required,
+            ]),
+        });
     }
 }
