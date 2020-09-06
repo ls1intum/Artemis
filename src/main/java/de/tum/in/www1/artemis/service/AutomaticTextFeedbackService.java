@@ -96,7 +96,8 @@ public class AutomaticTextFeedbackService {
                 if(feedbackOptional.isPresent()) {
                     return feedbackOptional.get();
                 }
-            } else {
+            } else if (block.getTreeId() != null) {
+                // If block has no tree id, it means that it was created manually after the initial clustering
                 final Optional<Feedback> feedbackOptional = findFeedbackForBlockWithoutCluster(clusterTree, block, exercise);
                 if(feedbackOptional.isPresent()) {
                     feedbackOptional.get();

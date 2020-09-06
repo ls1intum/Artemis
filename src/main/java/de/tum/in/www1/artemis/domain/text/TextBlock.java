@@ -176,7 +176,7 @@ public class TextBlock implements Serializable {
         this.positionInCluster = positionInCluster;
     }
 
-    public int getTreeId() {
+    public Integer getTreeId() {
         return treeId;
     }
 
