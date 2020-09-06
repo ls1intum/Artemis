@@ -176,9 +176,13 @@ public class TextBlock implements Serializable {
         this.positionInCluster = positionInCluster;
     }
 
-    public int getTreeId() { return treeId; }
+    public int getTreeId() {
+        return treeId;
+    }
 
-    public void setTreeId(int treeId) { this.treeId = treeId; }
+    public void setTreeId(int treeId) {
+        this.treeId = treeId;
+    }
 
     @Override
     public boolean equals(Object o) {

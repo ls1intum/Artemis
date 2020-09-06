@@ -358,6 +358,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     percentage: 100,
                 }),
             );
+            return;
         }
 
         const replaced = result.resultString.replace(',', '.');

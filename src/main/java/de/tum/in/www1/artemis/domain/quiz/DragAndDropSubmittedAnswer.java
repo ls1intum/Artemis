@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -30,14 +29,8 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     @JsonView(QuizView.Before.class)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
-    }
-
-    public DragAndDropSubmittedAnswer mappings(Set<DragAndDropMapping> dragAndDropMappings) {
-        this.mappings = dragAndDropMappings;
-        return this;
     }
 
     public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping dragAndDropMapping) {
@@ -55,7 +48,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
         this.mappings = dragAndDropMappings;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Get the drag item that was drag-and-dropped on the given drop location
@@ -112,26 +104,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
             // Check if a dragItem or dropLocation was deleted and delete the mappings with it
             checkAndDeleteMappings((DragAndDropQuestion) quizQuestion);
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) o;
-        if (dragAndDropSubmittedAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropSubmittedAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

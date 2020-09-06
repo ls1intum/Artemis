@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.text;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.io.Serializable;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *  Pairwise distance between two TextBlocks
@@ -21,10 +21,10 @@ public class TextPairwiseDistance implements Serializable {
     private Long id;
 
     @Column(name = "block_i", nullable = false)
-    private long block_i;
+    private long blockI;
 
     @Column(name = "block_j", nullable = false)
-    private long block_j;
+    private long blockJ;
 
     @Column(name = "distance", nullable = false)
     private double distance;
@@ -33,29 +33,45 @@ public class TextPairwiseDistance implements Serializable {
     @JsonIgnore
     private TextExercise exercise;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public long getBlock_i() { return this.block_i; }
+    public long getBlockI() {
+        return blockI;
+    }
 
-    public long getBlock_j() { return block_j; }
+    public long getBlockJ() {
+        return blockJ;
+    }
 
-    public void setBlock_i(long block_i) { this.block_i = block_i; }
+    public void setBlockI(long blockI) {
+        this.blockI = blockI;
+    }
 
-    public void setBlock_j(long block_j) { this.block_j = block_j; }
+    public void setBlockJ(long blockJ) {
+        this.blockJ = blockJ;
+    }
 
-    public double getDistance() { return distance; }
+    public double getDistance() {
+        return distance;
+    }
 
-    public void setDistance(double distance) { this.distance = distance; }
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
 
-    public TextExercise getExercise() { return exercise; }
+    public TextExercise getExercise() {
+        return exercise;
+    }
 
-    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+    public void setExercise(TextExercise exercise) {
+        this.exercise = exercise;
+    }
 
     public TextPairwiseDistance exercise(TextExercise exercise) {
         setExercise(exercise);

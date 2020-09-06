@@ -6,8 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -22,6 +20,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -58,6 +58,8 @@ public class ParticipationService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final RatingRepository ratingRepository;
+
     private final TeamRepository teamRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -81,7 +83,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService) {
+            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -100,6 +102,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
+        this.ratingRepository = ratingRepository;
     }
 
     /**
@@ -497,7 +500,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise, participation));
+            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
             versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
@@ -569,22 +572,15 @@ public class ParticipationService {
      * Currently, exercise start dates are the same for all users
      *
      * @param exercise that is possibly part of an exam
-     * @param participation the participation of the student
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
      */
-    public ZonedDateTime getIndividualReleaseDate(Exercise exercise, StudentParticipation participation) {
-        var studentExam = findStudentExam(exercise, participation).orElse(null);
-        // this is the case for all non-exam exercises
-        if (studentExam == null) {
+    public ZonedDateTime getIndividualReleaseDate(Exercise exercise) {
+        if (isExamExercise(exercise)) {
+            return exercise.getExerciseGroup().getExam().getStartDate();
+        }
+        else {
             return exercise.getReleaseDate();
         }
-        var exerciseReleaseDate = exercise.getReleaseDate();
-        var examStartDate = studentExam.getExam().getStartDate();
-        // use the exerciseReleaseDate if it was explicitly set to start after the exam
-        if (exerciseReleaseDate != null && exerciseReleaseDate.isAfter(examStartDate)) {
-            return exerciseReleaseDate;
-        }
-        return examStartDate;
     }
 
     /**
@@ -1073,7 +1069,9 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.deleteLocalRepository(programmingExerciseParticipation);
+                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
+                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    gitService.deleteLocalRepository(repo);
                 }
             }
             catch (Exception ex) {
@@ -1083,6 +1081,7 @@ public class ParticipationService {
 
         complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
         complaintRepository.deleteByResult_Participation_Id(participationId);
+        ratingRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 

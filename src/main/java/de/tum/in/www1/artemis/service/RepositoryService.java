@@ -19,7 +19,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
@@ -217,7 +216,7 @@ public class RepositoryService {
      * @throws IOException if the repository status can't be retrieved.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
+    public boolean isClean(URL repositoryUrl) throws GitAPIException, InterruptedException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }
@@ -263,25 +262,5 @@ public class RepositoryService {
             throw new IllegalAccessException();
         }
         return gitService.getOrCheckoutRepository(repoUrl, true);
-    }
-
-    /**
-     * Retrieve a repository by the participation connected to it.
-     *
-     * @param participation to which the repository belongs.
-     * @return the repository if available.
-     * @throws IOException if the repository can't be checked out.
-     * @throws GitAPIException if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     * @throws InterruptedException if the repository can't be checked out.
-     */
-    public Repository checkoutRepositoryByParticipation(ProgrammingExerciseParticipation participation)
-            throws IOException, IllegalAccessException, GitAPIException, InterruptedException {
-        boolean hasAccess = programmingExerciseParticipationService.canAccessParticipation(participation);
-        if (!hasAccess) {
-            throw new IllegalAccessException();
-        }
-
-        return gitService.getOrCheckoutRepository(participation);
     }
 }

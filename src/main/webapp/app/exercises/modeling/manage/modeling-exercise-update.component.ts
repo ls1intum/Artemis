@@ -103,6 +103,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = null;
                         this.modelingExercise.teamMode = false;
+                        this.modelingExercise.assessmentType = AssessmentType.MANUAL;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
@@ -223,7 +224,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     diagramTypeChanged() {
         const semiAutomaticSupportPossible = this.modelingExercise.diagramType === DiagramType.ClassDiagram || this.modelingExercise.diagramType === DiagramType.ActivityDiagram;
-        if (!semiAutomaticSupportPossible) {
+        if (this.isExamMode || !semiAutomaticSupportPossible) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }

@@ -28,6 +28,12 @@ public class CompassResult implements Grade {
 
     private double coverage;
 
+    /**
+     * to make mockito happy
+     */
+    public CompassResult() {
+    }
+
     public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
         jsonIdCommentsMapping = new ConcurrentHashMap<>();
         jsonIdPointsMapping = new ConcurrentHashMap<>();

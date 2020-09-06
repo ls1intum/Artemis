@@ -305,7 +305,7 @@ public class QuizExerciseResource {
         }
 
         switch (action) {
-            case "start-now":
+            case "start-now" -> {
                 // check if quiz hasn't already started
                 if (quizExercise.isStarted()) {
                     return ResponseEntity.badRequest()
@@ -316,8 +316,8 @@ public class QuizExerciseResource {
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 quizExercise.setIsPlannedToStart(true);
                 groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
-                break;
-            case "set-visible":
+            }
+            case "set-visible" -> {
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
                     return ResponseEntity.badRequest()
@@ -326,8 +326,8 @@ public class QuizExerciseResource {
 
                 // set quiz to visible
                 quizExercise.setIsVisibleBeforeStart(true);
-                break;
-            case "open-for-practice":
+            }
+            case "open-for-practice" -> {
                 // check if quiz has ended
                 if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
@@ -343,10 +343,11 @@ public class QuizExerciseResource {
                 // set quiz to open for practice
                 quizExercise.setIsOpenForPractice(true);
                 groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
-                break;
-            default:
+            }
+            default -> {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action))
                         .build();
+            }
         }
 
         // save quiz exercise

@@ -1,18 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.cosine;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.metricLongestCommonSubsequence;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.nGram;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisionStrategy.normalizedLevenshtein;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-import static java.util.stream.Collectors.toMap;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -31,11 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -46,10 +40,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
-import de.tum.in.www1.artemis.service.util.Tuple;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -86,13 +77,10 @@ public class TextSubmissionResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
-    private final TextPlagiarismDetectionService textPlagiarismDetectionService;
-
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<TextClusteringScheduleService> textClusteringScheduleService,
-            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider,
-            TextPlagiarismDetectionService textPlagiarismDetectionService) {
+            ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -104,7 +92,6 @@ public class TextSubmissionResource {
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
-        this.textPlagiarismDetectionService = textPlagiarismDetectionService;
     }
 
     /**
@@ -332,41 +319,5 @@ public class TextSubmissionResource {
                     .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getResult()));
         }
         return bodyBuilder.body(textSubmission);
-    }
-
-    /**
-     * GET /plagiarism-checks : Run comparison metrics pair-wise against all submissions of a given exercises.
-     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
-     *
-     * @param exerciseId exerciseID  for which all submission should be checked
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
-     */
-    @GetMapping("/text-exercises/{exerciseId}/plagiarism-checks")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<SubmissionComparisonDTO>> plagiarismChecks(@PathVariable long exerciseId) {
-        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
-        if (optionalTextExercise.isEmpty()) {
-            return notFound();
-        }
-        TextExercise textExercise = optionalTextExercise.get();
-
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            return forbidden();
-        }
-
-        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
-        textSubmissions.forEach(s -> {
-            s.getParticipation().setExercise(null);
-            s.setResult(null);
-            s.getParticipation().setSubmissions(null);
-        });
-
-        return ResponseEntity.ok(Stream
-                .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
-                        new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
-                .parallel()
-                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX()).entrySet().stream()
-                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
-                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
     }
 }

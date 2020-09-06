@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -24,7 +25,7 @@ const SCORE_KEY = 'Score';
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
-    providers: [],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type
@@ -58,10 +59,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
+    private languageChangeSubscription: Subscription | null;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
         private sortService: SortService,
+        private changeDetector: ChangeDetectorRef,
+        private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
     ) {
         this.reverse = false;
@@ -97,6 +102,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 this.getParticipationsWithResults(this.course.id);
             });
         });
+
+        // Update the view if the language was changed
+        this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
+            this.changeDetector.detectChanges();
+        });
     }
 
     /**
@@ -108,6 +118,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.participations = participations;
             this.groupExercises();
             this.calculatePointsPerStudent();
+            this.changeDetector.detectChanges();
         });
     }
 
@@ -444,6 +455,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
+        }
     }
 }
 

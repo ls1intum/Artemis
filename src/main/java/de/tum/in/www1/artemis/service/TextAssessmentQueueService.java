@@ -7,12 +7,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.text.TextBlock;
 import de.tum.in.www1.artemis.domain.text.TextCluster;
 import de.tum.in.www1.artemis.domain.text.TextExercise;
 import de.tum.in.www1.artemis.domain.text.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 
 @Service
@@ -58,9 +58,8 @@ public class TextAssessmentQueueService {
             return Optional.empty();
         }
         Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
-        Optional<TextSubmission> best = textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
+        return textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
                 .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
-        return best;
     }
 
     /**

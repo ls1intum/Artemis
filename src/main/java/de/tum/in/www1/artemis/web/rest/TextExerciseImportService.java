@@ -2,15 +2,15 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.text.TextBlock;
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.text.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 
 @Repository

@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +19,8 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -152,7 +152,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -174,7 +174,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -196,7 +196,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();

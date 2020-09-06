@@ -70,11 +70,6 @@ public class DragAndDropMapping implements Serializable {
         return dragItemIndex;
     }
 
-    public DragAndDropMapping dragItemIndex(Integer dragItemIndex) {
-        this.dragItemIndex = dragItemIndex;
-        return this;
-    }
-
     public void setDragItemIndex(Integer dragItemIndex) {
         this.dragItemIndex = dragItemIndex;
     }
@@ -83,22 +78,12 @@ public class DragAndDropMapping implements Serializable {
         return dropLocationIndex;
     }
 
-    public DragAndDropMapping dropLocationIndex(Integer dropLocationIndex) {
-        this.dropLocationIndex = dropLocationIndex;
-        return this;
-    }
-
     public void setDropLocationIndex(Integer dropLocationIndex) {
         this.dropLocationIndex = dropLocationIndex;
     }
 
     public Boolean isInvalid() {
-        return invalid;
-    }
-
-    public DragAndDropMapping invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -135,11 +120,6 @@ public class DragAndDropMapping implements Serializable {
         return submittedAnswer;
     }
 
-    public DragAndDropMapping submittedAnswer(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-        this.submittedAnswer = dragAndDropSubmittedAnswer;
-        return this;
-    }
-
     public void setSubmittedAnswer(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
         this.submittedAnswer = dragAndDropSubmittedAnswer;
     }
@@ -148,15 +128,9 @@ public class DragAndDropMapping implements Serializable {
         return question;
     }
 
-    public DragAndDropMapping question(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-        return this;
-    }
-
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {

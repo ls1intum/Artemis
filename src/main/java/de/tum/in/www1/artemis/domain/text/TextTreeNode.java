@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain.text;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.NaturalId;
+import java.io.Serializable;
 
 import javax.persistence.*;
-import java.io.Serializable;
+
+import org.hibernate.annotations.NaturalId;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *  An node in the cluster tree. The nodes here actually have the properties of edges.
@@ -31,40 +32,62 @@ public class TextTreeNode implements Serializable {
     private long child;
 
     @Column(name = "lambda_val", nullable = false)
-    private double lambda_val;
+    private double lambdaVal;
 
     @Column(name = "child_size", nullable = false)
-    private long child_size;
+    private long childSize;
 
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
 
-    public Long getId() { return id; }
-
-    public void setId(Long id) { this.id = id; }
-
-    public long getParent() { return parent; }
-
-    public void setParent(long parent) { this.parent = parent; }
-
-    public long getChild() { return child; }
-
-    public void setChild(long child) { this.child = child; }
-
-    public double getLambda_val() {
-        return lambda_val == -1 ? Double.POSITIVE_INFINITY : lambda_val;
+    public Long getId() {
+        return id;
     }
 
-    public void setLambda_val(double lambda_val) { this.lambda_val = lambda_val; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public long getChild_size() { return child_size; }
+    public long getParent() {
+        return parent;
+    }
 
-    public void setChild_size(long child_size) { this.child_size = child_size; }
+    public void setParent(long parent) {
+        this.parent = parent;
+    }
 
-    public TextExercise getExercise() { return exercise; }
+    public long getChild() {
+        return child;
+    }
 
-    public void setExercise(TextExercise exercise) { this.exercise = exercise; }
+    public void setChild(long child) {
+        this.child = child;
+    }
+
+    public double getLambdaVal() {
+        return lambdaVal == -1 ? Double.POSITIVE_INFINITY : lambdaVal;
+    }
+
+    public void setLambdaVal(double lambdaVal) {
+        this.lambdaVal = lambdaVal == Double.POSITIVE_INFINITY ? -1 : lambdaVal;
+    }
+
+    public long getChildSize() {
+        return childSize;
+    }
+
+    public void setChildSize(long childSize) {
+        this.childSize = childSize;
+    }
+
+    public TextExercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(TextExercise exercise) {
+        this.exercise = exercise;
+    }
 
     public TextTreeNode exercise(TextExercise exercise) {
         setExercise(exercise);
@@ -72,6 +95,6 @@ public class TextTreeNode implements Serializable {
     }
 
     public boolean isBlockNode() {
-        return this.child_size == 1;
+        return this.childSize == 1;
     }
 }

@@ -1,6 +1,6 @@
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
-    <h2 class="col-md-6" style="text-align: center;">
+    <h2 class="col-md-6" style="text-align: center">
         <span
             >{{
                 'artemisApp.examParticipation.finish'
@@ -10,7 +10,7 @@
                           }
             }}
         </span>
-        <span style="color: blue;">
+        <span style="color: blue">
             {{ accountName }}
         </span>
     </h2>
@@ -18,12 +18,12 @@
 </div>
 <div class="w-100 d-flex" *ngIf="!startView && !studentFailedToSubmit">
     <div class="col-md-3"></div>
-    <p class="col-md-6 font-weight-bold" style="text-align: center;">
+    <p class="col-md-6 font-weight-bold" style="text-align: center">
         <span jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
     </p>
 </div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
-    <h2 style="text-align: center;" *ngIf="startView">
+    <h2 style="text-align: center" *ngIf="startView">
         <span>{{
             'artemisApp.examParticipation.greeting'
                 | translate
@@ -31,12 +31,12 @@
                           title: exam.title
                       }
         }}</span>
-        <span style="color: blue;">
+        <span style="color: blue">
             {{ accountName }}
         </span>
     </h2>
     <jhi-exam-information [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
-    <div><span style="display: table; margin-left: auto; margin-right: auto;" [innerHTML]="formattedGeneralInformation"></span></div>
+    <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">
         {{ 'studentExam.submissionNotInTime' | translate }}
     </div>
@@ -47,14 +47,14 @@
                 type="checkbox"
                 id="confirmBox"
                 (click)="updateConfirmation()"
-                style="place-self: flex-start;"
+                style="place-self: flex-start"
                 class="mt-1"
                 [required]="inserted"
                 [disabled]="startView ? waitingForExamStart : false"
             />
             <span id="formatted-confirmation-text" class="d-inline-block ml-2" [innerHTML]="formattedConfirmationText"></span>
         </div>
-        <div style="text-align: center;">
+        <div style="text-align: center">
             <div class="login-form">
                 <div class="row justify-content-center">
                     <div class="col-md-6">

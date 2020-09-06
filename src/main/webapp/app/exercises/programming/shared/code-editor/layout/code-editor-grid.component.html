@@ -1,12 +1,7 @@
 <div class="editor-wrapper">
     <!-- Top bar -->
     <nav class="editor-statusbar">
-        <!-- Exercise title -->
-        <h4>
-            <span>{{ exerciseTitle }}</span>
-            <span *ngIf="exerciseMaxScore">&nbsp;[{{ exerciseMaxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
-        </h4>
-        <ng-content select="[editorNavbar]"> </ng-content>
+        <ng-content select="[editorNavbar]"></ng-content>
     </nav>
 
     <div class="editor-main">
@@ -31,10 +26,12 @@
         </div>
 
         <!-- Required for resizing; don't remove empty span -->
-        <fa-icon [icon]="'grip-lines'" class="rg-main-bottom text-lightgrey"><span></span></fa-icon>
+        <!--<fa-icon [icon]="'grip-lines'" class="rg-main-bottom text-lightgrey"><span></span></fa-icon> -->
     </div>
-
-    <div class="editor-bottom collapsable">
+    <div *ngIf="isTutorAssessment">
+        <ng-content select="[editorBottom]"></ng-content>
+    </div>
+    <div *ngIf="!isTutorAssessment" class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
         <!-- Required for resizing; don't remove empty span -->
         <fa-icon [icon]="'grip-lines'" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>

@@ -7,15 +7,18 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.core.TreeNode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.text.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextCluster;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
@@ -141,7 +144,7 @@ public class AutomaticTextFeedbackService {
         double currentDist = 0;
         TextTreeNode temp = clusterTree[block.getTreeId()];
         while(temp.getChild() != currentNode.getChild()) {
-            currentDist += 1 / temp.getLambda_val();
+            currentDist += 1 / temp.getLambdaVal();
             temp = clusterTree[(int) temp.getParent()];
         }
         while(currentDist <= LAMBDA_THRESHOLD) {
@@ -149,12 +152,12 @@ public class AutomaticTextFeedbackService {
             long parentId = currentNode.getParent();
             List<TextTreeNode> siblings = treeNodeRepository.findAllByParentAndExercise(parentId, exercise);
             siblings.remove(currentNode);
-            siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
+            siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambdaVal).reversed());
             // In the following loop, we trace all ancestors within the threshold of the siblings for feedback
             while(!siblings.isEmpty()) {
                 TextTreeNode x = siblings.remove(0);
                 // If already above lambda threshold or a block node remove x directly
-                if(1 / x.getLambda_val() + currentDist > LAMBDA_THRESHOLD) {
+                if(1 / x.getLambdaVal() + currentDist > LAMBDA_THRESHOLD) {
                     continue;
                 }
                 if(!x.isBlockNode()) {
@@ -167,10 +170,10 @@ public class AutomaticTextFeedbackService {
                         }
                     } else {
                         for(TextTreeNode y : treeNodeRepository.findAllByParentAndExercise(x.getChild(), exercise)) {
-                            y.setLambda_val(sumLambdaValues(y.getLambda_val(), x.getLambda_val()));
+                            y.setLambdaVal(sumLambdaValues(y.getLambdaVal(), x.getLambdaVal()));
                             siblings.add(y);
                         }
-                        siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambda_val).reversed());
+                        siblings.sort(Comparator.comparingDouble(TextTreeNode::getLambdaVal).reversed());
                     }
                 }
             }
@@ -178,7 +181,7 @@ public class AutomaticTextFeedbackService {
             if(parentId == -1) {
                 return Optional.empty();
             }
-            currentDist = currentDist + 1 / currentNode.getLambda_val();
+            currentDist = currentDist + 1 / currentNode.getLambdaVal();
             currentNode = clusterTree[(int) parentId];
         }
         return Optional.empty();
@@ -192,9 +195,9 @@ public class AutomaticTextFeedbackService {
             int i = b.getTreeId();
             long j = block.getTreeId();
             if(i <= j) {
-                distances.put(i, pairwiseDistanceRepository.findByExerciseAndBlocks(cluster.getExercise().getId(), (long) i, j).getDistance());
+                distances.put(i, pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), i, j).getDistance());
             } else {
-                distances.put(i, pairwiseDistanceRepository.findByExerciseAndBlocks(cluster.getExercise().getId(), j, (long) i).getDistance());
+                distances.put(i, pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), j, i).getDistance());
             }
         }
 

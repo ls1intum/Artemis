@@ -26,6 +26,7 @@ export class ModelingExercise extends Exercise {
         this.course = course || null;
         this.exerciseGroup = exerciseGroup || null;
         this.diagramType = diagramType;
+        // default value
         if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
             this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         }

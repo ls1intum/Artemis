@@ -9,8 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +27,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -1003,7 +1003,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
 
         // TODO: it would be nice if we can support programming exercises here as well
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, false);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));

@@ -8,9 +8,7 @@ import { CourseExerciseService } from 'app/course/manage/course-management.servi
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
@@ -38,8 +36,6 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
         translateService: TranslateService,
         route: ActivatedRoute,
         jhiAlertService: AlertService,
-        sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService,
     ) {
         super(
             router,
@@ -50,11 +46,8 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
             exerciseHintService,
             location,
             participationService,
-            translateService,
             route,
             jhiAlertService,
-            sessionService,
-            fileService,
         );
     }
 

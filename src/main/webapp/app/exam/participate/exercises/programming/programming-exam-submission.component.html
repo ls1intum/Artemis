@@ -1,15 +1,12 @@
-<!-- ngIf code-editor -->
-<div *ngIf="exercise.allowOnlineEditor && !exercise.allowOfflineIde">
-    <h4 class="mb-1 mr-1">Online Code Editor</h4>
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
-</div>
-<!-- ngIf code-editor with clone button start -->
-<div *ngIf="exercise.allowOnlineEditor && exercise.allowOfflineIde">
+<!-- ngIf online-code-editor -->
+<div *ngIf="exercise.allowOnlineEditor">
     <div class="d-flex mb-3">
         <div class="d-flex flex-wrap flex-column justify-content-center">
             <h4 class="mb-0 mr-1">Online Code Editor</h4>
         </div>
+        <!-- ngIf offline-ide clone button -->
         <jhi-exercise-details-student-actions
+            *ngIf="exercise.allowOfflineIde"
             jhiOrionFilter
             [examMode]="true"
             [showInOrionWindow]="false"
@@ -19,7 +16,45 @@
         ></jhi-exercise-details-student-actions>
     </div>
 
-    <jhi-exam-code-editor-student [exercise]="exercise" [participation]="studentParticipation"></jhi-exam-code-editor-student>
+    <jhi-code-editor-container
+        [editable]="!repositoryIsLocked"
+        [participation]="studentParticipation"
+        [showEditorInstructions]="showEditorInstructions"
+        (onCommitStateChange)="onCommitStateChange($event)"
+        (onFileChanged)="onFileChanged()"
+    >
+        <div editorTitle>
+            <span>{{ exercise?.title }}</span>
+            <span>&nbsp;[{{ exercise?.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
+        </div>
+        <div editorToolbar>
+            <jhi-updating-result
+                *ngIf="studentParticipation"
+                [exercise]="exercise"
+                [showUngradedResults]="true"
+                [showGradedBadge]="true"
+                [participation]="studentParticipation"
+                [short]="true"
+                [personalParticipation]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+            <jhi-programming-exercise-student-trigger-build-button
+                class="mr-2"
+                [exercise]="exercise"
+                [participation]="studentParticipation"
+                [btnSize]="ButtonSize.MEDIUM"
+            ></jhi-programming-exercise-student-trigger-build-button>
+        </div>
+        <jhi-programming-exercise-instructions
+            editorSidebar
+            (onNoInstructionsAvailable)="showEditorInstructions = false"
+            [exercise]="exercise"
+            [participation]="studentParticipation"
+            [personalParticipation]="true"
+            [exerciseHints]="exercise.exerciseHints"
+            class="instructions-wrapper__content card-body p-0"
+        ></jhi-programming-exercise-instructions>
+    </jhi-code-editor-container>
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
@@ -29,7 +64,7 @@
     </h4>
     <jhi-exercise-details-student-actions jhiOrionFilter [showInOrionWindow]="false" [exercise]="exercise" [courseId]="courseId" [showResult]="true">
     </jhi-exercise-details-student-actions>
-    <div style="display: flex; justify-content: flex-end;">
+    <div style="display: flex; justify-content: flex-end">
         <jhi-updating-result
             *ngIf="studentParticipation"
             [exercise]="exercise"

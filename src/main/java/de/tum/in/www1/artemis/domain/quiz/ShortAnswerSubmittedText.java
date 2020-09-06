@@ -59,22 +59,12 @@ public class ShortAnswerSubmittedText implements Serializable {
         return text;
     }
 
-    public ShortAnswerSubmittedText text(String text) {
-        this.text = text;
-        return this;
-    }
-
     public void setText(String text) {
         this.text = text;
     }
 
     public Boolean isIsCorrect() {
         return isCorrect;
-    }
-
-    public ShortAnswerSubmittedText isCorrect(Boolean isCorrect) {
-        this.isCorrect = isCorrect;
-        return this;
     }
 
     public void setIsCorrect(Boolean isCorrect) {
@@ -85,11 +75,6 @@ public class ShortAnswerSubmittedText implements Serializable {
         return spot;
     }
 
-    public ShortAnswerSubmittedText spot(ShortAnswerSpot shortAnswerSpot) {
-        this.spot = shortAnswerSpot;
-        return this;
-    }
-
     public void setSpot(ShortAnswerSpot shortAnswerSpot) {
         this.spot = shortAnswerSpot;
     }
@@ -98,15 +83,9 @@ public class ShortAnswerSubmittedText implements Serializable {
         return submittedAnswer;
     }
 
-    public ShortAnswerSubmittedText submittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-        this.submittedAnswer = shortAnswerSubmittedAnswer;
-        return this;
-    }
-
     public void setSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
         this.submittedAnswer = shortAnswerSubmittedAnswer;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy

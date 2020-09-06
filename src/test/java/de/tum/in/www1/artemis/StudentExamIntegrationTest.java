@@ -12,8 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +35,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.text.TextExercise;
+import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -176,7 +176,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, examStartDate, examEndDate, true);
+        exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, true);
 
         // register users
         Set<User> registeredStudents = new HashSet<>(users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toCollection(ArrayList::new)));
@@ -312,7 +312,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
@@ -337,7 +337,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, examStartDate, examEndDate, true);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         exam.setRegisteredUsers(new HashSet<>(users));
@@ -453,17 +453,25 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitExamOtherUser_forbidden() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
-        database.changeUser(studentExams.get(0).getUser().getLogin());
+        database.changeUser("student1");
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
         studentExamResponse.setExercises(null);
+        // use a different user
         database.changeUser("student2");
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSubmitExamWithSubmissionResult_forbidden() throws Exception {
+    public void testSubmitExamWithSubmissionResult() throws Exception {
+
         List<StudentExam> studentExams = prepareStudentExamsForConduction();
+
+        // this test should be after the end date of the exam
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam2);
+
         database.changeUser(studentExams.get(0).getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
         for (var exercise : studentExamResponse.getExercises()) {
@@ -487,9 +495,24 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 submissions.add(submission);
                 participation.setSubmissions(submissions);
             }
-
         }
-        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
+
+        studentExamResponse = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/submit", studentExamResponse,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(studentExamResponse.isSubmitted()).isTrue();
+        assertThat(studentExamResponse.getSubmissionDate()).isNotNull();
+
+        // check that the result was not injected and that the student exam was still submitted correctly
+
+        var studentExamDatabase = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/studentExams/conduction", HttpStatus.OK, StudentExam.class);
+        for (var exercise : studentExamDatabase.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            var iterator = participation.getSubmissions().iterator();
+            if (iterator.hasNext()) {
+                var submission = iterator.next();
+                assertThat(submission.getResult()).isNull();
+            }
+        }
     }
 
     @Test

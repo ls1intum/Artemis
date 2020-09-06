@@ -56,9 +56,7 @@
                 <ngx-datatable-column prop="id" [minWidth]="60" [width]="60" [maxWidth]="60">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
-                                ID
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
                         </span>
                     </ng-template>
@@ -72,9 +70,7 @@
                 <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label">
-                                Name
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label"> Name </span>
                             <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
                         </span>
                     </ng-template>
@@ -86,9 +82,7 @@
                 <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.shortName.label">
-                                Short Name
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.shortName.label"> Short Name </span>
                             <fa-icon [icon]="controls.iconForSortPropField('shortName')"></fa-icon>
                         </span>
                     </ng-template>
@@ -102,9 +96,7 @@
                 <ngx-datatable-column prop="owner" [minWidth]="140" [width]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('owner.name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.tutor">
-                                Tutor
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.tutor"> Tutor </span>
                             <fa-icon [icon]="controls.iconForSortPropField('owner.name')"></fa-icon>
                         </span>
                     </ng-template>
@@ -117,10 +109,8 @@
 
                 <ngx-datatable-column prop="students" [minWidth]="200" [width]="600">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" style="cursor: text;">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
-                                Students
-                            </span>
+                        <span class="datatable-header-cell-wrapper" style="cursor: text">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students"> Students </span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
