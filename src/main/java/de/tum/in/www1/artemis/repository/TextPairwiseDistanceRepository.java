@@ -16,6 +16,6 @@ public interface TextPairwiseDistanceRepository extends JpaRepository<TextPairwi
 
     List<TextPairwiseDistance> findAllByExercise(TextExercise exercise);
 
-    // It must hold: treeIdI <= treeIdJ
+    // It must hold: treeIdI < treeIdJ
     TextPairwiseDistance findByExerciseAndAndBlockIAndBlockJ(TextExercise exercise, long blockI, long blockJ);
 }

@@ -194,11 +194,7 @@ public class AutomaticTextFeedbackService {
         for (TextBlock b: allBlocksInCluster) {
             int i = b.getTreeId();
             long j = block.getTreeId();
-            if(i <= j) {
-                distances.put(i, pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), i, j).getDistance());
-            } else {
-                distances.put(i, pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), j, i).getDistance());
-            }
+            distances.put(i, getDistanceBetweenBlocks(cluster.getExercise(), i, j));
         }
 
         final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
@@ -239,6 +235,23 @@ public class AutomaticTextFeedbackService {
      */
     private double sumLambdaValues(double l1, double l2) {
         return 1 / (1 / l1 + 1 / l2);
+    }
+
+    /**
+     * Gets the distance between two given text blocks
+     * @param exercise - Exercise of the text blocks
+     * @param i - Text block i
+     * @param j - Text block j
+     * @return the distance
+     */
+    private double getDistanceBetweenBlocks(TextExercise exercise, long i, long j) {
+        if(i == j) {
+            return 0;
+        } else if(i < j) {
+            return pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(exercise, i, j).getDistance();
+        } else {
+            return pairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(exercise, j, i).getDistance();
+        }
     }
 
 }
