@@ -260,9 +260,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Generate a valid cluster tree
         List<TextTreeNode> clusterTree = textExerciseUtilService.generateClusterTree(textBlocks.stream().map(TextBlock::getTreeId).collect(Collectors.toList()));
-        for (TextTreeNode node: clusterTree) {
-            node.setExercise(textExercise);
-        }
+        clusterTree.forEach(node -> node.setExercise(textExercise));
         textTreeNodeRepository.saveAll(clusterTree);
 
         long[] clusterTreeIds = textExerciseUtilService.getTreeIdsOfClustersInFlatPartitioning(clusterTree, 4);

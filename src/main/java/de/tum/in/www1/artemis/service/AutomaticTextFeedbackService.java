@@ -7,8 +7,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.text.*;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.text.TextBlock;
-import de.tum.in.www1.artemis.domain.text.TextCluster;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import de.tum.in.www1.artemis.repository.TextTreeNodeRepository;
 

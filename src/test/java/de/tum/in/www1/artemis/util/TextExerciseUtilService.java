@@ -41,7 +41,12 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
-    public ArrayList<TextBlock> generateTextBlocksWithTreeId(int count) {
+    /**
+     * Generates text blocks that have non-null treeId value
+     * @param count Number of blocks to be created
+     * @return List of text blocks
+     */
+    public List<TextBlock> generateTextBlocksWithTreeId(int count) {
         ArrayList<TextBlock> textBlocks = new ArrayList<>();
         TextBlock textBlock;
         for (int i = 0; i < count; i++) {
@@ -53,6 +58,11 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
+    /**
+     * Builds a valid cluster tree
+     * @param blockTreeIds - TreeIds of the blocks in the cluster tree
+     * @return List of TextTreeNodes
+     */
     public List<TextTreeNode> generateClusterTree(List<Integer> blockTreeIds) {
         List<TextTreeNode> clusterTree = new ArrayList<>();
         // Create and add root node
