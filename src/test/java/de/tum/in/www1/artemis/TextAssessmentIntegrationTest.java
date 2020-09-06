@@ -40,21 +40,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.text.TextBlock;
-import de.tum.in.www1.artemis.domain.text.TextCluster;
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.domain.text.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -90,6 +77,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private TextBlockRepository textBlockRepository;
+
+    @Autowired
+    private TextTreeNodeRepository textTreeNodeRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -264,11 +254,19 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
-        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocksWithTreeId(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+
+        // Generate a valid cluster tree
+        List<TextTreeNode> clusterTree = textExerciseUtilService.generateClusterTree(textBlocks.stream().map(TextBlock::getTreeId).collect(Collectors.toList()));
+        for (TextTreeNode node: clusterTree) {
+            node.setExercise(textExercise);
+        }
+        textTreeNodeRepository.saveAll(clusterTree);
+
+        long[] clusterTreeIds = textExerciseUtilService.getTreeIdsOfClustersInFlatPartitioning(clusterTree, 4);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToClustersWithTreeStructure(textBlocks, clusterTree, textExercise, clusterTreeIds);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
 

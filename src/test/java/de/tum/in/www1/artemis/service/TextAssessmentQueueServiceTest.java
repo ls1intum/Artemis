@@ -78,7 +78,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
         ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToClustersWithoutTreeStructure(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
