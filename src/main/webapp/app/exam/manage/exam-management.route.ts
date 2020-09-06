@@ -90,7 +90,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
     resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : null;
         const examId = route.params['examId'] ? route.params['examId'] : null;
-        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : null;
+        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
@@ -239,6 +239,18 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'artemisApp.examManagement.tutorDashboard',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/:testRunExamId/view',
+        component: StudentExamDetailComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },

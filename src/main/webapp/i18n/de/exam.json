@@ -202,7 +202,8 @@
                 "testRun": "Testlauf",
                 "title": "Testlaufverwaltung: ",
                 "setup": "Testlauf Erstellen",
-                "assess": "Testläufe Bewerten"
+                "assess": "Testläufe Bewerten",
+                "manage": "Arbeitszeit verwalten"
             },
             "examStudents": {
                 "registeredStudents": "Angemeldete Studenten",

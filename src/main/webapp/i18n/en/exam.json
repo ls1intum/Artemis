@@ -202,7 +202,8 @@
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
                 "setup": "Set up Test Run",
-                "assess": "Assess Test Runs"
+                "assess": "Assess Test Runs",
+                "manage": "Manage Working Time"
             },
             "examStudents": {
                 "registeredStudents": "Registered students",

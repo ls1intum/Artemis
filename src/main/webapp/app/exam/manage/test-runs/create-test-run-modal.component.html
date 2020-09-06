@@ -1,0 +1,10 @@
+<h2>Create Test Run</h2>
+<div *ngFor="let exerciseGroup of exam.exerciseGroups">
+    <h3>{{ exerciseGroup.title }}</h3>
+    <p>Select an exercise for this exercise group:</p>
+    <ul>
+        <li *ngFor="let exercise of exerciseGroup.exercises" (click)="onSelectExercise(exercise)">
+            {{ exercise.title }}
+        </li>
+    </ul>
+</div>

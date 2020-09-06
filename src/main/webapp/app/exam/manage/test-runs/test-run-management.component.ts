@@ -5,8 +5,11 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CreateTestRunModal } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -24,47 +27,56 @@ export class TestRunManagementComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        private courseManagementService: CourseManagementService,
+        private examManagementService: ExamManagementService,
+        private accountService: AccountService,
         private sortService: SortService,
+        private modalService: NgbModal,
     ) {
         this.predicate = 'id';
         this.ascending = true;
     }
 
     ngOnInit(): void {
-        this.route.data.subscribe(({ exam }) => {
-            this.exam = exam;
-            this.isExamStarted = this.exam.started;
-            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
-                (response: HttpResponse<Course>) => {
-                    this.exam.course = response.body!;
-                    this.course = response.body!;
-                },
-                (err: HttpErrorResponse) => this.onError(err),
-            );
-        });
-        let testRun1 = new StudentExam();
-        let testRun2 = new StudentExam();
-        testRun1.id = 1;
-        testRun1.started = true;
-        testRun1.workingTime = 4000;
-        testRun1.submitted = true;
-        testRun1.exam = this.exam;
-        this.testRuns = [testRun1];
-        testRun2.id = 2;
-        testRun2.started = false;
-        testRun2.workingTime = 6000;
-        testRun2.exam = this.exam;
-
-        this.testRuns.push(testRun2);
+        this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true).subscribe(
+            (response: HttpResponse<Exam>) => {
+                this.exam = response.body!;
+                this.isExamStarted = this.exam.started;
+                this.course = this.exam.course;
+                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                // TODO delete, replace with call to get all studentExams with testRun flag
+                let testRun1 = new StudentExam();
+                let testRun2 = new StudentExam();
+                testRun1.id = 1;
+                testRun1.started = true;
+                testRun1.workingTime = 4000;
+                testRun1.submitted = true;
+                testRun1.exam = this.exam;
+                this.testRuns = [testRun1];
+                testRun2.id = 2;
+                testRun2.started = false;
+                testRun2.workingTime = 6000;
+                testRun2.exam = this.exam;
+                this.testRuns.push(testRun2);
+            },
+            (error) => this.onError(error),
+        );
     }
 
-    openTestRunModal() {
-        // TODO
+    /**
+     * Open modal to configure a new test run
+     */
+    openCreateTestRunModal() {
+        const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModal as Component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exam = this.exam;
+        modalRef.result.then((testRun: StudentExam) => {
+            !!this.testRuns ? this.testRuns.push(testRun) : (this.testRuns = [testRun]);
+            console.log('Test run created');
+            // TODO: Create the configured student exam => make the server call
+        });
     }
 
     startTestRun(testRun: StudentExam) {
-        // TODO
+        // TODO: Launch conduction
     }
 
     /**
