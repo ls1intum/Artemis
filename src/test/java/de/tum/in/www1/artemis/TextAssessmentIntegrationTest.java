@@ -254,7 +254,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocksWithTreeId(submissionCount * submissionSize);
+        List<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocksWithTreeId(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
 
