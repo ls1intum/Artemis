@@ -3,23 +3,19 @@ package de.tum.in.www1.artemis.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.*;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.service.connectors.TextEmbeddingService;
-import de.tum.in.www1.artemis.service.connectors.TextSegmentationService;
-import de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
-import static org.mockito.Mockito.*;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,8 +25,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.text.*;
+import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.TextEmbeddingService;
+import de.tum.in.www1.artemis.service.connectors.TextSegmentationService;
+import de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -331,7 +331,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         textTreeNodeRepository.save(newNode);
 
         request.delete("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exams/" + exercise.getExerciseGroup().getExam().getId() + "/exerciseGroups/"
-            + exercise.getExerciseGroup().getId(), HttpStatus.OK);
+                + exercise.getExerciseGroup().getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(exercise.getId()).isPresent(), equalTo(false));
         assertThat(textTreeNodeRepository.findAllByExercise(exercise), hasSize(0));
         assertThat(textPairwiseDistanceRepository.findAllByExercise(exercise), hasSize(0));

@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.text.*;
-import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -11,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 
 @Service
 @Profile("automaticText")
@@ -23,7 +23,8 @@ public class TextAssessmentQueueService {
 
     private final TextPairwiseDistanceRepository textPairwiseDistanceRepository;
 
-    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService, TextPairwiseDistanceRepository textPairwiseDistanceRepository) {
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService,
+            TextPairwiseDistanceRepository textPairwiseDistanceRepository) {
         this.textClusterRepository = textClusterRepository;
         this.textSubmissionService = textSubmissionService;
         this.textPairwiseDistanceRepository = textPairwiseDistanceRepository;
@@ -60,7 +61,7 @@ public class TextAssessmentQueueService {
         }
         Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
         return textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
-            .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
+                .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
     }
 
     /**
@@ -100,13 +101,14 @@ public class TextAssessmentQueueService {
         }
         List<TextBlock> blocks = cluster.getBlocks();
         double sum = 0.0;
-        for (TextBlock block: blocks) {
+        for (TextBlock block : blocks) {
             TextPairwiseDistance distance;
             // TODO: Why 1 - distance? (Entries in textPairwiseDistanceRepository have the actual distances)
             if (block.getTreeId() < textBlock.getTreeId()) {
                 distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) block.getTreeId(), (long) textBlock.getTreeId());
                 sum += 1 - distance.getDistance();
-            } else if (block.getTreeId() > textBlock.getTreeId()) {
+            }
+            else if (block.getTreeId() > textBlock.getTreeId()) {
                 distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) textBlock.getTreeId(), (long) block.getTreeId());
                 sum += 1 - distance.getDistance();
             }
