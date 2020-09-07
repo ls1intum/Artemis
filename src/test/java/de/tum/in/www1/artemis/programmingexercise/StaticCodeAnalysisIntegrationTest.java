@@ -51,7 +51,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private String parameterizeEndpoint(String endpoint, ProgrammingExercise exercise) {
-        return endpoint.replace("{exerciseId}", exercise.getId() + "");
+        return endpoint.replace("{exerciseId}", String.valueOf(exercise.getId()));
     }
 
     @Test
