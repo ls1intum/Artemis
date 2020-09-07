@@ -46,6 +46,23 @@ public class TextExerciseUtilService {
         return textBlocks;
     }
 
+    /**
+     * Generates text blocks that have non-null treeId value
+     * @param count Number of blocks to be created
+     * @return List of text blocks
+     */
+    public List<TextBlock> generateTextBlocksWithTreeId(int count) {
+        ArrayList<TextBlock> textBlocks = new ArrayList<>();
+        TextBlock textBlock;
+        for (int i = 0; i < count; i++) {
+            textBlock = new TextBlock();
+            textBlock.setText("TextBlock" + i);
+            textBlock.setTreeId(i);
+            textBlocks.add(textBlock);
+        }
+        return textBlocks;
+    }
+
     public List<TextCluster> addTextBlocksToCluster(List<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
 
         if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {

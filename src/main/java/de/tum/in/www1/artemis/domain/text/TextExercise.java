@@ -48,6 +48,15 @@ public class TextExercise extends Exercise implements Serializable {
         this.sampleSolution = sampleSolution;
     }
 
+    public TextExercise addPairwiseDistance(TextPairwiseDistance pairwiseDistance) {
+        this.pairwiseDistances.add(pairwiseDistance);
+        return this;
+    }
+
+    public void setPairwiseDistances(List<TextPairwiseDistance> pairwiseDistances) {
+        this.pairwiseDistances = pairwiseDistances;
+    }
+
     public boolean isAutomaticAssessmentEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }

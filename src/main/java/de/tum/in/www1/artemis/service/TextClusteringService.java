@@ -131,7 +131,7 @@ public class TextClusteringService {
         final List<TextTreeNode> clusterTree;
         final List<List<Double>> distanceMatrix;
         try {
-            TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
+            TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(embeddings);
             clusters = response.clusters;
             clusterTree = response.clusterTree;
             distanceMatrix = response.distanceMatrix;

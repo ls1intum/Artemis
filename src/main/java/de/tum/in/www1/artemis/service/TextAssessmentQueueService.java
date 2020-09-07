@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.text.*;
+import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -9,10 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.text.TextBlock;
-import de.tum.in.www1.artemis.domain.text.TextCluster;
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 
 @Service
@@ -23,9 +21,12 @@ public class TextAssessmentQueueService {
 
     private final TextSubmissionService textSubmissionService;
 
-    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService) {
+    private final TextPairwiseDistanceRepository textPairwiseDistanceRepository;
+
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService, TextPairwiseDistanceRepository textPairwiseDistanceRepository) {
         this.textClusterRepository = textClusterRepository;
         this.textSubmissionService = textSubmissionService;
+        this.textPairwiseDistanceRepository = textPairwiseDistanceRepository;
     }
 
     /**
@@ -59,7 +60,7 @@ public class TextAssessmentQueueService {
         }
         Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
         return textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
-                .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
+            .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
     }
 
     /**
@@ -97,10 +98,20 @@ public class TextAssessmentQueueService {
         if (!cluster.getBlocks().contains(textBlock)) {
             throw new IllegalArgumentException("textBlock must be an element of the cluster");
         }
-        double[][] distanceMatrix = cluster.getDistanceMatrix();
-        int blockID = cluster.getBlocks().indexOf(textBlock);
-        // subtract 1 because the statement also included the distance to itself, but it should't be included
-        return Arrays.stream(distanceMatrix[blockID]).map(distance -> 1.0 - distance).sum() - 1;
+        List<TextBlock> blocks = cluster.getBlocks();
+        double sum = 0.0;
+        for (TextBlock block: blocks) {
+            TextPairwiseDistance distance;
+            // TODO: Why 1 - distance? (Entries in textPairwiseDistanceRepository have the actual distances)
+            if (block.getTreeId() < textBlock.getTreeId()) {
+                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) block.getTreeId(), (long) textBlock.getTreeId());
+                sum += 1 - distance.getDistance();
+            } else if (block.getTreeId() > textBlock.getTreeId()) {
+                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) textBlock.getTreeId(), (long) block.getTreeId());
+                sum += 1 - distance.getDistance();
+            }
+        }
+        return sum;
     }
 
     /**
@@ -109,6 +120,7 @@ public class TextAssessmentQueueService {
      * @param textBlockList list of the TextBlocks
      * @param textCluster Cluster
      */
+    @Transactional(readOnly = true)
     public void setAddedDistances(List<TextBlock> textBlockList, TextCluster textCluster) {
         textBlockList.forEach(textBlock -> {
             double addedDistance = calculateAddedDistance(textBlock, textCluster);

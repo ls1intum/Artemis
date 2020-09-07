@@ -15,4 +15,6 @@ import de.tum.in.www1.artemis.domain.text.TextPairwiseDistance;
 public interface TextPairwiseDistanceRepository extends JpaRepository<TextPairwiseDistance, Long> {
 
     List<TextPairwiseDistance> findAllByExercise(TextExercise exercise);
+
+    TextPairwiseDistance findByExerciseAndAndBlockIAndBlockJ(TextExercise exercise, long blockI, long blockJ);
 }
