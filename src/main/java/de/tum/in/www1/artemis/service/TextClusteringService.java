@@ -123,6 +123,7 @@ public class TextClusteringService {
         for (int i = 0; i < blocks.size(); i++) {
             TextBlock block = blocks.get(i);
             block.setTreeId(i);
+            textBlockMap.put(block.getId(), block);
             textBlockRepository.save(block);
         }
 
@@ -168,6 +169,8 @@ public class TextClusteringService {
             cluster.setExercise(exercise);
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
                     .collect(toList());
+            // To update the treeIds of the cluster
+            cluster.setBlocks(updatedBlockReferences);
 
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
 

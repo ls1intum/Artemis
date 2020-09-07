@@ -105,11 +105,11 @@ public class TextAssessmentQueueService {
             TextPairwiseDistance distance;
             // TODO: Why 1 - distance? (Entries in textPairwiseDistanceRepository have the actual distances)
             if (block.getTreeId() < textBlock.getTreeId()) {
-                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) block.getTreeId(), (long) textBlock.getTreeId());
+                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), block.getTreeId(), textBlock.getTreeId());
                 sum += 1 - distance.getDistance();
             }
             else if (block.getTreeId() > textBlock.getTreeId()) {
-                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), (long) textBlock.getTreeId(), (long) block.getTreeId());
+                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), textBlock.getTreeId(), block.getTreeId());
                 sum += 1 - distance.getDistance();
             }
         }
