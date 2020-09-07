@@ -124,7 +124,6 @@ public class TextClusteringService {
             TextBlock block = blocks.get(i);
             block.setTreeId(i);
             textBlockMap.put(block.getId(), block);
-            textBlockRepository.save(block);
         }
 
         // Invoke clustering for Text Blocks

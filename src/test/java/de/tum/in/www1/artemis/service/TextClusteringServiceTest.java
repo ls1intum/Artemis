@@ -151,14 +151,13 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         ReflectionTestUtils.setField(textClusteringService, "textEmbeddingService", textEmbeddingService);
         ReflectionTestUtils.setField(textClusteringService, "textAssessmentQueueService", textAssessmentQueueService);
 
-        textClusterRepository.saveAll(clusters);
         textClusteringService.calculateClusters(exercise);
 
-        clusters = textClusterRepository.findAll();
+        clusters = textClusterRepository.findAllByExercise(exercise);
         blocks = textBlockRepository.findAll();
         exercises = textExerciseRepository.findAll();
-        treeNodes = textTreeNodeRepository.findAll();
-        pairwiseDistances = textPairwiseDistanceRepository.findAll();
+        treeNodes = textTreeNodeRepository.findAllByExercise(exercise);
+        pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
         submissions = textSubmissionRepository.findAll();
 
         // Initialize data for the second exercise
