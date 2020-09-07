@@ -30,9 +30,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     RequestUtilService request;
 
     @Autowired
-    private StaticCodeAnalysisCategoryRepository scaCategoryRepository;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
