@@ -155,7 +155,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
         clusters = textClusterRepository.findAllByExercise(exercise);
         blocks = textBlockRepository.findAll();
-        exercises = textExerciseRepository.findAll();
         treeNodes = textTreeNodeRepository.findAllByExercise(exercise);
         pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
         submissions = textSubmissionRepository.findAll();
@@ -189,6 +188,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         TextExercise exercise = exercises.get(0);
         // Only half of the matrix is stored in the database, as it is symmetrical (Main diagonal also not stored).
         int matrixSize = (blocks.size() - 1) * blocks.size() / 2; // Gives sum of numbers from 1 to (blocks.size() - 1)
+        pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
         assertThat(pairwiseDistances, hasSize(matrixSize));
         // BlockI < BlockJ should hold
         for (TextPairwiseDistance dist : pairwiseDistances) {
