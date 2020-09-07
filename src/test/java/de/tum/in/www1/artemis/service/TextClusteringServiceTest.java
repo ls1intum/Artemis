@@ -163,15 +163,19 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         TextExercise exercise2 = exercises.get(1);
         submission = ModelFactory.generateTextSubmission("Submission to be deleted...", Language.ENGLISH, true);
         database.addTextSubmission(exercise2, submission, "student1");
+
         TextBlock block = ModelFactory.generateTextBlock(0, 1, "b1");
         block.setSubmission(submission);
         block.setTreeId(11);
         textBlockRepository.save(block);
+
         TextCluster cluster = new TextCluster().exercise(exercise2);
         textClusterRepository.save(cluster);
+
         TextTreeNode incorrectTreeNode = new TextTreeNode().exercise(exercise2);
         incorrectTreeNode.setChild(-1);
         textTreeNodeRepository.save(incorrectTreeNode);
+
         TextPairwiseDistance incorrectPairwiseDistance = new TextPairwiseDistance().exercise(exercise2);
         textPairwiseDistanceRepository.save(incorrectPairwiseDistance);
     }
@@ -186,15 +190,15 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(value = "student1", roles = "USER")
     public void testUniqueProperties() {
         TextExercise exercise = exercises.get(0);
-        // Only half of the matrix is stored in the database, as it is symmetrical (Main diagonal also not stored).
-        int matrixSize = (blocks.size() - 1) * blocks.size() / 2; // Gives sum of numbers from 1 to (blocks.size() - 1)
-        pairwiseDistances = textPairwiseDistanceRepository.findAllByExercise(exercise);
-        assertThat(pairwiseDistances, hasSize(matrixSize));
-        // BlockI < BlockJ should hold
+
+        // BlockI < BlockJ and distance >= 0 should hold
         for (TextPairwiseDistance dist : pairwiseDistances) {
             assertThat(dist.getBlockI(), lessThan(dist.getBlockJ()));
             assertThat(dist.getDistance(), greaterThanOrEqualTo(0.));
         }
+        // Only half of the matrix is stored in the database, as it is symmetrical (Main diagonal also not stored).
+        int matrixSize = (blocks.size() - 1) * blocks.size() / 2; // Gives sum of numbers from 1 to (blocks.size() - 1)
+        assertThat(pairwiseDistances, hasSize(matrixSize));
 
         // Getter and setter for lambda value tested
         TextTreeNode testNode = new TextTreeNode();
@@ -479,7 +483,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         for (int i = 0; i < clusters.size(); i++) {
             response.clusters.put(i, clusters.get(i));
         }
+
         response.clusterTree = treeNodes;
+
         double[][] matrix = new double[blocks.size()][blocks.size()];
         pairwiseDistances.forEach(dist -> matrix[(int) dist.getBlockI()][(int) dist.getBlockJ()] = dist.getDistance());
         response.distanceMatrix = new ArrayList<>();
