@@ -137,7 +137,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             when(textSimilarityClusteringService.clusterTextBlocks(anyList())).thenReturn(prepareMockResponse());
         }
         catch (NetworkingError error) {
-            error.printStackTrace();
+            fail("Mocks could not be initialized.");
             return;
         }
 
@@ -154,6 +154,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         exercises = textExerciseRepository.findAll();
         treeNodes = textTreeNodeRepository.findAll();
         pairwiseDistances = textPairwiseDistanceRepository.findAll();
+        submissions = textSubmissionRepository.findAll();
 
         // Initialize data for the second exercise
         TextExercise exercise2 = exercises.get(1);
@@ -391,7 +392,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      * @param exercise
      */
     private void initializeBlocksAndSubmissions(TextExercise exercise) {
-        // Create first submission, save text blocks and submission
+        // Create text blocks and first submission, save submission
         submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
         database.addTextSubmission(exercise, submission, "student1");
 
@@ -399,21 +400,16 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         bl.computeId();
         bl.setTreeId(0);
         blocks.add(bl);
-        textBlockRepository.save(bl);
-        submission.addBlock(bl);
-        submissions.add(submission);
-        textSubmissionRepository.save(submission);
 
         bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(blockText[1]);
         bl.computeId();
         bl.setTreeId(1);
         blocks.add(bl);
-        textBlockRepository.save(bl);
-        submission.addBlock(bl);
+
         submissions.add(submission);
         textSubmissionRepository.save(submission);
 
-        // Create submissions, save text blocks and submissions
+        // Create text blocks and submissions, save submissions
         for (int i = 2; i <= 10; i++) {
             submission = ModelFactory.generateTextSubmission(blockText[i], Language.ENGLISH, true);
             database.addTextSubmission(exercise, submission, "student" + i);
@@ -421,8 +417,6 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             bl.computeId();
             bl.setTreeId(i);
             blocks.add(bl);
-            textBlockRepository.save(bl);
-            submission.addBlock(bl);
             submissions.add(submission);
             textSubmissionRepository.save(submission);
         }
