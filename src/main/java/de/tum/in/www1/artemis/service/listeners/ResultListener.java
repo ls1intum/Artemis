@@ -47,6 +47,21 @@ public class ResultListener {
     }
 
     /**
+     * Before result gets updated, remove result from all TutorScores.
+     *
+     * @param updatedResult updated result
+     */
+    @PreUpdate
+    public void preUpdate(Result updatedResult) {
+        log.info("Result " + updatedResult + " will be updated");
+
+        if (updatedResult.getAssessor() != null) {
+            // remove from tutor scores for future update
+            tutorScoreService.removeResult(updatedResult);
+        }
+    }
+
+    /**
      * After result gets updated, update all StudentScores/TutorScores with this result.
      *
      * @param updatedResult updated result
