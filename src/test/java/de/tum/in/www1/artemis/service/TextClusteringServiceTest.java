@@ -61,6 +61,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
     @Mock
     TextSimilarityClusteringService textSimilarityClusteringService = mock(TextSimilarityClusteringService.class);
 
+    @Mock
+    TextAssessmentQueueService textAssessmentQueueService = mock(TextAssessmentQueueService.class);
+
     @Autowired
     TextExerciseRepository textExerciseRepository;
 
@@ -135,6 +138,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             when(textSegmentationService.segmentSubmissions(anyList())).thenReturn(blocks);
             when(textEmbeddingService.embedTextBlocks(anyList(), any())).thenReturn(new ArrayList<>());
             when(textSimilarityClusteringService.clusterTextBlocks(anyList())).thenReturn(prepareMockResponse());
+            doNothing().when(textAssessmentQueueService).setAddedDistances(anyList(), any());
         }
         catch (NetworkingError error) {
             fail("Mocks could not be initialized.");
@@ -145,6 +149,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         ReflectionTestUtils.setField(textClusteringService, "textSimilarityClusteringService", textSimilarityClusteringService);
         ReflectionTestUtils.setField(textClusteringService, "textSegmentationService", textSegmentationService);
         ReflectionTestUtils.setField(textClusteringService, "textEmbeddingService", textEmbeddingService);
+        ReflectionTestUtils.setField(textClusteringService, "textAssessmentQueueService", textAssessmentQueueService);
 
         textClusterRepository.saveAll(clusters);
         textClusteringService.calculateClusters(exercise);
