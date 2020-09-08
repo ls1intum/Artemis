@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -20,6 +16,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -41,6 +38,10 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final UserService userService;
+
+    private final ExamService examService;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -53,11 +54,14 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, ParticipationService participationService,
+            QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
+            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
+        this.examService = examService;
+        this.userService = userService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -335,5 +339,69 @@ public class StudentExamService {
     public Set<Integer> findAllDistinctWorkingTimesByExamId(Long examId) {
         log.debug("Request to find all distinct working times for Exam : {}", examId);
         return studentExamRepository.findAllDistinctWorkingTimesByExamId(examId);
+    }
+
+    /**
+     * Generates a Student Exam marked as a testRun for te instructor to test the exam as a student would experience it.
+     * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * @param testRunConfiguration the configured studentExam
+     * @param instructorId the id of the instructor
+     * @return the created testRun studentExam
+     */
+    public StudentExam generateTestRun(StudentExam testRunConfiguration, Long instructorId) {
+        StudentExam testRun = createTestRun(testRunConfiguration);
+        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId(), instructorId);
+        return testRun;
+    }
+
+    /**
+     * Create TestRun student exam based on the configuration provided.
+     *
+     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @return The created test run
+     */
+    private StudentExam createTestRun(StudentExam testRunConfiguration) {
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(testRunConfiguration.getExercises());
+        testRun.setExam(testRunConfiguration.getExam());
+        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setUser(userService.getUser());
+        testRun.setTestRun(true);
+        testRun.setSubmitted(false);
+        testRun = studentExamRepository.save(testRun);
+        return testRun;
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the test run.
+     * Calling {@link ExamService#setUpExerciseParticipationsAndSubmissions}
+     *
+     * @param testRunId the ID of the TestRun
+     */
+    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId, Long instructorId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsForUserById(testRunId, instructorId)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+
+        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+    }
+
+    public StudentExam deleteTestRun(Long testRunId, Long instructorId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsForUserById(testRunId, instructorId)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+
+        // Delete participations and submissions
+        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(testRun.getId(), testRun.getExercises());
+        for (var participation : participations) {
+            participationService.delete(participation.getId(), true, true);
+        }
+
+        // Delete the student exam
+        studentExamRepository.deleteById(testRunId);
+        return testRun;
+    }
+
+    public List<StudentExam> findAllTestRuns(Long examId) {
+        return studentExamRepository.findAllTestRunsById(examId);
     }
 }

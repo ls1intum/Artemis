@@ -293,6 +293,74 @@ public class StudentExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @return the list of test runs
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to find all test runs for exam {}", examId);
+
+        Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
+        return ResponseEntity.ok(testRuns);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/create-test-run : Create a test run
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunConfiguration the desired student exam configuration for the test run
+     * @return the created test run student exam
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/create-test-run")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
+        log.info("REST request to create a test run of exam {}", examId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
+            return badRequest();
+        }
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration, user.getId());
+        return ResponseEntity.ok(testRun);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/delete-test-run/{testRunId} : Delete a test run
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunId the id of the student exam of the test run
+     * @return the deleted test run student exam
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
+        log.info("REST request to delete the test run with id {}", testRunId);
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        StudentExam testRun = studentExamService.deleteTestRun(testRunId, user.getId());
+        return ResponseEntity.ok(testRun);
+    }
+
+    /**
      * For all exercises from the student exam, fetch participation, submissions & result for the current user.
      *
      * @param studentExam the student exam in quesiton
@@ -328,8 +396,7 @@ public class StudentExamResource {
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
 
-        if (exercise instanceof ProgrammingExercise) {
-            var programmingExercise = (ProgrammingExercise) exercise;
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             programmingExercise.setTestRepositoryUrl(null);
         }
 

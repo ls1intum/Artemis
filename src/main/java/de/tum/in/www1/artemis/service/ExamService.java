@@ -656,32 +656,40 @@ public class ExamService {
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
-            User student = studentExam.getUser();
-            for (Exercise exercise : studentExam.getExercises()) {
-                // we start the exercise if no participation was found that was already fully initialized
-                if (exercise.getStudentParticipations().stream()
-                        .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
-                                && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
-                    try {
-                        SecurityUtils.setAuthorizationObject();
-                        if (exercise instanceof ProgrammingExercise) {
-                            // Load lazy property
-                            final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
-                            ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
-                        }
-                        // this will create initial (empty) submissions for quiz, text, modeling and file upload
-                        var participation = participationService.startExercise(exercise, student, true);
-                        generatedParticipations.add(participation);
-                    }
-                    catch (Exception ex) {
-                        log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(),
-                                student.getId(), ex.getMessage(), ex);
-                    }
-                }
-            }
+            setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam);
         }));
 
         return generatedParticipations.size();
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the student exam.
+     *
+     * @param studentExam The student exam
+     */
+    public void setUpExerciseParticipationsAndSubmissions(List<Participation> generatedParticipations, StudentExam studentExam) {
+        User student = studentExam.getUser();
+        for (Exercise exercise : studentExam.getExercises()) {
+            // we start the exercise if no participation was found that was already fully initialized
+            if (exercise.getStudentParticipations().stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+                try {
+                    SecurityUtils.setAuthorizationObject();
+                    if (exercise instanceof ProgrammingExercise) {
+                        // Load lazy property
+                        final var programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+                        ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                    }
+                    // this will create initial (empty) submissions for quiz, text, modeling and file upload
+                    var participation = participationService.startExercise(exercise, student, true);
+                    generatedParticipations.add(participation);
+                }
+                catch (Exception ex) {
+                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                            ex.getMessage(), ex);
+                }
+            }
+        }
     }
 
     private void executeInParallel(Runnable task) {
@@ -865,4 +873,5 @@ public class ExamService {
     public boolean isUserRegisteredForExam(Long examId, Long userId) {
         return examRepository.isUserRegisteredForExam(examId, userId);
     }
+
 }
