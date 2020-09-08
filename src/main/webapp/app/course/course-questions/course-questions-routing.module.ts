@@ -1,8 +1,9 @@
-import { Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseQuestionsComponent } from 'app/course/course-questions/course-questions.component';
+import { NgModule } from '@angular/core';
 
-export const courseQuestionsRoute: Routes = [
+const routes: Routes = [
     {
         path: ':courseId/questions',
         component: CourseQuestionsComponent,
@@ -13,3 +14,9 @@ export const courseQuestionsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisCourseQuestionsRoutingModule {}
