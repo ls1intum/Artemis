@@ -625,6 +625,20 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_bonusPointsIsNull() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setBonusPoints(null);
+        programmingExercise.setShortName("testShortName");
+        programmingExercise.setTitle("testTitle");
+        mockConnectorRequestsForSetup(programmingExercise);
+        var responseExercise = request.postWithResponseBody(ROOT + SETUP, programmingExercise, ProgrammingExercise.class);
+        var savedExercise = programmingExerciseRepository.findById(responseExercise.getId()).get();
+        assertThat(responseExercise.getBonusPoints()).isEqualTo(0d);
+        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(null);
