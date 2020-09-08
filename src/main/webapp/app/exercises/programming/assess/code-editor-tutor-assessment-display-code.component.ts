@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-display-code',
@@ -11,17 +12,23 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges {
     @Input()
     selectedFile: string;
+    @Input()
+    allFeedbacks: Feedback[] = [];
     @Output()
     onError = new EventEmitter<string>();
-
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     studentCode: string;
     studentCodePerLine: string[];
 
     isLoading = false;
-    lineOfCodeHovered: number | null;
+
+    // manual assessment
+    fileFeedbacks: Feedback[];
     toggleInlineComment = false;
     lineOfCodeForInlineComment: number;
+    fileFeedbackPerLine: { [line: number]: Feedback } = {};
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
 
@@ -49,6 +56,20 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             this.studentCode = this.fileSession[this.selectedFile].code;
             this.studentCodePerLine = this.studentCode.split(/\r?\n/);
+            if (!this.allFeedbacks) {
+                this.allFeedbacks = [];
+            }
+            this.fileFeedbacks = this.allFeedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
+            this.fileFeedbackPerLine = {};
+            this.fileFeedbacks.forEach((feedback) => {
+                const line: number = +feedback.reference!.split('line:')[1];
+                this.fileFeedbackPerLine[line] = feedback;
+            });
+            console.log('file feebacks normal und per line und undefined');
+            console.log(this.allFeedbacks);
+            console.log(this.fileFeedbacks);
+            console.log(this.fileFeedbackPerLine);
+            console.log(this.fileFeedbackPerLine[1]);
         }
     }
 
@@ -81,10 +102,35 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     openInlineFeedback(i: number) {
         this.lineOfCodeForInlineComment = i;
         this.toggleInlineComment = true;
-        console.log('openInlineFeedback');
+        console.log('openInlineFeedback toggleInline: ' + this.toggleInlineComment + ' line of code: ' + this.lineOfCodeForInlineComment);
+        console.log('feeedbacks');
+        console.log(this.fileFeedbacks);
+        console.log(this.allFeedbacks);
     }
 
-    onCancel() {
+    updateFeedback(feedback: Feedback) {
+        console.log('updateFeedback');
+        const line: number = +feedback.reference!.split('line:')[1];
+        // Check if feedback already exists and update it, else append it to feedbacks of the file
+        if (this.allFeedbacks.some((f) => f.reference === feedback.reference)) {
+            console.log('update existing feedback');
+            const index = this.allFeedbacks.findIndex((f) => f.reference === feedback.reference);
+            this.allFeedbacks[index] = feedback;
+            this.fileFeedbackPerLine[line] = feedback;
+        } else {
+            console.log('append feedback');
+            this.allFeedbacks.push(feedback);
+            this.fileFeedbackPerLine[line] = feedback;
+        }
+        console.log('fileFeedbacks after update 123: ');
+        console.log(this.fileFeedbackPerLine);
+        console.log(this.allFeedbacks);
+        this.toggleInlineComment = false;
+        this.onUpdateFeedback.emit(this.allFeedbacks);
+        console.log('should emit');
+    }
+
+    onCancelFeedback() {
         this.toggleInlineComment = false;
     }
 }

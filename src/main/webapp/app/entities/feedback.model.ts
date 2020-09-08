@@ -19,6 +19,7 @@ export enum FeedbackType {
 }
 
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
+export const MANUAL_ASSESSMENT_IDENTIFIER = 'MAFeedbackIdentifier:';
 
 export class Feedback implements BaseEntity {
     public id: number;

@@ -13,7 +13,7 @@
         <table>
             <tbody>
                 <ng-container *ngFor="let lineOfCode of studentCodePerLine; let i = index">
-                    <tr  id="code-line-{{ i + 1 }}">
+                    <tr id="code-line-{{ i + 1 }}">
                         <td [style.width]="'20px'">
                             <div class="btn-inline-comment" (click)="openInlineFeedback(i)">
                                 <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
@@ -25,9 +25,16 @@
                             <pre>{{ lineOfCode }}</pre>
                         </td>
                     </tr>
-                    <tr *ngIf="lineOfCodeForInlineComment === i && toggleInlineComment">
+                    <tr *ngIf="fileFeedbackPerLine[i] || (lineOfCodeForInlineComment === i && toggleInlineComment)">
                         <td colspan="4">
-                            <jhi-code-editor-tutor-assessment-inline-feedback (onCancelFeedback)="onCancel()"></jhi-code-editor-tutor-assessment-inline-feedback>
+                            <jhi-code-editor-tutor-assessment-inline-feedback
+                                [fileName]="selectedFile"
+                                [codeLine]="i"
+                                [feedback]="fileFeedbackPerLine[i]"
+                                (onCancelFeedback)="onCancelFeedback()"
+                                (onUpdateFeedback)="updateFeedback($event)"
+                            >
+                            </jhi-code-editor-tutor-assessment-inline-feedback>
                         </td>
                     </tr>
                 </ng-container>

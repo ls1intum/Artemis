@@ -26,6 +26,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Course } from 'app/entities/course.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -266,6 +267,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.assessmentsAreValid = this.manualResult.resultString.trim().length > 0;
         } else {
             this.assessmentsAreValid = false;
+        }
+    }
+
+    onUpdateFeedback(feedbacks: Feedback[]) {
+        console.log('final update');
+        if (this.manualResult) {
+            console.log('final update - result exists');
+            this.manualResult.feedbacks = feedbacks;
+        } else {
+            console.log('final update - result does not exists');
+            this.manualResult = new Result();
+            this.manualResult.feedbacks = feedbacks;
         }
     }
 
