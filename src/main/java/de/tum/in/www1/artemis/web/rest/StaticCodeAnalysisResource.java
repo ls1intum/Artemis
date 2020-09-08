@@ -97,7 +97,7 @@ public class StaticCodeAnalysisResource {
             return forbidden();
         }
 
-        // Validate the categories to update
+        // Validate the category updates
         for (var category : categories) {
             // Each categories must have an id
             if (category.getId() == null) {
