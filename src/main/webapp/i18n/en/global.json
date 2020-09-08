@@ -212,7 +212,8 @@
             "exercise": "Exercises",
             "scores": "Scores",
             "manageHints": "Manage Hints",
-            "addExternalSubmission": "Add External Submission"
+            "addExternalSubmission": "Add External Submission",
+            "questionsAndAnswers": "Questions and Answers"
         },
         "detail": {
             "field": "Field",
