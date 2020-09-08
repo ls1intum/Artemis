@@ -203,7 +203,11 @@
                 "title": "Testlaufverwaltung: ",
                 "setup": "Testlauf Erstellen",
                 "assess": "Testläufe Bewerten",
-                "manage": "Arbeitszeit verwalten"
+                "manage": "Arbeitszeit verwalten",
+                "delete": {
+                    "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht.",
+                    "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein."
+                }
             },
             "examStudents": {
                 "registeredStudents": "Angemeldete Studenten",

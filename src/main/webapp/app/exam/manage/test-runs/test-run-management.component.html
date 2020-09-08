@@ -1,4 +1,5 @@
 <div>
+    <jhi-alert-error></jhi-alert-error>
     <div class="d-flex">
         <div class="mb-3">
             <h2><span jhiTranslate="artemisApp.examManagement.testRun.title">Test Run Management</span>{{ exam?.title }}</h2>
@@ -60,20 +61,40 @@
                     <td [width]="350">
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
-                                <button *ngIf="testRun.started; else notStarted" class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/courses', course.id, 'exams', exam.id]">
-                                    <span *ngIf="testRun.submitted" jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                    <span *ngIf="!testRun.submitted" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
-                                </button>
+                                <ng-container *ngIf="testRun.started; else notStarted">
+                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/courses', course.id, 'exams', exam.id]">
+                                        <span *ngIf="testRun.submitted" jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                        <span *ngIf="!testRun.submitted" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
+                                    </button>
+                                    <button
+                                        class="btn btn-primary btn-sm mr-1 mb-1"
+                                        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id, 'view']"
+                                        [disabled]="true"
+                                    >
+                                        <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
+                                    </button>
+                                </ng-container>
                                 <ng-template #notStarted>
                                     <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="startTestRun(testRun)">
                                         <span jhiTranslate="artemisApp.course.startDate">Start</span>
                                     </button>
+                                    <button
+                                        class="btn btn-primary btn-sm mr-1 mb-1"
+                                        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id, 'view']"
+                                    >
+                                        <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
+                                    </button>
                                 </ng-template>
                                 <button
+                                    jhiDeleteButton
+                                    [entityTitle]="'artemisApp.examManagement.testRun.testRun' | translate"
+                                    deleteQuestion="artemisApp.examManagement.testRun.delete.question"
+                                    deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
+                                    (delete)="deleteTestRun(testRun.id)"
+                                    [dialogError]="dialogError$"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
-                                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id, 'view']"
                                 >
-                                    <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
+                                    <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                             </div>
                         </div>

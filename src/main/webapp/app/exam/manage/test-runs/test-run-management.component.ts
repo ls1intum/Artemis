@@ -10,6 +10,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTestRunModal } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -20,7 +21,9 @@ export class TestRunManagementComponent implements OnInit {
     exam: Exam;
     isLoading: boolean;
     isExamStarted: boolean;
-    testRuns: [StudentExam];
+    testRuns: StudentExam[];
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
     predicate: string;
     ascending: boolean;
 
@@ -43,20 +46,12 @@ export class TestRunManagementComponent implements OnInit {
                 this.isExamStarted = this.exam.started;
                 this.course = this.exam.course;
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                // TODO delete, replace with call to get all studentExams with testRun flag
-                let testRun1 = new StudentExam();
-                let testRun2 = new StudentExam();
-                testRun1.id = 1;
-                testRun1.started = true;
-                testRun1.workingTime = 4000;
-                testRun1.submitted = true;
-                testRun1.exam = this.exam;
-                this.testRuns = [testRun1];
-                testRun2.id = 2;
-                testRun2.started = false;
-                testRun2.workingTime = 6000;
-                testRun2.exam = this.exam;
-                this.testRuns.push(testRun2);
+                this.examManagementService.findAllTestRunsForExam(this.course.id, this.exam.id).subscribe(
+                    (res) => {
+                        res.body != null ? (this.testRuns = res.body) : {};
+                    },
+                    (err) => this.onError(err),
+                );
             },
             (error) => this.onError(error),
         );
@@ -68,15 +63,37 @@ export class TestRunManagementComponent implements OnInit {
     openCreateTestRunModal() {
         const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModal as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exam = this.exam;
-        modalRef.result.then((testRun: StudentExam) => {
-            !!this.testRuns ? this.testRuns.push(testRun) : (this.testRuns = [testRun]);
-            console.log('Test run created');
-            // TODO: Create the configured student exam => make the server call
+        modalRef.result.then((testRunConfiguration: StudentExam) => {
+            this.examManagementService.createTestRun(this.course.id, this.exam.id, testRunConfiguration).subscribe(
+                (res) => {
+                    if (res.body != null) {
+                        const testRun = res.body;
+                        !!this.testRuns ? this.testRuns.push(testRun) : (this.testRuns = [testRun]);
+                    }
+                },
+                (error) => {
+                    this.onError(error);
+                },
+            );
         });
     }
 
     startTestRun(testRun: StudentExam) {
         // TODO: Launch conduction
+    }
+
+    /**
+     * Delete the test run with the given id.
+     * @param testRunId {number}
+     */
+    deleteTestRun(testRunId: number) {
+        this.examManagementService.deleteTestRun(this.course.id, this.exam.id, testRunId).subscribe(
+            () => {
+                this.testRuns = this.testRuns!.filter((testRun) => testRun.id !== testRunId);
+                this.dialogErrorSource.next('');
+            },
+            (error) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     /**

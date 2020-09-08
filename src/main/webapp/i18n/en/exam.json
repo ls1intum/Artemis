@@ -203,7 +203,11 @@
                 "title": "Test Run Management: ",
                 "setup": "Set up Test Run",
                 "assess": "Assess Test Runs",
-                "manage": "Manage Working Time"
+                "manage": "Manage Working Time",
+                "delete": {
+                    "question": "Should the <strong>{{ title }}</strong> really be deleted? All associated elements will also be deleted.",
+                    "typeNameToConfirm": "Please type: Test Run to confirm."
+                }
             },
             "examStudents": {
                 "registeredStudents": "Registered students",
