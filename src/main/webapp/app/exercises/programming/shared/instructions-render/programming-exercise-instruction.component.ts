@@ -212,8 +212,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     updateMarkdown(): void {
         // make sure that always the correct result is set, before updating markdown
-        this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+        // looks weird, but in setter of latestResult are setters of sub components invoked
+        this.latestResult = this.latestResult;
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);

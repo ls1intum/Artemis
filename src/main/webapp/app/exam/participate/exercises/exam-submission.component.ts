@@ -33,7 +33,6 @@ export abstract class ExamSubmissionComponent {
      */
     onActivate(): void {
         this.changeDetectorReference.reattach();
-        this.changeDetectorReference.detectChanges();
     }
 
     /**
