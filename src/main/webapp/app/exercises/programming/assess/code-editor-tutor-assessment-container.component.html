@@ -60,6 +60,13 @@
             [exerciseHints]="exercise.exerciseHints"
             class="instructions-wrapper__content card-body p-0"
         ></jhi-programming-exercise-instructions>
+        <jhi-code-editor-tutor-assessment-display-code
+            editorCenter
+            [selectedFile]="codeEditorContainer ? codeEditorContainer.selectedFile : undefined"
+            [allFeedbacks]="manualResult?.feedbacks"
+            (onError)="onError($event)"
+            (onUpdateFeedback)="onUpdateFeedback($event)"
+        ></jhi-code-editor-tutor-assessment-display-code>
         <div class="mt-3" editorBottom>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"

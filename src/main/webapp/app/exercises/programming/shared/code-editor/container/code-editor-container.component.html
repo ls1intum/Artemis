@@ -30,7 +30,9 @@
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event)"
     ></jhi-code-editor-file-browser>
-    <jhi-code-editor-tutor-assessment-display-code *ngIf="isTutorAssessment" editorCenter [selectedFile]="selectedFile" (onError)="onError($event)"></jhi-code-editor-tutor-assessment-display-code>
+    <div *ngIf="isTutorAssessment" editorCenter class="h-100">
+        <ng-content select="[editorCenter]"></ng-content>
+    </div>
     <jhi-code-editor-ace
         *ngIf="!isTutorAssessment"
         editorCenter
