@@ -42,6 +42,9 @@ public class StudentExam implements Serializable {
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
+    @Column(name = "test_run")
+    private Boolean testRun;
+
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
@@ -71,6 +74,14 @@ public class StudentExam implements Serializable {
 
     public Boolean isSubmitted() {
         return submitted;
+    }
+
+    public Boolean getTestRun() {
+        return testRun;
+    }
+
+    public void setTestRun(Boolean testRun) {
+        this.testRun = testRun;
     }
 
     public void setSubmitted(Boolean submitted) {
