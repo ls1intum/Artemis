@@ -24,22 +24,31 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
+    @Query("select distinct se from StudentExam se left join se.exercises e where se.testRun = false and se.exam.id = :#{#examId} and se.user.id = :#{#userId} ")
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
-    List<StudentExam> findByExamId(Long examId);
+    @Query("select se from StudentExam se where se.exam.id = :#{#examId} and se.testRun = false")
+    List<StudentExam> findByExamId(@Param("examId") Long examId);
 
-    Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId);
+    @Query("select se from StudentExam se where se.exam.id = :#{#examId} and se.testRun = true")
+    List<StudentExam> findAllTestRunsById(@Param("examId") Long examId);
 
-    @Query("select distinct se from StudentExam se left join se.exercises e where e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
+    @Query("select distinct se from StudentExam se where se.testRun = false and se.exam.id = :#{#examId} and se.user.id = :#{#userId} ")
+    Optional<StudentExam> findByExamIdAndUserId(@Param("userId") long userId, @Param("examId") long examId);
+
+    @Query("select distinct se from StudentExam se left join se.exercises e left join e.studentParticipations p left join p.submissions s where se.id = :#{#studentExamId} and p.student.id = :#{#userId}")
+    Optional<StudentExam> findWithExercisesParticipationsSubmissionsForUserById(@Param("studentExamId") Long studentExamId, @Param("userId") Long userId);
+
+    @Query("select distinct se from StudentExam se left join se.exercises e where se.testRun = false and e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
     Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
-    @Query("select max(se.workingTime) from StudentExam se where se.exam.id = :#{#examId}")
+    @Query("select max(se.workingTime) from StudentExam se where se.testRun = false and se.exam.id = :#{#examId}")
     Optional<Integer> findMaxWorkingTimeByExamId(@Param("examId") Long examId);
 
-    @Query("select distinct se.workingTime from StudentExam se where se.exam.id = :#{#examId}")
+    @Query("select distinct se.workingTime from StudentExam se where se.testRun = false and se.exam.id = :#{#examId}")
     Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
 
-    @Query("select u from StudentExam se left join se.user u where se.exam.id = :#{#examId}")
+    @Query("select u from StudentExam se left join se.user u where se.testRun = false and se.exam.id = :#{#examId}")
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
+
 }
