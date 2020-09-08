@@ -98,9 +98,9 @@ export class StudentExamsComponent implements OnInit {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    viewAssessment(studentExam: StudentExam) {
-        // TODO: go to assessment
-    }
+    // viewAssessment(studentExam: StudentExam) {
+    //     // TODO: go to assessment
+    // }
 
     /**
      * Generate all student exams for the exam on the server and handle the result.
