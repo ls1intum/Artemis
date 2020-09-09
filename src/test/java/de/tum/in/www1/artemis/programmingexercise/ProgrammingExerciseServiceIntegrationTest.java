@@ -205,7 +205,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
-    public void testSearchProgrammingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = databse.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
@@ -213,7 +213,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSearchProgrammingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = databse.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
@@ -240,7 +240,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testSearchProgrammingExercise_admin_getResultsFromAllCourses() throws Exception {
+    public void testAdminGetsResultsFromAllCourses() throws Exception {
         databse.addCourseInOtherInstructionGroupAndExercise("Programming");
         final var search = databse.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
