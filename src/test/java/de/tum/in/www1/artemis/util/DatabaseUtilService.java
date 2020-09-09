@@ -1125,6 +1125,10 @@ public class DatabaseUtilService {
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
+    /**
+     * @param programmingExerciseTitle The name of programming exercise
+     * @return A course with named exercise
+     */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
@@ -1171,6 +1175,9 @@ public class DatabaseUtilService {
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
     }
 
+    /**
+     * @return A empty course
+     */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
