@@ -1185,6 +1185,10 @@ public class DatabaseUtilService {
         return course;
     }
 
+    /**
+     * @param title The title reflect the genre of exercise that will be added to the course
+     * @return A course that is added in other group different from the group that created in beforeEach() method
+     */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "other-instructors");
         if ("Programming".equals(title)) {
@@ -1250,6 +1254,10 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    /**
+     * @param programmingExerciseTitle The title of the programming exercise
+     * @return A Course with named programming exercise and test cases
+     */
     public Course addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
         Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
