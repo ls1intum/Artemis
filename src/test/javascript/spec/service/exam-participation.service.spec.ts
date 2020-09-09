@@ -40,10 +40,20 @@ describe('Exam Participation Service', () => {
     });
 
     describe('Service methods', async () => {
-        it('loadStudentExamWithExercisesForConduction', async () => {
+        it('loadStudentExamWithExercisesForConduction successful', async () => {
             const returnedFromService = Object.assign({ started: true }, studentExam);
             service
                 .loadStudentExamWithExercisesForConduction(1, 1)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(JSON.stringify(returnedFromService));
+        });
+        it('loadStudentExamWithExercisesForSummary successful', async () => {
+            const returnedFromService = Object.assign({}, studentExam);
+            service
+                .loadStudentExamWithExercisesForSummary(1, 1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
