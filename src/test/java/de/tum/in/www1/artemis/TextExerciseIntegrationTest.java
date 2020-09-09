@@ -430,7 +430,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructorother1", roles = "INSTRUCTOR")
-    public void searchTextExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void testSearchTextExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         final var search = database.configureSearch("");
         final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
@@ -439,7 +439,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchTextExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
+    public void testSearchTextExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         database.addCourseWithOneReleasedTextExercise("Essay Bachelor");
         database.addCourseWithOneReleasedTextExercise("Essay Master");
@@ -459,7 +459,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void searchTextExercise_admin_getResultsFromAllCourses() throws Exception {
+    public void testSearchTextExercise_admin_getResultsFromAllCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         database.addCourseInOtherInstructionGroupAndExercise("Text");
 

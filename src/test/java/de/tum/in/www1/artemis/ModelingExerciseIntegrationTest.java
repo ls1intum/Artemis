@@ -387,7 +387,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
-    public void searchModelingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
+    public void testSearchModelingExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
 
@@ -396,7 +396,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void searchModelingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
+    public void testSearchModelingExercises_instructor_getResultsFromOwningCoursesNotEmpty() throws Exception {
         database.addCourseWithOneModelingExercise();
         database.addCourseWithOneModelingExercise("Activity Diagram");
         final var searchClassDiagram = database.configureSearch("ClassDiagram");
@@ -411,7 +411,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void searchModelingExercise_admin_getResultsFromAllCourses() throws Exception {
+    public void testSearchModelingExercise_admin_getResultsFromAllCourses() throws Exception {
         database.addCourseInOtherInstructionGroupAndExercise("ClassDiagram");
 
         final var search = database.configureSearch("ClassDiagram");
