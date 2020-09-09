@@ -889,6 +889,10 @@ public class DatabaseUtilService {
         return exercise.getGradingCriteria();
     }
 
+    /**
+     * @param title The title of the to be added modeling exercise
+     * @return A course with one specified modeling exercise
+     */
     public Course addCourseWithOneModelingExercise(String title) {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
@@ -910,6 +914,10 @@ public class DatabaseUtilService {
         return addCourseWithOneModelingExercise("ClassDiagram");
     }
 
+    /**
+     * @param title The title of the to be added text exercise
+     * @return A course with one specified text exercise
+     */
     public Course addCourseWithOneReleasedTextExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
