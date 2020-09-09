@@ -24,22 +24,29 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long id);
 
-    @Query("select distinct se from StudentExam se left join se.exercises e where se.testRun = false and se.exam.id = :#{#examId} and se.user.id = :#{#userId} ")
+    @Query("select distinct se from StudentExam se left join fetch se.exercises e where se.testRun = false and se.exam.id = :#{#examId} and se.user.id = :#{#userId} ")
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+
+    @Query("select distinct se from StudentExam se left join fetch se.exercises e left join fetch e.studentParticipations sp left join fetch sp.submissions s where se.id = :#{#studentExamId} and sp.student.id = :#{#studentId} and se.testRun = :#{#testRun}")
+    Optional<StudentExam> findWithExercisesParticipationsSubmissionsByIdForUser(@Param("studentExamId") Long studentExamId, @Param("studentId") Long studentId,
+            @Param("testRun") boolean testRun);
+
+    @Query("select distinct se from StudentExam se left join fetch se.exercises e left join fetch e.studentParticipations sp left join fetch sp.submissions s where se.id = :#{#studentExamId} and se.testRun = :#{#testRun}")
+    Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(@Param("studentExamId") Long studentExamId, @Param("testRun") boolean testRun);
 
     @Query("select se from StudentExam se where se.exam.id = :#{#examId} and se.testRun = false")
     List<StudentExam> findByExamId(@Param("examId") Long examId);
 
     @Query("select se from StudentExam se where se.exam.id = :#{#examId} and se.testRun = true")
-    List<StudentExam> findAllTestRunsById(@Param("examId") Long examId);
+    List<StudentExam> findAllTestRunsByExamId(@Param("examId") Long examId);
+
+    @Query("select se from StudentExam se where se.exam.id = :#{#examId} and se.testRun = true and se.user.id = :#{#instructorId}")
+    List<StudentExam> findAllTestRunsByExamIdForInstructor(@Param("examId") Long examId, @Param("instructorId") Long instructorId);
 
     @Query("select distinct se from StudentExam se where se.testRun = false and se.exam.id = :#{#examId} and se.user.id = :#{#userId} ")
     Optional<StudentExam> findByExamIdAndUserId(@Param("userId") long userId, @Param("examId") long examId);
 
-    @Query("select distinct se from StudentExam se left join se.exercises e left join e.studentParticipations p left join p.submissions s where se.id = :#{#studentExamId} and p.student.id = :#{#userId}")
-    Optional<StudentExam> findWithExercisesParticipationsSubmissionsForUserById(@Param("studentExamId") Long studentExamId, @Param("userId") Long userId);
-
-    @Query("select distinct se from StudentExam se left join se.exercises e where se.testRun = false and e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
+    @Query("select distinct se from StudentExam se left join fetch se.exercises e where se.testRun = false and e.id = :#{#exerciseId} and se.user.id = :#{#userId}")
     Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("select max(se.workingTime) from StudentExam se where se.testRun = false and se.exam.id = :#{#examId}")

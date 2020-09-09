@@ -143,12 +143,16 @@ public class StudentExamResource {
         if (workingTime <= 0) {
             return badRequest();
         }
-        Exam exam = examRepository.findById(examId).get();
-        // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
-        if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-            return badRequest();
-        }
         StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        boolean testRun = studentExam.getTestRun();
+        if (!testRun) {
+            Exam exam = examRepository.findById(examId).get();
+            // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
+            if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+                return badRequest();
+            }
+        }
+
         studentExam.setWorkingTime(workingTime);
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
@@ -170,7 +174,8 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser);
+        boolean testRun = studentExam.getTestRun();
+        Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, testRun);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
@@ -181,10 +186,12 @@ public class StudentExamResource {
             return conflict("studentExam", "alreadySubmitted", "You have already submitted.");
         }
 
-        // checks if student exam is live (after start date, before end date + grace period)
-        if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
-                || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod())))) {
-            return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
+        if (!testRun) {
+            // checks if student exam is live (after start date, before end date + grace period)
+            if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
+                    || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod())))) {
+                return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
+            }
         }
 
         return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
@@ -208,17 +215,18 @@ public class StudentExamResource {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
-
         // 1st: load the studentExam with all associated exercises
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(currentUser.getId(), examId);
         if (optionalStudentExam.isEmpty()) {
             return notFound();
         }
         var studentExam = optionalStudentExam.get();
+        boolean testRun = studentExam.getTestRun();
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, testRun);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
 
         loadExercisesForStudentExam(studentExam);
 
@@ -262,17 +270,18 @@ public class StudentExamResource {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
-        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser);
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
-
         // 1st: load the studentExam with all associated exercises
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(currentUser.getId(), examId);
         if (optionalStudentExam.isEmpty()) {
             return notFound();
         }
         var studentExam = optionalStudentExam.get();
+        boolean testRun = studentExam.getTestRun();
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, testRun);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
 
         // check that the studentExam has been submitted, otherwise /studentExams/conduction should be used
         if (!studentExam.isSubmitted()) {
@@ -334,7 +343,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration, user.getId());
+        StudentExam testRun = studentExamService.generateTestRun(testRunConfiguration);
         return ResponseEntity.ok(testRun);
     }
 
@@ -470,4 +479,5 @@ public class StudentExamResource {
             }
         }
     }
+
 }

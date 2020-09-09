@@ -345,12 +345,11 @@ public class StudentExamService {
      * Generates a Student Exam marked as a testRun for te instructor to test the exam as a student would experience it.
      * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
      * @param testRunConfiguration the configured studentExam
-     * @param instructorId the id of the instructor
      * @return the created testRun studentExam
      */
-    public StudentExam generateTestRun(StudentExam testRunConfiguration, Long instructorId) {
+    public StudentExam generateTestRun(StudentExam testRunConfiguration) {
         StudentExam testRun = createTestRun(testRunConfiguration);
-        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId(), instructorId);
+        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
 
@@ -376,32 +375,54 @@ public class StudentExamService {
      * Sets up the participations and submissions for all the exercises of the test run.
      * Calling {@link ExamService#setUpExerciseParticipationsAndSubmissions}
      *
-     * @param testRunId the ID of the TestRun
+     * @param testRunId the id of the TestRun
      */
-    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId, Long instructorId) {
-        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsForUserById(testRunId, instructorId)
+    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
+        StudentExam testRun = (studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
-
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
     }
 
     public StudentExam deleteTestRun(Long testRunId, Long instructorId) {
-        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsForUserById(testRunId, instructorId)
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsByIdForUser(testRunId, instructorId, true)
+                .orElse((studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
+                        .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist")));
 
-        // Delete participations and submissions
-        List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(testRun.getId(), testRun.getExercises());
-        for (var participation : participations) {
-            participationService.delete(participation.getId(), true, true);
+        List<StudentExam> testRuns = findAllTestRunsForUser(testRun.getExam().getId(), testRun.getUser().getId());
+        Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(testRun.getExam().getId(), instructorId);
+
+        // Only delete the participation and submission if no other student exam or test run references them
+        if (studentExam.isEmpty() && testRuns.size() == 1) {
+            // Delete participations and submissions
+            for (final Exercise exercise : testRun.getExercises()) {
+                if (exercise.getStudentParticipations().iterator().hasNext()) {
+                    participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                }
+            }
         }
 
-        // Delete the student exam
+        // Delete the test run student exam
         studentExamRepository.deleteById(testRunId);
         return testRun;
     }
 
+    /**
+     * Returns all test runs for a given exam
+     * @param examId the id of the exam in question
+     * @return a list of the test run student exams
+     */
     public List<StudentExam> findAllTestRuns(Long examId) {
-        return studentExamRepository.findAllTestRunsById(examId);
+        return studentExamRepository.findAllTestRunsByExamId(examId);
+    }
+
+    /**
+     * Returns all test runs for a given exam initiated by the given instructor
+     * @param examId the id of the exam in question
+     * @param instructorId the id of the instructor
+     * @return a list of the test run student exams
+     */
+    public List<StudentExam> findAllTestRunsForUser(Long examId, Long instructorId) {
+        return studentExamRepository.findAllTestRunsByExamIdForInstructor(examId, instructorId);
     }
 }

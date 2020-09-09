@@ -522,6 +522,7 @@ public class ExamService {
             studentExam.setExam(exam);
             studentExam.setUser(user);
             studentExam.setSubmitted(false);
+            studentExam.setTestRun(false);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
