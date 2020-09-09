@@ -132,12 +132,14 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        try {
-            // lock the programming exercise repository access (important in case of early exam submissions)
-            lockStudentRepositories(currentUser, existingStudentExam);
-        }
-        catch (Exception e) {
-            log.error("lockStudentRepositories threw an exception", e);
+        if (!studentExam.getTestRun()) {
+            try {
+                // lock the programming exercise repository access (important in case of early exam submissions)
+                lockStudentRepositories(currentUser, existingStudentExam);
+            }
+            catch (Exception e) {
+                log.error("lockStudentRepositories threw an exception", e);
+            }
         }
 
         return ResponseEntity.ok(studentExam);

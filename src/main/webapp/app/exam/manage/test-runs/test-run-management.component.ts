@@ -85,10 +85,6 @@ export class TestRunManagementComponent implements OnInit {
         });
     }
 
-    startTestRun(testRun: StudentExam) {
-        // TODO: Launch conduction
-    }
-
     /**
      * Delete the test run with the given id.
      * @param testRunId {number}

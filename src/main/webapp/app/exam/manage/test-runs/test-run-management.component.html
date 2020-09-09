@@ -62,22 +62,16 @@
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
                                 <ng-container *ngIf="testRun.user.id == instructor.id; else notOwnerOfTestRun">
-                                    <ng-container *ngIf="!testRun.started; else started">
-                                        <button class="btn btn-primary btn-sm mr-1 mb-1" (click)="startTestRun(testRun)">
-                                            <span jhiTranslate="artemisApp.course.startDate">Start</span>
+                                    <ng-container *ngIf="!testRun.submitted; else submitted">
+                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                            <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
+                                            <span *ngIf="testRun.started" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
                                         </button>
                                     </ng-container>
-                                    <ng-template #started>
-                                        <ng-container *ngIf="!testRun.submitted; else submitted">
-                                            <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/courses', course.id, 'exams', exam.id]">
-                                                <span *ngIf="!testRun.submitted" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
-                                            </button>
-                                        </ng-container>
-                                        <ng-template #submitted>
-                                            <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../' + testRun.id + '/summary'">
-                                                <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                            </button>
-                                        </ng-template>
+                                    <ng-template #submitted>
+                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../' + testRun.id + '/summary'">
+                                            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                        </button>
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #notOwnerOfTestRun>

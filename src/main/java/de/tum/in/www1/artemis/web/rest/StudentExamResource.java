@@ -255,6 +255,66 @@ public class StudentExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction : Find a specific test run for conduction.
+     * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
+     * and with the student participation and with the submissions.
+     * NOTE: when this is called it will also mark the test run as started
+     *
+     * @param courseId the course to which the test run belongs to
+     * @param examId   the exam to which the test run belongs to
+     * @param request  the http request, used to extract headers
+     * @return the ResponseEntity with status 200 (OK) and with the found test run as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
+        long start = System.currentTimeMillis();
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
+
+        // 1st: load the testRun with all associated exercises
+        Optional<StudentExam> optionalTestRun = studentExamRepository.findWithExercisesById(testRunId);
+        if (optionalTestRun.isEmpty()) {
+            return notFound();
+        }
+        var testRun = optionalTestRun.get();
+
+        if (!currentUser.equals(testRun.getUser())) {
+            return conflict();
+        }
+
+        Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, currentUser, true);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        loadExercisesForStudentExam(testRun);
+
+        // 2nd: mark the student exam as started
+        testRun.setStarted(true);
+        studentExamRepository.save(testRun);
+
+        // 3rd fetch participations, submissions and results and connect them to the testRun
+        fetchParticipationsSubmissionsAndResultsForStudentExam(testRun, currentUser);
+
+        // 4th create new exam session
+        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+        final String userAgent = request.getHeader("User-Agent");
+        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+        ExamSession examSession = this.examSessionService.startExamSession(testRun, browserFingerprint, userAgent, instanceId, ipAddress);
+        examSession.hideDetails();
+        testRun.setExamSessions(Set.of(examSession));
+
+        // not needed
+        testRun.getExam().setCourse(null);
+
+        log.info("getTestRunForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + testRun.getExercises().size() + " exercises for user "
+                + currentUser.getLogin());
+        return ResponseEntity.ok(testRun);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/studentExams/summary : Find a student exam for the summary.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.

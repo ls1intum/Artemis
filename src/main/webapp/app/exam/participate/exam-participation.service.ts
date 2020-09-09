@@ -83,6 +83,15 @@ export class ExamParticipationService {
         });
     }
 
+    public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
+        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
+            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+            this.currentlyLoadedStudentExam.next(convertedStudentExam);
+            return convertedStudentExam;
+        });
+    }
+
     /**
      * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in

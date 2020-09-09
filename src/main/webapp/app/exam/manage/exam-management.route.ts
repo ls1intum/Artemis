@@ -31,6 +31,8 @@ import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
+import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -277,6 +279,16 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/:testRunId/conduction',
+        component: ExamParticipationComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.exam.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':examId/test-runs/:studentExamId/summary',
