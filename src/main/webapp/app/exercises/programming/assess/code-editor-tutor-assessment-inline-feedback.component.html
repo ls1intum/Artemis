@@ -1,4 +1,4 @@
-<div class="border rounded" [style.max-width]="'780px'">
+<div class="border rounded" [style.max-width]="'780px'" [class.alert-success]="feedback.credits > 0" [class.alert-danger]="feedback.credits < 0" [class.alert-warning]="feedback.credits === 0">
     <div class="m-2">
         <div class="form-row align-items-start">
             <div class="form-group col-8" [style.max-width]="'500px'">
