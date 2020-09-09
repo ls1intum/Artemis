@@ -27,7 +27,7 @@ describe('Exam Participation Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                ],
+            ],
         });
         injector = getTestBed();
         service = injector.get(ExamParticipationService);
