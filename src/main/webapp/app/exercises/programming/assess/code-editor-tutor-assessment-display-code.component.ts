@@ -133,4 +133,12 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     onCancelFeedback() {
         this.toggleInlineComment = false;
     }
+
+    deleteFeedback(feedback: Feedback) {
+        const indexToDelete = this.allFeedbacks.indexOf(feedback);
+        const line: number = +feedback.reference!.split('line:')[1];
+        this.allFeedbacks.splice(indexToDelete, 1);
+        delete this.fileFeedbackPerLine[line];
+        this.onUpdateFeedback.emit(this.allFeedbacks);
+    }
 }

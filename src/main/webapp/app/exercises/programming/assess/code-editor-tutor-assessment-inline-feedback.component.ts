@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Feedback, FeedbackType, MANUAL_ASSESSMENT_IDENTIFIER } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -25,9 +26,12 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
     onCancelFeedback = new EventEmitter<void>();
+    @Output()
+    onDeleteFeedback = new EventEmitter<Feedback>();
 
     readOnly: boolean;
     oldFeedback: Feedback;
+    constructor(private translateService: TranslateService) {}
 
     updateFeedback() {
         this.feedback.type = FeedbackType.MANUAL;
@@ -52,6 +56,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             console.log(this.oldFeedback);
             this.feedback = this.oldFeedback;
             this.readOnly = true;
+        }
+    }
+
+    deleteFeedback() {
+        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
+        const confirmation = confirm(text);
+        if (confirmation) {
+            this.onDeleteFeedback.emit(this.feedback);
         }
     }
 }
