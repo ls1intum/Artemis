@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    MANUAL = FeedbackType.MANUAL;
     @Input()
     get feedback(): Feedback {
         return this._feedback;
@@ -34,7 +35,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     constructor(private translateService: TranslateService) {}
 
     updateFeedback() {
-        this.feedback.type = FeedbackType.MANUAL;
+        this.feedback.type = this.MANUAL;
         this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
         this.readOnly = true;
         this.feedback.text = `Feedback for ${this.fileName} line: ${this.codeLine}`;
@@ -46,7 +47,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         console.log('cancel pressed');
         console.log(this.feedback);
         // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
-        if (this.feedback.type !== FeedbackType.MANUAL) {
+        if (this.feedback.type !== this.MANUAL) {
             this.onCancelFeedback.emit();
         } else {
             // Changes in feedback is discarded
