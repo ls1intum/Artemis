@@ -243,7 +243,7 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/test-runs/:testRunExamId/view',
+        path: ':examId/test-runs/:studentExamId/view',
         component: StudentExamDetailComponent,
         resolve: {
             studentExam: StudentExamResolve,
@@ -268,6 +268,18 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary',
+        component: StudentExamSummaryComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/:studentExamId/summary',
         component: StudentExamSummaryComponent,
         resolve: {
             studentExam: StudentExamResolve,

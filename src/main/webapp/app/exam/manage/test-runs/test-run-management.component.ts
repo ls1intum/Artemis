@@ -11,6 +11,7 @@ import { CreateTestRunModal } from 'app/exam/manage/test-runs/create-test-run-mo
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -22,6 +23,7 @@ export class TestRunManagementComponent implements OnInit {
     isLoading: boolean;
     isExamStarted: boolean;
     testRuns: StudentExam[];
+    instructor: User;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     predicate: string;
@@ -55,6 +57,11 @@ export class TestRunManagementComponent implements OnInit {
             },
             (error) => this.onError(error),
         );
+        this.accountService.fetch().subscribe((res) => {
+            if (res.body != null) {
+                this.instructor = res.body;
+            }
+        });
     }
 
     /**
