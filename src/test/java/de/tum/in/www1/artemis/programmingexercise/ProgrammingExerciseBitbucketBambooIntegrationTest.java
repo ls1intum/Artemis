@@ -135,6 +135,17 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
+        exercise.setBonusPoints(null);
+        mockConnectorRequestsForSetup(exercise);
+        var responseExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
+        var savedExercise = programmingExerciseRepository.findById(responseExercise.getId()).get();
+        assertThat(responseExercise.getBonusPoints()).isEqualTo(0D);
+        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
 
