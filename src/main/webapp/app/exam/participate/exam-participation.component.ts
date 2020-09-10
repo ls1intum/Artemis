@@ -29,6 +29,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
+import { Course } from 'app/entities/course.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -132,12 +133,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
             this.loadingExam = true;
             if (!!this.testRunId) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe((studentExam) => {
-                    this.studentExam = studentExam;
-                    this.exam = studentExam.exam;
-                    this.testRunStartTime = moment();
-                    this.individualStudentEndDate = this.testRunStartTime.add(this.studentExam.workingTime, 'seconds');
-                });
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
+                    (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.studentExam.exam.course = new Course();
+                        this.studentExam.exam.course.id = this.courseId;
+                        this.exam = studentExam.exam;
+                        this.testRunStartTime = moment();
+                        this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
+                        this.loadingExam = false;
+                    },
+                    () => (this.loadingExam = false),
+                );
             } else {
                 this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
                     (studentExam) => {

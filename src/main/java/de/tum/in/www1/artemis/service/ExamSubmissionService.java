@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,10 +28,14 @@ public class ExamSubmissionService {
 
     private final ParticipationService participationService;
 
-    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService,
+            AuthorizationCheckService authorizationCheckService) {
         this.studentExamService = studentExamService;
         this.examService = examService;
         this.participationService = participationService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -51,7 +56,7 @@ public class ExamSubmissionService {
     }
 
     /**
-     * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise).
+     * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise or it is a test run).
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
@@ -63,6 +68,18 @@ public class ExamSubmissionService {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
             StudentExam studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+
+            // Check if user is an instructor or admin
+            if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
+                // fetch all testRuns for the user
+                List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
+                // if the test run contains the exercise, then the user is allowed to submit
+                testRuns = testRuns.stream().filter(testRun -> testRun.getExercises().stream().anyMatch(testRunExercise -> testRunExercise.getId().equals(exercise.getId())))
+                        .collect(Collectors.toList());
+                if (testRuns.size() > 0) {
+                    return true;
+                }
+            }
 
             // Check that the current user is allowed to submit to this exercise
             if (!studentExam.getExercises().contains(exercise)) {

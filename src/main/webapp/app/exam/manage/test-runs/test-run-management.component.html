@@ -69,13 +69,13 @@
                                         </button>
                                     </ng-container>
                                     <ng-template #submitted>
-                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../' + testRun.id + '/summary'">
+                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                                         </button>
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #notOwnerOfTestRun>
-                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../' + testRun.id + '/summary'">
+                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                         <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                                     </button>
                                 </ng-template>

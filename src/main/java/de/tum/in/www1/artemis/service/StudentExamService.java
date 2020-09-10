@@ -391,15 +391,27 @@ public class StudentExamService {
                 .orElse((studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
                         .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist")));
 
-        List<StudentExam> testRuns = findAllTestRunsForUser(testRun.getExam().getId(), testRun.getUser().getId());
+        List<StudentExam> testRuns = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), testRun.getUser().getId());
         Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(testRun.getExam().getId(), instructorId);
 
         // Only delete the participation and submission if no other student exam or test run references them
-        if (studentExam.isEmpty() && testRuns.size() == 1) {
-            // Delete participations and submissions
-            for (final Exercise exercise : testRun.getExercises()) {
-                if (exercise.getStudentParticipations().iterator().hasNext()) {
-                    participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+        if (studentExam.isEmpty()) {
+            if (testRuns.size() == 1) {
+                // Delete participations and submissions
+                for (final Exercise exercise : testRun.getExercises()) {
+                    if (exercise.getStudentParticipations().iterator().hasNext()) {
+                        participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                    }
+                }
+            }
+            else {
+                for (final Exercise exercise : testRun.getExercises()) {
+                    // we can delete the participation and submission of an exercise if no other test run references them | contains the same exercise
+                    if (testRuns.stream().filter(tr -> tr.getExercises().stream().anyMatch(trExercise -> trExercise.getId().equals(exercise.getId()))).count() == 1) {
+                        if (exercise.getStudentParticipations().iterator().hasNext()) {
+                            participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                        }
+                    }
                 }
             }
         }
@@ -421,10 +433,10 @@ public class StudentExamService {
     /**
      * Returns all test runs for a given exam initiated by the given instructor
      * @param examId the id of the exam in question
-     * @param instructorId the id of the instructor
+     * @param userId the id of the user
      * @return a list of the test run student exams
      */
-    public List<StudentExam> findAllTestRunsForUser(Long examId, Long instructorId) {
-        return studentExamRepository.findAllTestRunsByExamIdForInstructor(examId, instructorId);
+    public List<StudentExam> findAllTestRunsWithExercisesForUser(Long examId, Long userId) {
+        return studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(examId, userId);
     }
 }
