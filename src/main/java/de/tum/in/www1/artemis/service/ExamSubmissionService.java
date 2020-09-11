@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ExamSubmissionService {
@@ -67,18 +68,24 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            StudentExam studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
-
-            // Check if user is an instructor or admin
-            if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
-                // fetch all testRuns for the user
-                List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
-                // if the test run contains the exercise, then the user is allowed to submit
-                testRuns = testRuns.stream().filter(testRun -> testRun.getExercises().stream().anyMatch(testRunExercise -> testRunExercise.getId().equals(exercise.getId())))
-                        .collect(Collectors.toList());
-                if (testRuns.size() > 0) {
-                    return true;
+            StudentExam studentExam;
+            try {
+                studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            }
+            catch (EntityNotFoundException entityNotFoundException) {
+                // Check if it is an exam test run
+                // Check if user is an instructor or admin
+                if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
+                    // fetch all testRuns for the instructor
+                    List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
+                    // count the test runs which contain this exercise
+                    final long numberOfTestRunsContainingExercise = testRuns.stream().filter(testRun -> testRun.getExercises().contains(exercise)).count();
+                    // if a test run contains the exercise, then the instructor is allowed to submit
+                    return numberOfTestRunsContainingExercise > 0;
                 }
+                // it is not an exam test run and we throw the original error
+                else
+                    throw entityNotFoundException;
             }
 
             // Check that the current user is allowed to submit to this exercise

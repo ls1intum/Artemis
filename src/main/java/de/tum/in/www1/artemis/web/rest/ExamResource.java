@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -32,6 +31,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -65,6 +65,8 @@ public class ExamResource {
 
     private final ExerciseService exerciseService;
 
+    private final ComplaintService complaintService;
+
     private final ParticipationService participationService;
 
     private final AuditEventRepository auditEventRepository;
@@ -80,7 +82,7 @@ public class ExamResource {
     public ExamResource(UserService userService, CourseService courseService, ExamRepository examRepository, ExamService examService, ExamAccessService examAccessService,
             ExerciseService exerciseService, AuditEventRepository auditEventRepository, InstanceMessageSendService instanceMessageSendService,
             StudentExamService studentExamService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService) {
+            TutorParticipationService tutorParticipationService, TutorDashboardService tutorDashboardService, ComplaintService complaintService) {
         this.userService = userService;
         this.courseService = courseService;
         this.examRepository = examRepository;
@@ -94,6 +96,7 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.tutorDashboardService = tutorDashboardService;
+        this.complaintService = complaintService;
     }
 
     /**
@@ -290,6 +293,58 @@ public class ExamResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
         tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+
+        List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
+        Set<Exercise> testRunExercises = new HashSet<>();
+        testRuns.forEach(testRun -> testRunExercises.addAll(testRun.getExercises()));
+
+        for (final Exercise exercise : exercises) {
+            List<Complaint> complaints = complaintService.getAllComplaintsByExerciseId(exercise.getId());
+            for (final Exercise testRunExercise : testRunExercises) {
+                if (exercise.equals(testRunExercise)) {
+                    if (testRunExercise.getStudentParticipations().size() > 0) {
+                        DueDateStat numberOfSubmissions = new DueDateStat();
+                        DueDateStat numberOfAssessments = new DueDateStat();
+                        int numberOfParticipationsWithSubmissions = testRunExercise.getStudentParticipations().size();
+                        int assessmentCounter = 0;
+                        int numberOfComplaints = 0;
+                        int numberOfAssessedComplaints = 0;
+
+                        for (final StudentParticipation studentParticipation : testRunExercise.getStudentParticipations()) {
+                            if (studentParticipation.getSubmissions().size() == 0) {
+                                numberOfParticipationsWithSubmissions--;
+                            }
+                            final Submission submission = studentParticipation.getSubmissions().iterator().next();
+                            if (submission.getResult() != null) {
+                                if (testRunExercise instanceof ProgrammingExercise && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+                                    continue;
+                                }
+                                assessmentCounter = assessmentCounter + 1;
+                                if (Boolean.TRUE.equals(submission.getResult().hasComplaint())) {
+                                    numberOfComplaints = numberOfComplaints + 1;
+                                    Complaint complaint = complaints.stream().filter(c -> c.getStudent().equals(studentParticipation.getStudent().get()))
+                                            .collect(Collectors.toList()).get(0);
+                                    if (Boolean.TRUE.equals(complaint.isAccepted()) || Boolean.FALSE.equals(complaint.isAccepted())) {
+                                        numberOfAssessedComplaints = numberOfAssessedComplaints + 1;
+                                    }
+                                }
+                            }
+                        }
+
+                        numberOfSubmissions.setInTime(exercise.getNumberOfSubmissions().getInTime() - numberOfParticipationsWithSubmissions);
+                        numberOfSubmissions.setLate(exercise.getNumberOfSubmissions().getLate());
+                        numberOfAssessments.setInTime(exercise.getNumberOfAssessments().getInTime() - assessmentCounter);
+                        numberOfAssessments.setLate(exercise.getNumberOfAssessments().getLate());
+
+                        exercise.setNumberOfSubmissions(numberOfSubmissions);
+                        exercise.setNumberOfAssessments(numberOfAssessments);
+                        exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
+                        exercise.setNumberOfOpenComplaints((long) (numberOfComplaints - numberOfAssessedComplaints));
+                    }
+                    break;
+                }
+            }
+        }
 
         return ResponseEntity.ok(exam);
     }
