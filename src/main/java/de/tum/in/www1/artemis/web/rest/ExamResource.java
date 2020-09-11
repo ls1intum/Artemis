@@ -313,12 +313,11 @@ public class ExamResource {
                         for (final StudentParticipation studentParticipation : testRunExercise.getStudentParticipations()) {
                             if (studentParticipation.getSubmissions().size() == 0) {
                                 numberOfParticipationsWithSubmissions--;
+                                continue;
                             }
                             final Submission submission = studentParticipation.getSubmissions().iterator().next();
-                            if (submission.getResult() != null) {
-                                if (testRunExercise instanceof ProgrammingExercise && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
-                                    continue;
-                                }
+                            if (submission.getResult() != null && submission.getResult().getCompletionDate() != null
+                                    && submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
                                 assessmentCounter = assessmentCounter + 1;
                                 if (Boolean.TRUE.equals(submission.getResult().hasComplaint())) {
                                     numberOfComplaints = numberOfComplaints + 1;
