@@ -146,7 +146,7 @@ public class ParticipationResource {
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, participant, true);
+        StudentParticipation participation = participationService.startExercise(exercise, participant, true, false);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);

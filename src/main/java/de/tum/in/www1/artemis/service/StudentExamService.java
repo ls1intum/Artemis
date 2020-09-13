@@ -383,7 +383,7 @@ public class StudentExamService {
         StudentExam testRun = (studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun, true);
     }
 
     public StudentExam deleteTestRun(Long testRunId, Long instructorId) {

@@ -101,6 +101,8 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
+        this.breakCircularDependency(studentExam);
+
         return this.httpClient.post<StudentExam>(url, studentExam).pipe(
             map((submittedStudentExam: StudentExam) => {
                 return this.convertStudentExamFromServer(submittedStudentExam);
@@ -113,6 +115,18 @@ export class ExamParticipationService {
                 }
             }),
         );
+    }
+
+    private breakCircularDependency(studentExam: StudentExam) {
+        for (const exercise of studentExam.exercises) {
+            for (const participation of exercise.studentParticipations) {
+                delete participation.results;
+                for (const submission of participation.submissions) {
+                    delete submission.result;
+                    delete submission.participation;
+                }
+            }
+        }
     }
 
     /**

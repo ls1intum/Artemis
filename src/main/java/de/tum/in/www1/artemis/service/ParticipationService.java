@@ -176,13 +176,15 @@ public class ParticipationService {
     /**
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
+     * In case of a test run, we add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
      *
      * @param exercise the exercise which is started
      * @param participant the user or team who starts the exercise
      * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
+     * @param testRun flag whether the student exam is a test run
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission, boolean testRun) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
@@ -213,10 +215,19 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = configureRepository((ProgrammingExercise) exercise, programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
-            // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
-            programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
-            // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-            programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
+            if (!testRun) {
+                // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
+                programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
+                // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
+                programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
+            }
+            else {
+                // Note: we configure the repository webhook first, so that the empty commit triggers a new programming submission
+                // If it is a test run, we need an initial submission in order to map a draft manual result to it
+                programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
+                programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
+            }
+
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -239,6 +250,32 @@ public class ParticipationService {
                 if (createInitialSubmission) {
                     initializeSubmission(participation, exercise, null);
                 }
+            }
+
+        }
+        if (testRun) {
+            Submission submission;
+            if (participation instanceof ProgrammingExerciseParticipation) {
+                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
+                participation.setSubmissions(programmingSubmissions);
+                initializeSubmission(participation, exercise, null);
+                submission = participation.getSubmissions().iterator().next();
+                submission.submitted(true);
+            }
+            else {
+                submission = participation.getSubmissions().iterator().next();
+            }
+
+            // If it is a test run, we add a result with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            if (submission.getResult() == null) {
+                Result result = new Result();
+                result.setSubmission(submission);
+                submission.setResult(result);
+                result.setParticipation(submission.getParticipation());
+                submission.getResult().setAssessor(participation.getStudent().get());
+                submission.getResult().setAssessmentType(AssessmentType.MANUAL);
+                resultRepository.save(result);
+                submissionRepository.save(submission);
             }
         }
         participation = save(participation);

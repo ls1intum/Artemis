@@ -480,6 +480,7 @@ public class StudentExamResource {
             Optional<Submission> optionalLatestSubmission = participation.findLatestSubmission();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
+                latestSubmission.setParticipation(null);
                 participation.setSubmissions(Set.of(latestSubmission));
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
@@ -514,9 +515,12 @@ public class StudentExamResource {
             // Set the latest result into the participation as the client expects it there for programming exercises
             Result result = latestSubmission.get().getResult();
             if (result != null) {
+                result.setParticipation(null);
+                result.setSubmission(null);
                 participation.setResults(Set.of(result));
             }
         }
+
     }
 
     /**

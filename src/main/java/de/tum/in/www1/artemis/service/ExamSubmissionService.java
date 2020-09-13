@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -73,19 +72,12 @@ public class ExamSubmissionService {
                 studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             }
             catch (EntityNotFoundException entityNotFoundException) {
-                // Check if it is an exam test run
-                // Check if user is an instructor or admin
-                if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
-                    // fetch all testRuns for the instructor
-                    List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
-                    // count the test runs which contain this exercise
-                    final long numberOfTestRunsContainingExercise = testRuns.stream().filter(testRun -> testRun.getExercises().contains(exercise)).count();
-                    // if a test run contains the exercise, then the instructor is allowed to submit
-                    return numberOfTestRunsContainingExercise > 0;
+                if (isExamTestRunSubmission(exercise, user, exam)) {
+                    return true;
                 }
-                // it is not an exam test run and we throw the original error
-                else
+                else {
                     throw entityNotFoundException;
+                }
             }
 
             // Check that the current user is allowed to submit to this exercise
@@ -102,6 +94,28 @@ public class ExamSubmissionService {
             return isSubmissionInTime(exercise, studentExam);
         }
         return true;
+    }
+
+    /**
+     * Check if the submission is made as part of a test run exam
+     * Only Instructors have access to test runs.
+     * @param exercise the exercise
+     * @param user the user
+     * @param exam the exam
+     * @return returns whether the submission is part of a test run exam.
+     */
+    private boolean isExamTestRunSubmission(Exercise exercise, User user, Exam exam) {
+        // Check if user is an instructor or admin
+        if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
+            // fetch all testRuns for the instructor
+            List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
+            // count the test runs which contain this exercise
+            final long numberOfTestRunsContainingExercise = testRuns.stream().filter(testRun -> testRun.getExercises().contains(exercise)).count();
+            // if a test run contains the exercise, then the instructor is allowed to submit
+            return numberOfTestRunsContainingExercise > 0;
+        }
+        // only instructors can access and submit to test runs
+        return false;
     }
 
     /**

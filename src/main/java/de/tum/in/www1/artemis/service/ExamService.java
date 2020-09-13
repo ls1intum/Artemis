@@ -657,7 +657,7 @@ public class ExamService {
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
-            setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam);
+            setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam, false);
         }));
 
         return generatedParticipations.size();
@@ -668,7 +668,7 @@ public class ExamService {
      *
      * @param studentExam The student exam
      */
-    public void setUpExerciseParticipationsAndSubmissions(List<Participation> generatedParticipations, StudentExam studentExam) {
+    public void setUpExerciseParticipationsAndSubmissions(List<Participation> generatedParticipations, StudentExam studentExam, boolean testRun) {
         User student = studentExam.getUser();
         for (Exercise exercise : studentExam.getExercises()) {
             // we start the exercise if no participation was found that was already fully initialized
@@ -682,7 +682,7 @@ public class ExamService {
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                     }
                     // this will create initial (empty) submissions for quiz, text, modeling and file upload
-                    var participation = participationService.startExercise(exercise, student, true);
+                    var participation = participationService.startExercise(exercise, student, true, testRun);
                     generatedParticipations.add(participation);
                 }
                 catch (Exception ex) {
