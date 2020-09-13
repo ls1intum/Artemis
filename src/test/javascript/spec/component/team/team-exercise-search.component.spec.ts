@@ -7,11 +7,12 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import * as moment from 'moment';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Team Exercise Search Component', () => {
     let comp: TeamExerciseSearchComponent;
     let fixture: ComponentFixture<TeamExerciseSearchComponent>;
-    let service: CourseManagementService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,10 +30,20 @@ describe('Team Exercise Search Component', () => {
 
         fixture = TestBed.createComponent(TeamExerciseSearchComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(CourseManagementService);
     });
 
-    it('dummy test', () => {
-        expect(true).toEqual(true);
+    it('searchResultFormatter', () => {
+        const title = 'My exercise';
+        const releaseDate = moment();
+        const dateFormat = 'yyyy-MM-DD';
+
+        const exercise = new TextExercise();
+        exercise.title = title;
+        exercise.releaseDate = releaseDate;
+
+        const expectedResult = `${title} (${releaseDate.format(dateFormat)})`;
+        const result = comp.searchResultFormatter(exercise);
+
+        expect(result).toEqual(expectedResult);
     });
 });
