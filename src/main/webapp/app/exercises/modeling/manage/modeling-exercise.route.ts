@@ -13,10 +13,12 @@ import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
+
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
@@ -83,6 +85,14 @@ export const routes: Routes = [
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
         },
         canActivate: [UserRouteAccessService],
     },
