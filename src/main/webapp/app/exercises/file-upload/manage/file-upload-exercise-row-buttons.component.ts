@@ -16,12 +16,8 @@ export class FileUploadExerciseRowButtonsComponent {
     dialogError$ = this.dialogErrorSource.asObservable();
     constructor(private fileUploadExerciseService: FileUploadExerciseService, private eventManager: JhiEventManager) {}
 
-    /**
-     * Deletes file upload exercise
-     * @param fileUploadExerciseId id of the exercise that will be deleted
-     */
-    deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
+    deleteFileUploadExercise() {
+        this.fileUploadExerciseService.delete(this.exercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',

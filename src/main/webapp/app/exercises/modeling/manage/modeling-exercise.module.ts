@@ -15,6 +15,7 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
+import { ModelingExerciseRowButtonsComponent } from './modeling-exercise-row-buttons.component';
 
 @NgModule({
     imports: [
@@ -32,7 +33,7 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
         AssessmentInstructionsModule,
         ExerciseDetailsModule,
     ],
-    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
+    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent, ModelingExerciseRowButtonsComponent],
     exports: [ModelingExerciseComponent],
 })
 export class ArtemisModelingExerciseModule {}
