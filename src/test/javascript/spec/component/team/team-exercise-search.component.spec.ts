@@ -32,7 +32,7 @@ describe('Team Exercise Search Component', () => {
         comp = fixture.componentInstance;
     });
 
-    it('searchResultFormatter', () => {
+    it('formats the search result with release date', () => {
         const title = 'My exercise';
         const releaseDate = moment();
         const dateFormat = 'yyyy-MM-DD';
@@ -42,6 +42,18 @@ describe('Team Exercise Search Component', () => {
         exercise.releaseDate = releaseDate;
 
         const expectedResult = `${title} (${releaseDate.format(dateFormat)})`;
+        const result = comp.searchResultFormatter(exercise);
+
+        expect(result).toEqual(expectedResult);
+    });
+
+    it('formats the search result without release date', () => {
+        const title = 'My exercise';
+
+        const exercise = new TextExercise();
+        exercise.title = title;
+
+        const expectedResult = title;
         const result = comp.searchResultFormatter(exercise);
 
         expect(result).toEqual(expectedResult);
