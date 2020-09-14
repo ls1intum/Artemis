@@ -1,14 +1,16 @@
-import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import * as moment from 'moment';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
+import { Course } from 'app/entities/course.model';
 
 describe('Team Exercise Search Component', () => {
     let comp: TeamExerciseSearchComponent;
@@ -57,5 +59,97 @@ describe('Team Exercise Search Component', () => {
         const result = comp.searchResultFormatter(exercise);
 
         expect(result).toEqual(expectedResult);
+    });
+
+    it('onAutocompleteSelect', () => {
+        const title = 'My exercise';
+
+        const exercise = new TextExercise();
+        exercise.title = title;
+
+        spyOn(comp.selectExercise, 'emit');
+        spyOn(comp, 'searchResultFormatter').and.returnValue(title);
+
+        comp.onAutocompleteSelect(exercise);
+
+        expect(comp.searchResultFormatter).toHaveBeenCalledWith(exercise);
+        expect(comp.inputDisplayValue).toEqual(title);
+        expect(comp.selectExercise.emit).toHaveBeenCalledWith(exercise);
+    });
+
+    it('searchInputFormatter', () => {
+        const testInputDisplayValue = 'Test';
+        comp.inputDisplayValue = testInputDisplayValue;
+
+        // Should return the current inputDisplayValue
+        expect(comp.searchInputFormatter()).toEqual(testInputDisplayValue);
+    });
+
+    it('searchMatchesExercise with exact term', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
+
+        expect(matchesExercise).toBeTrue;
+    });
+
+    it('searchMatchesExercise with lowercase term', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
+
+        expect(matchesExercise).toBeTrue;
+    });
+
+    it('searchMatchesExercise with partial term start', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('my', exercise);
+
+        expect(matchesExercise).toBeTrue;
+    });
+
+    it('searchMatchesExercise with partial term end', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
+
+        expect(matchesExercise).toBeTrue;
+    });
+
+    it('searchMatchesExercise without whitespace', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
+
+        expect(matchesExercise).toBeFalse;
+    });
+
+    it('searchMatchesExercise with incorrect searchTerm', () => {
+        const exercise = new TextExercise();
+        exercise.title = 'My Exercise';
+
+        const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);
+
+        expect(matchesExercise).toBeFalse;
+    });
+
+    it('successfully loads the exercise options', (done) => {
+        comp.course = new Course();
+        comp.course.id = 1;
+        comp.ignoreExercises = [];
+
+        expect(comp.exerciseOptions.length).toEqual(0);
+
+        comp.loadExerciseOptions().subscribe((exerciseOptions) => {
+            expect(exerciseOptions).not.toBeNull();
+            expect(exerciseOptions!.length).toBeGreaterThan(0);
+            done();
+        });
     });
 });
