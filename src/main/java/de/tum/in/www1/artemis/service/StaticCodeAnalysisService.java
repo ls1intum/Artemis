@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -16,15 +21,17 @@ import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 @Service
 public class StaticCodeAnalysisService {
 
-    private final Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisConfiguration;
+    private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     @Qualifier("staticCodeAnalysisConfiguration")
+    private final Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations;
+
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisConfiguration) {
+            Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
-        this.staticCodeAnalysisConfiguration = staticCodeAnalysisConfiguration;
+        this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
     }
 
     /**
@@ -35,6 +42,34 @@ public class StaticCodeAnalysisService {
      */
     public Set<StaticCodeAnalysisCategory> findByExerciseId(Long exerciseId) {
         return staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
+    }
+
+    /**
+     * Creates static code analysis categories for a programming exercise using @{staticCodeAnalysisDefaultConfigurations}
+     * as a template.
+     *
+     * @param programmingExercise for which the static code analysis categories will be created
+     */
+    public void createDefaultCategories(ProgrammingExercise programmingExercise) {
+        // Retrieve the default configuration for a specific programming language
+        StaticCodeAnalysisConfiguration defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
+        if (defaultConfiguration == null) {
+            log.debug("Could not create default static code analysis categories for exercise " + programmingExercise.getId() + ". Default configuration not available.");
+            return;
+        }
+
+        // Create new static code analysis using the default configuration as a template
+        List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
+        for (var defaultCategory : defaultConfiguration.getDefaultCategories()) {
+            StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
+            newCategory.setName(defaultCategory.getName());
+            newCategory.setPenalty(defaultCategory.getDefaultPenalty());
+            newCategory.setMaxPenalty(defaultCategory.getDefaultMaxPenalty());
+            newCategory.setState(defaultCategory.getDefaultState());
+            newCategory.setProgrammingExercise(programmingExercise);
+            newCategories.add(newCategory);
+        }
+        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
     }
 
     /**
