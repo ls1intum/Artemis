@@ -1,21 +1,30 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisConfiguration;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 
 @Service
 public class StaticCodeAnalysisService {
 
+    private final Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisConfiguration;
+
+    @Qualifier("staticCodeAnalysisConfiguration")
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
+            Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisConfiguration) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.staticCodeAnalysisConfiguration = staticCodeAnalysisConfiguration;
     }
 
     /**
