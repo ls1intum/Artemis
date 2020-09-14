@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 /**
- * POJO for storing static code analysis configurations read from JSON files
+ * Read-only POJO for storing static code analysis configurations loaded from JSON files
  */
 public class StaticCodeAnalysisConfiguration {
 
@@ -16,13 +16,11 @@ public class StaticCodeAnalysisConfiguration {
         return defaultCategories;
     }
 
-    public void setDefaultCategories(List<DefaultCategory> defaultCategories) {
-        this.defaultCategories = defaultCategories;
-    }
-
-    public class DefaultCategory {
+    public static class DefaultCategory {
 
         private String name;
+
+        private String description;
 
         private Integer defaultPenalty;
 
@@ -36,40 +34,24 @@ public class StaticCodeAnalysisConfiguration {
             return name;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public String getDescription() {
+            return description;
         }
 
         public Integer getDefaultPenalty() {
             return defaultPenalty;
         }
 
-        public void setDefaultPenalty(Integer defaultPenalty) {
-            this.defaultPenalty = defaultPenalty;
-        }
-
         public Integer getDefaultMaxPenalty() {
             return defaultMaxPenalty;
-        }
-
-        public void setDefaultMaxPenalty(Integer defaultMaxPenalty) {
-            this.defaultMaxPenalty = defaultMaxPenalty;
         }
 
         public CategoryState getDefaultState() {
             return defaultState;
         }
 
-        public void setDefaultState(CategoryState defaultState) {
-            this.defaultState = defaultState;
-        }
-
         public List<CategoryMapping> getCategoryMappings() {
             return categoryMappings;
-        }
-
-        public void setCategoryMappings(List<CategoryMapping> categoryMappings) {
-            this.categoryMappings = categoryMappings;
         }
     }
 
@@ -83,16 +65,8 @@ public class StaticCodeAnalysisConfiguration {
             return tool;
         }
 
-        public void setTool(StaticCodeAnalysisTool tool) {
-            this.tool = tool;
-        }
-
         public String getCategory() {
             return category;
-        }
-
-        public void setCategory(String category) {
-            this.category = category;
         }
     }
 }

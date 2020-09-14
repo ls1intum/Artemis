@@ -1,72 +1,75 @@
-[
-    {
-        "name": "Bad Practice",
-        "description": "Violations of recommended and essential coding practice. Rules which enforce generally accepted best practices",
-        "defaultState": "DEACTIVATED",
-        "defaultPenalty": 1,
-        "defaultMaxPenalty": 10,
-        "categoryMappings": [
-            {
-                "tool": "SPOTBUGS",
-                "category": "BAD_PRACTICE"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "coding"
-            },
-            {
-                "tool": "PMD",
-                "category": "best-practices"
-            }
-        ]
-    },
-    {
-        "name": "Styling",
-        "description": "Confusing Code, Formatting, Import-Order, Modifier-Order, Line-Length, etc.",
-        "defaultState": "DEACTIVATED",
-        "defaultPenalty": 0,
-        "defaultMaxPenalty": 0,
-        "categoryMappings": [
-            {
-                "tool": "SPOTBUGS",
-                "category": "STYLE"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "annotation"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "blocks"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "imports"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "indentation"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "metrics"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "modifier"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "sizes"
-            },
-            {
-                "tool": "CHECKSTYLE",
-                "category": "whitespaces"
-            },
-            {
-                "tool": "PMD",
-                "category": "code-style"
-            }
-        ]
-    }
-]
+{
+    "defaultCategories":
+    [
+        {
+            "name": "Bad Practice",
+            "description": "Violations of recommended and essential coding practice. Rules which enforce generally accepted best practices",
+            "defaultState": "DEACTIVATED",
+            "defaultPenalty": 1,
+            "defaultMaxPenalty": 10,
+            "categoryMappings": [
+                {
+                    "tool": "SPOTBUGS",
+                    "category": "BAD_PRACTICE"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "coding"
+                },
+                {
+                    "tool": "PMD",
+                    "category": "best-practices"
+                }
+            ]
+        },
+        {
+            "name": "Styling",
+            "description": "Confusing Code, Formatting, Import-Order, Modifier-Order, Line-Length, etc.",
+            "defaultState": "DEACTIVATED",
+            "defaultPenalty": 0,
+            "defaultMaxPenalty": 0,
+            "categoryMappings": [
+                {
+                    "tool": "SPOTBUGS",
+                    "category": "STYLE"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "annotation"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "blocks"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "imports"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "indentation"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "metrics"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "modifier"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "sizes"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "whitespaces"
+                },
+                {
+                    "tool": "PMD",
+                    "category": "code-style"
+                }
+            ]
+        }
+    ]
+}

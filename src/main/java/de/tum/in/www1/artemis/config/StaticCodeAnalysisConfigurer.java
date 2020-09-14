@@ -60,9 +60,10 @@ public class StaticCodeAnalysisConfigurer {
                 languageToConfiguration.put(optionalLanguage.get(), configuration);
             }
             catch (IOException e) {
-                log.debug("Could not deserialize static code analysis configuration " + jsonConfiguration.getFilename());
+                log.debug("Could not deserialize static code analysis configuration " + jsonConfiguration.getFilename() + e);
             }
         }
+        log.debug("Successfully initialized static code analysis configuration");
     }
 
     @Bean(name = "staticCodeAnalysisConfiguration")
