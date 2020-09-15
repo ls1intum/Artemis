@@ -26,7 +26,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Course } from 'app/entities/course.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -41,9 +41,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participation: ProgrammingExerciseStudentParticipation;
     participationForManualResult: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
-    submission: ProgrammingSubmission | null;
-    manualResult: Result | null;
-    automaticResult: Result | null;
+    submission: ProgrammingSubmission;
+    manualResult: Result;
+    automaticResult: Result;
     userId: number;
     // for assessment-layout
     isLoading = false;
@@ -63,6 +63,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
     }
+
+    generalFeedback = new Feedback();
+    unreferencedFeedback: Feedback[] = [];
+    referencedFeedback: Feedback[] = [];
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -97,19 +101,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 (participationWithResults: ProgrammingExerciseStudentParticipation) => {
                     // Set domain to make file editor work properly
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                    this.participation = <ProgrammingExerciseStudentParticipation>participationWithResults;
+                    this.participation = participationWithResults;
                     this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
                     this.manualResult = this.getLatestManualResult(this.participation.results);
 
-                    // Add participation with manual results to display manual result in navbar
+                    // Add participation with manual results to display manual result
                     this.participationForManualResult = cloneDeep(this.participation);
-                    this.participationForManualResult.results = this.manualResult ? [this.manualResult] : [];
-
-                    // Either latest manual or automatic result
-                    this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
+                    this.participationForManualResult.results = !!this.manualResult.resultString ? [this.manualResult] : [];
+                    // Either submission from latest manual or automatic result
+                    this.submission = this.getLatestResult(this.participation.results).submission as ProgrammingSubmission;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
 
                     this.checkPermissions();
+                    this.handleFeedback();
 
                     if (this.manualResult && this.manualResult.hasComplaint) {
                         this.getComplaint();
@@ -140,8 +144,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     save(): void {
         this.saveBusy = true;
-
-        this.manualResultService.save(this.participation.id, this.manualResult!).subscribe(
+        this.setFeedbacksForManualResult();
+        console.log('save triggered with manual result:');
+        console.log(this.manualResult);
+        this.manualResultService.save(this.participation.id, this.manualResult).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
@@ -152,8 +158,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     submit(): void {
         this.submitBusy = true;
-
-        this.manualResultService.save(this.participation.id, this.manualResult!, true).subscribe(
+        this.setFeedbacksForManualResult();
+        console.log('submit triggered with manual result:');
+        console.log(this.manualResult);
+        this.manualResultService.save(this.participation.id, this.manualResult, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
@@ -256,30 +264,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.saveBusy = this.submitBusy = false;
     }
 
-    /**
-     * Updates the manualResult and checks whether it has a resultString, then the assessment is valid.
-     * @param result
-     */
-    onResultModified(result: Result) {
-        this.manualResult = result;
-        this.participationForManualResult.results = [this.manualResult];
-        if (this.manualResult.resultString) {
-            this.assessmentsAreValid = this.manualResult.resultString.trim().length > 0;
-        } else {
-            this.assessmentsAreValid = false;
-        }
-    }
-
     onUpdateFeedback(feedbacks: Feedback[]) {
         console.log('final update');
-        if (this.manualResult) {
-            console.log('final update - result exists');
-            this.manualResult.feedbacks = feedbacks;
-        } else {
-            console.log('final update - result does not exists');
-            this.manualResult = new Result();
-            this.manualResult.feedbacks = feedbacks;
-        }
+        this.referencedFeedback = feedbacks;
+        console.log('referencedFeedback: ');
+        console.log(this.referencedFeedback);
+        this.validateFeedback();
     }
 
     /**
@@ -291,18 +281,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
-    private getLatestResult(results: Result[]): Result | null {
-        return _orderBy(results, 'id', 'desc')[0] ?? null;
+    private getLatestResult(results: Result[]): Result {
+        return _orderBy(results, 'id', 'desc')[0];
     }
 
-    private getLatestAutomaticResult(results: Result[]): Result | null {
+    private getLatestAutomaticResult(results: Result[]): Result {
         const automaticResults = results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
-        return _orderBy(automaticResults, 'id', 'desc')[0] ?? null;
+        return _orderBy(automaticResults, 'id', 'desc')[0];
     }
 
-    private getLatestManualResult(results: Result[]): Result | null {
+    private getLatestManualResult(results: Result[]): Result {
         const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        return _orderBy(manualResults, 'id', 'desc')[0] ?? null;
+        const initialManualResult = this.manualResultService.generateInitialManualResult();
+        return _orderBy(manualResults, 'id', 'desc')[0] ?? initialManualResult;
     }
 
     /**
@@ -311,8 +302,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @private
      */
     private checkPermissions() {
-        if (this.manualResult) {
-            this.isAssessor = this.manualResult.assessor ? this.manualResult.assessor.id === this.userId : false;
+        if (this.manualResult.assessor) {
+            this.isAssessor = this.manualResult.assessor.id === this.userId;
         } else {
             this.isAssessor = true;
         }
@@ -333,5 +324,57 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.onError(err.message);
             },
         );
+    }
+
+    private handleFeedback(): void {
+        // Setup feedbacks
+        const feedbacks = this.manualResult.feedbacks || [];
+        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        if (generalFeedbackIndex !== -1) {
+            this.generalFeedback = feedbacks[generalFeedbackIndex];
+            feedbacks.splice(generalFeedbackIndex, 1);
+        } else {
+            this.generalFeedback = new Feedback();
+        }
+        this.validateFeedback();
+    }
+
+    /**
+     * Validate the feedback of the assessment
+     */
+    private validateFeedback(): void {
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
+        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+    }
+
+    private readOnly() {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    /**
+     * the dialog is writable if the user can override the result
+     * or if there is a complaint that was not yet accepted or rejected
+     */
+    /*writable() {
+        // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
+        // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
+        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined && this.manualResult!.assessor.id !== this.userId);
+    } */
+    /*
+    get readOnly(): boolean {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    } */
+
+    private setFeedbacksForManualResult() {
+        if (Feedback.hasDetailText(this.generalFeedback)) {
+            this.manualResult.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+        } else {
+            this.manualResult.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+        }
     }
 }

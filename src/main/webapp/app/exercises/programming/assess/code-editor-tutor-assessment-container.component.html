@@ -63,7 +63,7 @@
         <jhi-code-editor-tutor-assessment-display-code
             editorCenter
             [selectedFile]="codeEditorContainer ? codeEditorContainer.selectedFile : undefined"
-            [allFeedbacks]="manualResult?.feedbacks"
+            [allFeedbacks]="this.referencedFeedback"
             (onError)="onError($event)"
             (onUpdateFeedback)="onUpdateFeedback($event)"
         ></jhi-code-editor-tutor-assessment-display-code>
@@ -91,15 +91,16 @@
                 class="mr-2"
             ></jhi-updating-result>
             <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
-            <jhi-programming-assessment-manual-result-in-code-editor
-                editorBottom
-                [participationId]="participation.id"
-                [result]="manualResult"
-                [exercise]="exercise"
-                [canOverride]="canOverride"
-                [complaint]="complaint"
-                (onResultModified)="onResultModified($event)"
-            ></jhi-programming-assessment-manual-result-in-code-editor>
+            <div class="form-group mt-3" *ngIf="exercise.gradingInstructions">
+                <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
+                <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-unreferenced-feedback>
+                    <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-assessment-general-feedback>
+                </div>
+            </div>
         </div>
     </jhi-code-editor-container>
 </jhi-assessment-layout>
