@@ -21,6 +21,7 @@ jobs:
           project: Artemis Development
           column: In progress
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
+        if: github.repository == 'ls1intum/Artemis'
 
   commentOnNonDraft:
     runs-on: ubuntu-latest
