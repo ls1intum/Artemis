@@ -1,2 +1,10 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .plagiarism-split-view {
+    display: flex;
+    flex-direction: row;
+
+    .gutter {
+        background-color: $body-bg !important;
+    }
 }
