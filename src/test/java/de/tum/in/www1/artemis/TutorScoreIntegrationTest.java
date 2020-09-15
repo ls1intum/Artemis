@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,11 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
@@ -72,6 +68,10 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private List<Feedback> feedbacks;
 
+    private Complaint complaint;
+
+    private ComplaintResponse complaintResponse;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
@@ -81,6 +81,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         courseRepo.save(course);
         // exercise1
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxScore(8.0);
         exerciseRepo.save(exercise);
 
         // score for tutor1 in exercise1 in course1
@@ -238,5 +239,34 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getId()).as("response id is as expected").isEqualTo(tutorScore.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void removeTutorScore() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+        exercise = exerciseRepo.findAll().get(0);
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        response.getAssessmentsPoints();
+
+        result = resultRepo.findAll().get(0);
+
+        
+
+
+        resultRepo.delete(result);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void newTutorScoreWithComplaintAndResponse() throws Exception {
+
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void updateTutorScoreWithComplaintAndResponse() throws Exception {
+
     }
 }
