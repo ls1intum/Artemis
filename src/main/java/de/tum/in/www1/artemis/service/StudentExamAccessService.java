@@ -46,6 +46,7 @@ public class StudentExamAccessService {
      * @param courseId      the if of the course
      * @param examId        the id of the exam
      * @param studentExamId the id of the student exam
+     * @param testRun flag to determine if test run
      * @param <T>           The type of the return type of the requesting route so that the
      *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed

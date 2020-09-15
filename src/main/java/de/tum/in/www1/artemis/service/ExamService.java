@@ -555,7 +555,7 @@ public class ExamService {
      * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<StudentDTO> registerStudentsForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
+    public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDtos) {
         var course = courseService.findOne(courseId);
         var exam = findOneWithRegisteredUsers(examId);
         List<StudentDTO> notFoundStudentsDtos = new ArrayList<>();
@@ -656,17 +656,16 @@ public class ExamService {
 
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> {
-            setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam, false);
-        }));
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam, false)));
 
         return generatedParticipations.size();
     }
 
     /**
      * Sets up the participations and submissions for all the exercises of the student exam.
-     *
-     * @param studentExam The student exam
+     * @param generatedParticipations List of generatedParticipations
+     * @param studentExam The studentExam
+     * @param testRun a flag to indicate whether it is a test run
      */
     public void setUpExerciseParticipationsAndSubmissions(List<Participation> generatedParticipations, StudentExam studentExam, boolean testRun) {
         User student = studentExam.getUser();
@@ -734,9 +733,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.info("Evaluating {} quiz exercies in exam {}", quizExercises.size(), examId);
         // Evaluate all quizzes for that exercise
-        quizExercises.forEach(quiz -> {
-            examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId());
-        });
+        quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
         log.info("Evaluated {} quiz exercies in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();

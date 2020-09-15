@@ -254,8 +254,7 @@ public class StudentExamService {
         if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : existingStudentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
-                    ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
@@ -380,15 +379,22 @@ public class StudentExamService {
      * @param testRunId the id of the TestRun
      */
     private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
-        StudentExam testRun = (studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
         List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun, true);
     }
 
+    /**
+     * Deletes a test run.
+     * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
+     * @param testRunId the id of the test run
+     * @param instructorId the id of the instructor
+     * @return the deleted test run
+     */
     public StudentExam deleteTestRun(Long testRunId, Long instructorId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsByIdForUser(testRunId, instructorId, true)
-                .orElse((studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true))
+                .orElse(studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                         .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist")));
 
         List<StudentExam> testRuns = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), testRun.getUser().getId());
@@ -407,10 +413,9 @@ public class StudentExamService {
             else {
                 for (final Exercise exercise : testRun.getExercises()) {
                     // we can delete the participation and submission of an exercise if no other test run references them | contains the same exercise
-                    if (testRuns.stream().filter(tr -> tr.getExercises().stream().anyMatch(trExercise -> trExercise.getId().equals(exercise.getId()))).count() == 1) {
-                        if (exercise.getStudentParticipations().iterator().hasNext()) {
-                            participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
-                        }
+                    if (testRuns.stream().filter(tr -> tr.getExercises().stream().anyMatch(trExercise -> trExercise.getId().equals(exercise.getId()))).count() == 1
+                            && exercise.getStudentParticipations().iterator().hasNext()) {
+                        participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
                     }
                 }
             }

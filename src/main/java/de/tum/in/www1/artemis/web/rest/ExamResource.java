@@ -665,7 +665,7 @@ public class ExamResource {
             if (withParticipationsAndSubmission) {
                 // check that no test runs reference these participations and submissions
                 List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(examId, student.getId());
-                if (testRuns.size() == 0) {
+                if (testRuns.isEmpty()) {
                     List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
                             studentExam.getExercises());
                     for (var participation : participations) {

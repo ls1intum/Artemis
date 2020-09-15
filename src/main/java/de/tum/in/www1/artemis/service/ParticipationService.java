@@ -989,7 +989,7 @@ public class ParticipationService {
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
         // if exam exercise
-        if (participations.size() > 0 && participations.get(0).getExercise().getExerciseGroup() != null) {
+        if (!participations.isEmpty() && participations.get(0).getExercise().getExerciseGroup() != null) {
             List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
             // filter out the participations of test runs which can only be made by instructors
             participations = participations.stream().filter(studentParticipation -> {
