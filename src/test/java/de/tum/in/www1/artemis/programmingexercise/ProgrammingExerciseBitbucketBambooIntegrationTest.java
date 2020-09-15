@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -59,6 +60,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
     private ParticipationService participationService;
@@ -138,10 +142,23 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
         exercise.setBonusPoints(null);
         mockConnectorRequestsForSetup(exercise);
-        var responseExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
-        var savedExercise = programmingExerciseRepository.findById(responseExercise.getId()).get();
-        assertThat(responseExercise.getBonusPoints()).isEqualTo(0D);
+        var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
+        var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
+        assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
         assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis() throws Exception {
+        exercise.setStaticCodeAnalysisEnabled(true);
+        mockConnectorRequestsForSetup(exercise);
+        var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
+
+        exercise.setId(generatedExercise.getId());
+        assertThat(exercise).isEqualTo(generatedExercise);
+        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
+        assertThat(staticCodeAnalysisCategories).isNotEmpty();
     }
 
     @Test
