@@ -7,7 +7,7 @@ import { Exam } from 'app/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { CreateTestRunModal } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
@@ -22,7 +22,7 @@ export class TestRunManagementComponent implements OnInit {
     exam: Exam;
     isLoading: boolean;
     isExamStarted: boolean;
-    testRuns: StudentExam[];
+    testRuns: StudentExam[] = [];
     instructor: User;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -50,7 +50,7 @@ export class TestRunManagementComponent implements OnInit {
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 this.examManagementService.findAllTestRunsForExam(this.course.id, this.exam.id).subscribe(
                     (res) => {
-                        res.body != null ? (this.testRuns = res.body) : {};
+                        this.testRuns = res.body!;
                     },
                     (err) => this.onError(err),
                 );
@@ -68,14 +68,13 @@ export class TestRunManagementComponent implements OnInit {
      * Open modal to configure a new test run
      */
     openCreateTestRunModal() {
-        const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModal as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exam = this.exam;
         modalRef.result.then((testRunConfiguration: StudentExam) => {
             this.examManagementService.createTestRun(this.course.id, this.exam.id, testRunConfiguration).subscribe(
                 (res) => {
                     if (res.body != null) {
-                        const testRun = res.body;
-                        !!this.testRuns ? this.testRuns.push(testRun) : (this.testRuns = [testRun]);
+                        this.testRuns.push(res.body!);
                     }
                 },
                 (error) => {
@@ -118,7 +117,7 @@ export class TestRunManagementComponent implements OnInit {
      */
     get testRunCanBeAssessed(): boolean {
         if (!!this.testRuns && this.testRuns.length > 0) {
-            for (let testRun of this.testRuns) {
+            for (const testRun of this.testRuns) {
                 if (testRun.submitted) {
                     return true;
                 }

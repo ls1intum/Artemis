@@ -13,7 +13,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
 })
-export class CreateTestRunModal implements OnInit {
+export class CreateTestRunModalComponent implements OnInit {
     exam: Exam;
     workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
@@ -30,7 +30,7 @@ export class CreateTestRunModal implements OnInit {
      */
     createTestRun() {
         if (this.testRunConfigured) {
-            let testRun = new StudentExam();
+            const testRun = new StudentExam();
             testRun.exam = this.exam;
             testRun.exercises = Object.values(this.testRunConfiguration);
             testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;

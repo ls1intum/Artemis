@@ -33,7 +33,7 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exerc
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { CreateTestRunModal } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -70,7 +70,7 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamStatusComponent,
         StudentExamsComponent,
         TestRunManagementComponent,
-        CreateTestRunModal,
+        CreateTestRunModalComponent,
         StudentsExamImportDialogComponent,
         StudentsExamImportButtonComponent,
         StudentExamDetailComponent,
