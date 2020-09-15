@@ -145,6 +145,26 @@ Generic styles
 
 .gutter {
     background-color: $body-bg;
+    cursor: col-resize;
+    position: relative;
+    transition: background-color 0.2s;
+
+    &:active,
+    &:hover {
+        background-color: darken($body-bg, 10);
+    }
+
+    &::before {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        content: '';
+        height: 24px;
+        width: 2px;
+        border-radius: 1px;
+        background-color: darken($body-bg, 20);
+    }
 }
 
 .error {

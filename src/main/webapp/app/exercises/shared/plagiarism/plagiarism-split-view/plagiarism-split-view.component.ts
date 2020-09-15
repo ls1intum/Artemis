@@ -15,7 +15,7 @@ export class SplitPaneDirective {
 export class PlagiarismSplitViewComponent implements AfterViewInit {
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
-    private split: any;
+    private split: Split;
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -26,6 +26,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit {
         this.split = Split(paneElements, {
             minSize: 100,
             sizes: [50, 50],
+            gutterSize: 8,
         });
     }
 }

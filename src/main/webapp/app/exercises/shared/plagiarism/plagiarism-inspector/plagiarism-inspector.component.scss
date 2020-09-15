@@ -1,4 +1,11 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$card-body-padding: 1.25rem;
+$navbar-height: 57px;
+$footer-height: 31px;
+
 .plagiarism-inspector {
+    height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height});
     // JHipster .card-body has default padding of 1.25
     margin: -1.25rem;
 
@@ -8,10 +15,13 @@
         top: 0;
         left: 0;
         bottom: 0;
-        border-right: 1px solid grey;
+        border-right: 1px solid $body-bg;
     }
 
     .plagiarism-main-window {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         margin-left: 200px;
     }
 }
