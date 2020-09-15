@@ -156,8 +156,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
+        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getDetailText() == null)) {
+            throw new BadRequestAlertException("In case feedback is present, feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
 
         ProgrammingSubmission submission;
