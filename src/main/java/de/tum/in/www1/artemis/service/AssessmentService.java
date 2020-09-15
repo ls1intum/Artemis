@@ -56,7 +56,8 @@ public class AssessmentService {
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
         Double maxScore = exercise.getMaxScore();
 
-        if (exercise.hasExerciseGroup()) {
+        // Exam results and manual results of programming exercises are always to rated
+        if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
         else {

@@ -79,13 +79,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public Result submitManualAssessment(long resultId) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        // Every manual assessed programming submission is rated
-        result.setRated(true);
-        result.setCompletionDate(ZonedDateTime.now());
-        // TODO: Make it possible to give scores/points for manual results
-        // Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        // return submitResult(result, exercise, calculatedScore);
 
-        return resultRepository.save(result);
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, result.getParticipation().getExercise(), calculatedScore);
     }
 }
