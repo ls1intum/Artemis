@@ -1,6 +1,6 @@
 name: Pull Request Converted to draft
 on:
-  pull_request:
+  pull_request_target:
     types: [assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, locked, unlocked]
 
 jobs:

@@ -368,6 +368,11 @@ Start Jenkins
             -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
             jenkins-artemis
 
+    For jenkins to be able to read data from the volume you might need to allow the jenkins user to read the jenkins_data folder.
+    One way to do that is transfer the ownership to the user with id 1000 which is normally the user the jenkins process runs with.
+    ::
+        sudo chown -R 1000 jenkins_data/
+
 8.  Wait until the docker container has started and Jenkins is running.
 
 9.  Run the following commands to navigate into the docker container and
@@ -622,6 +627,9 @@ the following steps:
     “Manage Jenkins” - “Configure Global Security” and uncheck “Prevent
     Cross Site Request Forgery exploits”. Also disable the option
     ``use-crumb`` in ``application-jenkins.yml``.
+
+    Depending on the version this setting might not be available anymore.
+    Have a look `here<https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`_ on how you can disable CSRF protection.
 
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~

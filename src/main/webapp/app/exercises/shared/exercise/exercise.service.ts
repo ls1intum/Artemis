@@ -230,7 +230,7 @@ export class ExerciseService {
      */
     convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: Exercise) => {
+            res.body.forEach((exercise: E) => {
                 this.convertExerciseDateFromServer(exercise);
             });
         }
@@ -260,7 +260,7 @@ export class ExerciseService {
      * Prepare client-exercise to be uploaded to the server
      * @param { Exercise } exercise - Exercise that will be modified
      */
-    convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
+    convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
         if (copy.course) {
