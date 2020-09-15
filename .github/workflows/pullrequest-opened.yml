@@ -13,6 +13,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   addToProject:
+    if: github.repository == 'ls1intum/Artemis'
     runs-on: ubuntu-latest
     steps:
       - name: Add Pull Request to Project
@@ -21,7 +22,6 @@ jobs:
           project: Artemis Development
           column: In progress
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
-        if: github.repository == 'ls1intum/Artemis'
 
   commentOnNonDraft:
     runs-on: ubuntu-latest
