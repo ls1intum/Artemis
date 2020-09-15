@@ -267,7 +267,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin());
 
         // Start participation with original team
-        participationService.startExercise(exercise, team, false);
+        participationService.startExercise(exercise, team, false, false);
 
         // Update team with new student after participation has already started
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
@@ -305,7 +305,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, exercise.getProjectKey(), firstStudent);
 
         // Start participation with original team
-        participationService.startExercise(exercise, team, false);
+        participationService.startExercise(exercise, team, false, false);
 
         // Update team with removed student
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);

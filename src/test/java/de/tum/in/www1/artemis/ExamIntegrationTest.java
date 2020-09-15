@@ -1003,8 +1003,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // TODO: it would be nice if we can support programming exercises here as well
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
-        // register user
-        exam.setRegisteredUsers(new HashSet<>(users));
+        // register users. Instructors are ignored from scores as they are exclusive for test run exercises
+        Set<User> registeredStudents = users.stream().filter(user -> !user.getLogin().contains("instructor") && !user.getLogin().contains("admin")).collect(Collectors.toSet());
+        exam.setRegisteredUsers(registeredStudents);
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -1015,13 +1016,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size());
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size());
 
         // start exercises
 
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
@@ -1183,6 +1184,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Set student exam without working time and save into database
         StudentExam studentExam = new StudentExam();
         studentExam.setUser(user);
+        studentExam.setTestRun(false);
         studentExam = studentExamRepository.save(studentExam);
 
         // Add student exam to exam and save into database

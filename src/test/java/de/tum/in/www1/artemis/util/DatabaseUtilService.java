@@ -668,6 +668,7 @@ public class DatabaseUtilService {
         examRepository.save(exam);
         var studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
         studentExam.setUser(user);
         studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
         studentExamRepository.save(studentExam);
