@@ -253,7 +253,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             }
             catch (GitLabApiException e) {
                 if (e.getMessage().equals("Member already exists")) {
-                    log.debug("Member already exists for group " + exercise.getProjectKey());
+                    log.warn("Member already exists for group " + exercise.getProjectKey());
                     return;
                 }
                 throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);

@@ -93,7 +93,7 @@ public class BambooRequestMockProvider {
 
     public void enableMockingOfRequests(boolean ignoreExpectOrder) {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
-        builder.ignoreExpectOrder(true);
+        builder.ignoreExpectOrder(ignoreExpectOrder);
         mockServer = builder.build();
 
         // necessary for injecting bambooClient above
@@ -111,7 +111,7 @@ public class BambooRequestMockProvider {
      *
      * @param exercise the programming exercise that already exists
      */
-    public void mockProjectKeyExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+    public void mockProjectKeyExists(ProgrammingExercise exercise) {
         mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + exercise.getProjectKey())).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK));
     }
