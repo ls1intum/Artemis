@@ -98,9 +98,6 @@ public class StaticCodeAnalysisService {
             originalCategory.setState(matchingCategory.getState());
         }
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
-
-        // TODO: Trigger re-evaluate if at least on category was changed?
-
         return originalCategories;
     }
 }

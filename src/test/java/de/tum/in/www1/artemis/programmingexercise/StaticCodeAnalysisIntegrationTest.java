@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,10 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -29,7 +38,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     RequestUtilService request;
 
     @Autowired
+    private StaticCodeAnalysisService staticCodeAnalysisService;
+
+    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
@@ -54,6 +69,15 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    void testCreateDefaultCategories_noConfigurationAvailable() {
+        // Haskell does not have a default configuration at the time of creation of this test
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(categories).isEmpty();
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
@@ -64,8 +88,16 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(value = "student1", roles = "STUDENT")
-    void testGetStaticCodeAnalysisCategories_forbidden() throws Exception {
+    void testGetStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
+    }
+
+    @Test
+    @WithMockUser(username = "other-ta1", roles = "TA")
+    void testGetStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        database.addTeachingAssistant("other-tas", "other-ta");
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
 
@@ -77,16 +109,104 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
-    void testUpdateStaticCodeAnalysisCategories_forbidden() throws Exception {
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
-        request.put(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
+        // Change the first category
+        var categoryIterator = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator();
+        var firstCategory = categoryIterator.next();
+        firstCategory.setState(CategoryState.GRADED);
+        firstCategory.setPenalty(33);
+        firstCategory.setMaxPenalty(44);
+        // Remove the second category
+        var removedCategory = categoryIterator.next();
+        categoryIterator.remove();
+
+        var responseCategories = request.patchWithResponseBody(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(),
+                new TypeReference<List<StaticCodeAnalysisCategory>>() {
+                }, HttpStatus.OK);
+        var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
+
+        // The removed category should not be deleted
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().add(removedCategory);
+        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+                .containsExactlyInAnyOrderElementsOf(savedCategories);
+        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+                .containsExactlyInAnyOrderElementsOf(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories());
+        assertThat(savedCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+                .containsExactlyInAnyOrderElementsOf(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    void testUpdateStaticCodeAnalysisCategories_asStudent_forbidden() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "other-ta1", roles = "TA")
+    void testUpdateStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        database.addTeachingAssistant("other-tas", "other-ta");
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories_staticCodeAnalysisNotEnabled_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExercise);
-        request.put(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories_categoryIdMissing_badRequest() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setId(null);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories_penaltyNullOrNegative_badRequest() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(null);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(-1);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories_maxPenaltySmallerThanPenalty_badRequest() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        var category = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next();
+        category.setMaxPenalty(3);
+        category.setPenalty(5);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories_stateIsNull_badRequest() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setState(null);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateStaticCodeAnalysisCategories_exerciseIdsDoNotMatch_conflict() throws Exception {
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().getExercise().setId(1234L);
+        request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void testDeletionOfStaticCodeAnalysisCategoriesOnExerciseDeletion() {
+        programmingExerciseRepository.delete(programmingExerciseSCAEnabled);
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
+        assertThat(categories).isEmpty();
     }
 }

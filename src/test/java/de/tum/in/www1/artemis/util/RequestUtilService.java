@@ -240,6 +240,16 @@ public class RequestUtilService {
         return mapper.readValue(stringResponse, responseType);
     }
 
+    public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
+    }
+
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
