@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, Directive, ElementRef, QueryList, ViewChildren } from '@angular/core';
+// @ts-ignore
 import Split from 'split.js';
 
 @Directive({ selector: '[jhiPane]' })
