@@ -1,2 +1,17 @@
 .plagiarism-inspector {
+    // JHipster .card-body has default padding of 1.25
+    margin: -1.25rem;
+
+    .plagiarism-sidebar {
+        width: 200px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        border-right: 1px solid grey;
+    }
+
+    .plagiarism-main-window {
+        margin-left: 200px;
+    }
 }
