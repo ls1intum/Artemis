@@ -31,6 +31,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,7 +115,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var cleanTargetName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
-        final var jobXml = jobXml(sourceProjectKey, sourcePlanKey);
+        final var jobXml = getJobXmlForBuildPlanWith(sourceProjectKey, sourcePlanKey);
         saveJobXml(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
@@ -139,22 +140,67 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
-        final var config = jobXml(projectKey, planName);
-        final var urlElements = config.getElementsByTagName("url");
-        if (urlElements.getLength() != 2) {
+        final var jobXmlDocument = getJobXmlForBuildPlanWith(projectKey, planName);
+        final var remoteUrlNode = findUserRemoteConfigFor(jobXmlDocument, repoNameInCI);
+        if (remoteUrlNode == null || remoteUrlNode.getFirstChild() == null) {
+            throw new IllegalArgumentException("Url to replace not found in job xml document");
+        }
+        remoteUrlNode.getFirstChild().setNodeValue(repoUrl);
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        postXml(jobXmlDocument, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
+    }
+
+    private org.w3c.dom.Node findUserRemoteConfigFor(Document jobXmlDocument, String repoNameInCI) {
+        final var userRemoteConfigs = jobXmlDocument.getElementsByTagName("hudson.plugins.git.UserRemoteConfig");
+        if (userRemoteConfigs.getLength() != 2) {
             throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
         }
+        var firstUserRemoteConfig = userRemoteConfigs.item(0).getChildNodes();
+        var urlElement = findUrlElement(firstUserRemoteConfig, repoNameInCI);
+        if (urlElement != null) {
+            return urlElement;
+        }
+        var secondUserRemoteConfig = userRemoteConfigs.item(1).getChildNodes();
+        urlElement = findUrlElement(secondUserRemoteConfig, repoNameInCI);
+        if (urlElement != null) {
+            return urlElement;
+        }
+        return null;
+    }
 
-        // TODO: we should rather identify those repositories in the section source code management in Jenkins with a unique name instead of using the order
-        if (repoNameInCI.equals(TEST_REPO_NAME)) {
-            urlElements.item(1).getFirstChild().setNodeValue(repoUrl);
+    private org.w3c.dom.Node findUrlElement(NodeList nodeList, String repoNameInCI) {
+        boolean found = false;
+        org.w3c.dom.Node urlNode = null;
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            var childElement = nodeList.item(i);
+            if ("name".equalsIgnoreCase(childElement.getNodeName())) {
+                var nameValue = childElement.hasChildNodes() ? childElement.getFirstChild().getNodeValue() : null;
+                // this name was added recently, so we cannot assume that all job xml files include this name
+                if (repoNameInCI.equalsIgnoreCase(nameValue)) {
+                    found = true;
+                }
+            }
+            else if ("url".equalsIgnoreCase(childElement.getNodeName())) {
+                urlNode = childElement;
+                if (!found) {
+                    // fallback for old xmls
+                    var urlValue = childElement.hasChildNodes() ? childElement.getFirstChild().getNodeValue() : null;
+                    if (urlValue != null && repoNameInCI.equals(ASSIGNMENT_REPO_NAME) && ((urlValue.contains("-exercise.git") || (urlValue.contains("-solution.git"))))) {
+                        found = true;
+                    }
+                    else if (urlValue != null && repoNameInCI.equals(TEST_REPO_NAME) && urlValue.contains("-tests.git")) {
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        if (found && urlNode != null) {
+            return urlNode;
         }
         else {
-            urlElements.item(0).getFirstChild().setNodeValue(repoUrl);
+            return null;
         }
-
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
-        postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
     }
 
     @Override
@@ -313,7 +359,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
         try {
-            jobXml(projectKey, buildPlanId);
+            getJobXmlForBuildPlanWith(projectKey, buildPlanId);
             return true;
         }
         catch (Exception emAll) {
@@ -535,7 +581,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private Document jobXml(String projectKey, String jobName) {
+    private Document getJobXmlForBuildPlanWith(String projectKey, String jobName) {
         try {
             final var xmlString = jenkinsServer.getJobXml(folder(projectKey), jobName);
             return XmlFileUtils.readFromString(xmlString);
