@@ -27,7 +27,6 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     course: Course;
     exam: Exam;
-    examTestRun = false;
     courseId: number;
     examId: number;
     unfinishedExercises: Exercise[] = [];
@@ -59,6 +58,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     exerciseForGuidedTour: Exercise | null;
 
     isExamMode = false;
+    isTestRun = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -79,9 +79,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.isExamMode = !!this.examId;
         if (this.isExamMode) {
-            console.log(this.route.snapshot.url.length);
-            this.examTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-            console.log(this.examTestRun);
+            this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+            this.showFinishedExercises = this.isTestRun;
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
@@ -207,11 +206,15 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Navigate back to the course management page.
+     * Navigate back to the origin page.
      */
     back() {
         if (this.isExamMode) {
-            this.router.navigate(['course-management', this.course.id, 'exams']);
+            if (this.isTestRun) {
+                this.router.navigate(['course-management', this.course.id, 'exams', this.examId, 'test-runs']);
+            } else {
+                this.router.navigate(['course-management', this.course.id, 'exams']);
+            }
         } else {
             this.router.navigate(['course-management']);
         }

@@ -37,15 +37,18 @@ public class ComplaintService {
 
     private CourseService courseService;
 
+    private UserService userService;
+
     private ExamService examService;
 
     public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService) {
+            ExamService examService, UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
         this.examService = examService;
+        this.userService = userService;
     }
 
     /**
@@ -64,11 +67,19 @@ public class ComplaintService {
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+        boolean examTestRun = false;
 
         if (examId.isPresent()) {
             final Exam exam = examService.findOne(examId.getAsLong());
-            if (!isTimeOfComplaintValid(exam)) {
-                throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
+            final List<User> instructors = userService.getInstructors(exam.getCourse());
+            Optional<User> complaintStudent = instructors.stream().filter(instructor -> instructor.getLogin().equals(principal.getName())).findFirst();
+            if (complaintStudent.isPresent()) {
+                examTestRun = true;
+            }
+            else {
+                if (!isTimeOfComplaintValid(exam)) {
+                    throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
+                }
             }
         }
         else {

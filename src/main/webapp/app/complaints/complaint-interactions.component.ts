@@ -20,6 +20,8 @@ export class ComplaintInteractionsComponent implements OnInit {
     @Input() participation: StudentParticipation;
     @Input() result: Result;
     @Input() exam: Exam;
+    // flag to indicate exam test run. Default set to false.
+    @Input() testRun = false;
     isCurrentUserSubmissionAuthor: boolean;
 
     get isExamMode() {
@@ -47,6 +49,7 @@ export class ComplaintInteractionsComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
+        console.log('complaints active');
         if (this.isExamMode) {
             if (this.participation && this.participation.id && this.exercise) {
                 if (this.participation.results && this.participation.results.length > 0) {
@@ -95,6 +98,9 @@ export class ComplaintInteractionsComponent implements OnInit {
      * We disable the component, if no complaint or feedback request has been made by the user during the Student Review period, for exam exercises.
      */
     get noValidFeedbackRequestOrComplaintWasSubmittedWithinTheStudentReviewPeriod() {
+        if (this.testRun) {
+            return false;
+        }
         return !this.isTimeOfComplaintValid && !this.hasComplaint && !this.hasRequestMoreFeedback;
     }
 
@@ -108,6 +114,9 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     get isTimeOfComplaintValid(): boolean {
         if (this.isExamMode) {
+            if (this.testRun) {
+                return !!this.result && !!this.result.completionDate;
+            }
             return this.isWithinStudentReviewPeriod() && !!this.result && !!this.result.completionDate;
         } else if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
@@ -125,6 +134,9 @@ export class ComplaintInteractionsComponent implements OnInit {
      * These are only allowed if they are submitted within the student review period.
      */
     private isWithinStudentReviewPeriod(): boolean {
+        if (this.testRun) {
+            return true;
+        }
         if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isBetween(this.exam.examStudentReviewStart, this.exam.examStudentReviewEnd);
         } else {

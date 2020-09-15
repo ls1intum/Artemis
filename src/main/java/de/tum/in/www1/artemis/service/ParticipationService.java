@@ -982,22 +982,24 @@ public class ParticipationService {
     }
 
     /**
-     * filters the relevant results by removing all irrelevent ones (
+     * filters the relevant results by removing all irrelevent ones
      * @param participations the participations to get filtered
+     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
-        // filter out the participations of test runs | can only be made by instructors
-        if (participations.get(0).getExercise().getExerciseGroup() != null) {
+     */
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+        // if exam exercise
+        if (participations.size() > 0 && participations.get(0).getExercise().getExerciseGroup() != null) {
             List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
-    
-            participations = participations.stream().filter(studentParticipation ->  {
+            // filter out the participations of test runs which can only be made by instructors
+            participations = participations.stream().filter(studentParticipation -> {
                 if (studentParticipation.getStudent().isPresent()) {
                     return !instructors.contains(studentParticipation.getStudent().get());
                 }
                 return true;
             }).collect(Collectors.toList());
         }
-     */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+
         return participations.stream()
 
                 // Filter out participations without Students
