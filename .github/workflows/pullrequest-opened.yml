@@ -1,6 +1,6 @@
 name: Pull Request Opened
 on:
-  pull_request:
+  pull_request_target:
     types: [opened]
 
 jobs:
@@ -13,7 +13,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   addToProject:
-    if: github.repository == 'ls1intum/Artemis'
     runs-on: ubuntu-latest
     steps:
       - name: Add Pull Request to Project
