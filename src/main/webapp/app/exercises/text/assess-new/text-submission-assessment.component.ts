@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
@@ -46,7 +46,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     unusedTextBlockRefs: TextBlockRef[];
     complaint: Complaint | null;
     totalScore: number;
-
+    isTestRun = false;
     isLoading: boolean;
     saveBusy: boolean;
     submitBusy: boolean;
@@ -90,6 +90,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private assessmentsService: TextAssessmentsService,
@@ -135,6 +136,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity ? identity.id : null;
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.isTestRun = queryParams.get('testRun') === 'true';
+        });
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
@@ -272,7 +276,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
     }
 
     private computeTotalScore() {

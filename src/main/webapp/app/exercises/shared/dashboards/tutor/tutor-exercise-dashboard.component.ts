@@ -52,6 +52,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exam: Exam | null = null;
     // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
+    isTestRun = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -131,6 +132,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.isTestRun = this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
 
         this.loadAll();
 
@@ -209,14 +211,21 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
-        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
+        if (!this.isTestRun) {
+            this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+            this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+        } else {
+            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+        }
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -418,7 +427,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.openingAssessmentEditorForNewSubmission = true;
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        await this.router.navigate([route]);
+        await this.router.navigate([route], { queryParams: { testRun: true } });
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
@@ -451,10 +460,14 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      * Navigates back to the tutor (exam) dashboard
      */
     back() {
-        if (this.exercise?.course) {
+        if (!this.isExamMode) {
             this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
         } else {
-            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            if (this.isTestRun) {
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
+            } else {
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            }
         }
     }
 }
