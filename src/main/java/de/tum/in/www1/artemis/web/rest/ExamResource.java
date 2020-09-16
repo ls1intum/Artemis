@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -295,60 +296,42 @@ public class ExamResource {
         tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
 
         List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
-        Set<Exercise> testRunExercises = new HashSet<>();
-        testRuns.forEach(testRun -> testRunExercises.addAll(testRun.getExercises()));
+        Map<Exercise, Set<StudentParticipation>> testRunParticipationsByExercise = testRuns.stream().flatMap(testRun -> testRun.getExercises().stream()) // map to all exercises of
+                                                                                                                                                         // test runs (each exercise
+                                                                                                                                                         // contains exactly one
+                                                                                                                                                         // participation for now)
+                .flatMap(exercise -> exercise.getStudentParticipations().stream()) // map the exercise to the (currently single) participation
+                .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // ignore participations without submissions
+                .collect(Collectors.groupingBy(StudentParticipation::getExercise, Collectors.toSet())); // group the participations by the exercise
 
         for (final Exercise exercise : exercises) {
-            List<Complaint> complaints = complaintService.getAllComplaintsByExerciseId(exercise.getId());
-            boolean foundExercise = false;
-            for (final Exercise testRunExercise : testRunExercises) {
-                if (foundExercise) {
-                    break;
-                }
-                if (exercise.equals(testRunExercise)) {
-                    foundExercise = true;
-                    if (testRunExercise.getStudentParticipations().size() > 0) {
-                        DueDateStat numberOfSubmissions = new DueDateStat();
-                        DueDateStat numberOfAssessments = new DueDateStat();
-                        int numberOfParticipationsWithSubmissions = testRunExercise.getStudentParticipations().size();
-                        int assessmentCounter = 0;
-                        int numberOfComplaints = 0;
-                        int numberOfOpenComplaints = 0;
+            // Create map in order to access the corresponding complaint via its result
+            var complaintsByResult = complaintService.getAllComplaintsByExerciseId(exercise.getId()).stream().collect(Collectors.toMap(Complaint::getResult, Function.identity()));
 
-                        for (final StudentParticipation studentParticipation : testRunExercise.getStudentParticipations()) {
-                            if (studentParticipation.getSubmissions().size() == 0) {
-                                numberOfParticipationsWithSubmissions--;
-                                continue;
-                            }
-                            final Submission submission = studentParticipation.getSubmissions().iterator().next();
-                            if (submission.getResult() != null && submission.getResult().getCompletionDate() != null
-                                    && submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
-                                assessmentCounter++;
-                                if (Boolean.TRUE.equals(submission.getResult().hasComplaint())) {
-                                    numberOfComplaints++;
-                                    Complaint complaint = complaints.stream().filter(c -> c.getStudent().equals(studentParticipation.getStudent().get()))
-                                            .collect(Collectors.toList()).get(0);
-                                    if (complaint.isAccepted() == null) {
-                                        numberOfOpenComplaints++;
-                                    }
-                                }
-                            }
-                        }
+            if (testRunParticipationsByExercise.containsKey(exercise)) {
+                var testRunParticipationSet = testRunParticipationsByExercise.get(exercise);
+                var numberOfTestRunParticipations = testRunParticipationSet.size();
+                // Deduct the number of test run participations (with one submission each) from the total calculated number of submissions in time
+                exercise.getNumberOfSubmissions().setInTime(exercise.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
 
-                        numberOfSubmissions.setInTime(exercise.getNumberOfSubmissions().getInTime() - numberOfParticipationsWithSubmissions);
-                        numberOfSubmissions.setLate(exercise.getNumberOfSubmissions().getLate());
-                        numberOfAssessments.setInTime(exercise.getNumberOfAssessments().getInTime() - assessmentCounter);
-                        numberOfAssessments.setLate(exercise.getNumberOfAssessments().getLate());
+                // count the number of finished assessments (the result must be rated and it must have a completion date set)
+                var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult)
+                        .filter(result -> result.getCompletionDate() != null && result.isRated() && result.getAssessmentType().equals(AssessmentType.MANUAL)).count();
+                // Deduct the number of test run finished assessments from the total calculated finished assessments
+                exercise.getNumberOfAssessments().setInTime(exercise.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
 
-                        exercise.setNumberOfSubmissions(numberOfSubmissions);
-                        exercise.setNumberOfAssessments(numberOfAssessments);
-                        exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
-                        exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);
-                    }
-                }
+                // count the number of complaints for all test run results
+                var numberOfComplaints = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult).map(complaintsByResult::get).filter(Objects::nonNull).count();
+                // Deduct the number of test run complaints from the total calculated number of complaints
+                exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
+
+                // count the number of open complaints for all test run results (isAccepted must not be set)
+                var numberOfOpenComplaints = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult).map(complaintsByResult::get).filter(Objects::nonNull)
+                        .filter(complaint -> complaint.isAccepted() == null).count();
+                // Deduct the number of open test run complaints from the total calculated number of open complaints
+                exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);
             }
         }
-
         return ResponseEntity.ok(exam);
     }
 
@@ -376,61 +359,59 @@ public class ExamResource {
             return forbidden();
         }
 
-        List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
-        Set<Exercise> testRunExercises = new HashSet<>();
-        testRuns.forEach(testRun -> testRunExercises.addAll(testRun.getExercises()));
         Set<Exercise> exercises = new HashSet<>();
         // extract all exercises for all the exam
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            var exerciseGroupExercises = courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises());
-            exerciseGroup.setExercises(testRunExercises.stream().filter(exerciseGroupExercises::contains).collect(Collectors.toSet()));
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
             exercises.addAll(exerciseGroup.getExercises());
         }
 
-        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+        List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
+        Map<Exercise, Set<StudentParticipation>> testRunParticipationsByExercise = testRuns.stream().flatMap(testRun -> testRun.getExercises().stream()) // map to all exercises of
+                                                                                                                                                         // test runs (each exercise
+                                                                                                                                                         // contains exactly one
+                                                                                                                                                         // participation for now)
+                .flatMap(exercise -> exercise.getStudentParticipations().stream()) // map the exercise to the (currently single) participation
+                .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // ignore participations without submissions
+                .collect(Collectors.groupingBy(StudentParticipation::getExercise, Collectors.toSet())); // group the participations by the exercise
 
         for (final Exercise exercise : exercises) {
-            List<Complaint> complaints = complaintService.getAllComplaintsByExerciseId(exercise.getId());
-            if (exercise.getStudentParticipations().size() > 0) {
-                DueDateStat numberOfSubmissions = new DueDateStat();
-                DueDateStat numberOfAssessments = new DueDateStat();
-                int numberOfParticipationsWithSubmissions = exercise.getStudentParticipations().size();
-                int assessmentCounter = 0;
-                int numberOfComplaints = 0;
-                int numberOfOpenComplaints = 0;
+            // Create map in order to access the corresponding complaint via its result
+            var complaintsByResult = complaintService.getAllComplaintsByExerciseId(exercise.getId()).stream().collect(Collectors.toMap(Complaint::getResult, Function.identity()));
 
-                for (final StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                    if (studentParticipation.getSubmissions().size() == 0) {
-                        numberOfParticipationsWithSubmissions--;
-                        continue;
-                    }
-                    final Submission submission = studentParticipation.getSubmissions().iterator().next();
-                    if (submission.getResult() != null && submission.getResult().getCompletionDate() != null
-                            && submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
-                        assessmentCounter++;
-                        if (Boolean.TRUE.equals(submission.getResult().hasComplaint())) {
-                            numberOfComplaints++;
-                            Complaint complaint = complaints.stream().filter(c -> c.getStudent().equals(studentParticipation.getStudent().get())).collect(Collectors.toList())
-                                    .get(0);
-                            if (complaint.isAccepted() == null) {
-                                numberOfOpenComplaints++;
-                            }
-                        }
-                    }
-                }
+            DueDateStat numberOfTestRunSubmissions = new DueDateStat();
+            numberOfTestRunSubmissions.setLate(0L);
+            numberOfTestRunSubmissions.setInTime(0L);
+            DueDateStat numberOfTestRunAssessments = new DueDateStat();
+            numberOfTestRunAssessments.setInTime(0L);
+            numberOfTestRunAssessments.setLate(0L);
+            exercise.setNumberOfSubmissions(numberOfTestRunSubmissions);
+            exercise.setNumberOfAssessments(numberOfTestRunAssessments);
+            exercise.setNumberOfComplaints(0L);
+            exercise.setNumberOfOpenComplaints(0L);
+            if (testRunParticipationsByExercise.containsKey(exercise)) {
+                var testRunParticipationSet = testRunParticipationsByExercise.get(exercise);
+                var numberOfTestRunParticipations = testRunParticipationSet.size();
+                // Set the number of test run submissions as the total number of calculated participations with (exactly one) submission
+                numberOfTestRunSubmissions.setInTime((long) numberOfTestRunParticipations);
 
-                numberOfSubmissions.setInTime((long) numberOfParticipationsWithSubmissions);
-                numberOfSubmissions.setLate(0L);
-                numberOfAssessments.setInTime((long) assessmentCounter);
-                numberOfAssessments.setLate(0L);
+                // count the number of finished assessments (the result must be rated and it must have a completion date set)
+                var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult)
+                        .filter(result -> result.getCompletionDate() != null && result.isRated() && result.getAssessmentType().equals(AssessmentType.MANUAL)).count();
+                // Set the number of test run finished assessments as total calculated finished assessments
+                numberOfTestRunAssessments.setInTime(numberOfTestRunFinishedAssessements);
 
-                exercise.setNumberOfSubmissions(numberOfSubmissions);
-                exercise.setNumberOfAssessments(numberOfAssessments);
-                exercise.setNumberOfComplaints((long) numberOfComplaints);
-                exercise.setNumberOfOpenComplaints((long) numberOfOpenComplaints);
+                // count the number of complaints for all test run results
+                var numberOfComplaints = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult).map(complaintsByResult::get).filter(Objects::nonNull).count();
+                // Set the number of test run complaints as the total calculated number of complaints
+                exercise.setNumberOfComplaints(numberOfComplaints);
+
+                // count the number of open complaints for all test run results (isAccepted must not be set)
+                var numberOfOpenComplaints = testRunParticipationSet.stream().map(StudentParticipation::findLatestResult).map(complaintsByResult::get).filter(Objects::nonNull)
+                        .filter(complaint -> complaint.isAccepted() == null).count();
+                // Set the number of open test run complaints as the total calculated number of open complaints
+                exercise.setNumberOfOpenComplaints(numberOfOpenComplaints);
             }
-            break;
         }
         return ResponseEntity.ok(exam);
     }
