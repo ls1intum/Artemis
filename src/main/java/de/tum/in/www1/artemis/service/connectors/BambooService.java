@@ -627,61 +627,6 @@ public class BambooService implements ContinuousIntegrationService {
         return (long) 0;
     }
 
-    @Override
-    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
-        final var buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
-        if (buildResults == null) {
-            return Optional.empty();
-        }
-        // The retrieved build result must match the commitHash of the provided submission.
-        String commitHash = buildResults.getVcsRevisionKey();
-        if(!commitHash.equalsIgnoreCase(submission.getCommitHash())) {
-            return Optional.empty();
-        }
-        Result result = new Result();
-        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
-
-        if (buildResults.getBuildTestSummary().equals("No tests found")) {
-            result.setResultString("No tests found");
-        } else {
-            int total = buildResults.getTestResults().getAll();
-            int passed = buildResults.getTestResults().getSuccessful();
-            result.setResultString(String.format("%d of %d passed", passed, total));
-        }
-
-        result.setCompletionDate(buildResults.getBuildCompletedDate());
-        result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
-        result.setParticipation((Participation) participation);
-        result.setSubmission(submission);
-
-        addFeedbackToResult(result, mockBambooJobFromFailedTests(buildResults.getTestResults().getFailedTests()), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
-        result = resultRepository.save(result);
-
-        submission.setBuildArtifact(buildResults.getArtifacts() != null && !buildResults.getArtifacts().getArtifacts().isEmpty());
-        submission.setBuildFailed(result.getResultString().equals("No tests found"));
-        programmingSubmissionRepository.save(submission);
-
-        return Optional.of(result);
-    }
-
-    private List<BambooBuildResultNotificationDTO.BambooJobDTO> mockBambooJobFromFailedTests(QueriedBambooBuildResultDTO.BambooFailedTestsDTO failedTests) {
-        var job = new BambooBuildResultNotificationDTO.BambooJobDTO();
-
-        job.setFailedTests(failedTests.getTestResults().stream().map(testResult -> {
-            var testJob = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
-            testJob.setName(testResult.getMethodName());
-            testJob.setMethodName(testResult.getMethodName());
-            testJob.setClassName(testResult.getClassName());
-            testJob.setErrors(testResult.getErrors().getErrorMessages().stream().map(error -> error.getMessage()).collect(Collectors.toList()));
-            return testJob;
-        }).collect(Collectors.toList()));
-
-        return Collections.singletonList(job);
-    }
-
-
     /**
      * Performs a request to the Bamboo REST API to retrive the latest result for the given plan.
      *

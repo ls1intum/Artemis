@@ -368,25 +368,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    @Override
-    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
-        final var report = fetchLatestBuildResultFromJenkins(participation);
-
-        // The retrieved build result must match the commitHash of the provided submission.
-        if (report.getCommits().stream().map(CommitDTO::getHash).noneMatch(hash -> hash.equals(submission.getCommitHash()))) {
-            return Optional.empty();
-        }
-
-        final var result = createResultFromBuildResult(report, (Participation) participation);
-        result.setRatedIfNotExceeded(report.getRunDate(), submission);
-        result.setSubmission(submission);
-
-        submission.setBuildFailed(result.getResultString().equals("No tests found"));
-        programmingSubmissionRepository.save(submission);
-
-        return Optional.empty();
-    }
-
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
         // No feedback for build errors
         if (report.getResults() == null || report.getResults().isEmpty()) {

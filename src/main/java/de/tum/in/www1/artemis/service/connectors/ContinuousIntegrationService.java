@@ -137,14 +137,6 @@ public interface ContinuousIntegrationService {
     ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
-     * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission and save it into the database.
-     * @param participation to identify the build artifact with.
-     * @param submission    for commitHash comparison.
-     * @return the saved Result instance if a build result could be retrieved from the CIS.
-     */
-    Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
-
-    /**
      * Checks if the project with the given projectKey already exists
      *
      * @param projectKey to check if a project with this unique key already exists
