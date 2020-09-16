@@ -295,6 +295,11 @@ public class RequestUtilService {
         return mapper.readValue(res, responseType);
     }
 
+    public <T> T get(String path, HttpStatus expectedStatus, TypeReference<T> responseType) throws Exception {
+        var stringResponse = get(path, expectedStatus, String.class, new LinkedMultiValueMap<>(), new HttpHeaders());
+        return mapper.readValue(stringResponse, responseType);
+    }
+
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
     }

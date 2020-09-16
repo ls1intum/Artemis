@@ -81,7 +81,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
-        var categories = request.getSet(endpoint, HttpStatus.OK, StaticCodeAnalysisCategory.class);
+        var categories = request.get(endpoint, HttpStatus.OK, new TypeReference<Set<StaticCodeAnalysisCategory>>() {
+        });
         assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(categories);
     }
