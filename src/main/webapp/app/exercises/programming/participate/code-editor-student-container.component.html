@@ -16,6 +16,7 @@
     [editable]="!repositoryIsLocked"
     [participation]="participation"
     [showEditorInstructions]="showEditorInstructions"
+    [isTutorAssessment]="hasTutorAssessment"
 >
     <span editorTitle>{{ exercise.title }}</span>
     <div editorToolbar class="d-inline-flex">
@@ -47,4 +48,11 @@
         [exerciseHints]="exercise.exerciseHints"
         class="instructions-wrapper__content card-body p-0"
     ></jhi-programming-exercise-instructions>
+    <jhi-code-editor-tutor-assessment-display-code
+        *ngIf="hasTutorAssessment"
+        editorCenter
+        [selectedFile]="codeEditorContainer ? codeEditorContainer.selectedFile : undefined"
+        [allFeedbacks]="this.latestResult!.feedbacks"
+        [isStudent]="true"
+    ></jhi-code-editor-tutor-assessment-display-code>
 </jhi-code-editor-container>

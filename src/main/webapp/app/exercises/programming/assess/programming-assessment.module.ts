@@ -44,6 +44,6 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/
         CodeEditorTutorAssessmentInlineFeedbackComponent,
     ],
     entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
-    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
+    exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent, CodeEditorTutorAssessmentDisplayCodeComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}

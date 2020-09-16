@@ -31,6 +31,7 @@
                                 [fileName]="selectedFile"
                                 [codeLine]="i"
                                 [feedback]="fileFeedbackPerLine[i]"
+                                [isStudent]="isStudent"
                                 (onCancelFeedback)="onCancelFeedback()"
                                 (onUpdateFeedback)="updateFeedback($event)"
                                 (onDeleteFeedback)="deleteFeedback($event)"

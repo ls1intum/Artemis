@@ -14,6 +14,8 @@ export class CodeEditorTutorAssessmentDisplayCodeComponent implements OnChanges 
     selectedFile: string;
     @Input()
     allFeedbacks: Feedback[] = [];
+    @Input()
+    isStudent = false;
     @Output()
     onError = new EventEmitter<string>();
     @Output()

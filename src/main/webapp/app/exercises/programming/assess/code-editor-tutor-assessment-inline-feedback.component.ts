@@ -23,6 +23,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     fileName: string;
     @Input()
     codeLine: number;
+    @Input()
+    isStudent: boolean;
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
