@@ -117,4 +117,9 @@ public class StaticCodeAnalysisCategory implements Serializable {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    @Override
+    public String toString() {
+        return "StaticCodeAnalysisCategory{" + "id=" + id + ", name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';
+    }
 }
