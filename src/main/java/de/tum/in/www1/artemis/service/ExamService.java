@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,7 +35,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -654,9 +651,9 @@ public class ExamService {
 
         var studentExams = exam.getStudentExams();
 
-        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam, false)));
+        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(generatedParticipations, studentExam)));
 
         return generatedParticipations.size();
     }
@@ -665,9 +662,8 @@ public class ExamService {
      * Sets up the participations and submissions for all the exercises of the student exam.
      * @param generatedParticipations List of generatedParticipations
      * @param studentExam The studentExam
-     * @param testRun a flag to indicate whether it is a test run
      */
-    public void setUpExerciseParticipationsAndSubmissions(List<Participation> generatedParticipations, StudentExam studentExam, boolean testRun) {
+    public void setUpExerciseParticipationsAndSubmissions(List<StudentParticipation> generatedParticipations, StudentExam studentExam) {
         User student = studentExam.getUser();
         for (Exercise exercise : studentExam.getExercises()) {
             // we start the exercise if no participation was found that was already fully initialized
@@ -681,7 +677,7 @@ public class ExamService {
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
                     }
                     // this will create initial (empty) submissions for quiz, text, modeling and file upload
-                    var participation = participationService.startExercise(exercise, student, true, testRun);
+                    var participation = participationService.startExercise(exercise, student, true);
                     generatedParticipations.add(participation);
                 }
                 catch (Exception ex) {

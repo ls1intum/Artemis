@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -374,15 +373,17 @@ public class StudentExamService {
 
     /**
      * Sets up the participations and submissions for all the exercises of the test run.
-     * Calling {@link ExamService#setUpExerciseParticipationsAndSubmissions}
+     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations
+     * and {@link ParticipationService#markSubmissionsOfTestRunParticipations} to mark them as test run participations
      *
      * @param testRunId the id of the TestRun
      */
     private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
-        List<Participation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun, true);
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+        participationService.markSubmissionsOfTestRunParticipations(generatedParticipations);
     }
 
     /**

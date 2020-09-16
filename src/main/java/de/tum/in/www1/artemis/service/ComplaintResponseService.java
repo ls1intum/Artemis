@@ -115,10 +115,9 @@ public class ComplaintResponseService {
             return assessor.equals(reviewer);
         }
         else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
-            if (complaint.getStudent().getLogin().equals(assessor.getLogin())) {
-                if (authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
-                    return true;
-                }
+            // if test run complaint
+            if (complaint.getStudent().getLogin().equals(assessor.getLogin()) && authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+                return true;
             }
             return !assessor.equals(reviewer);
         }

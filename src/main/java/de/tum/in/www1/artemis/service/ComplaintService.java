@@ -67,19 +67,14 @@ public class ComplaintService {
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-        boolean examTestRun = false;
+        boolean examTestRun;
 
         if (examId.isPresent()) {
             final Exam exam = examService.findOne(examId.getAsLong());
             final List<User> instructors = userService.getInstructors(exam.getCourse());
-            Optional<User> complaintStudent = instructors.stream().filter(instructor -> instructor.getLogin().equals(principal.getName())).findFirst();
-            if (complaintStudent.isPresent()) {
-                examTestRun = true;
-            }
-            else {
-                if (!isTimeOfComplaintValid(exam)) {
-                    throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
-                }
+            examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
+            if (!examTestRun && !isTimeOfComplaintValid(exam)) {
+                throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
             }
         }
         else {
