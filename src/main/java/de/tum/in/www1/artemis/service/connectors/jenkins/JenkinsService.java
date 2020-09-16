@@ -41,6 +41,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -396,6 +397,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var feedbacks = report.getResults().stream().flatMap(testsuite -> testsuite.getTestCases().stream()).map(testCase -> {
             final var feedback = new Feedback();
             feedback.setPositive(testCase.getErrors() == null && testCase.getFailures() == null);
+            feedback.setType(FeedbackType.AUTOMATIC);
             feedback.setText(testCase.getName());
             String errorMessage = null;
             // If we have errors or failures, they will always be of length == 1 since JUnit (and the format itself)
