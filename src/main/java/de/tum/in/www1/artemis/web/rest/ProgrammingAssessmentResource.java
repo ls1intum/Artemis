@@ -144,13 +144,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        if (newResult.getResultString() == null) {
-            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getResultString().length() > 255) {
-            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getScore() == null) {
+        if (newResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
         else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
