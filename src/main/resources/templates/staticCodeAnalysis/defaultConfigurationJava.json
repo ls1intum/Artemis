@@ -3,10 +3,9 @@
     [
         {
             "name": "Bad Practice",
-            "description": "Violations of recommended and essential coding practice. Rules which enforce generally accepted best practices",
-            "defaultState": "DEACTIVATED",
-            "defaultPenalty": 1,
-            "defaultMaxPenalty": 10,
+            "state": "VISIBLE",
+            "penalty": 1,
+            "maxPenalty": 10,
             "categoryMappings": [
                 {
                     "tool": "SPOTBUGS",
@@ -24,10 +23,9 @@
         },
         {
             "name": "Styling",
-            "description": "Confusing Code, Formatting, Import-Order, Modifier-Order, Line-Length, etc.",
-            "defaultState": "DEACTIVATED",
-            "defaultPenalty": 0,
-            "defaultMaxPenalty": 0,
+            "state": "INACTIVE",
+            "penalty": 0,
+            "maxPenalty": 0,
             "categoryMappings": [
                 {
                     "tool": "SPOTBUGS",

@@ -20,13 +20,11 @@ public class StaticCodeAnalysisConfiguration {
 
         private String name;
 
-        private String description;
+        private Integer penalty;
 
-        private Integer defaultPenalty;
+        private Integer maxPenalty;
 
-        private Integer defaultMaxPenalty;
-
-        private CategoryState defaultState;
+        private CategoryState state;
 
         private List<CategoryMapping> categoryMappings;
 
@@ -34,20 +32,16 @@ public class StaticCodeAnalysisConfiguration {
             return name;
         }
 
-        public String getDescription() {
-            return description;
+        public Integer getPenalty() {
+            return penalty;
         }
 
-        public Integer getDefaultPenalty() {
-            return defaultPenalty;
+        public Integer getMaxPenalty() {
+            return maxPenalty;
         }
 
-        public Integer getDefaultMaxPenalty() {
-            return defaultMaxPenalty;
-        }
-
-        public CategoryState getDefaultState() {
-            return defaultState;
+        public CategoryState getState() {
+            return state;
         }
 
         public List<CategoryMapping> getCategoryMappings() {

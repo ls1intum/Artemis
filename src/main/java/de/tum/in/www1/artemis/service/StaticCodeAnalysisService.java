@@ -63,9 +63,9 @@ public class StaticCodeAnalysisService {
         for (var defaultCategory : defaultConfiguration.getDefaultCategories()) {
             StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
             newCategory.setName(defaultCategory.getName());
-            newCategory.setPenalty(defaultCategory.getDefaultPenalty());
-            newCategory.setMaxPenalty(defaultCategory.getDefaultMaxPenalty());
-            newCategory.setState(defaultCategory.getDefaultState());
+            newCategory.setPenalty(defaultCategory.getPenalty());
+            newCategory.setMaxPenalty(defaultCategory.getMaxPenalty());
+            newCategory.setState(defaultCategory.getState());
             newCategory.setProgrammingExercise(programmingExercise);
             newCategories.add(newCategory);
         }
