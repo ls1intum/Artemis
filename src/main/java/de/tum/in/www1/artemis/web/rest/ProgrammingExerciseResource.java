@@ -507,6 +507,7 @@ public class ProgrammingExerciseResource {
 
         // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);
+        importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
         importedProgrammingExercise.setTemplateParticipation(null);
         importedProgrammingExercise.setSolutionParticipation(null);
         importedProgrammingExercise.setExerciseHints(null);
