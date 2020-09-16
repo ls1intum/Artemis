@@ -154,7 +154,7 @@ public class ResultService {
 
         Result result;
         try {
-            result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
+            result = continuousIntegrationService.get().onBuildCompleted((ProgrammingExerciseParticipation) participation, requestBody);
         }
         catch (Exception ex) {
             log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);

@@ -412,7 +412,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the created result.
      */
     @Override
-    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
+    public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {

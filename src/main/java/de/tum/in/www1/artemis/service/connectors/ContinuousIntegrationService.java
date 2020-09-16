@@ -100,7 +100,7 @@ public interface ContinuousIntegrationService {
      * @return the result of the build
      * @throws Exception if the Body could not be parsed
      */
-    Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
+    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
