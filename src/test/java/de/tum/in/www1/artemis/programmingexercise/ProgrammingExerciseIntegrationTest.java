@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -919,7 +920,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bambooRequestMockProvider.enableMockingOfRequests();
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
             test.setWeight(42.0);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
@@ -941,7 +942,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }

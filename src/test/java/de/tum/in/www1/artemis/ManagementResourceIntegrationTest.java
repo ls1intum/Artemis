@@ -89,7 +89,6 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doReturn(Optional.of(new Result())).when(continuousIntegrationService).retrieveLatestBuildResult(any(), any());
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
