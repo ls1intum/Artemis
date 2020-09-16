@@ -1,0 +1,31 @@
+@import '../../../../../content/scss/artemis-variables';
+
+$border-color: #979797;
+
+.test-case--inactive {
+    color: grey;
+}
+
+.run-after-due-date-disabled {
+    max-width: 200px;
+}
+
+.tab-bar {
+    display: flex;
+    align-items: center;
+    min-height: 60px;
+    $padding-y: 11px;
+
+    padding-top: $padding-y;
+    padding-bottom: $padding-y;
+    border-bottom: 1px solid $border-color;
+
+    .tab-item {
+        cursor: pointer;
+        margin: 0 0.5em;
+
+        &.active {
+            box-shadow: 0 2px 0 $artemis-dark;
+        }
+    }
+}
