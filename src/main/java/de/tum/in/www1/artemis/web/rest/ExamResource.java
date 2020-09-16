@@ -349,6 +349,89 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/:courseId/exams/:examId:for-exam-tutor-test-run-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
+     * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForTutorTestRunDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard");
+
+        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Course course = exam.getCourse();
+        if (!course.getId().equals(courseId)) {
+            return conflict();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
+        Set<Exercise> testRunExercises = new HashSet<>();
+        testRuns.forEach(testRun -> testRunExercises.addAll(testRun.getExercises()));
+        Set<Exercise> exercises = new HashSet<>();
+        // extract all exercises for all the exam
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            var exerciseGroupExercises = courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises());
+            exerciseGroup.setExercises(testRunExercises.stream().filter(exerciseGroupExercises::contains).collect(Collectors.toSet()));
+            exercises.addAll(exerciseGroup.getExercises());
+        }
+
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+
+        for (final Exercise exercise : exercises) {
+            List<Complaint> complaints = complaintService.getAllComplaintsByExerciseId(exercise.getId());
+            if (exercise.getStudentParticipations().size() > 0) {
+                DueDateStat numberOfSubmissions = new DueDateStat();
+                DueDateStat numberOfAssessments = new DueDateStat();
+                int numberOfParticipationsWithSubmissions = exercise.getStudentParticipations().size();
+                int assessmentCounter = 0;
+                int numberOfComplaints = 0;
+                int numberOfOpenComplaints = 0;
+
+                for (final StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
+                    if (studentParticipation.getSubmissions().size() == 0) {
+                        numberOfParticipationsWithSubmissions--;
+                        continue;
+                    }
+                    final Submission submission = studentParticipation.getSubmissions().iterator().next();
+                    if (submission.getResult() != null && submission.getResult().getCompletionDate() != null
+                            && submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+                        assessmentCounter++;
+                        if (Boolean.TRUE.equals(submission.getResult().hasComplaint())) {
+                            numberOfComplaints++;
+                            Complaint complaint = complaints.stream().filter(c -> c.getStudent().equals(studentParticipation.getStudent().get())).collect(Collectors.toList())
+                                    .get(0);
+                            if (complaint.isAccepted() == null) {
+                                numberOfOpenComplaints++;
+                            }
+                        }
+                    }
+                }
+
+                numberOfSubmissions.setInTime((long) numberOfParticipationsWithSubmissions);
+                numberOfSubmissions.setLate(0L);
+                numberOfAssessments.setInTime((long) assessmentCounter);
+                numberOfAssessments.setLate(0L);
+
+                exercise.setNumberOfSubmissions(numberOfSubmissions);
+                exercise.setNumberOfAssessments(numberOfAssessments);
+                exercise.setNumberOfComplaints((long) numberOfComplaints);
+                exercise.setNumberOfOpenComplaints((long) numberOfOpenComplaints);
+            }
+            break;
+        }
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
      * GET /courses/{courseId}/exams : Find all exams for the given course.
      *
      * @param courseId the course to which the exam belongs

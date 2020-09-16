@@ -95,9 +95,15 @@ export class ExamManagementService {
      * Returns the exam with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
      * @param examId - the id of the exam
+     * @param isTestRun - boolean to determine whether it is a test run
      */
-    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
+        let url: string;
+        if (isTestRun) {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+        } else {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+        }
         return this.http
             .get<Exam>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));

@@ -100,7 +100,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     loadAll() {
         if (this.isExamMode) {
             this.showFinishedExercises = true;
-            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, this.examId).subscribe((res: HttpResponse<Exam>) => {
+            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course);
                 this.courseService.checkAndSetCourseRights(this.course);
