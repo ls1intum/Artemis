@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -6,7 +7,9 @@ import { Component } from '@angular/core';
     templateUrl: './plagiarism-inspector.component.html',
 })
 export class PlagiarismInspectorComponent {
-    test() {
-        console.log('Works!');
+    splitControlSubject: Subject<string> = new Subject<string>();
+
+    handleSplit(pane: string) {
+        this.splitControlSubject.next(pane);
     }
 }

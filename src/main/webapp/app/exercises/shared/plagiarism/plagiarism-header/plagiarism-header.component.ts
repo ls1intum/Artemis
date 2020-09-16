@@ -6,6 +6,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
+    @Output() split = new EventEmitter<string>();
     @Output() newItemEvent = new EventEmitter<void>();
 
     onConfirmPlagiarism() {

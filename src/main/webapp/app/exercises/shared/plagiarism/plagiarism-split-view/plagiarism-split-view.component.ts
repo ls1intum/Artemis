@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, Directive, ElementRef, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 // @ts-ignore
 import Split from 'split.js';
+import { Observable } from 'rxjs';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -12,7 +13,9 @@ export class SplitPaneDirective {
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit {
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
+    @Input() splitControl: Observable<string>;
+
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     private split: Split;
@@ -28,5 +31,25 @@ export class PlagiarismSplitViewComponent implements AfterViewInit {
             sizes: [50, 50],
             gutterSize: 8,
         });
+    }
+
+    ngOnInit(): void {
+        this.splitControl.subscribe((pane: string) => this.handleSplitControl(pane));
+    }
+
+    handleSplitControl(pane: string) {
+        switch (pane) {
+            case 'left': {
+                this.split.collapse(1);
+                return;
+            }
+            case 'right': {
+                this.split.collapse(0);
+                return;
+            }
+            case 'half': {
+                this.split.setSizes([50, 50]);
+            }
+        }
     }
 }
