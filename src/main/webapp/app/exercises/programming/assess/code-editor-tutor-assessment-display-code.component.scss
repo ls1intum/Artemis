@@ -6,6 +6,13 @@ pre {
     padding: 1px;
     font-size: 11px;
 }
+
+.btn-inline-comment {
+    display: none;
+    color: #3e8acc; // btn-primary color
+    height: 16px;
+}
+
 table {
     font-size: 11px;
 
@@ -25,10 +32,4 @@ table {
             transition: font-size 0.35s ease;
         }
     }
-}
-
-.btn-inline-comment {
-    display: none;
-    color: #3e8acc; // btn-primary color
-    height: 16px;
 }

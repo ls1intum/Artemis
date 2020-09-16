@@ -262,7 +262,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         for (Feedback feedback : result.getFeedbacks()) {
             score += feedback.getCredits();
         }
-        
+
         assertThat(response.getResultString()).isEqualTo(formatter.format(score) + " of " + formatter.format(maxScore) + " points");
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
