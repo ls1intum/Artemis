@@ -10,4 +10,33 @@
     h4 {
         margin-bottom: 0;
     }
+
+    &-right {
+        display: flex;
+        align-items: center;
+
+        & > * {
+            margin: 0 8px;
+        }
+
+        .split-controls {
+            display: flex;
+
+            .split-control {
+                margin: 0 2px;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: #f5f5f5;
+                }
+            }
+        }
+
+        .vertical-divider {
+            height: 24px;
+            width: 1px;
+            background-color: $body-bg;
+        }
+    }
 }

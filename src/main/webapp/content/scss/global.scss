@@ -144,17 +144,22 @@ Generic styles
 }
 
 .gutter {
-    background-color: $body-bg;
+    background-color: #f1f1f1;
     cursor: col-resize;
     position: relative;
     transition: background-color 0.2s;
 
     &:active,
     &:hover {
-        background-color: darken($body-bg, 10);
+        background-color: $body-bg;
+
+        &::before {
+            background-color: darken($body-bg, 20);
+        }
     }
 
     &::before {
+        transition: background-color 0.2s;
         position: absolute;
         top: 50%;
         left: 50%;
@@ -163,7 +168,7 @@ Generic styles
         height: 24px;
         width: 2px;
         border-radius: 1px;
-        background-color: darken($body-bg, 20);
+        background-color: darken($body-bg, 10);
     }
 }
 

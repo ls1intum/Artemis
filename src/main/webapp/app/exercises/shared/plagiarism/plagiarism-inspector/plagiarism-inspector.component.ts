@@ -5,4 +5,8 @@ import { Component } from '@angular/core';
     styleUrls: ['./plagiarism-inspector.component.scss'],
     templateUrl: './plagiarism-inspector.component.html',
 })
-export class PlagiarismInspectorComponent {}
+export class PlagiarismInspectorComponent {
+    test() {
+        console.log('Works!');
+    }
+}
