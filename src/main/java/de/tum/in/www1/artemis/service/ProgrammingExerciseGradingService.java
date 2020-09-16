@@ -85,7 +85,7 @@ public class ProgrammingExerciseGradingService {
             if (isSolutionParticipation) {
                 extractTestCasesFromResult(programmingExercise, result);
             }
-            result = updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+            result = updateResult(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
             result = resultRepository.save(result);
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
@@ -163,14 +163,14 @@ public class ProgrammingExerciseGradingService {
      * @param isStudentParticipation boolean flag indicating weather the participation of the result is not a solution/template participation.
      * @return Result with updated feedbacks, score and result string.
      */
-    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
+    public Result updateResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
             testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
         }
-        return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
+        return updateResult(testCases, testCasesForCurrentDate, result, exercise);
     }
 
     /**
@@ -184,7 +184,7 @@ public class ProgrammingExerciseGradingService {
      * @param exercise the exercise whose results should be updated
      * @return the results of the exercise that have been updated
      */
-    public List<Result> updateAllResultsFromTestCases(ProgrammingExercise exercise) {
+    public List<Result> updateAllResults(ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
 
         ArrayList<Result> updatedResults = new ArrayList<>();
@@ -193,11 +193,11 @@ public class ProgrammingExerciseGradingService {
         Result solutionResult = exercise.getSolutionParticipation().findLatestResult();
         // template and solution are always updated using ALL test cases
         if (templateResult != null) {
-            updateResultFromTestCases(testCases, testCases, templateResult, exercise);
+            updateResult(testCases, testCases, templateResult, exercise);
             updatedResults.add(templateResult);
         }
         if (solutionResult != null) {
-            updateResultFromTestCases(testCases, testCases, solutionResult, exercise);
+            updateResult(testCases, testCases, solutionResult, exercise);
             updatedResults.add(solutionResult);
         }
         // filter the test cases for the student results if necessary
@@ -208,7 +208,7 @@ public class ProgrammingExerciseGradingService {
         for (StudentParticipation studentParticipation : participations) {
             Result result = studentParticipation.findLatestResult();
             if (result != null) {
-                updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
+                updateResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
             }
         }
@@ -226,8 +226,8 @@ public class ProgrammingExerciseGradingService {
      * TODO: For now we are only concerned with not breaking existing functionality and not losing static code analysis feedback.
      * This method has to be extended/refactored when a grading concept for static code analysis has been created
      */
-    private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
-            ProgrammingExercise exercise) {
+    private Result updateResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
+                                ProgrammingExercise exercise) {
 
         // Distinguish between static code analysis feedback and test case feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();

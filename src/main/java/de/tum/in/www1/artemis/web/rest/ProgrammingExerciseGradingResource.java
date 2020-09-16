@@ -58,7 +58,7 @@ public class ProgrammingExerciseGradingResource {
      */
     @PatchMapping(Endpoints.RESET)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<ProgrammingExerciseTestCase>> reset(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTestCase>> resetGradingConfiguration(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -79,7 +79,7 @@ public class ProgrammingExerciseGradingResource {
      */
     @PutMapping(Endpoints.RE_EVALUATE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> reEvaluateProgrammingExerciseFromTestCases(@PathVariable Long exerciseId) {
+    public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -89,7 +89,7 @@ public class ProgrammingExerciseGradingResource {
             return forbidden();
         }
 
-        List<Result> updatedResults = programmingExerciseGradingService.updateAllResultsFromTestCases(programmingExercise);
+        List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
         resultRepository.saveAll(updatedResults);
         return ResponseEntity.ok(updatedResults.size());
     }
