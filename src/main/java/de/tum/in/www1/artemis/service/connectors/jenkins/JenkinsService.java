@@ -402,14 +402,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.addFeedbacks(feedbacks);
     }
 
-    private TestResultsDTO fetchLatestBuildResultFromJenkins(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.TEST_RESULTS.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true);
-
-        return restTemplate.getForObject(url.toUri(), TestResultsDTO.class);
-    }
-
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
         try {
