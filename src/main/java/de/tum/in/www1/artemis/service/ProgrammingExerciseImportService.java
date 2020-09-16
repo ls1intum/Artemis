@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 
@@ -41,19 +43,22 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService) {
         this.exerciseHintService = exerciseHintService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseService = programmingExerciseService;
     }
@@ -89,10 +94,13 @@ public class ProgrammingExerciseImportService {
         setupTestRepository(newExercise, projectKey);
         programmingExerciseService.initParticipations(newExercise);
 
-        // Hints and test cases
+        // Hints, test cases and static code analysis categories
         exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         importTestCases(templateExercise, newExercise);
+        if (Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
+            importStaticCodeAnalysisCategories(templateExercise, newExercise);
+        }
         // An exam exercise can only be in individual mode
         if (!newExercise.hasCourse()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
@@ -202,9 +210,32 @@ public class ProgrammingExerciseImportService {
             copy.setAfterDueDate(testCase.isAfterDueDate());
             copy.setTestName(testCase.getTestName());
             copy.setWeight(testCase.getWeight());
+            copy.setBonusMultiplier(testCase.getBonusMultiplier());
+            copy.setBonusPoints(testCase.getBonusPoints());
             copy.setExercise(targetExercise);
             programmingExerciseTestCaseRepository.save(copy);
             return copy;
+        }).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Copies static code analysis categories from one exercise to another by creating new entities and copying the
+     * appropriate fields.
+     *
+     * @param templateExercise with static code analysis categories which should get copied
+     * @param targetExercise for which static code analysis categories will be copied
+     */
+    private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        targetExercise.setStaticCodeAnalysisCategories(templateExercise.getStaticCodeAnalysisCategories().stream().map(originalCategory -> {
+            var categoryCopy = new StaticCodeAnalysisCategory();
+            categoryCopy.setName(originalCategory.getName());
+            categoryCopy.setPenalty(originalCategory.getPenalty());
+            categoryCopy.setMaxPenalty(originalCategory.getMaxPenalty());
+            categoryCopy.setState(originalCategory.getState());
+            categoryCopy.setProgrammingExercise(targetExercise);
+
+            staticCodeAnalysisCategoryRepository.save(categoryCopy);
+            return categoryCopy;
         }).collect(Collectors.toSet()));
     }
 
@@ -221,6 +252,7 @@ public class ProgrammingExerciseImportService {
         newExercise.setSolutionParticipation(null);
         newExercise.setExerciseHints(null);
         newExercise.setTestCases(null);
+        newExercise.setStaticCodeAnalysisCategories(null);
         newExercise.setAttachments(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);

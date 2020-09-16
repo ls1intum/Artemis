@@ -34,6 +34,10 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
+    public static <X> ResponseEntity<X> badRequest(String entityName, String errorKey, String message) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
+    }
+
     public static <X> ResponseEntity<X> conflict() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }

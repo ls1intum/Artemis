@@ -489,6 +489,7 @@ public class ModelFactory {
         toBeImported.setShortName(shortName);
         toBeImported.setId(template.getId());
         toBeImported.setTestCases(null);
+        toBeImported.setStaticCodeAnalysisCategories(null);
         toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
@@ -507,7 +508,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
-        toBeImported.setStaticCodeAnalysisEnabled(false);
+        toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
@@ -661,6 +662,16 @@ public class ModelFactory {
         issue1.setLine(2);
         report.setIssues(List.of(issue1, issue2));
         return report;
+    }
+
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
+        var category = new StaticCodeAnalysisCategory();
+        category.setName("Bad practice");
+        category.setPenalty(2);
+        category.setMaxPenalty(10);
+        category.setState(CategoryState.VISIBLE);
+        category.setProgrammingExercise(programmingExercise);
+        return category;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {

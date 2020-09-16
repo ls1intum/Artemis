@@ -1,0 +1,73 @@
+{
+    "defaultCategories":
+    [
+        {
+            "name": "Bad Practice",
+            "state": "VISIBLE",
+            "penalty": 1,
+            "maxPenalty": 10,
+            "categoryMappings": [
+                {
+                    "tool": "SPOTBUGS",
+                    "category": "BAD_PRACTICE"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "coding"
+                },
+                {
+                    "tool": "PMD",
+                    "category": "best-practices"
+                }
+            ]
+        },
+        {
+            "name": "Styling",
+            "state": "INACTIVE",
+            "penalty": 0,
+            "maxPenalty": 0,
+            "categoryMappings": [
+                {
+                    "tool": "SPOTBUGS",
+                    "category": "STYLE"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "annotation"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "blocks"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "imports"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "indentation"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "metrics"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "modifier"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "sizes"
+                },
+                {
+                    "tool": "CHECKSTYLE",
+                    "category": "whitespaces"
+                },
+                {
+                    "tool": "PMD",
+                    "category": "code-style"
+                }
+            ]
+        }
+    ]
+}
