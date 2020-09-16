@@ -488,7 +488,7 @@ public class ComplaintResource {
             User assessor = complaint.getResult().getAssessor();
             User student = complaint.getStudent();
 
-            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller && assessor.getLogin().equals(student.getLogin()) == testRun) {
+            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);

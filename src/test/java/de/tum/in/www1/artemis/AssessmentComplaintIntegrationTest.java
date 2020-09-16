@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,16 +75,20 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     private Complaint moreFeedbackRequest;
 
+    private List<User> students;
+
     private Course course;
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(2, 2, 1);
+        students = database.addUsers(2, 2, 1).stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toList());
+
         // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        // complaint.setParticipant(students.get(0));
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 

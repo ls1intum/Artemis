@@ -116,7 +116,8 @@ public class ComplaintResponseService {
         }
         else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
             // if test run complaint
-            if (complaint.getStudent().getLogin().equals(assessor.getLogin()) && authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+            if (complaint.getStudent() != null && complaint.getStudent().getLogin().equals(assessor.getLogin())
+                    && authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
                 return true;
             }
             return !assessor.equals(reviewer);
