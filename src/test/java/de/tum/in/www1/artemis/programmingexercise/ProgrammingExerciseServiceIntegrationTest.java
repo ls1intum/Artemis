@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -62,13 +63,13 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addInstructor("other-instructors", "instructorother");
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();
-        programmingExercise = database.loadProgrammingExerciseWithEagerReferences();
+        programmingExercise = programmingExerciseRepository.findAll().get(0);
         database.addHintsToExercise(programmingExercise);
         database.addHintsToProblemStatement(programmingExercise);
         database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
-        programmingExercise = database.loadProgrammingExerciseWithEagerReferences();
+        programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
     }
 
     @AfterEach
@@ -77,7 +78,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    public void importProgrammingExerciseBasis_baseReferencesGotCloned() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         final var newlyImported = importExerciseBase();
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
@@ -111,7 +113,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() {
         final var imported = importExerciseBase();
 
         final var oldHintIDs = programmingExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
@@ -123,7 +126,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
         // All copied hints/tests have the same content are are referenced to the new exercise
