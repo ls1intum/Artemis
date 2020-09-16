@@ -345,14 +345,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Validate the feedback of the assessment
      */
-    private validateFeedback(): void {
+    validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
     }
 
-    private readOnly() {
+    readOnly() {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
