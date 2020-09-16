@@ -465,7 +465,8 @@ public class ProgrammingExerciseResource {
             return optionalShortNameValidationError.get();
         }
 
-        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        final var optionalOriginalProgrammingExercise = programmingExerciseRepository
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
