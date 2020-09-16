@@ -41,6 +41,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -256,7 +257,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
+    public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var report = TestResultsDTO.convert(requestBody);
         final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
@@ -367,25 +368,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    @Override
-    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
-        final var report = fetchLatestBuildResultFromJenkins(participation);
-
-        // The retrieved build result must match the commitHash of the provided submission.
-        if (report.getCommits().stream().map(CommitDTO::getHash).noneMatch(hash -> hash.equals(submission.getCommitHash()))) {
-            return Optional.empty();
-        }
-
-        final var result = createResultFromBuildResult(report, (Participation) participation);
-        result.setRatedIfNotExceeded(report.getRunDate(), submission);
-        result.setSubmission(submission);
-
-        submission.setBuildFailed(result.getResultString().equals("No tests found"));
-        programmingSubmissionRepository.save(submission);
-
-        return Optional.empty();
-    }
-
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
         // No feedback for build errors
         if (report.getResults() == null || report.getResults().isEmpty()) {
@@ -396,6 +378,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var feedbacks = report.getResults().stream().flatMap(testsuite -> testsuite.getTestCases().stream()).map(testCase -> {
             final var feedback = new Feedback();
             feedback.setPositive(testCase.getErrors() == null && testCase.getFailures() == null);
+            feedback.setType(FeedbackType.AUTOMATIC);
             feedback.setText(testCase.getName());
             String errorMessage = null;
             // If we have errors or failures, they will always be of length == 1 since JUnit (and the format itself)
@@ -417,14 +400,6 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         result.setHasFeedback(true);
         result.addFeedbacks(feedbacks);
-    }
-
-    private TestResultsDTO fetchLatestBuildResultFromJenkins(ProgrammingExerciseParticipation participation) {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.TEST_RESULTS.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true);
-
-        return restTemplate.getForObject(url.toUri(), TestResultsDTO.class);
     }
 
     @Override
