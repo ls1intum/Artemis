@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission.model';
  * @param submission: Submission currently assessed
  * @param isTestRun: flag to determine if it is an exam test run
  */
-export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null, isTestRun: boolean = false) {
+export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null, isTestRun = false) {
     if (exercise) {
         const course = exercise.course || exercise.exerciseGroup?.exam?.course;
 

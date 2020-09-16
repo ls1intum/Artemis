@@ -263,6 +263,7 @@ public class StudentExamResource {
      * @param courseId the course to which the test run belongs to
      * @param examId   the exam to which the test run belongs to
      * @param request  the http request, used to extract headers
+     * @param testRunId the id of the student exam of the test run
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")

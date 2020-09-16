@@ -300,8 +300,13 @@ public class ExamResource {
 
         for (final Exercise exercise : exercises) {
             List<Complaint> complaints = complaintService.getAllComplaintsByExerciseId(exercise.getId());
+            boolean foundExercise = false;
             for (final Exercise testRunExercise : testRunExercises) {
+                if (foundExercise) {
+                    break;
+                }
                 if (exercise.equals(testRunExercise)) {
+                    foundExercise = true;
                     if (testRunExercise.getStudentParticipations().size() > 0) {
                         DueDateStat numberOfSubmissions = new DueDateStat();
                         DueDateStat numberOfAssessments = new DueDateStat();
@@ -340,7 +345,6 @@ public class ExamResource {
                         exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
                         exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);
                     }
-                    break;
                 }
             }
         }
