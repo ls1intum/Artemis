@@ -1,18 +1,19 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.*;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
@@ -39,9 +40,8 @@ public class ProgrammingExerciseGradingResource {
     private final ResultRepository resultRepository;
 
     public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService,
-                                              ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-                                              ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-                                              AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseTestCaseService programmingExerciseTestCaseService,
+            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseService = programmingExerciseService;

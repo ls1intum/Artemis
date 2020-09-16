@@ -19,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -48,6 +47,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.Verifiable;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;

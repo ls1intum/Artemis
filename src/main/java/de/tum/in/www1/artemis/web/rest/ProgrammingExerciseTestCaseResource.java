@@ -110,7 +110,6 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
-
     public static final class Endpoints {
 
         private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";

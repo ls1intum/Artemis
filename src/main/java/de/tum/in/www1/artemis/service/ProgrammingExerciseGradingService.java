@@ -7,18 +7,18 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -42,7 +42,7 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultRepository resultRepository,
-             Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate) {
         this.testCaseService = testCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -98,7 +98,6 @@ public class ProgrammingExerciseGradingService {
         return Optional.ofNullable(result);
     }
 
-
     /**
      * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
      * Will use the commitHash of the submission for triggering the template build.
@@ -116,7 +115,7 @@ public class ProgrammingExerciseGradingService {
         catch (EntityNotFoundException ex) {
             // This is an unlikely error that would mean that no submission could be created for the result. In this case we can only log and abort.
             log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                + " because no submission could be found for the provided result id " + resultId);
+                    + " because no submission could be found for the provided result id " + resultId);
             return;
         }
         // We only trigger the template build when the test repository was changed.
@@ -131,7 +130,7 @@ public class ProgrammingExerciseGradingService {
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
             log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                + " because no template participation could be found for the given exercise");
+                    + " because no template participation could be found for the given exercise");
         }
     }
 
@@ -150,7 +149,6 @@ public class ProgrammingExerciseGradingService {
             messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
         }
     }
-
 
     /**
      * Updates an incoming result with the information of the exercises test cases. This update includes:
@@ -174,7 +172,6 @@ public class ProgrammingExerciseGradingService {
         }
         return updateResultFromTestCases(testCases, testCasesForCurrentDate, result, exercise);
     }
-
 
     /**
      * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
@@ -220,7 +217,7 @@ public class ProgrammingExerciseGradingService {
 
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
         boolean shouldTestsWithAfterDueDateFlagBeRemoved = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-            && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+                && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         // Filter all test cases from the score calculation that are only executed after due date if the due date has not yet passed.
         return testCases.stream().filter(testCase -> !shouldTestsWithAfterDueDateFlagBeRemoved || !testCase.isAfterDueDate()).collect(Collectors.toSet());
     }
@@ -230,7 +227,7 @@ public class ProgrammingExerciseGradingService {
      * This method has to be extended/refactored when a grading concept for static code analysis has been created
      */
     private Result updateResultFromTestCases(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
-                                             ProgrammingExercise exercise) {
+            ProgrammingExercise exercise) {
 
         // Distinguish between static code analysis feedback and test case feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
@@ -270,7 +267,6 @@ public class ProgrammingExerciseGradingService {
         return result;
     }
 
-
     /**
      * Check which tests were not executed and add a new Feedback for them to the exercise.
      * @param result of the build run.
@@ -278,7 +274,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
         List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
-            .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
@@ -290,12 +286,12 @@ public class ProgrammingExerciseGradingService {
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream().filter(
-            feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
-            .collect(Collectors.toList());
+                feedback -> !feedback.isStaticCodeAnalysisFeedback() && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText())))
+                .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> feedback.isPositive() == Boolean.FALSE
-            || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
+                || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
             result.setHasFeedback(false);
     }
 
@@ -308,21 +304,18 @@ public class ProgrammingExerciseGradingService {
      * @param allTests of a given programming exercise.
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-                             ProgrammingExercise programmingExercise) {
+            ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
 
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-            double successfulTestPoints = successfulTestCases.stream()
-                .mapToDouble(test -> {
-                    double testWeight = test.getWeight() * test.getBonusMultiplier();
-                    double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
-                    double testPointsWithBonus = testPoints + test.getBonusPoints();
-                    // update credits of related feedback
-                    result.getFeedbacks().stream().filter(fb -> fb.getText().equals(test.getTestName())).findFirst()
-                        .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
-                    return testPointsWithBonus;
-                })
-                .sum();
+            double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
+                double testWeight = test.getWeight() * test.getBonusMultiplier();
+                double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
+                double testPointsWithBonus = testPoints + test.getBonusPoints();
+                // update credits of related feedback
+                result.getFeedbacks().stream().filter(fb -> fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
+                return testPointsWithBonus;
+            }).sum();
             double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
             // The points are capped by the maximum achievable points
             if (successfulTestPoints > maxPoints) {
@@ -369,7 +362,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
         return testCase -> result.getFeedbacks().stream()
-            .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && feedback.isPositive() == Boolean.TRUE);
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && feedback.isPositive() == Boolean.TRUE);
     }
 
     /**
