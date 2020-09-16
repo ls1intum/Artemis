@@ -240,9 +240,8 @@ public class ParticipationService {
                     initializeSubmission(participation, exercise, null);
                 }
             }
-
         }
-        return participation;
+        return save(participation);
     }
 
     /**
