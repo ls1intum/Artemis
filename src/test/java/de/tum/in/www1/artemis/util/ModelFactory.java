@@ -489,6 +489,7 @@ public class ModelFactory {
         toBeImported.setShortName(shortName);
         toBeImported.setId(template.getId());
         toBeImported.setTestCases(null);
+        toBeImported.setStaticCodeAnalysisCategories(null);
         toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
@@ -507,7 +508,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
-        toBeImported.setStaticCodeAnalysisEnabled(false);
+        toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);

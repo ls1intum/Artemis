@@ -1123,7 +1123,6 @@ public class DatabaseUtilService {
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
@@ -1132,6 +1131,8 @@ public class DatabaseUtilService {
     }
 
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
         var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
         var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
         var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
@@ -1601,7 +1602,11 @@ public class DatabaseUtilService {
 
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
         final var lazyExercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+    }
+
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> T addHintsToProblemStatement(T exercise) {
