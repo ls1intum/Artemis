@@ -56,7 +56,7 @@ public class ProgrammingExercise extends Exercise {
     private Boolean staticCodeAnalysisEnabled;
 
     @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
-    private Double maxStaticCodeAnalysisPenalty;
+    private Integer maxStaticCodeAnalysisPenalty;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
@@ -266,11 +266,11 @@ public class ProgrammingExercise extends Exercise {
         this.staticCodeAnalysisEnabled = staticCodeAnalysisEnabled;
     }
 
-    public Double getMaxStaticCodeAnalysisPenalty() {
+    public Integer getMaxStaticCodeAnalysisPenalty() {
         return maxStaticCodeAnalysisPenalty;
     }
 
-    public void setMaxStaticCodeAnalysisPenalty(Double maxStaticCodeAnalysisPenalty) {
+    public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
         this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
     }
 
