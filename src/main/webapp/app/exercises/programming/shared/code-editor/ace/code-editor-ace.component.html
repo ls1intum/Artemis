@@ -8,6 +8,16 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
+        <div #lineWidgets>
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                [fileName]="selectedFile"
+                [codeLine]="1"
+                [isStudent]="false"
+                [feedback]="undefined"
+            >
+            </jhi-code-editor-tutor-assessment-inline-feedback>
+        </div>
+        <div #lineIcon class="gutter-icon"><fa-icon [icon]="'plus-square'" size="lg"></fa-icon></div>
         <ace-editor
             #editor
             id="ace-code-editor"

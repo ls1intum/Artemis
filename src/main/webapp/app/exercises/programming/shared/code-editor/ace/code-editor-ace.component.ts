@@ -7,7 +7,7 @@ import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
@@ -25,11 +25,16 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     styleUrls: ['./code-editor-ace.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
+    @ViewChild('lineWidgets')
+    lineWidgetsElement: { nativeElement: HTMLDivElement };
+    @ViewChild('lineIcon')
+    lineIconElement: { nativeElement: HTMLDivElement };
 
     @Input()
     selectedFile: string;
@@ -52,12 +57,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
+    readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+
+    private lineWidget: any;
+    private lineWidgetObserver: MutationObserver | null;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -72,6 +81,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
         });
+        this.lineWidgetsElement.nativeElement.remove();
+        this.lineIconElement.nativeElement.remove();
     }
 
     /**
@@ -129,6 +140,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
+            this.loadLineWidgets();
+            this.setupLineIcons();
         }
     }
 
@@ -167,6 +180,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
+            this.setupLineIcons();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -297,5 +311,78 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .getEditor()
             .getSession()
             .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
+    }
+
+    loadLineWidgets() {
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        if (this.lineWidget) {
+            session.widgetManager.removeLineWidget(this.lineWidget);
+        }
+        if (this.lineWidgetObserver) {
+            this.lineWidgetObserver.disconnect();
+        }
+        const rowElement = this.lineWidgetsElement.nativeElement.children.item(0);
+        if (rowElement) {
+            this.lineWidgetObserver = new MutationObserver((mutations) => {
+                if (mutations.some((m) => m.type === 'attributes' && m.attributeName === 'row')) {
+                    this.loadLineWidgets();
+                }
+            });
+            this.lineWidgetObserver.observe(rowElement, { attributes: true });
+            const row = rowElement.attributes.getNamedItem('row')?.value || '0';
+            this.lineWidget = {
+                row: parseInt(row, 10) || 0,
+                fixedWidth: true,
+                coverGutter: true,
+                el: this.lineWidgetsElement.nativeElement,
+            };
+            this.lineWidgetsElement.nativeElement.remove();
+            session.widgetManager.addLineWidget(this.lineWidget);
+        }
+    }
+    displayFeedbacks() {
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        this.lineWidget = {
+            row: 11,
+            fixedWidth: true,
+            coverGutter: true,
+            el: this.lineWidgetsElement.nativeElement,
+        };
+        session.widgetManager.addLineWidget(this.lineWidget);
+    }
+
+    setupLineIcons() {
+        const container = this.editor.getEditor().container;
+        const lines = container.querySelectorAll('.ace_line');
+        const gutters = container.querySelectorAll('.ace_gutter-cell');
+        lines.forEach((line: HTMLElement, i: number) => {
+            line.addEventListener('mouseenter', () => {
+                gutters[i].append(this.lineIconElement.nativeElement);
+                console.log('mouseenter line ' + i);
+            });
+            line.addEventListener('mouseleave', () => {
+                this.lineIconElement.nativeElement.remove();
+                console.log('mouseleave line ' + i);
+            });
+        });
+        gutters.forEach((gutter: HTMLElement) => {
+            gutter.addEventListener('mouseenter', () => {
+                gutter.append(this.lineIconElement.nativeElement);
+                console.log('mouseenter gutter' + gutter.innerText);
+            });
+            gutter.addEventListener('mouseleave', () => {
+                // this.lineIconElement.nativeElement.remove();
+                console.log('mouseleave gutter' + gutter.innerText);
+            });
+        });
+        this.lineIconElement.nativeElement.remove();
     }
 }

@@ -12,6 +12,22 @@ Ace Editor
         &__editor {
             flex: 1 1 auto;
         }
+        .ace_gutter-cell {
+            position: relative;
+
+            .gutter-icon {
+                position: absolute;
+                top: 8px; //gutter-cell has height of 16px
+                right: 0;
+                transform: translate(-50%, -50%);
+                color: #3e8acc; // btn-primary color
+                height: 16px;
+            }
+        }
+
+        .ace_line {
+            pointer-events: all;
+        }
         &__no-selected {
             justify-self: center;
             width: 100%;
