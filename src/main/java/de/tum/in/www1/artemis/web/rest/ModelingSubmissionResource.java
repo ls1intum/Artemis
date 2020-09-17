@@ -175,7 +175,8 @@ public class ModelingSubmissionResource {
 
     /**
      * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
-     * only return all the modeling submissions where the tutor has a result associated
+     * only return all the modeling submissions where the tutor has a result associated.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param submittedOnly if true, it returns only submission with submitted flag set to true
@@ -202,12 +203,17 @@ public class ModelingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<ModelingSubmission> modelingSubmissions;
+        List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
             modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user);
         }
         else {
             modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+        }
+
+        final boolean examMode = exercise.hasExerciseGroup();
+        if (examMode) {
+            modelingSubmissions = modelingSubmissionService.filterTestRunSubmissions(modelingSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

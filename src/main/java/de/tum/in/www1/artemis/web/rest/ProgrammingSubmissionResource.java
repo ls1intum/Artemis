@@ -325,6 +325,7 @@ public class ProgrammingSubmissionResource {
     /**
      * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise.
      * @param submittedOnly if only submitted submissions should be returned.
@@ -349,6 +350,11 @@ public class ProgrammingSubmissionResource {
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        final boolean examMode = exercise.hasExerciseGroup();
+        if (examMode) {
+            programmingSubmissions = programmingSubmissionService.filterTestRunSubmissions(programmingSubmissions, exercise);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);

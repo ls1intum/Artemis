@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -32,9 +33,9 @@ public class SubmissionService {
 
     protected ResultRepository resultRepository;
 
-    private UserService userService;
+    private final UserService userService;
 
-    private CourseService courseService;
+    private final CourseService courseService;
 
     protected AuthorizationCheckService authCheckService;
 
@@ -278,6 +279,30 @@ public class SubmissionService {
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Filters out the submissions which are related to test runs for exam mode.
+     * This is indicated by {@link StudentParticipation#getStudent()} equals {@link Result#getAssessor()}
+     * and {@link StudentParticipation#getStudent()} is an instructor.
+     * @param submissions all submissions for the exercise
+     * @param exercise the exercise containing the submissions
+     * @return a list of all submissions which are not part of test runs
+     */
+    public <T extends Submission> List<T> filterTestRunSubmissions(List<T> submissions, Exercise exercise) {
+        var instructors = userService.getInstructors(exercise.getExerciseGroup().getExam().getCourse());
+        var immutableSubmissionsList = List.copyOf(submissions);
+        // remove test run submissions
+        for (var submission : immutableSubmissionsList) {
+            var studentParticipation = (StudentParticipation) submission.getParticipation();
+            if (studentParticipation.getStudent().isPresent()) {
+                var student = studentParticipation.getStudent().get();
+                if ((student.equals(submission.getResult().getAssessor()) && instructors.contains(student))) {
+                    submissions.remove(submission);
+                }
+            }
+        }
+        return submissions;
     }
 
     /**

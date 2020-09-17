@@ -182,7 +182,8 @@ public class FileUploadSubmissionResource {
 
     /**
      * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call
+     * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise
      * @param submittedOnly if only submitted submissions should be returned
@@ -207,12 +208,17 @@ public class FileUploadSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<FileUploadSubmission> fileUploadSubmissions;
+        List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user);
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+        }
+
+        final boolean examMode = exercise.hasExerciseGroup();
+        if (examMode) {
+            fileUploadSubmissions = fileUploadSubmissionService.filterTestRunSubmissions(fileUploadSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission
