@@ -19,6 +19,7 @@ export class ProgrammingExercise extends Exercise {
     public publishBuildPlanUrl = false; // default value
     public allowOnlineEditor = false; // default value
     public staticCodeAnalysisEnabled = false; // default value
+    public maxStaticCodeAnalysisPenalty: number | null;
     public allowOfflineIde = true; // default value
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;

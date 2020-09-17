@@ -49,7 +49,11 @@
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
-            "enableStaticCodeAnalysis": "Enable Static Code Analysis",
+            "enableStaticCodeAnalysis": {
+                "title": "Enable Static Code Analysis",
+                "description": "This option enables the execution of static code analysis. On activation, the maximum score penalty for found issues can be defined. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
+            },
+            "maxStaticCodeAnalysisPenalty": "Max Static Code Analysis Penalty",
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
