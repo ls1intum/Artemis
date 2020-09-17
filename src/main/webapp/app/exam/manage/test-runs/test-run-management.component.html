@@ -16,7 +16,7 @@
                     *ngIf="course?.isAtLeastInstructor"
                     [disabled]="isLoading || !testRunCanBeAssessed"
                 >
-                    <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Test Runs</span>
+                    <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Your Test Runs</span>
                 </button>
             </div>
         </div>
@@ -31,6 +31,10 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="artemisApp.examManagement.testRun.author"> Author </span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="workingTime">
@@ -56,6 +60,9 @@
                 <tr *ngFor="let testRun of testRuns; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="[testRun.id, 'view']">{{ testRun.id }}</a>
+                    </td>
+                    <td>
+                        <a> {{ testRun.user.name }}</a>
                     </td>
                     <td>{{ testRun.workingTime | artemisDurationFromSeconds }}</td>
                     <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>

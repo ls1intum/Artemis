@@ -331,6 +331,10 @@ public class ExamResource {
             return forbidden();
         }
 
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+        }
+
         return ResponseEntity.ok(exam);
     }
 

@@ -202,8 +202,9 @@
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
                 "setup": "Create a Test Run",
+                "author": "Author",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
-                "assess": "Assess Test Runs",
+                "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
                 "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
 
