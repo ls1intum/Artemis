@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +41,11 @@ public class ProgrammingExerciseGradingService {
 
     private final ParticipationService participationService;
 
+    private StaticCodeAnalysisService staticCodeAnalysisService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.testCaseService = testCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -50,6 +53,7 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
+        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**
@@ -253,7 +257,7 @@ public class ProgrammingExerciseGradingService {
 
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases, exercise);
+            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
             updateResultString(result, successfulTestCases, testCasesForCurrentDate);
@@ -304,10 +308,11 @@ public class ProgrammingExerciseGradingService {
      * @param allTests of a given programming exercise.
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            ProgrammingExercise programmingExercise) {
+            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
         if (successfulTestCases.size() > 0) {
 
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
                 double testWeight = test.getWeight() * test.getBonusMultiplier();
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
@@ -316,6 +321,26 @@ public class ProgrammingExerciseGradingService {
                 result.getFeedbacks().stream().filter(fb -> fb.getText().equals(test.getTestName())).findFirst().ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
+
+            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
+                .mapToDouble(staticCodeAnalysisCategory -> {
+                    double penaltySum = staticCodeAnalysisFeedback.stream()
+                        .filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
+                        .mapToDouble(feedback -> {
+                            double penalty = staticCodeAnalysisCategory.getPenalty();
+                            feedback.setText(feedback.getText() + ":" + staticCodeAnalysisCategory.getName());
+                            feedback.setCredits(-penalty);
+                            return penalty;
+                        }).sum();
+                    return penaltySum > staticCodeAnalysisCategory.getMaxPenalty() ? staticCodeAnalysisCategory.getMaxPenalty() : penaltySum;
+                })
+                .sum();
+
+            successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
+            if (successfulTestPoints < 0) {
+                successfulTestPoints = 0;
+            }
+
             double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
             // The points are capped by the maximum achievable points
             if (successfulTestPoints > maxPoints) {
@@ -329,6 +354,18 @@ public class ProgrammingExerciseGradingService {
         else {
             result.setScore(0L);
         }
+    }
+
+    private Predicate<Feedback> isInCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory, ProgrammingLanguage programmingLanguage) {
+        Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> categoryMappings = staticCodeAnalysisService.getMappingForCategory(staticCodeAnalysisCategory, programmingLanguage);
+        return categoryMappings.<Predicate<Feedback>>map(mappings -> feedback -> {
+            String[] parts = feedback.getText().split(":");
+            if (parts.length > 2) {
+                return mappings.stream().anyMatch(mapping -> mapping.getTool().name().equals(parts[1]) && mapping.getCategory().equals(parts[2]));
+            } else {
+                return false;
+            }
+        }).orElseGet(() -> fb -> false);
     }
 
     /**

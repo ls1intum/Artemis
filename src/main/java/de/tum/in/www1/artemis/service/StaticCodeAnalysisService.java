@@ -100,4 +100,12 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
         return originalCategories;
     }
+
+    public Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> getMappingForCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory, ProgrammingLanguage programmingLanguage) {
+        return staticCodeAnalysisDefaultConfigurations.get(programmingLanguage)
+            .getDefaultCategories().stream()
+            .filter(defaultCategory -> defaultCategory.getName().equals(staticCodeAnalysisCategory.getName()))
+            .findFirst()
+            .map(defaultCategory -> defaultCategory.getCategoryMappings());
+    }
 }
