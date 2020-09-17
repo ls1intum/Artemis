@@ -20,6 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
+/**
+ * Reads static code analysis configurations from json files at application start-up and provides a Bean with
+ * programming language specific default categories.
+ */
 @Configuration
 public class StaticCodeAnalysisConfigurer {
 

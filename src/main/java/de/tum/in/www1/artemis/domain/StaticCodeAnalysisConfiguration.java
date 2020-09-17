@@ -20,9 +20,9 @@ public class StaticCodeAnalysisConfiguration {
 
         private String name;
 
-        private Integer penalty;
+        private Double penalty;
 
-        private Integer maxPenalty;
+        private Double maxPenalty;
 
         private CategoryState state;
 
@@ -32,11 +32,11 @@ public class StaticCodeAnalysisConfiguration {
             return name;
         }
 
-        public Integer getPenalty() {
+        public Double getPenalty() {
             return penalty;
         }
 
-        public Integer getMaxPenalty() {
+        public Double getMaxPenalty() {
             return maxPenalty;
         }
 
