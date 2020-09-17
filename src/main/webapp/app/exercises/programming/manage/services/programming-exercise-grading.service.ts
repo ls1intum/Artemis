@@ -6,7 +6,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean; bonusMultiplier: number; bonusPoints: number };
 export type StaticCodeAnalysisCategoryUpdate = { id: number; penalty: number; maxPenalty: number; state: string };
@@ -16,6 +15,8 @@ export interface IProgrammingExerciseGradingService {
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+    getCodeAnalysisCategories(exerciseId: number): Observable<HttpResponse<StaticCodeAnalysisCategory[]>>;
+    updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>>;
 }
 
 @Injectable({ providedIn: 'root' })

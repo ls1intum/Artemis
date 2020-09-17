@@ -3,7 +3,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import {
     IProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
-    StaticCodeAnalysisCategoryUpdate
+    StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 
