@@ -206,7 +206,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
 
         return ResponseEntity.ok(stats);
     }
@@ -216,9 +216,10 @@ public class ExerciseResource {
      * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
+     * @param examMode - flag to determine if test run submissions should be deducted from the statistics
      * @return a object node with the stats
      */
-    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
@@ -259,12 +260,13 @@ public class ExerciseResource {
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
-        // deduct the test run submissions from the statistics
-        Exercise exerciseWithTestRunSubmissions = exerciseService.findWithTestRunSubmissions(exerciseId);
-        Set<StudentParticipation> testRunParticipationSet = exerciseWithTestRunSubmissions.getStudentParticipations().stream()
-                .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()).collect(Collectors.toSet());
-        exerciseService.deductTestRunSubmissions(stats, testRunParticipationSet, exerciseWithTestRunSubmissions);
-
+        if (examMode) {
+            // deduct the test run submissions from the statistics
+            Exercise exerciseWithTestRunSubmissions = exerciseService.findWithTestRunSubmissions(exerciseId);
+            Set<StudentParticipation> testRunParticipationSet = exerciseWithTestRunSubmissions.getStudentParticipations().stream()
+                    .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()).collect(Collectors.toSet());
+            exerciseService.deductTestRunSubmissions(stats, testRunParticipationSet, exerciseWithTestRunSubmissions);
+        }
         return stats;
     }
 
@@ -284,7 +286,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 

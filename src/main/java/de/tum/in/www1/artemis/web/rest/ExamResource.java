@@ -295,6 +295,7 @@ public class ExamResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
         tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
 
+        // deduct test run submissions from statistics
         List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
         Map<Exercise, Set<StudentParticipation>> testRunParticipationsByExercise = testRuns.stream().flatMap(testRun -> testRun.getExercises().stream()) // map to all exercises of
                                                                                                                                                          // test runs (each exercise
