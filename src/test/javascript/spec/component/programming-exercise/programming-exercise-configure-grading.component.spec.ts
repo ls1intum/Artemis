@@ -14,7 +14,7 @@ import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockProgrammingExerciseTestCaseService } from '../../helpers/mocks/service/mock-programming-exercise-test-case.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
@@ -28,36 +28,37 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-// TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
-// The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
     let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
     let debugElement: DebugElement;
 
     let route: ActivatedRoute;
-    let testCaseService: ProgrammingExerciseTestCaseService;
+    let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
 
     let updateTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
+    let getCodeAnalysisCategoriesStub: SinonStub;
     let loadExerciseStub: SinonStub;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
     let testCasesChangedSubject: Subject<boolean>;
     let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
+    let getCodeAnalysisCategoriesSubject: Subject<{ body: StaticCodeAnalysisCategory[] }>;
 
     const testCaseTableId = '#testCaseTable';
     const tableEditingInput = '.table-editable-field__input';
@@ -80,6 +81,22 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         { id: 2, testName: 'testMergeSort', active: true, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: true },
         { id: 3, testName: 'otherTest', active: false, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
+    const codeAnalysisCategories1 = [
+        {
+            id: 1,
+            name: 'Bad Practice',
+            state: StaticCodeAnalysisCategoryState.Graded,
+            penalty: 1,
+            maxPenalty: 10,
+        },
+        {
+            id: 2,
+            name: 'Styling',
+            state: StaticCodeAnalysisCategoryState.Feedback,
+            penalty: 0,
+            maxPenalty: 0,
+        },
+    ] as StaticCodeAnalysisCategory[];
 
     const getExerciseTestCasteStateDTO = (
         released: boolean,
@@ -126,7 +143,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -142,14 +159,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 debugElement = fixture.debugElement;
                 comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
+                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
                 route = debugElement.injector.get(ActivatedRoute);
                 const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
-                updateTestCasesStub = stub(testCaseService, 'updateTestCase');
-                notifyTestCasesSpy = spy(testCaseService, 'notifyTestCases');
+                updateTestCasesStub = stub(gradingService, 'updateTestCase');
+                notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -159,13 +176,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+                getCodeAnalysisCategoriesStub = stub(gradingService, 'getCodeAnalysisCategories');
                 loadExerciseStub = stub(programmingExerciseService, 'find');
 
                 getExerciseTestCaseStateSubject = new Subject();
+                getCodeAnalysisCategoriesSubject = new Subject();
 
                 testCasesChangedSubject = new Subject<boolean>();
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
+                getCodeAnalysisCategoriesStub.returns(getCodeAnalysisCategoriesSubject);
                 loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
@@ -180,8 +200,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -204,8 +225,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -228,10 +250,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId, tab: 'test-cases' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
 
@@ -311,10 +334,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         const orderedTests = _sortBy(testCases1, 'testName');
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -362,8 +386,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, null));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
-        (testCaseService as any).next(testCases1);
+        (gradingService as any).next(testCases1);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -380,8 +405,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         fixture.detectChanges();
 
@@ -397,8 +423,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, false, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         fixture.detectChanges();
 
@@ -414,8 +441,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(false, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         fixture.detectChanges();
 
@@ -431,8 +459,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
         // @ts-ignore
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases1);
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, true, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         fixture.detectChanges();
 
@@ -448,6 +477,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId, tab: 'code-analysis' });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next({ body: codeAnalysisCategories1 });
 
         fixture.detectChanges();
 

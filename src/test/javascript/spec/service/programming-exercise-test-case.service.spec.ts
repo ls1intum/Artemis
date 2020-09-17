@@ -6,7 +6,7 @@ import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
@@ -24,7 +24,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     let unsubscribeSpy: SinonSpy;
     let getStub: SinonStub;
 
-    let testCaseService: ProgrammingExerciseTestCaseService;
+    let testCaseService: ProgrammingExerciseGradingService;
 
     const exercise1 = { id: 1 };
     const exercise2 = { id: 2 };
@@ -46,7 +46,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
         httpService = new MockHttpService();
-        testCaseService = new ProgrammingExerciseTestCaseService(websocketService as any, httpService as any);
+        testCaseService = new ProgrammingExerciseGradingService(websocketService as any, httpService as any);
 
         subscribeSpy = spy(websocketService, 'subscribe');
         unsubscribeSpy = spy(websocketService, 'unsubscribe');
@@ -57,8 +57,8 @@ describe('ProgrammingExerciseTestCaseService', () => {
         exercise2TestCaseSubject = new Subject();
         receiveStub.withArgs(exercise1Topic).returns(exercise1TestCaseSubject);
         receiveStub.withArgs(exercise2Topic).returns(exercise2TestCaseSubject);
-        getStub.withArgs(`${testCaseService.testCaseUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));
-        getStub.withArgs(`${testCaseService.testCaseUrl}/${exercise2.id}/test-cases`).returns(of(testCases2));
+        getStub.withArgs(`${testCaseService.resourceUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));
+        getStub.withArgs(`${testCaseService.resourceUrl}/${exercise2.id}/test-cases`).returns(of(testCases2));
     }));
 
     afterEach(() => {
