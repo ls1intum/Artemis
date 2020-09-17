@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -39,16 +38,19 @@ public class SubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authorizationCheckServiceCheckService;
 
     private final UserService userService;
 
+    private final ExerciseService exerciseService;
+
     public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService) {
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
+        this.exerciseService = exerciseService;
         this.participationService = participationService;
-        this.authCheckService = authCheckService;
+        this.authorizationCheckServiceCheckService = authCheckService;
         this.userService = userService;
     }
 
@@ -81,11 +83,45 @@ public class SubmissionResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
+    /**
+     * GET /test-run-submissions : get all the test run submissions for an exercise.
+     *
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/test-run-submissions")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
+        Exercise exercise = exerciseService.findWithTestRunSubmissions(exerciseId);
+        if (!authorizationCheckServiceCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        List<Submission> submissions = exercise.getStudentParticipations().stream().filter(studentParticipation -> {
+            if (studentParticipation.getStudent().isPresent()) { // filter out all submissions which do not belng to the current instructor
+                return studentParticipation.getStudent().get().equals(user);
+            }
+            return false;
+        }).filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // filter out participations with no submissions
+                .flatMap(studentParticipation -> studentParticipation.getSubmissions().stream()).collect(Collectors.toList());
+
+        // remove unnecessary data from the REST response
+        submissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+
+        return ResponseEntity.ok().body(submissions);
+    }
+
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authorizationCheckServiceCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }

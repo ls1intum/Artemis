@@ -33,6 +33,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -115,6 +116,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
+        private submissionService: SubmissionService,
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
@@ -273,20 +275,24 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     private getTutorAssessedSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        // TODO: This could be one generic endpoint.
-        switch (this.exercise.type) {
-            case ExerciseType.TEXT:
-                submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.MODELING:
-                submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.PROGRAMMING:
-                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
+        if (this.isTestRun) {
+            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
+        } else {
+            // TODO: This could be one generic endpoint.
+            switch (this.exercise.type) {
+                case ExerciseType.TEXT:
+                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.MODELING:
+                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.FILE_UPLOAD:
+                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.PROGRAMMING:
+                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+            }
         }
 
         submissionsObservable
