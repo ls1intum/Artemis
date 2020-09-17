@@ -263,6 +263,7 @@ public class SubmissionService {
      * If not, the original list is returned.
      * @param submissions The submissions to filter
      * @param dueDate The due-date to filter by
+     * @param <T> Subclass of Submission
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
@@ -297,7 +298,7 @@ public class SubmissionService {
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             if (studentParticipation.getStudent().isPresent()) {
                 var student = studentParticipation.getStudent().get();
-                if ((student.equals(submission.getResult().getAssessor()) && instructors.contains(student))) {
+                if (student.equals(submission.getResult().getAssessor()) && instructors.contains(student)) {
                     submissions.remove(submission);
                 }
             }

@@ -89,7 +89,7 @@ public class SubmissionResource {
      * @param exerciseId exerciseID  for which all submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/test-run-submissions")
+    @GetMapping("/exercises/{exerciseId}/test-run-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
