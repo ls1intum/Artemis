@@ -7,7 +7,7 @@
 
 <div *ngIf="exercise !== undefined">
     <div class="row my-3 justify-content-around">
-        <div class="col-5 text-center">
+        <div class="col-5 text-center" *ngIf="!isTestRun">
             <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
@@ -88,7 +88,7 @@
         </div>
     </div>
 
-    <div class="guided-tour-markdown-preview markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
+    <div class="guided-tour-markdown-preview markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
 
@@ -130,7 +130,7 @@
         <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
-    <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
+    <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <button class="btn btn-primary guided-tour-instructions-button" (click)="readInstruction()">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'artemisApp.tutorExerciseDashboard.readAndUnderstood' | translate }}
@@ -142,9 +142,9 @@
         </button>
     </div>
 
-    <div class="d-flex" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
+    <div class="d-flex" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun">
         <div class="guided-tour-exercise-dashboard-table flex-grow-1">
-            <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS" class="alert alert-warning row" role="alert">
+            <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun" class="alert alert-warning row" role="alert">
                 <span
                     jhiTranslate="artemisApp.tutorExerciseDashboard.totalExampleSubmissions"
                     [translateValues]="{
@@ -156,7 +156,7 @@
                 </span>
             </div>
 
-            <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
+            <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED && !isTestRun">
                 <div class="col-6" *ngIf="stats.toReview.total > 0">
                     <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.reviewSubmissions' | translate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})</p>
 
@@ -226,10 +226,10 @@
             <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun">
                 {{ 'artemisApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
             </h4>
-            <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && isTestRun">
+            <h4 *ngIf="isTestRun">
                 {{ 'artemisApp.tutorExerciseDashboard.testRunSubmissions' | translate }}
             </h4>
-            <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+            <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
                 <table class="table table-striped exercise-table" *ngIf="(unassessedSubmission && unassessedSubmission?.id > 0) || submissions.length > 0; else noSubmissions">
                     <thead>
                         <tr>
@@ -331,7 +331,7 @@
                 </ng-template>
             </div>
             <!-- Complaints -->
-            <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+            <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
                 <h4 class="d-inline-block">
                     {{ 'artemisApp.tutorExerciseDashboard.complaints' | translate }}
                 </h4>

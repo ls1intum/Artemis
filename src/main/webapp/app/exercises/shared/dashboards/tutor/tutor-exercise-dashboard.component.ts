@@ -204,7 +204,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
-                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode) {
+                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessment();
                 }
             },
@@ -427,7 +427,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.openingAssessmentEditorForNewSubmission = true;
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        await this.router.navigate([route], { queryParams: { testRun: true } });
+        await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
