@@ -1,14 +1,17 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
+import { ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
-export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
+export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean; bonusMultiplier: number; bonusPoints: number };
+export type StaticCodeAnalysisCategoryUpdate = { id: number; penalty: number; maxPenalty: number; state: string };
 
-export interface IProgrammingExerciseTestCaseService {
+export interface IProgrammingExerciseGradingService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
@@ -16,8 +19,8 @@ export interface IProgrammingExerciseTestCaseService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService, OnDestroy {
-    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise`;
+export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
+    public resourceUrl = `${SERVER_API_URL}api/programming-exercise`;
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
@@ -68,7 +71,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      */
     private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`);
     }
 
     /**
@@ -79,7 +82,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param updates dto for updating test cases to avoid setting automatic parameters (e.g. active or testName)
      */
     public updateTestCase(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/update-test-cases`, updates);
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/update-test-cases`, updates);
     }
 
     /**
@@ -88,7 +91,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      */
     public reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset`, {});
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/grading/reset`, {});
     }
 
     /**
@@ -97,7 +100,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      */
     public reEvaluate(exerciseId: number): Observable<number> {
-        return this.http.put<number>(`${this.testCaseUrl}/${exerciseId}/re-evaluate`, {});
+        return this.http.put<number>(`${this.resourceUrl}/${exerciseId}/grading/re-evaluate`, {});
     }
 
     /**
@@ -127,5 +130,24 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      */
     private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | null) {
         this.subjects[exerciseId].next(testCases);
+    }
+
+    /**
+     * Executes a REST request to the static code analysis endpoint.
+     * @param exerciseId
+     */
+    public getCodeAnalysisCategories(exerciseId: number): Observable<HttpResponse<StaticCodeAnalysisCategory[]>> {
+        return this.http.get<HttpResponse<StaticCodeAnalysisCategory[]>>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`);
+    }
+
+    /**
+     * Update the fields with the provided values of the sca categories.
+     * Needs the exercise to verify permissions on the server.
+     *
+     * @param exerciseId
+     * @param updates dto for updating sca categories to avoid setting automatic parameters
+     */
+    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>> {
+        return this.http.patch<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
     }
 }

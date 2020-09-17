@@ -18,7 +18,7 @@ import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise-utils
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
@@ -98,7 +98,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private testCaseService: ProgrammingExerciseTestCaseService,
+        private testCaseService: ProgrammingExerciseGradingService,
         private exerciseHintService: ExerciseHintService,
     ) {}
 
