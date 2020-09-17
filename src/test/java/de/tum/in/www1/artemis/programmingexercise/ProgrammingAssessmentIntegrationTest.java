@@ -258,10 +258,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         DecimalFormat formatter = new DecimalFormat("#.##");
         double maxScore = programmingExercise.getMaxScore();
-        double score = 0D;
-        for (Feedback feedback : result.getFeedbacks()) {
-            score += feedback.getCredits();
-        }
+        double score = result.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
 
         assertThat(response.getResultString()).isEqualTo(formatter.format(score) + " of " + formatter.format(maxScore) + " points");
         assertThat(response.getSubmission()).isNotNull();
