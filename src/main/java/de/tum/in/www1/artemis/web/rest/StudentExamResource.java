@@ -390,10 +390,9 @@ public class StudentExamResource {
      * @return the created test run student exam
      */
     @PostMapping("courses/{courseId}/exams/{examId}/create-test-run")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
-        User user = userService.getUserWithGroupsAndAuthorities();
 
         if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
             return badRequest();

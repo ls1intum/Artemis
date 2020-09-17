@@ -259,7 +259,6 @@ public class ParticipationService {
                 participation.setSubmissions(programmingSubmissions);
                 initializeSubmission(participation, exercise, null);
                 submission = participation.getSubmissions().iterator().next();
-                submission.submitted(true);
             }
             else {
                 submission = participation.getSubmissions().iterator().next();

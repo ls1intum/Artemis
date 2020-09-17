@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -378,6 +381,17 @@ public class ExerciseService {
     }
 
     /**
+     * Returns an exercise with all test run submissions.
+     * They are identified by having the {@link StudentParticipation#getStudent()} equal to {@link Result#getAssessor()}
+     * @param exerciseId the id of the exercise
+     * @return the exercise with participations, submissions and results loaded
+     */
+    public Exercise findWithTestRunSubmissions(long exerciseId) {
+        return exerciseRepository.findWithTestRunSubmissionsWithResultsById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Exercise with id \"" + exerciseId + "\" does not exist"));
+    }
+
+    /**
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
      * @param updatedExercise the updated Exercise
@@ -465,6 +479,63 @@ public class ExerciseService {
 
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    /**
+     * Deduct the test run submissions from the dashboard statistics
+     * If no StatsForInstructorDashboardDTO is used, set it to null
+     * @param stats the DTO for the exercise dashboard
+     * @param testRunParticipationSet a set containing all test run participations. Must contain at least one submission per participation.
+     * @param exercise the exercise
+     */
+    public void deductTestRunSubmissions(StatsForInstructorDashboardDTO stats, Set<StudentParticipation> testRunParticipationSet, Exercise exercise) {
+        long numberOfComplaints;
+        // Create map in order to access the corresponding complaint via its result
+        var complaintsByResult = complaintRepository.getAllByResult_Participation_Exercise_Id(exercise.getId()).stream()
+                .collect(Collectors.toMap(Complaint::getResult, Function.identity()));
+
+        var numberOfTestRunParticipations = testRunParticipationSet.size();
+        // Deduct the number of test run participations (with one submission each) from the total calculated number of submissions in time
+        if (stats == null) {
+            exercise.getNumberOfSubmissions().setInTime(exercise.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
+        }
+        else {
+            stats.getNumberOfSubmissions().setInTime(stats.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
+        }
+
+        // count the number of finished assessments (the result must be rated and it must have a completion date set)
+        var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get())
+                .map(Submission::getResult).filter(result -> result.getCompletionDate() != null && result.isRated() && result.getAssessmentType().equals(AssessmentType.MANUAL))
+                .count();
+        // Deduct the number of test run finished assessments from the total calculated finished assessments
+        if (stats == null) {
+            exercise.getNumberOfAssessments().setInTime(exercise.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
+        }
+        else {
+            stats.getNumberOfAssessments().setInTime(stats.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
+        }
+
+        // count the number of complaints for all test run results
+        numberOfComplaints = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get()).map(Submission::getResult)
+                .map(complaintsByResult::get).filter(Objects::nonNull).count();
+        // Deduct the number of test run complaints from the total calculated number of complaints
+        if (stats == null) {
+            exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
+        }
+        else {
+            stats.setNumberOfComplaints(stats.getNumberOfComplaints() - numberOfComplaints);
+        }
+
+        // count the number of open complaints for all test run results (isAccepted must not be set)
+        var numberOfOpenComplaints = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get()).map(Submission::getResult)
+                .map(complaintsByResult::get).filter(Objects::nonNull).filter(complaint -> complaint.isAccepted() == null).count();
+        // Deduct the number of open test run complaints from the total calculated number of open complaints
+        if (stats == null) {
+            exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);
+        }
+        else {
+            stats.setNumberOfOpenComplaints(stats.getNumberOfOpenComplaints() - numberOfOpenComplaints);
         }
     }
 

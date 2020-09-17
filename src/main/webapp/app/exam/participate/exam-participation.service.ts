@@ -101,7 +101,7 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
-        this.breakCircularDependency(studentExam);
+        ExamParticipationService.breakCircularDependency(studentExam);
 
         return this.httpClient.post<StudentExam>(url, studentExam).pipe(
             map((submittedStudentExam: StudentExam) => {
@@ -117,13 +117,18 @@ export class ExamParticipationService {
         );
     }
 
-    private breakCircularDependency(studentExam: StudentExam) {
+    private static breakCircularDependency(studentExam: StudentExam) {
         for (const exercise of studentExam.exercises) {
             for (const participation of exercise.studentParticipations) {
-                delete participation.results;
+                for (const result of participation.results) {
+                    delete participation.results[0].participation;
+                }
                 for (const submission of participation.submissions) {
-                    delete submission.result;
-                    delete submission.participation;
+                    delete participation.submissions[0].participation;
+                    if (!!participation.submissions[0].result) {
+                        delete participation.submissions[0].result.participation;
+                        delete participation.submissions[0].result.submission;
+                    }
                 }
             }
         }
@@ -137,6 +142,7 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
+        ExamParticipationService.breakCircularDependency(studentExam);
         this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExam));
     }
 
