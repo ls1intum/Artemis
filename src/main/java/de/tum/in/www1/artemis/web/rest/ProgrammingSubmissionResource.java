@@ -354,7 +354,7 @@ public class ProgrammingSubmissionResource {
 
         final boolean examMode = exercise.hasExerciseGroup();
         if (examMode) {
-            programmingSubmissions = programmingSubmissionService.filterTestRunSubmissions(programmingSubmissions, exercise);
+            programmingSubmissions = programmingSubmissionService.filterOutTestRunSubmissions(programmingSubmissions, exercise);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);

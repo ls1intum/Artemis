@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -34,6 +35,10 @@ public class SubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final SubmissionService submissionService;
+
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     private final ResultService resultService;
 
     private final ParticipationService participationService;
@@ -44,9 +49,12 @@ public class SubmissionResource {
 
     private final ExerciseService exerciseService;
 
-    public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
+    public SubmissionResource(SubmissionRepository submissionRepository, SubmissionService submissionService, ProgrammingSubmissionService programmingSubmissionService,
+            ResultService resultService, ParticipationService participationService, AuthorizationCheckService authCheckService, UserService userService,
+            ExerciseService exerciseService) {
         this.submissionRepository = submissionRepository;
+        this.submissionService = submissionService;
+        this.programmingSubmissionService = programmingSubmissionService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -91,7 +99,7 @@ public class SubmissionResource {
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Submission>> getAllTestRunSubmissions(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseService.findWithTestRunSubmissions(exerciseId);
         if (!authorizationCheckServiceCheckService.isAtLeastInstructorForExercise(exercise)) {
@@ -99,21 +107,13 @@ public class SubmissionResource {
         }
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        List<Submission> submissions = exercise.getStudentParticipations().stream().filter(studentParticipation -> {
-            if (studentParticipation.getStudent().isPresent()) { // filter out all submissions which do not belng to the current instructor
-                return studentParticipation.getStudent().get().equals(user);
-            }
-            return false;
-        }).filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // filter out participations with no submissions
-                .flatMap(studentParticipation -> studentParticipation.getSubmissions().stream()).collect(Collectors.toList());
-
-        // remove unnecessary data from the REST response
-        submissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
+        List<Submission> submissions;
+        if (exercise instanceof ProgrammingExercise) {
+            submissions = programmingSubmissionService.getTestRunSubmissionsOfInstructor(exercise, user);
+        }
+        else {
+            submissions = submissionService.getTestRunSubmissionsOfInstructor(exercise, user);
+        }
         return ResponseEntity.ok().body(submissions);
     }
 

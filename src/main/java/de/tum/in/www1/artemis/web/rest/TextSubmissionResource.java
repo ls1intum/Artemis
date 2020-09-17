@@ -227,7 +227,7 @@ public class TextSubmissionResource {
 
         final boolean examMode = exercise.hasExerciseGroup();
         if (examMode) {
-            textSubmissions = textSubmissionService.filterTestRunSubmissions(textSubmissions, exercise);
+            textSubmissions = textSubmissionService.filterOutTestRunSubmissions(textSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

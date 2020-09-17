@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
@@ -213,7 +212,7 @@ public class ModelingSubmissionResource {
 
         final boolean examMode = exercise.hasExerciseGroup();
         if (examMode) {
-            modelingSubmissions = modelingSubmissionService.filterTestRunSubmissions(modelingSubmissions, exercise);
+            modelingSubmissions = modelingSubmissionService.filterOutTestRunSubmissions(modelingSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

@@ -259,12 +259,14 @@ public class ParticipationService {
                 participation.setSubmissions(programmingSubmissions);
                 initializeSubmission(participation, exercise, null);
                 submission = participation.getSubmissions().iterator().next();
+                // required so that the tutor dashboard statistics are calculated correctly
+                submission.setSubmitted(true);
             }
             else {
                 submission = participation.getSubmissions().iterator().next();
             }
 
-            // If it is a test run, we add a result with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
             if (submission.getResult() == null) {
                 Result result = new Result();
                 result.setSubmission(submission);
@@ -272,6 +274,7 @@ public class ParticipationService {
                 result.setParticipation(submission.getParticipation());
                 submission.getResult().setAssessor(participation.getStudent().get());
                 submission.getResult().setAssessmentType(AssessmentType.MANUAL);
+                submission.getResult().setCompletionDate(ZonedDateTime.now());
                 resultRepository.save(result);
                 submissionRepository.save(submission);
             }
@@ -797,6 +800,16 @@ public class ParticipationService {
         else {
             throw new Error("Unknown Participant type");
         }
+    }
+
+    /**
+     * Loads the participation including submissions and results and assessor by id
+     * @param participationId the id of the participation
+     * @return the student participation
+     */
+    public StudentParticipation findWithEagerSubmissionsAndResultsAssessorsById(Long participationId) {
+        return studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation with id: \"" + participationId + "\" does not exist"));
     }
 
     /**

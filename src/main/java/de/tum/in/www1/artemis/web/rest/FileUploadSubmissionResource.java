@@ -218,7 +218,7 @@ public class FileUploadSubmissionResource {
 
         final boolean examMode = exercise.hasExerciseGroup();
         if (examMode) {
-            fileUploadSubmissions = fileUploadSubmissionService.filterTestRunSubmissions(fileUploadSubmissions, exercise);
+            fileUploadSubmissions = fileUploadSubmissionService.filterOutTestRunSubmissions(fileUploadSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

@@ -33,7 +33,7 @@ public class SubmissionService {
 
     protected ResultRepository resultRepository;
 
-    private final UserService userService;
+    protected final UserService userService;
 
     private final CourseService courseService;
 
@@ -291,7 +291,7 @@ public class SubmissionService {
      * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return a list of all submissions which are not part of test runs
      */
-    public <T extends Submission> List<T> filterTestRunSubmissions(List<T> submissions, Exercise exercise) {
+    public <T extends Submission> List<T> filterOutTestRunSubmissions(List<T> submissions, Exercise exercise) {
         var instructors = userService.getInstructors(exercise.getExerciseGroup().getExam().getCourse());
         final var immutableSubmissionsList = List.copyOf(submissions);
         // remove test run submissions
@@ -305,6 +305,32 @@ public class SubmissionService {
             }
         }
         return submissions;
+    }
+
+    /**
+     * Returns the list of submissions which belong to test runs.
+     * Identified by {@link StudentParticipation#getStudent()} equals {@link Result#getAssessor()}.
+     * @param exercise the exercise for which we request the submissions
+     * @param instructor the owner of the test run
+     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
+     * @return the list of test run submissions of the exercise
+     */
+    public <T extends Submission> List<T> getTestRunSubmissionsOfInstructor(Exercise exercise, User instructor) {
+        var submissions = exercise.getStudentParticipations().stream().filter(studentParticipation -> {
+            if (studentParticipation.getStudent().isPresent()) { // filter out all submissions which do not belong to the current instructor
+                return studentParticipation.getStudent().get().equals(instructor);
+            }
+            return false;
+        }).filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // filter out participations with no submissions
+                .flatMap(studentParticipation -> studentParticipation.getSubmissions().stream()).collect(Collectors.toList());
+
+        // remove unnecessary data from the REST response
+        submissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+        return (List<T>) submissions;
     }
 
     /**

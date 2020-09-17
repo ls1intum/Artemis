@@ -278,6 +278,7 @@
                                         [participationId]="submission.participation.id"
                                         [latestResult]="submission.result"
                                         [exercise]="exercise"
+                                        [isTestRun]="isTestRun"
                                         (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
@@ -310,6 +311,7 @@
                                         [participationId]="unassessedSubmission.participation.id"
                                         [latestResult]="unassessedSubmission.result"
                                         [exercise]="exercise"
+                                        [isTestRun]="isTestRun"
                                         (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>

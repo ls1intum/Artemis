@@ -506,8 +506,8 @@ public class ExerciseService {
 
         // count the number of finished assessments (the result must be rated and it must have a completion date set)
         var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get())
-                .map(Submission::getResult).filter(result -> result.getCompletionDate() != null && result.isRated() && result.getAssessmentType().equals(AssessmentType.MANUAL))
-                .count();
+                .filter(submission -> submission.getResult() != null).map(Submission::getResult)
+                .filter(result -> result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && result.getAssessmentType().equals(AssessmentType.MANUAL)).count();
         // Deduct the number of test run finished assessments from the total calculated finished assessments
         if (stats == null) {
             exercise.getNumberOfAssessments().setInTime(exercise.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
