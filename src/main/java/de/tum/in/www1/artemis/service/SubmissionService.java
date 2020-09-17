@@ -263,7 +263,7 @@ public class SubmissionService {
      * If not, the original list is returned.
      * @param submissions The submissions to filter
      * @param dueDate The due-date to filter by
-     * @param <T> Subclass of Submission
+     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
@@ -288,11 +288,12 @@ public class SubmissionService {
      * and {@link StudentParticipation#getStudent()} is an instructor.
      * @param submissions all submissions for the exercise
      * @param exercise the exercise containing the submissions
+     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return a list of all submissions which are not part of test runs
      */
     public <T extends Submission> List<T> filterTestRunSubmissions(List<T> submissions, Exercise exercise) {
         var instructors = userService.getInstructors(exercise.getExerciseGroup().getExam().getCourse());
-        var immutableSubmissionsList = List.copyOf(submissions);
+        final var immutableSubmissionsList = List.copyOf(submissions);
         // remove test run submissions
         for (var submission : immutableSubmissionsList) {
             var studentParticipation = (StudentParticipation) submission.getParticipation();
