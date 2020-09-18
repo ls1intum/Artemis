@@ -385,7 +385,7 @@ public class ExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(Long examId) {
-        // Delete all existing student exams via orphan removal
+        // Delete all existing student exams via orphan removal (ignore test runs)
         Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
 
         // TODO: the validation checks should happen in the resource, before this method is even being called!

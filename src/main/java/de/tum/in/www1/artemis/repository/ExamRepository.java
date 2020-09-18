@@ -33,7 +33,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentExams" })
+    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams where studentExams.testRun = false")
     Optional<Exam> findWithStudentExamsById(Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.studentParticipations",
