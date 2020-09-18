@@ -11,10 +11,10 @@
             <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="penalty" type="INT" defaultValue="1">
+            <column name="penalty" type="DOUBLE" defaultValue="1.0">
                 <constraints nullable="false"/>
             </column>
-            <column name="max_penalty" type="INT"/>
+            <column name="max_penalty" type="DOUBLE"/>
             <column name="state" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>

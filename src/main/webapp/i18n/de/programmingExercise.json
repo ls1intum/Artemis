@@ -49,7 +49,11 @@
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
-            "enableStaticCodeAnalysis": "Aktiviere Statische Code Analyse",
+            "enableStaticCodeAnalysis": {
+                "title": "Aktiviere Statische Code Analyse",
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Bei Aktivierung kann die maximale prozentuelle Strafe durch gefundene Fehler definiert werden. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
+            },
+            "maxStaticCodeAnalysisPenalty": "Max Statische Code Analyse Strafe",
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",

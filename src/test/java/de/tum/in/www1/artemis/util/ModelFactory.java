@@ -667,8 +667,8 @@ public class ModelFactory {
     public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
         var category = new StaticCodeAnalysisCategory();
         category.setName("Bad practice");
-        category.setPenalty(2);
-        category.setMaxPenalty(10);
+        category.setPenalty(2D);
+        category.setMaxPenalty(10D);
         category.setState(CategoryState.VISIBLE);
         category.setProgrammingExercise(programmingExercise);
         return category;

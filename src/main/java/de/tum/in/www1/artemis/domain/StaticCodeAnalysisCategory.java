@@ -40,10 +40,10 @@ public class StaticCodeAnalysisCategory implements Serializable {
     private String name;
 
     @Column(name = "penalty")
-    private Integer penalty;
+    private Double penalty;
 
     @Column(name = "max_penalty")
-    private Integer maxPenalty;
+    private Double maxPenalty;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
@@ -69,19 +69,19 @@ public class StaticCodeAnalysisCategory implements Serializable {
         this.name = name;
     }
 
-    public Integer getPenalty() {
+    public Double getPenalty() {
         return penalty;
     }
 
-    public void setPenalty(Integer penalty) {
+    public void setPenalty(Double penalty) {
         this.penalty = penalty;
     }
 
-    public Integer getMaxPenalty() {
+    public Double getMaxPenalty() {
         return maxPenalty;
     }
 
-    public void setMaxPenalty(Integer maxPenalty) {
+    public void setMaxPenalty(Double maxPenalty) {
         this.maxPenalty = maxPenalty;
     }
 

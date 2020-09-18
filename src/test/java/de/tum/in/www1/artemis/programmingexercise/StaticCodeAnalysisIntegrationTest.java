@@ -81,7 +81,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testGetStaticCodeAnalysisCategories() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
-        var categories = request.getSet(endpoint, HttpStatus.OK, StaticCodeAnalysisCategory.class);
+        var categories = request.get(endpoint, HttpStatus.OK, new TypeReference<Set<StaticCodeAnalysisCategory>>() {
+        });
         assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(categories);
     }
@@ -116,8 +117,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var categoryIterator = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator();
         var firstCategory = categoryIterator.next();
         firstCategory.setState(CategoryState.GRADED);
-        firstCategory.setPenalty(33);
-        firstCategory.setMaxPenalty(44);
+        firstCategory.setPenalty(33D);
+        firstCategory.setMaxPenalty(44D);
         // Remove the second category
         var removedCategory = categoryIterator.next();
         categoryIterator.remove();
@@ -173,7 +174,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(null);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
-        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(-1);
+        programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next().setPenalty(-1D);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
 
@@ -182,8 +183,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     void testUpdateStaticCodeAnalysisCategories_maxPenaltySmallerThanPenalty_badRequest() throws Exception {
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         var category = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator().next();
-        category.setMaxPenalty(3);
-        category.setPenalty(5);
+        category.setMaxPenalty(3D);
+        category.setPenalty(5D);
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.BAD_REQUEST);
     }
 

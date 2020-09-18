@@ -43,7 +43,7 @@ public class StaticCodeAnalysisResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingExerciseService programmingExerciseService,
+    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
             StaticCodeAnalysisService staticCodeAnalysisService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
@@ -79,6 +79,7 @@ public class StaticCodeAnalysisResource {
      * Updates the static code analysis categories of a given programming exercise using the data in the request body.
      *
      * @param exerciseId of the the exercise
+     * @param categories used for the update
      * @return the updated static code analysis categories
      */
     @PatchMapping(Endpoints.CATEGORIES)
