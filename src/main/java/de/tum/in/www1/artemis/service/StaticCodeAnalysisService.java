@@ -101,11 +101,10 @@ public class StaticCodeAnalysisService {
         return originalCategories;
     }
 
-    public Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> getMappingForCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory, ProgrammingLanguage programmingLanguage) {
-        return staticCodeAnalysisDefaultConfigurations.get(programmingLanguage)
-            .getDefaultCategories().stream()
-            .filter(defaultCategory -> defaultCategory.getName().equals(staticCodeAnalysisCategory.getName()))
-            .findFirst()
-            .map(defaultCategory -> defaultCategory.getCategoryMappings());
+    public Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> getMappingForCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory,
+            ProgrammingLanguage programmingLanguage) {
+        return staticCodeAnalysisDefaultConfigurations.get(programmingLanguage).getDefaultCategories().stream()
+                .filter(defaultCategory -> defaultCategory.getName().equals(staticCodeAnalysisCategory.getName())).findFirst()
+                .map(defaultCategory -> defaultCategory.getCategoryMappings());
     }
 }

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -45,7 +45,8 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate,
+            StaticCodeAnalysisService staticCodeAnalysisService) {
         this.testCaseService = testCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -231,7 +232,7 @@ public class ProgrammingExerciseGradingService {
      * This method has to be extended/refactored when a grading concept for static code analysis has been created
      */
     private Result updateResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
-                                ProgrammingExercise exercise) {
+            ProgrammingExercise exercise) {
 
         // Distinguish between static code analysis feedback and test case feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
@@ -322,19 +323,16 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
-            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
-                .mapToDouble(staticCodeAnalysisCategory -> {
-                    double penaltySum = staticCodeAnalysisFeedback.stream()
-                        .filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
+            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream().mapToDouble(staticCodeAnalysisCategory -> {
+                double penaltySum = staticCodeAnalysisFeedback.stream().filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
                         .mapToDouble(feedback -> {
                             double penalty = staticCodeAnalysisCategory.getPenalty();
                             feedback.setText(feedback.getText() + ":" + staticCodeAnalysisCategory.getName());
                             feedback.setCredits(-penalty);
                             return penalty;
                         }).sum();
-                    return penaltySum > staticCodeAnalysisCategory.getMaxPenalty() ? staticCodeAnalysisCategory.getMaxPenalty() : penaltySum;
-                })
-                .sum();
+                return penaltySum > staticCodeAnalysisCategory.getMaxPenalty() ? staticCodeAnalysisCategory.getMaxPenalty() : penaltySum;
+            }).sum();
 
             successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
             if (successfulTestPoints < 0) {
@@ -357,12 +355,14 @@ public class ProgrammingExerciseGradingService {
     }
 
     private Predicate<Feedback> isInCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory, ProgrammingLanguage programmingLanguage) {
-        Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> categoryMappings = staticCodeAnalysisService.getMappingForCategory(staticCodeAnalysisCategory, programmingLanguage);
+        Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> categoryMappings = staticCodeAnalysisService.getMappingForCategory(staticCodeAnalysisCategory,
+                programmingLanguage);
         return categoryMappings.<Predicate<Feedback>>map(mappings -> feedback -> {
             String[] parts = feedback.getText().split(":");
             if (parts.length > 2) {
                 return mappings.stream().anyMatch(mapping -> mapping.getTool().name().equals(parts[1]) && mapping.getCategory().equals(parts[2]));
-            } else {
+            }
+            else {
                 return false;
             }
         }).orElseGet(() -> fb -> false);
