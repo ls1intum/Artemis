@@ -803,16 +803,6 @@ public class ParticipationService {
     }
 
     /**
-     * Loads the participation including submissions and results and assessor by id
-     * @param participationId the id of the participation
-     * @return the student participation
-     */
-    public StudentParticipation findWithEagerSubmissionsAndResultsAssessorsById(Long participationId) {
-        return studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation with id: \"" + participationId + "\" does not exist"));
-    }
-
-    /**
      * Get one participation (in any state) by its student and exercise with all its results.
      *
      * @param exercise the exercise for which to find a participation
@@ -1300,7 +1290,7 @@ public class ParticipationService {
      * @param exercise the exercise id
      * @return the test run participation with submissions and results loaded
      */
-    public StudentParticipation findTestRunParticipationofInstructorForExercise(Long instructorId, Exercise exercise) {
+    public StudentParticipation findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
         var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
         if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
             return null;
@@ -1316,7 +1306,7 @@ public class ParticipationService {
      */
     public Set<StudentParticipation> findTestRunParticipationsForExercise(Exercise exercise) {
         var instructors = userService.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember());
-        return instructors.stream().map(instructor -> findTestRunParticipationofInstructorForExercise(instructor.getId(), exercise)).filter(Objects::nonNull)
+        return instructors.stream().map(instructor -> findTestRunParticipationOfInstructorForExercise(instructor.getId(), exercise)).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 

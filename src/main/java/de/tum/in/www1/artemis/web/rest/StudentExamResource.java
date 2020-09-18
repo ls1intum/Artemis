@@ -369,7 +369,7 @@ public class StudentExamResource {
      * @return the list of test runs
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
@@ -520,7 +520,6 @@ public class StudentExamResource {
                 participation.setResults(Set.of(result));
             }
         }
-
     }
 
     /**

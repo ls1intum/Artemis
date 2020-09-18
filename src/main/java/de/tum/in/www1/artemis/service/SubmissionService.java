@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -33,9 +32,9 @@ public class SubmissionService {
 
     protected ResultRepository resultRepository;
 
-    protected final UserService userService;
+    private UserService userService;
 
-    private final CourseService courseService;
+    private CourseService courseService;
 
     protected AuthorizationCheckService authCheckService;
 
@@ -295,10 +294,12 @@ public class SubmissionService {
 
         final var immutableSubmissionsList = List.copyOf(submissions);
         var groupedByParticipation = immutableSubmissionsList.stream().collect(Collectors.groupingBy(submission -> (StudentParticipation) submission.getParticipation()));
-        groupedByParticipation.keySet().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
-                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get())).filter(StudentParticipation::isTestRunParticipation)
-                .forEach(testRunParticipation -> submissions.removeAll(groupedByParticipation.get(testRunParticipation)));
 
+        groupedByParticipation.keySet().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
+                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get())) // only instructors have test run submissions
+                .filter(StudentParticipation::isTestRunParticipation) // verify that it is really a test run
+                .forEach(testRunParticipation -> submissions.removeAll(groupedByParticipation.get(testRunParticipation))); // remove the identified test run submissions from the
+                                                                                                                           // submissions list
         return submissions;
     }
 

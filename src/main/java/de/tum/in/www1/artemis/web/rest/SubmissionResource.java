@@ -13,7 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -33,10 +37,6 @@ public class SubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final SubmissionService submissionService;
-
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
     private final ResultService resultService;
 
     private final ParticipationService participationService;
@@ -47,12 +47,9 @@ public class SubmissionResource {
 
     private final ExerciseService exerciseService;
 
-    public SubmissionResource(SubmissionRepository submissionRepository, SubmissionService submissionService, ProgrammingSubmissionService programmingSubmissionService,
-            ResultService resultService, ParticipationService participationService, AuthorizationCheckService authCheckService, UserService userService,
-            ExerciseService exerciseService) {
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
         this.submissionRepository = submissionRepository;
-        this.submissionService = submissionService;
-        this.programmingSubmissionService = programmingSubmissionService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -107,7 +104,7 @@ public class SubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        var testRunParticipation = participationService.findTestRunParticipationofInstructorForExercise(user.getId(), exercise);
+        var testRunParticipation = participationService.findTestRunParticipationOfInstructorForExercise(user.getId(), exercise);
         var latestSubmission = testRunParticipation.findLatestSubmission().get();
         return ResponseEntity.ok().body(List.of(latestSubmission));
     }

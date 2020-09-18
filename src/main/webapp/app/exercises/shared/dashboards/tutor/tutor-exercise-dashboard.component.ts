@@ -433,13 +433,21 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.openingAssessmentEditorForNewSubmission = true;
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+        if (this.isTestRun) {
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+        } else {
+            await this.router.navigate([route]);
+        }
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
     async openCodeEditorWithStudentSubmission(participationId: number) {
-        const route = `/course-management/${this.exercise.course?.id}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
-        await this.router.navigate([route]);
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
+        if (this.isTestRun) {
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+        } else {
+            await this.router.navigate([route]);
+        }
     }
 
     /**

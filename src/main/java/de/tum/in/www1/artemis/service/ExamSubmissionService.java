@@ -72,12 +72,7 @@ public class ExamSubmissionService {
                 studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             }
             catch (EntityNotFoundException entityNotFoundException) {
-                if (isExamTestRunSubmission(exercise, user, exam)) {
-                    return true;
-                }
-                else {
-                    throw entityNotFoundException;
-                }
+                return isExamTestRunSubmission(exercise, user, exam);
             }
 
             // Check that the current user is allowed to submit to this exercise
