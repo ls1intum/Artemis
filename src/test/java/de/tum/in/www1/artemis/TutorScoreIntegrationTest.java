@@ -15,9 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -49,6 +51,12 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     UserRepository userRepo;
 
     @Autowired
+    ComplaintRepository complaintRepo;
+
+    @Autowired
+    ComplaintResponseRepository complaintResponseRepo;
+
+    @Autowired
     DatabaseUtilService database;
 
     @Autowired
@@ -70,11 +78,13 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private Complaint complaint;
 
+    private Complaint feedbackRequest;
+
     private ComplaintResponse complaintResponse;
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(4, 3, 2);
 
         // course1
         course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
@@ -248,25 +258,100 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exercise = exerciseRepo.findAll().get(0);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
-        response.getAssessmentsPoints();
+        assertThat(response.getAssessmentsPoints()).as("response id is as expected").isEqualTo(exercise.getMaxScore());
 
         result = resultRepo.findAll().get(0);
-
-        
-
-
         resultRepo.delete(result);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAssessmentsPoints()).as("response id is as expected").isEqualTo(0);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void newTutorScoreWithComplaintAndResponse() throws Exception {
+    public void newTutorScoreWithComplaint() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(2);
+        exercise = exerciseRepo.findAll().get(0);
+        participation = database.addParticipationForExercise(exercise, "student3");
+        result = ModelFactory.generateResult(true, 100).resultString("Perfect!").participation(participation);
+        result.setAssessor(user);
+        resultRepo.save(result);
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(0);
+
+        //complaint
+        complaint = new Complaint().result(result).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        complaint.setResult(result);
+        complaintRepo.save(complaint);
+        result.setHasComplaint(true);
+        resultRepo.save(result);
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
+
+        complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor3"));
 
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void updateTutorScoreWithComplaintAndResponse() throws Exception {
+    public void newTutorScoreWithFeedbackRequest() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(2);
+        exercise = exerciseRepo.findAll().get(0);
+        participation = database.addParticipationForExercise(exercise, "student3");
+        result = ModelFactory.generateResult(true, 100).resultString("Perfect!").participation(participation);
+        result.setAssessor(user);
+        resultRepo.save(result);
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(0);
+
+        //feedback request
+        complaint = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
+        complaintRepo.save(complaint);
+        result.setHasComplaint(true);
+        resultRepo.save(result);
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void updateTutorScoreWithComplaint() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+        result = resultRepo.findAll().get(0);
+        exercise = result.getParticipation().getExercise();
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(0);
+
+        database.addComplaints("student1", result.getParticipation(), 1, ComplaintType.COMPLAINT);
+        resultRepo.save(result);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        //assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void updateTutorScoreWithFeedbackRequest() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+        result = resultRepo.findAll().get(0);
+        exercise = result.getParticipation().getExercise();
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAllFeedbackRequests()).as("feedback requests amount is as expected").isEqualTo(0);
+
+        database.addComplaints("student1", result.getParticipation(), 1, ComplaintType.MORE_FEEDBACK);
+        resultRepo.save(result);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        //assertThat(response.getAllFeedbackRequests()).as("feedback requests amount is as expected").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteTutorScoreWithComplaint() throws Exception {
 
     }
 }
