@@ -60,6 +60,7 @@ public class StudentScoreService {
      * @param exercise exercise
      * @return list of student score objects for that course
      */
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public Optional<StudentScore> getStudentScoreForStudentAndExercise(User student, Exercise exercise) {
         return studentScoreRepository.findByStudentAndExercise(student, exercise);
     }
@@ -118,8 +119,11 @@ public class StudentScoreService {
             return;
         }
 
+        var student = participation.get().getStudent().get();
+        var exercise = participation.get().getExercise();
+
         // TODO: this call does not work
-        // var existingStudentScores = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.getExercise());
+        // var existingStudentScores = getStudentScoreForStudentsAndExercises(student, exercise);
         var existingStudentScores = new ArrayList<StudentScore>();
 
         if (existingStudentScores.size() > 0) {

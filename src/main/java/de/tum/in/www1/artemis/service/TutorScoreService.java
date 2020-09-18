@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -68,6 +67,7 @@ public class TutorScoreService {
      * @param exercise exercise
      * @return list of tutor score objects for that course
      */
+    @Transactional(readOnly = true)
     public Optional<TutorScore> getTutorScoreForTutorAndExercise(User tutor, Exercise exercise) {
         return tutorScoreRepository.findByTutorAndExercise(tutor, exercise);
     }
@@ -102,8 +102,10 @@ public class TutorScoreService {
         if (existingTutorScore.isPresent()) {
             TutorScore tutorScore = existingTutorScore.get();
 
-            tutorScore.setAssessments(tutorScore.getAssessments() - 1);
-            tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+            if (tutorScore.getAssessments() > 0) {
+                tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+            }
 
             // handle complaints and feedback requests
             if (deletedResult.hasComplaint() == Boolean.TRUE) {
@@ -111,8 +113,10 @@ public class TutorScoreService {
 
                 // complaint
                 if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-                    tutorScore.setAllComplaints(tutorScore.getAllComplaints() - 1);
-                    tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() - exercise.getMaxScore());
+                    if (tutorScore.getAllComplaints() > 0) {
+                        tutorScore.setAllComplaints(tutorScore.getAllComplaints() - 1);
+                        tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() - exercise.getMaxScore());
+                    }
 
                     if (complaint.isAccepted() == Boolean.TRUE) {
                         tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() - 1);
@@ -124,8 +128,10 @@ public class TutorScoreService {
                     if (complaintResponse.isPresent()) {
                         var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
 
-                        fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
-                        fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+                        if (fromComplaintResponse.getComplaintResponses() > 0) {
+                            fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
+                            fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+                        }
 
                         tutorScoreRepository.save(fromComplaintResponse);
                     }
@@ -133,8 +139,10 @@ public class TutorScoreService {
 
                 // feedback request
                 if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-                    tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() - 1);
-                    tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() - exercise.getMaxScore());
+                    if (tutorScore.getAllFeedbackRequests() > 0) {
+                        tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() - 1);
+                        tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() - exercise.getMaxScore());
+                    }
 
                     // answered feedback request
                     Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
@@ -142,8 +150,10 @@ public class TutorScoreService {
                     if (complaintResponse.isPresent()) {
                         var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
 
-                        fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() - 1);
-                        fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() - exercise.getMaxScore());
+                        if (fromComplaintResponse.getComplaintResponses() > 0 && fromComplaintResponse.getComplaintResponsesPoints() > 0) {
+                            fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
+                            fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+                        }
 
                         tutorScoreRepository.save(fromComplaintResponse);
                     }
@@ -184,6 +194,8 @@ public class TutorScoreService {
         if (existingTutorScore.isEmpty()) {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
 
+            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
+
             tutorScoreRepository.save(newScore);
         } else {
             // handle other results than the first
@@ -192,50 +204,7 @@ public class TutorScoreService {
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
-            // add complaints and feedback requests
-            if (updatedResult.hasComplaint() == Boolean.TRUE) {
-                Complaint complaint = complaintRepository.findByResult_Id(updatedResult.getId()).get();
-
-                // complaint
-                if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-                    tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
-                    tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
-
-                    if (complaint.isAccepted() == Boolean.TRUE) {
-                        tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() + 1);
-                    }
-
-                    // complaint response
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
-
-                        fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() + 1);
-                        fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() + exercise.getMaxScore());
-
-                        tutorScoreRepository.save(fromComplaintResponse);
-                    }
-                }
-
-                // feedback request
-                if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
-                    tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
-                    tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
-
-                    // answered feedback request
-                    Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-
-                    if (complaintResponse.isPresent()) {
-                        var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
-
-                        fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() + 1);
-                        fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
-
-                        tutorScoreRepository.save(fromComplaintResponse);
-                    }
-                }
-            }
+            tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
 
             tutorScoreRepository.save(tutorScore);
         }
@@ -265,8 +234,7 @@ public class TutorScoreService {
 
         Exercise exercise = participation.get().getExercise();
 
-        // TODO: probably not working either
-        // Optional<TutorScore> existingScore = getTutorScoreForTutorAndExercise(newResult.getAssessor(), exercise);
+        //var existingScore = tutorScoreRepository.findByTutorAndExercise(newResult.getAssessor(), exercise);
         var existingScore = new ArrayList<TutorScore>();
 
         if (existingScore.size() > 0) {
@@ -275,12 +243,65 @@ public class TutorScoreService {
             oldScore.setAssessments(oldScore.getAssessments() + 1);
             oldScore.setAssessmentsPoints(oldScore.getAssessmentsPoints() + exercise.getMaxScore());
 
+            oldScore = addComplaintsAndFeedbackRequests(newResult, oldScore, exercise);
+
             tutorScoreRepository.save(oldScore);
         } else {
             TutorScore newScore = new TutorScore(newResult.getAssessor(), exercise, 1, exercise.getMaxScore());
 
+            newScore = addComplaintsAndFeedbackRequests(newResult, newScore, exercise);
+
             tutorScoreRepository.save(newScore);
         }
+    }
+
+    private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
+        // add complaints and feedback requests
+        if (result.hasComplaint() == Boolean.TRUE) {
+            Complaint complaint = complaintRepository.findByResult_Id(result.getId()).get();
+
+            // complaint
+            if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+                tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
+                tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
+
+                if (complaint.isAccepted() == Boolean.TRUE) {
+                    tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() + 1);
+                }
+
+                // complaint response
+                Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+
+                if (complaintResponse.isPresent()) {
+                    var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+
+                    fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() + 1);
+                    fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() + exercise.getMaxScore());
+
+                    tutorScoreRepository.save(fromComplaintResponse);
+                }
+            }
+
+            // feedback request
+            if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+                tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
+                tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
+
+                // answered feedback request
+                Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+
+                if (complaintResponse.isPresent()) {
+                    var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
+
+                    fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() + 1);
+                    fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
+
+                    tutorScoreRepository.save(fromComplaintResponse);
+                }
+            }
+        }
+
+        return tutorScore;
     }
 
     // TODO: also handle complaints, feedback requests and complaint responses
