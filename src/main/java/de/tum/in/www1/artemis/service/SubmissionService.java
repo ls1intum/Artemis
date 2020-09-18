@@ -284,8 +284,7 @@ public class SubmissionService {
 
     /**
      * Filters out the submissions which are related to test runs for exam mode.
-     * This is indicated by {@link StudentParticipation#getStudent()} equals {@link Result#getAssessor()}
-     * and {@link StudentParticipation#getStudent()} is an instructor.
+     * For more information on how this is set see {@link StudentParticipation#isTestRunParticipation}
      * @param submissions all submissions for the exercise
      * @param exercise the exercise containing the submissions
      * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
@@ -293,44 +292,14 @@ public class SubmissionService {
      */
     public <T extends Submission> List<T> filterOutTestRunSubmissions(List<T> submissions, Exercise exercise) {
         var instructors = userService.getInstructors(exercise.getExerciseGroup().getExam().getCourse());
+
         final var immutableSubmissionsList = List.copyOf(submissions);
-        // remove test run submissions
-        for (var submission : immutableSubmissionsList) {
-            var studentParticipation = (StudentParticipation) submission.getParticipation();
-            if (studentParticipation.getStudent().isPresent()) {
-                var student = studentParticipation.getStudent().get();
-                if (student.equals(submission.getResult().getAssessor()) && instructors.contains(student)) {
-                    submissions.remove(submission);
-                }
-            }
-        }
+        var groupedByParticipation = immutableSubmissionsList.stream().collect(Collectors.groupingBy(submission -> (StudentParticipation) submission.getParticipation()));
+        groupedByParticipation.keySet().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
+                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get())).filter(StudentParticipation::isTestRunParticipation)
+                .forEach(testRunParticipation -> submissions.removeAll(groupedByParticipation.get(testRunParticipation)));
+
         return submissions;
-    }
-
-    /**
-     * Returns the list of submissions which belong to test runs.
-     * Identified by {@link StudentParticipation#getStudent()} equals {@link Result#getAssessor()}.
-     * @param exercise the exercise for which we request the submissions
-     * @param instructor the owner of the test run
-     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
-     * @return the list of test run submissions of the exercise
-     */
-    public <T extends Submission> List<T> getTestRunSubmissionsOfInstructor(Exercise exercise, User instructor) {
-        var submissions = exercise.getStudentParticipations().stream().filter(studentParticipation -> {
-            if (studentParticipation.getStudent().isPresent()) { // filter out all submissions which do not belong to the current instructor
-                return studentParticipation.getStudent().get().equals(instructor);
-            }
-            return false;
-        }).filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // filter out participations with no submissions
-                .flatMap(studentParticipation -> studentParticipation.getSubmissions().stream()).collect(Collectors.toList());
-
-        // remove unnecessary data from the REST response
-        submissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-        return (List<T>) submissions;
     }
 
     /**

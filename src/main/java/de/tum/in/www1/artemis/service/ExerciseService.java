@@ -381,17 +381,6 @@ public class ExerciseService {
     }
 
     /**
-     * Returns an exercise with all test run submissions.
-     * They are identified by having the {@link StudentParticipation#getStudent()} equal to {@link Result#getAssessor()}
-     * @param exerciseId the id of the exercise
-     * @return the exercise with participations, submissions and results loaded
-     */
-    public Exercise findWithTestRunSubmissions(long exerciseId) {
-        return exerciseRepository.findWithTestRunSubmissionsWithResultsById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Exercise with id \"" + exerciseId + "\" does not exist"));
-    }
-
-    /**
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
      * @param updatedExercise the updated Exercise
@@ -489,7 +478,7 @@ public class ExerciseService {
      * @param testRunParticipationSet a set containing all test run participations. Must contain at least one submission per participation.
      * @param exercise the exercise
      */
-    public void deductTestRunSubmissions(StatsForInstructorDashboardDTO stats, Set<StudentParticipation> testRunParticipationSet, Exercise exercise) {
+    public void deductTestRunSubmissionsFromStatistics(StatsForInstructorDashboardDTO stats, Set<StudentParticipation> testRunParticipationSet, Exercise exercise) {
         long numberOfComplaints;
         // Create map in order to access the corresponding complaint via its result
         var complaintsByResult = complaintRepository.getAllByResult_Participation_Exercise_Id(exercise.getId()).stream()
@@ -504,10 +493,13 @@ public class ExerciseService {
             stats.getNumberOfSubmissions().setInTime(stats.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
         }
 
-        // count the number of finished assessments (the result must be rated and it must have a completion date set)
-        var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get())
-                .filter(submission -> submission.getResult() != null).map(Submission::getResult)
-                .filter(result -> result.getCompletionDate() != null && Boolean.TRUE.equals(result.isRated()) && result.getAssessmentType().equals(AssessmentType.MANUAL)).count();
+        // count the number of finished assessments (it must have a completion date set and an assessor set, count by participation as programming exercises can have multiple
+        // submissions)
+        var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream()
+                .filter(studentParticipation -> studentParticipation.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
+                        .anyMatch(result -> result.getCompletionDate() != null && result.getAssessor() != null))
+                .count();
+
         // Deduct the number of test run finished assessments from the total calculated finished assessments
         if (stats == null) {
             exercise.getNumberOfAssessments().setInTime(exercise.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
@@ -517,8 +509,8 @@ public class ExerciseService {
         }
 
         // count the number of complaints for all test run results
-        numberOfComplaints = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get()).map(Submission::getResult)
-                .map(complaintsByResult::get).filter(Objects::nonNull).count();
+        numberOfComplaints = testRunParticipationSet.stream().filter(studentParticipation -> studentParticipation.getSubmissions().stream()
+                .filter(submission -> submission.getResult() != null).map(Submission::getResult).map(complaintsByResult::get).anyMatch(Objects::nonNull)).count();
         // Deduct the number of test run complaints from the total calculated number of complaints
         if (stats == null) {
             exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
@@ -528,8 +520,10 @@ public class ExerciseService {
         }
 
         // count the number of open complaints for all test run results (isAccepted must not be set)
-        var numberOfOpenComplaints = testRunParticipationSet.stream().map(studentParticipation -> studentParticipation.findLatestSubmission().get()).map(Submission::getResult)
-                .map(complaintsByResult::get).filter(Objects::nonNull).filter(complaint -> complaint.isAccepted() == null).count();
+        var numberOfOpenComplaints = testRunParticipationSet.stream()
+                .filter(studentParticipation -> studentParticipation.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
+                        .map(complaintsByResult::get).filter(Objects::nonNull).anyMatch(complaint -> complaint.isAccepted() == null))
+                .count();
         // Deduct the number of open test run complaints from the total calculated number of open complaints
         if (stats == null) {
             exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);

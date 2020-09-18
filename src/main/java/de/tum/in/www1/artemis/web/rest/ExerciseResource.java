@@ -5,15 +5,11 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -207,6 +203,8 @@ public class ExerciseResource {
         }
 
         StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        stats.setNumberOfOpenComplaints(0L);
+        stats.setNumberOfOpenMoreFeedbackRequests(0L);
 
         return ResponseEntity.ok(stats);
     }
@@ -262,10 +260,8 @@ public class ExerciseResource {
 
         if (examMode) {
             // deduct the test run submissions from the statistics
-            Exercise exerciseWithTestRunSubmissions = exerciseService.findWithTestRunSubmissions(exerciseId);
-            Set<StudentParticipation> testRunParticipationSet = exerciseWithTestRunSubmissions.getStudentParticipations().stream()
-                    .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()).collect(Collectors.toSet());
-            exerciseService.deductTestRunSubmissions(stats, testRunParticipationSet, exerciseWithTestRunSubmissions);
+            var testRunParticipationSet = participationService.findTestRunParticipationsForExercise(exercise);
+            exerciseService.deductTestRunSubmissionsFromStatistics(stats, testRunParticipationSet, exercise);
         }
         return stats;
     }

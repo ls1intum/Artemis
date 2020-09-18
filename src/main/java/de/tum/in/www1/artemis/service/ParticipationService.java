@@ -265,7 +265,7 @@ public class ParticipationService {
             else {
                 submission = participation.getSubmissions().iterator().next();
             }
-
+            submission.setSubmissionDate(ZonedDateTime.now());
             // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
             if (submission.getResult() == null) {
                 Result result = new Result();
@@ -273,8 +273,8 @@ public class ParticipationService {
                 submission.setResult(result);
                 result.setParticipation(submission.getParticipation());
                 submission.getResult().setAssessor(participation.getStudent().get());
-                submission.getResult().setAssessmentType(AssessmentType.MANUAL);
-                submission.getResult().setCompletionDate(ZonedDateTime.now());
+                submission.getResult().setAssessmentType(AssessmentType.AUTOMATIC);
+
                 resultRepository.save(result);
                 submissionRepository.save(submission);
             }
@@ -1291,6 +1291,33 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Loads the test run participation for the instructor.
+     * See {@link StudentParticipation#isTestRunParticipation()}
+     * @param instructorId the id of the instructor
+     * @param exercise the exercise id
+     * @return the test run participation with submissions and results loaded
+     */
+    public StudentParticipation findTestRunParticipationofInstructorForExercise(Long instructorId, Exercise exercise) {
+        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+            return null;
+        }
+
+        return studentParticipations.get(0);
+    }
+
+    /**
+     * Returs all test run participations for all instructors for a given exercise,
+     * @param exercise the given exercise
+     * @return list of test run participations with submissions and results loaded
+     */
+    public Set<StudentParticipation> findTestRunParticipationsForExercise(Exercise exercise) {
+        var instructors = userService.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember());
+        return instructors.stream().map(instructor -> findTestRunParticipationofInstructorForExercise(instructor.getId(), exercise)).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     /**

@@ -301,7 +301,7 @@ public class ExamResource {
 
         for (final Exercise exercise : exercises) {
             if (testRunParticipationsByExercise.containsKey(exercise)) {
-                exerciseService.deductTestRunSubmissions(null, testRunParticipationsByExercise.get(exercise), exercise);
+                exerciseService.deductTestRunSubmissionsFromStatistics(null, testRunParticipationsByExercise.get(exercise), exercise);
             }
         }
         return ResponseEntity.ok(exam);

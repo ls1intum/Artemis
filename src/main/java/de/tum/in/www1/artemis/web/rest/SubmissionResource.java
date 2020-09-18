@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,20 +99,17 @@ public class SubmissionResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getAllTestRunSubmissions(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
-        Exercise exercise = exerciseService.findWithTestRunSubmissions(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!exercise.hasExerciseGroup()) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
         if (!authorizationCheckServiceCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        List<Submission> submissions;
-        if (exercise instanceof ProgrammingExercise) {
-            submissions = programmingSubmissionService.getTestRunSubmissionsOfInstructor(exercise, user);
-        }
-        else {
-            submissions = submissionService.getTestRunSubmissionsOfInstructor(exercise, user);
-        }
-        return ResponseEntity.ok().body(submissions);
+        var testRunParticipation = participationService.findTestRunParticipationofInstructorForExercise(user.getId(), exercise);
+        var latestSubmission = testRunParticipation.findLatestSubmission().get();
+        return ResponseEntity.ok().body(List.of(latestSubmission));
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
