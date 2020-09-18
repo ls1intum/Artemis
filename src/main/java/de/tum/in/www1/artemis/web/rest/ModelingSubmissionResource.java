@@ -294,10 +294,11 @@ public class ModelingSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup());
         }
         else {
-            final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
+            final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup());
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }

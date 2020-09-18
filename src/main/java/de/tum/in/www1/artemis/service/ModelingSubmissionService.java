@@ -101,11 +101,12 @@ public class ModelingSubmissionService extends SubmissionService {
      * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param modelingExercise the exercise the submission should belong to
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
     @Transactional
-    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
-        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
+    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean removeTestRunParticipations) {
+        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         lockSubmission(modelingSubmission, modelingExercise);
@@ -120,10 +121,11 @@ public class ModelingSubmissionService extends SubmissionService {
      * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
     @Transactional
-    public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
+    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean removeTestRunParticipations) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise)) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
@@ -143,9 +145,16 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+        List<StudentParticipation> participations;
+        if (removeTestRunParticipations) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(modelingExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+        }
+
         var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+                .map(submission -> (ModelingSubmission) submission).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -154,7 +163,7 @@ public class ModelingSubmissionService extends SubmissionService {
         submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, modelingExercise.getDueDate());
 
         Random random = new Random();
-        var submissionWithoutResult = (ModelingSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
 

@@ -97,6 +97,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
+     * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     *
+     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
+     *
+     * @param exerciseId the exercise id the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id) and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId);
+
+    /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *

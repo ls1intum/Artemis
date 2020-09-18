@@ -384,11 +384,12 @@ public class ProgrammingSubmissionResource {
 
         // TODO: Handle lock limit.
 
-        final Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
-        if (programmingSubmissionOpt.isEmpty()) {
+        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
+                programmingExercise.hasExerciseGroup());
+        if (optionalProgrammingSubmission.isEmpty()) {
             return notFound();
         }
-        final ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+        final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

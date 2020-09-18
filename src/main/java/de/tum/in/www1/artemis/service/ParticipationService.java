@@ -948,6 +948,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId);
+    }
+
+    /**
      * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *

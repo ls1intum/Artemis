@@ -168,10 +168,11 @@ public class TextSubmissionService extends SubmissionService {
      * assessment for the corresponding submission yet.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
-        return getTextSubmissionWithoutManualResult(textExercise, false);
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean removeTestRunParticipations) {
+        return getRandomTextSubmissionEligibleForNewAssessment(textExercise, false, removeTestRunParticipations);
     }
 
     /**
@@ -180,17 +181,25 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise, boolean skipAssessmentQueue) {
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean removeTestRunParticipations) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
 
         Random random = new Random();
-        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(toList());
+        List<StudentParticipation> participations;
+        if (removeTestRunParticipations) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(textExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
+        }
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(submission -> (TextSubmission) submission).collect(toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -198,7 +207,7 @@ public class TextSubmissionService extends SubmissionService {
 
         submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, textExercise.getDueDate());
 
-        var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
 
@@ -276,10 +285,11 @@ public class TextSubmissionService extends SubmissionService {
      * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
      *
      * @param textExercise the exercise the submission should belong to
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
-    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise) {
-        TextSubmission textSubmission = getTextSubmissionWithoutManualResult(textExercise)
+    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean removeTestRunParticipations) {
+        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
         lockSubmission(textSubmission);
         return textSubmission;

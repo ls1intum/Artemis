@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -593,13 +594,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean removeTestRunParticipations) {
         Random r = new Random();
-        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId()).stream()
+        List<StudentParticipation> participations;
+        if (removeTestRunParticipations) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(programmingExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId());
+        }
+
+        List<ProgrammingSubmission> submissionsWithoutResult = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation())
                 .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
                 .collect(Collectors.toList());
 

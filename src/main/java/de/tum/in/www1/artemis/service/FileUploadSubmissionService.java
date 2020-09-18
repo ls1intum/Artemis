@@ -117,17 +117,27 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
-     * assessment for the corresponding submission yet.
+     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
+    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations) {
         Random random = new Random();
-        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+        List<StudentParticipation> participations;
+        if (removeTestRunParticipations) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(fileUploadExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
+        }
+
+        List<FileUploadSubmission> submissionsWithoutResult = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation())
+                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (FileUploadSubmission) submission)
                 .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
@@ -136,7 +146,7 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
 
-        var submissionWithoutResult = (FileUploadSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
         return Optional.of(submissionWithoutResult);
     }
 
@@ -253,11 +263,12 @@ public class FileUploadSubmissionService extends SubmissionService {
      * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param fileUploadExercise the exercise the submission should belong to
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */
     @Transactional
-    public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
-        FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
+    public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations) {
+        FileUploadSubmission fileUploadSubmission = getRandomFileUploadSubmissionEligibleForNewAssessment(fileUploadExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission);
         return fileUploadSubmission;

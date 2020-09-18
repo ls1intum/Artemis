@@ -262,11 +262,6 @@ public class TextSubmissionResource {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        Exam exam = null;
-        if (exercise.hasExerciseGroup()) {
-            exam = exercise.getExerciseGroup().getExam();
-        }
-
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -290,16 +285,16 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup());
             textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
             if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise, true);
+                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.hasExerciseGroup());
             }
             else {
-                optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup());
             }
             if (optionalTextSubmission.isEmpty()) {
                 return notFound();

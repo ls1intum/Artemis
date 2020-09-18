@@ -270,11 +270,13 @@ public class FileUploadSubmissionResource {
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
+            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
+                    fileUploadExercise.hasExerciseGroup());
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup());
+
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();
             }
