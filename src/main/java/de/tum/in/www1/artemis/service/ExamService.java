@@ -386,7 +386,7 @@ public class ExamService {
      */
     public List<StudentExam> generateStudentExams(Long examId) {
         // Delete all existing student exams via orphan removal (ignore test runs)
-        Exam examWithExistingStudentExams = examRepository.findWithStudentExamsById(examId).get();
+        Exam examWithExistingStudentExams = findWithStudentExamsById(examId);
 
         // TODO: the validation checks should happen in the resource, before this method is even being called!
         if (examWithExistingStudentExams.getNumberOfExercisesInExam() == null) {
@@ -603,6 +603,18 @@ public class ExamService {
         List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
         exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+    }
+
+    /**
+     * Finds an exam based on the id with all student exams which are not marked as test runs.
+     * @param examId the id of the exam
+     * @return the exam with student exams loaded
+     */
+    private Exam findWithStudentExamsById(long examId) {
+        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
+        // drop all test runs and set the remaining students exams to the exam
+        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::getTestRun).collect(Collectors.toSet()));
+        return exam;
     }
 
     /**
