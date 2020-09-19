@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
@@ -29,14 +28,14 @@ public class TutorScoreService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ComplaintRepository complaintRepository;
+    private final ComplaintService complaintService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintService complaintService, ComplaintResponseRepository complaintResponseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.complaintRepository = complaintRepository;
+        this.complaintService = complaintService;
         this.complaintResponseRepository = complaintResponseRepository;
     }
 
@@ -109,7 +108,7 @@ public class TutorScoreService {
 
             // handle complaints and feedback requests
             if (deletedResult.hasComplaint() == Boolean.TRUE) {
-                Complaint complaint = complaintRepository.findByResult_Id(deletedResult.getId()).get();
+                Complaint complaint = complaintService.getByResultId(deletedResult.getId()).get();
 
                 // complaint
                 if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
@@ -258,7 +257,7 @@ public class TutorScoreService {
     private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
         // add complaints and feedback requests
         if (result.hasComplaint() == Boolean.TRUE) {
-            Complaint complaint = complaintRepository.findByResult_Id(result.getId()).get();
+            Complaint complaint = complaintService.getByResultId(result.getId()).get();
 
             // complaint
             if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
