@@ -14,6 +14,12 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @Aspect
 public class FeatureToggleAspect {
 
+    private final FeatureService featureService;
+
+    public FeatureToggleAspect(FeatureService featureService) {
+        this.featureService = featureService;
+    }
+
     /**
      * Pointcut around all methods or classes annotated with {@link FeatureToggle}.
      *
@@ -34,7 +40,7 @@ public class FeatureToggleAspect {
      */
     @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
     public Object around(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
-        if (Arrays.stream(featureToggle.value()).allMatch(Feature::isEnabled)) {
+        if (Arrays.stream(featureToggle.value()).allMatch(featureService::isFeatureEnabled)) {
             return joinPoint.proceed();
         }
         else {
