@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -9,7 +10,6 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AlertService } from 'app/core/alert/alert.service';
 import { downloadFile } from 'app/shared/util/download.util';
 import { ExportToCsv } from 'export-to-csv';
 
@@ -31,8 +31,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
+        private router: Router,
         private artemisMarkdown: ArtemisMarkdownService,
-        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -54,6 +54,12 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.categories) {
                 this.modelingExercise.categories = this.modelingExercise.categories.map((category) => JSON.parse(category));
             }
+        });
+    }
+
+    navigateToPlagiarismInspection() {
+        this.router.navigate(['plagiarism'], {
+            relativeTo: this.route,
         });
     }
 

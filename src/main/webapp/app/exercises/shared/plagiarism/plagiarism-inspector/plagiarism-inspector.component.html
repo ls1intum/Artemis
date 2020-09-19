@@ -1,5 +1,20 @@
 <div class="plagiarism-inspector">
-    <aside class="plagiarism-sidebar">Sidebar</aside>
+    <aside class="plagiarism-sidebar">
+        <div class="plagiarism-sidebar-header">
+            {{ modelingExercise?.title || 'Test' }}
+        </div>
+        <div class="plagiarism-sidebar-body">
+            <ul class="plagiarism-list">
+                <li class="plagiarism-list-item">Plagiarism #1</li>
+                <li class="plagiarism-list-item">Plagiarism #2</li>
+            </ul>
+        </div>
+        <div class="plagiarism-sidebar-footer">
+            <button class="btn btn-primary btn-block" (click)="checkPlagiarism()">
+                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+            </button>
+        </div>
+    </aside>
     <div class="plagiarism-main-window">
         <jhi-plagiarism-header (split)="handleSplit($event)"></jhi-plagiarism-header>
         <jhi-plagiarism-split-view [splitControl]="splitControlSubject.asObservable()"></jhi-plagiarism-split-view>

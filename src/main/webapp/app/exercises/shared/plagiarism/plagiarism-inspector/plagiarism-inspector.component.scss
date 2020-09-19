@@ -10,12 +10,36 @@ $footer-height: 31px;
     margin: -1.25rem;
 
     .plagiarism-sidebar {
+        display: flex;
+        flex-direction: column;
         width: 200px;
         position: absolute;
         top: 0;
         left: 0;
         bottom: 0;
         border-right: 1px solid $body-bg;
+
+        &-header {
+            flex-shrink: 0;
+            border-bottom: 1px solid $body-bg;
+            padding: 0.75rem;
+        }
+
+        &-body {
+            flex-grow: 1;
+
+            .plagiarism-list {
+                padding: 0;
+                margin: 0;
+                list-style: none;
+            }
+        }
+
+        &-footer {
+            border-top: 1px solid $body-bg;
+            padding: 0.75rem;
+            flex-shrink: 0;
+        }
     }
 
     .plagiarism-main-window {
