@@ -96,6 +96,7 @@ Gitlab Server Setup
 
        docker pull gitlab/gitlab-ce:latest
 
+.. _Start-Gitlab:
 Start Gitlab
 ^^^^^^^^^^^^
 
@@ -266,17 +267,16 @@ Upgrade GitLab
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
 
-```
-docker stop gitlab
-docker rename gitlab gitlab_old
-docker pull gitlab/gitlab-ce:latest
-```
+    ::
+
+        docker stop gitlab
+        docker rename gitlab gitlab_old
+        docker pull gitlab/gitlab-ce:latest
 
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
-Start a GitLab container just as described in `Start
-Gitlab <#Start-Gitlab>`__ and wait for a couple of minutes. GitLab
+Start a GitLab container just as described in :ref:`Start-Gitlab` and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
 image (see ``docker images``) using ``docker rmi <old-image-id>``.
@@ -313,7 +313,7 @@ Jenkins Server Setup
    is only required once.
 
 3. Run steps 4-6 only if you are **not** using a separate instance,
-   otherwise continue with `Start Jenkins <#Start-Jenkins>`__.
+   otherwise continue with :ref:`Start-Jenkins`.
 
 4. Create a file increasing the maximum file size for the nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
@@ -356,6 +356,7 @@ Jenkins Server Setup
            --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
            jrcs/letsencrypt-nginx-proxy-companion
 
+.. _Start-Jenkins:
 Start Jenkins
 ^^^^^^^^^^^^^
 
@@ -642,13 +643,13 @@ Upgrade Jenkins
 Build the latest version of the ``jenkins-artemis`` Docker image, stop
 the running container and mount the Jenkins data volume to the new LTS
 container. Make sure to perform this command in the folder where the
-``Dockerfile`` was created (e.g. ``/opt/jenkins/``).
+``Dockerfile`` was created (e.g. ``/opt/jenkins/``):
 
-```
-docker stop jenkins
-docker rename jenkins jenkins_old
-docker build --no-cache -t jenkins-artemis .
-```
+    ::
+
+        docker stop jenkins
+        docker rename jenkins jenkins_old
+        docker build --no-cache -t jenkins-artemis .
 
 Now start a new Jenkins container just as described in `Start
 Jenkins <#Start-Jenkins>`__.
