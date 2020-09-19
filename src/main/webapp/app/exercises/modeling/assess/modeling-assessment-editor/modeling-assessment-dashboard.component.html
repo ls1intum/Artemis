@@ -95,9 +95,7 @@
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && otherSubmissions.length > 0" style="padding-top: 5px;">
-        Other submissions:
-    </h5>
+    <h5 *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && otherSubmissions.length > 0" style="padding-top: 5px;">Other submissions:</h5>
     <p *ngIf="modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong

@@ -8,7 +8,22 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -126,12 +141,6 @@ public class Course implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
-
-    @ManyToMany
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "course_achievement", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "achievement_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "courses", "users" })
-    private Set<Achievement> achievements = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -487,26 +496,6 @@ public class Course implements Serializable {
         if (exam.getCourse() == this) {
             exam.setCourse(null);
         }
-    }
-
-    public Set<Achievement> getAchievements() {
-        return achievements;
-    }
-
-    public void setAchievements(Set<Achievement> achievements) {
-        this.achievements = achievements;
-    }
-
-    public Course addAchievement(Achievement achievement) {
-        this.achievements.add(achievement);
-        achievement.getCourses().add(this);
-        return this;
-    }
-
-    public Course removeAchievement(Achievement achievement) {
-        this.achievements.remove(achievement);
-        achievement.getCourses().remove(this);
-        return this;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

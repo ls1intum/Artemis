@@ -156,7 +156,7 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses : Create a new course.
+     * POST /courses : create a new course.
      *
      * @param course the course to create
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
@@ -261,7 +261,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        if (authCheckService.isAdmin()) {
+        if (authCheckService.isAdmin(user)) {
             // if an admin changes a group, we need to check that the changed group exists
             try {
                 if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
@@ -396,7 +396,7 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
+                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
@@ -790,7 +790,7 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user)) {
+        if (authCheckService.isAdmin(user) || authCheckService.isInstructorInCourse(course, user)) {
             Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
             return ResponseEntity.ok().body(categories);
         }
@@ -913,7 +913,7 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+        if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 return notFound();
@@ -982,7 +982,7 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+        if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToRemoveFromGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToRemoveFromGroup.isEmpty()) {
                 return notFound();

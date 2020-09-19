@@ -89,6 +89,7 @@
             "maxScore": "Max. Score",
             "remainingTime": "Time left",
             "waitingForStart": "Waiting for Start",
+            "numberOfQuestions": "Number of Questions",
             "quizInstructions": {
                 "live": "Answer all questions in remaining time and only click the \"Submit\" button, when you're done.",
                 "wait": "Please wait until the quiz has ended to see your results.",

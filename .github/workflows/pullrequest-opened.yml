@@ -1,6 +1,6 @@
 name: Pull Request Opened
 on:
-  pull_request:
+  pull_request_target:
     types: [opened]
 
 jobs:
@@ -16,8 +16,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add Pull Request to Project
-        uses: alex-page/github-project-automation-plus@v0.2.3
+        uses: alex-page/github-project-automation-plus@v0.3.0
         with:
           project: Artemis Development
           column: In progress
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
+
+  commentOnNonDraft:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && !contains(github.event.issue.labels.*.name, 'ready for review')
+    steps:
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@master
+        with:
+          message: 'Still in progress? Consider converting to draft.'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

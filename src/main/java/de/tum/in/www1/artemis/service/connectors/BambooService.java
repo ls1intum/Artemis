@@ -338,13 +338,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     private String permissionToBambooPermission(CIPermission permission) {
-        switch (permission) {
-            case EDIT: return "WRITE";
-            case CREATE: return "CREATE";
-            case READ: return "READ";
-            case ADMIN: return "ADMINISTRATION";
-            default: throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
-        }
+        return switch (permission) {
+            case EDIT -> "WRITE";
+            case CREATE -> "CREATE";
+            case READ -> "READ";
+            case ADMIN -> "ADMINISTRATION";
+            default -> throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
+        };
     }
 
     @Override
@@ -665,7 +665,7 @@ public class BambooService implements ContinuousIntegrationService {
                 }
                 // 3) process static code analysis feedback
                 boolean hasStaticCodeAnalysisFeedback = false;
-                if (isStaticCodeAnalysisEnabled) {
+                if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
                     hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
                 }
 

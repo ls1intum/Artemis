@@ -156,7 +156,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     public void testPreventMultipleSubmissions() {
         StudentParticipation participation = database.addParticipationForExercise(exercise, "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
-        existingSubmission = database.addSubmission(participation, existingSubmission, "student1");
+        existingSubmission = database.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
         receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, user);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 
 @Entity
 @Table(name = "achievement")
@@ -32,18 +34,20 @@ public class Achievement implements Serializable {
     @Column(name = "icon")
     private String icon;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "rank")
-    private Integer rank;
+    private AchievementRank rank;
+
+    @ManyToOne
+    private Course course;
+
+    @ManyToOne
+    private Exercise exercise;
 
     @ManyToMany(mappedBy = "achievements")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "achievements" })
     private Set<User> users = new HashSet<>();
-
-    @ManyToMany(mappedBy = "achievements")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties({ "achievements" })
-    private Set<Course> courses = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -77,11 +81,11 @@ public class Achievement implements Serializable {
         this.icon = icon;
     }
 
-    public Integer getRank() {
+    public AchievementRank getRank() {
         return rank;
     }
 
-    public void setRank(Integer rank) {
+    public void setRank(AchievementRank rank) {
         this.rank = rank;
     }
 
@@ -93,41 +97,43 @@ public class Achievement implements Serializable {
         this.users = users;
     }
 
-    public Set<Course> getCourses() {
-        return courses;
+    public Course getCourse() {
+        return course;
     }
 
-    public void setCourses(Set<Course> courses) {
-        this.courses = courses;
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
-    public Achievement addUser(User user) {
-        this.users.add(user);
-        user.getAchievements().add(this);
-        return this;
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public Achievement removeUser(User user) {
-        this.users.remove(user);
-        user.getAchievements().remove(this);
-        return this;
-    }
-
-    public Achievement addCourse(Course course) {
-        this.courses.add(course);
-        course.getAchievements().add(this);
-        return this;
-    }
-
-    public Achievement removeCourse(Course course) {
-        this.courses.remove(course);
-        course.getAchievements().remove(this);
-        return this;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     @Override
     public String toString() {
         return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank=" + getRank()
                 + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Achievement that = (Achievement) o;
+        return id.equals(that.id) && title.equals(that.title) && description.equals(that.description) && icon.equals(that.icon) && rank.equals(that.rank)
+                && course.equals(that.course);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title, description, icon, rank, course, exercise);
     }
 }

@@ -3,9 +3,26 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -120,8 +137,9 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
 
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "user_achievement", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "achievement_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "users", "courses" })
+    @JoinTable(name = "user_achievement", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "achievement_id", referencedColumnName = "id") })
+    @JsonIgnoreProperties("users")
     private Set<Achievement> achievements = new HashSet<>();
 
     public Long getId() {
@@ -285,16 +303,14 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
         this.achievements = achievements;
     }
 
-    public User addAchievement(Achievement achievement) {
+    public void addAchievement(Achievement achievement) {
         this.achievements.add(achievement);
         achievement.getUsers().add(this);
-        return this;
     }
 
-    public User removeAchievement(Achievement achievement) {
+    public void removeAchievement(Achievement achievement) {
         this.achievements.remove(achievement);
         achievement.getUsers().remove(this);
-        return this;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

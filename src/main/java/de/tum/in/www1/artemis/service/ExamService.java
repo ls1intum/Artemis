@@ -73,13 +73,15 @@ public class ExamService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final QuizExerciseService quizExerciseService;
+
     private final ExamQuizService examQuizService;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, UserService userService, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ExamQuizService examQuizService, ExerciseService exerciseService,
-            InstanceMessageSendService instanceMessageSendService) {
+            InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userService = userService;
@@ -88,6 +90,7 @@ public class ExamService {
         this.examQuizService = examQuizService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseService = exerciseService;
+        this.quizExerciseService = quizExerciseService;
     }
 
     @Autowired
@@ -133,6 +136,7 @@ public class ExamService {
 
     /**
      * Get one exam by id with exercise groups and exercises.
+     * Also fetches the template and solution participation for programming exercises and questions for quiz exercises.
      *
      * @param examId the id of the entity
      * @return the exam with exercise groups
@@ -140,7 +144,22 @@ public class ExamService {
     @NotNull
     public Exam findOneWithExerciseGroupsAndExercises(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        return examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id: \"" + examId + "\" does not exist"));
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseService
+                            .findWithTemplateAndSolutionParticipationWithResultsById(exercise.getId());
+                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
+                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
+                }
+                if (exercise instanceof QuizExercise) {
+                    QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exercise.getId());
+                    ((QuizExercise) exercise).setQuizQuestions(quizExercise.getQuizQuestions());
+                }
+            }
+        }
+        return exam;
     }
 
     /**
@@ -346,7 +365,7 @@ public class ExamService {
         else if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
             try {
-                return !jacksonObjectMapper.readTree(modelingSubmission.getModel()).get("elements").isEmpty();
+                return !modelingSubmission.isEmpty(jacksonObjectMapper);
             }
             catch (Exception e) {
                 // Then the student most likely submitted something which breaks the model, if parsing fails

@@ -1,24 +1,96 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Achievement;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
+import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class AchievementService {
 
+    private final AchievementRepository achievementRepository;
+
     private final ParticipationService participationService;
 
     private final UserRepository userRepository;
 
-    public AchievementService(ParticipationService participationService, UserRepository userRepository) {
+    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, ParticipationService participationService) {
+        this.achievementRepository = achievementRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
     }
 
-    @Transactional
+    public Optional<Achievement> findById(Long achievementId) {
+        return achievementRepository.findById(achievementId);
+    }
+
+    public List<Achievement> findAll() {
+        return achievementRepository.findAll();
+    }
+
+    public Set<Achievement> findAllByCourseId(Long courseId) {
+        return achievementRepository.findAllByCourseId(courseId);
+    }
+
+    public Set<Achievement> findAllByExerciseId(Long exerciseId) {
+        return achievementRepository.findAllByExerciseId(exerciseId);
+    }
+
+    public Set<Achievement> findAllByUserId(Long userId) {
+        return achievementRepository.findAllByUserId(userId);
+    }
+
+    public Achievement save(Achievement achievement) {
+        return achievementRepository.save(achievement);
+    }
+
+    /**
+     * Creates an achievement and persist it
+     * @param title title of the achievement
+     * @param description description of the achievement
+     * @param icon the font awesome icon string identifier
+     * @param rank rank of the achievement
+     * @param course course which the achievement belongs to
+     * @param exercise which the achievement belongs to
+     * @return the created and persisted achievement
+     */
+    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course, Exercise exercise) {
+        Achievement achievement = new Achievement();
+        achievement.setTitle(title);
+        achievement.setDescription(description);
+        achievement.setIcon(icon);
+        achievement.setRank(rank);
+        achievement.setCourse(course);
+        achievement.setExercise(exercise);
+        return achievementRepository.save(achievement);
+    }
+
+    /**
+     * Deletes an achievement by also removing it from all users
+     * @param achievement achievement to be deleted
+     */
+    public void delete(Achievement achievement) {
+        var users = userRepository.findAllByAchievementId(achievement.getId());
+        achievement.setUsers(users);
+        for (User user : users) {
+            user.removeAchievement(achievement);
+            userRepository.save(user);
+        }
+        achievementRepository.delete(achievement);
+    }
+
+    // @Transactional
     public void assignPointBasedAchievementIfEarned(Result result) {
         var score = result.getScore();
         // TODO: add actually required score for achievements
