@@ -265,7 +265,12 @@ Upgrade GitLab
 
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
-``shell script docker stop gitlab docker rename gitlab gitlab_old docker pull gitlab/gitlab-ce:latest``
+
+```
+docker stop gitlab
+docker rename gitlab gitlab_old
+docker pull gitlab/gitlab-ce:latest
+```
 
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
@@ -367,6 +372,11 @@ Start Jenkins
             -e LETSENCRYPT_HOST=your.jenkins.domain \                     # Only needed if Alternative 1 is used
             -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
             jenkins-artemis
+
+    For jenkins to be able to read data from the volume you might need to allow the jenkins user to read the jenkins_data folder.
+    One way to do that is transfer the ownership to the user with id 1000 which is normally the user the jenkins process runs with.
+    ::
+        sudo chown -R 1000 jenkins_data/
 
 8.  Wait until the docker container has started and Jenkins is running.
 
@@ -623,6 +633,9 @@ the following steps:
     Cross Site Request Forgery exploits”. Also disable the option
     ``use-crumb`` in ``application-jenkins.yml``.
 
+    Depending on the version this setting might not be available anymore.
+    Have a look `here<https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`_ on how you can disable CSRF protection.
+
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~
 
@@ -631,7 +644,11 @@ the running container and mount the Jenkins data volume to the new LTS
 container. Make sure to perform this command in the folder where the
 ``Dockerfile`` was created (e.g. ``/opt/jenkins/``).
 
-``shell script docker stop jenkins docker rename jenkins jenkins_old docker build --no-cache -t jenkins-artemis .``
+```
+docker stop jenkins
+docker rename jenkins jenkins_old
+docker build --no-cache -t jenkins-artemis .
+```
 
 Now start a new Jenkins container just as described in `Start
 Jenkins <#Start-Jenkins>`__.
