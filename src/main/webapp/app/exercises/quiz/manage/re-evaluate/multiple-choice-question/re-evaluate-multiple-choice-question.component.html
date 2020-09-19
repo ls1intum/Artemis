@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-md-10 text-left">
             <div class="input-group">
-                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px;" />
+                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
                 <span class="input-group-btn">
                     <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
                         <fa-icon [icon]="'undo'"></fa-icon>
@@ -62,7 +62,7 @@
         ></button>
     </div>
     <div class="markupEditorArea">
-        <div class="question-content" style="padding-bottom: 12px;">
+        <div class="question-content" style="padding-bottom: 12px">
             <div class="row">
                 <jhi-markdown-editor
                     [markdown]="getQuestionText(question)"
@@ -76,7 +76,7 @@
                     [showPreviewButton]="false"
                     (markdownChange)="onQuestionChange($event)"
                     class="editor col"
-                    style="width: 90%;"
+                    style="width: 90%"
                 ></jhi-markdown-editor>
                 <span class="col-auto input-group-btn d-flex align-items-center">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
@@ -89,7 +89,7 @@
     <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions">
         <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
             <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%;" dnd-sortable-handle>
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
                     <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
                 </span>
                 <jhi-markdown-editor
@@ -104,9 +104,9 @@
                     [showPreviewButton]="false"
                     (markdownChange)="onAnswerOptionChange($event, answer)"
                     class="editor"
-                    style="width: 65%;"
+                    style="width: 65%"
                 ></jhi-markdown-editor>
-                <div class="form-group text-center" style="width: 25%;">
+                <div class="form-group text-center" style="width: 25%">
                     <button
                         class="btn btn-outline-secondary"
                         [hidden]="isAnswerInvalid(answer)"
