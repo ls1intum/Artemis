@@ -164,7 +164,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.isLoading = false;
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'start');
     }
 
     private updateUrlIfNeeded() {
@@ -191,7 +191,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -214,7 +214,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
