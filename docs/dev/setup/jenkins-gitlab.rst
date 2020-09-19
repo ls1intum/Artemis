@@ -265,7 +265,12 @@ Upgrade GitLab
 
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
-``shell script docker stop gitlab docker rename gitlab gitlab_old docker pull gitlab/gitlab-ce:latest``
+
+```
+docker stop gitlab
+docker rename gitlab gitlab_old
+docker pull gitlab/gitlab-ce:latest
+```
 
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
@@ -639,7 +644,11 @@ the running container and mount the Jenkins data volume to the new LTS
 container. Make sure to perform this command in the folder where the
 ``Dockerfile`` was created (e.g. ``/opt/jenkins/``).
 
-``shell script docker stop jenkins docker rename jenkins jenkins_old docker build --no-cache -t jenkins-artemis .``
+```
+docker stop jenkins
+docker rename jenkins jenkins_old
+docker build --no-cache -t jenkins-artemis .
+```
 
 Now start a new Jenkins container just as described in `Start
 Jenkins <#Start-Jenkins>`__.
