@@ -25,8 +25,6 @@ public class ProgrammingExerciseGradingResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
-    private static final String ENTITY_NAME = "programmingExerciseGrading";
-
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
@@ -40,8 +38,8 @@ public class ProgrammingExerciseGradingResource {
     private final ResultRepository resultRepository;
 
     public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseTestCaseService programmingExerciseTestCaseService,
-            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
+            AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseService = programmingExerciseService;
