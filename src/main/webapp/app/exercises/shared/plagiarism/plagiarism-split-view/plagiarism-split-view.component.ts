@@ -2,6 +2,7 @@ import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, QueryLi
 // @ts-ignore
 import Split from 'split.js';
 import { Observable } from 'rxjs';
+import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -15,6 +16,7 @@ export class SplitPaneDirective {
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnInit {
     @Input() splitControl: Observable<string>;
+    @Input() comparison: ModelingSubmissionComparisonDTO;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 

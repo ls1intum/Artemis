@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -6,6 +6,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
+    @Input() comparisonIdx: number;
     @Output() split = new EventEmitter<string>();
     @Output() newItemEvent = new EventEmitter<void>();
 
