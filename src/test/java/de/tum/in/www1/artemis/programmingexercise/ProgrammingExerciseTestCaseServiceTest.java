@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -28,6 +32,8 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -65,13 +71,16 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     @Autowired
     DatabaseUtilService database;
 
+    @Autowired
+    RequestUtilService request;
+
     private ProgrammingExercise programmingExercise;
 
     private Result result;
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 0);
+        database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         result = new Result();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
@@ -496,7 +505,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReEvaluateScoreOfTheCorrectResults() {
+    public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
@@ -591,10 +600,13 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCases.get("test3").setWeight(3.);
         testCaseRepository.saveAll(testCases.values());
 
-        // TODO: we should instead invoke the REST call here
         // re-evaluate
-        var updatedResults = gradingService.updateAllResults(programmingExercise);
-        resultRepository.saveAll(updatedResults);
+        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        assertThat(response).isEqualTo(6);
+
+        // this fixes an issue with the authentication context after a mock request
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());

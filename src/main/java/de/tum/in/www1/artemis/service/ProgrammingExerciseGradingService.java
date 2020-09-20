@@ -68,8 +68,9 @@ public class ProgrammingExerciseGradingService {
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation " + participation.getId());
 
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation with id " + participation.getId() + " is not a programming exercise participation!");
+        }
 
         Result result;
         try {
