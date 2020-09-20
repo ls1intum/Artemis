@@ -431,16 +431,17 @@ Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 You will need to install the following plugins (apart from the
-recommended ones that got installed during the setup process): \*
-`GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
-webhooks to and from GitLab \* `Multiple
-SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
-exercise test and assignment repositories in one build \* `Post Build
-Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
-results to be exported to Artemis \*
-`Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
-libraries, for which tests have to have some virtual display \*
-`Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+recommended ones that got installed during the setup process):
+
+1. `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
+webhooks to and from GitLab
+2. `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
+exercise test and assignment repositories in one build
+3. `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
+results to be exported to Artemis
+4. `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
+libraries, for which tests have to have some virtual display
+5. `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
 time to every line of the build output (Timestamper might already be
 installed)
 
