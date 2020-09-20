@@ -90,4 +90,10 @@ $footer-height: 31px;
         height: 100%;
         opacity: 0.5;
     }
+
+    .plagiarism-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
 }
