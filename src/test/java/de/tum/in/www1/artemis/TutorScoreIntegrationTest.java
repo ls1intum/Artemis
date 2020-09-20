@@ -149,8 +149,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(responseExerciseTwo.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseTwo.size()).as("response has length 1").isEqualTo(1);
 
+        // exercise3 in course1
         course = courseRepo.findAll().get(0);
-        // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1
@@ -201,8 +201,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(responseCourseTwo.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseTwo.size()).as("response has length 1").isEqualTo(1);
 
+        // exercise3 in course1
         course = courseRepo.findAll().get(0);
-        // exercise3
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exerciseRepo.save(exercise);
         // score for tutor1 in exercise3 in course1

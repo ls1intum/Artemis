@@ -214,6 +214,7 @@ public class TutorScoreService {
      *
      * @param newResult result to be added
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addNewResult(Result newResult) {
         // ignore unrated results and results without score or assessor
         if (newResult.isRated() != Boolean.TRUE || newResult.getScore() == null || newResult.getAssessor() == null) {
@@ -233,11 +234,10 @@ public class TutorScoreService {
 
         Exercise exercise = participation.get().getExercise();
 
-        //var existingScore = tutorScoreRepository.findByTutorAndExercise(newResult.getAssessor(), exercise);
-        var existingScore = new ArrayList<TutorScore>();
+        var existingScore = tutorScoreRepository.findByTutorAndExercise(newResult.getAssessor(), exercise);
 
-        if (existingScore.size() > 0) {
-            TutorScore oldScore = existingScore.get(0);
+        if (existingScore.isPresent()) {
+            TutorScore oldScore = existingScore.get();
 
             oldScore.setAssessments(oldScore.getAssessments() + 1);
             oldScore.setAssessmentsPoints(oldScore.getAssessmentsPoints() + exercise.getMaxScore());
@@ -302,6 +302,4 @@ public class TutorScoreService {
 
         return tutorScore;
     }
-
-    // TODO: also handle complaints, feedback requests and complaint responses
 }

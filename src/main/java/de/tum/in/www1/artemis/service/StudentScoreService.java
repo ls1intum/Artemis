@@ -103,6 +103,7 @@ public class StudentScoreService {
      *
      * @param newResult result to be added
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addNewResult(Result newResult) {
         // ignore unrated results and results without participation
         if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
@@ -119,15 +120,10 @@ public class StudentScoreService {
             return;
         }
 
-        var student = participation.get().getStudent().get();
-        var exercise = participation.get().getExercise();
+        var existingStudentScores = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.get().getExercise());
 
-        // TODO: this call does not work
-        // var existingStudentScores = getStudentScoreForStudentsAndExercises(student, exercise);
-        var existingStudentScores = new ArrayList<StudentScore>();
-
-        if (existingStudentScores.size() > 0) {
-            var existingStudentScore = existingStudentScores.get(0);
+        if (existingStudentScores.isPresent()) {
+            var existingStudentScore = existingStudentScores.get();
             if (existingStudentScore.getResult().getId().equals(newResult.getId())) {
                 updateResult(newResult);
             }
