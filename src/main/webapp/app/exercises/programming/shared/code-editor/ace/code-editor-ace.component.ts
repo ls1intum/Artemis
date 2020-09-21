@@ -18,6 +18,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash';
+import { Feedback } from 'app/entities/feedback.model';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -31,10 +32,12 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
+    /*
     @ViewChild('lineWidgets')
     lineWidgetsElement: { nativeElement: HTMLDivElement };
     @ViewChild('lineIcon')
     lineIconElement: { nativeElement: HTMLDivElement };
+    */
 
     @Input()
     selectedFile: string;
@@ -50,6 +53,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly editorState: EditorState;
     @Input()
     isTutorAssessment = false;
+    @Input()
+    feedbacks: Feedback[];
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
@@ -64,9 +69,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-
+    fileFeedbacks: Feedback[];
     private lineWidget: any;
     private lineWidgetObserver: MutationObserver | null;
+    linesOfCode: number;
+    showLine: number;
+    gutters: any;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -81,8 +89,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
         });
+        if (this.isTutorAssessment) {
+            this.editor.getEditor().setShowFoldWidgets(false);
+        }
+        /*
         this.lineWidgetsElement.nativeElement.remove();
         this.lineIconElement.nativeElement.remove();
+        */
     }
 
     /**
@@ -140,8 +153,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
-            this.loadLineWidgets();
+            // this.loadLineWidgets();
             this.setupLineIcons();
+
+            if (!this.feedbacks) {
+                this.feedbacks = [];
+            }
+            this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
+            this.displayFeedbacks();
         }
     }
 
@@ -180,7 +199,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
-            this.setupLineIcons();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -314,7 +332,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     loadLineWidgets() {
-        const session = this.editor.getEditor().getSession();
+        /*const session = this.editor.getEditor().getSession();
         if (!session.widgetManager) {
             session.widgetManager = new this.LineWidgets(session);
             session.widgetManager.attach(this.editor.getEditor());
@@ -342,24 +360,43 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             };
             this.lineWidgetsElement.nativeElement.remove();
             session.widgetManager.addLineWidget(this.lineWidget);
-        }
+        }*/
     }
     displayFeedbacks() {
+        /*
         const session = this.editor.getEditor().getSession();
         if (!session.widgetManager) {
             session.widgetManager = new this.LineWidgets(session);
             session.widgetManager.attach(this.editor.getEditor());
         }
-        this.lineWidget = {
-            row: 11,
-            fixedWidth: true,
-            coverGutter: true,
-            el: this.lineWidgetsElement.nativeElement,
-        };
+
+        this.fileFeedbacks.forEach((feedback) => {
+            this.lineWidget = {
+                row: feedback.reference!.split('line:')[1],
+                fixedWidth: true,
+                coverGutter: true,
+                el: this.lineWidgetsElement.nativeElement,
+            };
+        });
         session.widgetManager.addLineWidget(this.lineWidget);
+        */
     }
 
     setupLineIcons() {
+        this.linesOfCode = this.editor.getEditor().getSession().getLength();
+        this.gutters = document.querySelectorAll('.ace_gutter-cell');
+        this.gutters.forEach((gutter: HTMLElement) => {
+            const elements = document.querySelectorAll('.btn-inline-comment');
+            const line: string = +gutter.innerText - 1 + '';
+            elements.forEach((el: HTMLElement) => {
+                if (el.id === 'inline-comment-button-' + line) {
+                    gutter.appendChild(el);
+                }
+            });
+        });
+        // this.lineIconElement.nativeElement.id = '';
+
+        /*
         const container = this.editor.getEditor().container;
         const lines = container.querySelectorAll('.ace_line');
         const gutters = container.querySelectorAll('.ace_gutter-cell');
@@ -373,16 +410,51 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 console.log('mouseleave line ' + i);
             });
         });
+
         gutters.forEach((gutter: HTMLElement) => {
             gutter.addEventListener('mouseenter', () => {
                 gutter.append(this.lineIconElement.nativeElement);
+                const child = gutter.getElementsByClassName('gutter-icon')[0];
                 console.log('mouseenter gutter' + gutter.innerText);
+                child.addEventListener('click', () => {
+                    console.log('on click icon in gutter line' + gutter.innerText);
+                });
             });
             gutter.addEventListener('mouseleave', () => {
                 // this.lineIconElement.nativeElement.remove();
                 console.log('mouseleave gutter' + gutter.innerText);
             });
         });
-        this.lineIconElement.nativeElement.remove();
+        this.lineIconElement.nativeElement.remove();*/
+    }
+
+    addLineWidgetWithFeedback(line: number) {
+        /*this.lineWidgetsElement.nativeElement.id = line;
+        const copy = this.lineWidgetsElement.nativeElement.cloneNode(true);*/
+        console.log('button clicked for line: ' + line);
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        const elements = document.querySelectorAll('.inline-feedback-d-none');
+        elements.forEach((element: HTMLElement) => {
+            if (element.id === 'test-' + line) {
+                console.log('inline comment element:');
+                console.log(element);
+                // element.className = 'inline-feedback';
+                this.lineWidget = {
+                    row: line,
+                    fixedWidth: true,
+                    coverGutter: true,
+                    el: element,
+                };
+                this.lineWidget.el.className = 'inline-feedback';
+                session.widgetManager.addLineWidget(this.lineWidget);
+            }
+        });
+    }
+    counter(num: number) {
+        return new Array(num);
     }
 }

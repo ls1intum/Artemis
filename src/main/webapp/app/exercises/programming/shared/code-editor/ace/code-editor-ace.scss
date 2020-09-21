@@ -12,16 +12,35 @@ Ace Editor
         &__editor {
             flex: 1 1 auto;
         }
-        .ace_gutter-cell {
+
+        .inline-feedback-d-none {
+            display: none;
+        }
+
+        .inline-feedback {
+            display: block;
+        }
+
+        .btn-inline-comment {
+            display: none;
+            color: #3e8acc; // btn-primary color
+            height: 16px;
+        }
+
+        .ace_gutter-cell:hover .btn-inline-comment,
+        .ace_line:hover .btn-inline-comment {
+            display: block;
             position: relative;
 
-            .gutter-icon {
+            fa-icon {
                 position: absolute;
-                top: 8px; //gutter-cell has height of 16px
-                right: 0;
+                top: -50%;
+                left: 5%;
                 transform: translate(-50%, -50%);
-                color: #3e8acc; // btn-primary color
-                height: 16px;
+            }
+            fa-icon:hover {
+                font-size: 15px;
+                transition: font-size 0.35s ease;
             }
         }
 
