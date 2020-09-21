@@ -12,6 +12,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextAssessmentConflict } from 'app/entities/text-assessment-conflict';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -100,7 +101,6 @@ export class TextAssessmentsService {
                 tap((response) => (response.body!.results[0].participation = response.body!)),
                 // Make sure Feedbacks Array is initialized
                 tap((response) => (response.body!.results[0].feedbacks = response.body!.results[0].feedbacks || [])),
-
                 // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
                 tap((response) => ((response.body!.submissions[0] as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
                 map((response) => response.body!),
@@ -116,10 +116,30 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
+    /**
+     *  Gets an array of text submissions that contains conflicting feedback with the given feedback id.
+     * @param exerciseId id of the exercise feedback belongs to of type {number}
+     * @param feedbackId id of the feedback to search for conflicts of type {number}
+     */
+    public getConflictingTextSubmissions(exerciseId: number, feedbackId: number): Observable<TextSubmission[]> {
+        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/exercise/${exerciseId}/feedback/${feedbackId}/text-assessment-conflicts`);
+    }
+
+    public setConflictsAsSolved(textAssessmentConflictId: number): Observable<TextAssessmentConflict> {
+        return this.http.get<TextAssessmentConflict>(`${this.resourceUrl}/textAssessmentConflict/${textAssessmentConflictId}/solve-text-assessment-conflicts`);
+    }
+
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
         feedbacks = feedbacks.map((f) => {
             f = Object.assign({}, f);
             f.result = null;
+            if (f['firstConflicts']) {
+                delete f['firstConflicts'];
+            }
+            if (f['secondConflicts']) {
+                delete f['secondConflicts'];
+            }
+            f.conflictingTextAssessments = null;
             return f;
         });
         textBlocks = textBlocks.map((tb) => {
