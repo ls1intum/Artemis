@@ -414,7 +414,7 @@ public class StudentExamResource {
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
