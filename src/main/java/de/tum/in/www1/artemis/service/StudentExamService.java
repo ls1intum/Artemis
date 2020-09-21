@@ -253,12 +253,12 @@ public class StudentExamService {
         if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : existingStudentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                if (exercise instanceof ProgrammingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                                 currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+                        programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);

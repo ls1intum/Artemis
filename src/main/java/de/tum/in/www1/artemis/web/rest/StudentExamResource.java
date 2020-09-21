@@ -465,8 +465,8 @@ public class StudentExamResource {
         exercise.setCourse(null);
         exercise.setExerciseGroup(null);
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            programmingExercise.setTestRepositoryUrl(null);
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);
         }
 
         // get user's participation for the exercise
