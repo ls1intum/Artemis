@@ -24,16 +24,20 @@ public class TextAssessmentService extends AssessmentService {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final TextAssessmentConflictRepository textAssessmentConflictRepository;
+
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
-            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService) {
+            TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
+            TextAssessmentConflictRepository textAssessmentConflictRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
+        this.textAssessmentConflictRepository = textAssessmentConflictRepository;
     }
 
     /**
@@ -107,6 +111,15 @@ public class TextAssessmentService extends AssessmentService {
         return this.feedbackRepository.findByResult(result);
     }
 
+    public List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
+        List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
+        feedbackList.forEach(feedback -> {
+            feedback.setFirstConflicts(this.textAssessmentConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
+            feedback.setSecondConflicts(this.textAssessmentConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
+        });
+        return feedbackList;
+    }
+
     /**
      * Load entities from database needed for text assessment & compute Feedback suggestions (Athene):
      *   1. Create or load the result
@@ -125,14 +138,14 @@ public class TextAssessmentService extends AssessmentService {
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = getAssessmentsForResult(result);
+            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : getAssessmentsForResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
         else {
-            // We we are the first ones to open assess this submission, we want to lock it.
+            // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission);
