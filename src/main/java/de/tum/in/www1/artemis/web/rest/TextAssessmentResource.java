@@ -25,13 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -318,6 +312,46 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden();
         }
         return ResponseEntity.ok(submission.getResult());
+    }
+
+    @GetMapping("/exercise/{exerciseId}/feedback/{feedbackId}/text-assessment-conflicts")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long exerciseId, @PathVariable long feedbackId) {
+        log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        checkTextExerciseForRequest(textExercise, user);
+
+        if (!textExercise.isAutomaticAssessmentEnabled() || automaticTextAssessmentConflictService.isEmpty()) {
+            throw new BadRequestAlertException("Automatic assessments are not enabled for this text exercise or text assessment conflict service is not available!",
+                    "textAssessmentConflict", "AutomaticTextAssessmentConflictServiceNotFound");
+        }
+
+        Set<TextSubmission> textSubmissionSet = this.automaticTextAssessmentConflictService.get().getConflictingSubmissions(feedbackId);
+
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        return bodyBuilder.body(textSubmissionSet);
+    }
+
+    @GetMapping("/textAssessmentConflict/{textAssessmentConflictId}/solve-text-assessment-conflicts")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextAssessmentConflict> setConflictsAsSolved(@PathVariable long textAssessmentConflictId) {
+        log.debug("REST request to set text assessment conflict as solved for textAssessmentConflictId: {}", textAssessmentConflictId);
+
+        if (automaticTextAssessmentConflictService.isEmpty()) {
+            throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
+                    "AutomaticTextAssessmentConflictServiceNotFound");
+        }
+
+        TextAssessmentConflict textAssessmentConflict = this.automaticTextAssessmentConflictService.get().setConflictAsSolved(textAssessmentConflictId);
+
+        if (textAssessmentConflict == null) {
+            throw new BadRequestAlertException("Text Assessment Conflict cannot found in the database!", "TextAssessmentConflict", "TextAssessmentConflictNotFound");
+        }
+
+        return ResponseEntity.ok(textAssessmentConflict);
+
     }
 
     @Override
