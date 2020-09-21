@@ -1,0 +1,68 @@
+<jhi-text-assessment-conflicts-header
+    [numberOfConflicts]="conflictingSubmissions?.length"
+    (didChangeConflictIndex)="didChangeConflictIndex($event)"
+    [haveRights]="canOverride(this.leftSubmission?.result)"
+    [overrideBusy]="overrideBusy"
+    [markBusy]="markBusy"
+    [isOverrideDisabled]="isOverrideDisabled"
+    [isMarkingDisabled]="isMarkingDisabled"
+    (overrideLeftSubmission)="overrideLeftSubmission()"
+    (markSelectedAsNoConflict)="markSelectedAsNoConflict()"
+></jhi-text-assessment-conflicts-header>
+
+<div class="conflict-container">
+    <div class="left card" [class.border-0]="false">
+        <div class="card-header bg-primary text-white">
+            <div class="flew-grow-1">
+                <span *ngIf="isAssessor(this.leftSubmission?.result); else otherAssessor">Assessor: You</span>
+                <ng-template #otherAssessor>
+                    <span
+                        jhiTranslate="artemisApp.assessment.conflict.assessor"
+                        [translateValues]="{ otherUser: this.leftSubmission?.result?.assessor?.name + ' (' + this.leftSubmission?.result?.assessor?.login + ')' }"
+                    ></span>
+                </ng-template>
+            </div>
+            <jhi-score-display [maxScore]="exercise?.maxScore" [score]="leftTotalScore"></jhi-score-display>
+        </div>
+        <div class="left-body card-body" [class.p-0]="false">
+            <jhi-text-assessment-area
+                [submission]="leftSubmission"
+                [(textBlockRefs)]="leftTextBlockRefs"
+                (textBlockRefsChange)="leftTextBlockRefsChange()"
+                [readOnly]="true"
+                [conflictMode]="true"
+                [isLeftConflictingFeedback]="true"
+                [selectedFeedbackIdWithConflicts]="leftFeedbackId"
+            ></jhi-text-assessment-area>
+        </div>
+    </div>
+    <div class="movable right">
+        <div class="draggable-left">
+            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+        </div>
+        <div class="right card" [class.border-0]="false">
+            <div class="card-header bg-primary text-white">
+                <div class="flew-grow-1">
+                    <span *ngIf="isAssessor(this.rightSubmission?.result); else otherAssessor">Assessor: You</span>
+                    <ng-template #otherAssessor>
+                        <span
+                            jhiTranslate="artemisApp.assessment.conflict.assessor"
+                            [translateValues]="{ otherUser: this.rightSubmission?.result?.assessor?.name + ' (' + this.rightSubmission?.result?.assessor?.login + ')' }"
+                        ></span>
+                    </ng-template>
+                </div>
+                <jhi-score-display [maxScore]="exercise?.maxScore" [score]="rightTotalScore"></jhi-score-display>
+            </div>
+            <div class="right-body card-body" [class.p-0]="false">
+                <jhi-text-assessment-area
+                    [submission]="rightSubmission"
+                    [(textBlockRefs)]="rightTextBlockRefs"
+                    [readOnly]="true"
+                    [conflictMode]="true"
+                    [conflictingAssessments]="conflictingAssessments"
+                    (didSelectConflictingFeedback)="didSelectConflictingFeedback($event)"
+                ></jhi-text-assessment-area>
+            </div>
+        </div>
+    </div>
+</div>
