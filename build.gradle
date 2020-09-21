@@ -95,6 +95,7 @@ springBoot {
 // Execute the test cases: ./gradlew executeTests
 
 test {
+    jvmArgs(['--enable-preview'])
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
     testLogging.showStandardStreams = true
@@ -106,6 +107,7 @@ test {
 }
 
 task integrationTest(type: Test) {
+    jvmArgs(['--enable-preview'])
     description = "Execute integration tests."
     group = "verification"
     include "**/*IT*", "**/*IntTest*"
