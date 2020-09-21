@@ -1,0 +1,19 @@
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Moment } from 'moment';
+
+export enum TextAssessmentConflictType {
+    INCONSISTENT_COMMENT = 'INCONSISTENT COMMENT',
+    INCONSISTENT_SCORE = 'INCONSISTENT SCORE',
+    INCONSISTENT_FEEDBACK = 'INCONSISTENT FEEDBACK',
+}
+
+export class TextAssessmentConflict implements BaseEntity {
+    public id: number;
+    public conflict: boolean;
+    public conflictingFeedbackId: number;
+    public createdAt: Moment;
+    public solvedAt: Moment | null;
+    public type: TextAssessmentConflictType;
+
+    constructor() {}
+}
