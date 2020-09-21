@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
@@ -248,6 +248,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
+    async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
+        const navigationExtras: NavigationExtras = { queryParams: { id: feedbackId }, state: { submission: this.submission } };
+        await this.router.navigate(
+            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-assessment-conflict'],
+            navigationExtras,
+        );
+    }
+
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
@@ -297,6 +305,16 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
         const feedbacks = this.result.feedbacks || [];
+        feedbacks.forEach(function (feedback) {
+            feedback.conflictingTextAssessments = [
+                ...(feedback['firstConflicts'] ? feedback['firstConflicts'] : []),
+                ...(feedback['secondConflicts'] ? feedback['secondConflicts'] : []),
+            ];
+            feedback.conflictingTextAssessments.forEach(function (textAssessmentConflict) {
+                textAssessmentConflict.conflictingFeedbackId =
+                    textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;
+            });
+        });
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
