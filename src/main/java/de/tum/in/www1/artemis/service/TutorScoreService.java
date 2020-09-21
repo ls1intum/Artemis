@@ -189,15 +189,7 @@ public class TutorScoreService {
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
 
-        // handle remove from old assessor
-        if (existingTutorScore.isEmpty()) {
-            TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
-
-            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
-
-            tutorScoreRepository.save(newScore);
-        } else {
-            // handle other results than the first
+        if (existingTutorScore.isPresent()) {
             TutorScore tutorScore = existingTutorScore.get();
 
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
@@ -206,6 +198,12 @@ public class TutorScoreService {
             tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
 
             tutorScoreRepository.save(tutorScore);
+        } else {
+            TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
+
+            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
+
+            tutorScoreRepository.save(newScore);
         }
     }
 
@@ -216,8 +214,8 @@ public class TutorScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addNewResult(Result newResult) {
-        // ignore unrated results and results without score or assessor
-        if (newResult.isRated() != Boolean.TRUE || newResult.getScore() == null || newResult.getAssessor() == null) {
+        // ignore unrated results and results without score
+        if (newResult.isRated() != Boolean.TRUE || newResult.getScore() == null) {
             return;
         }
 

@@ -88,6 +88,7 @@ public class StudentScoreService {
         }
 
         var existingStudentScore = studentScoreRepository.findByResult(updatedResult);
+        
         if (existingStudentScore.isPresent()) {
             StudentScore studentScore = existingStudentScore.get();
 
