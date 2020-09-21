@@ -1,6 +1,6 @@
 name: Pull Request Ready for Review
 on:
-  pull_request:
+  pull_request_target:
     types: [ready_for_review]
 
 jobs:
@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Move to "Ready for review" column
         if: github.event.pull_request.draft == false
-        uses: alex-page/github-project-automation-plus@v0.2.3
+        uses: alex-page/github-project-automation-plus@v0.3.0
         with:
           project: Artemis Development
           column: Ready for review
