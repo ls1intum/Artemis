@@ -131,7 +131,6 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
 
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
-        ;
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
