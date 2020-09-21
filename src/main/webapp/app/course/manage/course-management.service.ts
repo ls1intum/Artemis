@@ -117,6 +117,15 @@ export class CourseManagementService {
             .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
 
+    findOneForQuestionsDashboard(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-questions-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
+            .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
+    }
+
     courseWasUpdated(course: Course | null): void {
         if (course) {
             return this.courses.get(course.id)?.subject.next(course);

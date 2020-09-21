@@ -20,7 +20,7 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.findOneForDashboard(params['courseId']).subscribe((res) => {
+            this.courseService.findOneForQuestionsDashboard(params['courseId']).subscribe((res) => {
                 this.course = res.body!;
                 console.log(this.course);
             });
