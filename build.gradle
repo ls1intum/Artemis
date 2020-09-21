@@ -38,8 +38,8 @@ group = "de.tum.in.www1.artemis"
 version = "4.4.6"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=14
-targetCompatibility=14
+sourceCompatibility=15
+targetCompatibility=15
 
 apply plugin: "com.github.ben-manes.versions"
 
