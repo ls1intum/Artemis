@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Table(name = "student_exam")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StudentExam implements Serializable {
+public class StudentExam extends AbstractAuditingEntity implements Serializable {
 
     @Id
     @Column(name = "id")
