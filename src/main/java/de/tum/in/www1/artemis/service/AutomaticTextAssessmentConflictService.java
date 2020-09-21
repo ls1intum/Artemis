@@ -136,9 +136,9 @@ public class AutomaticTextAssessmentConflictService {
         List<TextAssessmentConflict> storedConflicts = this.textAssessmentConflictRepository.findAllByFeedbackList(feedbackIds);
 
         storedConflicts.forEach(conflict -> {
-            boolean isPresent = textAssessmentConflictResponseDTOS.stream().anyMatch(newConflicts -> ((newConflicts.getFirstFeedbackId() == conflict.getFirstFeedback().getId()
+            boolean isPresent = textAssessmentConflictResponseDTOS.stream().anyMatch(newConflicts -> (newConflicts.getFirstFeedbackId() == conflict.getFirstFeedback().getId()
                     && newConflicts.getSecondFeedbackId() == conflict.getSecondFeedback().getId())
-                    || (newConflicts.getFirstFeedbackId() == conflict.getSecondFeedback().getId() && newConflicts.getSecondFeedbackId() == conflict.getFirstFeedback().getId())));
+                    || (newConflicts.getFirstFeedbackId() == conflict.getSecondFeedback().getId() && newConflicts.getSecondFeedbackId() == conflict.getFirstFeedback().getId()));
             if (!isPresent) {
                 conflict.setConflict(false);
                 conflict.setSolvedAt(ZonedDateTime.now());
