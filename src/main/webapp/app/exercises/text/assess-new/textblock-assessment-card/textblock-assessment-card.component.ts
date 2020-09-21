@@ -3,6 +3,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { TextBlockType } from 'app/entities/text-block.model';
+import { TextAssessmentConflictType } from 'app/entities/text-assessment-conflict';
 
 type OptionalTextBlockRef = TextBlockRef | null;
 
@@ -15,9 +16,14 @@ export class TextblockAssessmentCardComponent {
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Input() readOnly: boolean;
+    @Input() isConflictingFeedback: boolean;
+    @Input() conflictMode: boolean;
+    @Input() conflictType: TextAssessmentConflictType | null;
+    @Input() isLeftConflictingFeedback: boolean;
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();
+    @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
     disableEditScore = false;
 
@@ -28,10 +34,14 @@ export class TextblockAssessmentCardComponent {
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {
+        if (this.readOnly && !(this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback)) {
+            return;
+        }
+        this.selected = !this.selected;
         this.didSelect.emit(this.textBlockRef);
         this.textBlockRef.initFeedback();
 
-        if (autofocus) {
+        if (autofocus || (this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback)) {
             setTimeout(() => this.feedbackEditor.focus());
         }
     }
