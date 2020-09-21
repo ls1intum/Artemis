@@ -1,0 +1,21 @@
+<h3 class="top-container">
+    <div class="row-container">
+        <button class="btn btn-primary" (click)="onPrevConflict()">
+            <fa-icon icon="arrow-left"></fa-icon>
+        </button>
+        <span class="ml-3 mr-3">{{ currentConflictIndex }}/{{ [numberOfConflicts] }}</span>
+        <button class="btn btn-primary" (click)="onNextConflict()">
+            <fa-icon icon="arrow-right"></fa-icon>
+        </button>
+    </div>
+    <div class="row-container">
+        <button class="btn ml-2 btn-primary" *ngIf="haveRights" (click)="overrideLeftSubmission.emit()" [disabled]="isOverrideDisabled">
+            <fa-icon *ngIf="overrideBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            Override Left Assessment
+        </button>
+        <button class="btn ml-2 btn-primary" *ngIf="haveRights" (click)="markSelectedAsNoConflict.emit()" [disabled]="isMarkingDisabled">
+            <fa-icon *ngIf="markBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            Mark Selected as No Conflict
+        </button>
+    </div>
+</h3>
