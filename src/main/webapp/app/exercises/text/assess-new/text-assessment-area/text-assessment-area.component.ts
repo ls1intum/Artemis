@@ -2,6 +2,7 @@ import { Component, EventEmitter, HostListener, Input, OnChanges, Output, Simple
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { TextAssessmentConflict, TextAssessmentConflictType } from 'app/entities/text-assessment-conflict';
 
 @Component({
     selector: 'jhi-text-assessment-area',
@@ -18,8 +19,14 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
     @Input() readOnly: boolean;
+    @Input() selectedFeedbackIdWithConflicts: number;
+    @Input() conflictMode: boolean;
+    @Input() isLeftConflictingFeedback = false;
+    @Input() conflictingAssessments: TextAssessmentConflict[];
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
+    @Output() onConflictsClicked = new EventEmitter<number>();
+    @Output() didSelectConflictingFeedback = new EventEmitter<number>();
     autoTextBlockAssessment = true;
     selectedRef: TextBlockRef | null = null;
     wordCount = 0;
@@ -31,7 +38,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * Life cycle hook to indicate component change
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.submission) {
+        if (changes.submission && changes.submission.currentValue) {
             const { text } = changes.submission.currentValue as TextSubmission;
             this.wordCount = this.stringCountService.countWords(text);
             this.characterCount = this.stringCountService.countCharacters(text);
@@ -62,5 +69,27 @@ export class TextAssessmentAreaComponent implements OnChanges {
         const index = this.textBlockRefs.findIndex((elem) => elem.block.id === ref.block.id);
         this.textBlockRefs.splice(index, 1);
         this.textBlockRefsAddedRemoved.emit();
+    }
+
+    getIsConflictingFeedback(ref: TextBlockRef): boolean {
+        if (this.isLeftConflictingFeedback && this.selectedFeedbackIdWithConflicts) {
+            return this.selectedFeedbackIdWithConflicts === ref.feedback?.id;
+        }
+        return this.conflictingAssessments?.some((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
+    }
+
+    getConflictType(ref: TextBlockRef): TextAssessmentConflictType | null {
+        const conflict = this.conflictingAssessments?.find((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
+        if (conflict) {
+            return conflict.type;
+        }
+        return null;
+    }
+
+    didSelectRef(ref: TextBlockRef): void {
+        this.selectedRef = ref;
+        if (this.conflictMode && !this.isLeftConflictingFeedback) {
+            this.didSelectConflictingFeedback.emit(ref.feedback?.id);
+        }
     }
 }
