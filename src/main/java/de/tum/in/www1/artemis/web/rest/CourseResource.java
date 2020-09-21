@@ -542,24 +542,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/for-questions-dashboard
-     *
-     * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises and lectures with questions
-     */
-    @GetMapping("/courses/{courseId}/for-questions-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForQuestionsDashboard(@PathVariable long courseId) {
-        log.debug("REST request /courses/{courseId}/for-questions-dashboard");
-        Course course = courseService.findOneWithExercisesAndLecturesAndQuestions(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
-    }
-
-    /**
      * GET /courses/:courseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *

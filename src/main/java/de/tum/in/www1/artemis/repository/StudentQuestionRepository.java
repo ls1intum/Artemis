@@ -25,4 +25,7 @@ public interface StudentQuestionRepository extends JpaRepository<StudentQuestion
     @Query("select student_question from StudentQuestion student_question where student_question.lecture.id = :#{#lectureId}")
     List<StudentQuestion> findStudentQuestionsForLecture(@Param("lectureId") Long lectureId);
 
+    @Query("select distinct student_question from StudentQuestion student_question left join student_question.lecture lecture left join student_question.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} )")
+    List<StudentQuestion> findStudentQuestionsForCourse(@Param("courseId") Long courseId);
+
 }

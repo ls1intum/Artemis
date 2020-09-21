@@ -200,11 +200,6 @@ public class CourseService {
         return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
     }
 
-    public Course findOneWithExercisesAndLecturesAndQuestions(long courseId) {
-        log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
-    }
-
     /**
      * Deletes all elements associated with the course including:
      * <ul>

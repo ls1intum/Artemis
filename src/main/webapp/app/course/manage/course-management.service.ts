@@ -23,9 +23,11 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { StudentQuestion } from 'app/entities/student-question.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
+export type EntityArrayResponseType2 = HttpResponse<StudentQuestion[]>;
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
@@ -117,13 +119,8 @@ export class CourseManagementService {
             .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
 
-    findOneForQuestionsDashboard(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-questions-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
-            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
-            .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
+    findOneForQuestionsDashboard(courseId: number): Observable<EntityArrayResponseType2> {
+        return this.http.get<StudentQuestion[]>(`${this.resourceUrl}/${courseId}/student-questions`, { observe: 'response' });
     }
 
     courseWasUpdated(course: Course | null): void {
