@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,11 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextCluster;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
@@ -113,6 +110,100 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
         feedbackRepository.deleteAll();
         assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
+    }
+
+    /**
+     * Creates and stores a Text Assessment Conflict in the database.
+     * Then sends a conflict with same feedback ids and different conflict type.
+     * Checks if the conflict type in the database has changed.
+     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void changedFeedbackConflictsType() throws NetworkingError {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+
+        final TextCluster cluster = new TextCluster().exercise(textExercise);
+        textClusterRepository.save(cluster);
+
+        final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
+        database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
+
+        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        ;
+        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+
+        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
+        textAssessmentConflict.setConflict(true);
+        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
+        textAssessmentConflict.setFirstFeedback(feedback1);
+        textAssessmentConflict.setSecondFeedback(feedback2);
+        textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_COMMENT);
+
+        textAssessmentConflictRepository.save(textAssessmentConflict);
+
+        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
+        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(createRemoteServiceResponse(feedback1, feedback2));
+
+        automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(textAssessmentConflictRepository, feedbackRepository, textBlockRepository,
+                textAssessmentConflictService);
+
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+
+        assertThat(textAssessmentConflictRepository.findAll(), hasSize(1));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), is(feedback2));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getType(), is(TextAssessmentConflictType.INCONSISTENT_SCORE));
+    }
+
+    /**
+     * Creates and stores a Text Assessment Conflict in the database.
+     * Then a same feedback is sent to the conflict checking class.
+     * Empty list is returned from the mock object. (meaning: no conflicts have found)
+     * Checks if the conflict set as solved in the database.
+     * @throws NetworkingError - it never throws an error since the TextAssessmentConflictService is a mock class
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void solveFeedbackConflicts() throws NetworkingError {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+
+        final TextCluster cluster = new TextCluster().exercise(textExercise);
+        textClusterRepository.save(cluster);
+
+        final TextBlock textBlock = new TextBlock().startIndex(0).endIndex(15).automatic().cluster(cluster);
+        database.addTextBlocksToTextSubmission(List.of(textBlock), textSubmission);
+
+        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
+        ;
+        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+
+        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
+        textAssessmentConflict.setConflict(true);
+        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
+        textAssessmentConflict.setFirstFeedback(feedback1);
+        textAssessmentConflict.setSecondFeedback(feedback2);
+        textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_SCORE);
+
+        textAssessmentConflictRepository.save(textAssessmentConflict);
+
+        textAssessmentConflictService = mock(TextAssessmentConflictService.class);
+        when(textAssessmentConflictService.checkFeedbackConsistencies(any(), anyLong(), anyInt())).thenReturn(List.of());
+
+        automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(textAssessmentConflictRepository, feedbackRepository, textBlockRepository,
+                textAssessmentConflictService);
+
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+
+        assertThat(textAssessmentConflictRepository.findAll(), hasSize(1));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), is(feedback2));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getConflict(), is(Boolean.FALSE));
+        assertThat(textAssessmentConflictRepository.findAll().get(0).getSolvedAt(), is(notNullValue()));
     }
 
     private List<TextAssessmentConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
