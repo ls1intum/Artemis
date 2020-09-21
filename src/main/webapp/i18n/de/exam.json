@@ -115,7 +115,7 @@
             "points": "Punkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
-            "submitted": "Aufgabe eingereicht",
+            "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",

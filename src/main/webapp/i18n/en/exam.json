@@ -115,7 +115,7 @@
             "points": "points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
-            "submitted": "Exercise submitted",
+            "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
             "notSubmitted": "Exercise not submitted",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
