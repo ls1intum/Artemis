@@ -8,6 +8,22 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
+        <div *ngFor="let gutter of gutters">
+            <div class="btn-inline-comment" id="inline-comment-button-{{+gutter.innerText - 1}}" (click)="addLineWidgetWithFeedback(+gutter.innerText - 1)">
+                <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
+            </div>
+        </div>
+        <div *ngFor="let line of counter(linesOfCode); let i = index;">
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                class="inline-feedback-d-none"
+                id="test-{{i}}"
+                [fileName]="selectedFile"
+                [codeLine]="i"
+                [feedback]="undefined"
+            >
+            </jhi-code-editor-tutor-assessment-inline-feedback>
+        </div>
+        <!--
         <div #lineWidgets>
             <jhi-code-editor-tutor-assessment-inline-feedback
                 [fileName]="selectedFile"
@@ -16,7 +32,9 @@
                 [feedback]="undefined"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
+            <div>Teeeeest</div>
         </div>
+        -->
         <div #lineIcon class="gutter-icon"><fa-icon [icon]="'plus-square'" size="lg"></fa-icon></div>
         <ace-editor
             #editor
