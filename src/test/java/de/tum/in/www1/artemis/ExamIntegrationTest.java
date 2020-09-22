@@ -745,6 +745,43 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + testRun.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTestRunWithReferencedParticipations() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun2 = new StudentExam();
+        testRun2.setTestRun(true);
+        testRun2.setExam(testRun1.getExam());
+        testRun2.setUser(instructor);
+        testRun2.setExercises(testRun1.getExercises());
+        testRun2.setWorkingTime(testRun1.getWorkingTime());
+        studentExamRepository.save(testRun2);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + testRun2.getId(), HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject();
+        var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam1.getId());
+        assertThat(testRunList.size()).isEqualTo(1);
+        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteTestRunAsTutor() throws Exception {
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + 1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetExamForTestRunDashboard_forbidden() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.FORBIDDEN, Exam.class);
