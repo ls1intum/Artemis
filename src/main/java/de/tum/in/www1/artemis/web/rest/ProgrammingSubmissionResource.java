@@ -350,7 +350,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);

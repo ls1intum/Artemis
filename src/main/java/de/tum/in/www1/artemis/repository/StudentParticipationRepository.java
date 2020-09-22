@@ -60,6 +60,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)")
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(Long exerciseId);
+
     /**
      * Get all participations for an exercise with each latest result (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -69,6 +72,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null) AND NOT EXISTS (select prs from participation.results prs where prs.assessor.id = participation.student.id)")
+    List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
@@ -152,6 +158,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
+
+    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch r.assessor a WHERE p.exercise.id = :#{#exerciseId} AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "results" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId);

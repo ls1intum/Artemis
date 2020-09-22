@@ -214,7 +214,7 @@ public class FileUploadSubmissionResource {
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission

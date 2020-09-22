@@ -268,10 +268,18 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore test run submissions
      * @return a list of text submissions for the given exercise id
      */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
+
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {

@@ -90,11 +90,18 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to to ignore exam test run submissions
      * @return a list of file upload submissions for the given exercise id
      */
     @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+    public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
         List<FileUploadSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true

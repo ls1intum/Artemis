@@ -869,9 +869,13 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
+     * @param examMode flag should be set to ignore test run submissions
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
@@ -901,7 +905,10 @@ public class ParticipationService {
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 

@@ -223,7 +223,7 @@ public class TextSubmissionResource {
             textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode);
         }
         else {
-            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission

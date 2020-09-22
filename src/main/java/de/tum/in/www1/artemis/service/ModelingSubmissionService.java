@@ -57,11 +57,18 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore exam test run submissions
      * @return a list of modeling submissions for the given exercise id
      */
     @Transactional(readOnly = true)
-    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();

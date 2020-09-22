@@ -208,7 +208,7 @@ public class ModelingSubmissionResource {
             modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
-            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
