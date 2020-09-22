@@ -161,6 +161,7 @@ public class SubmissionService {
     /**
      * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
     public DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
