@@ -342,7 +342,7 @@ public class StudentExamService {
     }
 
     /**
-     * Generates a Student Exam marked as a testRun for te instructor to test the exam as a student would experience it.
+     * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam

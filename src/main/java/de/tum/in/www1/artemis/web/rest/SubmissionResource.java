@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -105,8 +106,11 @@ public class SubmissionResource {
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         var testRunParticipation = participationService.findTestRunParticipationOfInstructorForExercise(user.getId(), exercise);
-        var latestSubmission = testRunParticipation.findLatestSubmission().get();
-        return ResponseEntity.ok().body(List.of(latestSubmission));
+        if (testRunParticipation.isPresent()) {
+            var latestSubmission = testRunParticipation.get().findLatestSubmission().get();
+            return ResponseEntity.ok().body(List.of(latestSubmission));
+        }
+        throw new EntityNotFoundException("There is no test run participation for exercise: " + exerciseId);
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {

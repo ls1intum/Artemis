@@ -1307,26 +1307,15 @@ public class ParticipationService {
      * See {@link StudentParticipation#isTestRunParticipation()}
      * @param instructorId the id of the instructor
      * @param exercise the exercise id
-     * @return the test run participation with submissions and results loaded
+     * @return the optional test run participation with submissions and results loaded
      */
-    public StudentParticipation findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
+    public Optional<StudentParticipation> findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
         var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
         if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
-            return null;
+            return Optional.empty();
         }
 
-        return studentParticipations.get(0);
-    }
-
-    /**
-     * Returs all test run participations for all instructors for a given exercise,
-     * @param exercise the given exercise
-     * @return list of test run participations with submissions and results loaded
-     */
-    public Set<StudentParticipation> findTestRunParticipationsForExercise(Exercise exercise) {
-        var instructors = userService.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember());
-        return instructors.stream().map(instructor -> findTestRunParticipationOfInstructorForExercise(instructor.getId(), exercise)).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        return Optional.of(studentParticipations.get(0));
     }
 
     /**

@@ -3,6 +3,10 @@
     <changeSet author="turdiu" id="20200908112330">
         <addColumn tableName="student_exam">
             <column name="test_run" type="bit" defaultValueBoolean="false"/>
+            <column name="created_by" type="VARCHAR(45)"/>
+            <column name="created_date" type="VARCHAR(45)"/>
+            <column name="last_modified_by" type="VARCHAR(45)"/>
+            <column name="last_modified_date" type="VARCHAR(45)"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
