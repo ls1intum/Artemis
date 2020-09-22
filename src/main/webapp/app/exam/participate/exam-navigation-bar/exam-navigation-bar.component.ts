@@ -114,7 +114,7 @@ export class ExamNavigationBarComponent implements OnInit {
         const submission = this.getSubmissionForExercise(this.exercises[exerciseIndex]);
         if (submission) {
             if (this.exercises[exerciseIndex].type === ExerciseType.PROGRAMMING) {
-                if (submission.isSynced) {
+                if (submission.submitted) {
                     return 'submitted';
                 } else {
                     return 'notSubmitted';
