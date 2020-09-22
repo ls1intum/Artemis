@@ -903,6 +903,7 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
      *
      * @param exerciseId the id of exercise
+     * @param examMode set flag to ignore test run submissions for exam mode
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId, boolean examMode) {
