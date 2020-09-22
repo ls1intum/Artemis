@@ -343,14 +343,18 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId());
         }
         else {
             programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        final boolean examMode = exercise.hasExerciseGroup();
+        if (examMode) {
+            programmingSubmissions = programmingSubmissionService.filterOutTestRunSubmissions(programmingSubmissions, exercise);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);

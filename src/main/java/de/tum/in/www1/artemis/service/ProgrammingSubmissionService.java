@@ -565,17 +565,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutorId    - the id of the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId, boolean examMode) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(exerciseId, tutorId);
-        }
-        else {
-            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
-        }
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId) {
+        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
     }

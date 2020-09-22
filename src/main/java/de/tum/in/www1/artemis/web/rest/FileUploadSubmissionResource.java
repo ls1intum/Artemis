@@ -208,13 +208,17 @@ public class FileUploadSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final boolean examMode = exercise.hasExerciseGroup();
         List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user);
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+        }
+
+        final boolean examMode = exercise.hasExerciseGroup();
+        if (examMode) {
+            fileUploadSubmissions = fileUploadSubmissionService.filterOutTestRunSubmissions(fileUploadSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

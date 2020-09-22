@@ -177,9 +177,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
-
     /**
      * Count the number of submissions for each participation in a given exercise.
      *
