@@ -1,8 +1,10 @@
 <div class="plagiarism-split-view">
-    <div jhiPane>
+    <div class="plagiarism-split-pane" jhiPane>
+        <div class="plagiarism-split-pane-header">{{ comparison?.element1.studentLogin }}</div>
         <jhi-modeling-editor *ngIf="submission1" [umlModel]="submission1?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
     </div>
-    <div jhiPane>
+    <div class="plagiarism-split-pane" jhiPane>
+        <div class="plagiarism-split-pane-header">{{ comparison?.element2.studentLogin }}</div>
         <jhi-modeling-editor *ngIf="submission2" [umlModel]="submission2?.model" [diagramType]="'ClassDiagram'" [readOnly]="true"></jhi-modeling-editor>
     </div>
 </div>

@@ -35,6 +35,10 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
         this.subscription.unsubscribe();
     }
 
+    handleTagPlagiarism(confirmed: boolean) {
+        this.modelingSubmissionComparisons[this.selectedComparisonIndex].confirmed = confirmed;
+    }
+
     checkPlagiarismJson() {
         const json = JSON.stringify(this.modelingSubmissionComparisons);
         const blob = new Blob([json], { type: 'application/json' });

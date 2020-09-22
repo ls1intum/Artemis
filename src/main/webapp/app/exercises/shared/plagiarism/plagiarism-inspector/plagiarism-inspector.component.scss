@@ -53,10 +53,18 @@ $footer-height: 31px;
 
                     .plagiarism-indicator {
                         border-radius: 50%;
-                        background-color: slategrey;
+                        background-color: $body-bg;
                         height: 8px;
                         width: 8px;
                         margin-right: 0.75rem;
+
+                        &.confirmed {
+                            background-color: green;
+                        }
+
+                        &.denied {
+                            background-color: red;
+                        }
                     }
 
                     &:hover {

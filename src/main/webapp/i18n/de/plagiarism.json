@@ -1,0 +1,8 @@
+{
+    "artemisApp": {
+        "plagiarism": {
+            "confirm": "Bestätigen",
+            "deny": "Ablehnen"
+        }
+    }
+}

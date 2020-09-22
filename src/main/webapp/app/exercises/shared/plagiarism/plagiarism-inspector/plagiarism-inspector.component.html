@@ -14,7 +14,7 @@
                     (click)="selectedComparisonIndex = idx"
                 >
                     <span style="display: inline-flex; align-items: center">
-                        <span class="plagiarism-indicator"></span>
+                        <span class="plagiarism-indicator" [ngClass]="{ confirmed: comparison.confirmed === true, denied: comparison.confirmed === false }"></span>
                         <span class="plagiarism-name">Plagiarism #{{ idx + 1 }}</span>
                     </span>
                     <span class="plagiarism-percentage">({{ comparison.similarity * 100 }}%)</span>
@@ -39,7 +39,11 @@
     <div class="plagiarism-main">
         <div class="plagiarism-empty" *ngIf="selectedComparisonIndex == undefined">No plagiarism selected</div>
         <div *ngIf="selectedComparisonIndex != undefined" class="plagiarism-content">
-            <jhi-plagiarism-header [comparisonIdx]="selectedComparisonIndex + 1" (split)="handleSplit($event)"></jhi-plagiarism-header>
+            <jhi-plagiarism-header
+                [comparisonIdx]="selectedComparisonIndex + 1"
+                (split)="handleSplit($event)"
+                (tagPlagiarism)="handleTagPlagiarism($event)"
+            ></jhi-plagiarism-header>
             <jhi-plagiarism-split-view
                 [comparison]="modelingSubmissionComparisons ? modelingSubmissionComparisons[selectedComparisonIndex] : null"
                 [splitControl]="splitControlSubject.asObservable()"

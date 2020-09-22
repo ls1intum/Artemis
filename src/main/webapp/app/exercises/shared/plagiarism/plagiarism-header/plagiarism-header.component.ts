@@ -8,13 +8,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 export class PlagiarismHeaderComponent {
     @Input() comparisonIdx: number;
     @Output() split = new EventEmitter<string>();
-    @Output() newItemEvent = new EventEmitter<void>();
+    @Output() tagPlagiarism = new EventEmitter<boolean>();
 
-    onConfirmPlagiarism() {
-        this.newItemEvent.emit();
-    }
-
-    onDenyPlagiarism() {
-        this.newItemEvent.emit();
+    onTagPlagiarism(confirmed: boolean) {
+        this.tagPlagiarism.emit(confirmed);
     }
 }
