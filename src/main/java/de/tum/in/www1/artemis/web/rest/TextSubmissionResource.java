@@ -218,16 +218,12 @@ public class TextSubmissionResource {
         }
 
         List<TextSubmission> textSubmissions;
+        final boolean examMode = exercise.hasExerciseGroup();
         if (assessedByTutor) {
-            textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user);
+            textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode);
         }
         else {
             textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
-        }
-
-        final boolean examMode = exercise.hasExerciseGroup();
-        if (examMode) {
-            textSubmissions = textSubmissionService.filterOutTestRunSubmissions(textSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission

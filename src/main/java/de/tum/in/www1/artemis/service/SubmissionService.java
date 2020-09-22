@@ -287,29 +287,6 @@ public class SubmissionService {
     }
 
     /**
-     * Filters out the submissions which are related to test runs for exam mode.
-     * For more information on how this is set see {@link StudentParticipation#isTestRunParticipation}
-     * @param submissions all submissions for the exercise
-     * @param exercise the exercise containing the submissions
-     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
-     * @return a list of all submissions which are not part of test runs
-     */
-    public <T extends Submission> List<T> filterOutTestRunSubmissions(List<T> submissions, Exercise exercise) {
-        var instructors = userService.getInstructors(exercise.getExerciseGroup().getExam().getCourse());
-
-        final var immutableSubmissionsList = List.copyOf(submissions);
-        var groupedByParticipation = immutableSubmissionsList.stream().collect(Collectors.groupingBy(submission -> (StudentParticipation) submission.getParticipation()));
-
-        groupedByParticipation.keySet().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
-                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get()))// only instructors have test run submissions
-                .peek(studentParticipation -> studentParticipation.setSubmissions(new HashSet<>(groupedByParticipation.get(studentParticipation)))) // set lazy loaded submissions
-                .filter(StudentParticipation::isTestRunParticipation) // verify that it is really a test run
-                .forEach(testRunParticipation -> submissions.removeAll(groupedByParticipation.get(testRunParticipation))); // remove the identified test run submissions from the
-                                                                                                                           // submissions list
-        return submissions;
-    }
-
-    /**
      * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
      * @param exercise course exercise or exam exercise that is checked
      * @return boolean
