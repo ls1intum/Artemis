@@ -32,13 +32,6 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
-    /*
-    @ViewChild('lineWidgets')
-    lineWidgetsElement: { nativeElement: HTMLDivElement };
-    @ViewChild('lineIcon')
-    lineIconElement: { nativeElement: HTMLDivElement };
-    */
-
     @Input()
     selectedFile: string;
     @Input()
@@ -73,8 +66,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     private lineWidget: any;
     private lineWidgetObserver: MutationObserver | null;
     linesOfCode: number;
-    showLine: number;
+    lineOfCodeForInlineComment: number;
     gutters: any;
+    lineCounter: any[] = [];
+    elementArray: Element[] = [];
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -92,10 +87,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.isTutorAssessment) {
             this.editor.getEditor().setShowFoldWidgets(false);
         }
-        /*
-        this.lineWidgetsElement.nativeElement.remove();
-        this.lineIconElement.nativeElement.remove();
-        */
     }
 
     /**
@@ -134,6 +125,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Makes sure previous settings are restored and the correct language service is used.
      **/
     initEditorAfterFileChange() {
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        if (session.lineWidgets) {
+            session.lineWidgets.forEach((widget: any) => {
+                session.widgetManager.removeLineWidget(widget);
+            });
+        }
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
@@ -153,14 +154,17 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
-            // this.loadLineWidgets();
-            this.setupLineIcons();
-
+            // inline feedback below
+            const lines = this.editor.getEditor().getSession().getLength();
+            this.lineCounter = new Array(lines);
+            // this.setupLineIcons();
+            /*
             if (!this.feedbacks) {
                 this.feedbacks = [];
             }
             this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
             this.displayFeedbacks();
+            */
         }
     }
 
@@ -198,8 +202,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
+            console.log('onFileTextchanged');
             this.editor.setReadOnly(true);
-            this.displayFeedbacks();
+            // this works: this.displayFeedbacks();
             this.setupLineIcons();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
@@ -391,16 +396,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     setupLineIcons() {
         this.linesOfCode = this.editor.getEditor().getSession().getLength();
-        this.gutters = document.querySelectorAll('.ace_gutter-cell');
-        this.gutters.forEach((gutter: HTMLElement) => {
+        console.log(this.editor.getEditor());
+        const container = this.editor.getEditor().container;
+        this.gutters = container.querySelectorAll('.ace_gutter-cell');
+        console.log('amount of gutters: ' + this.gutters.length + 'for file: ' + this.selectedFile);
+        console.log('linesOfCode: ' + this.linesOfCode);
+        setTimeout(() => {
             const elements = document.querySelectorAll('.btn-inline-comment');
-            const line: string = +gutter.innerText - 1 + '';
-            elements.forEach((el: HTMLElement) => {
-                if (el.id === 'inline-comment-button-' + line) {
-                    gutter.appendChild(el);
-                }
+            console.log(elements);
+            this.gutters.forEach((gutter: HTMLElement) => {
+                const line: string = +gutter.innerText - 1 + '';
+                elements.forEach((el: HTMLElement) => {
+                    if (el.id === 'inline-comment-button-' + line) {
+                        gutter.appendChild(el);
+                    }
+                });
             });
-        });
+        }, 0);
         // this.lineIconElement.nativeElement.id = '';
 
         /*
@@ -438,30 +450,75 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     addLineWidgetWithFeedback(line: number) {
         /*this.lineWidgetsElement.nativeElement.id = line;
         const copy = this.lineWidgetsElement.nativeElement.cloneNode(true);*/
+        this.lineOfCodeForInlineComment = line;
         console.log('button clicked for line: ' + line);
         const session = this.editor.getEditor().getSession();
         if (!session.widgetManager) {
             session.widgetManager = new this.LineWidgets(session);
             session.widgetManager.attach(this.editor.getEditor());
         }
-        const elements = document.querySelectorAll('.inline-feedback-d-none');
-        elements.forEach((element: HTMLElement) => {
-            if (element.id === 'test-' + line) {
+        console.log('elementArray :) ');
+        console.log(this.elementArray);
+        setTimeout(() => {
+            // const elements = document.querySelectorAll('.inline-feedback-d-none');
+            let _element: Element | null | undefined = this.elementArray.find((element) => element.id === 'test-' + line);
+            if (!_element) {
+                _element = document.querySelector(`#test-${line}`);
+                if (_element) {
+                    this.elementArray.push(_element);
+                }
+            }
+            if (_element) {
                 console.log('inline comment element:');
-                console.log(element);
+                console.log(_element);
                 // element.className = 'inline-feedback';
                 this.lineWidget = {
                     row: line,
                     fixedWidth: true,
                     coverGutter: true,
-                    el: element,
+                    el: _element,
                 };
                 this.lineWidget.el.className = 'inline-feedback';
                 session.widgetManager.addLineWidget(this.lineWidget);
             }
-        });
+            /*
+            elements.forEach((element: HTMLElement) => {
+                if (element.id === 'test-' + line + '-' + this.selectedFile) {
+                    console.log('inline comment element:');
+                    console.log(element);
+                    // element.className = 'inline-feedback';
+                    this.lineWidget = {
+                        row: line,
+                        fixedWidth: true,
+                        coverGutter: true,
+                        el: element,
+                    };
+                    this.lineWidget.el.className = 'inline-feedback';
+                    session.widgetManager.addLineWidget(this.lineWidget);
+                }
+            });*/
+        }, 100);
     }
     counter(num: number) {
         return new Array(num);
+    }
+
+    test(i: number) {
+        console.log('test method: update rows');
+        const session = this.editor.getEditor().getSession();
+        if (!session.widgetManager) {
+            session.widgetManager = new this.LineWidgets(session);
+            session.widgetManager.attach(this.editor.getEditor());
+        }
+        session.lineWidgets.forEach((widget: any) => {
+            if (widget.el.id === 'test-' + i) {
+                session.widgetManager.removeLineWidget(widget);
+                session.widgetManager.addLineWidget(widget);
+            }
+        });
+    }
+
+    trackByFn(index: number) {
+        return index + this.selectedFile;
     }
 }
