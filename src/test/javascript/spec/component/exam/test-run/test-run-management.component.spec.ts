@@ -3,10 +3,10 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -15,6 +15,9 @@ import { Exam } from 'app/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Course } from 'app/entities/course.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockActiveModal } from '../../../helpers/mocks/service/mock-active-modal.service';
+import * as sinon from 'sinon';
 
 describe('Test Run Management Component', () => {
     let comp: TestRunManagementComponent;
@@ -37,6 +40,7 @@ describe('Test Run Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: NgbModal, useClass: MockActiveModal },
             ],
         })
             .overrideTemplate(TestRunManagementComponent, '')
@@ -49,7 +53,7 @@ describe('Test Run Management Component', () => {
     });
 
     describe('onInit', () => {
-        it('should fetch exam with exercises and user on init', fakeAsync(() => {
+        it('should fetch exam with test runs and user on init', fakeAsync(() => {
             // GIVEN
             spyOn(examManagementService, 'find').and.returnValue(of(new HttpResponse({ body: exam })));
             spyOn(examManagementService, 'findAllTestRunsForExam').and.returnValue(of(new HttpResponse({ body: studentExams })));
@@ -69,6 +73,36 @@ describe('Test Run Management Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.testRuns).toEqual(studentExams);
             expect(comp.instructor).toEqual(user);
+        }));
+    });
+    describe('Delete', () => {
+        it('should call delete for test run', fakeAsync(() => {
+            comp.testRuns = studentExams;
+            comp.course = course;
+            comp.exam = exam;
+            const responseFakeDelete = {} as HttpResponse<StudentExam>;
+            sinon.replace(examManagementService, 'deleteTestRun', sinon.fake.returns(of(responseFakeDelete)));
+            spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(responseFakeDelete));
+
+            // WHEN
+            comp.deleteTestRun(studentExams[0].id);
+
+            // THEN
+            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id, exam.id, studentExams[0].id);
+        }));
+    });
+
+    describe('Assessment of test runs', () => {
+        it('Test Run cannot be assessed', fakeAsync(() => {
+            comp.testRuns = studentExams;
+            fixture.detectChanges();
+            expect(comp.testRunCanBeAssessed).toBeFalsy();
+        }));
+        it('Test Run can be assessed', fakeAsync(() => {
+            comp.testRuns = studentExams;
+            comp.testRuns[0].submitted = true;
+            fixture.detectChanges();
+            expect(comp.testRunCanBeAssessed).toBeTruthy();
         }));
     });
 });
