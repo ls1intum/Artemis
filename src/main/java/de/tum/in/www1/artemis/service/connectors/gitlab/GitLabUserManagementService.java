@@ -79,7 +79,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
                 for (final var exercise : exercisesWithAddedGroups) {
                     final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
-                    gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
+                    try {
+                        gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
+                    }
+                    catch (GitLabApiException ex) {
+                        // if user is already member of group in GitLab, ignore the exception
+                        // to synchronize the "membership" with artemis
+                        if (ex.getMessage().equalsIgnoreCase("Member already exists")) {
+                            continue;
+                        }
+                    }
+
                 }
             }
 
@@ -98,7 +108,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     }
                     else {
                         // If the user is not a member of any relevant group any more, we can remove him from the exercise
-                        gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                        try {
+                            gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                        }
+                        catch (GitLabApiException e) {
+                            // If user membership to group is missing on Gitlab, ignore the exception
+                            // and let artemis synchronize with GitLab groups
+                            if (e.getHttpStatus() == 404) {
+                                continue;
+                            }
+                        }
+
                     }
                 }
             }
