@@ -14,7 +14,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
-    public course: Course | null;
+    public course?: Course;
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
 

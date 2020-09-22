@@ -2,7 +2,7 @@
     <ul class="list-group list-group-flush">
         <li class="list-group-item highlight" [ngClass]="highlightColor">
             <div class="credit-bubble float-left text-center align-middle mr-3">
-                <span [ngStyle]="feedback.credits < 0 && { color: 'red' }">{{ feedback.credits }}</span>
+                <span [ngStyle]="feedback.credits! < 0 && { color: 'red' }">{{ feedback.credits }}</span>
                 Points
             </div>
             <span>{{ feedback.reference }}</span>

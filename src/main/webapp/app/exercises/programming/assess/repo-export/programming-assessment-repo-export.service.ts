@@ -7,7 +7,7 @@ import { Moment } from 'moment';
 export type RepositoryExportOptions = {
     exportAllParticipants: boolean;
     filterLateSubmissions: boolean;
-    filterLateSubmissionsDate: Moment | null;
+    filterLateSubmissionsDate?: Moment;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
     normalizeCodeStyle: boolean;

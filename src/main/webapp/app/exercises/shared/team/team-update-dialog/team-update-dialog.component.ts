@@ -12,6 +12,8 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 
+export type StudentTeamConflict = { studentLogin: string; teamId: string };
+
 @Component({
     selector: 'jhi-team-update-dialog',
     templateUrl: './team-update-dialog.component.html',
@@ -30,14 +32,14 @@ export class TeamUpdateDialogComponent implements OnInit {
     searchingStudents = false;
     searchingStudentsQueryTooShort = false;
     searchingStudentsFailed = false;
-    searchingStudentsNoResultsForQuery: string | null = null;
+    searchingStudentsNoResultsForQuery?: string;
 
     searchingOwner = false;
     searchingOwnerQueryTooShort = false;
     searchingOwnerFailed = false;
-    searchingOwnerNoResultsForQuery: string | null = null;
+    searchingOwnerNoResultsForQuery?: string;
 
-    studentTeamConflicts = [];
+    studentTeamConflicts: StudentTeamConflict[] = [];
     ignoreTeamSizeRecommendation = false;
 
     private shortNameValidator = new Subject<string>();
@@ -104,8 +106,8 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private get recommendedTeamSize(): boolean {
-        const pendingTeamSize = this.pendingTeam.students.length;
-        return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
+        const pendingTeamSize = this.pendingTeam.students!.length;
+        return pendingTeamSize >= this.config.minTeamSize! && pendingTeamSize <= this.config.maxTeamSize!;
     }
 
     /**
@@ -120,21 +122,21 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Get conflicting team of a given user
      * @param {User} student - User to search for
      */
-    getConflictingTeam(student: User): string | null {
+    getConflictingTeam(student: User) {
         const conflict = this.findStudentTeamConflict(student);
-        return conflict ? conflict['teamId'] : null;
+        return conflict ? conflict['teamId'] : undefined;
     }
 
     private findStudentTeamConflict(student: User) {
-        return this.studentTeamConflicts.find((c) => c['studentLogin'] === student.login);
+        return this.studentTeamConflicts.find((conflict) => conflict.studentLogin === student.login);
     }
 
     private resetStudentTeamConflict(student: User) {
-        return (this.studentTeamConflicts = this.studentTeamConflicts.filter((c) => c['studentLogin'] !== student.login));
+        return (this.studentTeamConflicts = this.studentTeamConflicts.filter((conflict) => conflict.studentLogin !== student.login));
     }
 
     private isStudentAlreadyInPendingTeam(student: User): boolean {
-        return this.pendingTeam.students.find((s) => s.id === student.id) !== undefined;
+        return this.pendingTeam.students?.find((stud) => stud.id === student.id) !== undefined;
     }
 
     /**
@@ -143,7 +145,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
-            this.pendingTeam.students.push(student);
+            this.pendingTeam.students!.push(student);
         }
     }
 
@@ -152,7 +154,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {User} student - removed user
      */
     onRemoveStudent(student: User) {
-        this.pendingTeam.students = this.pendingTeam.students.filter((user) => user.id !== student.id);
+        this.pendingTeam.students = this.pendingTeam.students?.filter((user) => user.id !== student.id);
         this.resetStudentTeamConflict(student); // conflict might no longer exist when the student is added again
     }
 

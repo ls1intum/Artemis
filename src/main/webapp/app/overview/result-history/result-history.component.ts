@@ -19,7 +19,7 @@ export class ResultHistoryComponent {
      * @return {string} icon
      */
     resultIcon(result: Result): string {
-        if (result.score >= 75) {
+        if (result.score && result.score >= 75) {
             return 'check';
         } else {
             return 'times';
@@ -32,9 +32,9 @@ export class ResultHistoryComponent {
      * @return {string}
      */
     resultClass(result: Result): string {
-        if (result.score >= MIN_POINTS_GREEN) {
+        if (result.score && result.score >= MIN_POINTS_GREEN) {
             return 'success';
-        } else if (result.score >= MIN_POINTS_ORANGE) {
+        } else if (result.score && result.score >= MIN_POINTS_ORANGE) {
             return 'warning';
         } else {
             return 'danger';

@@ -28,15 +28,15 @@ export enum ParticipationType {
 }
 
 export abstract class Participation implements BaseEntity {
-    public id: number;
+    public id?: number;
 
-    public initializationState: InitializationState;
-    public initializationDate: Moment | null;
-    public presentationScore: number;
-    public results: Result[];
-    public submissions: Submission[];
+    public initializationState?: InitializationState;
+    public initializationDate?: Moment;
+    public presentationScore?: number;
+    public results?: Result[];
+    public submissions?: Submission[];
     public exercise?: Exercise;
-    public type: ParticipationType;
+    public type?: ParticipationType;
 
     // transient
     public submissionCount?: number;
@@ -46,15 +46,17 @@ export abstract class Participation implements BaseEntity {
     }
 }
 
-export const getExercise = (participation: Participation): Exercise => {
-    switch (participation.type) {
-        case ParticipationType.PROGRAMMING:
-            return (participation as ProgrammingExerciseStudentParticipation).exercise;
-        case ParticipationType.STUDENT:
-            return (participation as StudentParticipation).exercise;
-        case ParticipationType.SOLUTION:
-            return (participation as SolutionProgrammingExerciseParticipation).programmingExercise;
-        case ParticipationType.TEMPLATE:
-            return (participation as TemplateProgrammingExerciseParticipation).programmingExercise;
+export const getExercise = (participation: Participation): Exercise | undefined => {
+    if (participation) {
+        switch (participation.type) {
+            case ParticipationType.PROGRAMMING:
+                return (participation as ProgrammingExerciseStudentParticipation).exercise;
+            case ParticipationType.STUDENT:
+                return (participation as StudentParticipation).exercise;
+            case ParticipationType.SOLUTION:
+                return (participation as SolutionProgrammingExerciseParticipation).programmingExercise;
+            case ParticipationType.TEMPLATE:
+                return (participation as TemplateProgrammingExerciseParticipation).programmingExercise;
+        }
     }
 };

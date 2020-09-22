@@ -10,16 +10,16 @@ export enum ComplaintType {
 }
 
 export class Complaint implements BaseEntity {
-    public id: number;
+    public id?: number;
 
-    public complaintText: string;
-    public accepted: boolean;
-    public submittedTime: Moment | null;
-    public resultBeforeComplaint: string;
-    public result: Result;
-    public student: User | null;
-    public team: Team | null;
-    public complaintType: ComplaintType;
+    public complaintText?: string;
+    public accepted?: boolean;
+    public submittedTime?: Moment;
+    public resultBeforeComplaint?: string;
+    public result?: Result;
+    public student?: User;
+    public team?: Team;
+    public complaintType?: ComplaintType;
 
     constructor() {}
 }

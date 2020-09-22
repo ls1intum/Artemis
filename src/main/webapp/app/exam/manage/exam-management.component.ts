@@ -76,13 +76,13 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id).subscribe(
+        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe(
             (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
                 this.exams.forEach((exam) => {
                     this.examManagementService
-                        .getLatestIndividualEndDateOfExam(this.course.id, exam.id)
-                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id, examInformationDTORes.body!));
+                        .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id!, examInformationDTORes.body!));
                 });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
@@ -103,7 +103,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number) {
-        this.examManagementService.delete(this.course.id, examId).subscribe(
+        this.examManagementService.delete(this.course.id!, examId).subscribe(
             () => {
                 this.dialogErrorSource.next('');
                 this.exams = this.exams.filter((exam) => exam.id !== examId);

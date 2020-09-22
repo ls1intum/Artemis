@@ -55,7 +55,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.isExamMode = !!this.fileUploadExercise.exerciseGroup;
             if (!this.isExamMode) {
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
-                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id).subscribe(
+                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe(
                     (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },

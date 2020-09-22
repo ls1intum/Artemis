@@ -102,10 +102,10 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     private cleanupQuestion() {
         // Reset Question Object
         this.question.answerOptions = [];
-        this.question.text = null;
-        this.question.explanation = null;
-        this.question.hint = null;
-        this.question.hasCorrectOption = null;
+        this.question.text = undefined;
+        this.question.explanation = undefined;
+        this.question.hint = undefined;
+        this.question.hasCorrectOption = undefined;
     }
 
     /**

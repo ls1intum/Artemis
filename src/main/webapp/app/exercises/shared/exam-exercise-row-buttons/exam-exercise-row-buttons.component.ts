@@ -71,7 +71,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise.id).subscribe(
+        this.textExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
@@ -85,7 +85,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise.id).subscribe(
+        this.modelingExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
@@ -99,7 +99,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise.id).subscribe(
+        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
@@ -113,7 +113,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise.id).subscribe(
+        this.quizExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -127,7 +127,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     public deleteProgrammingExercise($event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+        this.programmingExerciseService.delete(this.exercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

@@ -3,8 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { mergeMap } from 'rxjs/operators';
-import { timer } from 'rxjs';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -109,7 +107,7 @@ export class ModelingAssessmentService {
     // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
     getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
-        for (const feedback of result.feedbacks) {
+        for (const feedback of result.feedbacks!) {
             const referencedModelType = feedback.referenceType! as UMLElementType;
             const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
@@ -222,37 +220,4 @@ export class ModelingAssessmentService {
                 (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
         );
     }
-
-    /**
-     * Creates an array filled with n integers starting from the number provided by startFrom.
-     * Example: numberToArray(5, 0) returns the array
-     * [0, 1, 2, 3, 4]
-     */
-    numberToArray(n: number, startFrom: number): number[] {
-        n = Math.floor(Math.abs(n));
-        return [...Array(n).keys()].map((i) => i + startFrom);
-    }
 }
-
-export const genericRetryStrategy = ({
-    maxRetryAttempts = 3,
-    scalingDuration = 1000,
-    excludedStatusCodes = [],
-}: {
-    maxRetryAttempts?: number;
-    scalingDuration?: number;
-    excludedStatusCodes?: number[];
-} = {}) => (attempts: Observable<any>) => {
-    return attempts.pipe(
-        mergeMap((error, i) => {
-            const retryAttempt = i + 1;
-            // if maximum number of retries have been met
-            // or response is a status code we don't wish to retry, throw error
-            if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find((e) => e === error.status)) {
-                throw error;
-            }
-            // retry after 1s, 2s, etc...
-            return timer(retryAttempt * scalingDuration);
-        }),
-    );
-};

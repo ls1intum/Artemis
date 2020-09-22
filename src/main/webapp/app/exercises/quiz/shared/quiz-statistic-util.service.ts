@@ -18,7 +18,7 @@ export class QuizStatisticUtil {
      */
     previousStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.quizQuestions.findIndex(function (quiz) {
+        const index = quizExercise.quizQuestions!.findIndex(function (quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-statistic if the position = 0
@@ -26,7 +26,7 @@ export class QuizStatisticUtil {
             this.router.navigateByUrl('/course-management/' + getCourseId(quizExercise) + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to previous Question-statistic
-            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index - 1]);
+            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions![index - 1]);
         }
     }
 
@@ -39,15 +39,15 @@ export class QuizStatisticUtil {
      */
     nextStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.quizQuestions.findIndex(function (quiz) {
+        const index = quizExercise.quizQuestions!.findIndex(function (quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-statistic if the position = last position
-        if (index === quizExercise.quizQuestions.length - 1) {
+        if (index === quizExercise.quizQuestions!.length - 1) {
             this.router.navigateByUrl('/course-management/' + getCourseId(quizExercise) + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
-            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index + 1]);
+            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions![index + 1]);
         }
     }
 

@@ -46,7 +46,7 @@ export class CourseManagementService {
      * @param course - the course to be created on the server
      */
     create(course: Course): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(course);
+        const copy = CourseManagementService.convertDateFromClient(course);
         return this.http
             .post<Course>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -57,7 +57,7 @@ export class CourseManagementService {
      * @param course - the course to be updated
      */
     update(course: Course): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(course);
+        const copy = CourseManagementService.convertDateFromClient(course);
         return this.http
             .put<Course>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -119,7 +119,7 @@ export class CourseManagementService {
 
     courseWasUpdated(course: Course | null): void {
         if (course) {
-            return this.courses.get(course.id)?.subject.next(course);
+            return this.courses.get(course.id!)?.subject.next(course);
         }
     }
 
@@ -266,7 +266,7 @@ export class CourseManagementService {
                         if (submission.result) {
                             submission.result.submission = submission;
                             submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
+                            submission.participation!.results = [submission.result];
                         }
                     }),
                 ),
@@ -298,18 +298,18 @@ export class CourseManagementService {
         course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
     }
 
-    private convertDateFromClient(course: Course): Course {
-        const copy: Course = Object.assign({}, course, {
-            startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
-            endDate: course.endDate && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
+    private static convertDateFromClient(course: Course): Course {
+        // copy of the object
+        return Object.assign({}, course, {
+            startDate: course.startDate && moment(course.startDate).isValid() ? course.startDate.toJSON() : undefined,
+            endDate: course.endDate && moment(course.endDate).isValid() ? course.endDate.toJSON() : undefined,
         });
-        return copy;
     }
 
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
             res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
             res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
         }
@@ -319,8 +319,8 @@ export class CourseManagementService {
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.startDate = course.startDate ? moment(course.startDate) : null;
-                course.endDate = course.endDate ? moment(course.endDate) : null;
+                course.startDate = course.startDate ? moment(course.startDate) : undefined;
+                course.endDate = course.endDate ? moment(course.endDate) : undefined;
                 course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
                 course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
             });
@@ -359,7 +359,7 @@ export class CourseManagementService {
     }
 
     private setParticipationStatusForExercisesInCourse(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
+        if (res.body?.exercises) {
             res.body.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
         }
         return res;
@@ -368,7 +368,9 @@ export class CourseManagementService {
     private setParticipationStatusForExercisesInCourses(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
-                course.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
+                if (course.exercises) {
+                    course.exercises.forEach((exercise) => (exercise.participationStatus = participationStatus(exercise)));
+                }
             });
         }
         return res;
@@ -456,11 +458,11 @@ export class CourseExerciseService {
     handleParticipation(participation: StudentParticipation) {
         if (participation) {
             // convert date
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 const exercise = participation.exercise;
-                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
-                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
                 exercise.studentParticipations = [participation];
             }
             this.participationWebsocketService.addParticipation(participation);
@@ -469,17 +471,17 @@ export class CourseExerciseService {
     }
 
     convertDateFromServer<T extends Exercise>(res: T): T {
-        res.releaseDate = res.releaseDate ? moment(res.releaseDate) : null;
-        res.dueDate = res.dueDate ? moment(res.dueDate) : null;
+        res.releaseDate = res.releaseDate ? moment(res.releaseDate) : undefined;
+        res.dueDate = res.dueDate ? moment(res.dueDate) : undefined;
         return res;
     }
 
     protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
-                exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
+                exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : undefined;
             });
         }
         return res;

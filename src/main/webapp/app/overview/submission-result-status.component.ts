@@ -17,7 +17,7 @@ export class SubmissionResultStatusComponent {
      * @property short Flag whether the short version of the result text should be used
      */
     @Input() exercise: Exercise;
-    @Input() studentParticipation: StudentParticipation | null;
+    @Input() studentParticipation?: StudentParticipation;
     @Input() updatingResultClass: string;
     @Input() showGradedBadge = false;
     @Input() short = false;
@@ -27,9 +27,9 @@ export class SubmissionResultStatusComponent {
      * Otherwise, use the first student participation on the exercise.
      */
     get participation() {
-        if (this.studentParticipation !== undefined) {
+        if (this.studentParticipation) {
             return this.studentParticipation;
         }
-        return this.exercise.studentParticipations[0];
+        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0 ? this.exercise.studentParticipations[0] : undefined;
     }
 }

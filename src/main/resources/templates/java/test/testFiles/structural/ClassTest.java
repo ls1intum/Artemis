@@ -112,6 +112,7 @@ public class ClassTest extends StructuralTest {
                 boolean implementsInterface = false;
 
                 for (Class<?> observedInterface : observedInterfaces) {
+                    //TODO: this does not work with the current implementation of the test oracle generator (which does not print the simple but the full qualified name including the package)
                     if(expectedInterface.equals(observedInterface.getSimpleName())) {
                         implementsInterface = true;
                         break;

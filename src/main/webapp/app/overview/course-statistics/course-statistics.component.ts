@@ -43,7 +43,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
-    course: Course | null;
+    course?: Course;
 
     // absolute score
     totalScore = 0;
@@ -241,7 +241,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     private onCourseLoad() {
-        this.courseExercises = this.course!.exercises;
+        this.courseExercises = this.course!.exercises!;
         this.calculateMaxScores();
         this.calculateReachableScores();
         this.calculateAbsoluteScores();
@@ -259,10 +259,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
             if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
-                let index = exerciseTypes.indexOf(exercise.type);
+                let index = exerciseTypes.indexOf(exercise.type!);
                 if (index === -1) {
                     index = exerciseTypes.length;
-                    exerciseTypes.push(exercise.type);
+                    exerciseTypes.push(exercise.type!);
                 }
                 if (!groupedExercises[index]) {
                     groupedExercises[index] = {
@@ -282,13 +282,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 }
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
-                    groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotParticipated', false);
+                    groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotParticipated', false);
                 } else {
                     exercise.studentParticipations.forEach((participation) => {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const participationScore = participationResult.score;
+                                const participationScore = participationResult.score!;
                                 const missedScore = 100 - participationScore;
                                 groupedExercises[index].scores.data.push(participationScore);
                                 groupedExercises[index].missedScores.data.push(missedScore);
@@ -305,20 +305,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 participation.initializationState === InitializationState.FINISHED &&
                                 (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
                             ) {
-                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseNotGraded', true);
                             } else {
-                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
+                                groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title!, 'exerciseParticipatedAfterDueDate', false);
                             }
                         }
                     });
                 }
 
-                groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
-                groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
-                groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type];
-                groupedExercises[index].reachableScore = this.reachableScores[exercise.type];
-                groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
-                groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
+                groupedExercises[index].relativeScore = this.relativeScores[exercise.type!];
+                groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type!];
+                groupedExercises[index].currentRelativeScore = this.currentRelativeScores[exercise.type!];
+                groupedExercises[index].reachableScore = this.reachableScores[exercise.type!];
+                groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type!];
+                groupedExercises[index].presentationScore = this.presentationScores[exercise.type!];
                 // check if presentation score is enabled for at least one exercise
                 groupedExercises[index].presentationScoreEnabled = groupedExercises[index].presentationScoreEnabled || exercise.presentationScoreEnabled;
                 groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores, groupedExercises[index].notGraded];
@@ -366,12 +366,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
-            if (result.score >= 50) {
+            if (result.score! >= 50) {
                 groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)`);
-                groupedExercise.missedScores.tooltips.push(`(${100 - result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`(${100 - result.score!}%)`);
             } else {
                 groupedExercise.scores.tooltips.push(`(${result.score}%)`);
-                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score}%)`);
+                groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - result.score!}%)`);
             }
 
             return;
@@ -389,7 +389,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
                         points: '',
-                        percentage: 100 - result.score,
+                        percentage: 100 - result.score!,
                     }),
                 );
                 return;
@@ -404,7 +404,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.missedScores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
                         points: parseFloat(split[2]) - parseFloat(split[0]),
-                        percentage: 100 - result.score,
+                        percentage: 100 - result.score!,
                     }),
                 );
                 return;
@@ -415,12 +415,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (replaced.includes('passed')) {
             if (split.length === 2) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
-                groupedExercise.missedScores.tooltips.push('(' + (100 - result.score) + '%)');
+                groupedExercise.missedScores.tooltips.push('(' + (100 - result.score!) + '%)');
                 return;
             }
             if (split.length === 4) {
                 groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).');
-                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' tests failed (' + (100 - result.score) + '%).');
+                groupedExercise.missedScores.tooltips.push(parseFloat(split[2]) - parseFloat(split[0]) + ' tests failed (' + (100 - result.score!) + '%).');
                 return;
             }
         }

@@ -6,7 +6,13 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
-export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
+export class ProgrammingExerciseTestCaseUpdate {
+    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public afterDueDate?: boolean) {}
+
+    static from(testCase: ProgrammingExerciseTestCase) {
+        return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.afterDueDate);
+    }
+}
 
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;

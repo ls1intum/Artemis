@@ -50,12 +50,12 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id);
+        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
         if (cachedParticipation) {
             this.exercise.studentParticipations = [cachedParticipation];
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
+            if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
                         ? this.exercise.studentParticipations.map((el) => {
@@ -87,15 +87,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         }
     }
 
-    getUrgentClass(date: Moment | null): string | null {
+    getUrgentClass(date?: Moment) {
         if (!date) {
-            return null;
+            return undefined;
         }
         const remainingDays = date.diff(moment(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
-        } else {
-            return null;
         }
     }
 

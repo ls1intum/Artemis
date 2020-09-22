@@ -1,8 +1,8 @@
 import { SimpleChanges } from '@angular/core';
 import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
+import { findLatestResult } from 'app/shared/util/utils';
 
 /**
  * Check if the participation has changed.
@@ -33,8 +33,8 @@ export const hasSolutionParticipationChanged = (changes: SimpleChanges) => {
     );
 };
 
-export const getLatestResult = (participation: Participation): Result | null => {
-    return participation.results ? participation.results.reduce((currentMax, result) => (result.id > currentMax.id ? result : currentMax)) : null;
+export const getLatestResult = (participation: Participation) => {
+    findLatestResult(participation.results);
 };
 
 /**

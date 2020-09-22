@@ -30,10 +30,10 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     totalScore = 0;
-    submission: ModelingSubmission | null;
-    model: UMLModel | null;
-    modelingExercise: ModelingExercise | null;
-    result: Result | null;
+    submission?: ModelingSubmission;
+    model?: UMLModel;
+    modelingExercise?: ModelingExercise;
+    result?: Result;
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
@@ -89,7 +89,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
-            const submissionId: String | null = params.get('submissionId');
+            const submissionId = params.get('submissionId');
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
@@ -144,18 +144,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = this.submission.result;
-        if (this.result.hasComplaint) {
+        if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        if (this.result.feedbacks) {
+        if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
         } else {
-            this.result.feedbacks = [];
+            this.result!.feedbacks = [];
         }
-        this.submission.participation.results = [this.result];
-        this.result.participation = this.submission.participation;
-        if (this.modelingExercise.diagramType == null) {
+        if (this.result && this.submission?.participation) {
+            this.submission.participation.results = [this.result];
+            this.result.participation = this.submission.participation;
+        }
+        if (!this.modelingExercise.diagramType) {
             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
         }
         if (this.submission.model) {
@@ -164,7 +166,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.jhiAlertService.clear();
             this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
         }
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+        if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
         }
@@ -173,10 +175,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading = false;
     }
 
-    private getComplaint(id: number): void {
-        if (this.result) {
+    private getComplaint(resultId?: number): void {
+        if (this.result && resultId) {
             this.complaintService
-                .findByResultId(id)
+                .findByResultId(resultId)
                 .pipe(filter((res) => !!res.body))
                 .subscribe(
                     (res) => {
@@ -195,18 +197,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly. Afterwards, it triggers the
      * highlighting of feedback elements, if necessary.
      */
-    private handleFeedback(feedback: Feedback[]): void {
+    private handleFeedback(feedback?: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
         }
 
-        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => !feedbackElement.reference && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex >= 0) {
             this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
             feedback.splice(generalFeedbackIndex, 1);
         }
 
-        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
+        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
@@ -218,7 +220,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private checkPermissions(): void {
-        this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAssessor = this.result?.assessor?.id === this.userId;
         if (this.modelingExercise) {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course || this.modelingExercise.exerciseGroup!.exam!.course);
         }
@@ -258,10 +260,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onError(): void {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.submission = null;
-        this.modelingExercise = null;
-        this.result = null;
-        this.model = null;
+        this.submission = undefined;
+        this.modelingExercise = undefined;
+        this.result = undefined;
+        this.model = undefined;
         this.jhiAlertService.clear();
         this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
@@ -272,7 +274,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id!).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
@@ -314,7 +316,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id!, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -342,7 +344,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id!).subscribe(
             (response) => {
                 this.result = response.body!;
                 // reconnect
@@ -363,20 +365,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission!.id!).subscribe(() => {
                 this.navigateBack();
             });
         }
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
-        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
+        this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.validateFeedback();
     }
 
     assessNextOptimal() {
         this.nextSubmissionBusy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
+        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id!).subscribe(
             (optimal: number[]) => {
                 this.nextSubmissionBusy = false;
                 if (optimal.length === 0) {
@@ -423,7 +425,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
         for (const feedback of this.referencedFeedback) {
-            if (feedback.credits == null || isNaN(feedback.credits)) {
+            if (!feedback.credits || isNaN(feedback.credits)) {
                 this.assessmentsAreValid = false;
                 return;
             }

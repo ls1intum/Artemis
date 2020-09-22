@@ -36,7 +36,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     notFoundStudents: StudentDTO[] = [];
 
     isParsing = false;
-    validationError: string | null = null;
+    validationError?: string;
     isImporting = false;
     hasImported = false;
 
@@ -72,7 +72,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
         let csvStudents: CsvStudent[] = [];
         try {
             this.isParsing = true;
-            this.validationError = null;
+            this.validationError = undefined;
             csvStudents = await this.parseCSVFile(csvFile);
         } catch (error) {
             this.validationError = error.message;
@@ -151,7 +151,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      */
     importStudents() {
         this.isImporting = true;
-        this.examManagementService.addStudentsToExam(this.courseId, this.exam.id, this.studentsToImport).subscribe(
+        this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.studentsToImport).subscribe(
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );

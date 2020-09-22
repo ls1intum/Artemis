@@ -35,12 +35,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
-    currAccount: User | null;
+    currAccount?: User;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    private exam: Exam | undefined;
-    private examId: number | undefined;
+    private exam?: Exam;
+    private examId?: number;
 
     constructor(
         private loginService: LoginService,
@@ -59,7 +59,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-
         this.getExamId();
     }
 
@@ -129,7 +128,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
     }
 
-    getImageUrl(): string | null {
+    getImageUrl() {
         return this.accountService.getImageUrl();
     }
 

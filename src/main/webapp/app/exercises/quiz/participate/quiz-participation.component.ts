@@ -164,7 +164,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         /**
          * unsubscribe from all subscribed websocket channels when page is closed
          */
-        this.runningTimeouts.forEach(function (timeout) {
+        this.runningTimeouts.forEach((timeout) => {
             clearTimeout(timeout);
         });
 
@@ -304,7 +304,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.runningTimeouts.push(
             setTimeout(() => {
                 this.onSubmit();
-            }, quizExercise.duration * 1000),
+            }, quizExercise.duration! * 1000),
         );
     }
 
@@ -341,7 +341,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // participation channel => react to new results
             this.jhiWebsocketService.subscribe(this.participationChannel);
             this.jhiWebsocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
-                if (changedParticipation && this.quizExercise && changedParticipation.exercise.id === this.quizExercise.id) {
+                if (changedParticipation && this.quizExercise && changedParticipation.exercise!.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
                         this.updateParticipationFromServer(changedParticipation);
@@ -443,8 +443,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     initQuiz() {
         // calculate score
         this.totalScore = this.quizExercise.quizQuestions
-            ? this.quizExercise.quizQuestions.reduce(function (score, question) {
-                  return score + question.score;
+            ? this.quizExercise.quizQuestions.reduce((score, question) => {
+                  return score + question.score!;
               }, 0)
             : 0;
 
@@ -457,13 +457,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.quizExercise.quizQuestions.forEach((question) => {
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions[question.id] = [];
+                    this.selectedAnswerOptions.set(question.id!, []);
                 } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings[question.id] = [];
+                    this.dragAndDropMappings.set(question.id!, []);
                 } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts[question.id] = [];
+                    this.shortAnswerSubmittedTexts.set(question.id!, []);
                 } else {
                     console.error('Unknown question type: ' + question);
                 }
@@ -488,39 +488,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // iterate through all questions of this quiz
             this.quizExercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find((answer) => {
-                          return answer.quizQuestion.id === question.id;
-                      })
-                    : null;
+                const submittedAnswer = this.submission.submittedAnswers?.find((answer) => {
+                    return answer.quizQuestion!.id === question.id;
+                });
 
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        this.selectedAnswerOptions[question.id] = selectedOptions ? selectedOptions : [];
-                    } else {
-                        // not found, set to empty array
-                        this.selectedAnswerOptions[question.id] = [];
-                    }
+                    this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
                 } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        this.dragAndDropMappings[question.id] = mappings ? mappings : [];
-                    } else {
-                        // not found, set to empty array
-                        this.dragAndDropMappings[question.id] = [];
-                    }
+                    this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
                 } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    if (submittedAnswer) {
-                        const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? submittedTexts : [];
-                    } else {
-                        // not found, set to empty array
-                        this.shortAnswerSubmittedTexts[question.id] = [];
-                    }
+                    this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
                 } else {
                     console.error('Unknown question type: ' + question);
                 }
@@ -542,53 +522,53 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.submission.submittedAnswers = [];
 
         // for multiple-choice questions
-        Object.keys(this.selectedAnswerOptions).forEach((questionID) => {
+        this.selectedAnswerOptions.forEach((answerOptions, questionId) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (selectedQuestion) {
-                return selectedQuestion.id === Number(questionID);
+            const question = this.quizExercise.quizQuestions?.find((selectedQuestion) => {
+                return selectedQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                console.error('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
             const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
             mcSubmittedAnswer.quizQuestion = question;
-            mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
-            this.submission.submittedAnswers.push(mcSubmittedAnswer);
+            mcSubmittedAnswer.selectedOptions = answerOptions;
+            this.submission.submittedAnswers!.push(mcSubmittedAnswer);
         }, this);
 
         // for drag-and-drop questions
-        Object.keys(this.dragAndDropMappings).forEach((questionID) => {
+        this.dragAndDropMappings.forEach((mappings, questionId) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
-                return localQuestion.id === Number(questionID);
+            const question = this.quizExercise.quizQuestions?.find((localQuestion) => {
+                return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                console.error('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
             const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
             dndSubmittedAnswer.quizQuestion = question;
-            dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
-            this.submission.submittedAnswers.push(dndSubmittedAnswer);
+            dndSubmittedAnswer.mappings = mappings;
+            this.submission.submittedAnswers!.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
-        Object.keys(this.shortAnswerSubmittedTexts).forEach((questionID) => {
+        this.shortAnswerSubmittedTexts.forEach((submittedTexts, questionId) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
-                return localQuestion.id === Number(questionID);
+            const question = this.quizExercise.quizQuestions?.find((localQuestion) => {
+                return localQuestion.id === questionId;
             });
             if (!question) {
-                console.error('question not found for ID: ' + questionID);
+                console.error('question not found for ID: ' + questionId);
                 return;
             }
             // generate the submittedAnswer object
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
             shortAnswerSubmittedAnswer.quizQuestion = question;
-            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
-            this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
+            shortAnswerSubmittedAnswer.submittedTexts = submittedTexts;
+            this.submission.submittedAnswers!.push(shortAnswerSubmittedAnswer);
         }, this);
     }
 
@@ -599,7 +579,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.applyQuizFull(participation.exercise as QuizExercise);
 
         // apply submission if it exists
-        if (participation.results.length) {
+        if (participation.results?.length) {
             this.submission = participation.results[0].submission as QuizSubmission;
 
             // update submission time
@@ -662,7 +642,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results.length && participation.results[0].resultString && quizExercise.ended) {
+        if (participation.results?.length && participation.results[0].resultString && quizExercise.ended) {
             // quiz has ended and results are available
             this.submission = participation.results[0].submission as QuizSubmission;
 
@@ -683,9 +663,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param fullQuizExerciseFromServer {object} the quizExercise containing additional information
      */
     transferInformationToQuizExercise(fullQuizExerciseFromServer: QuizExercise) {
-        this.quizExercise.quizQuestions.forEach(function (clientQuestion) {
+        this.quizExercise.quizQuestions!.forEach((clientQuestion) => {
             // find updated question
-            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions.find(function (fullQuestion) {
+            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions?.find((fullQuestion) => {
                 return clientQuestion.id === fullQuestion.id;
             });
             if (fullQuestionFromServer) {
@@ -696,9 +676,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
                     const answerOptions = mcClientQuestion.answerOptions!;
-                    answerOptions.forEach(function (clientAnswerOption) {
+                    answerOptions.forEach((clientAnswerOption) => {
                         // find updated answerOption
-                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find(function (option) {
+                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find((option) => {
                             return clientAnswerOption.id === option.id;
                         });
                         if (fullAnswerOptionFromServer) {
@@ -722,13 +702,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, this);
 
         // make sure that a possible explanation is updated correctly in all sub components
-        this.mcQuestionComponents.forEach(function (mcQuestionComponent) {
+        this.mcQuestionComponents.forEach((mcQuestionComponent) => {
             mcQuestionComponent.watchCollection();
         });
-        this.dndQuestionComponents.forEach(function (dndQuestionComponent) {
+        this.dndQuestionComponents.forEach((dndQuestionComponent) => {
             dndQuestionComponent.watchCollection();
         });
-        this.shortAnswerQuestionComponents.forEach(function (shortAnswerQuestionComponent) {
+        this.shortAnswerQuestionComponents.forEach((shortAnswerQuestionComponent) => {
             shortAnswerQuestionComponent.watchCollection();
         });
     }
@@ -751,9 +731,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers.forEach((submittedAnswer) => {
+            this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = Math.round(submittedAnswer.scoreInPoints! * 100) / 100;
             }, this);
         }
     }
@@ -843,21 +823,24 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {
-        for (const question of this.quizExercise.quizQuestions) {
+        this.quizExercise.quizQuestions!.forEach((question) => {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                if (this.selectedAnswerOptions[question.id] >= 0) {
+                const options = this.selectedAnswerOptions.get(question.id!);
+                if (options && options.length === 0) {
                     return false;
                 }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                if (this.dragAndDropMappings[question.id] >= 0) {
+                const mappings = this.dragAndDropMappings.get(question.id!);
+                if (mappings && mappings.length === 0) {
                     return false;
                 }
             } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                if (this.shortAnswerSubmittedTexts[question.id] >= 0) {
+                const submittedTexts = this.shortAnswerSubmittedTexts.get(question.id!);
+                if (submittedTexts && submittedTexts.length === 0) {
                     return false;
                 }
             }
-        }
+        });
         return true;
     }
 
@@ -937,8 +920,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;
-        // console.error(error);
-        // alert('Submitting was not possible. If your answers have been saved, you can also wait until the quiz has finished.');
         this.isSubmitting = false;
     }
 

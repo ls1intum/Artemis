@@ -12,11 +12,6 @@ export class ExerciseCourseTitlePipe implements PipeTransform {
      * @returns title of the exercise course
      */
     transform(exercise: Exercise): string {
-        if (exercise.exerciseGroup?.exam?.course) {
-            return exercise.exerciseGroup?.exam?.course.title;
-        } else if (exercise.course) {
-            return exercise.course.title;
-        }
-        return '';
+        return exercise?.exerciseGroup?.exam?.course?.title || exercise?.course?.title || '';
     }
 }

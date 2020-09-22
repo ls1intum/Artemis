@@ -24,8 +24,8 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     studentQuestions: StudentQuestion[];
     isEditMode: boolean;
     collapsed = false;
-    studentQuestionText: string | null;
-    selectedStudentQuestion: StudentQuestion | null;
+    studentQuestionText?: string;
+    selectedStudentQuestion?: StudentQuestion;
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
     EditorMode = EditorMode;
@@ -42,12 +42,12 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         });
         if (this.exercise) {
             // in this case the student questions are preloaded
-            this.studentQuestions = this.sortStudentQuestionsByVote(this.exercise.studentQuestions);
+            this.studentQuestions = this.sortStudentQuestionsByVote(this.exercise.studentQuestions!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
         } else {
             // in this case the student questions are preloaded
-            this.studentQuestions = this.sortStudentQuestionsByVote(this.lecture.studentQuestions);
-            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course);
+            this.studentQuestions = this.sortStudentQuestionsByVote(this.lecture.studentQuestions!);
+            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
         }
     }
 
@@ -119,14 +119,14 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
         studentQuestion.creationDate = moment();
         this.studentQuestionService.create(studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
             this.studentQuestions.push(studentQuestionResponse.body!);
-            this.studentQuestionText = null;
+            this.studentQuestionText = undefined;
             this.isEditMode = false;
         });
     }
 
     private sortStudentQuestionsByVote(studentQuestions: StudentQuestion[]): StudentQuestion[] {
         return studentQuestions.sort((a, b) => {
-            return b.votes - a.votes;
+            return b.votes! - a.votes!;
         });
     }
 

@@ -11,7 +11,7 @@ export class BuildPlanButtonDirective implements OnInit {
 
     private participationBuildPlanId: string;
     private exerciseProjectKey: string;
-    private buildPlanLink: string | null;
+    private buildPlanLink?: string;
     private templateLink: string;
 
     constructor(private profileService: ProfileService) {}
@@ -52,7 +52,7 @@ export class BuildPlanButtonDirective implements OnInit {
         this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 
-    set linkToBuildPlan(link: string | null) {
+    set linkToBuildPlan(link: string | undefined) {
         this.buildPlanLink = link;
         this.visibility = link ? 'visible' : 'hidden';
     }

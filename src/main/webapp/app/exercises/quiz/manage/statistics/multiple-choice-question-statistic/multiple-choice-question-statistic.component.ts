@@ -121,7 +121,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions!.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
@@ -242,13 +242,13 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
 
         // set data based on the answerCounters for each AnswerOption
         this.question.answerOptions!.forEach((answerOption) => {
-            const answerOptionCounter = this.questionStatistic.answerCounters.filter((answerCounter) => answerOption.id === answerCounter.answer.id)[0];
-            this.ratedData.push(answerOptionCounter.ratedCounter);
-            this.unratedData.push(answerOptionCounter.unRatedCounter);
+            const answerOptionCounter = this.questionStatistic.answerCounters!.filter((answerCounter) => answerOption.id === answerCounter.answer!.id)[0];
+            this.ratedData.push(answerOptionCounter.ratedCounter!);
+            this.unratedData.push(answerOptionCounter.unRatedCounter!);
         });
         // add data for the last bar (correct Solutions)
-        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
-        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter;
+        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
+        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
 
         this.loadDataInDiagram();
     }
@@ -272,12 +272,12 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
                 this.colors.push(this.backgroundSolutionColor[i]);
             }
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
                 this.data = this.ratedData.slice(0);
                 this.data.push(this.ratedCorrectData);
             } else {
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 // if rated is false use the unrated Data and add the unrated CorrectCounter
                 this.data = this.unratedData.slice(0);
                 this.data.push(this.unratedCorrectData);
@@ -295,11 +295,11 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             }
             // if rated is true use the rated Data
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 this.data = this.ratedData;
             } else {
                 // if rated is false use the unrated Data
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 this.data = this.unratedData;
             }
         }

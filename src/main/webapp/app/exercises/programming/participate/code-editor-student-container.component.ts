@@ -21,6 +21,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -63,8 +64,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
-                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
-                        this.participation = participationWithResults!;
+                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
+                        this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseService.isParticipationRepositoryLocked on the server-side)
@@ -104,7 +105,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      */
     private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }
@@ -113,15 +114,13 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
+    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
-            flatMap((participation: StudentParticipation) =>
-                participation.results && participation.results.length
+            flatMap((participation: ProgrammingExerciseStudentParticipation) =>
+                participation.results?.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
-                          map((feedback) => {
-                              if (feedback) {
-                                  participation.results[0].feedbacks = feedback;
-                              }
+                          map((feedbacks) => {
+                              participation.results![0].feedbacks = feedbacks;
                               return participation;
                           }),
                           catchError(() => Observable.of(participation)),
@@ -135,8 +134,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
-    loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
+    loadResultDetails(result: Result): Observable<Feedback[]> {
+        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
+            map((res) => {
+                return res.body || [];
+            }),
+        );
     }
 
     canDeactivate() {

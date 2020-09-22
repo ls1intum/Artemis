@@ -74,7 +74,7 @@ export class FileUploadExerciseService {
     }
 
     private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
-        fileUploadExercise.filePattern = fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
+        fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
     }
 }

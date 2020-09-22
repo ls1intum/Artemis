@@ -409,7 +409,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(points);
     }
 
-    roundAndPerformLocalConversion(points: number, exp: number, fractions = 1) {
+    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
         return this.localeConversionService.toLocaleString(round(points, exp), fractions);
     }
 }

@@ -24,7 +24,7 @@
         <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
     </div>
     <!-- Updating result -->
-    <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus)">
+    <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus!)">
         <jhi-updating-result
             [exercise]="exercise"
             [participation]="participation"

@@ -51,7 +51,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get resultsPublished() {
-        return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
+        return this.studentExam?.exam?.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
     /**
@@ -126,9 +126,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     setExamWithOnlyIdAndStudentReviewPeriod() {
         const exam = new Exam();
-        exam.id = this.studentExam.exam.id;
-        exam.examStudentReviewStart = this.studentExam.exam.examStudentReviewStart;
-        exam.examStudentReviewEnd = this.studentExam.exam.examStudentReviewEnd;
+        exam.id = this.studentExam?.exam?.id;
+        exam.examStudentReviewStart = this.studentExam?.exam?.examStudentReviewStart;
+        exam.examStudentReviewEnd = this.studentExam?.exam?.examStudentReviewEnd;
         this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
@@ -137,7 +137,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * the review dates are set and the review start date has passed.
      */
     isAfterStudentReviewStart() {
-        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
         }
         return false;

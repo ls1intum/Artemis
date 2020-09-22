@@ -101,7 +101,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private submittedAnswerCorrectValues() {
         let answerOptionsOfQuestion = new Array<AnswerOption>();
-        for (const question of this.submittedQuizExercise.quizQuestions) {
+        for (const question of this.submittedQuizExercise.quizQuestions || []) {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
             if (mcQuizQuestion.id === this.question.id) {
                 answerOptionsOfQuestion = mcQuizQuestion.answerOptions!;
@@ -113,10 +113,10 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             return;
         }
         const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
-        const submittedAnswerLength = submittedQuizSubmission.submittedAnswers.length;
+        const submittedAnswerLength = submittedQuizSubmission.submittedAnswers!.length;
         for (let i = 0; i < submittedAnswerLength; i++) {
-            if (submittedQuizSubmission.submittedAnswers[i].quizQuestion.id === this.question.id) {
-                const multipleChoiceSubmittedAnswers = submittedQuizSubmission.submittedAnswers[i] as MultipleChoiceSubmittedAnswer;
+            if (submittedQuizSubmission.submittedAnswers![i].quizQuestion!.id === this.question.id) {
+                const multipleChoiceSubmittedAnswers = submittedQuizSubmission.submittedAnswers![i] as MultipleChoiceSubmittedAnswer;
                 if (multipleChoiceSubmittedAnswers.selectedOptions === undefined) {
                     this.checkForCorrectAnswers = [];
                     this.checkForWrongAnswers = [];
@@ -170,7 +170,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const dndQuestion = this.question as DragAndDropQuestion;
-        this.dragAndDropZones = dndQuestion.dropLocations.length;
+        this.dragAndDropZones = dndQuestion.dropLocations!.length;
         this.wronglyMappedDragAndDropItems = this.dragAndDropZones - this.correctlyMappedDragAndDropItems;
         this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
 
@@ -193,7 +193,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     private countShortAnswer() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const shortAnswer = this.question as ShortAnswerQuestion;
-        this.shortAnswerSpots = shortAnswer.spots.length;
+        this.shortAnswerSpots = shortAnswer.spots!.length;
         this.shortAnswerCorrectAnswers = this.shortAnswerText.filter((option) => option.isCorrect).length;
         this.shortAnswerWrongAnswers = this.shortAnswerSpots - this.shortAnswerCorrectAnswers;
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;

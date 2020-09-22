@@ -107,7 +107,7 @@ export class TeamService implements ITeamService {
     create(exercise: Exercise, team: Team): Observable<TeamResponse> {
         const copy = TeamService.convertDateFromClient(team);
         return this.http
-            .post<Team>(TeamService.resourceUrl(exercise.id), copy, { observe: 'response' })
+            .post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
@@ -119,7 +119,7 @@ export class TeamService implements ITeamService {
     update(exercise: Exercise, team: Team): Observable<TeamResponse> {
         const copy = TeamService.convertDateFromClient(team);
         return this.http
-            .put<Team>(`${TeamService.resourceUrl(exercise.id)}/${team.id}`, copy, { observe: 'response' })
+            .put<Team>(`${TeamService.resourceUrl(exercise.id!)}/${team.id}`, copy, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
@@ -130,7 +130,7 @@ export class TeamService implements ITeamService {
      */
     find(exercise: Exercise, teamId: number): Observable<TeamResponse> {
         return this.http
-            .get<Team>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' })
+            .get<Team>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
@@ -155,7 +155,7 @@ export class TeamService implements ITeamService {
      * @param {number} teamId - Team to delete
      */
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' });
+        return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' });
     }
 
     /**
@@ -186,7 +186,7 @@ export class TeamService implements ITeamService {
      */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType) {
         return this.http.put<Team[]>(
-            `${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}?importStrategyType=${importStrategyType}`,
+            `${TeamService.resourceUrl(exercise.id!)}/import-from-exercise/${sourceExercise.id}?importStrategyType=${importStrategyType}`,
             {},
             { observe: 'response' },
         );
@@ -212,7 +212,7 @@ export class TeamService implements ITeamService {
             if (this.teamAssignmentUpdates$) {
                 return resolve(this.teamAssignmentUpdates$);
             }
-            this.authenticationStateSubscriber = this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+            this.authenticationStateSubscriber = this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
                 setTimeout(() => {
                     if (user) {
                         this.teamAssignmentUpdatesResolver = () => resolve(this.newTeamAssignmentUpdates$);
@@ -250,21 +250,21 @@ export class TeamService implements ITeamService {
     private static convertDateFromServer(res: TeamResponse): TeamResponse {
         if (res.body) {
             res.body.createdDate = moment(res.body.createdDate);
-            res.body.lastModifiedDate = res.body.lastModifiedDate ? moment(res.body.lastModifiedDate) : null;
+            res.body.lastModifiedDate = res.body.lastModifiedDate ? moment(res.body.lastModifiedDate) : undefined;
         }
         return res;
     }
 
     private static convertDatesForTeamFromServer(team: Team): Team {
         team.createdDate = moment(team.createdDate);
-        team.lastModifiedDate = team.lastModifiedDate ? moment(team.lastModifiedDate) : null;
+        team.lastModifiedDate = team.lastModifiedDate ? moment(team.lastModifiedDate) : undefined;
         return team;
     }
 
     private static convertDateFromClient(team: Team): Team {
         return Object.assign({}, team, {
-            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : null,
-            lastModifiedDate: team.lastModifiedDate && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : null,
+            createdDate: moment(team.createdDate).isValid() ? moment(team.createdDate).toJSON() : undefined,
+            lastModifiedDate: team.lastModifiedDate && moment(team.lastModifiedDate).isValid() ? moment(team.lastModifiedDate).toJSON() : undefined,
         });
     }
 }

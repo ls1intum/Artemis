@@ -58,7 +58,7 @@ class SerializerUtil {
 
     /**
      * This method is used to serialize the string representations of each parameter into a JSON array.
-     * 
+     *
      * @param parameters A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the parameter types.
      */
@@ -85,9 +85,11 @@ class SerializerUtil {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("name", name);
         if (!modifiers.isEmpty()) {
+            // TODO: in case of interfaces, we need to add "public" and "abstract", otherwise tests might fail
             jsonObject.add("modifiers", serializeModifiers(modifiers, javaMember));
         }
         if (!annotations.isEmpty()) {
+            // TODO: do not add the "Override" annotation here, because it causes problems
             jsonObject.add("annotations", serializeAnnotations(annotations));
         }
         return jsonObject;

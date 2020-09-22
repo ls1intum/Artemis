@@ -138,7 +138,7 @@
                         Already assigned to team with id {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
-                <li *ngIf="pendingTeam.students.length === 0" class="list-group-item-container d-flex align-items-center">
+                <li *ngIf="pendingTeam.students && pendingTeam.students.length === 0" class="list-group-item-container d-flex align-items-center">
                     <div class="list-group-item-index text-muted">1</div>
                     <div class="list-group-item d-flex align-items-center">
                         <div class="text-muted" jhiTranslate="artemisApp.team.noStudentsAddedYet">No students added yet.</div>

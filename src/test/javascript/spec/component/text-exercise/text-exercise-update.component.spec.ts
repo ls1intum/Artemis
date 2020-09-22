@@ -84,7 +84,7 @@ describe('TextExercise Management Update Component', () => {
     });
 
     describe('ngOnInit cl for exam exercise', () => {
-        const textExercise = new TextExercise(null, new ExerciseGroup());
+        const textExercise = new TextExercise(new ExerciseGroup());
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
@@ -103,7 +103,7 @@ describe('TextExercise Management Update Component', () => {
     });
 
     describe('ngOnInit for course exercise', () => {
-        const textExercise = new TextExercise(new Course(), null);
+        const textExercise = new TextExercise(new Course());
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
@@ -124,9 +124,9 @@ describe('TextExercise Management Update Component', () => {
     describe('ngOnInit in import mode: Course to Course', () => {
         const textExercise = new TextExercise(new Course());
         textExercise.id = 1;
-        textExercise.releaseDate = moment(moment.now());
-        textExercise.dueDate = moment(moment.now());
-        textExercise.assessmentDueDate = moment(moment.now());
+        textExercise.releaseDate = moment();
+        textExercise.dueDate = moment();
+        textExercise.assessmentDueDate = moment();
         const courseId = 1;
 
         beforeEach(() => {
@@ -143,9 +143,9 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(false);
-            expect(comp.textExercise.assessmentDueDate).toEqual(null);
-            expect(comp.textExercise.releaseDate).toEqual(null);
-            expect(comp.textExercise.dueDate).toEqual(null);
+            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.textExercise.releaseDate).toEqual(undefined);
+            expect(comp.textExercise.dueDate).toEqual(undefined);
         }));
     });
 
@@ -156,9 +156,9 @@ describe('TextExercise Management Update Component', () => {
         textExercise.exerciseGroup.exam.course = new Course();
         textExercise.exerciseGroup.exam.course.id = 1;
         textExercise.id = 1;
-        textExercise.releaseDate = moment(moment.now());
-        textExercise.dueDate = moment(moment.now());
-        textExercise.assessmentDueDate = moment(moment.now());
+        textExercise.releaseDate = moment();
+        textExercise.dueDate = moment();
+        textExercise.assessmentDueDate = moment();
         const courseId = 1;
 
         beforeEach(() => {
@@ -175,18 +175,18 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(false);
-            expect(comp.textExercise.assessmentDueDate).toEqual(null);
-            expect(comp.textExercise.releaseDate).toEqual(null);
-            expect(comp.textExercise.dueDate).toEqual(null);
+            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.textExercise.releaseDate).toEqual(undefined);
+            expect(comp.textExercise.dueDate).toEqual(undefined);
         }));
     });
 
     describe('ngOnInit in import mode: Course to Exam', () => {
         const textExercise = new TextExercise(new Course());
         textExercise.id = 1;
-        textExercise.releaseDate = moment(moment.now());
-        textExercise.dueDate = moment(moment.now());
-        textExercise.assessmentDueDate = moment(moment.now());
+        textExercise.releaseDate = moment();
+        textExercise.dueDate = moment();
+        textExercise.assessmentDueDate = moment();
         const groupId = 1;
 
         beforeEach(() => {
@@ -203,10 +203,10 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(true);
-            expect(comp.textExercise.course).toEqual(null);
-            expect(comp.textExercise.assessmentDueDate).toEqual(null);
-            expect(comp.textExercise.releaseDate).toEqual(null);
-            expect(comp.textExercise.dueDate).toEqual(null);
+            expect(comp.textExercise.course).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.textExercise.releaseDate).toEqual(undefined);
+            expect(comp.textExercise.dueDate).toEqual(undefined);
         }));
     });
 
@@ -214,9 +214,9 @@ describe('TextExercise Management Update Component', () => {
         const textExercise = new TextExercise();
         textExercise.exerciseGroup = new ExerciseGroup();
         textExercise.id = 1;
-        textExercise.releaseDate = moment(moment.now());
-        textExercise.dueDate = moment(moment.now());
-        textExercise.assessmentDueDate = moment(moment.now());
+        textExercise.releaseDate = moment();
+        textExercise.dueDate = moment();
+        textExercise.assessmentDueDate = moment();
         const groupId = 1;
 
         beforeEach(() => {
@@ -233,9 +233,9 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(true);
-            expect(comp.textExercise.assessmentDueDate).toEqual(null);
-            expect(comp.textExercise.releaseDate).toEqual(null);
-            expect(comp.textExercise.dueDate).toEqual(null);
+            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.textExercise.releaseDate).toEqual(undefined);
+            expect(comp.textExercise.dueDate).toEqual(undefined);
         }));
     });
 });

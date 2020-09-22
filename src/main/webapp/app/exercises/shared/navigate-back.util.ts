@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 
 /**
@@ -15,12 +15,12 @@ import { Submission } from 'app/entities/submission.model';
  * @param exercise: Exercise currently assessed
  * @param submission: Submission currently assessed
  */
-export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null) {
+export function assessmentNavigateBack(location: Location, router: Router, exercise?: Exercise, submission?: Submission) {
     if (exercise) {
-        const course = exercise.course || exercise.exerciseGroup?.exam?.course;
+        const course = getCourseFromExercise(exercise);
 
         if (exercise.teamMode && submission) {
-            const teamId = (submission.participation as StudentParticipation).team.id;
+            const teamId = (submission.participation as StudentParticipation).team?.id;
             router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
         } else {
             router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/tutor-dashboard`);

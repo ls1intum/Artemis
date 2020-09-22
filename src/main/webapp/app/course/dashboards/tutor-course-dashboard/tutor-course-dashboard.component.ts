@@ -53,8 +53,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     exercisesReverseOrder = false;
 
     tutor: User;
-
-    exerciseForGuidedTour: Exercise | null;
+    exerciseForGuidedTour?: Exercise;
 
     isExamMode = false;
 
@@ -96,13 +95,13 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
             this.showFinishedExercises = true;
             this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, examId).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
-                this.course = Course.from(this.exam.course);
+                this.course = Course.from(this.exam.course!);
                 this.courseService.checkAndSetCourseRights(this.course);
 
                 // get all exercises
                 const exercises: Exercise[] = [];
                 // eslint-disable-next-line chai-friendly/no-unused-expressions
-                this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+                this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
                     }
@@ -117,8 +116,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
                     this.courseService.checkAndSetCourseRights(this.course);
-                    const exercises = this.course.exercises;
-                    this.extractExercises(exercises);
+                    this.extractExercises(this.course.exercises);
                 },
                 (response: string) => this.onError(response),
             );
@@ -153,7 +151,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         }
     }
 
-    private extractExercises(exercises: Exercise[]) {
+    private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
             const [finishedExercises, unfinishedExercises] = partition(
                 exercises,
@@ -165,7 +163,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
             this.finishedExercises = finishedExercises;
             this.unfinishedExercises = unfinishedExercises;
             // sort exercises by type to get a better overview in the dashboard
-            this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
+            this.sortService.sortByProperty(this.unfinishedExercises, 'type', true);
             this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
             this.updateExercises();
         }
@@ -195,8 +193,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
      * @param error
      */
     private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 
     /**

@@ -20,7 +20,7 @@
                                     disabled
                                     [style.background]="'lightgreen'"
                                     value="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text : '' }}"
-                                    size="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text.length + 4 : 5 }}"
+                                    size="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text!.length + 4 : 5 }}"
                                 />
                                 <div class="short-answer-question-container__statistic-letter-solution">
                                     <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element)) + '.' }}</span>

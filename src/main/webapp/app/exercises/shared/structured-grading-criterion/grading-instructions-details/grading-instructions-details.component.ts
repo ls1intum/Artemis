@@ -46,7 +46,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     constructor() {}
 
     ngOnInit() {
-        this.criteria = this.exercise.gradingCriteria;
+        this.criteria = this.exercise.gradingCriteria || [];
         this.questionEditorText = this.generateMarkdown();
     }
 

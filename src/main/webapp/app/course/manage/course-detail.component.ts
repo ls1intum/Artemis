@@ -46,7 +46,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Register for the currently loaded course.
      */
     registerForCourse() {
-        this.courseService.registerForCourse(this.course.id).subscribe(
+        this.courseService.registerForCourse(this.course.id!).subscribe(
             (userResponse) => {
                 if (userResponse.body != null) {
                     const message = 'Registered user for course ' + this.course.title;
@@ -82,6 +82,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.load(this.course.id));
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.load(this.course.id!));
     }
 }

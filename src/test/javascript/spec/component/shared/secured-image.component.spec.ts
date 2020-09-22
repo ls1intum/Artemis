@@ -72,8 +72,8 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
+        comp.ngOnInit();
         triggerChanges(comp);
-
         fixture.detectChanges();
 
         expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
@@ -88,8 +88,8 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
+        comp.ngOnInit();
         triggerChanges(comp);
-
         fixture.detectChanges();
 
         expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
@@ -104,8 +104,8 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
+        comp.ngOnInit();
         triggerChanges(comp);
-
         fixture.detectChanges();
 
         expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
@@ -119,8 +119,8 @@ describe('SecuredImageComponent', () => {
 
         // @ts-ignore
         comp.src = src;
+        comp.ngOnInit();
         triggerChanges(comp);
-
         fixture.detectChanges();
 
         expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);

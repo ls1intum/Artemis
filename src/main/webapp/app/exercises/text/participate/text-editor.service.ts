@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { Franc, FrancLanguage } from './franc';
 import { Language } from 'app/entities/tutor-group.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {
@@ -10,8 +11,8 @@ export class TextEditorService {
 
     constructor(private http: HttpClient) {}
 
-    get(id: number): Observable<any> {
-        return this.http.get(`api/text-editor/${id}`, { responseType: 'json' });
+    get(participationId: number): Observable<StudentParticipation> {
+        return this.http.get(`api/text-editor/${participationId}`, { responseType: 'json' });
     }
 
     /**
@@ -20,7 +21,7 @@ export class TextEditorService {
      *
      * @returns {Language} language of the text
      */
-    predictLanguage(text: string): Language | null {
+    predictLanguage(text: string): Language | undefined {
         const languageProbabilities = this.franc.all(text);
 
         switch (languageProbabilities[0][0]) {
@@ -29,10 +30,6 @@ export class TextEditorService {
 
             case FrancLanguage.GERMAN:
                 return Language.GERMAN;
-
-            case FrancLanguage.UNDEFINED:
-            default:
-                return null;
         }
     }
 }

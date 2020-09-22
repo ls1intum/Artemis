@@ -70,8 +70,8 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * @param participation The participation for which to get the repository URL
      * @return The URL of the remote repository in which the user's code referring the the current exercise is stored.
      */
-    repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+    repositoryUrl(participation?: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUrl;
     }
 
     /**
@@ -81,7 +81,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         this.exercise.loading = true;
 
         this.courseExerciseService
-            .startExercise(this.courseId, this.exercise.id)
+            .startExercise(this.courseId, this.exercise.id!)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
                 (participation: StudentParticipation) => {
@@ -105,7 +105,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
     importIntoIDE() {
-        const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
+        const repo = this.repositoryUrl(this.exercise.studentParticipations![0])!;
         this.javaBridge.importParticipation(repo, this.exercise as ProgrammingExercise);
     }
 
@@ -130,7 +130,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     private hasInitializedParticipation(): boolean {
-        return this.exercise.studentParticipations && this.participationStatus(this.exercise) === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
+        return this.exercise.studentParticipations !== undefined && this.participationStatus(this.exercise) === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
     }
 
     /**
@@ -139,11 +139,11 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeProgrammingExercise(this.courseId, this.exercise.id)
+            .resumeProgrammingExercise(this.courseId, this.exercise.id!)
             .pipe(
                 filter(Boolean),
                 tap((participation: StudentParticipation) => {
-                    participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
+                    participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
                     this.exercise.studentParticipations = [participation];
                     this.exercise.participationStatus = participationStatus(this.exercise);
                 }),

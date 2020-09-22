@@ -98,7 +98,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * Listens to file upload exercise list modifications
      */
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id));
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id!));
     }
 
     private onError(error: HttpErrorResponse) {

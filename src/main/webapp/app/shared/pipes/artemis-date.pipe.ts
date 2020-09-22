@@ -23,7 +23,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private dateTime: moment.Moment;
     private locale: string;
     private localizedDateTime: string;
-    private onLangChange: Subscription | undefined;
+    private onLangChange?: Subscription;
     private long = true;
     private showDate = true;
     private showTime = true;
@@ -38,7 +38,11 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
      */
-    transform(dateTime: Date | moment.Moment | string | number | null, format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+    transform(
+        dateTime: Date | moment.Moment | string | number | null | undefined,
+        format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long',
+        seconds = false,
+    ): string {
         // Return empty string if given dateTime equals null or is not convertible to moment.
         if (!dateTime || !moment(dateTime).isValid()) {
             return '';

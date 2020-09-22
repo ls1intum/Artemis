@@ -112,8 +112,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     private loadAndCacheProgrammingExerciseSubmissionState() {
         // TODO: this is deactivated because of performance reasons as it would lead quickly to thousands of subscribed websocket topics
-        // return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
-        return of(null);
+        // return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(undefined);
+        return of(undefined);
     }
 
     /**
@@ -121,7 +121,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     getResults() {
         return this.resultService
-            .getResultsForExercise(this.exercise.id, {
+            .getResultsForExercise(this.exercise.id!, {
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
             })
             .pipe(
@@ -195,8 +195,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Returns the build plan id for a result
      * @param result Result for which to return the build plan id
      */
-    buildPlanId(result: Result): string {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    buildPlanId(result: Result) {
+        return (result.participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
     }
 
     /**
@@ -228,9 +228,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
                     }
                     const { name, shortName, students } = studentParticipation.team;
-                    rows.push(`${name},${shortName},"${students.map((s) => s.name).join(', ')}"`);
+                    rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
                 } else {
-                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName);
+                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
                 }
             });
             const csvContent = rows.join('\n');
@@ -263,7 +263,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
                     }
                 }
-                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team.students.map((s) => s.name).join(', ')}"` : '';
+                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team?.students?.map((s) => s.name).join(', ')}"` : '';
                 if (this.exercise.type !== ExerciseType.PROGRAMMING) {
                     rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                 } else {

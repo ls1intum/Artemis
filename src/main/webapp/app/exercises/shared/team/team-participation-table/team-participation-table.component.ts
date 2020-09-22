@@ -73,7 +73,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
         return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
-            exercise.team = exercise.teams[0];
+            exercise.team = exercise.teams![0];
             const participation = get(exercise, 'studentParticipations[0]', null);
             exercise.participation = participation;
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
@@ -103,7 +103,7 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param submission Either submission or 'new'
      */
     async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         await this.router.navigate([route]);
     }
@@ -112,7 +112,7 @@ export class TeamParticipationTableComponent implements OnInit {
      * Returns the assessment action depending on the state of the result on the submission
      * @param submission Submission which to check
      */
-    assessmentAction(submission: Submission | null): AssessmentAction {
+    assessmentAction(submission?: Submission): AssessmentAction {
         if (!submission || !submission.result) {
             return AssessmentAction.START;
         } else if (!submission.result.completionDate) {
@@ -131,7 +131,6 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        console.error(error);
         this.jhiAlertService.error(error.message);
         this.isLoading = false;
     }

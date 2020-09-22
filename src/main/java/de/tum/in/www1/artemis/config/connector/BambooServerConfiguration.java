@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config.connector;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,9 +13,7 @@ import org.springframework.context.annotation.Profile;
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.common.cli.Base;
 import com.appfire.common.cli.Settings;
-import com.atlassian.bamboo.specs.util.BambooServer;
-import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
-import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
+import com.atlassian.bamboo.specs.util.*;
 
 @Configuration
 @Profile("bamboo")
@@ -25,6 +24,9 @@ public class BambooServerConfiguration {
 
     @Value("${artemis.continuous-integration.password}")
     private String BAMBOO_PASSWORD;
+
+    @Value("${artemis.continuous-integration.token:#{null}}")
+    private Optional<String> BAMBOO_TOKEN;
 
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
@@ -40,8 +42,15 @@ public class BambooServerConfiguration {
 
     @Bean
     public BambooServer bambooServer() {
-        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
-        return new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+        if (BAMBOO_TOKEN.isPresent()) {
+            TokenCredentials tokenCredentials = new SimpleTokenCredentials(BAMBOO_TOKEN.get());
+            return new BambooServer(BAMBOO_SERVER_URL.toString(), tokenCredentials);
+        }
+        else {
+            // supports the legacy case if BAMBOO_TOKEN is not available --> TODO: Remove soon, because user password credentials are deprecated
+            UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
+            return new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+        }
     }
 
     /**
@@ -51,6 +60,7 @@ public class BambooServerConfiguration {
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
     @Bean
+    // TODO: can we use a token here as well?
     public BambooClient bambooClient() {
         final var bambooClient = new BambooClient(createBase());
         // setup the Bamboo Client to use the correct username and password

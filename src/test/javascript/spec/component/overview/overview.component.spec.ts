@@ -37,7 +37,7 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Courses Component', () => {
+describe('Overview Component', () => {
     const user = { id: 1 } as User;
     const course = { id: 1, color: ARTEMIS_DEFAULT_COLOR } as Course;
 

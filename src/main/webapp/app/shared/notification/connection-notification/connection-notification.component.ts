@@ -10,13 +10,13 @@ import { ConnectionNotification, ConnectionNotificationType } from 'app/shared/n
 })
 export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     notification = new ConnectionNotification();
-    alert: { class: string; icon: string; text: string } | null = null;
-    connected: boolean | null;
+    alert?: { class: string; icon: string; text: string };
+    connected?: boolean;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
     ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 // listen to connect / disconnect events
                 this.jhiWebsocketService.enableReconnect();
@@ -24,9 +24,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
                 this.jhiWebsocketService.bind('disconnect', this.onDisconnect);
             } else {
                 // On logout, reset component
-                this.connected = null;
-                this.alert = null;
-                this.notification.type = null;
+                this.connected = undefined;
+                this.alert = undefined;
+                this.notification.type = undefined;
                 this.jhiWebsocketService.disableReconnect();
                 this.jhiWebsocketService.unbind('connect', this.onConnect);
                 this.jhiWebsocketService.unbind('disconnect', this.onDisconnect);
@@ -81,7 +81,7 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
             } else if (this.notification.type === ConnectionNotificationType.RECONNECTED) {
                 this.alert = { class: 'alert-success', icon: 'check-circle', text: 'artemisApp.connectionAlert.reconnected' };
             } else if (this.notification.type === ConnectionNotificationType.CONNECTED) {
-                this.alert = null;
+                this.alert = undefined;
             }
         }
     }

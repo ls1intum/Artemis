@@ -21,17 +21,19 @@ export class TeamAssignmentPayload {
 }
 
 export class Team implements BaseEntity {
-    public id: number;
-    public name: string;
-    public shortName: string;
+    public id?: number;
+    public name?: string;
+    public shortName?: string;
     public image?: string;
-    public students: User[] = []; // default value
+    public students?: User[];
     public owner?: User;
 
-    public createdBy: string;
-    public createdDate: Moment;
+    public createdBy?: string;
+    public createdDate?: Moment;
     public lastModifiedBy?: string;
-    public lastModifiedDate?: Moment | null;
+    public lastModifiedDate?: Moment;
 
-    constructor() {}
+    constructor() {
+        this.students = []; // default value
+    }
 }

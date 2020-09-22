@@ -48,9 +48,9 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.exam.id !== undefined) {
-            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id, this.exam));
+            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
         } else {
-            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id, this.exam));
+            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id!, this.exam));
         }
     }
 
@@ -67,7 +67,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
+        this.jhiAlertService.error(error.message);
         this.isSaving = false;
     }
 

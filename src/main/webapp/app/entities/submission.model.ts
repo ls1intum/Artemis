@@ -1,8 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Language } from 'app/entities/tutor-group.model';
 import { Result } from 'app/entities/result.model';
-import * as moment from 'moment';
+import { Moment } from 'moment';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -22,23 +21,22 @@ export const enum SubmissionExerciseType {
 }
 
 export abstract class Submission implements BaseEntity {
-    public id: number;
-    public submitted = false; // default value
-    public submissionDate: moment.Moment | null;
-    public type: SubmissionType;
-    public exampleSubmission: boolean;
-    public submissionExerciseType: SubmissionExerciseType;
-    public durationInMinutes: number | null;
+    public id?: number;
+    public submitted?: boolean;
+    public submissionDate?: Moment;
+    public type?: SubmissionType;
+    public exampleSubmission?: boolean;
+    public submissionExerciseType?: SubmissionExerciseType;
+    public durationInMinutes?: number;
 
-    public result: Result;
-    public participation: Participation;
-
-    public language: Language | null;
+    public result?: Result;
+    public participation?: Participation;
 
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
+        this.submitted = false; // default value
     }
 }

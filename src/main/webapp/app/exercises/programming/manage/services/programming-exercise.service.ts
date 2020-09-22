@@ -11,6 +11,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { Moment } from 'moment';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -19,7 +20,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     released: boolean;
     hasStudentResult: boolean;
     testCasesChanged: boolean;
-    buildAndTestStudentSubmissionsAfterDueDate: moment.Moment | null;
+    buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -171,7 +172,7 @@ export class ProgrammingExerciseService {
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? moment(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
-                    : null,
+                    : undefined,
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
@@ -198,7 +199,7 @@ export class ProgrammingExerciseService {
         }
         res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
             ? moment(res.body.buildAndTestStudentSubmissionsAfterDueDate)
-            : null;
+            : undefined;
         return res;
     }
 }

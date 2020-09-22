@@ -3,8 +3,8 @@ import { QuizStatisticCounter } from 'app/entities/quiz/quiz-statistic-counter.m
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 
 export class AnswerCounter extends QuizStatisticCounter {
-    public answer: AnswerOption;
-    public multipleChoiceQuestionStatistic: MultipleChoiceQuestionStatistic;
+    public answer?: AnswerOption;
+    public multipleChoiceQuestionStatistic?: MultipleChoiceQuestionStatistic;
 
     constructor() {
         super();

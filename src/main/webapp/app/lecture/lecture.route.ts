@@ -16,7 +16,7 @@ export class LectureResolve implements Resolve<Lecture> {
     constructor(private service: LectureService) {}
 
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),

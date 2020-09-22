@@ -2,7 +2,13 @@ import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 export class TextBlockRef {
-    constructor(public block: TextBlock, public feedback?: Feedback) {}
+    public block?: TextBlock;
+    public feedback?: Feedback;
+
+    constructor(block: TextBlock, feedback?: Feedback) {
+        this.block = block;
+        this.feedback = feedback;
+    }
 
     public static new(): TextBlockRef {
         const textBlock = new TextBlock();
@@ -15,7 +21,9 @@ export class TextBlockRef {
             return;
         }
 
-        this.feedback = Feedback.forText(this.block);
-        this.feedback.type = FeedbackType.MANUAL;
+        if (this.block) {
+            this.feedback = Feedback.forText(this.block);
+            this.feedback.type = FeedbackType.MANUAL;
+        }
     }
 }

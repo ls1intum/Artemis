@@ -44,13 +44,13 @@ export class ExamDetailComponent implements OnInit {
      * Returns the route for editing the exam.
      */
     getEditRoute() {
-        return ['/course-management', this.exam.course.id, 'exams', this.exam.id, 'edit'];
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'edit'];
     }
 
     /**
      * Returns the route for the student exams.
      */
     getStudentExamRoute() {
-        return ['/course-management', this.exam.course.id, 'exams', this.exam.id, 'student-exams'];
+        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'student-exams'];
     }
 }

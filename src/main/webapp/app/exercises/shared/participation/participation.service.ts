@@ -92,15 +92,15 @@ export class ParticipationService {
     }
 
     protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
-        const copy: StudentParticipation = Object.assign({}, participation, {
-            initializationDate: participation.initializationDate && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
+        // return a copy of the object
+        return Object.assign({}, participation, {
+            initializationDate: participation.initializationDate && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
         });
-        return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.initializationDate = res.body.initializationDate ? moment(res.body.initializationDate) : null;
+            res.body.initializationDate = res.body.initializationDate ? moment(res.body.initializationDate) : undefined;
             res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
             res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
@@ -117,32 +117,34 @@ export class ParticipationService {
         return res;
     }
 
-    protected convertExerciseDateFromServer(exercise: Exercise) {
-        if (exercise !== null) {
-            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+    protected convertExerciseDateFromServer(exercise?: Exercise) {
+        if (exercise != null) {
+            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
+            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
         }
         return exercise;
     }
 
-    protected convertParticipationDateFromServer(participation: StudentParticipation) {
-        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
-        participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
-        participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
+    protected convertParticipationDateFromServer(participation?: StudentParticipation) {
+        if (participation != null) {
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.results = this.submissionService.convertResultsDateFromServer(participation.results);
+            participation.submissions = this.submissionService.convertSubmissionsDateFromServer(participation.submissions);
+        }
         return participation;
     }
 
-    public convertParticipationsDateFromServer(participations: StudentParticipation[]) {
+    public convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
         if (participations != null && participations.length > 0) {
             participations.forEach((participation: StudentParticipation) => {
-                convertedParticipations.push(this.convertParticipationDateFromServer(participation));
+                convertedParticipations.push(this.convertParticipationDateFromServer(participation)!);
             });
         }
         return convertedParticipations;
     }
 
-    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | null {
+    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
         if (participations && participations.length > 0) {
             if (participations[0].type === ParticipationType.STUDENT) {
                 const combinedParticipation = new StudentParticipation();
@@ -152,7 +154,7 @@ export class ParticipationService {
                 return this.mergeProgrammingParticipations(participations as ProgrammingExerciseStudentParticipation[]);
             }
         }
-        return null;
+        return undefined;
     }
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {

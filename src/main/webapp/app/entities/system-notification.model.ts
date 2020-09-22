@@ -7,8 +7,8 @@ export const enum SystemNotificationType {
 }
 
 export class SystemNotification extends Notification {
-    public expireDate: Moment | null;
-    public type: SystemNotificationType;
+    public expireDate?: Moment;
+    public type?: SystemNotificationType;
 
     constructor() {
         super(NotificationType.SYSTEM);

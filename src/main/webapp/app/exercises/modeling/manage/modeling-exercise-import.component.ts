@@ -82,7 +82,7 @@ export class ModelingExerciseImportComponent implements OnInit {
      * @returns The ID of the programming exercise
      */
     trackId(index: number, item: ModelingExercise): number {
-        return item.id;
+        return item.id!;
     }
 
     /** Set the list sorting direction

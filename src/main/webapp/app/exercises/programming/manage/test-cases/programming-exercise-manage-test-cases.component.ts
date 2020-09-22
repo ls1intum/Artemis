@@ -10,7 +10,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
 /**
  * Describes the editableField
@@ -32,7 +32,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
     courseId: number;
     exercise: ProgrammingExercise;
-    editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
+    editing?: [ProgrammingExerciseTestCase, EditableField];
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
@@ -77,7 +77,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * @param showInactive the value which should be set
      */
     set showInactive(showInactive: boolean) {
-        this.editing = null;
+        this.editing = undefined;
         this.showInactiveValue = showInactive;
         this.updateTestCaseFilter();
     }
@@ -102,7 +102,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
-            this.editing = null;
+            this.editing = undefined;
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
@@ -113,7 +113,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
                 map((res) => res.body!),
                 tap((exercise) => (this.exercise = exercise)),
-                catchError(() => of(null)),
+                catchError(() => of(undefined)),
             );
 
             const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
@@ -122,7 +122,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
                     this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                 }),
-                catchError(() => of(null)),
+                catchError(() => of(undefined)),
             );
 
             zip(loadExercise, loadExerciseTestCaseState)
@@ -161,7 +161,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseSubscription.unsubscribe();
         }
         this.testCaseSubscription = this.testCaseService
-            .subscribeForTestCases(this.exercise.id)
+            .subscribeForTestCases(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.testCases = testCases;
@@ -179,7 +179,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseChangedSubscription.unsubscribe();
         }
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
-            .getTestCaseState(this.exercise.id)
+            .getTestCaseState(this.exercise.id!)
             .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
             .subscribe();
     }
@@ -203,7 +203,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Hide input.
      */
     leaveEditingWithoutSaving() {
-        this.editing = null;
+        this.editing = undefined;
     }
 
     /**
@@ -218,32 +218,37 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
         // Don't allow an empty string as a value!
         if (!newValue) {
-            this.editing = null;
+            this.editing = undefined;
             return;
         }
         const [editedTestCase, field] = this.editing;
-        // If the weight has not changed, don't do anything besides closing the input.
-        if (newValue === editedTestCase[field]) {
-            this.editing = null;
+        // Only continue with valid numbers
+        const newValueAsNumber = Number(newValue);
+        if (isNaN(newValueAsNumber)) {
             return;
         }
-        this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
-        this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
-        this.editing = null;
+        // If the value has not changed, don't do anything besides closing the input.
+        if (newValueAsNumber === editedTestCase[field]) {
+            this.editing = undefined;
+            return;
+        }
+        this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
+        this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValueAsNumber }));
+        this.editing = undefined;
     }
 
     /**
      * Save the unsaved (edited) changes of the test cases.
      */
     saveChanges() {
-        this.editing = null;
+        this.editing = undefined;
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }) => ({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }));
+        const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
         this.testCaseService
-            .updateTestCase(this.exercise.id, testCaseUpdates)
+            .updateTestCase(this.exercise.id!, testCaseUpdates)
             .pipe(
                 tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                     // From successfully updated test cases from dirty checking list.
@@ -251,7 +256,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
                     // Generate the new list of test cases with the updated weights and notify the test case service.
                     const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
-                    this.testCaseService.notifyTestCases(this.exercise.id, newTestCases);
+                    this.testCaseService.notifyTestCases(this.exercise.id!, newTestCases);
 
                     // Find out if there are test cases that were not updated, show an error.
                     const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
@@ -263,7 +268,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 }),
                 catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -277,7 +282,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      */
     toggleAfterDueDate(rowIndex: number) {
         const testCase = this.filteredTestCases[rowIndex];
-        this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id];
+        this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id!];
         this.testCases = this.testCases.map((t) => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
     }
 
@@ -285,18 +290,18 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Reset all test cases.
      */
     resetChanges() {
-        this.editing = null;
+        this.editing = undefined;
         this.isSaving = true;
         this.testCaseService
-            .reset(this.exercise.id)
+            .reset(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.manageTestCases.resetSuccessful`);
-                    this.testCaseService.notifyTestCases(this.exercise.id, testCases);
+                    this.testCaseService.notifyTestCases(this.exercise.id!, testCases);
                 }),
                 catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.resetFailed`);
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {

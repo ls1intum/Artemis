@@ -49,7 +49,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         await this.getSubmissions(exerciseId)
             // At least one submission present. Can get exercise from first submission.
             .then(() => {
-                const exercise = this.submissions[0].participation.exercise!;
+                const exercise = this.submissions[0].participation!.exercise!;
                 FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
                 this.exercise = exercise as FileUploadExercise;
             })
@@ -77,7 +77,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                                 // reconnect some associations
                                 submission.result.submission = submission;
                                 submission.result.participation = submission.participation;
-                                submission.participation.results = [submission.result];
+                                submission.participation!.results = [submission.result];
                             }
                             return submission;
                         }),
@@ -129,8 +129,8 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.fileUploadAssessmentsService.cancelAssessment(submission.id).subscribe(() => {
-                this.getSubmissions(this.exercise.id);
+            this.fileUploadAssessmentsService.cancelAssessment(submission.id!).subscribe(() => {
+                this.getSubmissions(this.exercise.id!);
             });
         }
     }

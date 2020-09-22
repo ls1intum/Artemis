@@ -63,6 +63,6 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <jhi-student-questions *ngIf="lecture && lecture.course.studentQuestionsEnabled" class="ml-3" [lecture]="lecture!"></jhi-student-questions>
+        <jhi-student-questions *ngIf="lecture && lecture.course?.studentQuestionsEnabled" class="ml-3" [lecture]="lecture!"></jhi-student-questions>
     </div>
 </div>

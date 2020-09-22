@@ -4,12 +4,12 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Complaint } from 'app/entities/complaint.model';
 
 export class ComplaintResponse implements BaseEntity {
-    public id: number;
+    public id?: number;
 
-    public responseText: string;
-    public submittedTime: Moment | null;
-    public complaint: Complaint;
-    public reviewer: User;
+    public responseText?: string;
+    public submittedTime?: Moment;
+    public complaint?: Complaint;
+    public reviewer?: User;
 
     constructor() {}
 }

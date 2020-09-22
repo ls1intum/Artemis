@@ -16,9 +16,9 @@ export class ManualTextblockSelectionComponent {
     }
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
-    @Input() selectedRef: TextBlockRef | null = null;
+    @Input() selectedRef?: TextBlockRef;
     @Input() readOnly: boolean;
-    @Output() selectedRefChange = new EventEmitter<TextBlockRef | null>();
+    @Output() selectedRefChange = new EventEmitter<TextBlockRef | undefined>();
     @Input() submission: TextSubmission;
     textBlockRefGroups: TextBlockRefGroup[];
 
@@ -30,12 +30,12 @@ export class ManualTextblockSelectionComponent {
      * Called by <jhi-manual-text-selection> component (form [jhiTextSelect] directive).
      * Select Text within text block ref group and emit to parent component if it is indeed a new text block.
      *
-     * @param $text response from directive.
+     * @param text response from directive.
      * @param group TextBlockRefGroup of text blocks allowed to select text in.
      */
-    handleTextSelection($text: string, group: TextBlockRefGroup): void {
+    handleTextSelection(text: string, group: TextBlockRefGroup): void {
         // Text Selection returns <br> for linebreaks, model uses \n so we need to convert.
-        $text = $text.replace(/<br>/g, '\n');
+        text = text.replace(/<br>/g, '\n');
 
         // create new Text Block for text
         const textBlockRef = TextBlockRef.new();
@@ -44,24 +44,26 @@ export class ManualTextblockSelectionComponent {
         const baseIndex = group.startIndex;
         const groupText = group.getText(this.submission);
 
-        const startIndexInGroup = groupText.indexOf($text);
+        const startIndexInGroup = groupText.indexOf(text);
 
-        if ($text.length > groupText.length || startIndexInGroup === -1) {
+        if (text.length > groupText.length || startIndexInGroup === -1) {
             return;
         }
 
-        textBlock.startIndex = baseIndex + startIndexInGroup;
-        textBlock.endIndex = textBlock.startIndex + $text.length;
-        textBlock.setTextFromSubmission(this.submission);
-        textBlock.computeId();
-        const existingRef = this.textBlockRefs.find((ref) => ref.block.id === textBlock.id);
+        if (textBlock) {
+            textBlock.startIndex = baseIndex + startIndexInGroup;
+            textBlock.endIndex = textBlock.startIndex + text.length;
+            textBlock.setTextFromSubmission(this.submission);
+            textBlock.computeId();
+            const existingRef = this.textBlockRefs.find((ref) => ref.block?.id === textBlock.id);
 
-        if (existingRef) {
-            existingRef.initFeedback();
-            this.selectedRefChange.emit(existingRef);
-        } else {
-            textBlockRef.initFeedback();
-            this.textBlockRefAdded.emit(textBlockRef);
+            if (existingRef) {
+                existingRef.initFeedback();
+                this.selectedRefChange.emit(existingRef);
+            } else {
+                textBlockRef.initFeedback();
+                this.textBlockRefAdded.emit(textBlockRef);
+            }
         }
     }
 }
@@ -82,10 +84,10 @@ class TextBlockRefGroup {
     }
 
     get startIndex(): number {
-        return this.refs[0].block.startIndex;
+        return this.refs[0].block!.startIndex!;
     }
     private get endIndex(): number {
-        return this.refs[this.refs.length - 1].block.endIndex;
+        return this.refs[this.refs.length - 1].block!.endIndex!;
     }
 
     getText(submission: TextSubmission): string {
@@ -94,7 +96,7 @@ class TextBlockRefGroup {
         textBlock.endIndex = this.endIndex;
         textBlock.setTextFromSubmission(submission);
 
-        return textBlock.text;
+        return textBlock.text!;
     }
 
     addRef(textBlockRef: TextBlockRef) {

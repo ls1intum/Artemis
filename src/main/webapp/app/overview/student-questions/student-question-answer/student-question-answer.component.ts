@@ -25,7 +25,7 @@ export class StudentQuestionAnswerComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<StudentQuestionAnswerAction>();
-    editText: string | null;
+    editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
 
@@ -44,18 +44,14 @@ export class StudentQuestionAnswerComponent implements OnInit {
      * @returns {boolean}
      */
     isAuthorOfAnswer(studentQuestionAnswer: StudentQuestionAnswer): boolean {
-        if (this.user) {
-            return studentQuestionAnswer.author.id === this.user.id;
-        } else {
-            return false;
-        }
+        return this.user ? studentQuestionAnswer.author!.id === this.user.id : false;
     }
 
     /**
      * Deletes this studentQuestionAnswer
      */
     deleteAnswer(): void {
-        this.studentQuestionAnswerService.delete(this.studentQuestionAnswer.id).subscribe(() => {
+        this.studentQuestionAnswerService.delete(this.studentQuestionAnswer.id!).subscribe(() => {
             this.interactAnswer.emit({
                 name: QuestionAnswerActionName.DELETE,
                 studentQuestionAnswer: this.studentQuestionAnswer,

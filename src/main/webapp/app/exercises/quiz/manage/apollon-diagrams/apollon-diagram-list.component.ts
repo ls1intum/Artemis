@@ -51,7 +51,7 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        this.apollonDiagramsService.delete(apollonDiagram.id, this.courseId).subscribe(
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {

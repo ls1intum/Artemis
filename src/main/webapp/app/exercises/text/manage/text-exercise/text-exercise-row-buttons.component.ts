@@ -18,7 +18,7 @@ export class TextExerciseRowButtonsComponent {
     constructor(private textExerciseService: TextExerciseService, private eventManager: JhiEventManager) {}
 
     deleteExercise() {
-        this.textExerciseService.delete(this.exercise.id).subscribe(
+        this.textExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',

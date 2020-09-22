@@ -145,16 +145,16 @@ export class QuizExerciseService {
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
-    exportQuiz(quizQuestions: QuizQuestion[], exportAll: boolean) {
+    exportQuiz(quizQuestions?: QuizQuestion[], exportAll?: boolean) {
         // Make list of questions which we need to export,
         const questions: QuizQuestion[] = [];
-        for (const question of quizQuestions) {
-            if (exportAll || question.exportQuiz) {
-                delete question.quizQuestionStatistic;
-                delete question.exercise;
+        quizQuestions!.forEach((question) => {
+            if (exportAll === true || question.exportQuiz) {
+                question.quizQuestionStatistic = undefined;
+                question.exercise = undefined;
                 questions.push(question);
             }
-        }
+        });
         if (questions.length === 0) {
             return;
         }

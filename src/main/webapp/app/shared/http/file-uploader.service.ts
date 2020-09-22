@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 export interface FileUploadResponse {
-    path: string;
+    path?: string;
 }
 
 type Options = {

@@ -94,6 +94,6 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, undefined);
+        this.jhiAlertService.error(errorMessage);
     }
 }

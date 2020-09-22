@@ -44,7 +44,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     ngOnInit(): void {
         this.isSaving = false;
-        this.quizExerciseService.find(this.quizExercise.id).subscribe((res) => {
+        this.quizExerciseService.find(this.quizExercise.id!).subscribe((res) => {
             this.backUpQuiz = res.body!;
             this.loadQuizSuccess();
         });
@@ -70,12 +70,12 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     loadQuizSuccess(): void {
         // question deleted?
-        this.questionDeleted = this.backUpQuiz.quizQuestions.length !== this.quizExercise.quizQuestions.length;
+        this.questionDeleted = this.backUpQuiz.quizQuestions!.length !== this.quizExercise.quizQuestions!.length;
 
         // check each question
-        this.quizExercise.quizQuestions.forEach((question) => {
+        this.quizExercise.quizQuestions!.forEach((question) => {
             // find same question in backUp (necessary if the order has been changed)
-            const backUpQuestion = this.backUpQuiz.quizQuestions.find((questionBackUp) => question.id === questionBackUp.id)!;
+            const backUpQuestion = this.backUpQuiz.quizQuestions?.find((questionBackUp) => question.id === questionBackUp.id)!;
 
             this.checkQuestion(question, backUpQuestion);
         });
@@ -89,7 +89,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * @param backUpQuestion original not changed question
      */
     checkQuestion(question: QuizQuestion, backUpQuestion: QuizQuestion): void {
-        if (backUpQuestion !== null) {
+        if (backUpQuestion) {
             // question set invalid?
             if (question.invalid !== backUpQuestion.invalid) {
                 this.questionInvalid = true;
@@ -130,7 +130,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             // only check if there are no changes on the question-elements yet
             if (!this.questionCorrectness || !this.questionElementInvalid) {
                 const backUpAnswer = backUpQuestion.answerOptions!.find((answerBackUp) => answerBackUp.id === answer.id);
-                if (backUpAnswer != null) {
+                if (backUpAnswer) {
                     // answer set invalid?
                     if (answer.invalid !== backUpAnswer.invalid) {
                         this.questionElementInvalid = true;
@@ -153,7 +153,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkDragAndDropQuestion(question: DragAndDropQuestion, backUpQuestion: DragAndDropQuestion): void {
         // check if a dropLocation or dragItem was deleted
-        if (question.dragItems.length !== backUpQuestion.dragItems.length || question.dropLocations.length !== backUpQuestion.dropLocations.length) {
+        if (question.dragItems!.length !== backUpQuestion.dragItems!.length || question.dropLocations!.length !== backUpQuestion.dropLocations!.length) {
             this.questionElementDeleted = true;
         }
         // check if the correct Mappings has changed
@@ -163,18 +163,18 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         // only check if there are no changes on the question-elements yet
         if (!this.questionElementInvalid) {
             // check each dragItem
-            question.dragItems.forEach((dragItem) => {
-                const backUpDragItem = backUpQuestion.dragItems.find((dragItemBackUp) => dragItemBackUp.id === dragItem.id);
+            question.dragItems!.forEach((dragItem) => {
+                const backUpDragItem = backUpQuestion.dragItems?.find((dragItemBackUp) => dragItemBackUp.id === dragItem.id);
                 // dragItem set invalid?
-                if (backUpDragItem != null && dragItem.invalid !== backUpDragItem.invalid) {
+                if (backUpDragItem && dragItem.invalid !== backUpDragItem.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
             // check each dropLocation
-            question.dropLocations.forEach((dropLocation) => {
-                const backUpDropLocation = backUpQuestion.dropLocations.find((dropLocationBackUp) => dropLocationBackUp.id === dropLocation.id);
+            question.dropLocations!.forEach((dropLocation) => {
+                const backUpDropLocation = backUpQuestion.dropLocations?.find((dropLocationBackUp) => dropLocationBackUp.id === dropLocation.id);
                 // dropLocation set invalid?
-                if (backUpDropLocation != null && dropLocation.invalid !== backUpDropLocation.invalid) {
+                if (backUpDropLocation && dropLocation.invalid !== backUpDropLocation.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
@@ -190,11 +190,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
         // check if a spot or solution was deleted
-        if (question.solutions.length < backUpQuestion.solutions.length || question.spots.length < backUpQuestion.spots.length) {
+        if (question.solutions!.length < backUpQuestion.solutions!.length || question.spots!.length < backUpQuestion.spots!.length) {
             this.questionElementDeleted = true;
         }
         // check if a spot or solution was added
-        if (question.solutions.length > backUpQuestion.solutions.length || question.spots.length > backUpQuestion.spots.length) {
+        if (question.solutions!.length > backUpQuestion.solutions!.length || question.spots!.length > backUpQuestion.spots!.length) {
             this.solutionAdded = true;
         }
 
@@ -205,8 +205,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         // only check if there are no changes on the question-elements yet
         if (!this.questionElementInvalid) {
             // check each solution
-            question.solutions.forEach((solution) => {
-                const backUpSolution = backUpQuestion.solutions.find((solutionBackUp) => {
+            question.solutions!.forEach((solution) => {
+                const backUpSolution = backUpQuestion.solutions?.find((solutionBackUp) => {
                     return solutionBackUp.id === solution.id;
                 });
                 // check if a solution was added
@@ -214,17 +214,17 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                     return;
                 }
                 // solution set invalid?
-                if (backUpSolution != null && solution.invalid !== backUpSolution.invalid) {
+                if (backUpSolution && solution.invalid !== backUpSolution.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
             // check each spot
-            question.spots.forEach((spot) => {
-                const backUpSpot = backUpQuestion.spots.find((spotBackUp) => {
+            question.spots!.forEach((spot) => {
+                const backUpSpot = backUpQuestion.spots?.find((spotBackUp) => {
                     return spotBackUp.id === spot.id;
                 });
                 // spot set invalid?
-                if (backUpSpot != null && spot.invalid !== backUpSpot.invalid) {
+                if (backUpSpot && spot.invalid !== backUpSpot.invalid) {
                     this.questionElementInvalid = true;
                 }
             });

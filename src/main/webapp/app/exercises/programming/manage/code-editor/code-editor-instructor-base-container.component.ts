@@ -2,7 +2,7 @@ import { OnDestroy, OnInit, Component, ViewChild } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { CourseExerciseService } from '../../../../course/manage/course-management.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -62,8 +62,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
     course: Course;
-    // Can only be null when the test repository is selected.
-    selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
+    // Can only be undefined when the test repository is selected.
+    selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
@@ -105,7 +105,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     catchError(() => throwError('exerciseNotFound')),
                     tap((exercise) => {
                         this.exercise = exercise;
-                        this.course = exercise.course ?? exercise.exerciseGroup!.exam!.course;
+                        this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
                     }),
                     // Set selected participation
                     tap(() => {
@@ -114,7 +114,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         } else {
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
-                                this.selectParticipationDomainById(nextAvailableParticipation.id);
+                                this.selectParticipationDomainById(nextAvailableParticipation.id!);
 
                                 // Show a consistent route in the browser
                                 if (nextAvailableParticipation.id !== participationId) {
@@ -201,7 +201,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
-            this.selectedParticipation = null;
+            this.selectedParticipation = undefined;
             this.selectedRepository = REPOSITORY.TEST;
         }
     }
@@ -213,15 +213,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     setSelectedParticipation(participationId: number) {
         // The result component needs a circular structure of participation -> exercise.
         const exercise = this.exercise;
-        if (participationId === this.exercise.templateParticipation.id) {
+        if (participationId === this.exercise.templateParticipation!.id) {
             this.selectedRepository = REPOSITORY.TEMPLATE;
             this.selectedParticipation = this.exercise.templateParticipation;
-            this.selectedParticipation.programmingExercise = exercise;
-        } else if (participationId === this.exercise.solutionParticipation.id) {
+            (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (participationId === this.exercise.solutionParticipation!.id) {
             this.selectedRepository = REPOSITORY.SOLUTION;
             this.selectedParticipation = this.exercise.solutionParticipation;
-            this.selectedParticipation.programmingExercise = exercise;
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+            (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
             this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
             this.selectedParticipation.exercise = exercise;
@@ -230,8 +230,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
     }
 
-    repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+    repositoryUrl(participation?: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUrl;
     }
 
     /**
@@ -250,7 +250,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }
@@ -260,13 +260,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     selectParticipationDomainById(participationId: number) {
-        if (participationId === this.exercise.templateParticipation.id) {
-            this.exercise.templateParticipation.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
-        } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.exercise.solutionParticipation.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+        if (participationId === this.exercise.templateParticipation!.id) {
+            this.exercise.templateParticipation!.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
+        } else if (participationId === this.exercise.solutionParticipation!.id) {
+            this.exercise.solutionParticipation!.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
+        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
             this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
         } else {
@@ -275,24 +275,32 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Select the solution participation repository and navigate to it
-     */
-    abstract selectSolutionParticipation(): void;
-
-    /**
      * Select the template participation repository and navigate to it
      */
-    abstract selectTemplateParticipation(): void;
+    selectTemplateParticipation() {
+        this.router.navigate(['..', this.exercise.templateParticipation!.id], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the solution participation repository and navigate to it
+     */
+    selectSolutionParticipation() {
+        this.router.navigate(['..', this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+    }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
-    abstract selectAssignmentParticipation(): void;
+    selectAssignmentParticipation() {
+        this.router.navigate(['..', this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+    }
 
     /**
      * Select the test repository and navigate to it
      */
-    abstract selectTestRepository(): void;
+    selectTestRepository() {
+        this.router.navigate(['..', 'test'], { relativeTo: this.route });
+    }
 
     /**
      * Creates an assignment participation for this user for this exercise.
@@ -300,7 +308,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.course.id, this.exercise.id)
+            .startExercise(this.course.id!, this.exercise.id!)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap((participation) => {
@@ -323,7 +331,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
-        const assignmentParticipationId = this.exercise.studentParticipations[0].id;
+        const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(

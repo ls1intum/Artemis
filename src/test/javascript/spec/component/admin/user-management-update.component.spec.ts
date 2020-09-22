@@ -15,7 +15,7 @@ describe('User Management Update Component', () => {
     let service: UserService;
     let mockLanguageHelper: any;
     const route = ({
-        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
+        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], ['admin'], undefined, undefined, undefined) }),
     } as any) as ActivatedRoute;
 
     beforeEach(async(() => {

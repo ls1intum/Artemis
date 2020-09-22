@@ -458,7 +458,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 }
 
-const entityToString = (entity: BaseEntity) => entity.id.toString();
+const entityToString = (entity: BaseEntity) => entity.id!.toString();
 
 /**
  * Default on search wrapper that simply strips the search text and passes on the results.

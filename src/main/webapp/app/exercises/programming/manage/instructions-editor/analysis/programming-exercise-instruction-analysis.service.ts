@@ -87,7 +87,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             .map(
                 ([lineNumber, hints]): AnalysisItem => [
                     lineNumber,
-                    hints.filter((hint) => !exerciseHints.some((exerciseHint) => exerciseHint.id.toString(10) === hint)),
+                    hints.filter((hint) => !exerciseHints.some((exerciseHint) => exerciseHint.id!.toString(10) === hint)),
                     ProblemStatementIssue.INVALID_HINTS,
                 ],
             )

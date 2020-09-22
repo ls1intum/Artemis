@@ -14,6 +14,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Annotation } from '../ace/code-editor-ace.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { findLatestResult } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -33,7 +34,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     isBuilding: boolean;
     rawBuildLogs = new BuildLogEntryArray();
-    result: Result;
+    result?: Result;
 
     /** Resizable constants **/
     resizableMinHeight = 150;
@@ -77,8 +78,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.setupResultWebsocket();
         }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
-        if (participationChange && this.participation.results && this.participation.results.length) {
-            const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
+        if (participationChange && this.participation?.results?.length) {
+            const latestResult = findLatestResult(this.participation.results);
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
@@ -109,13 +110,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     private extractAnnotations() {
         const buildLogErrors = this.rawBuildLogs.extractErrors();
-        const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
+        const codeAnalysisIssues = (this.result?.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
             text: f.detailText || '',
             fileName: 'src/' + (f.reference?.split(':')[0] || '').split('.').join('/') + '.java', // TODO support other files
             row: parseInt(f.reference?.split(':')[1] || '0', 10) - 1,
             column: 0,
             type: 'warning', // TODO encode type in feedback
-            timestamp: this.result.completionDate != null ? new Date(this.result.completionDate.toString()).valueOf() : 0,
+            timestamp: this.result?.completionDate ? new Date(this.result.completionDate.toString()).valueOf() : 0,
         }));
         this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisIssues]);
     }
@@ -139,9 +140,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, true)
+            .subscribeForLatestResultOfParticipation(this.participation.id!, true)
             .pipe(
-                // Ignore initial null result from service
+                // Ignore initial null/undefined result from service
                 filter((result) => !!result),
                 tap((result) => (this.result = result!)),
                 switchMap((result) => this.fetchBuildResults(result)),
@@ -151,7 +152,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
-                    return Observable.of(null);
+                    return Observable.of(undefined);
                 }),
             )
             .subscribe(() => this.extractAnnotations());
@@ -163,7 +164,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -186,7 +187,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * Fetch the build logs if a result is available and no submission is available or the submission could not be build
      * @param result
      */
-    fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
+    fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | null> {
         if (result && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
             return this.getBuildLogs();
         } else {
@@ -198,7 +199,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
-     * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any) {
         this.onToggleCollapse.emit({

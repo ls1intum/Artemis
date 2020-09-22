@@ -17,14 +17,14 @@ export enum UMLDiagramType {
 }
 
 export class ModelingExercise extends Exercise {
-    public diagramType: UMLDiagramType;
-    public sampleSolutionModel: string;
-    public sampleSolutionExplanation: string;
+    public diagramType?: UMLDiagramType;
+    public sampleSolutionModel?: string;
+    public sampleSolutionExplanation?: string;
 
-    constructor(diagramType: UMLDiagramType, course?: Course | null, exerciseGroup?: ExerciseGroup | null) {
+    constructor(diagramType: UMLDiagramType, course?: Course, exerciseGroup?: ExerciseGroup) {
         super(ExerciseType.MODELING);
-        this.course = course || null;
-        this.exerciseGroup = exerciseGroup || null;
+        this.course = course;
+        this.exerciseGroup = exerciseGroup;
         this.diagramType = diagramType;
         // default value
         if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {

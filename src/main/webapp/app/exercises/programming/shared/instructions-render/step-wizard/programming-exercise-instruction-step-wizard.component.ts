@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
     TestCaseState = TestCaseState;
 
-    @Input() latestResult: Result | null;
+    @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
 
     steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;

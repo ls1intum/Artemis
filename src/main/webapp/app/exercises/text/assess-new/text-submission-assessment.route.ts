@@ -9,7 +9,7 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 
 @Injectable({ providedIn: 'root' })
-export class StudentParticipationResolver implements Resolve<StudentParticipation | null> {
+export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
     constructor(private textAssessmentsService: TextAssessmentsService) {}
 
     /**
@@ -20,14 +20,14 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
         const submissionId = Number(route.paramMap.get('submissionId'));
 
         if (submissionId) {
-            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(null));
+            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(undefined));
         }
-        return Observable.of(null);
+        return Observable.of(undefined);
     }
 }
 
 @Injectable({ providedIn: 'root' })
-export class NewStudentParticipationResolver implements Resolve<StudentParticipation | null> {
+export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
     constructor(private textSubmissionService: TextSubmissionService) {}
 
     /**
@@ -41,9 +41,9 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
             return this.textSubmissionService
                 .getTextSubmissionForExerciseWithoutAssessment(exerciseId, 'lock')
                 .map((submission) => <StudentParticipation>submission.participation)
-                .catch(() => Observable.of(null));
+                .catch(() => Observable.of(undefined));
         }
-        return Observable.of(null);
+        return Observable.of(undefined);
     }
 }
 

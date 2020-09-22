@@ -109,7 +109,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes of the text exercise.
      */
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id));
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id!));
     }
 
     checkPlagiarismJson() {
@@ -139,8 +139,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 const csvData = data.map((dto) => {
                     const submissionA = dto.submissions[0];
                     const submissionB = dto.submissions[1];
-                    const studentA = (submissionA.participation as StudentParticipation).student;
-                    const studentB = (submissionB.participation as StudentParticipation).student;
+                    const studentA = (submissionA.participation as StudentParticipation).student!;
+                    const studentB = (submissionB.participation as StudentParticipation).student!;
                     return Object.assign(
                         {
                             'Student A': fullname(studentA),
@@ -159,7 +159,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     private checkPlagiarism(completionHandler: (data: Array<SubmissionComparisonDTO>) => void) {
         this.checkPlagiarismInProgress = true;
-        this.textExerciseService.checkPlagiarism(this.textExercise.id).subscribe(
+        this.textExerciseService.checkPlagiarism(this.textExercise.id!).subscribe(
             (response: HttpResponse<Array<SubmissionComparisonDTO>>) => {
                 this.checkPlagiarismInProgress = false;
                 completionHandler(response.body!);

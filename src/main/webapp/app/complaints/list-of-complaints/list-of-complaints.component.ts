@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -83,7 +83,7 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            (err: HttpErrorResponse) => this.onError(err.message),
+            () => this.onError(),
             () => (this.loading = false),
         );
     }
@@ -115,9 +115,8 @@ export class ListOfComplaintsComponent implements OnInit {
         }
     }
 
-    private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error('error.http.400', null, undefined);
+    private onError() {
+        this.jhiAlertService.error('error.http.400');
     }
 
     back() {

@@ -10,12 +10,10 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
  * @param projectKey The project key of the programming exercise
  * @param buildPlanId The ID of the build plan for which to construct the URL
  */
-export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | null => {
+export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string) => {
     if (template && projectKey && buildPlanId) {
         return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
     }
-
-    return null;
 };
 
 @Directive({ selector: 'a[jhiBuildPlanLink]' })
@@ -26,7 +24,7 @@ export class BuildPlanLinkDirective implements OnInit {
     private participationBuildPlanId: string;
     private exerciseProjectKey: string;
     private templateLink: string;
-    private linkToBuildPlan: string | null;
+    private linkToBuildPlan?: string;
 
     constructor(private profileService: ProfileService) {}
 

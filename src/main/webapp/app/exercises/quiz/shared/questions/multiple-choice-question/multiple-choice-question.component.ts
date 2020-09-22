@@ -24,8 +24,9 @@ export class MultipleChoiceQuestionComponent {
     get question(): MultipleChoiceQuestion {
         return this._question;
     }
+    // TODO: Map vs. Array --> consistency
     @Input()
-    selectedAnswerOptions: AnswerOption[];
+    selectedAnswerOptions: Map<number, AnswerOption[]>;
     @Input()
     clickDisabled: boolean;
     @Input()
@@ -78,9 +79,10 @@ export class MultipleChoiceQuestionComponent {
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
+            const options = this.selectedAnswerOptions.get(this.questionIndex)?.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id) || [];
+            this.selectedAnswerOptions.set(this.questionIndex, options);
         } else {
-            this.selectedAnswerOptions.push(answerOption);
+            this.selectedAnswerOptions.get(this.questionIndex)!.push(answerOption);
         }
         this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
@@ -95,8 +97,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions != null &&
-            this.selectedAnswerOptions.findIndex(function (selected) {
+            this.selectedAnswerOptions.get(this.questionIndex)?.findIndex((selected) => {
                 return selected.id === answerOption.id;
             }) !== -1
         );

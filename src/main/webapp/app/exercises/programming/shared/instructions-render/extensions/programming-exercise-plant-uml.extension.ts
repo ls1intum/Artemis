@@ -11,7 +11,7 @@ import { Result } from 'app/entities/result.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    private latestResult: Result | null = null;
+    private latestResult?: Result;
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
@@ -20,9 +20,9 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     /**
      * Sets latest result according to parameter.
-     * @param result - either a result or null.
+     * @param result - either a result or undefined.
      */
-    public setLatestResult(result: Result | null) {
+    public setLatestResult(result?: Result) {
         this.latestResult = result;
     }
 

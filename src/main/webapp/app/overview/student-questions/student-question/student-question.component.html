@@ -31,7 +31,7 @@
         <div class="col question-text markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
     </div>
     <div class="row pl-2 mb-2">
-        <span class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | artemisDate: 'short' }}</span>
+        <span class="text-black-50 question-subtitle">{{ studentQuestion.author!.name }} - {{ studentQuestion.creationDate | artemisDate: 'short' }}</span>
     </div>
 </ng-container>
 <!-- question in edit mode -->

@@ -32,7 +32,8 @@ export class AssessmentInstructionsComponent {
         this.exercise = exercise;
         this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);
         this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
-        this.criteria = exercise.gradingCriteria;
+        // make sure the array is initialized
+        this.criteria = exercise.gradingCriteria || [];
 
         let sampleSolutionMarkdown: string | undefined;
         switch (exercise.type) {

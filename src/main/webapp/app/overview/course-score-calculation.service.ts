@@ -31,9 +31,9 @@ export class CourseScoreCalculationService {
             if (exercise.maxScore != null && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
                 maxScore = maxScore + exercise.maxScore;
                 const participation = this.getParticipationForExercise(exercise);
-                if (participation !== null) {
+                if (participation) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
-                    if (result !== null && result.rated) {
+                    if (result && result.rated) {
                         let score = result.score;
                         // this should cover score is undefined and score is null
                         if (score == null) {
@@ -42,7 +42,7 @@ export class CourseScoreCalculationService {
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
                         reachableScore += exercise.maxScore;
                     }
-                    presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
+                    presentationScore += participation.presentationScore ? participation.presentationScore : 0;
 
                     // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
                     if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
@@ -102,28 +102,26 @@ export class CourseScoreCalculationService {
         this.courses = courses;
     }
 
-    getCourse(courseId: number): Course | null {
-        return this.courses.find((course) => course.id === courseId) || null;
+    getCourse(courseId: number) {
+        return this.courses.find((course) => course.id === courseId);
     }
 
-    getParticipationForExercise(exercise: Exercise): Participation | null {
+    getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations != null && exercise.studentParticipations.length > 0) {
             const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
             return CourseScoreCalculationService.convertDateForParticipationFromServer(exerciseParticipation);
-        } else {
-            return null;
         }
     }
 
-    getResultForParticipation(participation: Participation, dueDate: Moment): Result | null {
-        if (participation === null) {
-            return null;
+    getResultForParticipation(participation: Participation | undefined, dueDate: Moment) {
+        if (!participation) {
+            return undefined;
         }
-        const results: Result[] = participation.results;
+        const results = participation.results;
         const resultsArray: Result[] = [];
         let chosenResult: Result;
 
-        if (results !== undefined) {
+        if (results) {
             for (let i = 0; i < results.length; i++) {
                 resultsArray.push(CourseScoreCalculationService.convertDateForResultFromServer(results[i]));
             }
@@ -170,12 +168,12 @@ export class CourseScoreCalculationService {
     }
 
     private static convertDateForResultFromServer(result: Result): Result {
-        result.completionDate = result.completionDate ? moment(result.completionDate) : null;
+        result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
         return result;
     }
 
     private static convertDateForParticipationFromServer(participation: Participation): Participation {
-        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
+        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
         return participation;
     }
 }

@@ -30,7 +30,7 @@
                         </div>
                     </div>
                     <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
-                    <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern.split(',')">
+                    <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern!.split(',')">
                         <span class="ml-1 badge badge-info">
                             {{ extension | uppercase }}
                         </span>
@@ -48,7 +48,7 @@
                 {{ submittedFileExtension | uppercase }}
             </span>
         </div>
-        <div *ngIf="result?.feedbacks && result.feedbacks.length > 0">
+        <div *ngIf="result && result.feedbacks && result.feedbacks.length > 0">
             <br />
             <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
             <jhi-file-upload-result [result]="result"></jhi-file-upload-result>

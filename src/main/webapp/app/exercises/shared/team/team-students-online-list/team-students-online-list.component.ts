@@ -79,7 +79,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     get team(): Team {
-        return this.participation.team;
+        return this.participation.team!;
     }
 
     /**
@@ -90,11 +90,11 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     get self(): User | undefined {
-        return this.team.students.find(this.isSelf);
+        return this.team.students?.find(this.isSelf);
     }
 
     get otherStudents(): User[] {
-        return this.team.students.filter(this.isOther);
+        return this.team.students?.filter(this.isOther) || [];
     }
 
     isSelf = (user: User): boolean => {

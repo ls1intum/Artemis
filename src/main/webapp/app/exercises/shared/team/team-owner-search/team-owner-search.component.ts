@@ -108,7 +108,7 @@ export class TeamOwnerSearchComponent implements OnInit {
      */
     loadOwnerOptions() {
         return this.courseService
-            .getAllUsersInCourseGroup(this.course.id, CourseGroup.TUTORS)
+            .getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS)
             .pipe(map((usersResponse) => usersResponse.body!))
             .pipe(
                 tap((ownerOptions) => {

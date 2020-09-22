@@ -3,12 +3,12 @@
     [draggable]="true"
     (drop)="connectStructuredGradingInstructionsWithTextBlock($event)"
     (dragover)="$event.preventDefault()"
-    [innerText]="textBlockRef.block.text"
+    [innerText]="textBlockRef.block!.text"
     (click)="select()"
     [class.text-with-feedback]="!!textBlockRef.feedback"
     [class.active]="selected"
-    [class.positive-feedback]="textBlockRef.feedback?.credits > 0"
-    [class.negative-feedback]="textBlockRef.feedback?.credits < 0"
+    [class.positive-feedback]="textBlockRef.feedback?.credits! > 0"
+    [class.negative-feedback]="textBlockRef.feedback?.credits! < 0"
     [class.neutral-feedback]="textBlockRef.feedback?.credits === 0"
 ></span>
 <!-- Display Feedback Editor -->

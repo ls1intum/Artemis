@@ -40,9 +40,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participation: ProgrammingExerciseStudentParticipation;
     participationForManualResult: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
-    submission: ProgrammingSubmission | null;
-    manualResult: Result | null;
-    automaticResult: Result | null;
+    submission?: ProgrammingSubmission;
+    manualResult?: Result;
+    automaticResult?: Result;
     userId: number;
     // for assessment-layout
     isLoading = false;
@@ -59,9 +59,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
+
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
     }
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -140,7 +142,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
 
-        this.manualResultService.save(this.participation.id, this.manualResult!).subscribe(
+        this.manualResultService.save(this.participation.id!, this.manualResult!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
@@ -152,7 +154,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
 
-        this.manualResultService.save(this.participation.id, this.manualResult!, true).subscribe(
+        this.manualResultService.save(this.participation.id!, this.manualResult!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
@@ -175,13 +177,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+        this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exercise.id!).subscribe(
             (response: ProgrammingSubmission) => {
                 const unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.navigateByUrl(
-                    `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation.id}/assessment`,
+                    `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`,
                     {},
                 );
             },
@@ -203,17 +205,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks, complaintResponse, this.manualResult!, this.manualResult!.submission!.id).subscribe(
-            (result: Result) => {
-                this.manualResult = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-            },
-            () => {
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
-            },
-        );
+        if (this.manualResult) {
+            this.manualResultService.updateAfterComplaint(this.manualResult.feedbacks!, complaintResponse, this.manualResult, this.manualResult.submission!.id!).subscribe(
+                (result: Result) => {
+                    this.manualResult = result;
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                },
+                () => {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                },
+            );
+        }
     }
 
     navigateBack() {
@@ -249,7 +253,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation!.results[0] = this.manualResult = response.body!;
+        this.participation!.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
@@ -278,18 +282,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
-    private getLatestResult(results: Result[]): Result | null {
-        return _orderBy(results, 'id', 'desc')[0] ?? null;
+    private getLatestResult(results?: Result[]) {
+        return _orderBy(results, 'id', 'desc')[0] ?? undefined;
     }
 
-    private getLatestAutomaticResult(results: Result[]): Result | null {
-        const automaticResults = results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
-        return _orderBy(automaticResults, 'id', 'desc')[0] ?? null;
+    private getLatestAutomaticResult(results?: Result[]) {
+        const automaticResults = results?.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC);
+        return _orderBy(automaticResults, 'id', 'desc')[0] ?? undefined;
     }
 
-    private getLatestManualResult(results: Result[]): Result | null {
-        const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        return _orderBy(manualResults, 'id', 'desc')[0] ?? null;
+    private getLatestManualResult(results?: Result[]): Result {
+        const manualResults = results?.filter((result) => result.assessmentType === AssessmentType.MANUAL);
+        return _orderBy(manualResults, 'id', 'desc')[0] ?? undefined;
     }
 
     /**
@@ -309,7 +313,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getComplaint(): void {
-        this.complaintService.findByResultId(this.manualResult!.id).subscribe(
+        this.complaintService.findByResultId(this.manualResult!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

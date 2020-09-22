@@ -21,8 +21,8 @@ import { FormControl, AbstractControl, FormGroup } from '@angular/forms';
 export class UserManagementComponent implements OnInit, OnDestroy {
     search = new Subject<string>();
     loadingSearchResult = false;
-    currentAccount: User | null = null;
-    users: User[] | null = null;
+    currentAccount?: User;
+    users: User[];
     userListSubscription?: Subscription;
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -61,7 +61,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe(
                 (res: HttpResponse<User[]>) => {
                     this.loadingSearchResult = false;
-                    this.onSuccess(res.body, res.headers);
+                    this.onSuccess(res.body || [], res.headers);
                 },
                 (res: HttpErrorResponse) => {
                     this.loadingSearchResult = false;
@@ -165,7 +165,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         );
     }
 
-    private onSuccess(users: User[] | null, headers: HttpHeaders) {
+    private onSuccess(users: User[], headers: HttpHeaders) {
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.users = users;
     }

@@ -50,7 +50,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.submissionStateSubscription = this.programmingSubmissionService
-                .getSubmissionStateOfExercise(this.exercise.id)
+                .getSubmissionStateOfExercise(this.exercise.id!)
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
@@ -70,9 +70,9 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions = true;
-        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise.id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
-            .triggerInstructorBuildForParticipationsOfExercise(this.exercise.id, failedSubmissionParticipations)
+            .triggerInstructorBuildForParticipationsOfExercise(this.exercise.id!, failedSubmissionParticipations)
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 

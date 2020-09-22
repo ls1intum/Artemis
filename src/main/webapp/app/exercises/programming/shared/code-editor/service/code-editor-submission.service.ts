@@ -14,8 +14,8 @@ import { DomainDependentService } from 'app/exercises/programming/shared/code-ed
  */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
-    private participationId: number | null;
-    private exerciseId: number | null;
+    private participationId?: number;
+    private exerciseId?: number;
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
@@ -47,17 +47,19 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             // There is no differentiation between the participation types atm.
             // This could be implemented in the domain service, but this would make the implementation more complicated, too.
             this.exerciseId = (domainValue as StudentParticipation).exercise
-                ? (domainValue as StudentParticipation).exercise.id
-                : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
+                ? (domainValue as StudentParticipation).exercise?.id
+                : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise?.id;
             const personalParticipation = !!(domainValue as StudentParticipation).exercise;
-            this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
-                .pipe(
-                    tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
-                    map(({ submission }) => !!submission),
-                    tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
-                )
-                .subscribe();
+            if (this.participationId && this.exerciseId) {
+                this.submissionSubscription = this.submissionService
+                    .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
+                    .pipe(
+                        tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
+                        map(({ submission }) => !!submission),
+                        tap((isBuilding: boolean) => this.isBuildingSubject.next(isBuilding)),
+                    )
+                    .subscribe();
+            }
         } else if (domainType === DomainType.TEST_REPOSITORY) {
             // There are no submissions for the test repository, so it is never building.
             this.isBuildingSubject.next(false);

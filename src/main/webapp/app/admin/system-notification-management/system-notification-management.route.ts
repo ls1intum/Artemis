@@ -16,7 +16,7 @@ export class SystemNotificationManagementResolve implements Resolve<any> {
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(parseInt(id, 10));
         }

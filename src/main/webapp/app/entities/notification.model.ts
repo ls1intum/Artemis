@@ -10,13 +10,13 @@ export enum NotificationType {
 }
 
 export class Notification implements BaseEntity {
-    public id: number;
-    public notificationType: NotificationType;
-    public title: string;
-    public text: string;
-    public notificationDate: Moment | null;
-    public target: string;
-    public author: User;
+    public id?: number;
+    public notificationType?: NotificationType;
+    public title?: string;
+    public text?: string;
+    public notificationDate?: Moment;
+    public target?: string;
+    public author?: User;
 
     protected constructor(notificationType: NotificationType) {
         this.notificationType = notificationType;

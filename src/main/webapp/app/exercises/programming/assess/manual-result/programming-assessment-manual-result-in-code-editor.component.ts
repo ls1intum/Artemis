@@ -86,7 +86,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
         } else {
             this.isLoading = true;
             this.resultService
-                .getFeedbackDetailsForResult(this.result.id)
+                .getFeedbackDetailsForResult(this.result.id!)
                 .pipe(
                     tap(({ body: feedbacks }) => {
                         this.feedbacks = feedbacks!;
@@ -119,12 +119,12 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
                     this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     if (!!this.exercise.exerciseGroup) {
-                        const exam = this.participation.exercise.exerciseGroup!.exam!;
+                        const exam = this.participation.exercise!.exerciseGroup!.exam!;
                         this.examManagementService
-                            .getLatestIndividualEndDateOfExam(exam.course!.id, exam.id)
+                            .getLatestIndividualEndDateOfExam(exam.course!.id!, exam.id!)
                             .subscribe((res: HttpResponse<ExamInformationDTO>) => (this.isOpenForSubmission = res.body!.latestIndividualEndDate.isAfter(moment())));
                     } else {
-                        this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+                        this.isOpenForSubmission = !this.participation.exercise?.dueDate || this.participation.exercise.dueDate.isAfter(moment());
                     }
                 }),
                 catchError((err: any) => {
@@ -169,15 +169,18 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     writable() {
         // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
         // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
-        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined && this.result.assessor.id !== this.user.id);
+        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined && this.result.assessor!.id !== this.user.id);
     }
+
     /**
      * Updates if the result is successful (score of 100%) or not
      * and emits the updated result to the parent component
      */
     updateResultSuccess() {
-        this.result.successful = this.result.score >= 100;
-        this.onResultModified.emit(this.result);
+        if (this.result.score) {
+            this.result.successful = this.result.score >= 100;
+            this.onResultModified.emit(this.result);
+        }
     }
 
     /**

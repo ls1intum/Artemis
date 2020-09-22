@@ -41,8 +41,8 @@ export class ExamResolve implements Resolve<Exam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
+        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
+        const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents).pipe(
@@ -64,9 +64,9 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
-        const exerciseGroupId = route.params['exerciseGroupId'] ? route.params['exerciseGroupId'] : null;
+        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
+        const examId = route.params['examId'] ? route.params['examId'] : undefined;
+        const exerciseGroupId = route.params['exerciseGroupId'] ? route.params['exerciseGroupId'] : undefined;
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
@@ -87,9 +87,9 @@ export class StudentExamResolve implements Resolve<StudentExam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
-        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : null;
+        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
+        const examId = route.params['examId'] ? route.params['examId'] : undefined;
+        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : undefined;
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),

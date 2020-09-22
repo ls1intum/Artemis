@@ -42,6 +42,7 @@
             <span>[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
         </h4>
         <div *ngFor="let question of exercise.quizQuestions; let i = index">
+            <!-- TODO: Map vs Array consistency -->
             <jhi-multiple-choice-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === MULTIPLE_CHOICE"
@@ -51,6 +52,7 @@
                 [submittedQuizExercise]="exercise"
                 [questionIndex]="i + 1"
             ></jhi-multiple-choice-question>
+            <!-- TODO: Map vs Array consistency -->
             <jhi-drag-and-drop-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === DRAG_AND_DROP"
@@ -59,6 +61,7 @@
                 [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
             ></jhi-drag-and-drop-question>
+            <!-- TODO: Map vs Array consistency -->
             <jhi-short-answer-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === SHORT_ANSWER"

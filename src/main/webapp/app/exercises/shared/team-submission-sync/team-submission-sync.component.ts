@@ -62,8 +62,10 @@ export class TeamSubmissionSyncComponent implements OnInit {
     private setupSender() {
         this.submission$.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
             (submission: Submission) => {
-                delete submission.participation?.exercise;
-                delete submission.participation?.submissions;
+                if (submission.participation) {
+                    submission.participation.exercise = undefined;
+                    submission.participation.submissions = [];
+                }
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), submission);
             },
             (error) => this.onError(error),
@@ -79,7 +81,6 @@ export class TeamSubmissionSyncComponent implements OnInit {
     }
 
     private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 }

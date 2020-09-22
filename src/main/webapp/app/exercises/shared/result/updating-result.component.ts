@@ -35,7 +35,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showTestNames = false;
     @Input() personalParticipation = true;
 
-    result: Result | null;
+    result?: Result;
     isBuilding: boolean;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
@@ -55,7 +55,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
-            this.result = latestResult ? { ...latestResult, participation: this.participation } : null;
+            this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
@@ -70,11 +70,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnDestroy() {
         if (this.resultSubscription) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id, this.exercise);
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise);
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
-            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.participation.id);
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.participation.id!);
             this.submissionSubscription.unsubscribe();
         }
     }
@@ -87,13 +87,13 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
+            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
-                filter((result: Result) => this.showUngradedResults || result.rated),
-                map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : null, participation: this.participation })),
+                filter((result: Result) => this.showUngradedResults || result.rated === true),
+                map((result) => ({ ...result, completionDate: result.completionDate ? moment(result.completionDate) : undefined, participation: this.participation })),
                 tap((result) => (this.result = result)),
             )
             .subscribe();
@@ -108,7 +108,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id, this.personalParticipation)
+            .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
                 // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
                 // (otherwise the building animation will be shown even though not relevant).

@@ -25,7 +25,7 @@ export class TeamExerciseSearchComponent implements OnInit {
     @Output() searching = new EventEmitter<boolean>();
     @Output() searchQueryTooShort = new EventEmitter<boolean>();
     @Output() searchFailed = new EventEmitter<boolean>();
-    @Output() searchNoResults = new EventEmitter<string | null>();
+    @Output() searchNoResults = new EventEmitter<string | undefined>();
 
     exercise: Exercise;
     exerciseOptions: Exercise[] = [];
@@ -61,7 +61,7 @@ export class TeamExerciseSearchComponent implements OnInit {
      * @param {Exercise} exercise - Exercise to search through
      */
     searchMatchesExercise(searchTerm: string, exercise: Exercise) {
-        return exercise.title.toLowerCase().includes(searchTerm.toLowerCase());
+        return exercise.title!.toLowerCase().includes(searchTerm.toLowerCase());
     }
 
     onSearch = (text$: Observable<string>) => {
@@ -70,7 +70,7 @@ export class TeamExerciseSearchComponent implements OnInit {
 
         return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
             tap(() => {
-                this.searchNoResults.emit(null);
+                this.searchNoResults.emit(undefined);
             }),
             switchMap((searchTerm) => {
                 this.searchFailed.emit(false);
@@ -83,7 +83,7 @@ export class TeamExerciseSearchComponent implements OnInit {
             switchMap(([searchTerm, exerciseOptions]) => {
                 // Filter list of all exercise options by the search term
                 const match = (exercise: Exercise) => this.searchMatchesExercise(searchTerm, exercise);
-                return combineLatest([of(searchTerm), of(exerciseOptions === null ? exerciseOptions : exerciseOptions.filter(match))]);
+                return combineLatest([of(searchTerm), of(!exerciseOptions ? exerciseOptions : exerciseOptions.filter(match))]);
             }),
             tap(([searchTerm, exerciseOptions]) => {
                 if (exerciseOptions && exerciseOptions.length === 0) {
@@ -100,8 +100,8 @@ export class TeamExerciseSearchComponent implements OnInit {
      */
     loadExerciseOptions() {
         return this.courseService
-            .findWithExercises(this.course.id)
-            .pipe(map((courseResponse) => courseResponse.body!.exercises))
+            .findWithExercises(this.course.id!)
+            .pipe(map((courseResponse) => courseResponse.body!.exercises || []))
             .pipe(map((exercises) => exercises.filter((exercise) => exercise.teamMode)))
             .pipe(map((exercises) => exercises.filter((exercise) => !this.ignoreExercises.map((e) => e.id).includes(exercise.id))))
             .pipe(

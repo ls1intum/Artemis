@@ -122,7 +122,10 @@ export class ExerciseService {
      * @param { Exercise[] } exercises - Considered exercises
      * @param { number} delayInDays - If set, amount of days that are considered
      */
-    getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
+    getNextExerciseForDays(exercises?: Exercise[], delayInDays = 7) {
+        if (!exercises) {
+            return undefined;
+        }
         return exercises.find((exercise) => {
             const dueDate = exercise.dueDate!;
             return moment().isBefore(dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(dueDate);
@@ -134,16 +137,16 @@ export class ExerciseService {
      * @param { Exercise[] } exercises - Considered exercises
      * @param { number} delayInHours - If set, amount of hours that are considered
      */
-    getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise | undefined {
+    getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12) {
         // check for quiz exercise in order to prioritize before other exercise types
-        const nextQuizExercises: Exercise[] = exercises.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
+        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
         return (
             // 1st priority is an active quiz
-            nextQuizExercises.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
             // 2nd priority is a visible quiz
-            nextQuizExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
             // 3rd priority is the next due exercise
-            exercises.find((exercise) => {
+            exercises?.find((exercise) => {
                 const dueDate = exercise.dueDate!;
                 return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
@@ -163,11 +166,13 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise from server whose date is adjusted
      * @returns { Exercise } - Exercise with adjusted times
      */
-    convertExerciseDateFromServer(exercise: Exercise): Exercise {
-        exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-        exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
-        exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : null;
-        exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
+    convertExerciseDateFromServer(exercise?: Exercise) {
+        if (exercise) {
+            exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : undefined;
+            exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : undefined;
+            exercise.assessmentDueDate = exercise.assessmentDueDate ? moment(exercise.assessmentDueDate) : undefined;
+            exercise.studentParticipations = this.participationService.convertParticipationsDateFromServer(exercise.studentParticipations);
+        }
         return exercise;
     }
 
@@ -176,11 +181,14 @@ export class ExerciseService {
      * @param { Exercise[] } exercises - Array of server-exercises whose date are adjusted
      * @returns { Exercise[] } - Array of exercises with adjusted times
      */
-    convertExercisesDateFromServer(exercises: Exercise[]): Exercise[] {
+    convertExercisesDateFromServer(exercises?: Exercise[]): Exercise[] {
         const convertedExercises: Exercise[] = [];
-        if (exercises != null && exercises.length > 0) {
+        if (exercises && exercises.length > 0) {
             exercises.forEach((exercise: Exercise) => {
-                convertedExercises.push(this.convertExerciseDateFromServer(exercise));
+                const convertedExercise = this.convertExerciseDateFromServer(exercise);
+                if (convertedExercise) {
+                    convertedExercises.push(convertedExercise);
+                }
             });
         }
         return convertedExercises;
@@ -192,9 +200,9 @@ export class ExerciseService {
      */
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : null,
-            dueDate: exercise.dueDate && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : null,
-            assessmentDueDate: exercise.assessmentDueDate && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : null,
+            releaseDate: exercise.releaseDate && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : undefined,
+            dueDate: exercise.dueDate && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : undefined,
+            assessmentDueDate: exercise.assessmentDueDate && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : undefined,
         });
     }
 
@@ -204,9 +212,9 @@ export class ExerciseService {
      */
     convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : null;
-            res.body.dueDate = res.body.dueDate ? moment(res.body.dueDate) : null;
-            res.body.assessmentDueDate = res.body.assessmentDueDate ? moment(res.body.assessmentDueDate) : null;
+            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
+            res.body.dueDate = res.body.dueDate ? moment(res.body.dueDate) : undefined;
+            res.body.assessmentDueDate = res.body.assessmentDueDate ? moment(res.body.assessmentDueDate) : undefined;
             res.body.studentParticipations = this.participationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;
@@ -264,10 +272,10 @@ export class ExerciseService {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
         if (copy.course) {
-            delete copy.course.exercises;
-            delete copy.course.lectures;
+            copy.course.exercises = [];
+            copy.course.lectures = [];
         }
-        delete copy.studentParticipations;
+        copy.studentParticipations = [];
         return copy;
     }
 

@@ -70,11 +70,11 @@ describe('ModelingExercise Management Update Component', () => {
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
-        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, new Course(), null);
+        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, new Course());
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment(moment.now());
-        modelingExercise.dueDate = moment(moment.now());
-        modelingExercise.assessmentDueDate = moment(moment.now());
+        modelingExercise.releaseDate = moment();
+        modelingExercise.dueDate = moment();
+        modelingExercise.assessmentDueDate = moment();
         const courseId = 1;
 
         beforeEach(() => {
@@ -91,9 +91,9 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(false);
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(null);
-            expect(comp.modelingExercise.releaseDate).toEqual(null);
-            expect(comp.modelingExercise.dueDate).toEqual(null);
+            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
+            expect(comp.modelingExercise.dueDate).toEqual(undefined);
         }));
     });
 
@@ -102,11 +102,11 @@ describe('ModelingExercise Management Update Component', () => {
         exerciseGroup.exam = new Exam();
         exerciseGroup.exam.course = new Course();
         exerciseGroup.exam.course.id = 1;
-        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, null, exerciseGroup);
+        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment(moment.now());
-        modelingExercise.dueDate = moment(moment.now());
-        modelingExercise.assessmentDueDate = moment(moment.now());
+        modelingExercise.releaseDate = moment();
+        modelingExercise.dueDate = moment();
+        modelingExercise.assessmentDueDate = moment();
         const courseId = 1;
 
         beforeEach(() => {
@@ -123,18 +123,18 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(false);
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(null);
-            expect(comp.modelingExercise.releaseDate).toEqual(null);
-            expect(comp.modelingExercise.dueDate).toEqual(null);
+            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
+            expect(comp.modelingExercise.dueDate).toEqual(undefined);
         }));
     });
 
     describe('ngOnInit in import mode: Course to Exam', () => {
-        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, new Course(), null);
+        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, new Course());
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment(moment.now());
-        modelingExercise.dueDate = moment(moment.now());
-        modelingExercise.assessmentDueDate = moment(moment.now());
+        modelingExercise.releaseDate = moment();
+        modelingExercise.dueDate = moment();
+        modelingExercise.assessmentDueDate = moment();
         const groupId = 1;
 
         beforeEach(() => {
@@ -151,20 +151,20 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(true);
-            expect(comp.modelingExercise.course).toEqual(null);
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(null);
-            expect(comp.modelingExercise.releaseDate).toEqual(null);
-            expect(comp.modelingExercise.dueDate).toEqual(null);
+            expect(comp.modelingExercise.course).toEqual(undefined);
+            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
+            expect(comp.modelingExercise.dueDate).toEqual(undefined);
         }));
     });
 
     describe('ngOnInit in import mode: Exam to Exam', () => {
         const exerciseGroup = new ExerciseGroup();
-        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, null, exerciseGroup);
+        const modelingExercise = new ModelingExercise(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.id = 1;
-        modelingExercise.releaseDate = moment(moment.now());
-        modelingExercise.dueDate = moment(moment.now());
-        modelingExercise.assessmentDueDate = moment(moment.now());
+        modelingExercise.releaseDate = moment();
+        modelingExercise.dueDate = moment();
+        modelingExercise.assessmentDueDate = moment();
         const groupId = 1;
 
         beforeEach(() => {
@@ -181,9 +181,9 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toEqual(true);
             expect(comp.isExamMode).toEqual(true);
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(null);
-            expect(comp.modelingExercise.releaseDate).toEqual(null);
-            expect(comp.modelingExercise.dueDate).toEqual(null);
+            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
+            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
+            expect(comp.modelingExercise.dueDate).toEqual(undefined);
         }));
     });
 });

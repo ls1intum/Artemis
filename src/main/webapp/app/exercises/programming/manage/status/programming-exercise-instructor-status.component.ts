@@ -7,6 +7,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { findLatestResult } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -22,7 +23,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
     @Input()
     exercise: ProgrammingExercise;
 
-    latestResult: Result | null;
+    latestResult?: Result;
     resultSubscription: Subscription;
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
@@ -33,7 +34,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            this.latestResult = this.participation.results.length ? this.participation.results.reduce((currentMax, next) => (next.id > currentMax.id ? next : currentMax)) : null;
+            this.latestResult = findLatestResult(this.participation.results);
             this.updateResultSubscription();
         }
     }
@@ -48,7 +49,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
         }
 
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, false, this.exercise.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id!, false, this.exercise.id)
             .pipe(filter((result) => !!result))
             .subscribe((result) => (this.latestResult = result));
     }

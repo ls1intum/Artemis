@@ -1,10 +1,10 @@
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | translate: { examTitle: studentExam.exam.title, studentName: studentExam.user.name } }}
+            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | translate: { examTitle: studentExam.exam.title, studentName: studentExam.user.name } }}
+            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <button class="btn btn-primary float-right" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
@@ -25,7 +25,7 @@
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <div *ngIf="resultsPublished">
-                <jhi-result [participation]="exercise.studentParticipations[0]"></jhi-result>
+                <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
             </div>
             <button
                 class="btn btn-light question-collapse"
@@ -85,8 +85,8 @@
                         *ngIf="
                             getSubmissionForExercise(exercise) &&
                             exercise.type !== QUIZ &&
-                            studentExam.exam.examStudentReviewStart &&
-                            studentExam.exam.examStudentReviewEnd &&
+                            studentExam.exam?.examStudentReviewStart &&
+                            studentExam.exam?.examStudentReviewEnd &&
                             isAfterStudentReviewStart()
                         "
                         class="mb-2 mt-2 ml-3"
@@ -110,7 +110,7 @@
                 <jhi-complaint-interactions
                     *ngIf="
                         exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC;
-                        getSubmissionForExercise: exercise && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd && isAfterStudentReviewStart()
+                        getSubmissionForExercise: exercise && studentExam.exam?.examStudentReviewStart && studentExam.exam?.examStudentReviewEnd && isAfterStudentReviewStart()
                     "
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"

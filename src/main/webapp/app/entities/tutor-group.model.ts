@@ -16,16 +16,16 @@ export const enum Language {
 }
 
 export class TutorGroup implements BaseEntity {
-    id: number;
-    name: string;
-    capacity: number;
-    weekday: Weekday;
-    timeSlot: string;
-    language: Language;
-    room: string;
-    tutor: User;
-    students: User[];
-    course: Course;
+    id?: number;
+    name?: string;
+    capacity?: number;
+    weekday?: Weekday;
+    timeSlot?: string;
+    language?: Language;
+    room?: string;
+    tutor?: User;
+    students?: User[];
+    course?: Course;
 
     constructor() {}
 }

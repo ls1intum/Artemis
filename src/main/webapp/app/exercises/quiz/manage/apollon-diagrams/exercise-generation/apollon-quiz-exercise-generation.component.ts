@@ -32,7 +32,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
     ngOnInit() {
         this.courseService.find(this.getCourseId()).subscribe((response) => {
             this.course = response.body!;
-            this.courseTitle = this.course.title;
+            this.courseTitle = this.course.title!;
         });
     }
 

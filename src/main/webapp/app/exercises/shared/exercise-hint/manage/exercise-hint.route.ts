@@ -19,7 +19,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
      * @param route Route which to resolve
      */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseHint | null> {
-        const id = route.params['hintId'] ? route.params['hintId'] : null;
+        const id = route.params['hintId'] ? route.params['hintId'] : undefined;
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<ExerciseHint>) => response.ok),

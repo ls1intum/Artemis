@@ -121,7 +121,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private checkPlagiarism(completionHandler: (data: Array<ModelingSubmissionComparisonDTO>) => void) {
         this.checkPlagiarismInProgress = true;
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
             (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
                 this.checkPlagiarismInProgress = false;
                 completionHandler(response.body!);
@@ -140,6 +140,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id));
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id!));
     }
 }

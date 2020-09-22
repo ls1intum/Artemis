@@ -22,19 +22,19 @@ describe('Markdown Service', () => {
 
         artemisMarkdown.parseTextHintExplanation(markdownString, markdownElement);
         expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.be.null;
-        expect(markdownElement.explanation).to.be.null;
+        expect(markdownElement.hint).to.be.undefined;
+        expect(markdownElement.explanation).to.be.undefined;
 
         markdownElement = new MultipleChoiceQuestion();
         artemisMarkdown.parseTextHintExplanation(`${markdownHint}`, markdownElement);
         expect(markdownElement.text).to.equal('');
         expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.be.null;
+        expect(markdownElement.explanation).to.be.undefined;
 
         markdownElement = new MultipleChoiceQuestion();
         artemisMarkdown.parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.be.null;
+        expect(markdownElement.hint).to.be.undefined;
         expect(markdownElement.explanation).to.equal(explanationText);
 
         markdownElement = new MultipleChoiceQuestion();
@@ -56,19 +56,19 @@ describe('Markdown Service', () => {
 
         artemisMarkdown.parseTextHintExplanation(markdownString, markdownElement);
         expect(markdownElement.text).to.equal(markdownString);
-        expect(markdownElement.hint).to.be.null;
-        expect(markdownElement.explanation).to.be.null;
+        expect(markdownElement.hint).to.be.undefined;
+        expect(markdownElement.explanation).to.be.undefined;
 
         markdownElement = new ShortAnswerQuestion();
         artemisMarkdown.parseTextHintExplanation(`${markdownHint}`, markdownElement);
         expect(markdownElement.text).to.equal('');
         expect(markdownElement.hint).to.equal(hintText);
-        expect(markdownElement.explanation).to.be.null;
+        expect(markdownElement.explanation).to.be.undefined;
 
         markdownElement = new ShortAnswerQuestion();
         artemisMarkdown.parseTextHintExplanation(`${markdownExplanation}`, markdownElement);
         expect(markdownElement.text).to.equal('');
-        expect(markdownElement.hint).to.be.null;
+        expect(markdownElement.hint).to.be.undefined;
         expect(markdownElement.explanation).to.equal(explanationText);
 
         markdownElement = new ShortAnswerQuestion();

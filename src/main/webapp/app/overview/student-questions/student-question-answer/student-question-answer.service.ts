@@ -80,7 +80,7 @@ export class StudentQuestionAnswerService {
      */
     protected convertDateFromClient(studentQuestionAnswer: StudentQuestionAnswer): StudentQuestionAnswer {
         const copy: StudentQuestionAnswer = Object.assign({}, studentQuestionAnswer, {
-            answerDate: studentQuestionAnswer.answerDate !== null && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : null,
+            answerDate: studentQuestionAnswer.answerDate && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : undefined,
         });
         return copy;
     }
@@ -92,7 +92,7 @@ export class StudentQuestionAnswerService {
      */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.answerDate = res.body.answerDate !== null ? moment(res.body.answerDate) : null;
+            res.body.answerDate = res.body.answerDate ? moment(res.body.answerDate) : undefined;
         }
         return res;
     }
@@ -105,7 +105,7 @@ export class StudentQuestionAnswerService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((studentQuestionAnswer: StudentQuestionAnswer) => {
-                studentQuestionAnswer.answerDate = studentQuestionAnswer.answerDate !== null ? moment(studentQuestionAnswer.answerDate) : null;
+                studentQuestionAnswer.answerDate = studentQuestionAnswer.answerDate ? moment(studentQuestionAnswer.answerDate) : undefined;
             });
         }
         return res;
