@@ -29,6 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
+import org.w3c.dom.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
@@ -571,6 +572,37 @@ public class DatabaseUtilService {
         return studentQuestions;
     }
 
+    public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
+        List<Exercise> exercises = new ArrayList<>();
+        exerciseGroupsWithExercises.stream().forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
+        var testRun = generateTestRunForInstructor(exam, instructor, exercises);
+        return studentExamRepository.save(testRun);
+    }
+
+    public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
+        var testRun = ModelFactory.generateStudentExam(exam);
+        testRun.setTestRun(true);
+        testRun.setUser(instructor);
+        exam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        for (final var exercise : exercises) {
+            testRun.addExercise(exercise);
+            Submission submission;
+            if (exercise instanceof ModelingExercise) {
+                submission = markModelingParticipationForTestRun((ModelingExercise) exercise, instructor.getLogin());
+            }
+            else if (exercise instanceof TextExercise) {
+                submission = markTextExerciseParticipationForTestRun((TextExercise) exercise, instructor.getLogin());
+            }
+            else {
+                submission = markProgrammingParticipationForTestRun((ProgrammingExercise) exercise, instructor.getLogin());
+            }
+            assertThat(exercise.hasExerciseGroup()).isTrue();
+            assertThat(submission.getResult().getAssessor().getLogin()).isEqualTo(instructor.getLogin());
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent().get().getLogin()).isEqualTo(instructor.getLogin());
+        }
+        return testRun;
+    }
+
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {
         var exam = ModelFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(4);
@@ -735,6 +767,42 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addTextModelingProgrammingExercisesToExam(Exam exam, boolean withProgrammingExercise) {
+        ModelFactory.generateExerciseGroup(true, exam); // text
+        ModelFactory.generateExerciseGroup(true, exam); // modeling
+        exam.setNumberOfExercisesInExam(2);
+        exam = examRepository.save(exam);
+        // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
+        var exerciseGroup0 = exam.getExerciseGroups().get(0);
+        var exerciseGroup1 = exam.getExerciseGroups().get(1);
+
+        TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
+        exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
+        exerciseRepo.save(textExercise1);
+        exerciseRepo.save(textExercise2);
+
+        ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
+        exerciseGroup1.setExercises(Set.of(modelingExercise1, modelingExercise2));
+        exerciseRepo.save(modelingExercise1);
+        exerciseRepo.save(modelingExercise2);
+
+        if (withProgrammingExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // programming
+            exam.setNumberOfExercisesInExam(3);
+            exam = examRepository.save(exam);
+            var exerciseGroup2 = exam.getExerciseGroups().get(2);
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            ProgrammingExercise programmingExercise1 = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup2);
+            exerciseRepo.save(programmingExercise1);
+            addTemplateParticipationForProgrammingExercise(programmingExercise1);
+            addSolutionParticipationForProgrammingExercise(programmingExercise1);
+            exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+        return exam;
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
@@ -755,6 +823,45 @@ public class DatabaseUtilService {
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
+    /**
+     * Stores test run participation of the user with the given login for the given modeling exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param login    login of the user
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public ModelingSubmission markModelingParticipationForTestRun(ModelingExercise exercise, String login) {
+        var modelingSubmission = addModelingSubmissionWithEmptyResult(exercise, "", login);
+        modelingSubmission.getResult().setAssessor(getUserByLogin(login));
+        resultRepo.save(modelingSubmission.getResult());
+        return modelingSubmission;
+    }
+
+    /**
+     * Stores test run participation of the user with the given login for the given modeling exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param login    login of the user
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public TextSubmission markTextExerciseParticipationForTestRun(TextExercise exercise, String login) {
+        var textSubmission = addTextSubmissionWithResultAndAssessor(exercise, ModelFactory.generateTextSubmission("", null, false), login, login);
+        textSubmission.getResult().setScore(null);
+        textSubmission.getResult().setCompletionDate(null);
+        resultRepo.save(textSubmission.getResult());
+        return textSubmission;
+    }
+
+    public ProgrammingSubmission markProgrammingParticipationForTestRun(ProgrammingExercise exercise, String login) {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submitted(true);
+        submission = addProgrammingSubmissionWithResult(exercise, submission, login);
+        submission.getResult().setAssessor(getUserByLogin(login));
+        submission.getResult().setCompletionDate(null);
+        resultRepo.save(submission.getResult());
+        submissionRepository.save(submission);
+        return submission;
     }
 
     /**
@@ -1281,8 +1388,8 @@ public class DatabaseUtilService {
         submission.setResult(result);
         participation.addResult(result);
         studentParticipationRepo.save(participation);
-        submission = modelingSubmissionRepo.save(submission);
-        result = resultRepo.save(result);
+        modelingSubmissionRepo.save(submission);
+        resultRepo.save(result);
         return submission;
     }
 

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -160,9 +161,13 @@ public class SubmissionService {
     /**
      * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    public DueDateStat countSubmissionsForExercise(long exerciseId) {
+    public DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
+        }
         return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 
@@ -296,7 +301,8 @@ public class SubmissionService {
         var groupedByParticipation = immutableSubmissionsList.stream().collect(Collectors.groupingBy(submission -> (StudentParticipation) submission.getParticipation()));
 
         groupedByParticipation.keySet().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
-                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get())) // only instructors have test run submissions
+                .filter(studentParticipation -> instructors.contains(studentParticipation.getStudent().get()))// only instructors have test run submissions
+                .peek(studentParticipation -> studentParticipation.setSubmissions(new HashSet<>(groupedByParticipation.get(studentParticipation)))) // set lazy loaded submissions
                 .filter(StudentParticipation::isTestRunParticipation) // verify that it is really a test run
                 .forEach(testRunParticipation -> submissions.removeAll(groupedByParticipation.get(testRunParticipation))); // remove the identified test run submissions from the
                                                                                                                            // submissions list

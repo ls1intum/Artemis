@@ -347,21 +347,32 @@ public class ExerciseService {
     /**
      * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
      *
+     * @param examMode should be set to ignore the test run submissions
      * @param exercise the exercise for which the number of unevaluated complaints should be calculated
      */
-    public void calculateNrOfOpenComplaints(Exercise exercise) {
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                ComplaintType.COMPLAINT);
+    public void calculateNrOfOpenComplaints(Exercise exercise, boolean examMode) {
+        long numberOfComplaints;
+        long numberOfComplaintResponses;
+        long numberOfMoreFeedbackRequests;
+        long numberOfMoreFeedbackComplaintResponses;
+        if (examMode) {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintTypeIgnoreTestRuns(exercise.getId(),
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequests = 0;
+            numberOfMoreFeedbackComplaintResponses = 0;
+        }
+        else {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                    ComplaintType.MORE_FEEDBACK);
+        }
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         exercise.setNumberOfComplaints(numberOfComplaints);
-
-        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                ComplaintType.MORE_FEEDBACK);
-
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
     }
@@ -467,68 +478,6 @@ public class ExerciseService {
 
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
-        }
-    }
-
-    /**
-     * Deduct the test run submissions from the dashboard statistics
-     * If no StatsForInstructorDashboardDTO is used, set it to null
-     * @param stats the DTO for the exercise dashboard
-     * @param testRunParticipationSet a set containing all test run participations. Must contain at least one submission per participation.
-     * @param exercise the exercise
-     */
-    public void deductTestRunSubmissionsFromStatistics(StatsForInstructorDashboardDTO stats, Set<StudentParticipation> testRunParticipationSet, Exercise exercise) {
-        long numberOfComplaints;
-        // Create map in order to access the corresponding complaint via its result
-        var complaintsByResult = complaintRepository.getAllByResult_Participation_Exercise_Id(exercise.getId()).stream()
-                .collect(Collectors.toMap(Complaint::getResult, Function.identity()));
-
-        var numberOfTestRunParticipations = testRunParticipationSet.size();
-        // Deduct the number of test run participations (with one submission each) from the total calculated number of submissions in time
-        if (stats == null) {
-            exercise.getNumberOfSubmissions().setInTime(exercise.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
-        }
-        else {
-            stats.getNumberOfSubmissions().setInTime(stats.getNumberOfSubmissions().getInTime() - numberOfTestRunParticipations);
-        }
-
-        // count the number of finished assessments (it must have a completion date set and an assessor set, count by participation as programming exercises can have multiple
-        // submissions)
-        var numberOfTestRunFinishedAssessements = testRunParticipationSet.stream()
-                .filter(studentParticipation -> studentParticipation.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
-                        .anyMatch(result -> result.getCompletionDate() != null && result.getAssessor() != null))
-                .count();
-
-        // Deduct the number of test run finished assessments from the total calculated finished assessments
-        if (stats == null) {
-            exercise.getNumberOfAssessments().setInTime(exercise.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
-        }
-        else {
-            stats.getNumberOfAssessments().setInTime(stats.getNumberOfAssessments().getInTime() - numberOfTestRunFinishedAssessements);
-        }
-
-        // count the number of complaints for all test run results
-        numberOfComplaints = testRunParticipationSet.stream().filter(studentParticipation -> studentParticipation.getSubmissions().stream()
-                .filter(submission -> submission.getResult() != null).map(Submission::getResult).map(complaintsByResult::get).anyMatch(Objects::nonNull)).count();
-        // Deduct the number of test run complaints from the total calculated number of complaints
-        if (stats == null) {
-            exercise.setNumberOfComplaints(exercise.getNumberOfComplaints() - numberOfComplaints);
-        }
-        else {
-            stats.setNumberOfComplaints(stats.getNumberOfComplaints() - numberOfComplaints);
-        }
-
-        // count the number of open complaints for all test run results (isAccepted must not be set)
-        var numberOfOpenComplaints = testRunParticipationSet.stream()
-                .filter(studentParticipation -> studentParticipation.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
-                        .map(complaintsByResult::get).filter(Objects::nonNull).anyMatch(complaint -> complaint.isAccepted() == null))
-                .count();
-        // Deduct the number of open test run complaints from the total calculated number of open complaints
-        if (stats == null) {
-            exercise.setNumberOfOpenComplaints(exercise.getNumberOfOpenComplaints() - numberOfOpenComplaints);
-        }
-        else {
-            stats.setNumberOfOpenComplaints(stats.getNumberOfOpenComplaints() - numberOfOpenComplaints);
         }
     }
 

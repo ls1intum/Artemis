@@ -225,12 +225,12 @@ public class ExerciseResource {
         DueDateStat numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
-            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
-            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
-            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
+            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
@@ -242,7 +242,13 @@ public class ExerciseResource {
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        long numberOfComplaints;
+        if (examMode) {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
+        }
+        else {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        }
         stats.setNumberOfComplaints(numberOfComplaints);
 
         long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
@@ -258,11 +264,6 @@ public class ExerciseResource {
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
-        if (examMode) {
-            // deduct the test run submissions from the statistics
-            var testRunParticipationSet = participationService.findTestRunParticipationsForExercise(exercise);
-            exerciseService.deductTestRunSubmissionsFromStatistics(stats, testRunParticipationSet, exercise);
-        }
         return stats;
     }
 
