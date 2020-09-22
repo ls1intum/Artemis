@@ -382,6 +382,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        const activeComponent = this.activeSubmissionComponent;
+        if (activeComponent) {
+            activeComponent.onDeactivate();
+        }
         this.triggerSave(exerciseChange.force);
         this.initializeExercise(exerciseChange.exercise);
     }

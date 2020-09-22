@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -49,10 +49,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
 
-    constructor(private domainService: DomainService) {
-        super();
-    }
-
     getSubmission(): Submission | null {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
             return this.studentParticipation.submissions[0];
@@ -68,6 +64,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
+    }
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
@@ -79,6 +79,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
         const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+    }
+
+    onActivate() {
+        super.onActivate();
+        this.instructions.updateMarkdown();
     }
 
     /**
@@ -111,10 +116,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
     }
 
-    onActivate(): void {}
-
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorContainer.actions.onSave();
+    }
+
+    updateViewFromSubmission(): void {
+        // do nothing - the code editor itself is taking care of updating the view from submission
     }
 }
