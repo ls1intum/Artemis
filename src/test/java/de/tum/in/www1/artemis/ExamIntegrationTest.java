@@ -745,6 +745,28 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExamForTestRunDashboard_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForTestRunDashboard_conflict() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.CONFLICT, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForTestRunDashboard_ok() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        exam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.OK, Exam.class);
+        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).collect(Collectors.toList())).isNotEmpty();
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestRun() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
