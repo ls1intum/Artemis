@@ -121,13 +121,15 @@ export class ExamParticipationService {
         for (const exercise of studentExam.exercises) {
             for (const participation of exercise.studentParticipations) {
                 for (const result of participation.results) {
-                    delete participation.results[0].participation;
+                    delete result.participation;
                 }
                 for (const submission of participation.submissions) {
-                    delete participation.submissions[0].participation;
-                    if (!!participation.submissions[0].result) {
-                        delete participation.submissions[0].result.participation;
-                        delete participation.submissions[0].result.submission;
+                    if (!!submission) {
+                        delete submission.participation;
+                        if (!!submission.result) {
+                            delete submission.result.participation;
+                            delete submission.result.submission;
+                        }
                     }
                 }
             }

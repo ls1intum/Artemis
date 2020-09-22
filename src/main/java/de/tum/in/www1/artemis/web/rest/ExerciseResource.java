@@ -244,7 +244,7 @@ public class ExerciseResource {
 
         long numberOfComplaints;
         if (examMode) {
-            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
+            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
         }
         else {
             numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);

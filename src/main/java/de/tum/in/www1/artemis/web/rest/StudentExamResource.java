@@ -187,8 +187,8 @@ public class StudentExamResource {
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
-        if (!testRun && ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
-                || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))))) {
+        if (!testRun && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
+                || existingStudentExam.getIndividualEndDate() != null && !ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
             return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
         }
 

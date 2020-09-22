@@ -156,7 +156,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .map(submission -> (ModelingSubmission) submission).collect(Collectors.toList());
+                .map(submission -> (ModelingSubmission) submission).collect(toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();

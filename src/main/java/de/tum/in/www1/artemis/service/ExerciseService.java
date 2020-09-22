@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -356,8 +354,8 @@ public class ExerciseService {
         long numberOfMoreFeedbackRequests;
         long numberOfMoreFeedbackComplaintResponses;
         if (examMode) {
-            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintTypeIgnoreTestRuns(exercise.getId(),
+            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(exercise.getId(),
                     ComplaintType.COMPLAINT);
             numberOfMoreFeedbackRequests = 0;
             numberOfMoreFeedbackComplaintResponses = 0;

@@ -83,7 +83,7 @@ export class TestRunManagementComponent implements OnInit {
                     },
                 );
             })
-            .catch((_) => {});
+            .catch(() => {});
     }
 
     /**
