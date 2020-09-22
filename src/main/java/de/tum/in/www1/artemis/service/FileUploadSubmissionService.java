@@ -106,10 +106,17 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutor - the tutor we are interested in
+     * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of file upload Submissions
      */
-    public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor) {
-        List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+    public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+        List<Submission> submissions;
+        if (examMode) {
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+        }
+        else {
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        }
         return submissions.stream().map(submission -> {
             submission.getResult().setSubmission(null);
             return (FileUploadSubmission) submission;

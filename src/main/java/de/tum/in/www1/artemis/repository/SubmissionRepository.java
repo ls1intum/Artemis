@@ -110,4 +110,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
+    @Query("SELECT DISTINCT s FROM Submission s WHERE s.participation.exercise = :#{#exerciseId} and s.result is not null and s.result.assessor = :#{#assessor} AND s.submitted = TRUE AND NOT EXISTS (select p from StudentParticipation p where s.participation.id = p.id and p.student.id = s.result.assessor.id)")
+    List<Submission> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
+
 }

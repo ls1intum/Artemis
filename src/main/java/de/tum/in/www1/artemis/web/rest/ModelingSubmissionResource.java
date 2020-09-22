@@ -202,17 +202,13 @@ public class ModelingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        final boolean examMode = exercise.hasExerciseGroup();
         List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
-            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user);
+            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
             modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        }
-
-        final boolean examMode = exercise.hasExerciseGroup();
-        if (examMode) {
-            modelingSubmissions = modelingSubmissionService.filterOutTestRunSubmissions(modelingSubmissions, exercise);
         }
 
         // tutors should not see information about the student of a submission
