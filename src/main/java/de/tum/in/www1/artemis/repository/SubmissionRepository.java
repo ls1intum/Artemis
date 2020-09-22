@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -109,8 +110,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
-
-    @Query("SELECT DISTINCT s FROM Submission s WHERE s.participation.exercise = :#{#exerciseId} and s.result is not null and s.result.assessor = :#{#assessor} AND s.submitted = TRUE AND NOT EXISTS (select p from StudentParticipation p where s.participation.id = p.id and p.student.id = s.result.assessor.id)")
-    List<Submission> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
-
 }

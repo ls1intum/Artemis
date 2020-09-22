@@ -250,7 +250,9 @@ public class TextSubmissionService extends SubmissionService {
     public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor, boolean examMode) {
         List<Submission> submissions;
         if (examMode) {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().filter(studentParticipation -> studentParticipation.findLatestSubmission().isPresent())
+                    .map(StudentParticipation::findLatestSubmission).map(Optional::get).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);

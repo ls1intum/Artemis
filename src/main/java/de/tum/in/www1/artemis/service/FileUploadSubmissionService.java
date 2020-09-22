@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,7 +114,9 @@ public class FileUploadSubmissionService extends SubmissionService {
     public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
         List<Submission> submissions;
         if (examMode) {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().filter(studentParticipation -> studentParticipation.findLatestSubmission().isPresent())
+                    .map(StudentParticipation::findLatestSubmission).map(Optional::get).collect(toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
