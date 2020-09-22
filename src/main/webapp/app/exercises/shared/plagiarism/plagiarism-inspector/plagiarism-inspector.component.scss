@@ -47,6 +47,7 @@ $footer-height: 31px;
                 &-item {
                     display: flex;
                     align-items: center;
+                    justify-content: space-between;
                     cursor: pointer;
                     padding: 0.75rem;
 

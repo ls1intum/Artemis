@@ -13,8 +13,11 @@
                     *ngFor="let comparison of modelingSubmissionComparisons; let idx = index"
                     (click)="selectedComparisonIndex = idx"
                 >
-                    <span class="plagiarism-indicator"></span>
-                    <span>Plagiarism #{{ idx + 1 }}</span>
+                    <span style="display: inline-flex; align-items: center">
+                        <span class="plagiarism-indicator"></span>
+                        <span class="plagiarism-name">Plagiarism #{{ idx + 1 }}</span>
+                    </span>
+                    <span class="plagiarism-percentage">({{ comparison.similarity * 100 }}%)</span>
                 </li>
             </ul>
         </div>
