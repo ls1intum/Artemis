@@ -18,7 +18,7 @@ import { Observable } from 'rxjs/Observable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -1109,13 +1109,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * Sanitize attributes of `quizExercise`
-     */
-    sanitizeQuizExercise() {
-        this.quizExercise.title = this.quizExercise.title?.trim();
-    }
-
-    /**
      * Save the quiz to the server and invoke callback functions depending of result
      */
     save(): void {
@@ -1123,7 +1116,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             return;
         }
 
-        this.sanitizeQuizExercise();
+        Exercise.sanitize(this.quizExercise);
 
         this.isSaving = true;
         this.parseAllQuestions();

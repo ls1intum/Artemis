@@ -9,7 +9,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -151,17 +151,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Sanitize attributes of `modelingExercise`
-     */
-    sanitizeModelingExercise() {
-        this.modelingExercise.title = this.modelingExercise.title?.trim();
-    }
-
-    /**
      * Sends a request to either update, create or import a modeling exercise
      */
     save(): void {
-        this.sanitizeModelingExercise();
+        Exercise.sanitize(this.modelingExercise);
 
         this.isSaving = true;
         if (this.isImport) {

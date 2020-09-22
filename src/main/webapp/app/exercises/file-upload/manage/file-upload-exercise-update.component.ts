@@ -8,7 +8,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
@@ -73,17 +73,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Sanitize attributes of `fileUploadExercise`
-     */
-    sanitizeFileUploadExercise() {
-        this.fileUploadExercise.title = this.fileUploadExercise.title?.trim();
-    }
-
-    /**
      * Creates or updates file upload exercise
      */
     save() {
-        this.sanitizeFileUploadExercise();
+        Exercise.sanitize(this.fileUploadExercise);
 
         this.isSaving = true;
         if (this.fileUploadExercise.id !== undefined) {
