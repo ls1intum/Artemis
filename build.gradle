@@ -91,6 +91,9 @@ springBoot {
     mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
 
 // Execute the test cases: ./gradlew executeTests
 
