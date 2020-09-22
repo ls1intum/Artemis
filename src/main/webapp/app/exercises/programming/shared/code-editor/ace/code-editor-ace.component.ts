@@ -199,6 +199,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
+            this.displayFeedbacks();
+            this.setupLineIcons();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -363,7 +365,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }*/
     }
     displayFeedbacks() {
-        /*
         const session = this.editor.getEditor().getSession();
         if (!session.widgetManager) {
             session.widgetManager = new this.LineWidgets(session);
@@ -371,15 +372,21 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.fileFeedbacks.forEach((feedback) => {
-            this.lineWidget = {
-                row: feedback.reference!.split('line:')[1],
-                fixedWidth: true,
-                coverGutter: true,
-                el: this.lineWidgetsElement.nativeElement,
-            };
+            const feedbackElements = document.querySelectorAll('.inline-feedback-d-none');
+            console.log('test');
+            feedbackElements.forEach((feedbackElement: HTMLElement) => {
+                if (feedbackElement.id === feedback.reference) {
+                    this.lineWidget = {
+                        row: +feedback.reference!.split('line:')[1],
+                        fixedWidth: true,
+                        coverGutter: true,
+                        el: feedbackElement,
+                    };
+                    this.lineWidget.el.className = 'inline-feedback';
+                    session.widgetManager.addLineWidget(this.lineWidget);
+                }
+            });
         });
-        session.widgetManager.addLineWidget(this.lineWidget);
-        */
     }
 
     setupLineIcons() {

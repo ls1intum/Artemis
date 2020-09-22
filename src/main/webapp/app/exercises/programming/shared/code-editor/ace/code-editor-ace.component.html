@@ -8,7 +8,18 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
-        <div *ngFor="let gutter of gutters">
+        <div *ngFor="let feedback of fileFeedbacks">
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                class="inline-feedback-d-none"
+                id="{{feedback.reference}}"
+                [fileName]="selectedFile"
+                [feedback]="feedback"
+                [isStudent]="true"
+            >
+            </jhi-code-editor-tutor-assessment-inline-feedback>
+        </div>
+
+        <!--<div *ngFor="let gutter of gutters">
             <div class="btn-inline-comment" id="inline-comment-button-{{+gutter.innerText - 1}}" (click)="addLineWidgetWithFeedback(+gutter.innerText - 1)">
                 <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
             </div>
@@ -22,7 +33,7 @@
                 [feedback]="undefined"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
-        </div>
+        </div> -->
         <!--
         <div #lineWidgets>
             <jhi-code-editor-tutor-assessment-inline-feedback
