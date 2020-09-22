@@ -186,12 +186,10 @@ public class StudentExamResource {
             return conflict("studentExam", "alreadySubmitted", "You have already submitted.");
         }
 
-        if (!testRun) {
-            // checks if student exam is live (after start date, before end date + grace period)
-            if ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
-                    || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod())))) {
-                return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
-            }
+        // checks if student exam is live (after start date, before end date + grace period)
+        if (!testRun && ((existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate()))
+                || (existingStudentExam.getIndividualEndDate() != null && !(ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))))) {
+            return forbidden("studentExam", "submissionNotInTime", "You can only submit between start and end of the exam.");
         }
 
         return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
