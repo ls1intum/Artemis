@@ -83,10 +83,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
-    @Query(value = "SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)")
+    @Query(value = "SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)")
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @Query(value = "SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = FALSE AND r.completionDate IS NOT NULL AND p.exercise.dueDate IS NOT NULL AND r.submission.submissionDate > p.exercise.dueDate")
+    @Query(value = "SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
+    @Query(value = "SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = FALSE AND r.completionDate IS NOT NULL AND p.exercise.dueDate IS NOT NULL AND r.submission.submissionDate > p.exercise.dueDate")
     long countNumberOfFinishedLateAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })

@@ -290,23 +290,8 @@ public class ExamResource {
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations, true);
 
-        // deduct test run submissions from statistics
-        List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
-        Map<Exercise, Set<StudentParticipation>> testRunParticipationsByExercise = testRuns.stream().flatMap(testRun -> testRun.getExercises().stream()) // map to all exercises of
-                                                                                                                                                         // test runs (each exercise
-                                                                                                                                                         // contains exactly one
-                                                                                                                                                         // participation for now)
-                .flatMap(exercise -> exercise.getStudentParticipations().stream()) // map the exercise to the (currently single) participation
-                .filter(studentParticipation -> !studentParticipation.getSubmissions().isEmpty()) // ignore participations without submissions
-                .collect(Collectors.groupingBy(StudentParticipation::getExercise, Collectors.toSet())); // group the participations by the exercise
-
-        for (final Exercise exercise : exercises) {
-            if (testRunParticipationsByExercise.containsKey(exercise)) {
-                exerciseService.deductTestRunSubmissionsFromStatistics(null, testRunParticipationsByExercise.get(exercise), exercise);
-            }
-        }
         return ResponseEntity.ok(exam);
     }
 
