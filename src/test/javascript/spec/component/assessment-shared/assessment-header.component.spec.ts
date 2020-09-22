@@ -210,7 +210,7 @@ describe('AssessmentHeaderComponent', () => {
         component.isTestRun = true;
         component.isLoading = false;
         fixture.detectChanges();
-        let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
+        const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
     });
 });

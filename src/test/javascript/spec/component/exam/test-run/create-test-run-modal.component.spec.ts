@@ -1,9 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockActiveModal } from '../../../helpers/mocks/service/mock-active-modal.service';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import moment = require('moment');
@@ -13,7 +11,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
-    let activeModal: NgbActiveModal;
     let artemisDurationPipe: ArtemisDurationFromSecondsPipe;
 
     const course = { id: 1 } as Course;
@@ -24,17 +21,13 @@ describe('Create Test Run Modal Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CreateTestRunModalComponent],
-            providers: [
-                { provide: NgbActiveModal, useClass: MockActiveModal },
-                { provide: ArtemisDurationFromSecondsPipe, useClass: ArtemisDurationFromSecondsPipe },
-            ],
+            providers: [],
         })
             .overrideTemplate(CreateTestRunModalComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
         comp = fixture.componentInstance;
-        activeModal = fixture.debugElement.injector.get(NgbActiveModal);
         artemisDurationPipe = fixture.debugElement.injector.get(ArtemisDurationFromSecondsPipe);
     });
 
@@ -50,7 +43,7 @@ describe('Create Test Run Modal Component', () => {
     describe('Exercise Selection', () => {
         it('should highlight the exercise when pressed', fakeAsync(() => {
             comp.exam = exam;
-            let exercise = { id: 1 } as Exercise;
+            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
@@ -59,7 +52,7 @@ describe('Create Test Run Modal Component', () => {
         }));
         it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
             comp.exam = exam;
-            let exercise = { id: 1 } as Exercise;
+            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);

@@ -70,18 +70,20 @@ export class TestRunManagementComponent implements OnInit {
     openCreateTestRunModal() {
         const modalRef: NgbModalRef = this.modalService.open(CreateTestRunModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exam = this.exam;
-        modalRef.result.then((testRunConfiguration: StudentExam) => {
-            this.examManagementService.createTestRun(this.course.id, this.exam.id, testRunConfiguration).subscribe(
-                (res) => {
-                    if (res.body != null) {
-                        this.testRuns.push(res.body!);
-                    }
-                },
-                (error) => {
-                    this.onError(error);
-                },
-            );
-        });
+        modalRef.result
+            .then((testRunConfiguration: StudentExam) => {
+                this.examManagementService.createTestRun(this.course.id, this.exam.id, testRunConfiguration).subscribe(
+                    (res) => {
+                        if (res.body != null) {
+                            this.testRuns.push(res.body!);
+                        }
+                    },
+                    (error) => {
+                        this.onError(error);
+                    },
+                );
+            })
+            .catch((_) => {});
     }
 
     /**

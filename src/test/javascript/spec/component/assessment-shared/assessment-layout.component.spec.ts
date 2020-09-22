@@ -77,7 +77,7 @@ describe('AssessmentLayoutComponent', () => {
         component.isTestRun = true;
         component.isAssessor = true;
         fixture.detectChanges();
-        let isAllowedToRespond = component.isAllowedToRespond;
+        const isAllowedToRespond = component.isAllowedToRespond;
 
         expect(isAllowedToRespond).toBeTruthy();
     });

@@ -583,7 +583,7 @@ public class DatabaseUtilService {
         var testRun = ModelFactory.generateStudentExam(exam);
         testRun.setTestRun(true);
         testRun.setUser(instructor);
-        exam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
             Submission submission;
@@ -767,11 +767,11 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam exam, boolean withProgrammingExercise) {
-        ModelFactory.generateExerciseGroup(true, exam); // text
-        ModelFactory.generateExerciseGroup(true, exam); // modeling
-        exam.setNumberOfExercisesInExam(2);
-        exam = examRepository.save(exam);
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+        ModelFactory.generateExerciseGroup(true, initialExam); // text
+        ModelFactory.generateExerciseGroup(true, initialExam); // modeling
+        initialExam.setNumberOfExercisesInExam(2);
+        var exam = examRepository.save(initialExam);
         // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
         var exerciseGroup1 = exam.getExerciseGroups().get(1);
