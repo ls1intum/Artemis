@@ -40,7 +40,7 @@
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
-        [feedbacks]="participation.results[0].feedbacks"
+        [feedbacks]="participation.results[0] ? participation.results[0].feedbacks : undefined"
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"
         (onUpdateFeedback)="updateFeedback($event)"
