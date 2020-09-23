@@ -119,16 +119,20 @@ export class ExamParticipationService {
 
     private static breakCircularDependency(studentExam: StudentExam) {
         for (const exercise of studentExam.exercises) {
-            for (const participation of exercise.studentParticipations) {
-                for (const result of participation.results) {
-                    delete result.participation;
-                }
-                for (const submission of participation.submissions) {
-                    if (!!submission) {
-                        delete submission.participation;
-                        if (!!submission.result) {
-                            delete submission.result.participation;
-                            delete submission.result.submission;
+            if (!!exercise.studentParticipations) {
+                for (const participation of exercise.studentParticipations) {
+                    if (!!participation.results) {
+                        for (const result of participation.results) {
+                            delete result.participation;
+                        }
+                    }
+                    if (!!participation.submissions) {
+                        for (const submission of participation.submissions) {
+                            delete submission.participation;
+                            if (!!submission.result) {
+                                delete submission.result.participation;
+                                delete submission.result.submission;
+                            }
                         }
                     }
                 }
