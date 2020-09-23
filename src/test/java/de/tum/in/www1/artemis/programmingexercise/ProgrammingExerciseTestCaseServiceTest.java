@@ -601,7 +601,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseRepository.saveAll(testCases.values());
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
+        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
         final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(6);
 

@@ -23,6 +23,10 @@ import de.tum.in.www1.artemis.service.*;
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
+    public final static String RESET = "/programming-exercise/{exerciseId}/grading/reset";
+
+    public final static String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -54,7 +58,7 @@ public class ProgrammingExerciseGradingResource {
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
      */
-    @PatchMapping("/programming-exercise/{exerciseId}/grading/reset")
+    @PatchMapping(RESET)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingExerciseTestCase>> resetGradingConfiguration(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
@@ -75,7 +79,7 @@ public class ProgrammingExerciseGradingResource {
      * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
      * @return the number of results that were updated.
      */
-    @PutMapping("/programming-exercise/{exerciseId}/grading/re-evaluate")
+    @PutMapping(RE_EVALUATE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
