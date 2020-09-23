@@ -77,6 +77,23 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+
+        it('Should trim the exercise title before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise();
+            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.title = 'My Exercise   ';
+            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.programmingExercise = entity;
+
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(entity.title).toEqual('My Exercise');
+        }));
     });
 
     describe('exam mode', () => {
