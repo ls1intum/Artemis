@@ -92,7 +92,7 @@ springBoot {
 }
 
 tasks.withType(JavaCompile).each {
-//    it.options.compilerArgs.add('--enable-preview')
+    it.options.compilerArgs.add('--enable-preview')
 }
 
 // Execute the test cases: ./gradlew executeTests
