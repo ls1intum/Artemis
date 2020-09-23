@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-row-buttons',
@@ -12,6 +13,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class FileUploadExerciseRowButtonsComponent {
     @Input() courseId: number;
     @Input() exercise: FileUploadExercise;
+    @Input() course: Course;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     constructor(private fileUploadExerciseService: FileUploadExerciseService, private eventManager: JhiEventManager) {}

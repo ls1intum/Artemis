@@ -1,5 +1,5 @@
 <div>
-    <h4>
+    <h4 *ngIf="isInExerciseGroup == null">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
         <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
         <button
@@ -30,33 +30,108 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate">
+                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="assessmentDueDate" *ngIf="isInExerciseGroup == null">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <th jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
+                    <th jhisortby="" *ngIf="isInExerciseGroup == true">
+                        <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let modelingExercise of modelingExercises; trackBy: trackId">
-                    <td>
+                    <td *ngIf="isInExerciseGroup == true">{{ modelingExercise.id }}</td>
+                    <td *ngIf="isInExerciseGroup == null">
                         <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
-                    <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.dueDate | artemisDate }}</td>
-                    <td>{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ modelingExercise.maxScore }}</td>
-                    <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
+                    <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
+                    <td *ngIf="isInExerciseGroup == true">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
                     <td class="text-right">
-                        <jhi-modeling-exercise-row-buttons [courseId]="courseId" [exercise]="modelingExercise"></jhi-modeling-exercise-row-buttons>
+                        <div class="btn-group flex-btn-group-container">
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'exercises', modelingExercise.id, 'scores']"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'assessment']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'exercises', modelingExercise.id, 'participations']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.teamMode && (modelingExercise.isAtLeastTutor || course.isAtLeastTutor)"
+                                [routerLink]="['/course-management', courseId, 'exercises', modelingExercise.id, 'teams']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'users'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id]"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="modelingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'edit']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                *ngIf="modelingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                jhiDeleteButton
+                                [entityTitle]="modelingExercise.title"
+                                deleteQuestion="artemisApp.exercise.delete.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="deleteModelingExercise(modelingExercise)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="'times'"></fa-icon>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>

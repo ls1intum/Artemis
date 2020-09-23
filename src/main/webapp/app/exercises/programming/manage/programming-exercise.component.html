@@ -1,5 +1,5 @@
 <div>
-    <h4>
+    <h4 *ngIf="isInExerciseGroup == null">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
@@ -40,8 +40,12 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
                         <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
                         <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -53,8 +57,11 @@
                     <th class="d-none d-md-table-cell">
                         <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" *ngIf="isInExerciseGroup == true">
+                        <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
                     </th>
                     <th></th>
                 </tr>
@@ -74,8 +81,8 @@
                         ></jhi-programming-exercise-test-cases-dirty-warning>
                     </td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
-                    <td>{{ programmingExercise.releaseDate | artemisDate }}</td>
-                    <td>{{ programmingExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ programmingExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
@@ -180,7 +187,9 @@
                             {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ programmingExercise.allowOnlineEditor }}
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
+                    <td class="d-none d-md-table-cell" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
+                        {{ programmingExercise.presentationScoreEnabled }}
+                    </td>
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button
                             *ngIf="
@@ -206,12 +215,14 @@
                             </jhi-ide-button>
                         </ng-template>
                     </td>
+                    <td *ngIf="isInExerciseGroup == true">{{ 'artemisApp.AssessmentType.' + programmingExercise.assessmentType | translate }}</td>
+
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastTutor || course.isAtLeastTutor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -220,7 +231,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastTutor || course.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -229,7 +240,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                                    *ngIf="isInExerciseGroup == null && programmingExercise.teamMode && (programmingExercise.isAtLeastTutor || course.isAtLeastTutor)"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -241,7 +252,7 @@
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                    *ngIf="(programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor) && programmingExercise.templateParticipation"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
                                     [routerLink]="[
@@ -260,7 +271,7 @@
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'test-cases']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -271,7 +282,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -280,7 +291,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -290,7 +301,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="isInExerciseGroup == null && programmingExercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Reset"
@@ -304,12 +315,12 @@
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
-                                    (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
+                                    (delete)="deleteProgrammingExercise(programmingExercise, $event)"
                                     [dialogError]="dialogError$"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{

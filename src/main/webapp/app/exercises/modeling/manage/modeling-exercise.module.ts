@@ -34,6 +34,6 @@ import { ModelingExerciseRowButtonsComponent } from './modeling-exercise-row-but
         ExerciseDetailsModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent, ModelingExerciseRowButtonsComponent],
-    exports: [ModelingExerciseComponent],
+    exports: [ModelingExerciseComponent, ModelingExerciseRowButtonsComponent],
 })
 export class ArtemisModelingExerciseModule {}

@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
@@ -12,6 +13,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 export class TextExerciseRowButtonsComponent {
     @Input() courseId: number;
     @Input() exercise: TextExercise;
+    @Input() course: Course;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

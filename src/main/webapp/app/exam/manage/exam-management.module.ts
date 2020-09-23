@@ -32,6 +32,8 @@ import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -55,6 +57,8 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisParticipationSummaryModule,
         ArtemisProgrammingExerciseStatusModule,
         ProgrammingExerciseUtilsModule,
+        ArtemisModelingExerciseModule,
+        ArtemisProgrammingExerciseModule,
     ],
     declarations: [
         ExamManagementComponent,

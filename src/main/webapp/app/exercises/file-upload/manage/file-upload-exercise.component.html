@@ -1,5 +1,5 @@
 <div>
-    <h4>
+    <h4 *ngIf="isInExerciseGroup == null">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
@@ -21,13 +21,17 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate">
+                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                        <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="assessmentDueDate" *ngIf="isInExerciseGroup == null">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <th jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></th>
@@ -40,14 +44,80 @@
                         <a [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
                     <td>{{ fileUploadExercise.title }}</td>
-                    <td>{{ fileUploadExercise.releaseDate | artemisDate }}</td>
-                    <td>{{ fileUploadExercise.dueDate | artemisDate }}</td>
-                    <td>{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ fileUploadExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ fileUploadExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="isInExerciseGroup == null">{{ fileUploadExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.maxScore }}</td>
-                    <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
+                    <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
                     <td class="text-right">
-                        <jhi-file-upload-exercise-row-buttons [courseId]="courseId" [exercise]="fileUploadExercise"></jhi-file-upload-exercise-row-buttons>
+                        <div class="btn-group flex-btn-group-container">
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'scores']"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, fileUploadExercise.type + '-exercises', fileUploadExercise.id, 'assessment']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'participations']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
+                                [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'teams']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'users'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, fileUploadExercise.type + '-exercises', fileUploadExercise.id]"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="fileUploadExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, fileUploadExercise.type + '-exercises', fileUploadExercise.id, 'edit']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                *ngIf="fileUploadExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                jhiDeleteButton
+                                [entityTitle]="fileUploadExercise.title"
+                                deleteQuestion="artemisApp.exercise.delete.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="deleteFileUploadExercise(fileUploadExercise)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="'times'"></fa-icon>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>

@@ -34,5 +34,6 @@ import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-de
         ExerciseDetailsModule,
     ],
     declarations: [ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent],
+    exports: [],
 })
 export class ArtemisProgrammingExerciseManagementModule {}

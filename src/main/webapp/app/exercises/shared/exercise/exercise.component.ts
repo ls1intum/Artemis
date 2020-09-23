@@ -12,6 +12,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
+    @Input() isInExerciseGroup?: boolean;
     @Output() exerciseCount = new EventEmitter<number>();
     showAlertHeading: boolean;
     showHeading: boolean;
@@ -39,7 +40,10 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.showAlertHeading = !this.embedded;
         this.showHeading = this.embedded;
-        this.load();
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.isInExerciseGroup == null) {
+            this.load();
+        }
         this.registerChangeInExercises();
     }
 

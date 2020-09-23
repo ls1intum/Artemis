@@ -107,6 +107,7 @@ export class ExerciseGroupsComponent implements OnInit {
                     this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
+            location.reload();
         }
     }
 
@@ -248,6 +249,10 @@ export class ExerciseGroupsComponent implements OnInit {
                 }
             }
         }
+    }
+
+    exerciseInExerciseGroup(element: Exercise) {
+        return element.exerciseGroup != null;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

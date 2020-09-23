@@ -1,9 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Subject } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-row-buttons',
@@ -12,7 +13,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class ModelingExerciseRowButtonsComponent {
     @Input() courseId: number;
-    @Input() exercise: ProgrammingExercise;
+    @Input() exercise: ModelingExercise;
+    @Input() course: Course;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

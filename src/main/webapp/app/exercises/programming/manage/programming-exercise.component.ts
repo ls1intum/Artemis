@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -26,6 +26,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    @Output() onDeleteExercise = new EventEmitter<ProgrammingExercise>();
     readonly ActionType = ActionType;
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
@@ -76,35 +77,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         return item.id;
     }
 
-    /**
-     * Deletes programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event contains additional checks for deleting exercise
-     */
-    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        return this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'programmingExerciseListModification',
-                    content: 'Deleted an programmingExercise',
-                });
-                this.dialogErrorSource.next('');
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
-    /**
-     * Resets programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     */
-    resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => this.dialogErrorSource.next(''),
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }
@@ -133,6 +105,38 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         } catch (e) {
             this.javaBridge.log(e);
         }
+    }
+
+    /**
+     * Deletes programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     * @param $event contains additional checks for deleting exercise
+     */
+    deleteProgrammingExercise(programmingExercise: ProgrammingExercise, $event: { [key: string]: boolean }) {
+        return this.programmingExerciseService.delete(programmingExercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted an programmingExercise',
+                });
+                this.dialogErrorSource.next('');
+                if (this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit(programmingExercise);
+                }
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    /**
+     * Resets programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     */
+    resetProgrammingExercise(programmingExerciseId: number) {
+        this.exerciseService.reset(programmingExerciseId).subscribe(
+            () => this.dialogErrorSource.next(''),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

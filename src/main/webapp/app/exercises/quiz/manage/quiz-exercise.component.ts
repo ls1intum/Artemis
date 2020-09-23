@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -22,6 +22,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
 
     @Input() quizExercises: QuizExercise[] = [];
+    @Output() onDeleteExercise = new EventEmitter<QuizExercise>();
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -190,14 +191,17 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Deletes quiz exercise
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
-    deleteQuizExercise(quizExerciseId: number) {
-        return this.quizExerciseService.delete(quizExerciseId).subscribe(
+    deleteQuizExercise(quizExercise: QuizExercise) {
+        return this.quizExerciseService.delete(quizExercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
+                if (this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit(quizExercise);
+                }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
