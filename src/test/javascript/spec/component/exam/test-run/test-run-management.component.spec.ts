@@ -28,10 +28,9 @@ describe('Test Run Management Component', () => {
     const course = { id: 1 } as Course;
     const exam = { id: 1, course, started: true } as Exam;
     const user = { id: 99 } as User;
-    const user2 = { id: 90 } as User;
     const studentExams = [
-        { id: 1, user: user },
-        { id: 2, user: user2 },
+        { id: 1, user: { id: 99 } },
+        { id: 2, user: { id: 90 } },
     ] as StudentExam[];
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) } } as any) as ActivatedRoute;
 
