@@ -67,6 +67,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
+    totalScore = 0;
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -346,6 +347,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
+        this.calculateTotalScore();
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
@@ -376,5 +378,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         } else {
             this.manualResult.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
+    }
+
+    private calculateTotalScore() {
+        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+        this.totalScore = (feedbacks || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
     }
 }

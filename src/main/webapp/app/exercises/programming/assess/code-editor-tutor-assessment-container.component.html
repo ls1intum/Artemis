@@ -90,9 +90,13 @@
                 [isBuilding]="false"
                 [participation]="participationForManualResult"
                 [short]="true"
-                class="mr-2"
+                class="mr-1"
             ></jhi-result>
             <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
+            <span class="badge badge-primary ml-2" [style.fontSize]="'inherit'">
+                <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
+            </span>
+            <span jhiTranslate="artemisApp.result.currentScore">Current Score</span>
             <div class="form-group mt-3" *ngIf="exercise.gradingInstructions">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
                 <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
