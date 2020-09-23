@@ -85,7 +85,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     catch (GitLabApiException ex) {
                         // if user is already member of group in GitLab, ignore the exception
                         // to synchronize the "membership" with artemis
-                        if (ex.getMessage().equalsIgnoreCase("Member already exists")) {
+                        if ("Member already exists".equalsIgnoreCase(ex.getMessage())) {
                             continue;
                         }
                     }
