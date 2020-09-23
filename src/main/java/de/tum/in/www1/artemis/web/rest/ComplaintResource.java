@@ -247,7 +247,7 @@ public class ComplaintResource {
     /**
      * Get /exercises/:exerciseId/complaints-for-test-run-dashboard
      * <p>
-     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this idicated test run exercises
+     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this idicates test run exercises
      *
      * @param exerciseId the id of the exercise we are interested in
      * @param principal that wants to get complaints
@@ -260,7 +260,6 @@ public class ComplaintResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-
         List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
         responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true);
         return ResponseEntity.ok(responseComplaints);
@@ -488,7 +487,8 @@ public class ComplaintResource {
             User assessor = complaint.getResult().getAssessor();
             User student = complaint.getStudent();
 
-            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
+            if (assessor != null && assessor.getLogin().equals(submissorName) == assessorSameAsCaller
+                    && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);

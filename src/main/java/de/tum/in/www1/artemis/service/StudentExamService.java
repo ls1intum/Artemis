@@ -428,14 +428,10 @@ public class StudentExamService {
             // filter out exercises which are referenced by other test runs (by extension their participation)
             var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
 
-            // filter out the student participations which do not belong to this user
             exercisesToBeDeleted.forEach(exercise -> exercise
-                    .setStudentParticipations(exercise.getStudentParticipations().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent()) // filter
-                                                                                                                                                                         // out
-                                                                                                                                                                         // student
-                                                                                                                                                                         // participations
-                                                                                                                                                                         // with no
-                                                                                                                                                                         // user
+                    // filter out student participations with no user
+                    .setStudentParticipations(exercise.getStudentParticipations().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
+                            // filter out the student participations which do not belong to this user
                             .filter(studentParticipation -> studentParticipation.getStudent().get().equals(testRun.getUser())).collect(Collectors.toSet())));
 
             for (final Exercise exercise : exercisesToBeDeleted) {
