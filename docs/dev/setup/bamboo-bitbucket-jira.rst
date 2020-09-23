@@ -72,12 +72,12 @@ under ``localhost:7990``.
 
 3. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
-   between all 3 application (OAuth Impersonate). The links should open automatically after the shell script 
-   has finished. If not open them manually: 
+   between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
+   has finished. If not open them manually:
  - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
  - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
  - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
-   
+
  **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
  Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
  ``http://localhost:8085`` **.**
@@ -166,8 +166,8 @@ the downloaded .jar file → Upload
    Capability type ``Executable`` → select type ``Maven 3.x`` → insert
    ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
--  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 12``
-   as JDK label → insert ``/usr/lib/jvm/java-14-oracle`` as Java home.
+-  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 15``
+   as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
 Configure Artemis
 -----------------
@@ -188,7 +188,7 @@ Configure Artemis
                    admin-group-name: instructors
                internal-admin:
                    username: artemis_admin
-                   password: artemis_admin            
+                   password: artemis_admin
            version-control:
                url: http://localhost:7990
                user:  <bitbucket-admin-user>
