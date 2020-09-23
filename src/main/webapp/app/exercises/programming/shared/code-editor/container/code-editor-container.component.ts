@@ -48,6 +48,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     showEditorInstructions = true;
     @Input()
     isTutorAssessment = false;
+    @Input()
+    isStudent = false;
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
