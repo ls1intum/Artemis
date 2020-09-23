@@ -4,8 +4,10 @@
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 <h2 *ngIf="!isExamMode">{{ 'artemisApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}</h2>
-                <h2 *ngIf="isExamMode && !isTestRun">{{ 'artemisApp.tutorCourseDashboard.pageHeaderExam' | translate }} {{ exam?.title }}</h2>
-                <h2 *ngIf="isExamMode && isTestRun">{{ 'artemisApp.tutorCourseDashboard.pageHeaderExamTestRun' | translate }} {{ exam?.title }}</h2>
+                <h2 *ngIf="isExamMode">
+                    {{ !isTestRun ? ('artemisApp.tutorCourseDashboard.pageHeaderExam' | translate) : ('artemisApp.tutorCourseDashboard.pageHeaderExamTestRun' | translate) }}
+                    {{ exam?.title }}
+                </h2>
                 <a
                     class="text-primary card-link"
                     *ngIf="course?.isAtLeastInstructor && !isExamMode"
