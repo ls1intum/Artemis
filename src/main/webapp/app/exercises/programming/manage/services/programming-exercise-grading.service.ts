@@ -15,8 +15,8 @@ export interface IProgrammingExerciseGradingService {
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
-    getCodeAnalysisCategories(exerciseId: number): Observable<HttpResponse<StaticCodeAnalysisCategory[]>>;
-    updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>>;
+    getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]>;
+    updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -137,8 +137,8 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * Executes a REST request to the static code analysis endpoint.
      * @param exerciseId
      */
-    public getCodeAnalysisCategories(exerciseId: number): Observable<HttpResponse<StaticCodeAnalysisCategory[]>> {
-        return this.http.get<HttpResponse<StaticCodeAnalysisCategory[]>>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`);
+    public getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        return this.http.get<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`);
     }
 
     /**
@@ -148,7 +148,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      * @param updates dto for updating sca categories to avoid setting automatic parameters
      */
-    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>> {
-        return this.http.patch<HttpResponse<StaticCodeAnalysisCategoryUpdate[]>>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
+    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]> {
+        return this.http.patch<StaticCodeAnalysisCategoryUpdate[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
     }
 }

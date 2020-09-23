@@ -143,7 +143,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 );
 
                 const loadCodeAnalysisCategories = this.gradingService.getCodeAnalysisCategories(exerciseId).pipe(
-                    map(({ body }) => body!),
                     tap((categories) => (this.staticCodeAnalysisCategories = categories)),
                     catchError(() => of(null)),
                 );
