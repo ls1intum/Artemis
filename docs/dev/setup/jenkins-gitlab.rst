@@ -390,8 +390,8 @@ Start Jenkins
 
         mvn -version
 
-    This should print ``Maven 3.x`` as Maven version, ``Java 14`` as
-    Java version and ``/usr/lib/jvm/java-14-openjdk-amd64`` as Java
+    This should print ``Maven 3.x`` as Maven version, ``Java 15`` as
+    Java version and ``/usr/lib/jvm/java-15-openjdk-amd64`` as Java
     home.
 
 10. Open Jenkins in your browser (e.g. ``localhost:8080``) and setup the
@@ -415,14 +415,14 @@ Start Jenkins
                user: your.chosen.username
                password: your.chosen.password
 
-12. Setup JDK 14 in Jenkins Settings
+12. Setup JDK 15 in Jenkins Settings
 
     Navigate in your browser into Jenkins → Manage Jenkins → Global Tool
     Configuration → JDK. Change the existing JDK installation or click
     on Add JDK.
 
-    Use ``OpenJDK 14`` as Name and
-    ``/usr/lib/jvm/java-14-openjdk-amd64`` as JAVA_HOME
+    Use ``OpenJDK 15`` as Name and
+    ``/usr/lib/jvm/java-15-openjdk-amd64`` as JAVA_HOME
 
    .. figure:: jenkins-gitlab/jenkins_jdk_config.png
       :align: center
