@@ -505,7 +505,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
+    public void shouldReEvaluateScores() throws Exception {
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
@@ -601,7 +601,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseRepository.saveAll(testCases.values());
 
         // re-evaluate
-        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseGradingResource.Endpoints.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
         final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(6);
 
