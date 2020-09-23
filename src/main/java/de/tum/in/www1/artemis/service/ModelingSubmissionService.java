@@ -34,21 +34,15 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ParticipationService participationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ExamService examService;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
         this.participationService = participationService;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.examService = examService;
     }
 
     /**
@@ -185,20 +179,8 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return a list of modeling submissions
      */
     public List<ModelingSubmission> getAllModelingSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
-        List<Submission> submissions;
-        if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().filter(studentParticipation -> studentParticipation.findLatestSubmission().isPresent())
-                    .map(StudentParticipation::findLatestSubmission).map(Optional::get).collect(toList());
-        }
-        else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-        }
-
-        return submissions.stream().map(submission -> {
-            submission.getResult().setSubmission(null);
-            return (ModelingSubmission) submission;
-        }).collect(Collectors.toList());
+        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
+        return submissions.stream().map(submission -> (ModelingSubmission) submission).collect(toList());
     }
 
     /**

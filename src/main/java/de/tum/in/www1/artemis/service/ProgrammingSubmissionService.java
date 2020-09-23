@@ -66,15 +66,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
             CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -85,7 +83,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
     }
 

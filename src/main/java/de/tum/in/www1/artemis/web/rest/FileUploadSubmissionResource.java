@@ -38,8 +38,6 @@ public class FileUploadSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseService courseService;
-
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
@@ -56,21 +54,17 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final AssessmentService assessmentService;
-
-    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+    public FileUploadSubmissionResource(FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, AssessmentService assessmentService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
-        this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
-        this.assessmentService = assessmentService;
     }
 
     /**

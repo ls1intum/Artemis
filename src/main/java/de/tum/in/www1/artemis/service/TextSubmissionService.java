@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -42,29 +43,23 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextClusterRepository textClusterRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ParticipationService participationService;
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SubmissionVersionService submissionVersionService;
 
-    private final ExamService examService;
-
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
             CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
-        this.examService = examService;
     }
 
     /**
@@ -248,19 +243,8 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text Submissions
      */
     public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor, boolean examMode) {
-        List<Submission> submissions;
-        if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().filter(studentParticipation -> studentParticipation.findLatestSubmission().isPresent())
-                    .map(StudentParticipation::findLatestSubmission).map(Optional::get).collect(toList());
-        }
-        else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-        }
-        return submissions.stream().map(submission -> {
-            submission.getResult().setSubmission(null);
-            return (TextSubmission) submission;
-        }).collect(Collectors.toList());
+        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
+        return submissions.stream().map(submission -> (TextSubmission) submission).collect(toList());
     }
 
     /**

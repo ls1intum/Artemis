@@ -43,22 +43,16 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final ParticipationService participationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final FileService fileService;
-
-    private final ExamService examService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
-        this.examService = examService;
     }
 
     /**
@@ -119,19 +113,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return a list of file upload Submissions
      */
     public List<FileUploadSubmission> getAllFileUploadSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
-        List<Submission> submissions;
-        if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().filter(studentParticipation -> studentParticipation.findLatestSubmission().isPresent())
-                    .map(StudentParticipation::findLatestSubmission).map(Optional::get).collect(toList());
-        }
-        else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-        }
-        return submissions.stream().map(submission -> {
-            submission.getResult().setSubmission(null);
-            return (FileUploadSubmission) submission;
-        }).collect(Collectors.toList());
+        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
+        return submissions.stream().map(submission -> (FileUploadSubmission) submission).collect(toList());
     }
 
     /**

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -39,16 +41,19 @@ public class SubmissionService {
 
     protected AuthorizationCheckService authCheckService;
 
+    protected StudentParticipationRepository studentParticipationRepository;
+
     private final ExamService examService;
 
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService) {
+            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.examService = examService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -125,6 +130,28 @@ public class SubmissionService {
      */
     public List<Submission> getLockedSubmissions(long courseId) {
         return submissionRepository.getLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutor - the tutor we are interested in
+     * @param examMode - flag should be set to ignore the test run submissions
+     * @return a list of Submissions
+     */
+    protected List<Submission> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+        List<Submission> submissions;
+        if (examMode) {
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(toList());
+        }
+        else {
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        }
+
+        submissions.forEach(submission -> submission.getResult().setSubmission(null));
+        return submissions;
     }
 
     /**
