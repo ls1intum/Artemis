@@ -273,7 +273,7 @@ public class ParticipationService {
                 submission.setResult(result);
                 result.setParticipation(submission.getParticipation());
                 submission.getResult().setAssessor(participation.getStudent().get());
-                submission.getResult().setAssessmentType(AssessmentType.AUTOMATIC);
+                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
 
                 resultRepository.save(result);
                 submissionRepository.save(submission);
