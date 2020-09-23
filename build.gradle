@@ -38,8 +38,8 @@ group = "de.tum.in.www1.artemis"
 version = "4.4.6"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=14
-targetCompatibility=14
+sourceCompatibility=15
+targetCompatibility=15
 
 apply plugin: "com.github.ben-manes.versions"
 
@@ -80,7 +80,7 @@ spotless {
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
 
-        // the following command is not compatible with Java14 switch expressions
+        // the following command is not compatible with Java switch expressions
 //        removeUnusedImports()
     }
 }
@@ -134,6 +134,10 @@ task testReport(type: TestReport) {
 task integrationTestReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn integrationTest
+}
+
+jacoco {
+    toolVersion = "0.8.6"
 }
 
 jacocoTestReport {
@@ -263,7 +267,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.25.2"
     implementation "com.ibm.icu:icu4j:67.1"
     implementation 'com.github.seancfoley:ipaddress:5.3.1'
-    compile group: 'info.debatty', name: 'java-string-similarity', version: '2.0.0'
+    implementation 'info.debatty:java-string-similarity:2.0.0'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
