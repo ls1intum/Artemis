@@ -43,6 +43,7 @@
         [feedbacks]="participation.results[0].feedbacks"
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"
+        (onUpdateFeedback)="updateFeedback($event)"
         (onError)="onError($event)"
     >
     </jhi-code-editor-ace>

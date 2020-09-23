@@ -36,6 +36,7 @@
         [participation]="participationForManualResult"
         [showEditorInstructions]="showEditorInstructions"
         [isTutorAssessment]="true"
+        (onUpdateFeedback)="onUpdateFeedback($event)"
     >
         <span editorTitle>{{ exercise.title }}</span>
         <div editorToolbar>

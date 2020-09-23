@@ -28,7 +28,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
-    onCancelFeedback = new EventEmitter<void>();
+    onCancelFeedback = new EventEmitter<number>();
     @Output()
     onDeleteFeedback = new EventEmitter<Feedback>();
 
@@ -46,17 +46,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     cancelFeedback() {
-        /*console.log('cancel pressed');
-        console.log(this.feedback);*/
+        console.log('cancel pressed');
+        console.log(this.feedback);
         // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
         if (this.feedback.type !== this.MANUAL) {
-            this.onCancelFeedback.emit();
+            this.onCancelFeedback.emit(this.codeLine);
         } else {
             // Changes in feedback is discarded
-            /*console.log('feedback: ');
+            console.log('else');
+            console.log('feedback: ');
             console.log(this.feedback);
             console.log('feedback old: ');
-            console.log(this.oldFeedback);*/
+            console.log(this.oldFeedback);
             this.feedback = this.oldFeedback;
             this.readOnly = true;
         }
