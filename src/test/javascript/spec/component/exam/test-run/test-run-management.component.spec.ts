@@ -27,8 +27,12 @@ describe('Test Run Management Component', () => {
 
     const course = { id: 1 } as Course;
     const exam = { id: 1, course, started: true } as Exam;
-    const user = { id: 1 } as User;
-    const studentExams = [{ id: 1 }, { id: 2 }] as StudentExam[];
+    const user = { id: 99 } as User;
+    const user2 = { id: 90 } as User;
+    const studentExams = [
+        { id: 1, user: user },
+        { id: 2, user: user2 },
+    ] as StudentExam[];
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) } } as any) as ActivatedRoute;
 
     beforeEach(() => {
@@ -93,8 +97,9 @@ describe('Test Run Management Component', () => {
     });
 
     describe('Assessment of test runs', () => {
-        it('Test Run cannot be assessed', fakeAsync(() => {
+        it('Test Run cannot be assessed because the logged in user does not have a test run which is submitted', fakeAsync(() => {
             comp.testRuns = studentExams;
+            comp.testRuns[0].submitted = false;
             fixture.detectChanges();
             expect(comp.testRunCanBeAssessed).toBeFalsy();
         }));

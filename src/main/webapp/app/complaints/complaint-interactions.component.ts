@@ -49,7 +49,6 @@ export class ComplaintInteractionsComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
-        console.log('complaints active');
         if (this.isExamMode) {
             if (this.participation && this.participation.id && this.exercise) {
                 if (this.participation.results && this.participation.results.length > 0) {
