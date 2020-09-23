@@ -4,6 +4,7 @@ import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { SortService } from 'app/shared/service/sort.service';
+import { StarRatingComponent } from 'ng-starrating';
 
 @Component({
     selector: 'jhi-rating-list',

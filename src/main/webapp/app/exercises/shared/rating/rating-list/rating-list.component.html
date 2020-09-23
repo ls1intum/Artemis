@@ -73,7 +73,7 @@
                         <span>{{ rating.result.assessmentType }}</span>
                     </td>
                     <td>
-                        <span>{{ rating.rating }}</span>
+                        <span><star-rating checkedcolor="gold" uncheckedcolor="grey" [value]="rating.rating" size="24" readonly="true" [totalstars]="5"> </star-rating></span>
                     </td>
 
                     <td class="text-center">
