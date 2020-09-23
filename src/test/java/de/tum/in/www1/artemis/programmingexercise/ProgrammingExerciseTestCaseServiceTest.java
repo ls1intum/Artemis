@@ -543,11 +543,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(0L);
-            assertThat(singleResult.getResultString()).isEqualTo("0 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0L, "0 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
@@ -557,11 +553,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(100L);
-            assertThat(singleResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 100L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
@@ -571,11 +563,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(25L);
-            assertThat(singleResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 25L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
@@ -587,20 +575,12 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findAny();
             assertThat(manualResultOptional).isPresent();
-            var manualResult = manualResultOptional.get();
-            assertThat(manualResult.getScore()).isEqualTo(100L);
-            assertThat(manualResult.getResultString()).isEqualTo("nice job");
-            assertThat(manualResult.getHasFeedback()).isTrue();
-            assertThat(manualResult.getFeedbacks()).hasSize(0);
-            assertThat(manualResult).isEqualTo(participation.findLatestResult());
+            testParticipationResult(manualResultOptional.get(), 100L, "nice job", true, 0, AssessmentType.MANUAL);
+            assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
-            var automaticResult = automaticResultOptional.get();
-            assertThat(automaticResult.getScore()).isEqualTo(75L);
-            assertThat(automaticResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(manualResult.getHasFeedback()).isTrue();
-            assertThat(automaticResult.getFeedbacks()).hasSize(3);
+            testParticipationResult(automaticResultOptional.get(), 75L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
         }
 
         // student3 no result
@@ -617,11 +597,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(100L);
-            assertThat(singleResult.getResultString()).isEqualTo("3 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isFalse();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 100L, "3 of 3 passed", false, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
@@ -631,13 +607,17 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(0L);
-            assertThat(singleResult.getResultString()).isEqualTo("Build Failed");
-            assertThat(singleResult.getHasFeedback()).isFalse();
-            assertThat(singleResult.getFeedbacks()).isEmpty();
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0L, "Build Failed", false, 0, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
+    }
+
+    private void testParticipationResult(Result result, long score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
+        assertThat(result.getScore()).isEqualTo(score);
+        assertThat(result.getResultString()).isEqualTo(resultString);
+        assertThat(result.getHasFeedback()).isEqualTo(hasFeedback);
+        assertThat(result.getFeedbacks()).hasSize(feedbackSize);
+        assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
     }
 
     private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
@@ -744,4 +724,5 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         return testParticipations;
     }
+
 }
