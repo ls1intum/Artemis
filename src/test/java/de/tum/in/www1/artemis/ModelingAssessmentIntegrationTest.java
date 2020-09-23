@@ -591,19 +591,10 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         storedResult.getFeedbacks().forEach(storedFeedback -> {
             switch (storedFeedback.getType()) {
-                case MANUAL:
-                    manualFeedback.add(storedFeedback);
-                    break;
-                case AUTOMATIC:
-                    automaticFeedback.add(storedFeedback);
-                    break;
-                case MANUAL_UNREFERENCED:
-                    manualUnreferencedFeedback.add(storedFeedback);
-                    break;
-                case AUTOMATIC_ADAPTED:
-                    adaptedFeedback.add(storedFeedback);
-                    break;
-
+                case MANUAL -> manualFeedback.add(storedFeedback);
+                case AUTOMATIC -> automaticFeedback.add(storedFeedback);
+                case MANUAL_UNREFERENCED -> manualUnreferencedFeedback.add(storedFeedback);
+                case AUTOMATIC_ADAPTED -> adaptedFeedback.add(storedFeedback);
             }
         });
         assertThat(storedResult.getAssessmentType()).as("type of result is MANUAL").isEqualTo(AssessmentType.MANUAL);

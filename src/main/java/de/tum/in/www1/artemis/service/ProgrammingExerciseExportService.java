@@ -208,17 +208,13 @@ public class ProgrammingExerciseExportService {
     }
 
     private String getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA:
-                return "java19";
-            case C:
-                return "c/c++";
-            case PYTHON:
-                return "python3";
-            default:
-                throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
-                        "ProgrammingExercise", "notSupported");
-        }
+        return switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA -> "java19";
+            case C -> "c/c++";
+            case PYTHON -> "python3";
+            default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
+                    "ProgrammingExercise", "notSupported");
+        };
     }
 
     private void cleanupRepositories(ProgrammingExercise programmingExercise) {

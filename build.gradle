@@ -35,11 +35,11 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.4.5"
+version = "4.4.6"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=14
-targetCompatibility=14
+sourceCompatibility=15
+targetCompatibility=15
 
 apply plugin: "com.github.ben-manes.versions"
 
@@ -78,9 +78,10 @@ spotless {
             exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
         }
         importOrderFile "artemis-spotless.importorder"
-        removeUnusedImports()
-
         eclipse().configFile "artemis-spotless-style.xml"
+
+        // the following command is not compatible with Java switch expressions
+//        removeUnusedImports()
     }
 }
 
@@ -90,9 +91,14 @@ springBoot {
     mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
+tasks.withType(JavaCompile).each {
+    it.options.compilerArgs.add('--enable-preview')
+}
+
 // Execute the test cases: ./gradlew executeTests
 
 test {
+    jvmArgs(['--enable-preview'])
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
     testLogging.showStandardStreams = true
@@ -104,6 +110,7 @@ test {
 }
 
 task integrationTest(type: Test) {
+    jvmArgs(['--enable-preview'])
     description = "Execute integration tests."
     group = "verification"
     include "**/*IT*", "**/*IntTest*"
@@ -129,6 +136,10 @@ task integrationTestReport(type: TestReport) {
     reportOn integrationTest
 }
 
+jacoco {
+    toolVersion = "0.8.6"
+}
+
 jacocoTestReport {
     reports {
         xml.enabled true
@@ -141,7 +152,8 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.70
+                // TODO: in the future the following value should become at least 0.80
+                minimum = 0.76
             }
         }
     }
@@ -180,7 +192,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
-    implementation "com.atlassian.bamboo:bamboo-specs:7.0.2"
+    implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
     implementation "io.sentry:sentry-spring:1.7.30"
     implementation "io.sentry:sentry-logback:1.7.30"
@@ -226,8 +238,8 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.3.3.RELEASE"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.4.RELEASE"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.4.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.5.RELEASE"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.5.RELEASE"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.9.RELEASE"
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
@@ -255,7 +267,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.25.2"
     implementation "com.ibm.icu:icu4j:67.1"
     implementation 'com.github.seancfoley:ipaddress:5.3.1'
-    compile group: 'info.debatty', name: 'java-string-similarity', version: '2.0.0'
+    implementation 'info.debatty:java-string-similarity:2.0.0'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -332,7 +344,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.6"
+    gradleVersion = "6.6.1"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -349,7 +361,7 @@ if (project.hasProperty("nodeInstall")) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.10"
+    toolVersion "8.36"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0

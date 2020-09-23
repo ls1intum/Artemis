@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -32,7 +31,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -96,114 +94,6 @@ public class ResultResource {
         this.assessmentService = assessmentService;
         this.userService = userService;
         this.examService = examService;
-    }
-
-    /**
-     * POST /participations/{participationId}/manual-results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types)
-     * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
-     *
-     * @param participationId the id of the participation for which the new manual result is created
-     * @param newResult the result to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result newResult) throws URISyntaxException {
-        log.debug("REST request to create a new result : {}", newResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        final var latestExistingResult = participation.findLatestResult();
-        if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
-            // prevent that tutors create multiple manual results
-            forbidden();
-        }
-
-        // make sure that the participation cannot be manipulated on the client side
-        newResult.setParticipation(participation);
-        final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
-            return forbidden();
-        }
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
-            return badRequest();
-        }
-
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, participation, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        if (newResult.getId() != null) {
-            throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
-        }
-        else if (newResult.getResultString() == null) {
-            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getResultString().length() > 255) {
-            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getScore() == null) {
-            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
-        }
-        else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
-            throw new BadRequestAlertException("Only result with score greater or equal than 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
-        }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
-        }
-
-        // Create manual submission with last commit hash und current time stamp.
-        ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
-                SubmissionType.MANUAL);
-        newResult.setSubmission(submission);
-        newResult = resultService.createNewRatedManualResult(newResult, true);
-
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
-    }
-
-    /**
-     * PUT /participations/{participationId}/manual-results : Updates an existing result.
-     *
-     * @param participationId the id of the participation for which the manual result is updated
-     * @param updatedResult the result to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
-     *         Server Error) if the result couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result updatedResult) throws URISyntaxException {
-        log.debug("REST request to update Result : {}", updatedResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        // make sure that the participation cannot be manipulated on the client side
-        updatedResult.setParticipation(participation);
-        // TODO: we should basically set the submission here to prevent possible manipulation of the submission
-        if (updatedResult.getSubmission() == null) {
-            throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
-        }
-
-        final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
-            return forbidden();
-        }
-        if (updatedResult.getId() == null) {
-            return createProgrammingExerciseManualResult(participationId, updatedResult);
-        }
-        // get the original result with assessor for permission checks below, otherwise the client could override the assessor and the check would not make any sense
-        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
-
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(originalResult, exercise, participation, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
     }
 
     /**

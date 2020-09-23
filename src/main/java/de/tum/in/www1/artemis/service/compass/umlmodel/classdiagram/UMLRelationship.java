@@ -24,24 +24,16 @@ public class UMLRelationship extends UMLElement {
          * @return the String which represents the relationship
          */
         public String toSymbol() {
-            switch (this) {
-                case CLASS_DEPENDENCY:
-                    return " ╌╌> ";
-                case CLASS_AGGREGATION:
-                    return " --◇ ";
-                case CLASS_INHERITANCE:
-                    return " --▷ ";
-                case CLASS_REALIZATION:
-                    return " ╌╌▷ ";
-                case CLASS_COMPOSITION:
-                    return " --◆ ";
-                case CLASS_UNIDIRECTIONAL:
-                    return " --> ";
-                case CLASS_BIDIRECTIONAL:
-                    return " <-> ";
-                default:
-                    return " --- ";
-            }
+            return switch (this) {
+                case CLASS_DEPENDENCY -> " ╌╌> ";
+                case CLASS_AGGREGATION -> " --◇ ";
+                case CLASS_INHERITANCE -> " --▷ ";
+                case CLASS_REALIZATION -> " ╌╌▷ ";
+                case CLASS_COMPOSITION -> " --◆ ";
+                case CLASS_UNIDIRECTIONAL -> " --> ";
+                case CLASS_BIDIRECTIONAL -> " <-> ";
+                default -> " --- ";
+            };
         }
     }
 
