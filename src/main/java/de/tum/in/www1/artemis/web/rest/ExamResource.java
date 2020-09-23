@@ -641,14 +641,10 @@ public class ExamResource {
 
             // Optionally delete participations and submissions
             if (withParticipationsAndSubmission) {
-                // check that no test runs reference these participations and submissions
-                List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(examId, student.getId());
-                if (testRuns.isEmpty()) {
-                    List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
-                            studentExam.getExercises());
-                    for (var participation : participations) {
-                        participationService.delete(participation.getId(), true, true);
-                    }
+                List<StudentParticipation> participations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(student.getId(),
+                        studentExam.getExercises());
+                for (var participation : participations) {
+                    participationService.delete(participation.getId(), true, true);
                 }
             }
 

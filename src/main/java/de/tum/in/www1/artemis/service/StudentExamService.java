@@ -390,35 +390,33 @@ public class StudentExamService {
      * Deletes a test run.
      * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
      * @param testRunId the id of the test run
-     * @param instructorId the id of the instructor
      * @return the deleted test run
      */
-    public StudentExam deleteTestRun(Long testRunId, Long instructorId) {
-        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsByIdForUser(testRunId, instructorId, true)
-                .orElse(studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
-                        .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist")));
+    public StudentExam deleteTestRun(Long testRunId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+        User instructor = testRun.getUser();
+        List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()
+                .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
 
-        List<StudentExam> testRuns = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), testRun.getUser().getId());
-        Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(testRun.getExam().getId(), instructorId);
-
-        // Only delete the participation and submission if no other student exam or test run references them
-        if (studentExam.isEmpty()) {
-            if (testRuns.size() == 1) {
-                // Delete participations and submissions
-                for (final Exercise exercise : testRun.getExercises()) {
-                    if (exercise.getStudentParticipations().iterator().hasNext()) {
-                        participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
-                    }
+        // Only delete the participation and submission if no other test run references them
+        if (otherTestRunsOfInstructor.isEmpty()) {
+            // Delete participations and submissions
+            for (final Exercise exercise : testRun.getExercises()) {
+                if (exercise.getStudentParticipations().iterator().hasNext()) {
+                    participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
                 }
             }
-            else {
-                for (final Exercise exercise : testRun.getExercises()) {
-                    // we can delete the participation and submission of an exercise if no other test run references them | contains the same exercise
-                    if (testRuns.stream().filter(tr -> tr.getExercises().stream().anyMatch(trExercise -> trExercise.getId().equals(exercise.getId()))).count() == 1
-                            && exercise.getStudentParticipations().iterator().hasNext()) {
-                        participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
-                    }
-                }
+        }
+        else {
+            // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+            var testRunExercises = testRun.getExercises();
+            var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().collect(Collectors.toList());
+            // filter out exercises which are referenced by other test runs (by extension their participation)
+            var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
+            for (final Exercise exercise : exercisesToBeDeleted) {
+                // delete those participations which are only referenced by one test run
+                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
             }
         }
 

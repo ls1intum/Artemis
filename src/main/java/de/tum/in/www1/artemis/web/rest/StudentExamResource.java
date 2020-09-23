@@ -422,8 +422,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
-        StudentExam testRun = studentExamService.deleteTestRun(testRunId, user.getId());
+        StudentExam testRun = studentExamService.deleteTestRun(testRunId);
         return ResponseEntity.ok(testRun);
     }
 
