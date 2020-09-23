@@ -11,8 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -41,17 +39,14 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private final ParticipationService participationService;
-
     private final FileService fileService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.participationService = participationService;
         this.fileService = fileService;
     }
 
@@ -123,31 +118,17 @@ public class FileUploadSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean removeTestRunParticipations) {
-        Random random = new Random();
-        List<StudentParticipation> participations;
-        if (removeTestRunParticipations) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(fileUploadExercise.getId());
+    public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode) {
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(fileUploadExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissionWithoutResult.get();
+            return Optional.of(fileUploadSubmission);
         }
-        else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
-        }
-
-        List<FileUploadSubmission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .map(submission -> (FileUploadSubmission) submission).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
-
-        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        return Optional.empty();
     }
 
     /**

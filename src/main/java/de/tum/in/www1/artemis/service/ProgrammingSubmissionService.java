@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -50,8 +49,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private final ParticipationService participationService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final GroupNotificationService groupNotificationService;
@@ -72,7 +69,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
             CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -608,29 +605,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean removeTestRunParticipations) {
-        Random r = new Random();
-        List<StudentParticipation> participations;
-        if (removeTestRunParticipations) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(programmingExercise.getId());
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode) {
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
+            return Optional.of(programmingSubmission);
         }
-        else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId());
-        }
-
-        List<ProgrammingSubmission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent)
-                .map(Optional::get).map(submission -> (ProgrammingSubmission) submission).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, programmingExercise.getDueDate());
-
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return Optional.empty();
     }
 
     /**

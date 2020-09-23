@@ -11,9 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -43,8 +40,6 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextClusterRepository textClusterRepository;
 
-    private final ParticipationService participationService;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SubmissionVersionService submissionVersionService;
@@ -53,10 +48,9 @@ public class TextSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService,
             CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
-        this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
@@ -163,11 +157,11 @@ public class TextSubmissionService extends SubmissionService {
      * assessment for the corresponding submission yet.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean removeTestRunParticipations) {
-        return getRandomTextSubmissionEligibleForNewAssessment(textExercise, false, removeTestRunParticipations);
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean examMode) {
+        return getRandomTextSubmissionEligibleForNewAssessment(textExercise, false, examMode);
     }
 
     /**
@@ -176,34 +170,20 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean removeTestRunParticipations) {
+    public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-
-        Random random = new Random();
-        List<StudentParticipation> participations;
-        if (removeTestRunParticipations) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(textExercise.getId());
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(textExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            TextSubmission textSubmission = (TextSubmission) submissionWithoutResult.get();
+            return Optional.of(textSubmission);
         }
-        else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
-        }
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .map(submission -> (TextSubmission) submission).collect(toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, textExercise.getDueDate());
-
-        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        return Optional.empty();
     }
 
     /**

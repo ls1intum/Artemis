@@ -5,9 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,18 +36,20 @@ public class SubmissionService {
 
     protected ResultRepository resultRepository;
 
-    private UserService userService;
-
-    private CourseService courseService;
-
     protected AuthorizationCheckService authCheckService;
 
     protected StudentParticipationRepository studentParticipationRepository;
 
+    protected ParticipationService participationService;
+
     private final ExamService examService;
 
+    private final UserService userService;
+
+    private final CourseService courseService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository) {
+            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -54,6 +57,7 @@ public class SubmissionService {
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participationService = participationService;
     }
 
     /**
@@ -152,6 +156,39 @@ public class SubmissionService {
 
         submissions.forEach(submission -> submission.getResult().setSubmission(null));
         return submissions;
+    }
+
+    /**
+     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise fileUploadExercise, boolean examMode) {
+        Random random = new Random();
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(fileUploadExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
+        }
+
+        List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
+
+        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
     }
 
     /**

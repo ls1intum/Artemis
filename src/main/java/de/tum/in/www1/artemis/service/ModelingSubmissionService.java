@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
@@ -32,17 +31,14 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
-    private final ParticipationService participationService;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
-        this.participationService = participationService;
     }
 
     /**
@@ -124,11 +120,11 @@ public class ModelingSubmissionService extends SubmissionService {
      * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
-     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
     @Transactional
-    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean removeTestRunParticipations) {
+    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise)) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
@@ -147,27 +143,12 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<StudentParticipation> participations;
-        if (removeTestRunParticipations) {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(modelingExercise.getId());
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
+            return Optional.of(modelingSubmission);
         }
-        else {
-            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-        }
-
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .map(submission -> (ModelingSubmission) submission).collect(toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, modelingExercise.getDueDate());
-
-        Random random = new Random();
-        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        return Optional.empty();
     }
 
     /**
