@@ -35,9 +35,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     selectedFile: string;
     @Input()
-    isStudent: boolean;
-    @Input()
     sessionId: number;
+    @Input()
+    readOnlyManualFeedback: boolean;
     @Input()
     set annotations(annotations: Array<Annotation>) {
         this.setAnnotations(annotations);
@@ -219,7 +219,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.isTutorAssessment) {
             console.log('onFileTextchanged');
             this.editor.setReadOnly(true);
-            this.setupLineIcons();
+            if (!this.readOnlyManualFeedback) {
+                this.setupLineIcons();
+            }
             this.displayFeedbacks();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/

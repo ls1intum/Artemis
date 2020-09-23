@@ -16,7 +16,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     set feedback(feedback: Feedback) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
-        this.readOnly = feedback ? true : false;
+        this.editOnly = feedback ? true : false;
     }
     private _feedback: Feedback;
     @Input()
@@ -24,7 +24,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input()
     codeLine: number;
     @Input()
-    isStudent: boolean;
+    readOnly: boolean;
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
@@ -34,17 +34,16 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Output()
     onEditFeedback = new EventEmitter<number>();
 
-    readOnly: boolean;
+    editOnly: boolean;
     oldFeedback: Feedback;
     constructor(private translateService: TranslateService) {}
 
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
-        this.readOnly = true;
+        this.editOnly = true;
         this.feedback.text = `Feedback for ${this.fileName} line: ${this.codeLine}`;
         this.onUpdateFeedback.emit(this.feedback);
-        // this.onCancelFeedback.emit();
     }
 
     cancelFeedback() {
@@ -53,7 +52,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
         if (this.feedback.type === this.MANUAL) {
             this.feedback = this.oldFeedback;
-            this.readOnly = true;
+            this.editOnly = true;
         }
         console.log('feedback after: ', this.feedback);
         this.onCancelFeedback.emit(this.codeLine);
@@ -68,7 +67,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     editFeedback(line: number) {
-        this.readOnly = false;
+        this.editOnly = false;
         this.onEditFeedback.emit(line);
     }
 }

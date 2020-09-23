@@ -27,7 +27,7 @@
                 [fileName]="selectedFile"
                 [codeLine]="i"
                 [feedback]="fileFeedbackPerLine[i]"
-                [isStudent]="isStudent"
+                [readOnly]="readOnlyManualFeedback"
                 (onUpdateFeedback)="updateFeedback($event)"
                 (onDeleteFeedback)="deleteFeedback($event)"
                 (onCancelFeedback)="cancelFeedback($event)"
