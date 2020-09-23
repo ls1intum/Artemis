@@ -1,4 +1,4 @@
-FROM atlassian/bamboo-server:7.0.2
+FROM atlassian/bamboo-server:7.1.2
 
 LABEL description="Bamboo pre-configured for Artemis"
 
@@ -10,7 +10,7 @@ RUN apt-get install -y maven
 RUN apt-get install -y software-properties-common apt-utils
 RUN add-apt-repository -y ppa:linuxuprising/java
 RUN echo debconf shared/accepted-oracle-license-v1-2 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-2 seen true | debconf-set-selections
-RUN apt-get install -y oracle-java14-installer
+RUN apt-get install -y oracle-java15-installer
 RUN update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java 1
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 # Add file in /artemis/bin/mvn that uses the correct java version and passes all arguments to mvn
