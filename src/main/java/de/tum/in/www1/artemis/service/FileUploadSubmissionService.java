@@ -154,9 +154,8 @@ public class FileUploadSubmissionService extends SubmissionService {
             participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
         }
 
-        List<FileUploadSubmission> submissionsWithoutResult = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation())
-                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (FileUploadSubmission) submission)
-                .collect(Collectors.toList());
+        List<FileUploadSubmission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(submission -> (FileUploadSubmission) submission).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();

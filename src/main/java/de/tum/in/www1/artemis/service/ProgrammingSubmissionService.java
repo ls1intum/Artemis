@@ -624,9 +624,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId());
         }
 
-        List<ProgrammingSubmission> submissionsWithoutResult = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRunParticipation())
-                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
-                .collect(Collectors.toList());
+        List<ProgrammingSubmission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent)
+                .map(Optional::get).map(submission -> (ProgrammingSubmission) submission).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();

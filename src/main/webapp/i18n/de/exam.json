@@ -117,6 +117,7 @@
             "notSynced": "Aufgabe nicht gespeichert",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
             "notSubmitted": "Aufgabe nicht eingereicht",
+            "notSavedOrSubmitted": "Du hast Änderungen die nicht gespeichert oder abgegeben sind",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig abgeben",

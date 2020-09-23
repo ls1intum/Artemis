@@ -120,7 +120,7 @@ export class TestRunManagementComponent implements OnInit {
     get testRunCanBeAssessed(): boolean {
         if (!!this.testRuns && this.testRuns.length > 0) {
             for (const testRun of this.testRuns) {
-                if (testRun.submitted) {
+                if (testRun.user && this.instructor && testRun.submitted) {
                     return true;
                 }
             }
