@@ -6,6 +6,7 @@ package de.tum.in.www1.artemis.exception;
 public class ContinousIntegrationException extends RuntimeException {
 
     public ContinousIntegrationException() {
+        // intentionally empty
     }
 
     public ContinousIntegrationException(String message) {

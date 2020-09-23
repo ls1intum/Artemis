@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -505,7 +506,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReEvaluateScores() throws Exception {
+    public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
@@ -517,82 +518,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCases.get("test3").active(true).afterDueDate(false).setWeight(2.);
         testCaseRepository.saveAll(testCases.values());
 
-        // template does not pass any tests
-        var participationTemplate = programmingExercise.getTemplateParticipation();
-        {
-            // score 0 %
-            var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100L);
-            participationTemplate.setResults(Set.of(resultTemplate));
-            resultTemplate = updateAndSaveAutomaticResult(resultTemplate, false, false, false);
-        }
-
-        // solution passes most tests but is still faulty
-        var participationSolution = programmingExercise.getSolutionParticipation();
-        {
-            // score 75 %
-            var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100L);
-            participationSolution.setResults(Set.of(resultSolution));
-            resultSolution = updateAndSaveAutomaticResult(resultSolution, false, true, true);
-        }
-
-        // student1 only has one automatic result
-        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        {
-            // score 50 %
-            var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
-            participation1.setResults(Set.of(result1));
-            result1 = updateAndSaveAutomaticResult(result1, true, true, false);
-        }
-
-        // student2 has an automatic result and a manual result as well
-        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
-        {
-            // score 75 %
-            var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
-            result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
-
-            // score 100 %
-            var result2b = new Result().participation(participation2).resultString("nice job").successful(false).rated(true).score(100L);
-            result2b.feedbacks(List.of(new Feedback().text("Well done!").positive(true).type(FeedbackType.MANUAL))) //
-                    .score(100L) //
-                    .rated(true) //
-                    .hasFeedback(true) //
-                    .successful(true) //
-                    .completionDate(ZonedDateTime.now()) //
-                    .assessmentType(AssessmentType.MANUAL);
-            result2b = resultRepository.save(result2b);
-            participation2.setResults(Set.of(result2a, result2b));
-        }
-
-        // student3 only started the exercise, but did not submit anything
-        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
-
-        // student4 only has one automatic result
-        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
-        {
-            // score 100 %
-            var result4 = new Result().participation(participation4).resultString("x of y passed").successful(false).rated(true).score(100L);
-            result4 = updateAndSaveAutomaticResult(result4, true, true, true);
-            participation4.setResults(Set.of(result4));
-        }
-
-        // student5 has a build failure
-        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student5");
-        {
-            // Build Failed
-            var result5 = new Result().participation(participation5) //
-                    .feedbacks(List.of()) //
-                    .score(0L) //
-                    .resultString("Build Failed") //
-                    .rated(true) //
-                    .hasFeedback(false) //
-                    .successful(false) //
-                    .completionDate(ZonedDateTime.now()) //
-                    .assessmentType(AssessmentType.AUTOMATIC);
-            gradingService.updateResult(result5, programmingExercise, true);
-            result5 = resultRepository.save(result5);
-            participation5.setResults(Set.of(result5));
-        }
+        var testParticipations = createTestParticipations();
 
         // change test case weights
         testCases.get("test1").setWeight(0.);
@@ -641,7 +567,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student1 25 %
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[0].getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -655,7 +581,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student2 100 % / 75 %
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[1].getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(2);
 
@@ -679,7 +605,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student3 no result
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[2].getId()).get();
             var results = participation.getResults();
             assertThat(results).isNullOrEmpty();
             assertThat(participation.findLatestResult()).isNull();
@@ -687,7 +613,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student4 100%
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[3].getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -701,7 +627,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         // student5 Build Failed
         {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation5.getId()).get();
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[4].getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
@@ -728,5 +654,94 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 .assessmentType(AssessmentType.AUTOMATIC);
         gradingService.updateResult(result, programmingExercise, true);
         return resultRepository.save(result);
+    }
+
+    private Participation[] createTestParticipations() {
+
+        var testParticipations = new Participation[5];
+
+        // template does not pass any tests
+        var participationTemplate = programmingExercise.getTemplateParticipation();
+        {
+            // score 0 %
+            var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100L);
+            participationTemplate.setResults(Set.of(resultTemplate));
+            resultTemplate = updateAndSaveAutomaticResult(resultTemplate, false, false, false);
+        }
+
+        // solution passes most tests but is still faulty
+        var participationSolution = programmingExercise.getSolutionParticipation();
+        {
+            // score 75 %
+            var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100L);
+            participationSolution.setResults(Set.of(resultSolution));
+            updateAndSaveAutomaticResult(resultSolution, false, true, true);
+        }
+
+        // student1 only has one automatic result
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        {
+            // score 50 %
+            var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
+            participation1.setResults(Set.of(result1));
+            updateAndSaveAutomaticResult(result1, true, true, false);
+        }
+        testParticipations[0] = participation1;
+
+        // student2 has an automatic result and a manual result as well
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        {
+            // score 75 %
+            var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
+            result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
+
+            // score 100 %
+            var result2b = new Result().participation(participation2).resultString("nice job").successful(false).rated(true).score(100L);
+            result2b.feedbacks(List.of(new Feedback().text("Well done!").positive(true).type(FeedbackType.MANUAL))) //
+                    .score(100L) //
+                    .rated(true) //
+                    .hasFeedback(true) //
+                    .successful(true) //
+                    .completionDate(ZonedDateTime.now()) //
+                    .assessmentType(AssessmentType.MANUAL);
+            result2b = resultRepository.save(result2b);
+            participation2.setResults(Set.of(result2a, result2b));
+        }
+        testParticipations[1] = participation2;
+
+        // student3 only started the exercise, but did not submit anything
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
+        testParticipations[2] = participation3;
+
+        // student4 only has one automatic result
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
+        {
+            // score 100 %
+            var result4 = new Result().participation(participation4).resultString("x of y passed").successful(false).rated(true).score(100L);
+            result4 = updateAndSaveAutomaticResult(result4, true, true, true);
+            participation4.setResults(Set.of(result4));
+        }
+        testParticipations[3] = participation4;
+
+        // student5 has a build failure
+        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student5");
+        {
+            // Build Failed
+            var result5 = new Result().participation(participation5) //
+                    .feedbacks(List.of()) //
+                    .score(0L) //
+                    .resultString("Build Failed") //
+                    .rated(true) //
+                    .hasFeedback(false) //
+                    .successful(false) //
+                    .completionDate(ZonedDateTime.now()) //
+                    .assessmentType(AssessmentType.AUTOMATIC);
+            gradingService.updateResult(result5, programmingExercise, true);
+            result5 = resultRepository.save(result5);
+            participation5.setResults(Set.of(result5));
+        }
+        testParticipations[4] = participation5;
+
+        return testParticipations;
     }
 }
