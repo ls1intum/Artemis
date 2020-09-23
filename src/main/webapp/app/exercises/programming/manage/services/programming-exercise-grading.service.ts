@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
