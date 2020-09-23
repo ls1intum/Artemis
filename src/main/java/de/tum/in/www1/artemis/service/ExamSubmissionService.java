@@ -72,6 +72,8 @@ public class ExamSubmissionService {
                 studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             }
             catch (EntityNotFoundException entityNotFoundException) {
+                // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+                // This is called often, everytime an exercise is saved therefore it is best to limit unessesary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
                     throw entityNotFoundException;
                 }
@@ -107,10 +109,8 @@ public class ExamSubmissionService {
         if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
             // fetch all testRuns for the instructor
             List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
-            // count the test runs which contain this exercise
-            final long numberOfTestRunsContainingExercise = testRuns.stream().filter(testRun -> testRun.getExercises().contains(exercise)).count();
             // if a test run contains the exercise, then the instructor is allowed to submit
-            return numberOfTestRunsContainingExercise > 0;
+            return testRuns.stream().anyMatch(testRun -> testRun.getExercises().contains(exercise));
         }
         // only instructors can access and submit to test runs
         return false;
