@@ -134,7 +134,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
+        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
 
         this.loadAll();
 

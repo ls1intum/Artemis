@@ -29,7 +29,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
-import org.w3c.dom.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
