@@ -119,7 +119,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     private calculateTickMax() {
         const max = Math.max(...this.histogramData);
-        return Math.ceil((max + 1) / 10) * 10;
+        return Math.ceil((max + 1) / 10) * 10 + 20;
     }
 
     private createChart() {

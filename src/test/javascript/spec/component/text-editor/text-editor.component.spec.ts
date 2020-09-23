@@ -1,3 +1,4 @@
+import * as ace from 'brace';
 import * as chai from 'chai';
 import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
@@ -36,6 +37,9 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TextEditorComponent', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist.js');
+
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let debugElement: DebugElement;

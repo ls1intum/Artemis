@@ -96,7 +96,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
             this.percentageComplaintsProgress = Math.floor(
                 ((this.numberOfComplaints -
-                this.numberOfOpenComplaints + // nr of evaluated complaints
+                    this.numberOfOpenComplaints + // nr of evaluated complaints
                     (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) / // nr of evaluated more feedback requests
                     (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) * // total nr of complaints and feedback requests
                     100,

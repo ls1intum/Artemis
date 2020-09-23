@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -11,11 +11,26 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import * as moment from 'moment';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
     templateUrl: './programming-exam-submission.component.html',
-    providers: [{ provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent }],
+    providers: [
+        { provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent },
+        CodeEditorConflictStateService,
+        CodeEditorSubmissionService,
+        CodeEditorBuildLogService,
+        CodeEditorRepositoryFileService,
+        CodeEditorRepositoryService,
+        DomainService,
+    ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
@@ -33,10 +48,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     repositoryIsLocked = false;
     showEditorInstructions = true;
 
-    constructor(private domainService: DomainService) {
-        super();
-    }
-
     getSubmission(): Submission | null {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
             return this.studentParticipation.submissions[0];
@@ -52,6 +63,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
+    }
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
@@ -65,13 +80,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
-    reload(): void {
-        this.ngOnInit();
-        if (this.instructions) {
-            // Load the result of the active exercise into the UML and Task extension on exercise switch
-            this.instructions.latestResult = this.instructions.latestResult;
-            this.instructions.updateMarkdown();
-        }
+    onActivate() {
+        super.onActivate();
+        this.instructions.updateMarkdown();
     }
 
     /**
@@ -102,12 +113,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
     }
 
-    onActivate(): void {
-        this.reload();
-    }
-
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorContainer.actions.onSave();
+    }
+
+    updateViewFromSubmission(): void {
+        // do nothing - the code editor itself is taking care of updating the view from submission
     }
 }
