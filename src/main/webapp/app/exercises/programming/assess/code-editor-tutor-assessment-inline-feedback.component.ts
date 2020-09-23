@@ -31,6 +31,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onCancelFeedback = new EventEmitter<number>();
     @Output()
     onDeleteFeedback = new EventEmitter<Feedback>();
+    @Output()
+    onEditFeedback = new EventEmitter<number>();
 
     readOnly: boolean;
     oldFeedback: Feedback;
@@ -69,5 +71,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         if (confirmation) {
             this.onDeleteFeedback.emit(this.feedback);
         }
+    }
+
+    editFeedback(line: number) {
+        this.readOnly = false;
+        this.onEditFeedback.emit(line);
     }
 }

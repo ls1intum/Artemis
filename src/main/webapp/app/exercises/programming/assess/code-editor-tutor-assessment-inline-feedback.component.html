@@ -43,7 +43,7 @@
                 <h6 class="d-inline">Tutor Comment:</h6>
             </div>
             <div *ngIf="!isStudent" class="col d-flex justify-content-end">
-                <button type="submit" (click)="readOnly = false" class="btn btn-primary btn-sm">
+                <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="'pencil-alt'"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
             </div>
