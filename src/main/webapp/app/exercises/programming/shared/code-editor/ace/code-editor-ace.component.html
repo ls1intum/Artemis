@@ -8,7 +8,7 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
-       <!-- <div *ngFor="let feedback of fileFeedbacks">
+        <!-- <div *ngFor="let feedback of fileFeedbacks">
             <jhi-code-editor-tutor-assessment-inline-feedback
                 class="inline-feedback-d-none"
                 id="{{feedback.reference}}"
@@ -19,10 +19,10 @@
             </jhi-code-editor-tutor-assessment-inline-feedback>
         </div> -->
 
-            <div class="btn-inline-comment">
-                <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
-            </div>
-        <div *ngFor="let line of lineCounter; let i = index;" id="test-{{i}}" class="inline-feedback-d-none">
+        <div class="btn-inline-comment">
+            <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
+        </div>
+        <div *ngFor="let line of lineCounter; let i = index" id="test-{{ i }}" class="inline-feedback-d-none">
             <jhi-code-editor-tutor-assessment-inline-feedback
                 [fileName]="selectedFile"
                 [codeLine]="i"
