@@ -49,20 +49,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     cancelFeedback() {
         console.log('cancel pressed');
-        console.log(this.feedback);
+        console.log('feedback before: ', this.feedback);
         // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
-        if (this.feedback.type !== this.MANUAL) {
-            this.onCancelFeedback.emit(this.codeLine);
-        } else {
-            // Changes in feedback is discarded
-            console.log('else');
-            console.log('feedback: ');
-            console.log(this.feedback);
-            console.log('feedback old: ');
-            console.log(this.oldFeedback);
+        if (this.feedback.type === this.MANUAL) {
             this.feedback = this.oldFeedback;
             this.readOnly = true;
         }
+        console.log('feedback after: ', this.feedback);
+        this.onCancelFeedback.emit(this.codeLine);
     }
 
     deleteFeedback() {

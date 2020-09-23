@@ -82,15 +82,16 @@
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
                 >Go to repository</a
             >
-            <jhi-updating-result
-                *ngIf="participation"
-                [exercise]="exercise"
+            <jhi-result
+                *ngIf="participationForManualResult"
+                [result]="manualResult"
                 [showUngradedResults]="true"
                 [showGradedBadge]="true"
+                [isBuilding]="false"
                 [participation]="participationForManualResult"
                 [short]="true"
                 class="mr-2"
-            ></jhi-updating-result>
+            ></jhi-result>
             <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
             <div class="form-group mt-3" *ngIf="exercise.gradingInstructions">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
