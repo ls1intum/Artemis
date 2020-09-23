@@ -52,9 +52,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
     onError = new EventEmitter<string>();
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
+    // Line widgets for inline feedback
     readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
@@ -62,14 +65,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+    // Inline feedback
     fileFeedbacks: Feedback[];
     private lineWidget: any;
-    private lineWidgetObserver: MutationObserver | null;
-    linesOfCode: number;
-    lineOfCodeForInlineComment: number;
-    gutters: any;
+    private gutters: any;
     lineCounter: any[] = [];
-    elementArray: Element[] = [];
+    private elementArray: Element[] = [];
+    fileFeedbackPerLine: { [line: number]: Feedback } = {};
+    editorSession: any;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -125,15 +128,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Makes sure previous settings are restored and the correct language service is used.
      **/
     initEditorAfterFileChange() {
-        const session = this.editor.getEditor().getSession();
-        if (!session.widgetManager) {
-            session.widgetManager = new this.LineWidgets(session);
-            session.widgetManager.attach(this.editor.getEditor());
+        this.editorSession = this.editor.getEditor().getSession();
+        if (!this.editorSession.widgetManager) {
+            this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
+            this.editorSession.widgetManager.attach(this.editor.getEditor());
         }
-        if (session.lineWidgets) {
-            session.lineWidgets.forEach((widget: any) => {
-                session.widgetManager.removeLineWidget(widget);
+        if (this.editorSession.lineWidgets) {
+            console.log('initEditorAfterFileChange() line widgets before: ', this.editorSession.lineWidgets);
+            this.editorSession.lineWidgets.forEach((widget: any) => {
+                if (widget) {
+                    this.editorSession.widgetManager.removeLineWidget(widget);
+                }
             });
+            console.log('initEditorAfterFileChange() line widgets after: ', this.editorSession.lineWidgets);
         }
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
@@ -154,17 +161,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
-            // inline feedback below
+            // Setup for inline feedback
             const lines = this.editor.getEditor().getSession().getLength();
             this.lineCounter = new Array(lines);
-            // this.setupLineIcons();
-            /*
             if (!this.feedbacks) {
                 this.feedbacks = [];
             }
             this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
-            this.displayFeedbacks();
-            */
+            this.fileFeedbackPerLine = {};
+            this.fileFeedbacks.forEach((feedback) => {
+                const line: number = +feedback.reference!.split('line:')[1];
+                this.fileFeedbackPerLine[line] = feedback;
+            });
+            console.log('file feebacks normal und per line und undefined');
+            console.log(this.feedbacks);
+            console.log(this.fileFeedbacks);
+            console.log(this.fileFeedbackPerLine);
+            console.log(this.fileFeedbackPerLine[1]);
         }
     }
 
@@ -204,8 +217,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.isTutorAssessment) {
             console.log('onFileTextchanged');
             this.editor.setReadOnly(true);
-            // this works: this.displayFeedbacks();
             this.setupLineIcons();
+            this.displayFeedbacks();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -338,187 +351,158 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
     }
 
-    loadLineWidgets() {
-        /*const session = this.editor.getEditor().getSession();
-        if (!session.widgetManager) {
-            session.widgetManager = new this.LineWidgets(session);
-            session.widgetManager.attach(this.editor.getEditor());
-        }
-        if (this.lineWidget) {
-            session.widgetManager.removeLineWidget(this.lineWidget);
-        }
-        if (this.lineWidgetObserver) {
-            this.lineWidgetObserver.disconnect();
-        }
-        const rowElement = this.lineWidgetsElement.nativeElement.children.item(0);
-        if (rowElement) {
-            this.lineWidgetObserver = new MutationObserver((mutations) => {
-                if (mutations.some((m) => m.type === 'attributes' && m.attributeName === 'row')) {
-                    this.loadLineWidgets();
-                }
-            });
-            this.lineWidgetObserver.observe(rowElement, { attributes: true });
-            const row = rowElement.attributes.getNamedItem('row')?.value || '0';
-            this.lineWidget = {
-                row: parseInt(row, 10) || 0,
-                fixedWidth: true,
-                coverGutter: true,
-                el: this.lineWidgetsElement.nativeElement,
-            };
-            this.lineWidgetsElement.nativeElement.remove();
-            session.widgetManager.addLineWidget(this.lineWidget);
-        }*/
-    }
     displayFeedbacks() {
-        const session = this.editor.getEditor().getSession();
-        if (!session.widgetManager) {
-            session.widgetManager = new this.LineWidgets(session);
-            session.widgetManager.attach(this.editor.getEditor());
-        }
-
+        console.log('displayFeedback');
         this.fileFeedbacks.forEach((feedback) => {
-            const feedbackElements = document.querySelectorAll('.inline-feedback-d-none');
-            console.log('test');
-            feedbackElements.forEach((feedbackElement: HTMLElement) => {
-                if (feedbackElement.id === feedback.reference) {
-                    this.lineWidget = {
-                        row: +feedback.reference!.split('line:')[1],
-                        fixedWidth: true,
-                        coverGutter: true,
-                        el: feedbackElement,
-                    };
-                    this.lineWidget.el.className = 'inline-feedback';
-                    session.widgetManager.addLineWidget(this.lineWidget);
-                }
-            });
-        });
-    }
-
-    setupLineIcons() {
-        this.linesOfCode = this.editor.getEditor().getSession().getLength();
-        console.log(this.editor.getEditor());
-        const container = this.editor.getEditor().container;
-        this.gutters = container.querySelectorAll('.ace_gutter-cell');
-        console.log('amount of gutters: ' + this.gutters.length + 'for file: ' + this.selectedFile);
-        console.log('linesOfCode: ' + this.linesOfCode);
-        setTimeout(() => {
-            const elements = document.querySelectorAll('.btn-inline-comment');
-            console.log(elements);
-            this.gutters.forEach((gutter: HTMLElement) => {
-                const line: string = +gutter.innerText - 1 + '';
-                elements.forEach((el: HTMLElement) => {
-                    if (el.id === 'inline-comment-button-' + line) {
-                        gutter.appendChild(el);
-                    }
-                });
-            });
-        }, 0);
-        // this.lineIconElement.nativeElement.id = '';
-
-        /*
-        const container = this.editor.getEditor().container;
-        const lines = container.querySelectorAll('.ace_line');
-        const gutters = container.querySelectorAll('.ace_gutter-cell');
-        lines.forEach((line: HTMLElement, i: number) => {
-            line.addEventListener('mouseenter', () => {
-                gutters[i].append(this.lineIconElement.nativeElement);
-                console.log('mouseenter line ' + i);
-            });
-            line.addEventListener('mouseleave', () => {
-                this.lineIconElement.nativeElement.remove();
-                console.log('mouseleave line ' + i);
-            });
-        });
-
-        gutters.forEach((gutter: HTMLElement) => {
-            gutter.addEventListener('mouseenter', () => {
-                gutter.append(this.lineIconElement.nativeElement);
-                const child = gutter.getElementsByClassName('gutter-icon')[0];
-                console.log('mouseenter gutter' + gutter.innerText);
-                child.addEventListener('click', () => {
-                    console.log('on click icon in gutter line' + gutter.innerText);
-                });
-            });
-            gutter.addEventListener('mouseleave', () => {
-                // this.lineIconElement.nativeElement.remove();
-                console.log('mouseleave gutter' + gutter.innerText);
-            });
-        });
-        this.lineIconElement.nativeElement.remove();*/
-    }
-
-    addLineWidgetWithFeedback(line: number) {
-        /*this.lineWidgetsElement.nativeElement.id = line;
-        const copy = this.lineWidgetsElement.nativeElement.cloneNode(true);*/
-        this.lineOfCodeForInlineComment = line;
-        console.log('button clicked for line: ' + line);
-        const session = this.editor.getEditor().getSession();
-        if (!session.widgetManager) {
-            session.widgetManager = new this.LineWidgets(session);
-            session.widgetManager.attach(this.editor.getEditor());
-        }
-        console.log('elementArray :) ');
-        console.log(this.elementArray);
-        setTimeout(() => {
-            // const elements = document.querySelectorAll('.inline-feedback-d-none');
-            let _element: Element | null | undefined = this.elementArray.find((element) => element.id === 'test-' + line);
-            if (!_element) {
-                _element = document.querySelector(`#test-${line}`);
-                if (_element) {
-                    this.elementArray.push(_element);
+            const line: number = +feedback.reference!.split('line:')[1];
+            let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+            if (!inlineFeedback) {
+                inlineFeedback = document.querySelector(`#test-${line}`);
+                if (inlineFeedback) {
+                    this.elementArray.push(inlineFeedback);
                 }
             }
-            if (_element) {
-                console.log('inline comment element:');
-                console.log(_element);
-                // element.className = 'inline-feedback';
+            if (inlineFeedback) {
+                console.log('add linewidget line ' + line);
                 this.lineWidget = {
                     row: line,
                     fixedWidth: true,
                     coverGutter: true,
-                    el: _element,
+                    el: inlineFeedback,
                 };
                 this.lineWidget.el.className = 'inline-feedback';
-                session.widgetManager.addLineWidget(this.lineWidget);
-            }
-            /*
-            elements.forEach((element: HTMLElement) => {
-                if (element.id === 'test-' + line + '-' + this.selectedFile) {
-                    console.log('inline comment element:');
-                    console.log(element);
-                    // element.className = 'inline-feedback';
-                    this.lineWidget = {
-                        row: line,
-                        fixedWidth: true,
-                        coverGutter: true,
-                        el: element,
-                    };
-                    this.lineWidget.el.className = 'inline-feedback';
-                    session.widgetManager.addLineWidget(this.lineWidget);
-                }
-            });*/
-        }, 100);
-    }
-    counter(num: number) {
-        return new Array(num);
-    }
-
-    test(i: number) {
-        console.log('test method: update rows');
-        const session = this.editor.getEditor().getSession();
-        if (!session.widgetManager) {
-            session.widgetManager = new this.LineWidgets(session);
-            session.widgetManager.attach(this.editor.getEditor());
-        }
-        session.lineWidgets.forEach((widget: any) => {
-            if (widget.el.id === 'test-' + i) {
-                session.widgetManager.removeLineWidget(widget);
-                session.widgetManager.addLineWidget(widget);
+                this.editorSession.widgetManager.addLineWidget(this.lineWidget);
             }
         });
     }
 
-    trackByFn(index: number) {
-        return index + this.selectedFile;
+    setupLineIcons() {
+        const gutterContainer = document.querySelector('.ace_gutter-layer');
+        const container = this.editor.getEditor().container;
+        this.observerDom(gutterContainer!, () => {
+            this.gutters = container.querySelectorAll('.ace_gutter-cell');
+            console.log('amount of gutters: ' + this.gutters.length + 'for file: ' + this.selectedFile);
+            setTimeout(() => {
+                const buttonInlineComment = document.querySelector('.btn-inline-comment');
+                console.log(buttonInlineComment);
+                this.gutters.forEach((gutter: HTMLElement) => {
+                    const clone = buttonInlineComment!.cloneNode(true);
+                    clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
+                    if (gutter.childElementCount < 1) {
+                        gutter.appendChild(clone);
+                    }
+                });
+            }, 100);
+        });
+    }
+
+    addLineWidgetWithFeedback(line: number) {
+        console.log('button clicked for line: ' + line);
+        console.log('elementArray :) ');
+        console.log(this.elementArray);
+        setTimeout(() => {
+            // const elements = document.querySelectorAll('.inline-feedback-d-none');
+            let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+            if (!inlineFeedback) {
+                inlineFeedback = document.querySelector(`#test-${line}`);
+                if (inlineFeedback) {
+                    this.elementArray.push(inlineFeedback);
+                }
+            }
+            if (inlineFeedback) {
+                console.log('inline comment element:');
+                console.log(inlineFeedback);
+                this.lineWidget = {
+                    row: line,
+                    fixedWidth: true,
+                    coverGutter: true,
+                    el: inlineFeedback,
+                };
+                this.lineWidget.el.className = 'inline-feedback';
+                this.editorSession.widgetManager.addLineWidget(this.lineWidget);
+            }
+        }, 100);
+    }
+
+    adjustLineWidgetHeight(i: number) {
+        console.log('test method: update rows');
+        this.editorSession.lineWidgets.forEach((widget: any) => {
+            if (widget && widget.el?.id === 'test-' + i) {
+                this.editorSession.widgetManager.removeLineWidget(widget);
+                this.editorSession.widgetManager.addLineWidget(widget);
+            }
+        });
+    }
+
+    updateFeedback(feedback: Feedback) {
+        console.log('updateFeedback');
+        const line: number = +feedback.reference!.split('line:')[1];
+        // Check if feedback already exists and update it, else append it to feedbacks of the file
+        if (this.feedbacks.some((f) => f.reference === feedback.reference)) {
+            console.log('update existing feedback');
+            const index = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
+            this.feedbacks[index] = feedback;
+            this.fileFeedbackPerLine[line] = feedback;
+        } else {
+            console.log('append feedback');
+            this.feedbacks.push(feedback);
+            this.fileFeedbackPerLine[line] = feedback;
+        }
+        console.log('fileFeedbacks after update 123: ');
+        console.log(this.fileFeedbackPerLine);
+        console.log(this.feedbacks);
+        this.onUpdateFeedback.emit(this.feedbacks);
+        console.log('should emit');
+        this.adjustLineWidgetHeight(line);
+    }
+
+    cancelFeedback(line: number) {
+        if (!this.fileFeedbackPerLine[line]) {
+            const widget = this.editorSession.lineWidgets.filter((w: any) => {
+                if (w) {
+                    return w.el?.id === 'test-' + line;
+                }
+            })[0];
+            /*console.log('remove widget ', widget);
+            const div = document.createElement('div');
+            div.style.height = '0px';
+            widget.el = div;*/
+            this.editorSession.widgetManager.removeLineWidget(widget);
+            console.log('line widgets after: ', this.editorSession.lineWidgets);
+        } else {
+            this.adjustLineWidgetHeight(line);
+        }
+    }
+
+    deleteFeedback(feedback: Feedback) {
+        const indexToDelete = this.feedbacks.indexOf(feedback);
+        const line: number = +feedback.reference!.split('line:')[1];
+        this.feedbacks.splice(indexToDelete, 1);
+        delete this.fileFeedbackPerLine[line];
+        this.cancelFeedback(line);
+        this.onUpdateFeedback.emit(this.feedbacks);
+    }
+
+    /**
+     * Observes whether the children of the DOM element change.
+     * We need this to detect changes in the gutter layer, to add the inline button to each gutter.
+     * @param obj The DOM element on which we check if children change.
+     * @param callback The method to be called when a change is detected.
+     */
+    observerDom(obj: Element, callback: () => void) {
+        if (!obj || obj.nodeType !== 1) {
+            return;
+        }
+        if (MutationObserver) {
+            // define a new observer
+            const mutationObserver = new MutationObserver(callback);
+
+            // have the observer observe foo for changes in children
+            mutationObserver.observe(obj, { childList: true, subtree: true });
+        } else {
+            obj.addEventListener('DOMNodeInserted', callback, false);
+            obj.addEventListener('DOMNodeRemoved', callback, false);
+        }
+        callback();
     }
 }

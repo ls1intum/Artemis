@@ -19,25 +19,20 @@
             </jhi-code-editor-tutor-assessment-inline-feedback>
         </div> -->
 
-        <div *ngFor="let gutter of gutters">
-            <div class="btn-inline-comment" id="inline-comment-button-{{+gutter.innerText - 1}}" (click)="addLineWidgetWithFeedback(+gutter.innerText - 1)">
+            <div class="btn-inline-comment">
                 <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
             </div>
-        </div>
-        <div>
+        <div *ngFor="let line of lineCounter; let i = index;" id="test-{{i}}" class="inline-feedback-d-none">
             <jhi-code-editor-tutor-assessment-inline-feedback
-                *ngFor="let line of lineCounter; let i = index; trackBy: trackByFn"
-                class="inline-feedback-d-none"
-                id="test-{{i}}"
                 [fileName]="selectedFile"
                 [codeLine]="i"
-                [feedback]="undefined"
-                (onUpdateFeedback)="test(i)"
-                (onDeleteFeedback)="test(i)"
-                (onCancelFeedback)="test(i)"
+                [feedback]="fileFeedbackPerLine[i]"
+                (onUpdateFeedback)="updateFeedback($event)"
+                (onDeleteFeedback)="deleteFeedback($event)"
+                (onCancelFeedback)="cancelFeedback($event)"
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
-        </div> -->
+        </div>
         <!--
         <div #lineWidgets>
             <jhi-code-editor-tutor-assessment-inline-feedback
