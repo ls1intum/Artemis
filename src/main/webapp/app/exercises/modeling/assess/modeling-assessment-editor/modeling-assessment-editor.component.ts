@@ -50,6 +50,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
+    isTestRun = false;
     hasAutomaticFeedback = false;
 
     private cancelConfirmationText: string;
@@ -98,6 +99,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
+            this.isTestRun = queryParams.get('testRun') === 'true';
         });
     }
 
@@ -432,7 +434,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise, this.submission, this.isTestRun);
     }
 
     /**
