@@ -166,17 +166,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
             // Setup inline feedbacks
             // Get amount of lines of code in order to render for each line a corresponding inline feedback component
-            const lines = this.editor.getEditor().getSession().getLength();
-            this.lineCounter = new Array(lines);
-            if (!this.feedbacks) {
-                this.feedbacks = [];
+            if (this.isTutorAssessment) {
+                const lines = this.editor.getEditor().getSession().getLength();
+                this.lineCounter = new Array(lines);
+                if (!this.feedbacks) {
+                    this.feedbacks = [];
+                }
+                this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
+                this.fileFeedbackPerLine = {};
+                this.fileFeedbacks.forEach((feedback) => {
+                    const line: number = +feedback.reference!.split('line:')[1];
+                    this.fileFeedbackPerLine[line] = feedback;
+                });
             }
-            this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
-            this.fileFeedbackPerLine = {};
-            this.fileFeedbacks.forEach((feedback) => {
-                const line: number = +feedback.reference!.split('line:')[1];
-                this.fileFeedbackPerLine[line] = feedback;
-            });
         }
     }
 
@@ -390,17 +392,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         const container = this.editor.getEditor().container;
         this.observerDom(gutterContainer!, () => {
             this.gutters = container.querySelectorAll('.ace_gutter-cell');
-            setTimeout(() => {
-                const buttonInlineComment = document.querySelector('.btn-inline-comment');
-                this.gutters.forEach((gutter: HTMLElement) => {
-                    const clone = buttonInlineComment!.cloneNode(true);
-                    clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
-                    // TODO: Check whether this causes issue when having annotations
-                    if (gutter.childElementCount < 1) {
-                        gutter.appendChild(clone);
-                    }
-                });
-            }, 100);
+            const buttonInlineComment = document.querySelector('.btn-inline-comment');
+            this.gutters.forEach((gutter: HTMLElement) => {
+                const clone = buttonInlineComment!.cloneNode(true);
+                clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
+                // TODO: Check whether this causes issue when having annotations
+                if (gutter.childElementCount < 1) {
+                    gutter.appendChild(clone);
+                }
+            });
         });
     }
 
@@ -409,25 +409,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component will be added to.
      */
     addLineWidgetWithFeedback(line: number) {
-        setTimeout(() => {
-            let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
-            if (!inlineFeedback) {
-                inlineFeedback = document.querySelector(`#test-${line}`);
-                if (inlineFeedback) {
-                    this.elementArray.push(inlineFeedback);
-                }
-            }
+        let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+        if (!inlineFeedback) {
+            inlineFeedback = document.querySelector(`#test-${line}`);
             if (inlineFeedback) {
-                this.lineWidget = {
-                    row: line,
-                    fixedWidth: true,
-                    coverGutter: true,
-                    el: inlineFeedback,
-                };
-                this.lineWidget.el.className = 'inline-feedback';
-                this.editorSession.widgetManager.addLineWidget(this.lineWidget);
+                this.elementArray.push(inlineFeedback);
             }
-        }, 100);
+        }
+        if (inlineFeedback) {
+            this.lineWidget = {
+                row: line,
+                fixedWidth: true,
+                coverGutter: true,
+                el: inlineFeedback,
+            };
+            this.lineWidget.el.className = 'inline-feedback';
+            this.editorSession.widgetManager.addLineWidget(this.lineWidget);
+        }
     }
 
     /**
