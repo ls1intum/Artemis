@@ -62,7 +62,12 @@
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy">
+            <button
+                *ngIf="!isTestRun"
+                class="btn ml-2 btn-danger"
+                (click)="cancel.emit()"
+                [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
+            >
                 <fa-icon *ngIf="cancelBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
@@ -74,7 +79,7 @@
         <button
             class="btn ml-2 btn-success"
             id="assessNextButton"
-            *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode"
+            *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
             [disabled]="nextSubmissionBusy || submitBusy"
             (click)="nextSubmission.emit()"
         >

@@ -202,7 +202,9 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
+        stats.setNumberOfOpenComplaints(0L);
+        stats.setNumberOfOpenMoreFeedbackRequests(0L);
 
         return ResponseEntity.ok(stats);
     }
@@ -212,9 +214,10 @@ public class ExerciseResource {
      * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
+     * @param examMode - flag to determine if test run submissions should be deducted from the statistics
      * @return a object node with the stats
      */
-    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
@@ -222,12 +225,12 @@ public class ExerciseResource {
         DueDateStat numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
-            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
         }
         else {
-            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
-            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId, examMode);
+            numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
@@ -239,7 +242,13 @@ public class ExerciseResource {
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        long numberOfComplaints;
+        if (examMode) {
+            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
+        }
+        else {
+            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        }
         stats.setNumberOfComplaints(numberOfComplaints);
 
         long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
@@ -274,7 +283,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise, exercise.hasExerciseGroup());
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
