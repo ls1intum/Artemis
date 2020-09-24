@@ -8,13 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -28,10 +22,13 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -57,18 +54,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -134,6 +120,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
 @Service
@@ -902,12 +889,16 @@ public class DatabaseUtilService {
         return exercise.getGradingCriteria();
     }
 
-    public Course addCourseWithOneModelingExercise() {
+    /**
+     * @param title The title of the to be added modeling exercise
+     * @return A course with one specified modeling exercise
+     */
+    public Course addCourseWithOneModelingExercise(String title) {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setTitle("ClassDiagram");
+        modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
@@ -919,10 +910,18 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneReleasedTextExercise() {
+    public Course addCourseWithOneModelingExercise() {
+        return addCourseWithOneModelingExercise("ClassDiagram");
+    }
+
+    /**
+     * @param title The title of the to be added text exercise
+     * @return A course with one specified text exercise
+     */
+    public Course addCourseWithOneReleasedTextExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
-        textExercise.setTitle("Text");
+        textExercise.setTitle(title);
         course.addExercises(textExercise);
         final var exercisesNrBefore = exerciseRepo.count();
         final var courseNrBefore = courseRepo.count();
@@ -934,6 +933,10 @@ public class DatabaseUtilService {
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return course;
+    }
+
+    public Course addCourseWithOneReleasedTextExercise() {
+        return addCourseWithOneReleasedTextExercise("Text");
     }
 
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
@@ -1122,7 +1125,33 @@ public class DatabaseUtilService {
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
+    /**
+     * @param programmingExerciseTitle The name of programming exercise
+     * @return A course with named exercise
+     */
+    public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle);
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        course.addExercises(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+
+        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+    }
+
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
+        populateProgrammingExercise(programmingExercise, shortName, "Programming");
+    }
+
+    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title) {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -1136,7 +1165,7 @@ public class DatabaseUtilService {
         programmingExercise.setProblemStatement("Lorem Ipsum");
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
-        programmingExercise.setTitle("Programming");
+        programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setPackageName("de.test");
@@ -1146,10 +1175,54 @@ public class DatabaseUtilService {
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
     }
 
+    /**
+     * @return A empty course
+     */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+        return course;
+    }
+
+    /**
+     * @param title The title reflect the genre of exercise that will be added to the course
+     * @return A course that is added in other group different from the group that created in beforeEach() method
+     */
+    public Course addCourseInOtherInstructionGroupAndExercise(String title) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "other-instructors");
+        if ("Programming".equals(title)) {
+            course = courseRepo.save(course);
+
+            var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
+            populateProgrammingExercise(programmingExercise, "TSTEXC");
+            programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
+
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            course.addExercises(programmingExercise);
+            programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+            assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+        }
+        else if ("Text".equals(title)) {
+            TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+            textExercise.setTitle("Text");
+            course.addExercises(textExercise);
+            courseRepo.save(course);
+            exerciseRepo.save(textExercise);
+        }
+        else if ("ClassDiagram".equals(title)) {
+            ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+            modelingExercise.setTitle("ClassDiagram");
+            course.addExercises(modelingExercise);
+            courseRepo.save(course);
+            exerciseRepo.save(modelingExercise);
+        }
+        else {
+            return course;
+        }
+
         return course;
     }
 
@@ -1175,6 +1248,19 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+
+        addTestCasesToProgrammingExercise(programmingExercise);
+
+        return courseRepo.findById(course.getId()).get();
+    }
+
+    /**
+     * @param programmingExerciseTitle The title of the programming exercise
+     * @return A Course with named programming exercise and test cases
+     */
+    public Course addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
+        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
@@ -1994,5 +2080,30 @@ public class DatabaseUtilService {
         fail("Could not find programming exercise with title " + title);
         // just to prevent compiler warnings, we have failed anyway here
         return new ProgrammingExercise();
+    }
+
+    public PageableSearchDTO<String> configureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        if ("".equals(searchTerm)) {
+            search.setSortingOrder(SortingOrder.ASCENDING);
+        }
+        else {
+            search.setSortingOrder(SortingOrder.DESCENDING);
+        }
+        return search;
+    }
+
+    public LinkedMultiValueMap<String, String> exerciseSearchMapping(PageableSearchDTO<String> search) {
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+        return paramMap;
     }
 }
