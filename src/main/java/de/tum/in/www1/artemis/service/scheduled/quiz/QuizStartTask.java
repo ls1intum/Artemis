@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
  * Task to start a quiz with the given id that can be serialized and distributed
  */
 @SpringAware
-class QuizStartTask implements Runnable, Serializable, NamedTask {
+final class QuizStartTask implements Runnable, Serializable, NamedTask {
 
     static final String HAZELCAST_QUIZ_START_TASK = "-start";
 
@@ -23,7 +23,7 @@ class QuizStartTask implements Runnable, Serializable, NamedTask {
 
     final Long quizExerciseId;
 
-    @Autowired(required = true)
+    @Autowired
     transient QuizScheduleService quizScheduleService;
 
     QuizStartTask(Long quizExerciseId) {

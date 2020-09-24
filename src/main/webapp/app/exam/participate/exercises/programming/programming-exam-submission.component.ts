@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -47,10 +47,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     repositoryIsLocked = false;
     showEditorInstructions = true;
-
-    constructor(private domainService: DomainService) {
-        super();
-    }
+    hasSubmittedOnce = false;
 
     getSubmission(): Submission | null {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
@@ -67,6 +64,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
+    }
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
@@ -80,6 +81,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
+    onActivate() {
+        super.onActivate();
+        this.instructions.updateMarkdown();
+    }
+
     /**
      * Update {@link Submission#isSynced} & {@link Submission#submitted} based on the CommitState.
      * The submission is only synced, if all changes are committed (CommitState.CLEAN).
@@ -88,9 +94,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     onCommitStateChange(commitState: CommitState): void {
         if (this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
-            if (commitState === CommitState.CLEAN) {
+            if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 this.studentParticipation.submissions[0].submitted = true;
                 this.studentParticipation.submissions[0].isSynced = true;
+            } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
+                this.hasSubmittedOnce = true;
             }
         }
     }
@@ -108,10 +116,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.codeEditorContainer.editorState === EditorState.UNSAVED_CHANGES;
     }
 
-    onActivate(): void {}
-
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
         this.codeEditorContainer.actions.onSave();
+    }
+
+    updateViewFromSubmission(): void {
+        // do nothing - the code editor itself is taking care of updating the view from submission
     }
 }

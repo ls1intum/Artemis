@@ -536,7 +536,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
+        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -647,12 +647,12 @@ public class CourseResource {
             DueDateStat numberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), false);
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
