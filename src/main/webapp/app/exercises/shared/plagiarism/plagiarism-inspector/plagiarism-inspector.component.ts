@@ -56,7 +56,20 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
                 filename: `check-plagiarism-modeling-exercise-${this.modelingExercise.id}-${this.modelingExercise.title}`,
                 useTextFile: false,
                 useBom: true,
-                headers: ['Similarity', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Link 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2', 'Link 2'],
+                headers: [
+                    'Similarity',
+                    'Confirmed',
+                    'Participant 1',
+                    'Submission 1',
+                    'Score 1',
+                    'Size 1',
+                    'Link 1',
+                    'Participant 2',
+                    'Submission 2',
+                    'Score 2',
+                    'Size 2',
+                    'Link 2',
+                ],
             });
 
             const courseId = this.modelingExercise.course ? this.modelingExercise.course.id : this.modelingExercise.exerciseGroup?.exam?.course?.id;
@@ -66,6 +79,7 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
             const csvData = this.modelingSubmissionComparisons.map((comparisonResult) => {
                 return Object.assign({
                     Similarity: comparisonResult.similarity,
+                    Confirmed: comparisonResult.confirmed ?? '',
                     'Participant 1': comparisonResult.element1.studentLogin,
                     'Submission 1': comparisonResult.element1.submissionId,
                     'Score 1': comparisonResult.element1.score,
