@@ -151,7 +151,7 @@ public class TextClusteringService {
     @NotNull
     @Transactional(readOnly = true)
     List<TextBlock> getTextBlocks(Long exerciseId) throws NetworkingError {
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true);
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
 
         // We only support english languages so far, to prevent corruption of the clustering
         textSubmissions.removeIf(textSubmission -> textSubmission.getLanguage() != Language.ENGLISH);

@@ -29,6 +29,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash';
+import { Course } from 'app/entities/course.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -48,6 +49,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     courseId: number;
     examId: number;
+    testRunId: number;
+    testRunStartTime: Moment | null;
 
     // determines if component was once drawn visited
     submissionComponentVisited: boolean[];
@@ -123,26 +126,42 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        this.route.parent!.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
+            this.testRunId = parseInt(params['testRunId'], 10);
 
             this.loadingExam = true;
-            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
-                (studentExam) => {
-                    this.studentExam = studentExam;
-                    this.exam = studentExam.exam;
-                    this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
-                    if (this.isOver()) {
-                        this.examParticipationService
-                            .loadStudentExamWithExercisesForSummary(this.exam.course.id, this.exam.id)
-                            .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                    }
-                    this.loadingExam = false;
-                },
-                // if error occurs
-                () => (this.loadingExam = false),
-            );
+            if (!!this.testRunId) {
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
+                    (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.studentExam.exam.course = new Course();
+                        this.studentExam.exam.course.id = this.courseId;
+                        this.exam = studentExam.exam;
+                        this.testRunStartTime = moment();
+                        this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
+                        this.loadingExam = false;
+                    },
+                    () => (this.loadingExam = false),
+                );
+            } else {
+                this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
+                    (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.exam = studentExam.exam;
+                        this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+                        if (this.isOver()) {
+                            this.examParticipationService
+                                .loadStudentExamWithExercisesForSummary(this.exam.course.id, this.exam.id)
+                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                        }
+                        this.loadingExam = false;
+                    },
+                    // if error occurs
+                    () => (this.loadingExam = false),
+                );
+            }
         });
         this.initLiveMode();
     }
@@ -183,7 +202,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // init studentExam
             this.studentExam = studentExam;
             // set endDate with workingTime
-            this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+            if (!!this.testRunId) {
+                this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime, 'seconds');
+            } else {
+                this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+            }
             // initializes array which manages submission component initialization
             this.submissionComponentVisited = new Array(studentExam.exercises.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
@@ -309,6 +332,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is visible
      */
     isVisible(): boolean {
+        if (!!this.testRunId) {
+            return true;
+        }
         if (!this.exam) {
             return false;
         }
@@ -319,6 +345,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam has started
      */
     isActive(): boolean {
+        if (!!this.testRunId) {
+            return true;
+        }
         if (!this.exam) {
             return false;
         }
@@ -353,6 +382,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onExerciseChange(exerciseChange: { exercise: Exercise; force: boolean }): void {
+        const activeComponent = this.activeSubmissionComponent;
+        if (activeComponent) {
+            activeComponent.onDeactivate();
+        }
         this.triggerSave(exerciseChange.force);
         this.initializeExercise(exerciseChange.exercise);
     }
@@ -535,8 +568,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
                         const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        /**
+                         * Syncs the navigation bar correctly when the student only uses an IDE or the code editor.
+                         * In case a student uses both, un-submitted changes in the code editor take precedence.
+                         */
                         submissionCopy.isSynced = exerciseForSubmission.studentParticipations[0].submissions[0].isSynced;
-                        submissionCopy.submitted = exerciseForSubmission.studentParticipations[0].submissions[0].submitted;
+                        submissionCopy.submitted = true;
                         delete submissionCopy.participation;
                         exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
                     }

@@ -17,6 +17,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
+import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 
 @NgModule({
     imports: [
@@ -40,7 +41,8 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
         QuizExamSummaryComponent,
         ExamInformationComponent,
         ExamPointsSummaryComponent,
+        TestRunRibbonComponent,
     ],
-    exports: [ExamParticipationSummaryComponent, ExamInformationComponent],
+    exports: [ExamParticipationSummaryComponent, ExamInformationComponent, TestRunRibbonComponent],
 })
 export class ArtemisParticipationSummaryModule {}

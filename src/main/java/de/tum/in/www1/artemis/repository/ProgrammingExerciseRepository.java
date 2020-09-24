@@ -126,12 +126,34 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * Should be used for exam dashboard to ignore test run submissions.
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of distinct submissions belonging to the exercise id
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
      *
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
     @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL)")
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * Should be used for exam dashboard to ignore test run submissions.
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of distinct submissions belonging to the exercise id that are assessed
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
