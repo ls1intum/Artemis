@@ -281,7 +281,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         // Otherwise return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
-        return filterBuildLogs(retrieveLatestBuildLogsFromJenkins(programmingExerciseParticipation.getBuildPlanId()));
+        return filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
     }
 
     @Override
@@ -480,7 +480,7 @@ public class BambooService implements ContinuousIntegrationService {
                     }
                 }
 
-                // Set logs that as we received new logs and don't want logs to be stored twice
+                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
                 programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
 
                 programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
@@ -881,7 +881,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey to identify the build logs with.
      * @return the list of retrieved build logs.
      */
-    private List<BuildLogEntry> retrieveLatestBuildLogsFromJenkins(String planKey) {
+    private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
