@@ -8,6 +8,8 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
+import { RatingModule as StarRatingComponent } from 'ng-starrating';
+
 import { of } from 'rxjs';
 
 describe('RatingListComponent', () => {
@@ -18,7 +20,7 @@ describe('RatingListComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([]), StarRatingComponent],
             declarations: [RatingListComponent],
             providers: [
                 {
