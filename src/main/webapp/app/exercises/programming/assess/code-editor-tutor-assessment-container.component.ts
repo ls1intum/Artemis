@@ -152,7 +152,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         this.manualResultService.save(this.participation.id, this.manualResult).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`error.${error.error.errorKey}`),
         );
     }
 
@@ -164,7 +164,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         this.manualResultService.save(this.participation.id, this.manualResult, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`error.${error.error.errorKey}`),
         );
     }
 
@@ -198,7 +198,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.onError('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else {
                     this.onError(error.message);
                 }
@@ -222,7 +222,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             },
             () => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
             },
         );
     }
@@ -277,7 +277,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+        this.jhiAlertService.error(error);
+        this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
     }
 
     /**
