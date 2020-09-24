@@ -60,12 +60,6 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    @Value("${artemis.continuous-integration.user}")
-    private String username;
-
-    @Value("${artemis.continuous-integration.password}")
-    private String password;
-
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
 
@@ -502,13 +496,20 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            folder(projectKey);
+            final var job = jenkinsServer.getJob(projectKey);
+            if (job == null) {
+                // means the project does not exist
+                return null;
+            }
+            else {
+                return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
+            }
         }
         catch (Exception emAll) {
-            return emAll.getMessage();
+            log.warn(emAll.getMessage());
+            // in case of an error message, we assume the project does not exist
+            return null;
         }
-
-        return null;
     }
 
     @Override
@@ -558,7 +559,11 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private FolderJob folder(String folderName) {
         try {
-            final var folder = jenkinsServer.getFolderJob(jenkinsServer.getJob(folderName));
+            final var job = jenkinsServer.getJob(folderName);
+            if (job == null) {
+                throw new JenkinsException("The job " + folderName + " does not exist!");
+            }
+            final var folder = jenkinsServer.getFolderJob(job);
             if (!folder.isPresent()) {
                 throw new JenkinsException("Folder " + folderName + " does not exist!");
             }
