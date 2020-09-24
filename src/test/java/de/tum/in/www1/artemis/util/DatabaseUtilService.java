@@ -106,6 +106,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
