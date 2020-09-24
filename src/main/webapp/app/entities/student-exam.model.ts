@@ -10,6 +10,7 @@ export class StudentExam implements BaseEntity {
     public workingTime: number;
     public submitted: boolean;
     public started: boolean;
+    public testRun: boolean;
     public submissionDate: Moment | null;
     public user: User;
     public exam: Exam;
