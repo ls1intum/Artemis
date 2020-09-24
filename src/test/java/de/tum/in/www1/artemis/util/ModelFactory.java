@@ -401,6 +401,7 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
         return studentExam;
     }
 

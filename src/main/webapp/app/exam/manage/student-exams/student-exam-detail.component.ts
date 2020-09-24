@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
+import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 
 @Component({
@@ -105,6 +106,7 @@ export class StudentExamDetailComponent implements OnInit {
             this.maxTotalScore += exercise.maxScore;
             if (!!exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length >= 1) {
                 this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score * exercise.maxScore) / 100;
+                this.achievedTotalScore = this.rounding(this.achievedTotalScore);
             }
         });
     }
@@ -138,5 +140,8 @@ export class StudentExamDetailComponent implements OnInit {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
+    }
+    rounding(number: number) {
+        return round(number, 1);
     }
 }
