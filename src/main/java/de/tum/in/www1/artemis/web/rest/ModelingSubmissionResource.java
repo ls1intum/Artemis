@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
@@ -175,7 +174,8 @@ public class ModelingSubmissionResource {
 
     /**
      * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
-     * only return all the modeling submissions where the tutor has a result associated
+     * only return all the modeling submissions where the tutor has a result associated.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
      * @param submittedOnly if true, it returns only submission with submitted flag set to true
@@ -202,12 +202,13 @@ public class ModelingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<ModelingSubmission> modelingSubmissions;
+        final boolean examMode = exercise.hasExerciseGroup();
+        List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
-            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user);
+            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
-            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
@@ -289,10 +290,11 @@ public class ModelingSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise, exercise.hasExerciseGroup());
         }
         else {
-            final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
+            final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService
+                    .getRandomModelingSubmissionEligibleForNewAssessment((ModelingExercise) exercise, exercise.hasExerciseGroup());
             if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }

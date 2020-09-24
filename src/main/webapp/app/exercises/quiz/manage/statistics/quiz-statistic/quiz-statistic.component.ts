@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
+import { Chart, ChartAnimationOptions, ChartOptions, LinearTickOptions } from 'chart.js';
 import { Subscription } from 'rxjs/Subscription';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -57,7 +57,8 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
                     },
                     ticks: {
                         beginAtZero: true,
-                    },
+                        min: 0,
+                    } as LinearTickOptions,
                 },
             ],
             xAxes: [
@@ -79,52 +80,21 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
     return {
         duration: 500,
         onComplete: (chartElement: ChartElement) => {
-            const chart = chartElement.chart;
-            const ctx = chart.ctx!;
-            const fontSize = 12;
-            const fontStyle = 'normal';
-            const fontFamily = 'Arial';
-            ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+            const chartInstance = chartElement.chart,
+                ctx = chartInstance.ctx!;
+
+            ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
+            ctx.textBaseline = 'bottom';
             const participants = dataSetProvider.getParticipants();
-            dataSetProvider.getDataSets().forEach((dataset, i) => {
-                const meta = chart.getDatasetMeta(i);
-                meta.data.forEach((bar: any, index) => {
-                    const data = (Math.round(dataset.data[index] * 100) / 100).toString();
-                    const dataPercentage = Math.round((dataset.data[index] / participants) * 1000) / 10;
-                    const position = bar.tooltipPosition();
 
-                    // if the bar is high enough -> write the percentageValue inside the bar
-                    if (dataPercentage > 6) {
-                        // if the bar is low enough -> write the amountValue above the bar
-                        if (position.y > 15) {
-                            ctx.fillStyle = 'black';
-                            ctx.fillText(data, position.x, position.y - 10);
-
-                            if (participants !== 0) {
-                                ctx.fillStyle = 'white';
-                                ctx.fillText(dataPercentage.toString() + '%', position.x, position.y + 10);
-                            }
-                        } else {
-                            // if the bar is too high -> write the amountValue inside the bar
-                            ctx.fillStyle = 'white';
-                            if (participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y + 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y + 10);
-                            }
-                        }
-                    } else {
-                        // if the bar is to low -> write the percentageValue above the bar
-                        ctx.fillStyle = 'black';
-                        if (participants !== 0) {
-                            ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y - 10);
-                        } else {
-                            ctx.fillText(data, position.x, position.y - 10);
-                        }
-                    }
+            dataSetProvider.getDataSets().forEach((dataset: DataSet, datasetIndex: number) => {
+                const meta = chartInstance.getDatasetMeta(datasetIndex);
+                meta.data.forEach((bar: any, dataIndex: number) => {
+                    const data = (Math.round(dataset.data[dataIndex] * 100) / 100).toString();
+                    const dataPercentage = Math.round((dataset.data[dataIndex] / participants) * 1000) / 10 || 0;
+                    ctx.fillText(data, bar._model.x, bar._model.y - 20);
+                    ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
                 });
             });
         },
@@ -134,6 +104,15 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
 export interface DataSetProvider {
     getDataSets(): DataSet[];
     getParticipants(): number;
+}
+
+export function calculateTickMax(datasetProvider: DataSetProvider) {
+    const data = datasetProvider.getDataSets().map((dataset) => {
+        return dataset.data;
+    });
+    const flattened = ([] as number[]).concat(...data);
+    const max = Math.max(...flattened);
+    return Math.ceil((max + 1) / 10) * 10 + 20;
 }
 
 @Component({
@@ -313,6 +292,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 backgroundColor: this.colors,
             },
         ];
+
+        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 
     /**
@@ -338,5 +319,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 backgroundColor: this.colors,
             },
         ];
+        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 }

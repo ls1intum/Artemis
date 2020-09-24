@@ -1,3 +1,4 @@
+<jhi-test-run-ribbon *ngIf="isTestRun"></jhi-test-run-ribbon>
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
@@ -82,17 +83,12 @@
                         <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
                     </ng-container>
                     <jhi-complaint-interactions
-                        *ngIf="
-                            getSubmissionForExercise(exercise) &&
-                            exercise.type !== QUIZ &&
-                            studentExam.exam.examStudentReviewStart &&
-                            studentExam.exam.examStudentReviewEnd &&
-                            isAfterStudentReviewStart()
-                        "
+                        *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
                         class="mb-2 mt-2 ml-3"
                         [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                        [testRun]="isTestRun"
                     >
                     </jhi-complaint-interactions>
                 </ng-container>
@@ -108,14 +104,12 @@
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
-                    *ngIf="
-                        exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC;
-                        getSubmissionForExercise: exercise && studentExam.exam.examStudentReviewStart && studentExam.exam.examStudentReviewEnd && isAfterStudentReviewStart()
-                    "
+                    *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                    [testRun]="isTestRun"
                 >
                 </jhi-complaint-interactions>
             </ng-container>
