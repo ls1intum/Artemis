@@ -109,7 +109,7 @@
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="!!(exercise?.studentParticipations)[0].results">
+                            <ng-container *ngIf="!!exercise?.studentParticipations && exercise.studentParticipations.length > 0 && !!(exercise?.studentParticipations)[0].results">
                                 {{ rounding((((exercise?.studentParticipations)[0]?.results)[0]?.score * exercise?.maxScore) / 100) }}
                             </ng-container>
                         </td>
@@ -117,7 +117,14 @@
                             {{ exercise?.maxScore }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="!!(exercise?.studentParticipations)[0].results && ((exercise?.studentParticipations)[0]?.results)[0].assessor">
+                            <ng-container
+                                *ngIf="
+                                    !!exercise?.studentParticipations &&
+                                    exercise.studentParticipations.length > 0 &&
+                                    !!(exercise?.studentParticipations)[0].results &&
+                                    ((exercise?.studentParticipations)[0]?.results)[0].assessor
+                                "
+                            >
                                 {{ ((exercise?.studentParticipations)[0]?.results)[0]?.assessor.name }}
                             </ng-container>
                         </td>
