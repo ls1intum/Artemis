@@ -123,7 +123,7 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
         this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(
             (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
                 this.checkPlagiarismInProgress = false;
-                this.modelingSubmissionComparisons = response.body!;
+                this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);
             },
             () => (this.checkPlagiarismInProgress = false),
         );
