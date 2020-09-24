@@ -106,7 +106,7 @@ Start Gitlab
    is typically used by the host running Docker, we change the port
    Gitlab uses for SSH to ``2222``. This can be adjusted if needed.
 
-   Make sure to remove the comments from the command before running it.
+   Make sure to remove the comments from the command before running it and that docker has enough memory (~ 6GB). To adapt it, go to ``Preferecences -> Resources``
 
    ::
 
