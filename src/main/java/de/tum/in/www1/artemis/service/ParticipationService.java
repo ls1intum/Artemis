@@ -243,9 +243,45 @@ public class ParticipationService {
                 }
             }
         }
-        participation = save(participation);
+        return save(participation);
+    }
 
-        return participation;
+    /**
+     * In order to distinguish test run submissions from student exam submissions we add a manual result to the test run submissions.
+     * We add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
+     * This way the submission appears to, and can only by assessed by, the instructor who created the test run.
+     * @param participations The test run participations
+     */
+    public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
+        for (final var participation : participations) {
+            final Exercise exercise = participation.getExercise();
+            Submission submission;
+            if (participation instanceof ProgrammingExerciseParticipation) {
+                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
+                participation.setSubmissions(programmingSubmissions);
+                initializeSubmission(participation, exercise, null);
+                submission = participation.getSubmissions().iterator().next();
+                // required so that the tutor dashboard statistics are calculated correctly
+                submission.setSubmitted(true);
+            }
+            else {
+                submission = participation.getSubmissions().iterator().next();
+            }
+            submission.setSubmissionDate(ZonedDateTime.now());
+            // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            if (submission.getResult() == null) {
+                Result result = new Result();
+                result.setSubmission(submission);
+                submission.setResult(result);
+                result.setParticipation(submission.getParticipation());
+                submission.getResult().setAssessor(participation.getStudent().get());
+                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
+
+                resultRepository.save(result);
+                submissionRepository.save(submission);
+            }
+            save(participation);
+        }
     }
 
     /**
@@ -835,9 +871,13 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
+     * @param examMode flag should be set to ignore test run submissions
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
@@ -865,9 +905,13 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
      *
      * @param exerciseId the id of exercise
+     * @param examMode set flag to ignore test run submissions for exam mode
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
@@ -914,6 +958,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId);
+    }
+
+    /**
      * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
@@ -947,11 +1002,24 @@ public class ParticipationService {
     }
 
     /**
-     * filters the relevant results by removing all irrelevent ones (
+     * filters the relevant results by removing all irrelevent ones
      * @param participations the participations to get filtered
+     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+        // if exam exercise
+        if (!participations.isEmpty() && participations.get(0).getExercise().getExerciseGroup() != null) {
+            List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
+            // filter out the participations of test runs which can only be made by instructors
+            participations = participations.stream().filter(studentParticipation -> {
+                if (studentParticipation.getStudent().isPresent()) {
+                    return !instructors.contains(studentParticipation.getStudent().get());
+                }
+                return true;
+            }).collect(Collectors.toList());
+        }
+
         return participations.stream()
 
                 // Filter out participations without Students
@@ -1234,6 +1302,22 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Loads the test run participation for the instructor.
+     * See {@link StudentParticipation#isTestRunParticipation()}
+     * @param instructorId the id of the instructor
+     * @param exercise the exercise id
+     * @return the optional test run participation with submissions and results loaded
+     */
+    public Optional<StudentParticipation> findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
+        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(studentParticipations.get(0));
     }
 
     /**

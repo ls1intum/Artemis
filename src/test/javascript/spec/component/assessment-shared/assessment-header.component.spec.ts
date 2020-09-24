@@ -206,4 +206,11 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan.nativeElement.click();
         expect(component.nextSubmission.emit).toHaveBeenCalledTimes(1);
     });
+    it('should not show assess next button if is test run mode', () => {
+        component.isTestRun = true;
+        component.isLoading = false;
+        fixture.detectChanges();
+        const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
+        expect(nextSubmissionButtonSpan).toBeFalsy();
+    });
 });

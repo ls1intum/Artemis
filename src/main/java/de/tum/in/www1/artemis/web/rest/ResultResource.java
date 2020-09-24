@@ -228,8 +228,9 @@ public class ResultResource {
         }
 
         List<Result> results = new ArrayList<>();
+        var examMode = exercise.hasExerciseGroup();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId, examMode);
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {

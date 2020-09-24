@@ -192,7 +192,8 @@ public class TextSubmissionResource {
 
     /**
      * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call
+     * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId exerciseID  for which all submissions should be returned
      * @param submittedOnly mark if only submitted Submissions should be returned
@@ -216,12 +217,13 @@ public class TextSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<TextSubmission> textSubmissions;
+        List<TextSubmission> textSubmissions;
+        final boolean examMode = exercise.hasExerciseGroup();
         if (assessedByTutor) {
-            textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user);
+            textSubmissions = textSubmissionService.getAllTextSubmissionsAssessedByTutorWithForExercise(exerciseId, user, examMode);
         }
         else {
-            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
@@ -256,11 +258,6 @@ public class TextSubmissionResource {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        Exam exam = null;
-        if (exercise.hasExerciseGroup()) {
-            exam = exercise.getExerciseGroup().getExam();
-        }
-
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -284,16 +281,16 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.hasExerciseGroup());
             textAssessmentService.prepareSubmissionForAssessment(textSubmission);
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
             if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise, true);
+                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.hasExerciseGroup());
             }
             else {
-                optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.hasExerciseGroup());
             }
             if (optionalTextSubmission.isEmpty()) {
                 return notFound();
