@@ -3,6 +3,10 @@
         <h5>Plagiarism #{{ comparisonIdx }}</h5>
     </div>
     <div class="plagiarism-header-right">
+        <div class="plagiarism-warning">
+            <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+            <span>{{ 'artemisApp.plagiarism.warning' | translate }}</span>
+        </div>
         <button class="btn btn-success btn-sm" (click)="onTagPlagiarism(true)">{{ 'artemisApp.plagiarism.confirm' | translate }}</button>
         <button class="btn btn-danger btn-sm" (click)="onTagPlagiarism(false)">{{ 'artemisApp.plagiarism.deny' | translate }}</button>
         <div class="vertical-divider"></div>

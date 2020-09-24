@@ -2,7 +2,8 @@
     "artemisApp": {
         "plagiarism": {
             "confirm": "Confirm",
-            "deny": "Deny"
+            "deny": "Deny",
+            "warning": "Confirmation/Denial of a plagiarism will be lost when refreshing the page."
         }
     }
 }

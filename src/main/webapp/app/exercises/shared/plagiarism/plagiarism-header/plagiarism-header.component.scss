@@ -11,6 +11,10 @@
         margin-bottom: 0;
     }
 
+    .plagiarism-warning {
+        color: darken($body-bg, 20);
+    }
+
     &-right {
         display: flex;
         align-items: center;

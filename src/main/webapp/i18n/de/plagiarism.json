@@ -2,7 +2,8 @@
     "artemisApp": {
         "plagiarism": {
             "confirm": "Bestätigen",
-            "deny": "Ablehnen"
+            "deny": "Ablehnen",
+            "warning": "Bestätigen/Ablehnen eines Plagiats geht beim Neuladen der Seite verloren."
         }
     }
 }
