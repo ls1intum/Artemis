@@ -67,10 +67,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
-    // Inline feedback
+    // Inline feedback variables
     fileFeedbacks: Feedback[];
-    private lineWidget: any;
-    private gutters: any;
     lineCounter: any[] = [];
     private elementArray: Element[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
@@ -360,25 +358,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     displayFeedbacks() {
         this.fileFeedbacks.forEach((feedback) => {
             const line: number = +feedback.reference!.split('line:')[1];
-            // Check if feedback element was already used and get it from the elementArray
-            let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
-            // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
-            if (!inlineFeedback) {
-                inlineFeedback = document.querySelector(`#test-${line}`);
-                if (inlineFeedback) {
-                    this.elementArray.push(inlineFeedback);
-                }
-            }
-            if (inlineFeedback) {
-                this.lineWidget = {
-                    row: line,
-                    fixedWidth: true,
-                    coverGutter: true,
-                    el: inlineFeedback,
-                };
-                this.lineWidget.el.className = 'inline-feedback';
-                this.editorSession.widgetManager.addLineWidget(this.lineWidget);
-            }
+            this.addLineWidgetWithFeedback(line);
         });
     }
 
@@ -391,12 +371,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         const gutterContainer = document.querySelector('.ace_gutter-layer');
         const container = this.editor.getEditor().container;
         this.observerDom(gutterContainer!, () => {
-            this.gutters = container.querySelectorAll('.ace_gutter-cell');
+            const gutters = container.querySelectorAll('.ace_gutter-cell');
             const buttonInlineComment = document.querySelector('.btn-inline-comment');
-            this.gutters.forEach((gutter: HTMLElement) => {
+            gutters.forEach((gutter: HTMLElement) => {
                 const clone = buttonInlineComment!.cloneNode(true);
                 clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
-                // TODO: Check whether this causes issue when having annotations
+                // TODO: Check whether this causes an issue when having annotations
                 if (gutter.childElementCount < 1) {
                     gutter.appendChild(clone);
                 }
@@ -409,6 +389,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line line of code where the feedback inline component will be added to.
      */
     addLineWidgetWithFeedback(line: number) {
+        // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
         let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
         if (!inlineFeedback) {
             inlineFeedback = document.querySelector(`#test-${line}`);
@@ -417,14 +398,23 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
         }
         if (inlineFeedback) {
-            this.lineWidget = {
+            const lineWidget = {
                 row: line,
                 fixedWidth: true,
                 coverGutter: true,
                 el: inlineFeedback,
             };
-            this.lineWidget.el.className = 'inline-feedback';
-            this.editorSession.widgetManager.addLineWidget(this.lineWidget);
+            // Check if lineWidget is already displayed
+            if (this.editorSession.lineWidgets) {
+                const displayedWidget = this.editorSession.lineWidgets.find((w: any) => w && w.row === lineWidget.row);
+                if (!!!displayedWidget) {
+                    lineWidget.el.className = 'inline-feedback';
+                    this.editorSession.widgetManager.addLineWidget(lineWidget);
+                }
+            } else {
+                lineWidget.el.className = 'inline-feedback';
+                this.editorSession.widgetManager.addLineWidget(lineWidget);
+            }
         }
     }
 
@@ -433,7 +423,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line Line of code which has inline feedback (lineWidget)
      */
     adjustLineWidgetHeight(line: number) {
-        const widget = this.editorSession.lineWidgets.filter((w: any) => w && w.el?.id === 'test-' + line)[0];
+        const widget = this.editorSession.lineWidgets.find((w: any) => w && w.el?.id === 'test-' + line);
         this.editorSession.widgetManager.removeLineWidget(widget);
         this.editorSession.widgetManager.addLineWidget(widget);
     }
@@ -497,7 +487,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // define a new observer
             const mutationObserver = new MutationObserver(callback);
 
-            // have the observer observe foo for changes in children
+            // have the observer observe the gutter layer for changes in children
             mutationObserver.observe(obj, { childList: true, subtree: true });
         } else {
             obj.addEventListener('DOMNodeInserted', callback, false);
