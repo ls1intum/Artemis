@@ -96,7 +96,7 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     /**
-     * Sets the student exam, initialised the component which allows changing the working time and sets the score of the student.
+     * Sets the student exam, initialises the component which allows changing the working time and sets the score of the student.
      * @param studentExam
      */
     private setStudentExam(studentExam: StudentExam) {
