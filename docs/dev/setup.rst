@@ -4,7 +4,7 @@ Setup Guide
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 14, and TypeScript
+development on the application server using Java 15, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__ and Webpack. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
@@ -21,7 +21,7 @@ following dependencies/tools on your machine:
 
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (>= JDK 14) to develop and run the Artemis application
+   We use Java (JDK 15) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
@@ -126,7 +126,7 @@ have to configure the file ``application-artemis.yml`` in the folder
            clustering-url: http://localhost:8002/cluster
            secret: null
 
-Change all entries with ``<...>`` with proper values, e.g. your TUM
+Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
 Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA,
 Bitbucket and Bamboo instances. It’s not necessary to fill all the
@@ -142,8 +142,15 @@ information about the setup for programming exercises provided:
 
 
 .. note::
-   Be careful that you don’t commit changes in this file.
-   Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
+   Be careful that you don’t commit changes to ``application-artemis.yml``.
+   To avoid this, follow the best practice when configuring your local development environment:
+
+   1) Create a file named ``application-local.yml`` under ``src/main/resources/config``.
+   2) Copy the contents of ``application-artemis.yml`` into the new file.
+   3) Update configuration values in ``application-local.yml``.
+
+   By default, changes to ``application-local.yml`` will be ignored by git so you don't accidentally
+   share your credentials or other local configuration options.
 
 If you use a password, you need to adapt it in
 ``gradle/liquibase.gradle``.

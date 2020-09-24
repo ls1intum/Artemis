@@ -96,6 +96,7 @@ Gitlab Server Setup
 
        docker pull gitlab/gitlab-ce:latest
 
+.. _Start-Gitlab:
 Start Gitlab
 ^^^^^^^^^^^^
 
@@ -105,7 +106,7 @@ Start Gitlab
    is typically used by the host running Docker, we change the port
    Gitlab uses for SSH to ``2222``. This can be adjusted if needed.
 
-   Make sure to remove the comments from the command before running it.
+   Make sure to remove the comments from the command before running it and that docker has enough memory (~ 6GB). To adapt it, go to ``Preferecences -> Resources``
 
    ::
 
@@ -265,13 +266,17 @@ Upgrade GitLab
 
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
-``shell script docker stop gitlab docker rename gitlab gitlab_old docker pull gitlab/gitlab-ce:latest``
+
+    ::
+
+        docker stop gitlab
+        docker rename gitlab gitlab_old
+        docker pull gitlab/gitlab-ce:latest
 
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
-Start a GitLab container just as described in `Start
-Gitlab <#Start-Gitlab>`__ and wait for a couple of minutes. GitLab
+Start a GitLab container just as described in :ref:`Start-Gitlab` and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
 image (see ``docker images``) using ``docker rmi <old-image-id>``.
@@ -308,7 +313,7 @@ Jenkins Server Setup
    is only required once.
 
 3. Run steps 4-6 only if you are **not** using a separate instance,
-   otherwise continue with `Start Jenkins <#Start-Jenkins>`__.
+   otherwise continue with :ref:`Start-Jenkins`.
 
 4. Create a file increasing the maximum file size for the nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
@@ -351,6 +356,7 @@ Jenkins Server Setup
            --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
            jrcs/letsencrypt-nginx-proxy-companion
 
+.. _Start-Jenkins:
 Start Jenkins
 ^^^^^^^^^^^^^
 
@@ -368,6 +374,11 @@ Start Jenkins
             -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
             jenkins-artemis
 
+    For jenkins to be able to read data from the volume you might need to allow the jenkins user to read the jenkins_data folder.
+    One way to do that is transfer the ownership to the user with id 1000 which is normally the user the jenkins process runs with.
+    ::
+        sudo chown -R 1000 jenkins_data/
+
 8.  Wait until the docker container has started and Jenkins is running.
 
 9.  Run the following commands to navigate into the docker container and
@@ -379,8 +390,8 @@ Start Jenkins
 
         mvn -version
 
-    This should print ``Maven 3.x`` as Maven version, ``Java 14`` as
-    Java version and ``/usr/lib/jvm/java-14-openjdk-amd64`` as Java
+    This should print ``Maven 3.x`` as Maven version, ``Java 15`` as
+    Java version and ``/usr/lib/jvm/java-15-openjdk-amd64`` as Java
     home.
 
 10. Open Jenkins in your browser (e.g. ``localhost:8080``) and setup the
@@ -404,14 +415,14 @@ Start Jenkins
                user: your.chosen.username
                password: your.chosen.password
 
-12. Setup JDK 14 in Jenkins Settings
+12. Setup JDK 15 in Jenkins Settings
 
     Navigate in your browser into Jenkins → Manage Jenkins → Global Tool
     Configuration → JDK. Change the existing JDK installation or click
     on Add JDK.
 
-    Use ``OpenJDK 14`` as Name and
-    ``/usr/lib/jvm/java-14-openjdk-amd64`` as JAVA_HOME
+    Use ``OpenJDK 15`` as Name and
+    ``/usr/lib/jvm/java-15-openjdk-amd64`` as JAVA_HOME
 
    .. figure:: jenkins-gitlab/jenkins_jdk_config.png
       :align: center
@@ -420,16 +431,17 @@ Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 You will need to install the following plugins (apart from the
-recommended ones that got installed during the setup process): \*
-`GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
-webhooks to and from GitLab \* `Multiple
-SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
-exercise test and assignment repositories in one build \* `Post Build
-Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
-results to be exported to Artemis \*
-`Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
-libraries, for which tests have to have some virtual display \*
-`Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+recommended ones that got installed during the setup process):
+
+1. `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
+webhooks to and from GitLab
+2. `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
+exercise test and assignment repositories in one build
+3. `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
+results to be exported to Artemis
+4. `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
+libraries, for which tests have to have some virtual display
+5. `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
 time to every line of the build output (Timestamper might already be
 installed)
 
@@ -623,15 +635,22 @@ the following steps:
     Cross Site Request Forgery exploits”. Also disable the option
     ``use-crumb`` in ``application-jenkins.yml``.
 
+    Depending on the version this setting might not be available anymore.
+    Have a look `here<https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`_ on how you can disable CSRF protection.
+
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~
 
 Build the latest version of the ``jenkins-artemis`` Docker image, stop
 the running container and mount the Jenkins data volume to the new LTS
 container. Make sure to perform this command in the folder where the
-``Dockerfile`` was created (e.g. ``/opt/jenkins/``).
+``Dockerfile`` was created (e.g. ``/opt/jenkins/``):
 
-``shell script docker stop jenkins docker rename jenkins jenkins_old docker build --no-cache -t jenkins-artemis .``
+    ::
+
+        docker stop jenkins
+        docker rename jenkins jenkins_old
+        docker build --no-cache -t jenkins-artemis .
 
 Now start a new Jenkins container just as described in `Start
 Jenkins <#Start-Jenkins>`__.

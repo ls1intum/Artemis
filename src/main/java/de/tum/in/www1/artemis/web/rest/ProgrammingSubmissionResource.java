@@ -325,6 +325,7 @@ public class ProgrammingSubmissionResource {
     /**
      * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise.
      * @param submittedOnly if only submitted submissions should be returned.
@@ -342,13 +343,14 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        final boolean examMode = exercise.hasExerciseGroup();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId());
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);
@@ -378,11 +380,12 @@ public class ProgrammingSubmissionResource {
 
         // TODO: Handle lock limit.
 
-        final Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
-        if (programmingSubmissionOpt.isEmpty()) {
+        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
+                programmingExercise.hasExerciseGroup());
+        if (optionalProgrammingSubmission.isEmpty()) {
             return notFound();
         }
-        final ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+        final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
