@@ -115,7 +115,7 @@ export class StudentExamDetailComponent implements OnInit {
                 !!exercise.studentParticipations &&
                 exercise.studentParticipations.length > 0 &&
                 !!exercise.studentParticipations[0].results &&
-                exercise.studentParticipations[0].results.length >= 1
+                exercise.studentParticipations[0].results.length > 0
             ) {
                 this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score * exercise.maxScore) / 100;
                 this.achievedTotalScore = this.rounding(this.achievedTotalScore);
