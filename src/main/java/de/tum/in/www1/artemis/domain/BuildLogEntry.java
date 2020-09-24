@@ -91,7 +91,10 @@ public class BuildLogEntry {
             return false;
         }
         BuildLogEntry that = (BuildLogEntry) object;
-        if (time != null && that.time != null) {
+        if (id != null && that.id != null) {
+            return Objects.equals(id, that.id);
+        }
+        else if (time != null && that.time != null) {
             return Objects.equals(time.toInstant(), that.time.toInstant()) && Objects.equals(log, that.log);
         }
         else if (time == null && that.time == null) {
@@ -104,6 +107,6 @@ public class BuildLogEntry {
 
     @Override
     public int hashCode() {
-        return Objects.hash(time, log);
+        return Objects.hash(id, time, log);
     }
 }

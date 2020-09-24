@@ -284,6 +284,9 @@ public class BambooService implements ContinuousIntegrationService {
 
         var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
 
+        // Add reference to ProgrammingSubmission
+        buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
+
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
         programmingSubmission.setBuildLogEntries(buildLogEntries);
         programmingSubmissionRepository.save(programmingSubmission);
@@ -473,26 +476,20 @@ public class BambooService implements ContinuousIntegrationService {
 
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-            Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-            if (optionalProgrammingSubmission.isPresent()) {
-                programmingSubmission = optionalProgrammingSubmission.get();
+            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
-                List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-                // Store logs into database. Append logs of multiple jobs.
-                for (var job : buildResult.getBuild().getJobs()) {
-                    for (var bambooLog : job.getLogs()) {
-                        // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                        buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
-                    }
+            // Store logs into database. Append logs of multiple jobs.
+            for (var job : buildResult.getBuild().getJobs()) {
+                for (var bambooLog : job.getLogs()) {
+                    // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
+                    buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
                 }
-
-                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
-
-                programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
             }
 
+            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+            programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
+
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
