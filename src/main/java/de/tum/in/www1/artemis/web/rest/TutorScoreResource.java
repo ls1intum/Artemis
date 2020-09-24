@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -121,5 +122,27 @@ public class TutorScoreResource {
 
         Optional<TutorScore> tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(tutor.get(), exercise);
         return ResponseEntity.ok(tutorScore);
+    }
+
+    /**
+     * DELETE /tutor-scores/exercise/{exerciseId}/ : Delete TutorScores by exercise id.
+     *
+     * @param exerciseId id of the exercise
+     * @return the ResponseEntity with status 200 (OK) and with the found tutor score as body
+     */
+    @DeleteMapping("/tutor-scores/exercise/{exerciseId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
+    public ResponseEntity<Void> deleteTutorScoresForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete tutor scores exercise {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
+
+        tutorScoreService.deleteTutorScoresForExercise(exercise);
+
+        return ResponseEntity.ok().body(null);
     }
 }

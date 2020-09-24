@@ -420,4 +420,26 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(response.getAssessmentsPoints()).as("assessment points are as expected").isEqualTo(0);
         assertThat(response.getAllComplaints()).as("feedback requests amount is as expected").isEqualTo(0);
     }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteTutorScoresForExercise() throws Exception {
+        exercise = exerciseRepo.findAll().get(0);
+
+        request.delete("/api/tutor-scores/exercise/" + exercise.getId(), HttpStatus.OK);
+
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
+        assertThat(response.isEmpty()).as("response is empty").isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteTutorScoresForExerciseAccessForbidden() throws Exception {
+        course = courseRepo.findAll().get(0);
+        course.setTeachingAssistantGroupName("instructor");
+        courseRepo.save(course);
+        exercise = exerciseRepo.findAll().get(0);
+
+        request.delete("/api/tutor-scores/exercise/" + exercise.getId(), HttpStatus.FORBIDDEN);
+    }
 }
