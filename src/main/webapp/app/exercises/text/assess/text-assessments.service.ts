@@ -177,7 +177,7 @@ export class TextAssessmentsService {
      * @param submission - The submission object that holds the data that is tracked
      * @param origin - The method that calls the the tracking method
      */
-    public trackAssessment(submission?: TextSubmission, origin: string) {
+    public trackAssessment(submission?: TextSubmission, origin?: string) {
         if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);

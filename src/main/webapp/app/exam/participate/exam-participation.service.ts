@@ -118,7 +118,7 @@ export class ExamParticipationService {
     }
 
     private static breakCircularDependency(studentExam: StudentExam) {
-        for (const exercise of studentExam.exercises) {
+        studentExam.exercises?.forEach((exercise) => {
             if (!!exercise.studentParticipations) {
                 for (const participation of exercise.studentParticipations) {
                     if (!!participation.results) {
@@ -137,7 +137,7 @@ export class ExamParticipationService {
                     }
                 }
             }
-        }
+        });
     }
 
     /**

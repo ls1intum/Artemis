@@ -136,9 +136,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe(
                     (studentExam) => {
                         this.studentExam = studentExam;
-                        this.studentExam.exam.course = new Course();
-                        this.studentExam.exam.course.id = this.courseId;
-                        this.exam = studentExam.exam;
+                        this.studentExam.exam!.course = new Course();
+                        this.studentExam.exam!.course.id = this.courseId;
+                        this.exam = studentExam.exam!;
                         this.testRunStartTime = moment();
                         this.individualStudentEndDate = moment(this.testRunStartTime).add(this.studentExam.workingTime, 'seconds');
                         this.loadingExam = false;
@@ -149,11 +149,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe(
                     (studentExam) => {
                         this.studentExam = studentExam;
-                        this.exam = studentExam.exam;
+                        this.exam = studentExam.exam!;
                         this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
                         if (this.isOver()) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.exam.course.id, this.exam.id)
+                                .loadStudentExamWithExercisesForSummary(this.exam.course!.id!, this.exam.id!)
                                 .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
                         this.loadingExam = false;

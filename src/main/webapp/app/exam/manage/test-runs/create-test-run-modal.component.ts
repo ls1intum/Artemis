@@ -45,7 +45,7 @@ export class CreateTestRunModalComponent implements OnInit {
      * @param exerciseGroup The exercise group for which the user selected an exercise
      */
     onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
-        this.testRunConfiguration[exerciseGroup.id] = exercise;
+        this.testRunConfiguration[exerciseGroup.id!] = exercise;
     }
 
     /**
