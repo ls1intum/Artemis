@@ -249,9 +249,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
-        const navigationExtras: NavigationExtras = { queryParams: { id: feedbackId }, state: { submission: this.submission } };
+        const navigationExtras: NavigationExtras = { state: { submission: this.submission } };
         await this.router.navigate(
-            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-assessment-conflict'],
+            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-assessment-conflict', feedbackId],
             navigationExtras,
         );
     }

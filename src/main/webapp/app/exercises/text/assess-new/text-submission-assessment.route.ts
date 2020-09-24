@@ -59,7 +59,7 @@ export class TextAssessmentConflictResolver implements Resolve<TextSubmission[] 
      */
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-        const feedbackId = Number(route.queryParams['id']);
+        const feedbackId = Number(route.paramMap.get('feedbackId'));
         if (exerciseId && feedbackId) {
             return this.textAssessmentsService.getConflictingTextSubmissions(exerciseId, feedbackId).catch(() => Observable.of(null));
         }
@@ -96,7 +96,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/text-assessment-conflict',
+        path: ':submissionId/text-assessment-conflict/:feedbackId',
         component: TextAssessmentConflictsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

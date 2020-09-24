@@ -60,7 +60,7 @@ export class TextAssessmentConflictsComponent implements OnInit, AfterViewInit {
         public structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
         const state = router.getCurrentNavigation()?.extras.state as { submission: TextSubmission };
-        this.leftFeedbackId = Number(activatedRoute.snapshot.queryParams['id']);
+        this.leftFeedbackId = Number(activatedRoute.snapshot.paramMap.get('feedbackId'));
         this.leftSubmission = state.submission;
         this.exercise = this.leftSubmission.participation?.exercise as TextExercise;
         this.leftTextBlockRefs = [];
