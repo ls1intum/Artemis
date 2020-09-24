@@ -281,7 +281,14 @@ public class BambooService implements ContinuousIntegrationService {
 
         // Otherwise return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
-        return filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
+
+        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
+
+        // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
+        programmingSubmission.setBuildLogEntries(buildLogEntries);
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        return buildLogEntries;
     }
 
     @Override
