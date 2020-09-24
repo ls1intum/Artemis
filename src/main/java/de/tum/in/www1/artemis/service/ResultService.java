@@ -63,10 +63,10 @@ public class ResultService {
     private final ComplaintRepository complaintRepository;
 
     public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-                         SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
-                         ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
-                         ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-                         RatingRepository ratingRepository) {
+            SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
+            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;

@@ -48,7 +48,7 @@ public class TutorScoreResource {
     private final AuthorizationCheckService authCheckService;
 
     public TutorScoreResource(TutorScoreService tutorScoreService, UserService userService, ExerciseService exerciseService, CourseService courseService,
-                              AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService) {
         this.tutorScoreService = tutorScoreService;
         this.userService = userService;
         this.exerciseService = exerciseService;

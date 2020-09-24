@@ -117,13 +117,15 @@ public class StudentScoreService {
 
             if (updatedResult.getScore() != null) {
                 oldScore.setScore(updatedResult.getScore());
-            } else {
+            }
+            else {
                 oldScore.setScore(0);
             }
 
             oldScore = studentScoreRepository.save(oldScore);
             log.info("student score in db updated: " + oldScore);
-        }else {
+        }
+        else {
             StudentScore newScore = new StudentScore();
             newScore.setStudent(participation.get().getStudent().get());
             newScore.setExercise(participation.get().getExercise());
@@ -131,7 +133,8 @@ public class StudentScoreService {
 
             if (updatedResult.getScore() != null) {
                 newScore.setScore(updatedResult.getScore());
-            } else {
+            }
+            else {
                 newScore.setScore(0);
             }
 

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
@@ -103,7 +103,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(70L);
         resultRepo.save(result);
 
@@ -116,7 +116,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(1));
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(85L);
         resultRepo.save(result);
 
@@ -136,7 +136,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(25L);
         resultRepo.save(result);
     }
@@ -169,7 +169,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setFeedbacks(feedbacks);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(85L);
         resultRepo.save(result);
 
@@ -224,7 +224,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setFeedbacks(feedbacks);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(55L);
         resultRepo.save(result);
 
@@ -291,14 +291,14 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result = ModelFactory.generateResult(true, 95).participation(participation);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(100L);
         resultRepo.save(result);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(0);
 
-        //complaint
+        // complaint
         complaint = new Complaint().result(result).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaint.setResult(result);
         complaintRepo.save(complaint);
@@ -323,14 +323,14 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result = ModelFactory.generateResult(true, 90).participation(participation);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(95L);
         resultRepo.save(result);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(0);
 
-        //feedback request
+        // feedback request
         feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
         complaintRepo.save(feedbackRequest);
         result.setHasComplaint(true);
@@ -354,11 +354,11 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result = ModelFactory.generateResult(true, 95).participation(participation);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(90L);
         resultRepo.save(result);
 
-        //add complaint
+        // add complaint
         complaint = new Complaint().result(result).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaint.setResult(result);
         complaintRepo.save(complaint);
@@ -372,7 +372,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaintRepo.delete(complaint);
         result.setHasComplaint(false);
         resultRepo.save(result);
-        //manual removal because of missing complaint -> no idea how else to test
+        // manual removal because of missing complaint -> no idea how else to test
         tutorScore = tutorScoresRepo.findById(response.getId()).get();
         tutorScore.setAllComplaints(tutorScore.getAllComplaints() - 1);
         tutorScoresRepo.save(tutorScore);
@@ -392,11 +392,11 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result = ModelFactory.generateResult(true, 80).participation(participation);
         result.setAssessor(user);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(90L);
         resultRepo.save(result);
 
-        //add feedback request
+        // add feedback request
         feedbackRequest = new Complaint().result(result).complaintText("More please").complaintType(ComplaintType.MORE_FEEDBACK);
         feedbackRequest.setResult(result);
         complaintRepo.save(feedbackRequest);
@@ -410,7 +410,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaintRepo.delete(feedbackRequest);
         result.setHasComplaint(false);
         resultRepo.save(result);
-        //manual removal because of missing complaint -> no idea how else to test
+        // manual removal because of missing complaint -> no idea how else to test
         tutorScore = tutorScoresRepo.findById(response.getId()).get();
         tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() - 1);
         tutorScoresRepo.save(tutorScore);

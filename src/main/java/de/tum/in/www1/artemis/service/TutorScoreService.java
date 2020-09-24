@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -32,7 +32,8 @@ public class TutorScoreService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintService complaintService, ComplaintResponseRepository complaintResponseRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintService complaintService,
+            ComplaintResponseRepository complaintResponseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.complaintService = complaintService;
@@ -170,7 +171,8 @@ public class TutorScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
-        if (updatedResult.getParticipation() == null || updatedResult.getParticipation().getId() == null || updatedResult.getParticipation().getClass() != StudentParticipation.class) {
+        if (updatedResult.getParticipation() == null || updatedResult.getParticipation().getId() == null
+                || updatedResult.getParticipation().getClass() != StudentParticipation.class) {
             return;
         }
 
@@ -198,7 +200,8 @@ public class TutorScoreService {
             tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
 
             tutorScoreRepository.save(tutorScore);
-        } else {
+        }
+        else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
 
             newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);

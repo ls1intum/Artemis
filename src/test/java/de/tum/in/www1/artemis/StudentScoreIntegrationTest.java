@@ -83,7 +83,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(70L);
         resultRepo.save(result);
 
@@ -92,7 +92,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 80).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(85L);
         resultRepo.save(result);
 
@@ -108,7 +108,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(70L);
         resultRepo.save(result);
     }
@@ -134,7 +134,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(70L);
         resultRepo.save(result);
 
@@ -176,7 +176,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 30).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(25L);
         resultRepo.save(result);
 
@@ -212,7 +212,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         participation = database.addParticipationForExercise(exercise, user.getLogin());
         result = ModelFactory.generateResult(true, 75).participation(participation);
         resultRepo.save(result);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         result.setScore(70L);
         resultRepo.save(result);
 
@@ -281,7 +281,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Result newResult = ModelFactory.generateResult(true, 20).participation(participation);
         resultRepo.save(newResult);
-        //change score to trigger PostUpdate
+        // change score to trigger PostUpdate
         newResult.setScore(15L);
         resultRepo.save(newResult);
 
