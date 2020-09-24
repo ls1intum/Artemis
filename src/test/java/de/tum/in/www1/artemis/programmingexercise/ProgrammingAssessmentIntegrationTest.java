@@ -303,6 +303,10 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         result.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+
+        // A feedback has no points
+        result.getFeedbacks().get(0).setCredits(null);
+        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

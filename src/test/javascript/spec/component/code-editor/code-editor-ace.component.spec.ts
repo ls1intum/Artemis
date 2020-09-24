@@ -17,6 +17,7 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +31,7 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot()],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
             declarations: [CodeEditorAceComponent],
             providers: [
                 CodeEditorFileService,
@@ -185,5 +186,27 @@ describe('CodeEditorAceComponent', () => {
         expect(onFileContentChangeSpy).to.have.been.calledOnceWithExactly({ file: selectedFile, fileContent: newFileContent });
         const newAnnotations = [{ fileName: selectedFile, text: 'error', type: 'error', timestamp: 0, row: 4, column: 4 }];
         expect(comp.annotationsArray).to.deep.equal(newAnnotations);
+    });
+
+    it('should be in readonly mode and display feedback when in tutor assessment', () => {
+        comp.isTutorAssessment = true;
+        comp.fileFeedbacks = [];
+        const displayFeedbacksSpy = spy(comp, 'displayFeedbacks');
+        comp.onFileTextChanged('newFileContent');
+
+        expect(comp.editor.getEditor().getReadOnly()).to.be.true;
+        expect(displayFeedbacksSpy).to.have.been.calledOnce;
+    });
+
+    it('should setup inline comment buttons in gutter', () => {
+        comp.isTutorAssessment = true;
+        comp.readOnlyManualFeedback = false;
+        comp.fileFeedbacks = [];
+        const setupLineIconsSpy = spy(comp, 'setupLineIcons');
+        const observerDomSpy = spy(comp, 'observerDom');
+        comp.onFileTextChanged('newFileContent');
+
+        expect(setupLineIconsSpy).to.be.calledOnce;
+        expect(observerDomSpy).to.be.calledOnce;
     });
 });
