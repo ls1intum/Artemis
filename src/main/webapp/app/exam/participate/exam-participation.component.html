@@ -1,9 +1,11 @@
+<jhi-test-run-ribbon *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
         *ngIf="isVisible() && !isOver() && !examStartConfirmed"
         [startView]="true"
         [exam]="exam"
         [studentExam]="studentExam"
+        [testRunStartTime]="testRunStartTime"
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
@@ -13,6 +15,7 @@
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
+                class="sticky-top d-block"
                 [exercises]="studentExam.exercises"
                 [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"

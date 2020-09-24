@@ -54,6 +54,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     notFound = false;
     userId: number;
     isLoading = true;
+    isTestRun = false;
     courseId: number;
 
     /** Resizable constants **/
@@ -98,6 +99,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.isTestRun = queryParams.get('testRun') === 'true';
+        });
 
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
@@ -373,7 +377,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
     }
 
     updateAssessment() {

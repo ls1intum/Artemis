@@ -18,7 +18,7 @@ import { Observable } from 'rxjs/Observable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -1115,6 +1115,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
             return;
         }
+
+        Exercise.sanitize(this.quizExercise);
+
         this.isSaving = true;
         this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
