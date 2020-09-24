@@ -213,6 +213,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks, complaintResponse, this.manualResult!, this.manualResult!.submission!.id).subscribe(
             (result: Result) => {
                 this.manualResult = result;
