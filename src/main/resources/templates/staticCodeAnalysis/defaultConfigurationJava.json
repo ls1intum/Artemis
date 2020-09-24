@@ -186,30 +186,6 @@
             ]
         },
         {
-            "name": "Naming & Formatting",
-            "state": "INACTIVE",
-            "penalty": 0,
-            "maxPenalty": 0,
-            "categoryMappings": [
-                {
-                    "tool": "CHECKSTYLE",
-                    "category": "imports"
-                },
-                {
-                    "tool": "CHECKSTYLE",
-                    "category": "indentation"
-                },
-                {
-                    "tool": "CHECKSTYLE",
-                    "category": "naming"
-                },
-                {
-                    "tool": "CHECKSTYLE",
-                    "category": "whitespaces"
-                }
-            ]
-        },
-        {
             "name": "Miscellaneous",
             "state": "INACTIVE",
             "penalty": 0,
