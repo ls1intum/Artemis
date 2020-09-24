@@ -53,7 +53,7 @@ public class ResultListener {
      */
     @PreUpdate
     public void preUpdate(Result updatedResult) {
-        log.info("Result " + updatedResult + " will be updated");
+        log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
 
         if (updatedResult.getAssessor() != null) {
             // remove from tutor scores for future update
@@ -69,29 +69,12 @@ public class ResultListener {
     @PostUpdate
     public void postUpdate(Result updatedResult) {
         log.info("Result " + updatedResult + " was updated");
-        // update existing student score
+        // update student score
         studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
-            // update existing tutor scores
+            // update tutor scores
             tutorScoreService.updateResult(updatedResult);
-        }
-    }
-
-    /**
-     * After result gets created, add/update StudentScores/TutorScores with this result.
-     *
-     * @param newResult newly created result
-     */
-    @PostPersist
-    public void postPersist(Result newResult) {
-        log.info("Result " + newResult + " was created");
-        // add to student scores (or update existing one)
-        studentScoreService.addNewResult(newResult);
-
-        if (newResult.getAssessor() != null) {
-            // add to tutor scores (or update existing one)
-            tutorScoreService.addNewResult(newResult);
         }
     }
 }

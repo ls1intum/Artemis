@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,7 +61,7 @@ public class StudentScoreService {
      * @param exercise exercise
      * @return list of student score objects for that course
      */
-    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<StudentScore> getStudentScoreForStudentAndExercise(User student, Exercise exercise) {
         return studentScoreRepository.findByStudentAndExercise(student, exercise);
     }
@@ -88,7 +89,7 @@ public class StudentScoreService {
         }
 
         var existingStudentScore = studentScoreRepository.findByResult(updatedResult);
-        
+
         if (existingStudentScore.isPresent()) {
             StudentScore studentScore = existingStudentScore.get();
 
@@ -97,58 +98,39 @@ public class StudentScoreService {
             studentScore = studentScoreRepository.save(studentScore);
             log.info("updated student score in db: " + studentScore);
         }
-    }
 
-    /**
-     * Adds new StudentScores for result newResult.
-     *
-     * @param newResult result to be added
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void addNewResult(Result newResult) {
-        // ignore unrated results and results without participation
-        if (newResult.isRated() != Boolean.TRUE || newResult.getParticipation() == null || newResult.getParticipation().getId() == null) {
+        if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {
             return;
         }
 
-        if (newResult.getParticipation().getClass() != StudentParticipation.class) {
-            return;
-        }
-
-        var participation = studentParticipationRepository.findById(newResult.getParticipation().getId());
+        var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
             return;
         }
 
-        var existingStudentScores = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.get().getExercise());
+        existingStudentScore = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.get().getExercise());
 
-        if (existingStudentScores.isPresent()) {
-            var existingStudentScore = existingStudentScores.get();
-            if (existingStudentScore.getResult().getId().equals(newResult.getId())) {
-                updateResult(newResult);
-            }
-            else {
-                existingStudentScore.setResult(newResult);
-                if (newResult.getScore() != null) {
-                    existingStudentScore.setScore(newResult.getScore());
-                }
-                else {
-                    existingStudentScore.setScore(0);
-                }
+        if (existingStudentScore.isPresent()) {
+            StudentScore oldScore = existingStudentScore.get();
+            oldScore.setResult(updatedResult);
 
-                var updatedScore = studentScoreRepository.save(existingStudentScore);
-                log.info("update student score in db: " + updatedScore);
+            if (updatedResult.getScore() != null) {
+                oldScore.setScore(updatedResult.getScore());
+            } else {
+                oldScore.setScore(0);
             }
-        }
-        else {
+
+            oldScore = studentScoreRepository.save(oldScore);
+            log.info("student score in db updated: " + oldScore);
+        }else {
             StudentScore newScore = new StudentScore();
             newScore.setStudent(participation.get().getStudent().get());
             newScore.setExercise(participation.get().getExercise());
-            newScore.setResult(newResult);
+            newScore.setResult(updatedResult);
 
-            if (newResult.getScore() != null) {
-                newScore.setScore(newResult.getScore());
+            if (updatedResult.getScore() != null) {
+                newScore.setScore(updatedResult.getScore());
             } else {
                 newScore.setScore(0);
             }

@@ -208,50 +208,8 @@ public class TutorScoreService {
     }
 
     /**
-     * Adds new TutorScores for result newResult.
-     *
-     * @param newResult result to be added
+     * Helper method for updating complaints and feedback requests in tutor scores.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void addNewResult(Result newResult) {
-        // ignore unrated results and results without score
-        if (newResult.isRated() != Boolean.TRUE || newResult.getScore() == null) {
-            return;
-        }
-
-        // ignore results without participation
-        if (newResult.getParticipation() == null || newResult.getParticipation().getId() == null || newResult.getParticipation().getClass() != StudentParticipation.class) {
-            return;
-        }
-
-        var participation = studentParticipationRepository.findById(newResult.getParticipation().getId());
-
-        if (participation.isEmpty()) {
-            return;
-        }
-
-        Exercise exercise = participation.get().getExercise();
-
-        var existingScore = tutorScoreRepository.findByTutorAndExercise(newResult.getAssessor(), exercise);
-
-        if (existingScore.isPresent()) {
-            TutorScore oldScore = existingScore.get();
-
-            oldScore.setAssessments(oldScore.getAssessments() + 1);
-            oldScore.setAssessmentsPoints(oldScore.getAssessmentsPoints() + exercise.getMaxScore());
-
-            oldScore = addComplaintsAndFeedbackRequests(newResult, oldScore, exercise);
-
-            tutorScoreRepository.save(oldScore);
-        } else {
-            TutorScore newScore = new TutorScore(newResult.getAssessor(), exercise, 1, exercise.getMaxScore());
-
-            newScore = addComplaintsAndFeedbackRequests(newResult, newScore, exercise);
-
-            tutorScoreRepository.save(newScore);
-        }
-    }
-
     private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
         // add complaints and feedback requests
         if (result.hasComplaint() == Boolean.TRUE) {
