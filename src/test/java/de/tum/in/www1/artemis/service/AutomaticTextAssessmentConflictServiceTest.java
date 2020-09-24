@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,10 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.TextAssessmentConflictRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictResponseDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -42,6 +38,12 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
 
     @Autowired
     TextBlockRepository textBlockRepository;
+
+    @Autowired
+    TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @Autowired
     DatabaseUtilService database;
@@ -71,7 +73,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createFeedbackConflicts() throws NetworkingError {
+    public void createTextAssessmentConflicts() throws NetworkingError {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission1, "student1");
@@ -108,8 +110,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         assertThat(textAssessmentConflictRepository.findAll(), hasSize(1));
         assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
         assertThat(textAssessmentConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
-        feedbackRepository.deleteAll();
-        assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
+
     }
 
     /**
@@ -120,7 +121,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedFeedbackConflictsType() throws NetworkingError {
+    public void changedTextAssessmentConflictsType() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
@@ -134,13 +135,8 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
-        textAssessmentConflict.setConflict(true);
-        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
-        textAssessmentConflict.setFirstFeedback(feedback1);
-        textAssessmentConflict.setSecondFeedback(feedback2);
+        TextAssessmentConflict textAssessmentConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
         textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_COMMENT);
-
         textAssessmentConflictRepository.save(textAssessmentConflict);
 
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
@@ -166,7 +162,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflicts() throws NetworkingError {
+    public void solveTextAssessmentConflicts() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
@@ -180,13 +176,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
-        textAssessmentConflict.setConflict(true);
-        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
-        textAssessmentConflict.setFirstFeedback(feedback1);
-        textAssessmentConflict.setSecondFeedback(feedback2);
-        textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_SCORE);
-
+        TextAssessmentConflict textAssessmentConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
         textAssessmentConflictRepository.save(textAssessmentConflict);
 
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
@@ -195,7 +185,7 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(textAssessmentConflictRepository, feedbackRepository, textBlockRepository,
                 textAssessmentConflictService);
 
-        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(List.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
 
         assertThat(textAssessmentConflictRepository.findAll(), hasSize(1));
         assertThat(textAssessmentConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
@@ -204,12 +194,51 @@ public class AutomaticTextAssessmentConflictServiceTest extends AbstractSpringIn
         assertThat(textAssessmentConflictRepository.findAll().get(0).getSolvedAt(), is(notNullValue()));
     }
 
+    /**
+     * Checks if deletion of submission, result and feedback delete the text assessment conflicts from the database.
+     * Additionally, checks the deletion of text assessment conflicts do not cause deletion of feedback.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void deleteSubmissionResultAndFeedback() {
+        TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+        textSubmissionRepository.deleteById(textSubmission.getId());
+        assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
+
+        textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+        resultRepository.deleteById(textSubmission.getResult().getId());
+        assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
+
+        this.createTextSubmissionWithResultFeedbackAndConflicts();
+        feedbackRepository.deleteAll();
+        assertThat(textAssessmentConflictRepository.findAll(), hasSize(0));
+
+        this.createTextSubmissionWithResultFeedbackAndConflicts();
+        textAssessmentConflictRepository.deleteAll();
+        assertThat(feedbackRepository.findAll(), hasSize(2));
+
+    }
+
     private List<TextAssessmentConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
         TextAssessmentConflictResponseDTO textAssessmentConflictResponseDTO = new TextAssessmentConflictResponseDTO();
         textAssessmentConflictResponseDTO.setFirstFeedbackId(firstFeedback.getId());
         textAssessmentConflictResponseDTO.setSecondFeedbackId(secondFeedback.getId());
         textAssessmentConflictResponseDTO.setType(TextAssessmentConflictType.INCONSISTENT_SCORE);
         return List.of(textAssessmentConflictResponseDTO);
+    }
+
+    private TextSubmission createTextSubmissionWithResultFeedbackAndConflicts() {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+
+        final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
+        final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
+        database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+
+        TextAssessmentConflict textAssessmentConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
+        textAssessmentConflictRepository.save(textAssessmentConflict);
+
+        return textSubmission;
     }
 
 }
