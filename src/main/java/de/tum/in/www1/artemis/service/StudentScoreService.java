@@ -83,8 +83,8 @@ public class StudentScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
-        // ignore results without score
-        if (updatedResult.getScore() == null) {
+        // ignore results without score or participation
+        if (updatedResult.getScore() == null || updatedResult.getParticipation() == null) {
             return;
         }
 
@@ -109,7 +109,14 @@ public class StudentScoreService {
             return;
         }
 
-        existingStudentScore = getStudentScoreForStudentAndExercise(participation.get().getStudent().get(), participation.get().getExercise());
+        var student = participation.get().getStudent();
+        var exercise = participation.get().getExercise();
+
+        if (student.isEmpty()) {
+            return;
+        }
+
+        existingStudentScore = getStudentScoreForStudentAndExercise(student.get(), exercise);
 
         if (existingStudentScore.isPresent()) {
             StudentScore oldScore = existingStudentScore.get();
@@ -127,8 +134,8 @@ public class StudentScoreService {
         }
         else {
             StudentScore newScore = new StudentScore();
-            newScore.setStudent(participation.get().getStudent().get());
-            newScore.setExercise(participation.get().getExercise());
+            newScore.setStudent(student.get());
+            newScore.setExercise(exercise);
             newScore.setResult(updatedResult);
 
             if (updatedResult.getScore() != null) {
