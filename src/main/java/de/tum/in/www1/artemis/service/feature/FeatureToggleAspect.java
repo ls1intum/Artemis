@@ -14,10 +14,10 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @Aspect
 public class FeatureToggleAspect {
 
-    private final FeatureService featureService;
+    private final FeatureToggleService featureToggleService;
 
-    public FeatureToggleAspect(FeatureService featureService) {
-        this.featureService = featureService;
+    public FeatureToggleAspect(FeatureToggleService featureToggleService) {
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -40,7 +40,7 @@ public class FeatureToggleAspect {
      */
     @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
     public Object around(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
-        if (Arrays.stream(featureToggle.value()).allMatch(featureService::isFeatureEnabled)) {
+        if (Arrays.stream(featureToggle.value()).allMatch(featureToggleService::isFeatureEnabled)) {
             return joinPoint.proceed();
         }
         else {

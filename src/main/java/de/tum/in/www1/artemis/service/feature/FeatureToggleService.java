@@ -9,17 +9,17 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
-public class FeatureService {
+public class FeatureToggleService {
 
     private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private List<Feature> enabledFeatures;
+    private final List<Feature> enabledFeatures;
 
-    private List<Feature> disabledFeatures;
+    private final List<Feature> disabledFeatures;
 
-    public FeatureService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
 
         enabledFeatures = hazelcastInstance.getList("enabled_features");
