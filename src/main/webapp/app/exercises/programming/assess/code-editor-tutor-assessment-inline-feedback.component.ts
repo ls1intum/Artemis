@@ -38,6 +38,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     oldFeedback: Feedback;
     constructor(private translateService: TranslateService) {}
 
+    /**
+     * Updates the current feedback and sets props and emits the feedback to parent component
+     */
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
@@ -46,18 +49,21 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.onUpdateFeedback.emit(this.feedback);
     }
 
+    /**
+     * When the current feedback was saved, we show the editOnly mode, otherwise the component is not displayed
+     * anymore in the parent component
+     */
     cancelFeedback() {
-        console.log('cancel pressed');
-        console.log('feedback before: ', this.feedback);
-        // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
         if (this.feedback.type === this.MANUAL) {
             this.feedback = this.oldFeedback;
             this.editOnly = true;
         }
-        console.log('feedback after: ', this.feedback);
         this.onCancelFeedback.emit(this.codeLine);
     }
 
+    /**
+     * Deletes feedback after confirmation and emits to parent component
+     */
     deleteFeedback() {
         const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
         const confirmation = confirm(text);
@@ -66,6 +72,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         }
     }
 
+    /**
+     * Checks if component is in edit mode
+     * @param line Line of code which is emitted to the parent
+     */
     editFeedback(line: number) {
         this.editOnly = false;
         this.onEditFeedback.emit(line);

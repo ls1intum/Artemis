@@ -8,17 +8,6 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
-        <!-- <div *ngFor="let feedback of fileFeedbacks">
-            <jhi-code-editor-tutor-assessment-inline-feedback
-                class="inline-feedback-d-none"
-                id="{{feedback.reference}}"
-                [fileName]="selectedFile"
-                [feedback]="feedback"
-                [isStudent]="true"
-            >
-            </jhi-code-editor-tutor-assessment-inline-feedback>
-        </div> -->
-
         <div class="btn-inline-comment">
             <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
         </div>
@@ -35,19 +24,6 @@
             >
             </jhi-code-editor-tutor-assessment-inline-feedback>
         </div>
-        <!--
-        <div #lineWidgets>
-            <jhi-code-editor-tutor-assessment-inline-feedback
-                [fileName]="selectedFile"
-                [codeLine]="1"
-                [isStudent]="false"
-                [feedback]="undefined"
-            >
-            </jhi-code-editor-tutor-assessment-inline-feedback>
-            <div>Teeeeest</div>
-        </div>
-        <div #lineIcon class="gutter-icon"><fa-icon [icon]="'plus-square'" size="lg"></fa-icon></div>
-        -->
         <ace-editor
             #editor
             id="ace-code-editor"

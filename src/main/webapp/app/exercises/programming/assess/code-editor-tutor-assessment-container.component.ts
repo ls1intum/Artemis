@@ -146,8 +146,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.setFeedbacksForManualResult();
-        console.log('save triggered with manual result:');
-        console.log(this.manualResult);
         this.manualResultService.save(this.participation.id, this.manualResult).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
@@ -160,8 +158,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.setFeedbacksForManualResult();
-        console.log('submit triggered with manual result:');
-        console.log(this.manualResult);
         this.manualResultService.save(this.participation.id, this.manualResult, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
@@ -226,6 +222,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         );
     }
 
+    /**
+     * Navigates back to previous view
+     */
     navigateBack() {
         assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
     }
@@ -258,18 +257,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return false;
     }
 
-    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation!.results[0] = this.manualResult = response.body!;
-        this.jhiAlertService.clear();
-        this.jhiAlertService.success(translationKey);
-        this.saveBusy = this.submitBusy = false;
-    }
-
+    /**
+     * Updates the referenced feedbacks, which are the inline feedbacks added directly in the code.
+     * @param feedbacks Inline feedbacks from th ecode
+     */
     onUpdateFeedback(feedbacks: Feedback[]) {
-        console.log('final update');
         this.referencedFeedback = feedbacks;
-        console.log('referencedFeedback: ');
-        console.log(this.referencedFeedback);
         this.validateFeedback();
     }
 
@@ -280,6 +273,31 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onError(error: string) {
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    /**
+     * Validate the feedback of the assessment
+     */
+    validateFeedback(): void {
+        this.calculateTotalScore();
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
+        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
+        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+    }
+
+    /**
+     * Defines whether the inline feedback should be read only or not
+     */
+    readOnly() {
+        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+        this.participation!.results[0] = this.manualResult = response.body!;
+        this.jhiAlertService.clear();
+        this.jhiAlertService.success(translationKey);
+        this.saveBusy = this.submitBusy = false;
     }
 
     private getLatestResult(results: Result[]): Result {
@@ -342,35 +360,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
         this.validateFeedback();
     }
-
-    /**
-     * Validate the feedback of the assessment
-     */
-    validateFeedback(): void {
-        this.calculateTotalScore();
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
-    }
-
-    readOnly() {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
-    }
-
-    /**
-     * the dialog is writable if the user can override the result
-     * or if there is a complaint that was not yet accepted or rejected
-     */
-    /*writable() {
-        // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
-        // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
-        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined && this.manualResult!.assessor.id !== this.userId);
-    } */
-    /*
-    get readOnly(): boolean {
-        return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
-    } */
 
     private setFeedbacksForManualResult() {
         if (Feedback.hasDetailText(this.generalFeedback)) {

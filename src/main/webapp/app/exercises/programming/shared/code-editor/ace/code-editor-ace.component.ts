@@ -130,19 +130,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Makes sure previous settings are restored and the correct language service is used.
      **/
     initEditorAfterFileChange() {
+        // Setup editorSession for inline feedback using lineWidgets
         this.editorSession = this.editor.getEditor().getSession();
         if (!this.editorSession.widgetManager) {
             this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
             this.editorSession.widgetManager.attach(this.editor.getEditor());
         }
+        // Remove previous lineWidgets
         if (this.editorSession.lineWidgets) {
-            console.log('initEditorAfterFileChange() line widgets before: ', this.editorSession.lineWidgets);
             this.editorSession.lineWidgets.forEach((widget: any) => {
                 if (widget) {
                     this.editorSession.widgetManager.removeLineWidget(widget);
                 }
             });
-            console.log('initEditorAfterFileChange() line widgets after: ', this.editorSession.lineWidgets);
         }
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
@@ -163,7 +163,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
-            // Setup for inline feedback
+
+            // Setup inline feedbacks
+            // Get amount of lines of code in order to render for each line a corresponding inline feedback component
             const lines = this.editor.getEditor().getSession().getLength();
             this.lineCounter = new Array(lines);
             if (!this.feedbacks) {
@@ -175,11 +177,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 const line: number = +feedback.reference!.split('line:')[1];
                 this.fileFeedbackPerLine[line] = feedback;
             });
-            console.log('file feebacks normal und per line und undefined');
-            console.log(this.feedbacks);
-            console.log(this.fileFeedbacks);
-            console.log(this.fileFeedbackPerLine);
-            console.log(this.fileFeedbackPerLine[1]);
         }
     }
 
@@ -217,7 +214,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
-            console.log('onFileTextchanged');
             this.editor.setReadOnly(true);
             if (!this.readOnlyManualFeedback) {
                 this.setupLineIcons();
@@ -355,11 +351,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
     }
 
+    /**
+     * Displays the inline feedback of a line of code using lineWidgets. We first go through all feedbacks of the selected file
+     * and create a lineWidget for each feedback. The elementArray contains all inline feedback components which have been added as lineWidget.
+     */
     displayFeedbacks() {
-        console.log('displayFeedback');
         this.fileFeedbacks.forEach((feedback) => {
             const line: number = +feedback.reference!.split('line:')[1];
+            // Check if feedback element was already used and get it from the elementArray
             let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+            // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
             if (!inlineFeedback) {
                 inlineFeedback = document.querySelector(`#test-${line}`);
                 if (inlineFeedback) {
@@ -367,7 +368,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 }
             }
             if (inlineFeedback) {
-                console.log('add linewidget line ' + line);
                 this.lineWidget = {
                     row: line,
                     fixedWidth: true,
@@ -380,18 +380,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         });
     }
 
+    /**
+     * Adds the inline comment button to all visible gutters in the ace editor.
+     * We use a MutualObserver to check if children of the gutter layer changes
+     * in order to add the button to all gutters.
+     */
     setupLineIcons() {
         const gutterContainer = document.querySelector('.ace_gutter-layer');
         const container = this.editor.getEditor().container;
         this.observerDom(gutterContainer!, () => {
             this.gutters = container.querySelectorAll('.ace_gutter-cell');
-            console.log('amount of gutters: ' + this.gutters.length + 'for file: ' + this.selectedFile);
             setTimeout(() => {
                 const buttonInlineComment = document.querySelector('.btn-inline-comment');
-                console.log(buttonInlineComment);
                 this.gutters.forEach((gutter: HTMLElement) => {
                     const clone = buttonInlineComment!.cloneNode(true);
                     clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
+                    // TODO: Check whether this causes issue when having annotations
                     if (gutter.childElementCount < 1) {
                         gutter.appendChild(clone);
                     }
@@ -400,12 +404,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         });
     }
 
+    /**
+     * Add lineWidget for specific line of code.
+     * @param line line of code where the feedback inline component will be added to.
+     */
     addLineWidgetWithFeedback(line: number) {
-        console.log('button clicked for line: ' + line);
-        console.log('elementArray :) ');
-        console.log(this.elementArray);
         setTimeout(() => {
-            // const elements = document.querySelectorAll('.inline-feedback-d-none');
             let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
             if (!inlineFeedback) {
                 inlineFeedback = document.querySelector(`#test-${line}`);
@@ -414,8 +418,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 }
             }
             if (inlineFeedback) {
-                console.log('inline comment element:');
-                console.log(inlineFeedback);
                 this.lineWidget = {
                     row: line,
                     fixedWidth: true,
@@ -428,56 +430,52 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }, 100);
     }
 
-    adjustLineWidgetHeight(i: number) {
-        console.log('test method: update rows');
-        this.editorSession.lineWidgets.forEach((widget: any) => {
-            if (widget && widget.el?.id === 'test-' + i) {
-                this.editorSession.widgetManager.removeLineWidget(widget);
-                this.editorSession.widgetManager.addLineWidget(widget);
-            }
-        });
+    /**
+     * Adjusts the height of the ace editor after the lineWidget (inline feedback component) changed size
+     * @param line Line of code which has inline feedback (lineWidget)
+     */
+    adjustLineWidgetHeight(line: number) {
+        const widget = this.editorSession.lineWidgets.filter((w: any) => w && w.el?.id === 'test-' + line)[0];
+        this.editorSession.widgetManager.removeLineWidget(widget);
+        this.editorSession.widgetManager.addLineWidget(widget);
     }
 
+    /**
+     * Called whenever a inline feedback element is emitted. Updates existing feedbacks or adds onto it
+     * @param feedback Newly created inline feedback.
+     */
     updateFeedback(feedback: Feedback) {
-        console.log('updateFeedback');
         const line: number = +feedback.reference!.split('line:')[1];
         // Check if feedback already exists and update it, else append it to feedbacks of the file
         if (this.feedbacks.some((f) => f.reference === feedback.reference)) {
-            console.log('update existing feedback');
             const index = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
             this.feedbacks[index] = feedback;
             this.fileFeedbackPerLine[line] = feedback;
         } else {
-            console.log('append feedback');
             this.feedbacks.push(feedback);
             this.fileFeedbackPerLine[line] = feedback;
         }
-        console.log('fileFeedbacks after update 123: ');
-        console.log(this.fileFeedbackPerLine);
-        console.log(this.feedbacks);
         this.onUpdateFeedback.emit(this.feedbacks);
-        console.log('should emit');
         this.adjustLineWidgetHeight(line);
     }
 
+    /**
+     * Called whenever a inline feedback is cancelled. Removes it from ace editor or just aligns height.
+     * @param line
+     */
     cancelFeedback(line: number) {
         if (!this.fileFeedbackPerLine[line]) {
-            const widget = this.editorSession.lineWidgets.filter((w: any) => {
-                if (w) {
-                    return w.el?.id === 'test-' + line;
-                }
-            })[0];
-            /*console.log('remove widget ', widget);
-            const div = document.createElement('div');
-            div.style.height = '0px';
-            widget.el = div;*/
+            const widget = this.editorSession.lineWidgets.filter((w: any) => w && w.el?.id === 'test-' + line)[0];
             this.editorSession.widgetManager.removeLineWidget(widget);
-            console.log('line widgets after: ', this.editorSession.lineWidgets);
         } else {
             this.adjustLineWidgetHeight(line);
         }
     }
 
+    /**
+     * Deletes a feedback from the feedbacks
+     * @param feedback Feedback to be removed
+     */
     deleteFeedback(feedback: Feedback) {
         const indexToDelete = this.feedbacks.indexOf(feedback);
         const line: number = +feedback.reference!.split('line:')[1];
