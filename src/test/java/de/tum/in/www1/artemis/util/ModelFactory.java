@@ -401,6 +401,7 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
         return studentExam;
     }
 
@@ -609,6 +610,7 @@ public class ModelFactory {
         job.setId(42);
         job.setFailedTests(failedTests);
         job.setSuccessfulTests(successfulTests);
+        job.setLogs(List.of());
 
         summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
         summary.setSuccessfulCount(successfulTestNames.size());

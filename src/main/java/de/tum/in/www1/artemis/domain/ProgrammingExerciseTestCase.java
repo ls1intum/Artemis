@@ -193,6 +193,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + getTestName() + "'" + ", weight=" + getWeight() + ", active='" + isActive() + "'" + "}";
+        return "ProgrammingExerciseTestCase{" + "id=" + id + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
+                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
 }

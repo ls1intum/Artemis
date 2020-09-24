@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartOptions } from 'chart.js';
-import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { calculateTickMax, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -255,6 +255,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                 backgroundColor: this.colors,
             },
         ];
+        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 
     /**

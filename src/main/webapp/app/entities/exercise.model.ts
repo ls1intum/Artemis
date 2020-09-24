@@ -118,6 +118,16 @@ export abstract class Exercise implements BaseEntity {
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
     }
+
+    /**
+     * Sanitize exercise attributes.
+     * This method should be used before sending an exercise to the backend.
+     *
+     * @param exercise
+     */
+    public static sanitize(exercise: Exercise): void {
+        exercise.title = exercise.title?.trim();
+    }
 }
 
 export function getIcon(exerciseType?: ExerciseType): string {

@@ -175,8 +175,9 @@ export class TextAssessmentsService {
      * The routing to athene is done using nginx on the production server.
      *
      * @param submission - The submission object that holds the data that is tracked
+     * @param origin - The method that calls the the tracking method
      */
-    public trackAssessment(submission?: TextSubmission) {
+    public trackAssessment(submission?: TextSubmission, origin: string) {
         if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
@@ -196,6 +197,7 @@ export class TextAssessmentsService {
             });
 
             const trackingObject = {
+                origin,
                 textBlocks: submissionForSending.blocks,
                 participation: submissionForSending.participation,
             };

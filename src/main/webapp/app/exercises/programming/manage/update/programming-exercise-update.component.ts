@@ -13,7 +13,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -219,7 +219,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 return;
             }
         }
+
+        Exercise.sanitize(this.programmingExercise);
+
         this.isSaving = true;
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
         } else if (this.programmingExercise.id !== undefined) {

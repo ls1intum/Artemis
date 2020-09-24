@@ -46,7 +46,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     unusedTextBlockRefs: TextBlockRef[];
     complaint?: Complaint;
     totalScore: number;
-
+    isTestRun = false;
     isLoading: boolean;
     saveBusy: boolean;
     submitBusy: boolean;
@@ -92,6 +92,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private assessmentsService: TextAssessmentsService,
@@ -137,6 +138,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.isTestRun = queryParams.get('testRun') === 'true';
+        });
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
@@ -166,7 +170,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.isLoading = false;
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'start');
     }
 
     private updateUrlIfNeeded() {
@@ -193,7 +197,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -216,7 +220,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         // track feedback in athene
-        this.assessmentsService.trackAssessment(this.submission);
+        this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
@@ -273,7 +277,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
     }
 
     private computeTotalScore() {

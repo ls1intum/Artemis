@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ChartOptions } from 'chart.js';
-import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { calculateTickMax, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -309,6 +309,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
                 backgroundColor: this.colors,
             },
         ];
+        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 
     /**
