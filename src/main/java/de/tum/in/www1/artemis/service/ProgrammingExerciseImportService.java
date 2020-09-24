@@ -202,6 +202,8 @@ public class ProgrammingExerciseImportService {
             copy.setAfterDueDate(testCase.isAfterDueDate());
             copy.setTestName(testCase.getTestName());
             copy.setWeight(testCase.getWeight());
+            copy.setBonusMultiplier(testCase.getBonusMultiplier());
+            copy.setBonusPoints(testCase.getBonusPoints());
             copy.setExercise(targetExercise);
             programmingExerciseTestCaseRepository.save(copy);
             return copy;
