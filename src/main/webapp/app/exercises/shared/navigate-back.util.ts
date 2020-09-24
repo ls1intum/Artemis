@@ -14,16 +14,21 @@ import { Submission } from 'app/entities/submission.model';
  * @param router: Angular router to navigate to URL
  * @param exercise: Exercise currently assessed
  * @param submission: Submission currently assessed
+ * @param isTestRun: flag to determine if it is an exam test run
  */
-export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null) {
+export function assessmentNavigateBack(location: Location, router: Router, exercise: Exercise | null, submission: Submission | null, isTestRun = false) {
     if (exercise) {
         const course = exercise.course || exercise.exerciseGroup?.exam?.course;
 
-        if (exercise.teamMode && submission) {
-            const teamId = (submission.participation as StudentParticipation).team.id;
-            router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
+        if (isTestRun) {
+            router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/test-run-tutor-dashboard`);
         } else {
-            router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/tutor-dashboard`);
+            if (exercise.teamMode && submission) {
+                const teamId = (submission.participation as StudentParticipation).team.id;
+                router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
+            } else {
+                router.navigateByUrl(`/course-management/${course?.id}/exercises/${exercise.id}/tutor-dashboard`);
+            }
         }
     } else {
         location.back();

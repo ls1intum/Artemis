@@ -38,8 +38,6 @@ public class FileUploadSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseService courseService;
-
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
@@ -56,21 +54,17 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final AssessmentService assessmentService;
-
-    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+    public FileUploadSubmissionResource(FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, AssessmentService assessmentService) {
+            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
-        this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.gradingCriterionService = gradingCriterionService;
         this.examSubmissionService = examSubmissionService;
-        this.assessmentService = assessmentService;
     }
 
     /**
@@ -182,7 +176,8 @@ public class FileUploadSubmissionResource {
 
     /**
      * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call
+     * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise
      * @param submittedOnly if only submitted submissions should be returned
@@ -207,12 +202,13 @@ public class FileUploadSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<FileUploadSubmission> fileUploadSubmissions;
+        final boolean examMode = exercise.hasExerciseGroup();
+        List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user);
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
@@ -264,11 +260,13 @@ public class FileUploadSubmissionResource {
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
+            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
+                    fileUploadExercise.hasExerciseGroup());
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup());
+
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();
             }

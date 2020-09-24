@@ -1,5 +1,5 @@
 <div *ngIf="result && !isLoading" class="modal-body mt-2">
-    <div *ngIf="isOpenForSubmission" class="alert alert-warning">
+    <div *ngIf="isOpenForSubmission && !isTestRun" class="alert alert-warning">
         <strong jhiTranslate="artemisApp.result.exerciseStillOpen">Exercise is still open for submissions!</strong>
         <span jhiTranslate="artemisApp.result.studentOverride">
             The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.

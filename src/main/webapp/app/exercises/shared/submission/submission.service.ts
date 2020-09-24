@@ -8,6 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -94,5 +95,29 @@ export class SubmissionService {
             this.convertSubmissionsDateFromServer(res.body);
         }
         return res;
+    }
+
+    getTestRunSubmissionsForExercise(exerciseId: number): Observable<HttpResponse<Submission[]>> {
+        return this.http
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/test-run-submissions`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
+    }
+
+    private convertArrayResponse(res: HttpResponse<Submission[]>): HttpResponse<Submission[]> {
+        const jsonResponse: Submission[] = res.body!;
+        const body: Submission[] = [];
+        for (let i = 0; i < jsonResponse.length; i++) {
+            body.push(this.convertItemFromServer(jsonResponse[i]));
+        }
+        return res.clone({ body });
+    }
+
+    /**
+     * Convert a returned JSON object to TextSubmission.
+     */
+    private convertItemFromServer(submission: Submission): Submission {
+        return Object.assign({}, submission);
     }
 }
