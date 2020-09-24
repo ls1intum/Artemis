@@ -1,21 +1,20 @@
 package de.tum.in.www1.artemis.connector.jenkins;
 
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
-import java.net.URL;
+import java.util.Optional;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.ExtractHeader;
@@ -27,9 +26,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @Component
 @Profile("jenkins")
 public class JenkinsRequestMockProvider {
-
-    @Value("${artemis.continuous-integration.url}")
-    private URL JENKINS_SERVER_URL;
 
     private final RestTemplate restTemplate;
 
@@ -55,28 +51,19 @@ public class JenkinsRequestMockProvider {
         mockServer.reset();
     }
 
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException {
-        final var projectKey = exercise.getProjectKey();
-
-        FolderJob folderJob = new FolderJob(projectKey, projectKey);
-        Job jobWithDetails = null;
-        if (exists) {
-            jobWithDetails = new JobWithDetails();
-        }
-
-        doReturn(jobWithDetails).when(jenkinsServer).getJob(any());
-        doReturn(null).when(jenkinsServer).getFolderJob(null);
-        doReturn(Optional.of(folderJob)).when(jenkinsServer).getFolderJob(jobWithDetails);
-    }
-
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException {
+        // TODO: we need to mock folder(...)
         doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), true);
     }
 
-    public void mockCreateBuildPlan() throws IOException {
+    public void mockCreateBuildPlan(String projectKey) throws IOException {
         JobWithDetails job = new JobWithDetails();
         job.setClient(jenkinsClient);
+        // return null for the first call (when we check if the project exists) and the actual job for the 2nd, 3rd, 4th, ... call (when the jobs will be created)
+        doReturn(null, job, job, job, job, job, job).when(jenkinsServer).getJob(anyString());
         doReturn(job).when(jenkinsServer).getJob(any(FolderJob.class), anyString());
+        FolderJob folderJob = new FolderJob(projectKey, projectKey);
+        doReturn(com.google.common.base.Optional.of(folderJob)).when(jenkinsServer).getFolderJob(job);
         doNothing().when(jenkinsServer).createJob(any(FolderJob.class), anyString(), anyString(), anyBoolean());
     }
 
