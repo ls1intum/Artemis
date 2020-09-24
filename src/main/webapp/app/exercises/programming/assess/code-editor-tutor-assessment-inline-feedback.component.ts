@@ -16,7 +16,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     set feedback(feedback: Feedback) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
-        this.readOnly = feedback ? true : false;
+        this.editOnly = feedback ? true : false;
     }
     private _feedback: Feedback;
     @Input()
@@ -24,49 +24,60 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input()
     codeLine: number;
     @Input()
-    isStudent: boolean;
+    readOnly: boolean;
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
-    onCancelFeedback = new EventEmitter<void>();
+    onCancelFeedback = new EventEmitter<number>();
     @Output()
     onDeleteFeedback = new EventEmitter<Feedback>();
+    @Output()
+    onEditFeedback = new EventEmitter<number>();
 
-    readOnly: boolean;
+    editOnly: boolean;
     oldFeedback: Feedback;
     constructor(private translateService: TranslateService) {}
 
+    /**
+     * Updates the current feedback and sets props and emits the feedback to parent component
+     */
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
-        this.readOnly = true;
+        this.editOnly = true;
         this.feedback.text = `Feedback for ${this.fileName} line: ${this.codeLine}`;
         this.onUpdateFeedback.emit(this.feedback);
-        // this.onCancelFeedback.emit();
     }
 
+    /**
+     * When the current feedback was saved, we show the editOnly mode, otherwise the component is not displayed
+     * anymore in the parent component
+     */
     cancelFeedback() {
-        console.log('cancel pressed');
-        console.log(this.feedback);
-        // The current feedback was not saved yet then do not show the inline feedback component, otherwise show the readonly mode
-        if (this.feedback.type !== this.MANUAL) {
-            this.onCancelFeedback.emit();
-        } else {
-            // Changes in feedback is discarded
-            console.log('feedback: ');
-            console.log(this.feedback);
-            console.log('feedback old: ');
-            console.log(this.oldFeedback);
+        if (this.feedback.type === this.MANUAL) {
             this.feedback = this.oldFeedback;
-            this.readOnly = true;
+            this.editOnly = true;
         }
+        this.onCancelFeedback.emit(this.codeLine);
     }
 
+    /**
+     * Deletes feedback after confirmation and emits to parent component
+     */
     deleteFeedback() {
         const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
         const confirmation = confirm(text);
         if (confirmation) {
             this.onDeleteFeedback.emit(this.feedback);
         }
+    }
+
+    /**
+     * Checks if component is in edit mode
+     * @param line Line of code which is emitted to the parent
+     */
+    editFeedback(line: number) {
+        this.editOnly = false;
+        this.onEditFeedback.emit(line);
     }
 }

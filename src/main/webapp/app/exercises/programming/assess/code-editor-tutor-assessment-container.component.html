@@ -19,6 +19,7 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
+    [isTestRun]="isTestRun"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="manualResult"
@@ -33,9 +34,11 @@
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
-        [participation]="participation"
+        [participation]="participationForManualResult"
         [showEditorInstructions]="showEditorInstructions"
         [isTutorAssessment]="true"
+        [readOnlyManualFeedback]="readOnly()"
+        (onUpdateFeedback)="onUpdateFeedback($event)"
     >
         <span editorTitle>{{ exercise.title }}</span>
         <div editorToolbar>
@@ -60,13 +63,13 @@
             [exerciseHints]="exercise.exerciseHints"
             class="instructions-wrapper__content card-body p-0"
         ></jhi-programming-exercise-instructions>
-        <jhi-code-editor-tutor-assessment-display-code
+        <!-- <jhi-code-editor-tutor-assessment-display-code
             editorCenter
             [selectedFile]="codeEditorContainer ? codeEditorContainer.selectedFile : undefined"
             [allFeedbacks]="this.referencedFeedback"
             (onError)="onError($event)"
             (onUpdateFeedback)="onUpdateFeedback($event)"
-        ></jhi-code-editor-tutor-assessment-display-code>
+        ></jhi-code-editor-tutor-assessment-display-code> -->
         <div class="mt-3" editorBottom>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
@@ -81,16 +84,21 @@
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
                 >Go to repository</a
             >
-            <jhi-updating-result
-                *ngIf="participation"
-                [exercise]="exercise"
+            <jhi-result
+                *ngIf="participationForManualResult"
+                [result]="manualResult"
                 [showUngradedResults]="true"
                 [showGradedBadge]="true"
+                [isBuilding]="false"
                 [participation]="participationForManualResult"
                 [short]="true"
-                class="mr-2"
-            ></jhi-updating-result>
+                class="mr-1"
+            ></jhi-result>
             <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
+            <span class="badge badge-primary ml-2" [style.fontSize]="'inherit'">
+                <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
+            </span>
+            <span jhiTranslate="artemisApp.result.currentScore">Current Score</span>
             <div class="form-group mt-3" *ngIf="exercise.gradingInstructions">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
                 <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>

@@ -153,6 +153,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getDetailText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
         }
+        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
+            throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
+        }
 
         ProgrammingSubmission submission;
         if (latestExistingResult.isEmpty()) {
