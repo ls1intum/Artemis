@@ -356,9 +356,13 @@ public class ResultService {
      * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
      *
      * @param exerciseId - the exercise we are interested in
+     * @param examMode should be used for exam exercises to ignore test run submissions
      * @return a number of assessments for the exercise
      */
-    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
+        }
         return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
                 resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId));
     }

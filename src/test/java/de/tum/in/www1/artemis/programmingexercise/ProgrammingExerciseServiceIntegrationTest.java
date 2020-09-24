@@ -114,6 +114,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases().size()).isEqualTo(programmingExercise.getTestCases().size());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
+        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
         final var newHintIDs = newlyImported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getExerciseHints().size()).isEqualTo(programmingExercise.getExerciseHints().size());
         assertThat(programmingExercise.getExerciseHints()).noneMatch(hint -> newHintIDs.contains(hint.getId()));
@@ -205,22 +206,46 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm("");
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
-
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+    public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
+        final var search = databse.configureSearch("");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        final var search = databse.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var searchPython = databse.configureSearch("Python");
+        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchPython));
+        assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
+
+        final var searchJava = databse.configureSearch("Java");
+        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchJava));
+        assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
+
+        final var searchSwift = databse.configureSearch("Swift");
+        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
+        assertThat(resultSwift.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testAdminGetsResultsFromAllCourses() throws Exception {
+        databse.addCourseInOtherInstructionGroupAndExercise("Programming");
+        final var search = databse.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
     }
 
     private ProgrammingExercise importExerciseBase() {
@@ -231,4 +256,5 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
+
 }

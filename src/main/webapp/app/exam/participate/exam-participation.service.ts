@@ -83,6 +83,15 @@ export class ExamParticipationService {
         });
     }
 
+    public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
+        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
+            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+            this.currentlyLoadedStudentExam.next(convertedStudentExam);
+            return convertedStudentExam;
+        });
+    }
+
     /**
      * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in
@@ -92,6 +101,8 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/studentExams/submit';
+        ExamParticipationService.breakCircularDependency(studentExam);
+
         return this.httpClient.post<StudentExam>(url, studentExam).pipe(
             map((submittedStudentExam: StudentExam) => {
                 return this.convertStudentExamFromServer(submittedStudentExam);
@@ -106,6 +117,29 @@ export class ExamParticipationService {
         );
     }
 
+    private static breakCircularDependency(studentExam: StudentExam) {
+        for (const exercise of studentExam.exercises) {
+            if (!!exercise.studentParticipations) {
+                for (const participation of exercise.studentParticipations) {
+                    if (!!participation.results) {
+                        for (const result of participation.results) {
+                            delete result.participation;
+                        }
+                    }
+                    if (!!participation.submissions) {
+                        for (const submission of participation.submissions) {
+                            delete submission.participation;
+                            if (!!submission.result) {
+                                delete submission.result.participation;
+                                delete submission.result.submission;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * save the studentExam to the local Storage
      *
@@ -114,6 +148,7 @@ export class ExamParticipationService {
      * @param studentExam
      */
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
+        ExamParticipationService.breakCircularDependency(studentExam);
         this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExam));
     }
 
