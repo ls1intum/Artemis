@@ -12,6 +12,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -28,6 +29,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Input() studentExam: StudentExam;
     @Input() handInEarly = false;
     @Input() handInPossible = true;
+    @Input() testRunStartTime: Moment | null;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
@@ -35,6 +37,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     startEnabled: boolean;
     endEnabled: boolean;
     confirmed: boolean;
+
+    testRun: boolean;
 
     formattedGeneralInformation: SafeHtml | null;
     formattedConfirmationText: SafeHtml | null;
@@ -66,6 +70,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.confirmed = false;
         this.startEnabled = false;
+        this.testRun = this.studentExam.testRun;
+
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
@@ -74,7 +80,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
             // this should be the individual working end + the grace period
-            this.graceEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds').add(this.exam.gracePeriod, 'seconds');
+            if (this.testRun) {
+                this.graceEndDate = moment(this.testRunStartTime!).add(this.studentExam.workingTime, 'seconds').add(this.exam.gracePeriod, 'seconds');
+            } else {
+                this.graceEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds').add(this.exam.gracePeriod, 'seconds');
+            }
         }
 
         this.accountService.identity().then((user) => {
@@ -107,6 +117,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * check if exam already started
      */
     hasStarted(): boolean {
+        if (this.testRun) {
+            return true;
+        }
         return this.exam?.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
     }
 
@@ -114,18 +127,30 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * displays popup or start exam participation immediately
      */
     startExam() {
-        this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
-            this.studentExam = studentExam;
-            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
+        if (this.testRun) {
+            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, this.studentExam);
             if (this.hasStarted()) {
-                this.onExamStarted.emit(studentExam);
+                this.onExamStarted.emit(this.studentExam);
             } else {
                 this.waitingForExamStart = true;
                 this.interval = window.setInterval(() => {
-                    this.updateDisplayedTimes(studentExam);
+                    this.updateDisplayedTimes(this.studentExam);
                 }, 100);
             }
-        });
+        } else {
+            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+                this.studentExam = studentExam;
+                this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
+                if (this.hasStarted()) {
+                    this.onExamStarted.emit(studentExam);
+                } else {
+                    this.waitingForExamStart = true;
+                    this.interval = window.setInterval(() => {
+                        this.updateDisplayedTimes(studentExam);
+                    }, 100);
+                }
+            });
+        }
     }
 
     /**
@@ -177,6 +202,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     get startButtonEnabled(): boolean {
+        if (this.testRun) {
+            return this.nameIsCorrect && this.confirmed && !!this.exam;
+        }
         return !!(this.nameIsCorrect && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
     }
 
@@ -197,6 +225,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * Returns whether the student failed to submit on time. In this case the end page is adapted.
      */
     get studentFailedToSubmit(): boolean {
+        if (this.testRun) {
+            return false;
+        }
         const individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         return individualStudentEndDate.add(this.exam.gracePeriod, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
