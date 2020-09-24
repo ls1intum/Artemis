@@ -26,6 +26,7 @@
             "sampleSolution": "Example Solution",
             "exampleSubmissions": "Example submissions",
             "assessedSubmission": "Your assessed submission",
+            "assessedSubmissionInstructor": "The assessed submission",
             "createExampleSubmissions": "Create example submission",
             "automaticAssessmentEnabled": "Automatic assessment suggestions enabled",
             "checkPlagiarism": "Check Plagiarism",

@@ -24,6 +24,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -50,6 +51,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
+    isOwnerOfParticipation: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -64,6 +66,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
+        private accountService: AccountService,
     ) {
         this.isSaving = false;
     }
@@ -104,6 +107,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.answer = this.submission.text;
             }
         }
+        // check wether the student looks at the result
+        this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
     }
 
     ngOnDestroy() {

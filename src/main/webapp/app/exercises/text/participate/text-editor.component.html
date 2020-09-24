@@ -3,6 +3,7 @@
         {{ 'artemisApp.textSubmission.textEditor' | translate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
     </span>
     <jhi-button
+        *ngIf="isOwnerOfParticipation"
         submitbutton
         [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
@@ -60,7 +61,13 @@
             <ng-template #hasFeedback>
                 <div class="row">
                     <div class="col-md-12 col-lg-10 col-xl-8">
-                        <b><span jhiTranslate="artemisApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
+                        <b>
+                            {{
+                                isOwnerOfParticipation
+                                    ? ('artemisApp.textExercise.assessedSubmission' | translate)
+                                    : ('artemisApp.textExercise.assessedSubmissionInstructor' | translate)
+                            }}:
+                        </b>
                         <hr />
                         <jhi-text-result [result]="result"></jhi-text-result>
                         <hr />
@@ -91,7 +98,7 @@
                         <br />
                         {{ generalFeedback.detailText }}
                     </div>
-                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
+                    <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
                 </div>
             </ng-template>
 
