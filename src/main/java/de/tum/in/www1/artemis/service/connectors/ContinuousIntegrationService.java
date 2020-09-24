@@ -122,11 +122,10 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
-     * @param projectKey The key of the project under which the plan is stored
-     * @param buildPlanId to get the latest build logs
+     * @param programmingSubmission The programming for which the latest build logs should be retrieved
      * @return list of build log entries
      */
-    List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId);
+    List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
