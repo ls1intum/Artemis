@@ -85,13 +85,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
                     tap((result) => (this.result = result)),
                     switchMap((result) => this.fetchBuildResults(result)),
-                    map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
-                    tap((buildLogsFromServer: BuildLogEntryArray) => {
-                        this.rawBuildLogs = buildLogsFromServer;
+                    tap((buildLogsFromServer: BuildLogEntry[]) => {
+                        this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!);
                     }),
                     catchError(() => {
+                        this.onError.emit('failedToLoadBuildLogs');
                         this.rawBuildLogs = new BuildLogEntryArray();
-                        return Observable.of();
+                        return Observable.of([]);
                     }),
                 )
                 .subscribe(() => this.extractAnnotations());
@@ -156,7 +156,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
-                    return Observable.of(null);
+                    return Observable.of([]);
                 }),
             )
             .subscribe(() => this.extractAnnotations());

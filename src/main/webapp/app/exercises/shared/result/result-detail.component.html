@@ -15,13 +15,13 @@
     <ng-template #feedbackContainer>
         <ng-container *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer">
             <div *ngFor="let feedback of filteredFeedbackList; last as isLast">
-                <div class="feedback-item" [className]="getClassNameForFeedbackItem(feedback)">
+                <div [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
                     <span>{{ feedback.category }}</span>
-                    <p>{{ feedback.title }}</p>
-                    <pre *ngIf="feedback.text">{{ feedback.text }}</pre>
-                    <pre *ngElse>No feedback available</pre>
+                    <span class="feedback-points" *ngIf="feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
+                    <span class="feedback-title">{{ feedback.title }}</span>
+                    <p *ngIf="feedback.text">{{ feedback.text }}</p>
+                    <p *ngElse>No feedback available</p>
                 </div>
-                <hr *ngIf="!isLast" />
             </div>
         </ng-container>
     </ng-template>

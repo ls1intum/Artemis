@@ -24,6 +24,7 @@ export class FeedbackItem {
 @Component({
     selector: 'jhi-result-detail',
     templateUrl: './result-detail.component.html',
+    styleUrls: ['./result-detail.scss'],
 })
 export class ResultDetailComponent implements OnInit {
     BuildLogType = BuildLogType;
@@ -105,7 +106,7 @@ export class ResultDetailComponent implements OnInit {
                     const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
                     return {
                         category: 'Code Issue',
-                        title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`,
+                        title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
                         text: `${scaIssue.rule}: ${scaIssue.message}`,
                         positive: false,
                         credits: feedback.credits,
@@ -113,12 +114,11 @@ export class ResultDetailComponent implements OnInit {
                 } else if (feedback.type === 'AUTOMATIC') {
                     return {
                         category: 'Test Case',
-                        title:
-                            feedback.positive === false
-                                ? `Error in ${feedback.text}`
-                                : feedback.positive === undefined
-                                ? `No result information for ${feedback.text}`
-                                : `Test ${feedback.text} passed.`,
+                        title: !this.showTestNames
+                            ? `${feedback.positive ? 'Passed' : 'Failed'} test`
+                            : feedback.positive === undefined
+                            ? `No result information for ${feedback.text}`
+                            : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
                         text: feedback.detailText,
                         positive: feedback.positive,
                         credits: feedback.credits,
@@ -170,7 +170,7 @@ export class ResultDetailComponent implements OnInit {
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
         if (this.exerciseType === ExerciseType.PROGRAMMING) {
             return feedbackList.filter((feedbackItem) => {
-                if (feedbackItem.category === 'Test Case' && (feedbackItem.positive || !this.showTestNames)) {
+                if (feedbackItem.category === 'Test Case' && feedbackItem.positive) {
                     return false;
                 }
                 return true;
@@ -182,11 +182,13 @@ export class ResultDetailComponent implements OnInit {
 
     getClassNameForFeedbackItem(feedback: FeedbackItem): string {
         if (feedback.category === 'Test Case') {
-            return 'errorItem';
+            return 'alert-danger';
         } else if (feedback.category === 'Code Issue') {
-            return 'warningItem';
+            return 'alert-warning';
+        } else if (this.exerciseType === ExerciseType.PROGRAMMING) {
+            return 'alert-primary';
         } else {
-            return feedback.positive ? 'positiveItem' : 'errorItem';
+            return feedback.positive ? 'alert-success' : 'alert-danger';
         }
     }
 }
