@@ -27,8 +27,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() conflictMode: boolean;
     @Input() conflictType: TextAssessmentConflictType | null;
     @Input() isLeftConflictingFeedback: boolean;
+    @Input() isSelectedConflict: boolean;
     private textareaElement: HTMLTextAreaElement;
-    isSelectedConflict = false;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -112,7 +112,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     focus(): void {
         if (this.conflictMode && !this.isLeftConflictingFeedback && this.isConflictingFeedback) {
-            this.isSelectedConflict = !this.isSelectedConflict;
             return;
         }
         this.textareaElement.focus();

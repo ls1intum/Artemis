@@ -27,6 +27,10 @@ export class TextblockAssessmentCardComponent {
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
     disableEditScore = false;
 
+    private get isSelectableConflict(): boolean {
+        return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
+    }
+
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
@@ -34,14 +38,19 @@ export class TextblockAssessmentCardComponent {
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {
-        if (this.readOnly && !(this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback)) {
+        if (this.readOnly && !this.isSelectableConflict) {
             return;
         }
-        this.selected = !this.selected;
+
+        if (this.isSelectableConflict && this.selected) {
+            this.didSelect.emit(null);
+            return;
+        }
+
         this.didSelect.emit(this.textBlockRef);
         this.textBlockRef.initFeedback();
 
-        if (autofocus || (this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback)) {
+        if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
         }
     }

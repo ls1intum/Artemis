@@ -89,7 +89,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     didSelectRef(ref: TextBlockRef): void {
         this.selectedRef = ref;
         if (this.conflictMode && !this.isLeftConflictingFeedback) {
-            this.didSelectConflictingFeedback.emit(ref.feedback?.id);
+            this.didSelectConflictingFeedback.emit(ref?.feedback?.id);
         }
     }
 }
