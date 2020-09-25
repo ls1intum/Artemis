@@ -45,7 +45,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
         this.editOnly = true;
-        this.feedback.text = `Feedback for ${this.fileName} line: ${this.codeLine}`;
+        this.feedback.text = `for file ${this.fileName} at line ${this.codeLine}`;
         this.onUpdateFeedback.emit(this.feedback);
     }
 

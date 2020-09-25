@@ -112,7 +112,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
                     // Add participation with manual results to display manual result
                     this.participationForManualResult = cloneDeep(this.participation);
-                    this.participationForManualResult.results = !!this.manualResult.resultString ? [this.manualResult] : [];
+                    this.participationForManualResult.results = this.manualResult.hasFeedback ? [this.manualResult] : [];
                     // Either submission from latest manual or automatic result
                     this.submission = this.getLatestResult(this.participation.results).submission as ProgrammingSubmission;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
@@ -300,7 +300,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation!.results[0] = this.manualResult = response.body!;
+        this.participationForManualResult.results[0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
