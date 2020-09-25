@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -20,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -332,7 +336,7 @@ public class ProgrammingExerciseGradingService {
                 double penaltySum = staticCodeAnalysisFeedback.stream().filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
                         .mapToDouble(feedback -> {
                             double penalty = staticCodeAnalysisCategory.getPenalty();
-                            feedback.setText(feedback.getText() + ":" + staticCodeAnalysisCategory.getName());
+                            feedback.setText(feedback.getText() + staticCodeAnalysisCategory.getName());
                             feedback.setCredits(-penalty);
                             return penalty;
                         }).sum();
@@ -363,11 +367,12 @@ public class ProgrammingExerciseGradingService {
         Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> categoryMappings = staticCodeAnalysisService.getMappingForCategory(staticCodeAnalysisCategory,
                 programmingLanguage);
         return categoryMappings.<Predicate<Feedback>>map(mappings -> feedback -> {
-            String[] parts = feedback.getText().split(":");
-            if (parts.length > 2) {
-                return mappings.stream().anyMatch(mapping -> mapping.getTool().name().equals(parts[1]) && mapping.getCategory().equals(parts[2]));
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
+                return mappings.stream().anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()));
             }
-            else {
+            catch (JsonProcessingException e) {
                 return false;
             }
         }).orElseGet(() -> fb -> false);
