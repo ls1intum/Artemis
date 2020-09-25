@@ -34,7 +34,8 @@ describe('ResultDetailComponent', () => {
         const scaFeedback = new Feedback();
         scaFeedback.id = 42;
         scaFeedback.type = FeedbackType.AUTOMATIC;
-        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'test';
+        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER;
+        scaFeedback.detailText = '{"filePath":"www/withSCA/MergeSort.java","startLine":9}';
         return scaFeedback;
     };
 
@@ -72,26 +73,32 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
-        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
+        const scaFeedback = generateSCAFeedback();
+        const testCaseFeedback = generateTestCaseFeedback();
+        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
+        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.isLoading).to.be.false;
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
-        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
+        const scaFeedback = generateSCAFeedback();
+        const testCaseFeedback = generateTestCaseFeedback();
+        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         getFeedbackDetailsForResultStub.returns(of({ body: feedbacks as Feedback[] } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
-        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
+        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.isLoading).to.be.false;
     });
 
@@ -105,7 +112,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.staticCodeAnalysisFeedbackList).to.have.same.deep.members([scaFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
     });
 

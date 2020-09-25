@@ -9,9 +9,8 @@ import java.util.StringJoiner;
  */
 public enum StaticCodeAnalysisTool {
 
-    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugs.xml"),
-    // TODO: Only enabled for parsing of config. Other PR has the right configuration
-    CHECKSTYLE(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugs.xml"), PMD(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugs.xml");
+    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle:checkstyle", "checkstyle-result.xml"),
+    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml");
 
     private final ProgrammingLanguage language;
 

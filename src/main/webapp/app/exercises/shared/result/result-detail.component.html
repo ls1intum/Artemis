@@ -34,15 +34,15 @@
             </div>
         </ng-container>
         <!-- Static Code Analysis Feedback -->
-        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisFeedbackList && staticCodeAnalysisFeedbackList.length">
+        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisIssues && staticCodeAnalysisIssues.length">
             <hr />
             <h6>Static Code Analysis Issues</h6>
             <hr />
-            <div *ngFor="let feedback of staticCodeAnalysisFeedbackList; last as isLast">
+            <div *ngFor="let issue of staticCodeAnalysisIssues; last as isLast">
                 <p>
-                    Issue in file <span class="code-error">{{ feedback | staticCodeAnalysisLocationText }}</span> detected:
+                    Issue in file <span class="code-error">{{ issue | staticCodeAnalysisLocationText }}</span> detected:
                 </p>
-                <pre>{{ feedback.detailText }}</pre>
+                <pre>{{ issue.message }}</pre>
                 <hr *ngIf="!isLast" />
             </div>
         </ng-container>

@@ -141,7 +141,7 @@ public interface ContinuousIntegrationService {
      *
      * @param projectKey to check if a project with this unique key already exists
      * @param projectName to check if a project with the same name already exists
-     * @return true if the project exists, false otherwise
+     * @return an error message if the project exists, null otherwise
      */
     String checkIfProjectExists(String projectKey, String projectName);
 

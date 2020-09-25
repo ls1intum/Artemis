@@ -14,6 +14,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Annotation } from '../ace/code-editor-ace.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -109,15 +110,19 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     private extractAnnotations() {
         const buildLogErrors = this.rawBuildLogs.extractErrors();
-        const codeAnalysisIssues = (this.result.feedbacks || []).filter(Feedback.isStaticCodeAnalysisFeedback).map<Annotation>((f) => ({
-            text: f.detailText || '',
-            fileName: 'src/' + (f.reference?.split(':')[0] || '').split('.').join('/') + '.java', // TODO support other files
-            row: parseInt(f.reference?.split(':')[1] || '0', 10) - 1,
-            column: 0,
+        const codeAnalysisIssues = (this.result.feedbacks || [])
+            .filter(Feedback.isStaticCodeAnalysisFeedback)
+            .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
+        const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
+            text: issue.message || '',
+            fileName: issue.filePath || '',
+            // TODO: Support endLine and endColumn
+            row: (issue.startLine || 1) - 1,
+            column: (issue.startColumn || 1) - 1,
             type: 'warning', // TODO encode type in feedback
             timestamp: this.result.completionDate != null ? new Date(this.result.completionDate.toString()).valueOf() : 0,
         }));
-        this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisIssues]);
+        this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisAnnotations]);
     }
 
     /**
