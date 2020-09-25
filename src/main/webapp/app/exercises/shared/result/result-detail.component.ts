@@ -4,13 +4,21 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+
+export class FeedbackItem {
+    category: string;
+    title: string | null;
+    text: string | null;
+    positive: boolean | null;
+    credits: number;
+}
 
 // Modal -> Result details view
 @Component({
@@ -24,11 +32,13 @@ export class ResultDetailComponent implements OnInit {
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
     @Input() showTestNames = false;
+    @Input() showFeedbackCredits = true;
     @Input() exerciseType: ExerciseType;
+
     isLoading = false;
     loadingFailed = false;
-    feedbackList: Feedback[];
-    staticCodeAnalysisIssues: StaticCodeAnalysisIssue[];
+    feedbackList: FeedbackItem[];
+    filteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private buildLogService: BuildLogService) {}
@@ -50,12 +60,10 @@ export class ResultDetailComponent implements OnInit {
                      * feedback and assign the lists to the component
                      */
                     if (feedbacks && feedbacks.length) {
+                        this.result.feedbacks = feedbacks!;
                         const filteredFeedback = this.filterFeedback(feedbacks);
-                        if (this.exerciseType === ExerciseType.PROGRAMMING) {
-                            this.partitionAndSetFeedback(filteredFeedback);
-                        } else {
-                            this.feedbackList = filteredFeedback;
-                        }
+                        this.feedbackList = this.createFeedbackItems(filteredFeedback);
+                        this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                     }
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)) {
@@ -78,10 +86,8 @@ export class ResultDetailComponent implements OnInit {
     }
 
     private filterFeedback = (feedbackList: Feedback[]) => {
-        // TODO: The input object is mutated, this could lead to unexpected bugs.
-        this.result.feedbacks = feedbackList!;
         if (!this.feedbackFilter) {
-            return feedbackList;
+            return [...feedbackList];
         } else {
             return this.feedbackFilter
                 .map((test) => {
@@ -91,24 +97,60 @@ export class ResultDetailComponent implements OnInit {
         }
     };
 
-    /**
-     * Distinguishes between static code analysis feedback and test case feedback.
-     * Assigns both lists to the component.
-     *
-     * @param feedbackList All available Feedback
-     */
-    private partitionAndSetFeedback(feedbackList: Feedback[]) {
-        const testCaseFeedback: Feedback[] = [];
-        const staticCodeAnalysisFeedback: StaticCodeAnalysisIssue[] = [];
-        feedbackList.forEach((feedback) => {
-            if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                staticCodeAnalysisFeedback.push(JSON.parse(feedback.detailText!));
-            } else {
-                testCaseFeedback.push(feedback);
-            }
-        });
-        this.feedbackList = testCaseFeedback;
-        this.staticCodeAnalysisIssues = staticCodeAnalysisFeedback;
+    private createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
+        if (this.exerciseType === ExerciseType.PROGRAMMING) {
+            return feedbacks.map((feedback) => {
+                if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                    const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
+                    const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+                    return {
+                        category: 'Code Issue',
+                        title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`,
+                        text: `${scaIssue.rule}: ${scaIssue.message}`,
+                        positive: false,
+                        credits: feedback.credits,
+                    };
+                } else if (feedback.type === 'AUTOMATIC') {
+                    return {
+                        category: 'Test Case',
+                        title:
+                            feedback.positive === false
+                                ? `Error in ${feedback.text}`
+                                : feedback.positive === undefined
+                                ? `No result information for ${feedback.text}`
+                                : `Test ${feedback.text} passed.`,
+                        text: feedback.detailText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
+                    };
+                } else {
+                    return {
+                        category: 'Tutor',
+                        title: feedback.text,
+                        text: feedback.detailText,
+                        positive: feedback.positive,
+                        credits: feedback.credits,
+                    };
+                }
+            });
+        } else {
+            return feedbacks.map((feedback) => ({
+                category: feedback.type === 'AUTOMATIC' ? 'System' : 'Tutor',
+                title: feedback.text,
+                text: feedback.detailText,
+                positive: feedback.positive,
+                credits: feedback.credits,
+            }));
+        }
+    }
+
+    getIssueLocation(issue: StaticCodeAnalysisIssue): string {
+        const lineText = issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
+        let columnText = '';
+        if (issue.startColumn) {
+            columnText = issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` columns ${issue.startColumn}-${issue.endColumn}`;
+        }
+        return issue.filePath + lineText + columnText;
     }
 
     private fetchAndSetBuildLogs = (participationId: number) => {
@@ -124,4 +166,27 @@ export class ResultDetailComponent implements OnInit {
             }),
         );
     };
+
+    private filterFeedbackItems(feedbackList: FeedbackItem[]) {
+        if (this.exerciseType === ExerciseType.PROGRAMMING) {
+            return feedbackList.filter((feedbackItem) => {
+                if (feedbackItem.category === 'Test Case' && (feedbackItem.positive || !this.showTestNames)) {
+                    return false;
+                }
+                return true;
+            });
+        } else {
+            return [...feedbackList];
+        }
+    }
+
+    getClassNameForFeedbackItem(feedback: FeedbackItem): string {
+        if (feedback.category === 'Test Case') {
+            return 'errorItem';
+        } else if (feedback.category === 'Code Issue') {
+            return 'warningItem';
+        } else {
+            return feedback.positive ? 'positiveItem' : 'errorItem';
+        }
+    }
 }

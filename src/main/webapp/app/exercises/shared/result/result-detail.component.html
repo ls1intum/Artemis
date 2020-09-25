@@ -13,36 +13,14 @@
     Feedbacks container
 -->
     <ng-template #feedbackContainer>
-        <ng-container *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer">
-            <div *ngFor="let feedback of feedbackList | removepositiveautomaticfeedback; last as isLast">
-                <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === false && showTestNames">
-                    Error in &nbsp;<span class="code-error">{{ feedback.text }}</span
-                    >:
-                </p>
-                <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive === undefined && showTestNames">
-                    No result information for &nbsp;<span class="code-warning">{{ feedback.text }}:</span>
-                </p>
-                <p *ngIf="feedback.type === 'MANUAL' && !feedback.positive">
-                    <span class="code-error">Feedback &nbsp;{{ feedback.text }}:</span>
-                </p>
-                <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
-                    <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
-                </p>
-                <pre *ngIf="feedback.detailText">{{ feedback.detailText }}</pre>
-                <pre *ngIf="!feedback.detailText">No feedback available</pre>
-                <hr *ngIf="!isLast" />
-            </div>
-        </ng-container>
-        <!-- Static Code Analysis Feedback -->
-        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisIssues && staticCodeAnalysisIssues.length">
-            <hr />
-            <h6>Static Code Analysis Issues</h6>
-            <hr />
-            <div *ngFor="let issue of staticCodeAnalysisIssues; last as isLast">
-                <p>
-                    Issue in file <span class="code-error">{{ issue | staticCodeAnalysisLocationText }}</span> detected:
-                </p>
-                <pre>{{ issue.message }}</pre>
+        <ng-container *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer">
+            <div *ngFor="let feedback of filteredFeedbackList; last as isLast">
+                <div class="feedback-item" [className]="getClassNameForFeedbackItem(feedback)">
+                    <span>{{ feedback.category }}</span>
+                    <p>{{ feedback.title }}</p>
+                    <pre *ngIf="feedback.text">{{ feedback.text }}</pre>
+                    <pre *ngElse>No feedback available</pre>
+                </div>
                 <hr *ngIf="!isLast" />
             </div>
         </ng-container>
