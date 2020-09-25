@@ -1,6 +1,6 @@
 jib {
     from {
-        image = "adoptopenjdk:14-jre-hotspot"
+        image = "adoptopenjdk:15-jre-hotspot"
     }
     to {
         image = "artemis:latest"

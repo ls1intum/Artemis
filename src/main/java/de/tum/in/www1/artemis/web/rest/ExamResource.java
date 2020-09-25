@@ -289,7 +289,38 @@ public class ExamResource {
         }
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
-        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations);
+        tutorDashboardService.prepareExercisesForTutorDashboard(exercises, tutorParticipations, true);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/:courseId/exams/:examId:for-exam-tutor-test-run-dashboard
+     *
+     * @param courseId the id of the course to retrieve
+     * @param examId the id of the exam that contains the exercises
+     * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exam> getExamForTutorTestRunDashboard(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request /courses/{courseId}/exams/{examId}/for-exam-tutor-test-run-dashboard");
+
+        Exam exam = examService.findOneWithExerciseGroupsAndExercises(examId);
+        Course course = exam.getCourse();
+        if (!course.getId().equals(courseId)) {
+            return conflict();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            exerciseGroup.setExercises(courseService.getInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
+        }
 
         return ResponseEntity.ok(exam);
     }

@@ -348,6 +348,7 @@ public class ProgrammingExerciseResource {
         if (errorMessageCI != null) {
             return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null));
         }
+        // means the project does not exist in version control server and does not exist in continuous integration server
         return Optional.empty();
     }
 

@@ -34,6 +34,9 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -71,6 +74,8 @@ const ENTITY_STATES = [...examManagementState];
         ExamStudentsComponent,
         StudentExamStatusComponent,
         StudentExamsComponent,
+        TestRunManagementComponent,
+        CreateTestRunModalComponent,
         StudentsExamImportDialogComponent,
         StudentsExamImportButtonComponent,
         StudentExamDetailComponent,

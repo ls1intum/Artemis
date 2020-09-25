@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
+
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
@@ -30,23 +31,14 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
-    private final ParticipationService participationService;
-
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final ExamService examService;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
-        this.participationService = participationService;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.examService = examService;
     }
 
     /**
@@ -55,11 +47,18 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore exam test run submissions
      * @return a list of modeling submissions for the given exercise id
      */
     @Transactional(readOnly = true)
-    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
@@ -101,11 +100,12 @@ public class ModelingSubmissionService extends SubmissionService {
      * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param modelingExercise the exercise the submission should belong to
+     * @param removeTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked modeling submission that needs an assessment
      */
     @Transactional
-    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
-        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
+    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise, boolean removeTestRunParticipations) {
+        ModelingSubmission modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, removeTestRunParticipations)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         lockSubmission(modelingSubmission, modelingExercise);
@@ -120,10 +120,11 @@ public class ModelingSubmissionService extends SubmissionService {
      * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a modeling submission without any result
      */
     @Transactional
-    public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
+    public Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise)) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
@@ -142,20 +143,12 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
+            return Optional.of(modelingSubmission);
         }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, modelingExercise.getDueDate());
-
-        Random random = new Random();
-        var submissionWithoutResult = (ModelingSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        return Optional.empty();
     }
 
     /**
@@ -163,14 +156,12 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutor - the tutor we are interested in
+     * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of modeling submissions
      */
-    public List<ModelingSubmission> getAllModelingSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor) {
-        List<Submission> submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-        return submissions.stream().map(submission -> {
-            submission.getResult().setSubmission(null);
-            return (ModelingSubmission) submission;
-        }).collect(Collectors.toList());
+    public List<ModelingSubmission> getAllModelingSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+        var submissions = super.getAllSubmissionsAssessedByTutorForExercise(exerciseId, tutor, examMode);
+        return submissions.stream().map(submission -> (ModelingSubmission) submission).collect(toList());
     }
 
     /**

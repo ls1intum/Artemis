@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, Input, OnInit } from '@angular/core';
+import { Component, QueryList, ViewChildren, Input, ChangeDetectorRef, OnInit } from '@angular/core';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -51,14 +51,13 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(private quizService: ArtemisQuizService) {
-        super();
+    constructor(private quizService: ArtemisQuizService, changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
         smoothscroll.polyfill();
     }
 
     ngOnInit(): void {
         this.initQuiz();
-        // show submission answers in UI
         this.updateViewFromSubmission();
     }
 
@@ -69,8 +68,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     getExercise(): Exercise {
         return this.exercise;
     }
-
-    onActivate(): void {}
 
     /**
      * Initialize the selections / mappings for each question with an empty array
@@ -103,12 +100,21 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     /**
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
-     * @param questionIndex
+     * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        document.getElementById('question' + questionId)!.scrollIntoView({
-            behavior: 'smooth',
-        });
+        let yOffset = 0;
+        const examNavigationBar = document.getElementById('exam-navigation-bar');
+        if (examNavigationBar) {
+            yOffset = examNavigationBar.clientHeight;
+        }
+        // get html element for question
+        const element = document.getElementById('question' + questionId);
+        if (element) {
+            // scroll to correct y
+            const y = element.getBoundingClientRect().top + window.pageYOffset - yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
     }
 
     /**
