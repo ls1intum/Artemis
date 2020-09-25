@@ -216,7 +216,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks, complaintResponse, this.manualResult!, this.manualResult!.submission!.id).subscribe(
+        this.manualResultService.updateAfterComplaint(this.manualResult.feedbacks, complaintResponse, this.manualResult, this.manualResult.submission!.id).subscribe(
             (result: Result) => {
                 this.manualResult = result;
                 this.jhiAlertService.clear();
@@ -269,7 +269,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param feedbacks Inline feedbacks from th ecode
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
-        this.referencedFeedback = feedbacks;
+        // Filter out other feedback than manual feedback
+        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != null && feedbackElement.reference.includes(MANUAL_ASSESSMENT_IDENTIFIER));
         this.validateFeedback();
     }
 
@@ -362,7 +363,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
         } else {
             this.generalFeedback = new Feedback();
         }
