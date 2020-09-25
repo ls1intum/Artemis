@@ -14,7 +14,6 @@ buildscript {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
         classpath "com.github.ben-manes:gradle-versions-plugin:0.33.0"
-        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
 
@@ -34,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.5.0"
+version = "4.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -79,8 +78,7 @@ spotless {
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
 
-        // the following command is not compatible with Java switch expressions
-//        removeUnusedImports()
+        removeUnusedImports()
     }
 }
 
@@ -165,7 +163,6 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
-    //jhipster-needle-gradle-repositories - JHipster will add additional repositories
 }
 
 dependencies {
@@ -289,7 +286,6 @@ dependencies {
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation 'org.json:json:20200518'
-    //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
 task cleanResources(type: Delete) {
