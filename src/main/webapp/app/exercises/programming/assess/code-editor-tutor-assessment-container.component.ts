@@ -150,9 +150,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.setFeedbacksForManualResult();
+        this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id, this.manualResult).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`error.${error.error.errorKey}`),
+            (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
     }
 
@@ -162,9 +163,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.setFeedbacksForManualResult();
+        this.avoidCircularStructure();
         this.manualResultService.save(this.participation.id, this.manualResult, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
-            (error: HttpErrorResponse) => this.onError(`error.${error.error.errorKey}`),
+            (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
     }
 
@@ -200,7 +202,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     // there are no unassessed submission, nothing we have to worry about
                     this.onError('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else {
-                    this.onError(error.message);
+                    this.onError(error?.message);
                 }
             },
         );
@@ -317,7 +319,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private getLatestManualResult(results: Result[]): Result {
         const manualResults = results.filter((result) => result.assessmentType === AssessmentType.MANUAL);
-        const initialManualResult = this.manualResultService.generateInitialManualResult();
+        const initialManualResult = new Result();
         return _orderBy(manualResults, 'id', 'desc')[0] ?? initialManualResult;
     }
 
@@ -346,7 +348,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.complaint = res.body;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.message);
+                this.onError(err?.message);
             },
         );
     }
@@ -372,6 +374,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
         } else {
             this.manualResult.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+        }
+    }
+
+    private avoidCircularStructure() {
+        if (this.manualResult.participation && this.manualResult.participation.results) {
+            this.manualResult.participation.results = [];
         }
     }
 

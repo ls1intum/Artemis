@@ -51,17 +51,6 @@ export class ProgrammingAssessmentManualResultService {
         return this.http.put<Result>(url, assessmentUpdate);
     }
 
-    /**
-     * Creates a new manual result with default values successful=true and score=100
-     * @return Created result
-     */
-    generateInitialManualResult() {
-        const newResult = new Result();
-        newResult.successful = true;
-        newResult.score = 100;
-        return newResult;
-    }
-
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null);
     }

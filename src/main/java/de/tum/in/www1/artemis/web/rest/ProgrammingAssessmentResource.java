@@ -144,10 +144,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        if (newResult.getScore() == null) {
-            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
-        }
-        else if (newResult.getScore() < 100 && newResult.isSuccessful()) {
+        if (newResult.getScore() != null && newResult.getScore() < 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
         else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getDetailText() == null)) {

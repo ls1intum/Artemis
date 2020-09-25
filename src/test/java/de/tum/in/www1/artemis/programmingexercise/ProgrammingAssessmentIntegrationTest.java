@@ -295,9 +295,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
 
-        // Result score is missing
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
         // Feedbacks have empty text
         result.setScore(100L);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
