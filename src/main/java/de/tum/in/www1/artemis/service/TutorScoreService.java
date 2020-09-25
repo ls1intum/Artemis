@@ -71,8 +71,6 @@ public class TutorScoreService {
         for (TutorScore score : scores) {
             tutorScoreRepository.delete(score);
         }
-
-        return;
     }
 
     /**
@@ -124,7 +122,7 @@ public class TutorScoreService {
 
             // handle complaints and feedback requests
             if (deletedResult.hasComplaint() == Boolean.TRUE) {
-                Complaint complaint = complaintRepository.findByResult_Id((deletedResult.getId())).get();
+                Complaint complaint = complaintRepository.findByResult_Id(deletedResult.getId()).get();
 
                 // complaint
                 if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
@@ -231,7 +229,7 @@ public class TutorScoreService {
     private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
         // add complaints and feedback requests
         if (result.hasComplaint() == Boolean.TRUE) {
-            Complaint complaint = complaintRepository.findByResult_Id((result.getId())).get();
+            Complaint complaint = complaintRepository.findByResult_Id(result.getId()).get();
 
             // complaint
             if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
