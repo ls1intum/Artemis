@@ -216,7 +216,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult.feedbacks, complaintResponse, this.manualResult, this.manualResult.submission!.id).subscribe(
+        this.manualResultService.updateAfterComplaint(this.manualResult.feedbacks, complaintResponse, this.manualResult.submission!.id).subscribe(
             (result: Result) => {
                 this.manualResult = result;
                 this.jhiAlertService.clear();

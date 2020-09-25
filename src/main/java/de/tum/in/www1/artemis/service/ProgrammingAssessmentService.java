@@ -22,24 +22,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
-     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
-     * complaint.
-     *
-     * @param originalResult   the original assessment that was complained about
-     * @param exercise programming exercise
-     * @param assessmentUpdate the assessment update
-     * @return the updated Result
-     */
-    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
-    @Transactional
-    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, ProgrammingAssessmentUpdate assessmentUpdate) {
-        originalResult.setResultString(assessmentUpdate.getResultString());
-        originalResult.setScore(assessmentUpdate.getScore());
-        return super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
-    }
-
-    /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
      *

@@ -63,7 +63,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/programming-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody ProgrammingAssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
+    public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultAndFeedback(submissionId);
