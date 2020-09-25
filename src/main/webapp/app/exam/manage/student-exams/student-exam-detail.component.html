@@ -86,10 +86,10 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.title">Title</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.result">Result</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.result">Your points</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Max. points</span>
                         </th>
 
                         <th>
@@ -109,15 +109,22 @@
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="!!(exercise?.studentParticipations)[0].results">
-                                {{ (((exercise?.studentParticipations)[0]?.results)[0]?.score * exercise?.maxScore) / 100 }}
+                            <ng-container *ngIf="!!exercise?.studentParticipations && exercise.studentParticipations.length > 0 && !!(exercise?.studentParticipations)[0].results">
+                                {{ rounding((((exercise?.studentParticipations)[0]?.results)[0]?.score * exercise?.maxScore) / 100) }}
                             </ng-container>
                         </td>
                         <td class="align-middle">
                             {{ exercise?.maxScore }}
                         </td>
                         <td class="align-middle">
-                            <ng-container *ngIf="!!(exercise?.studentParticipations)[0].results && ((exercise?.studentParticipations)[0]?.results)[0].assessor">
+                            <ng-container
+                                *ngIf="
+                                    !!exercise?.studentParticipations &&
+                                    exercise.studentParticipations.length > 0 &&
+                                    !!(exercise?.studentParticipations)[0].results &&
+                                    ((exercise?.studentParticipations)[0]?.results)[0].assessor
+                                "
+                            >
                                 {{ ((exercise?.studentParticipations)[0]?.results)[0]?.assessor.name }}
                             </ng-container>
                         </td>
