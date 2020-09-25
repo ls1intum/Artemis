@@ -1,27 +1,28 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Course } from 'app/entities/course.model';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
+import { StudentQuestion } from 'app/entities/student-question.model';
 
 @Component({
     selector: 'jhi-course-questions',
     templateUrl: './course-questions.component.html',
 })
 export class CourseQuestionsComponent implements OnInit, OnDestroy {
-    course: Course;
+    studentQuestions: StudentQuestion[];
 
     paramSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private courseService: CourseManagementService) {}
+    constructor(private route: ActivatedRoute, private studentQuestionsService: StudentQuestionService) {}
 
     /**
      * On init fetch the course
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.findOneForQuestionsDashboard(params['courseId']).subscribe((res) => {
+            this.studentQuestionsService.findQuestionsForCourse(params['courseId']).subscribe((res) => {
                 console.log(res);
+                this.studentQuestions = res.body!;
             });
         });
     }

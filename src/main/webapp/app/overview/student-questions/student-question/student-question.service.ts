@@ -74,6 +74,17 @@ export class StudentQuestionService {
     }
 
     /**
+     * find all questions for id of course
+     * @param {number} courseId
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    findQuestionsForCourse(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<StudentQuestion[]>(`api/courses/${courseId}/student-questions`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
      * delete studentQuestion by id
      * @param {number} studentQuestionId
      * @return {Observable<HttpResponse<any>>}
