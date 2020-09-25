@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

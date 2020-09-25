@@ -7,7 +7,6 @@ import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
