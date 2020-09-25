@@ -37,15 +37,18 @@ public class ComplaintService {
 
     private CourseService courseService;
 
+    private UserService userService;
+
     private ExamService examService;
 
     public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService) {
+            ExamService examService, UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
         this.examService = examService;
+        this.userService = userService;
     }
 
     /**
@@ -67,7 +70,9 @@ public class ComplaintService {
 
         if (examId.isPresent()) {
             final Exam exam = examService.findOne(examId.getAsLong());
-            if (!isTimeOfComplaintValid(exam)) {
+            final List<User> instructors = userService.getInstructors(exam.getCourse());
+            boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
+            if (!examTestRun && !isTimeOfComplaintValid(exam)) {
                 throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
             }
         }
