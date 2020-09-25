@@ -229,8 +229,12 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * TODO: For now we are only concerned with not breaking existing functionality and not losing static code analysis feedback.
-     * This method has to be extended/refactored when a grading concept for static code analysis has been created
+     * Calculates the grading for a result and updates the feedbacks
+     * @param testCases All test cases for the exercise
+     * @param testCasesForCurrentDate Test cases for the exercise for the current date
+     * @param result The result to be updated
+     * @param exercise The current exercise
+     * @return The updated result
      */
     private Result updateResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise) {
