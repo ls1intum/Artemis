@@ -29,6 +29,6 @@
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
         "nosubmissions": "Es wurde kein existierender Nutzer angegeben oder es existieren keine Abgaben.",
-        "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, müssen die Feedback eine Punktzahl haben."
+        "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben."
     }
 }
