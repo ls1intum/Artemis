@@ -19,7 +19,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
-    @Output() onDeleteExercise = new EventEmitter<FileUploadExercise>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
@@ -67,6 +67,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
     deleteFileUploadExercise(fileUploadExercise: FileUploadExercise) {
+        const exerciseId = fileUploadExercise.id;
+        const groupId = fileUploadExercise.exerciseGroup ? fileUploadExercise.exerciseGroup.id : 0;
         this.fileUploadExerciseService.delete(fileUploadExercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -74,8 +76,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit(fileUploadExercise);
+                if (!!this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

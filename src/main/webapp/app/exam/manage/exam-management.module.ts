@@ -37,7 +37,6 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 
-
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({

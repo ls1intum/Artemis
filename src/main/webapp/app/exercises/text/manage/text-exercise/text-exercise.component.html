@@ -43,7 +43,7 @@
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="isInExerciseGroup == true"><span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span></th>
+                    <th *ngIf="!!isInExerciseGroup"><span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -58,7 +58,7 @@
                     <td *ngIf="isInExerciseGroup == null">{{ textExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ textExercise.maxScore }}</td>
                     <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
-                    <td *ngIf="isInExerciseGroup == true">{{ 'artemisApp.AssessmentType.' + textExercise.assessmentType | translate }}</td>
+                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + textExercise.assessmentType | translate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <!-- Scores -->

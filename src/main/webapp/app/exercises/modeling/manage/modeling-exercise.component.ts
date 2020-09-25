@@ -20,7 +20,7 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    @Output() onDeleteExercise = new EventEmitter<ModelingExercise>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -69,6 +69,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * @param modelingExerciseId id of the exercise that will be deleted
      */
     deleteModelingExercise(modelingExercise: ModelingExercise) {
+        const exerciseId = modelingExercise.id;
+        const groupId = modelingExercise.exerciseGroup ? modelingExercise.exerciseGroup.id : 0;
         this.modelingExerciseService.delete(modelingExercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -76,8 +78,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an modelingExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit(modelingExercise);
+                if (!!this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

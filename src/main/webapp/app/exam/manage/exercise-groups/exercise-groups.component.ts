@@ -107,7 +107,6 @@ export class ExerciseGroupsComponent implements OnInit {
                     this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
-            location.reload();
         }
     }
 

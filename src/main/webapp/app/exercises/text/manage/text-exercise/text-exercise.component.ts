@@ -20,7 +20,7 @@ import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exer
 })
 export class TextExerciseComponent extends ExerciseComponent implements OnInit {
     @Input() textExercises: TextExercise[];
-    @Output() onDeleteExercise = new EventEmitter<TextExercise>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     constructor(
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
@@ -87,6 +87,8 @@ export class TextExerciseComponent extends ExerciseComponent implements OnInit {
         );
     }
     deleteExercise(textExercise: TextExercise) {
+        const exerciseId = textExercise.id;
+        const groupId = textExercise.exerciseGroup ? textExercise.exerciseGroup.id : 0;
         this.textExerciseService.delete(textExercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -94,8 +96,8 @@ export class TextExerciseComponent extends ExerciseComponent implements OnInit {
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit(textExercise);
+                if (!!this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

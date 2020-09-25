@@ -26,7 +26,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
-    @Output() onDeleteExercise = new EventEmitter<ProgrammingExercise>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     readonly ActionType = ActionType;
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
@@ -113,6 +113,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param $event contains additional checks for deleting exercise
      */
     deleteProgrammingExercise(programmingExercise: ProgrammingExercise, $event: { [key: string]: boolean }) {
+        const exerciseId = programmingExercise.id;
+        const groupId = programmingExercise.exerciseGroup ? programmingExercise.exerciseGroup.id : 0;
         return this.programmingExerciseService.delete(programmingExercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -120,8 +122,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     content: 'Deleted an programmingExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit(programmingExercise);
+                if (!!this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

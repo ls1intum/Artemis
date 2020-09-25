@@ -44,7 +44,7 @@
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
-                    <th jhisortby="" *ngIf="isInExerciseGroup == true">
+                    <th jhisortby="" *ngIf="!!isInExerciseGroup">
                         <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
                     </th>
                     <th></th>
@@ -52,8 +52,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let modelingExercise of modelingExercises; trackBy: trackId">
-                    <td *ngIf="isInExerciseGroup == true">{{ modelingExercise.id }}</td>
-                    <td *ngIf="isInExerciseGroup == null">
+                    <td>
                         <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
@@ -63,7 +62,7 @@
                     <td>{{ modelingExercise.maxScore }}</td>
                     <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
-                    <td *ngIf="isInExerciseGroup == true">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
+                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button

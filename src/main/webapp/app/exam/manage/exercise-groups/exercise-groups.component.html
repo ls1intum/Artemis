@@ -165,36 +165,36 @@
                 *ngIf="exerciseGroup.exercises[0].type == exerciseType.MODELING"
                 [modelingExercises]="exerciseGroup.exercises"
                 [course]="course"
-                (onDeleteExercise)="removeExercise($event.id, $event.exerciseGroup.id)"
-                [isInExerciseGroup]="true"
+                (onDeleteExercise)="removeExercise($event.id, $event.groupId)"
+                [isInExerciseGroup]="latestIndividualEndDate"
             ></jhi-modeling-exercise>
             <jhi-programming-exercise
                 *ngIf="exerciseGroup.exercises[0].type == exerciseType.PROGRAMMING"
                 [programmingExercises]="exerciseGroup.exercises"
                 [course]="course"
-                (onDeleteExercise)="removeExercise($event.id, $event.exerciseGroup.id)"
-                [isInExerciseGroup]="true"
+                (onDeleteExercise)="removeExercise($event.id, $event.groupId)"
+                [isInExerciseGroup]="latestIndividualEndDate"
             ></jhi-programming-exercise>
             <jhi-quiz-exercise
                 *ngIf="exerciseGroup.exercises[0].type == exerciseType.QUIZ"
                 [quizExercises]="exerciseGroup.exercises"
                 [course]="course"
-                (onDeleteExercise)="removeExercise($event.id, $event.exerciseGroup.id)"
-                [isInExerciseGroup]="true"
+                (onDeleteExercise)="removeExercise($event.id, $event.groupId)"
+                [isInExerciseGroup]="latestIndividualEndDate"
             ></jhi-quiz-exercise>
             <jhi-text-exercise
                 *ngIf="exerciseGroup.exercises[0].type == exerciseType.TEXT"
                 [textExercises]="exerciseGroup.exercises"
                 [course]="course"
-                (onDeleteExercise)="removeExercise($event.id, $event.exerciseGroup.id)"
-                [isInExerciseGroup]="true"
+                (onDeleteExercise)="removeExercise($event.id, $event.groupId)"
+                [isInExerciseGroup]="latestIndividualEndDate"
             ></jhi-text-exercise>
             <jhi-file-upload-exercise
                 *ngIf="exerciseGroup.exercises[0].type == exerciseType.FILE_UPLOAD"
                 [fileUploadExercises]="exerciseGroup.exercises"
                 [course]="course"
-                (onDeleteExercise)="removeExercise($event.id, $event.exerciseGroup.id)"
-                [isInExerciseGroup]="true"
+                (onDeleteExercise)="removeExercise($event.id, $event.groupId)"
+                [isInExerciseGroup]="latestIndividualEndDate"
             ></jhi-file-upload-exercise>
             <!--            <table class="table table-striped">-->
             <!--                <thead>-->

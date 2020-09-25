@@ -22,7 +22,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
 
     @Input() quizExercises: QuizExercise[] = [];
-    @Output() onDeleteExercise = new EventEmitter<QuizExercise>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -192,6 +192,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     deleteQuizExercise(quizExercise: QuizExercise) {
+        const exerciseId = quizExercise.id;
+        const groupId = quizExercise.exerciseGroup ? quizExercise.exerciseGroup.id : 0;
         return this.quizExerciseService.delete(quizExercise.id).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -199,8 +201,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit(quizExercise);
+                if (!!this.isInExerciseGroup) {
+                    this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
@@ -222,6 +224,20 @@ export class QuizExerciseComponent extends ExerciseComponent {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
+    }
+
+    /**
+     * Checks whether the exam is over using the latestIndividualEndDate
+     */
+    isExamOver() {
+        return this.isInExerciseGroup ? this.isInExerciseGroup.isBefore(moment()) : false;
+    }
+
+    /**
+     * Checks whether the exam has started
+     */
+    hasExamStarted() {
+        return this.quizExercises[0].exerciseGroup?.exam?.startDate ? this.quizExercises[0].exerciseGroup?.exam?.startDate.isBefore(moment()) : false;
     }
 
     public sortRows() {

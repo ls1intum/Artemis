@@ -43,14 +43,20 @@
                         <span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th *ngIf="isInExerciseGroup == true">{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</th>
+                    <th *ngIf="!!isInExerciseGroup">{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</th>
                     <th *ngIf="isInExerciseGroup == null">{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="isInExerciseGroup == true">
+                    <td *ngIf="!!isInExerciseGroup && isExamOver() && course.isAtLeastInstructor">
+                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
+                    </td>
+                    <td *ngIf="!!isInExerciseGroup && !isExamOver() && !hasExamStarted()">
+                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
+                    </td>
+                    <td *ngIf="!!isInExerciseGroup && hasExamStarted()">
                         <span>{{ quizExercise.id }}</span>
                     </td>
                     <td *ngIf="isInExerciseGroup == null && (!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor)">
@@ -77,7 +83,7 @@
                         </span>
                     </td>
                     <td>{{ quizExercise.maxScore }}</td>
-                    <td *ngIf="isInExerciseGroup == true">{{ quizExercise.quizQuestions?.length }}</td>
+                    <td *ngIf="!!isInExerciseGroup">{{ quizExercise.quizQuestions?.length }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container" *ngIf="isInExerciseGroup == null">
                             <button

@@ -60,7 +60,7 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" *ngIf="isInExerciseGroup == true">
+                    <th class="d-none d-md-table-cell" *ngIf="!!isInExerciseGroup">
                         <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
                     </th>
                     <th></th>
@@ -215,7 +215,7 @@
                             </jhi-ide-button>
                         </ng-template>
                     </td>
-                    <td *ngIf="isInExerciseGroup == true">{{ 'artemisApp.AssessmentType.' + programmingExercise.assessmentType | translate }}</td>
+                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + programmingExercise.assessmentType | translate }}</td>
 
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">

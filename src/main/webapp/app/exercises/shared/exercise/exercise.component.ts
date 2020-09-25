@@ -12,7 +12,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
-    @Input() isInExerciseGroup?: boolean;
+    @Input() isInExerciseGroup?: moment.Moment;
     @Output() exerciseCount = new EventEmitter<number>();
     showAlertHeading: boolean;
     showHeading: boolean;
@@ -61,14 +61,18 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
             this.loadCourse();
         } else {
             this.courseId = this.course.id;
-            this.loadExercises();
+            if (this.isInExerciseGroup == null) {
+                this.loadExercises();
+            }
         }
     }
 
     private loadCourse(): void {
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
-            this.loadExercises();
+            if (this.isInExerciseGroup == null) {
+                this.loadExercises();
+            }
         });
     }
 
@@ -93,6 +97,12 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected abstract getChangeEventName(): string;
 
     private registerChangeInExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => this.load());
+        this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => {
+            if (!!this.isInExerciseGroup) {
+                location.reload();
+            } else {
+                this.load();
+            }
+        });
     }
 }
