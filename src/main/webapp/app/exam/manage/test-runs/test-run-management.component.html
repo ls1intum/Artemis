@@ -6,13 +6,7 @@
         </div>
         <div class="ml-auto">
             <div class="d-flex mb-1">
-                <button
-                    class="btn btn-primary btn-sm mr-1 mb-1"
-                    style="height: 40px;"
-                    (click)="openCreateTestRunModal()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading"
-                >
+                <button class="btn btn-primary btn-sm mr-1 mb-1" style="height: 40px" (click)="openCreateTestRunModal()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
                     <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span jhiTranslate="artemisApp.examManagement.testRun.setup">Create a Test Run</span>
                 </button>
@@ -28,7 +22,7 @@
         </div>
     </div>
     <jhi-alert></jhi-alert>
-    <div style="padding-bottom: 10px;">
+    <div style="padding-bottom: 10px">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
     <div class="table-responsive" *ngIf="testRuns">

@@ -10,7 +10,7 @@
 <div>
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol style="list-style-type: none;">
+        <ol style="list-style-type: none">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -34,9 +34,9 @@
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
             <div class="mr-2" [ngbTooltip]="getWorkingTimeToolTip()">
-                <input formControlName="minutes" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" step="1" required />
+                <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
                 :
-                <input formControlName="seconds" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" max="59" step="1" required />
+                <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />
             </div>
             <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
                 <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
@@ -47,7 +47,7 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
-        <ol style="list-style-type: none;">
+        <ol style="list-style-type: none">
             <li>
                 <strong>{{ 'artemisApp.studentExams.started' | translate }}:</strong>
                 {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | translate }}
@@ -102,7 +102,7 @@
                         <td class="align-middle">
                             {{ exercise?.id }}
                         </td>
-                        <td class="align-middle" style="font-size: 1.35rem;">
+                        <td class="align-middle" style="font-size: 1.35rem">
                             <fa-icon *ngIf="exercise" [icon]="exerciseIcon(exercise)"></fa-icon>
                         </td>
                         <td class="align-middle">
@@ -133,7 +133,7 @@
                         <td></td>
                         <td></td>
                         <td class="align-middle">
-                            <span style="text-decoration: underline;" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Score</span>
+                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Score</span>
                         </td>
                         <td class="align-middle">
                             <u> {{ achievedTotalScore }} </u>
