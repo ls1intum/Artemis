@@ -84,8 +84,8 @@
                     </td>
                     <td>{{ quizExercise.maxScore }}</td>
                     <td *ngIf="!!isInExerciseGroup">{{ quizExercise.quizQuestions?.length }}</td>
-                    <td class="text-right">
-                        <div class="btn-group flex-btn-group-container" *ngIf="isInExerciseGroup == null">
+                    <td class="text-right" *ngIf="isInExerciseGroup == null">
+                        <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
                                 (click)="openForPractice(quizExercise.id)"

@@ -97,8 +97,8 @@
                                     href="{{ programmingExercise.templateParticipation.repositoryUrl }}"
                                     target="_blank"
                                     >Template</a
-                                ></span
-                            >
+                                >
+                            </span>
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
@@ -112,8 +112,8 @@
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl"
-                                ><a
+                            <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
+                                <a
                                     *ngIf="
                                         !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation.repositoryUrl);
                                         else noVersionControlAndContinuousIntegrationAvailableSolution
@@ -121,8 +121,8 @@
                                     href="{{ programmingExercise.solutionParticipation.repositoryUrl }}"
                                     target="_blank"
                                     >Solution</a
-                                ></span
-                            >
+                                >
+                            </span>
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
