@@ -1,0 +1,69 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h4 class="modal-title" id="createTestRunModal" jhiTranslate="artemisApp.examManagement.testRun.setup">Create Test Run</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+        <div class="mb-3">
+            <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
+            <p>Set the working time:</p>
+            <form class="d-flex" [formGroup]="workingTimeForm">
+                <div class="mr-2">
+                    <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
+                    :
+                    <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />
+                </div>
+            </form>
+        </div>
+
+        <div class="mb-3">
+            <h5>Exercises</h5>
+            <p jhiTranslate="artemisApp.examManagement.testRun.setupHint">Select an exercise for every exercise group by clicking on it.</p>
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Exercise Group</th>
+                        <th>Exercise</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exerciseGroup of exam.exerciseGroups">
+                        <td>
+                            <b> {{ exerciseGroup.title }} </b>
+                        </td>
+                        <td>
+                            <table class="table table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Title</th>
+                                        <th>Difficulty Level</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        *ngFor="let exercise of exerciseGroup.exercises"
+                                        (click)="onSelectExercise(exercise, exerciseGroup)"
+                                        [class.active]="exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
+                                    >
+                                        <td>{{ exercise.id }}</td>
+                                        <td>{{ exercise.title }}</td>
+                                        <td>{{ exercise.difficulty }}</td>
+                                        <td>{{ exercise.type }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" [disabled]="!testRunConfigured" (click)="createTestRun()">Create Test Run</button>
+        </div>
+    </div>
+</div>
