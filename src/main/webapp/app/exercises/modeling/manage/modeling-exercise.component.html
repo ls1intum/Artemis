@@ -53,7 +53,7 @@
             <tbody>
                 <tr *ngFor="let modelingExercise of modelingExercises; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
+                        <a [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
                     <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.releaseDate | artemisDate }}</td>
