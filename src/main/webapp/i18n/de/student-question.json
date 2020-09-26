@@ -3,7 +3,16 @@
         "studentQuestion": {
             "created": "Frage erfolgreich erstellt",
             "updated": "Frage erfolgreich aktualisiert",
-            "deleted": "Frage erfolgreich gelöscht"
+            "deleted": "Frage erfolgreich gelöscht",
+            "text": "Frage",
+            "creationDate": "gestellt am",
+            "votes": "Votes",
+            "answers": "Antworten",
+            "approvedAnswers": "bestätigte Antworten",
+            "exerciseOrLecture": "Aufgabe/ Vorlesung",
+            "overview": {
+                "title": "Fragen"
+            }
         },
         "questionAnswer": {
             "created": "Antwort erfolgreich erstellt",

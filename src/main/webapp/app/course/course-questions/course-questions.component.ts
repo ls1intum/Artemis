@@ -29,8 +29,12 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * returns the number of approved answers for a question
+     * @param { StudentQuestion }studentQuestion
+     */
     getNumberOfApprovedAnswers(studentQuestion: StudentQuestion): number {
-        return studentQuestion.answers.filter((question) => question.tutorApproved).length;
+        return studentQuestion.answers ? studentQuestion.answers.filter((question) => question.tutorApproved).length : 0;
     }
 
     /**

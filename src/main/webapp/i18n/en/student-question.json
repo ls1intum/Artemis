@@ -3,7 +3,16 @@
         "studentQuestion": {
             "created": "New question successfully created",
             "updated": "Question successfully updated",
-            "deleted": "Question successfully deleted"
+            "deleted": "Question successfully deleted",
+            "text": "Question text",
+            "creationDate": "Asked at",
+            "votes": "Votes",
+            "answers": "Answers",
+            "approvedAnswers": "Approved answers",
+            "exerciseOrLecture": "Exercise/ Lecture",
+            "overview": {
+                "title": "Questions"
+            }
         },
         "questionAnswer": {
             "created": "New answer successfully created",

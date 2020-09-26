@@ -1,14 +1,16 @@
 <ng-container *ngIf="courseId">
-    <h3>Q&A</h3>
+    <h3><span jhiTranslate="artemisApp.studentQuestion.overview.title">Questions</span></h3>
     <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort>
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.exercise.title">Creation Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="votes"><span jhiTranslate="artemisApp.exercise.releaseDate">Votes</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.exercise.dueDate">Answers</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.exercise.dueDate">Approved Answers</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th><span jhiTranslate="artemisApp.studentQuestion.text">Question Text</span></th>
+                    <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.studentQuestion.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="votes"><span jhiTranslate="artemisApp.studentQuestion.votes">Votes</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.studentQuestion.answers">Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.studentQuestion.approvedAnswers">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th><span jhiTranslate="artemisApp.studentQuestion.exerciseOrLecture">Exercise / Lecture</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -24,11 +26,12 @@
                             >{{ studentQuestion.id }}</a
                         >
                     </td>
+                    <td class="w-50"><div class="markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div></td>
                     <td>{{ studentQuestion.creationDate | artemisDate }}</td>
                     <td>{{ studentQuestion.votes }}</td>
                     <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>
-                    <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>
                     <td>{{ getNumberOfApprovedAnswers(studentQuestion) }}</td>
+                    <td>{{ studentQuestion.exercise ? studentQuestion.exercise.title : studentQuestion.lecture.title }}</td>
                 </tr>
             </tbody>
         </table>
