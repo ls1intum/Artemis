@@ -134,7 +134,13 @@ describe('ShortAnswerQuestionUtil', () => {
         hasAtLeastAsManySolutionsAsSpots = service.atLeastAsManySolutionsAsSpots(faultyShortAnswerQuestion);
         expect(hasAtLeastAsManySolutionsAsSpots).to.be.false;
 
-        // TODO add test for validateNoMisleadingCorrectShortAnswerMapping(), after the logic was fixed
+        // TODO more complex tests for validateNoMisleadingCorrectShortAnswerMapping(), after the logic issue is fixed
+        let hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
+        expect(hasMisleadingMapping).to.be.true;
+        // @ts-ignore
+        shortAnswerQuestion.correctMappings = undefined;
+        hasMisleadingMapping = service.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion);
+        expect(hasMisleadingMapping).to.be.true;
     });
 
     it('should split the question text into text parts and transform to html', () => {
