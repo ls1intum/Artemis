@@ -1,0 +1,18 @@
+<div class="result-graph-wrapper">
+    <svg class="result-graph-svg" viewBox="0 0 100 100" width="100px">
+        <ng-container *ngFor="let segment of graphSegments">
+            <circle class="graph-ring-outer" cx="25" cy="25" [attr.r]="segment.r" fill="transparent" stroke="#d2d3d4" stroke-width="4"></circle>
+            <circle
+                class="graph-segment"
+                cx="50"
+                cy="50"
+                [attr.r]="segment.r"
+                fill="transparent"
+                [attr.stroke]="segment.color"
+                stroke-width="4"
+                [attr.stroke-dasharray]="segment.value * TWO_PI * segment.r + ' ' + (1 - segment.value) * TWO_PI * segment.r"
+                [attr.stroke-dashoffset]="-segment.offset * TWO_PI * segment.r"
+            ></circle>
+        </ng-container>
+    </svg>
+</div>

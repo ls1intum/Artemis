@@ -8,10 +8,11 @@ import { SubmissionResultStatusComponent } from 'app/overview/submission-result-
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { ResultGraphComponent } from 'app/exercises/shared/result/result-graph.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule],
-    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
+    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent, ResultGraphComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
 })
 export class ArtemisResultModule {}

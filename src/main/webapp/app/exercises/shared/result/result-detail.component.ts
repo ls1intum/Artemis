@@ -33,8 +33,9 @@ export class ResultDetailComponent implements OnInit {
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
     @Input() showTestNames = false;
-    @Input() showFeedbackCredits = true;
+    @Input() showFeedbackCredits = false;
     @Input() exerciseType: ExerciseType;
+    @Input() maxPoints: number;
 
     isLoading = false;
     loadingFailed = false;
