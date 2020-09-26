@@ -1,7 +1,5 @@
 <ng-container *ngIf="courseId">
-    <h3>
-        Q&A
-    </h3>
+    <h3>Q&A</h3>
     <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0">
         <table class="table table-striped">
             <thead>
@@ -16,7 +14,15 @@
             <tbody>
                 <tr *ngFor="let studentQuestion of studentQuestions">
                     <td>
-                        <a [routerLink]="['/courses', courseId, studentQuestion.exercise ? 'exercises' : 'lectures', studentQuestion.exercise ? studentQuestion.exercise.id : studentQuestion.lecture.id]">{{ studentQuestion.id }}</a>
+                        <a
+                            [routerLink]="[
+                                '/courses',
+                                courseId,
+                                studentQuestion.exercise ? 'exercises' : 'lectures',
+                                studentQuestion.exercise ? studentQuestion.exercise.id : studentQuestion.lecture.id
+                            ]"
+                            >{{ studentQuestion.id }}</a
+                        >
                     </td>
                     <td>{{ studentQuestion.creationDate | artemisDate }}</td>
                     <td>{{ studentQuestion.votes }}</td>

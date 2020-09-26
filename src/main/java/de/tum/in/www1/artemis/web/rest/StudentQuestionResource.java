@@ -16,9 +16,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -56,7 +56,8 @@ public class StudentQuestionResource {
     GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
-            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository, CourseRepository courseRepository) {
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;

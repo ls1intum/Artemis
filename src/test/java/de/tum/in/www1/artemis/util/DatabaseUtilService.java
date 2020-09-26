@@ -558,6 +558,66 @@ public class DatabaseUtilService {
         return studentQuestions;
     }
 
+    public List<StudentQuestion> createCourseWithExerciseAndLectureAndStudentQuestions() {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        lecture.setDescription("a test lecture");
+        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture);
+        lecture.addAttachments(attachment1);
+        course1.addLectures(lecture);
+
+        courseRepo.save(course1);
+        textExercise = exerciseRepo.save(textExercise);
+        lecture = lectureRepo.save(lecture);
+        attachmentRepo.save(attachment1);
+
+        List<StudentQuestion> studentQuestions = new ArrayList<>();
+        StudentQuestion studentQuestion1 = new StudentQuestion();
+        studentQuestion1.setExercise(textExercise);
+        studentQuestion1.setQuestionText("Test Student Question 1");
+        studentQuestion1.setVisibleForStudents(true);
+        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestions.add(studentQuestion1);
+
+        StudentQuestion studentQuestion2 = new StudentQuestion();
+        studentQuestion2.setExercise(textExercise);
+        studentQuestion2.setQuestionText("Test Student Question 2");
+        studentQuestion2.setVisibleForStudents(true);
+        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
+
+        StudentQuestion studentQuestion3 = new StudentQuestion();
+        studentQuestion3.setLecture(lecture);
+        studentQuestion3.setQuestionText("Test Student Question 3");
+        studentQuestion3.setVisibleForStudents(true);
+        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion3);
+        studentQuestions.add(studentQuestion3);
+
+        StudentQuestion studentQuestion4 = new StudentQuestion();
+        studentQuestion4.setLecture(lecture);
+        studentQuestion4.setQuestionText("Test Student Question 4");
+        studentQuestion4.setVisibleForStudents(true);
+        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion4);
+        studentQuestions.add(studentQuestion2);
+
+        return studentQuestions;
+    }
+
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
         exerciseGroupsWithExercises.stream().forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
