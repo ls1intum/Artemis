@@ -3,7 +3,7 @@
     <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0">
         <table class="table table-striped">
             <thead>
-                <tr jhiSort>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th><span jhiTranslate="artemisApp.studentQuestion.text">Question Text</span></th>
                     <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.studentQuestion.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>

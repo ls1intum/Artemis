@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { StudentQuestion } from 'app/entities/student-question.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-course-questions',
@@ -14,7 +15,10 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
 
     paramSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private studentQuestionsService: StudentQuestionService) {}
+    predicate = 'id';
+    reverse = true;
+
+    constructor(private route: ActivatedRoute, private studentQuestionsService: StudentQuestionService, private sortService: SortService) {}
 
     /**
      * On init fetch the course
@@ -23,7 +27,6 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
-                console.log(res);
                 this.studentQuestions = res.body!;
             });
         });
@@ -35,6 +38,10 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
      */
     getNumberOfApprovedAnswers(studentQuestion: StudentQuestion): number {
         return studentQuestion.answers ? studentQuestion.answers.filter((question) => question.tutorApproved).length : 0;
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.studentQuestions, this.predicate, this.reverse);
     }
 
     /**
