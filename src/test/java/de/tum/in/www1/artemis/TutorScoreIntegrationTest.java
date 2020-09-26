@@ -268,6 +268,18 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void tutorScoreForExerciseAndTutorAccessForbiddenTutor() throws Exception {
+        user = userRepo.findOneByLogin("tutor1").get();
+        exercise = exerciseRepo.findAll().get(0);
+        course = courseRepo.findAll().get(0);
+        course.setTeachingAssistantGroupName("instructor");
+        courseRepo.save(course);
+
+        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.FORBIDDEN, TutorScore.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void removeTutorScore() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
         exercise = exerciseRepo.findAll().get(0);

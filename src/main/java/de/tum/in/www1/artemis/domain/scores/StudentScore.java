@@ -73,11 +73,4 @@ public class StudentScore {
     public StudentScore() {
         // Empty constructor because of @Entity
     }
-
-    public StudentScore(User student, Exercise exercise, Result result, long score) {
-        this.student = student;
-        this.exercise = exercise;
-        this.result = result;
-        this.score = score;
-    }
 }

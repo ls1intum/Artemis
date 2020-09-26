@@ -110,7 +110,7 @@ public class TutorScoreResource {
      */
     @GetMapping("/tutor-scores/exercise/{exerciseId}/tutor/{tutorLogin}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<Optional<TutorScore>> getTutorScoreForExerciseAndStudent(@PathVariable Long exerciseId, @PathVariable String tutorLogin) {
+    public ResponseEntity<Optional<TutorScore>> getTutorScoreForExerciseAndTutor(@PathVariable Long exerciseId, @PathVariable String tutorLogin) {
         log.debug("REST request to get tutor score for tutor {} and exercise {}", tutorLogin, exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();

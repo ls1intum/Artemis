@@ -118,10 +118,10 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         database.resetDatabase();
     }
 
-    // change back to student1 USER after releasing feature for students
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForExerciseTest() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseExerciseOne.size()).as("response has length 2").isEqualTo(2);
@@ -157,10 +157,21 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
-    // change back to student1 USER after releasing feature for students
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoresForExerciseTestAccessForbiddenInstructor() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
+        course = courseRepo.findAll().get(0);
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+
+        request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForCourseTest() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
         List responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourseOne.size()).as("response has length 2").isEqualTo(2);
@@ -195,7 +206,18 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setStudentGroupName("tutor");
         courseRepo.save(course);
 
-        request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoresForCourseTestAccessForbiddenInstructor() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
+        course = courseRepo.findAll().get(0);
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+
+        request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -225,6 +247,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreForStudentAndExerciseTest() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
         user = userRepo.findAllInGroup("tumuser").get(0);
         exercise = exerciseRepo.findAll().get(0);
 
@@ -233,6 +256,19 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
         assertThat(response.getId()).as("response id is as expected").isEqualTo(studentScore.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void studentScoreForStudentAndExerciseTestAccessForbiddenInstructor() throws Exception {
+        // TODO: change back to student1 USER after releasing feature for students
+        course = courseRepo.findAll().get(0);
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+        user = userRepo.findAllInGroup("tumuser").get(0);
+        exercise = exerciseRepo.findAll().get(0);
+
+        request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
