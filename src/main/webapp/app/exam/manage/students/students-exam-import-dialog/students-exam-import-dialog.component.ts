@@ -122,7 +122,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
      * @param csvStudents Parsed list of students
      */
     computeInvalidStudentEntries(csvStudents: CsvStudent[]): string | null {
-        const invalidList = [];
+        const invalidList: number[] = [];
         for (const [i, student] of csvStudents.entries()) {
             if (!student[csvColumns.registrationNumber]) {
                 invalidList.push(i + 2); // +2 instead of +1 due to header column in csv file

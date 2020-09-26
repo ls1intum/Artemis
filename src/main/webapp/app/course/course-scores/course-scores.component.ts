@@ -253,7 +253,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportResults() {
         if (this.exportReady && this.students.length > 0) {
-            const rows = [];
+            const rows: any[] = [];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             for (const exerciseType of this.exerciseTypes) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);

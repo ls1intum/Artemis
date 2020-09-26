@@ -49,7 +49,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
             .subscribe(
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
-                    this.isExamExercise = !!this.fileUploadExercise.exerciseGroup;
+                    this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                     if (this.fileUploadExercise.categories) {
                         this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
                     }

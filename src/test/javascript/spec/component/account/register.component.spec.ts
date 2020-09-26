@@ -7,6 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { RegisterService } from 'app/account/register/register.service';
 import { RegisterComponent } from 'app/account/register/register.component';
+import { User } from 'app/core/user/user.model';
 
 describe('RegisterComponent', () => {
     let fixture: ComponentFixture<RegisterComponent>;
@@ -45,18 +46,17 @@ describe('RegisterComponent', () => {
             comp.register();
             tick();
 
-            expect(service.save).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    password: 'password',
-                    langKey: 'en',
-                }),
-            );
+            const user = new User();
+            user.password = 'password';
+            user.langKey = 'en';
+
+            expect(service.save).toHaveBeenCalledWith(user);
             expect(comp.success).toEqual(true);
             expect(comp.registerAccount.langKey).toEqual('en');
             expect(mockTranslate.getCurrentSpy).toHaveBeenCalled();
-            expect(comp.errorUserExists).toBeNull();
-            expect(comp.errorEmailExists).toBeNull();
-            expect(comp.error).toBeNull();
+            expect(comp.errorUserExists).toBeUndefined();
+            expect(comp.errorEmailExists).toBeUndefined();
+            expect(comp.error).toBeUndefined();
         }),
     ));
 
@@ -75,8 +75,8 @@ describe('RegisterComponent', () => {
             tick();
 
             expect(comp.errorUserExists).toEqual('ERROR');
-            expect(comp.errorEmailExists).toBeNull();
-            expect(comp.error).toBeNull();
+            expect(comp.errorEmailExists).toBeUndefined();
+            expect(comp.error).toBeUndefined();
         }),
     ));
 
@@ -95,8 +95,8 @@ describe('RegisterComponent', () => {
             tick();
 
             expect(comp.errorEmailExists).toEqual('ERROR');
-            expect(comp.errorUserExists).toBeNull();
-            expect(comp.error).toBeNull();
+            expect(comp.errorUserExists).toBeUndefined();
+            expect(comp.error).toBeUndefined();
         }),
     ));
 
@@ -113,8 +113,8 @@ describe('RegisterComponent', () => {
             comp.register();
             tick();
 
-            expect(comp.errorUserExists).toBeNull();
-            expect(comp.errorEmailExists).toBeNull();
+            expect(comp.errorUserExists).toBeUndefined();
+            expect(comp.errorEmailExists).toBeUndefined();
             expect(comp.error).toEqual('ERROR');
         }),
     ));

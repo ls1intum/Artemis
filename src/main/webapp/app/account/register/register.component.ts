@@ -13,10 +13,10 @@ import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/con
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
-    doNotMatch: string | null;
-    error: string | null;
-    errorEmailExists: string | null;
-    errorUserExists: string | null;
+    doNotMatch?: string;
+    error?: string;
+    errorEmailExists?: string;
+    errorUserExists?: string;
     registerAccount: User;
     success: boolean;
     modalRef: NgbModalRef;
@@ -40,10 +40,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         if (this.registerAccount.password !== this.confirmPassword) {
             this.doNotMatch = 'ERROR';
         } else {
-            this.doNotMatch = null;
-            this.error = null;
-            this.errorUserExists = null;
-            this.errorEmailExists = null;
+            this.doNotMatch = undefined;
+            this.error = undefined;
+            this.errorUserExists = undefined;
+            this.errorEmailExists = undefined;
             this.languageService.getCurrent().then((key) => {
                 this.registerAccount.langKey = key;
                 this.registerService.save(this.registerAccount).subscribe(

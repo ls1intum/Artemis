@@ -123,7 +123,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
-        const labels = [];
+        const labels: any[] = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
             labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;

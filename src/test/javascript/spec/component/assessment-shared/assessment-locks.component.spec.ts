@@ -38,6 +38,6 @@ describe('AssessmentLocksComponent', () => {
         component.ngOnInit();
 
         expect(component.getAllLockedSubmissions).toHaveBeenCalled;
-        expect(component.lockedSubmissions).not.toBeNull();
+        expect(component.submissions.length).toBe(0);
     });
 });

@@ -160,7 +160,7 @@ describe('LectureAttachmentsComponent', () => {
         const fakeBlob = {};
         fakeBlob['name'] = 'Test-File.pdf';
         fakeBlob['size'] = 100000000000000000;
-        comp.attachmentFile = fakeBlob;
+        comp.attachmentFile = fakeBlob as Blob;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).to.exist;
         expect(comp.attachmentToBeCreated).to.exist;

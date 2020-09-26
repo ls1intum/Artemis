@@ -79,7 +79,7 @@ describe('Exam Management Component', () => {
         sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeEmptyExamArray)));
 
         // WHEN
-        comp.deleteExam(exam.id);
+        comp.deleteExam(exam.id!);
 
         // THEN
         expect(service.delete).to.have.been.calledOnce;

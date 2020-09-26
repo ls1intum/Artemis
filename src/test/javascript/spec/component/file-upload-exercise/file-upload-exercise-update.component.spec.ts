@@ -85,7 +85,7 @@ describe('FileUploadExercise Management Update Component', () => {
     });
 
     describe('ngOnInit with given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(null, new ExerciseGroup());
+        const fileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);
@@ -103,7 +103,7 @@ describe('FileUploadExercise Management Update Component', () => {
     });
 
     describe('ngOnInit without given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(new Course(), null);
+        const fileUploadExercise = new FileUploadExercise(new Course());
 
         beforeEach(() => {
             const route = TestBed.get(ActivatedRoute);

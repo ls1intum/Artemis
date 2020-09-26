@@ -157,7 +157,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation!.id!);
 
         subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
         tick();

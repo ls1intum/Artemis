@@ -52,7 +52,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
-            this.isExamMode = !!this.fileUploadExercise.exerciseGroup;
+            this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
             if (!this.isExamMode) {
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
                 this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe(
