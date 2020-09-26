@@ -90,24 +90,23 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1");
         Result programmingAssessment = programmingSubmission.getResult();
+        double score = programmingAssessment.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        ProgrammingAssessmentUpdate assessmentUpdate = new ProgrammingAssessmentUpdate();
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate();
         assessmentUpdate.setFeedbacks(new ArrayList<>());
         assessmentUpdate.setComplaintResponse(complaintResponse);
-        assessmentUpdate.setScore(20);
-        assessmentUpdate.setResultString("new Result!");
 
         Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(updatedResult.getScore()).isEqualTo(20L);
-        assertThat(updatedResult.getResultString()).isEqualTo("new Result!");
+        assertThat(updatedResult.getScore()).isEqualTo((long) score);
+        assertThat(updatedResult.getResultString()).isEqualTo(createResultString(programmingExercise, programmingAssessment));
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
@@ -255,11 +254,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", result,
                 Result.class, HttpStatus.OK);
 
-        DecimalFormat formatter = new DecimalFormat("#.##");
-        double maxScore = programmingExercise.getMaxScore();
-        double score = result.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
-
-        assertThat(response.getResultString()).isEqualTo(formatter.format(score) + " of " + formatter.format(maxScore) + " points");
+        assertThat(response.getResultString()).isEqualTo(createResultString(programmingExercise, result));
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
@@ -375,5 +370,12 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         programmingExercise.setAssessmentType(assessmentType);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         return database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+    }
+
+    private String createResultString(ProgrammingExercise programmingExercise, Result result) {
+        DecimalFormat formatter = new DecimalFormat("#.##");
+        double maxScore = programmingExercise.getMaxScore();
+        double score = result.getFeedbacks().stream().mapToDouble(Feedback::getCredits).sum();
+        return formatter.format(score) + " of " + formatter.format(maxScore) + " points";
     }
 }
