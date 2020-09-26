@@ -8,8 +8,6 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { cloneDeep } from 'lodash';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
@@ -55,15 +53,15 @@ describe('ShortAnswerQuestionUtil', () => {
         const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctMappings, spot);
         const spots = service.getAllSpotsForSolution(shortAnswerQuestion.correctMappings, solution);
         const sampleSolutions = service.getSampleSolutions(shortAnswerQuestion);
-        const mapping2 = service.getShortAnswerMapping(shortAnswerQuestion.correctMappings, solution, spot);
-        const spot2 = service.getSpot(spot.spotNr, shortAnswerQuestion);
+        const mappingFromGetter = service.getShortAnswerMapping(shortAnswerQuestion.correctMappings, solution, spot);
+        const spotFromGetter = service.getSpot(spot.spotNr, shortAnswerQuestion);
         const spotNr = service.getSpotNr('[-spot 123]');
 
         expect(solutions).to.contain(solution);
         expect(spots).to.be.contain(spot);
         expect(sampleSolutions).to.be.contain(solution);
-        expect(mapping2).to.be.equal(mapping);
-        expect(spot2).to.be.equal(spot);
+        expect(mappingFromGetter).to.be.equal(mapping);
+        expect(spotFromGetter).to.be.equal(spot);
         expect(spotNr).to.be.equal(123);
 
         let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solution, spot);
