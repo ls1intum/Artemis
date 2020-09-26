@@ -7,7 +7,9 @@ module.exports = {
             astTransformers: {
                 before: [require.resolve('./InlineHtmlStripStylesTransformer')],
             },
-            diagnostics: false,
+            diagnostics: {
+                ignoreCodes: [151001],
+            },
         },
     },
     coverageThreshold: {

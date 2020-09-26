@@ -147,12 +147,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: { [fileName: string]: string | null }) {
+    onSavedFiles(files: { [fileName: string]: string | undefined }) {
         const savedFiles = Object.entries(files)
-            .filter(([, error]: [string, string | null]) => !error)
+            .filter(([, error]: [string, string | undefined]) => !error)
             .map(([fileName]) => fileName);
         const errorFiles = Object.entries(files)
-            .filter(([, error]: [string, string | null]) => error)
+            .filter(([, error]: [string, string | undefined]) => error)
             .map(([fileName]) => fileName);
 
         this.unsavedFiles = fromPairs(toPairs(this.unsavedFiles).filter(([fileName]) => !savedFiles.includes(fileName)));

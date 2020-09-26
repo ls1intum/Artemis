@@ -11,10 +11,10 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class ExamDetailComponent implements OnInit {
     exam: Exam;
-    formattedStartText: SafeHtml | null;
-    formattedConfirmationStartText: SafeHtml | null;
-    formattedEndText: SafeHtml | null;
-    formattedConfirmationEndText: SafeHtml | null;
+    formattedStartText?: SafeHtml;
+    formattedConfirmationStartText?: SafeHtml;
+    formattedEndText?: SafeHtml;
+    formattedConfirmationEndText?: SafeHtml;
     isAtLeastInstructor = false;
 
     constructor(private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService) {}

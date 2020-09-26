@@ -19,7 +19,7 @@ export class FileUploadExamSummaryComponent implements OnInit {
      * @param filePath
      * File Upload Exercise
      */
-    downloadFile(filePath: string | null) {
+    downloadFile(filePath: string | undefined) {
         if (!filePath) {
             return;
         }

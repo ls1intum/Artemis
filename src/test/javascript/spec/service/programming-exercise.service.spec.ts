@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
-import { expect } from '../entry';
+import { expect } from '../helpers/jasmine.jest.fix';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;

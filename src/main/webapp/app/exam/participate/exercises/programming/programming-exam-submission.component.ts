@@ -49,11 +49,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
 
-    getSubmission(): Submission | null {
+    getSubmission() {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
             return this.studentParticipation.submissions[0];
         }
-        return null;
     }
 
     getExercise(): Exercise {

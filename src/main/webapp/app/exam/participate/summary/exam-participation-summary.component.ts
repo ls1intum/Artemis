@@ -77,9 +77,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, null if no participation could be found
+     * returns the students submission for the exercise, undefined if no participation could be found
      */
-    getSubmissionForExercise(exercise: Exercise): Submission | null {
+    getSubmissionForExercise(exercise: Exercise) {
         if (
             exercise &&
             exercise.studentParticipations &&
@@ -88,20 +88,16 @@ export class ExamParticipationSummaryComponent implements OnInit {
             exercise.studentParticipations[0].submissions.length > 0
         ) {
             return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return null;
         }
     }
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, null if no participation could be found
+     * returns the students submission for the exercise, undefined if no participation could be found
      */
-    getParticipationForExercise(exercise: Exercise): Participation | null {
+    getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations && exercise.studentParticipations[0]) {
             return exercise.studentParticipations[0];
-        } else {
-            return null;
         }
     }
 

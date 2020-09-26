@@ -17,7 +17,7 @@ import { Course } from 'app/entities/course.model';
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
-    notificationObserver: BehaviorSubject<Notification | null>;
+    notificationObserver: BehaviorSubject<Notification | undefined>;
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
@@ -164,7 +164,7 @@ export class NotificationService {
      * Get the notificationObserver.
      * @return {BehaviorSubject<Notification}
      */
-    subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
+    subscribeToSocketMessages(): BehaviorSubject<Notification | undefined> {
         return this.notificationObserver;
     }
 
@@ -184,7 +184,7 @@ export class NotificationService {
      * Set new notification observer.
      */
     private initNotificationObserver(): void {
-        this.notificationObserver = new BehaviorSubject<Notification | null>(null);
+        this.notificationObserver = new BehaviorSubject<Notification | undefined>(undefined);
     }
 
     /**

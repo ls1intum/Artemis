@@ -82,18 +82,15 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate(): boolean {
-        // note: != includes a check for undefined
-        return this.exam.visibleDate != null;
+        return this.exam.visibleDate != undefined;
     }
 
     get isValidStartDate(): boolean {
-        // note: != includes a check for undefined
-        return this.exam.startDate != null && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
+        return this.exam.startDate != undefined && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
     }
 
     get isValidEndDate(): boolean {
-        // note: != includes a check for undefined
-        return this.exam.endDate != null && moment(this.exam.endDate).isAfter(this.exam.startDate);
+        return this.exam.endDate != undefined && moment(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     get isValidPublishResultsDate(): boolean {

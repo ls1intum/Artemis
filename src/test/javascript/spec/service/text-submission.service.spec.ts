@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { expect } from '../entry';
+import { expect } from '../helpers/jasmine.jest.fix';
 
 describe('TextSubmission Service', () => {
     let injector: TestBed;
