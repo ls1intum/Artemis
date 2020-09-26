@@ -201,7 +201,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 catchError(() => {
                     // TODO: move to programming exercise translations
                     this.jhiAlertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -233,7 +233,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.testCaseSubscription = this.testCaseService
                 .subscribeForTestCases(this.exercise.id!)
                 .pipe(
-                    switchMap((testCases: ProgrammingExerciseTestCase[] | null) => {
+                    switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
                         if (testCases) {
                             const sortedTestCaseNames = compose(
@@ -266,7 +266,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result: Result | null) => (!result || !result.feedbacks ? throwError('no result available') : result)),
+            rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
             rxMap(({ feedbacks }: Result) =>
                 compose(
                     map(({ text }) => text),

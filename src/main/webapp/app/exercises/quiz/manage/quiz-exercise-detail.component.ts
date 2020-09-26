@@ -199,7 +199,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.quizExercise) {
             this.entity = this.quizExercise;
         } else {
-            this.entity = new QuizExercise();
+            this.entity = new QuizExercise(undefined, undefined);
             this.entity.title = '';
             this.entity.duration = 600;
             this.entity.isVisibleBeforeStart = false;
@@ -212,7 +212,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise();
+        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise(undefined, undefined);
         if (!this.quizExercise.course && !this.isExamMode) {
             this.quizExercise.course = this.course;
         }

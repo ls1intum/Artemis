@@ -1847,18 +1847,25 @@
   resolved "https://registry.yarnpkg.com/@types/showdown/-/showdown-1.9.3.tgz#eaa881b03a32d3720184731754d3025fc450b970"
   integrity sha512-akvzSmrvY4J5d3tHzUUiQr0xpjd4Nb3uzWW6dtwzYJ+qW/KdWw5F8NLatnor5q/1LURHnzDA1ReEwCVqcatRnw==
 
-"@types/sinon-chai@3.2.4":
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/@types/sinon-chai/-/sinon-chai-3.2.4.tgz#c425625681f4f8d3a43a7551a77f590ce1c49b21"
-  integrity sha512-xq5KOWNg70PRC7dnR2VOxgYQ6paumW+4pTZP+6uTSdhpYsAUEeeT5bw6rRHHQrZ4KyR+M5ojOR+lje6TGSpUxA==
+"@types/sinon-chai@3.2.5":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@types/sinon-chai/-/sinon-chai-3.2.5.tgz#df21ae57b10757da0b26f512145c065f2ad45c48"
+  integrity sha512-bKQqIpew7mmIGNRlxW6Zli/QVyc3zikpGzCa797B/tRnD9OtHvZ/ts8sYXV+Ilj9u3QRaUEM8xrjgd1gwm1BpQ==
   dependencies:
     "@types/chai" "*"
     "@types/sinon" "*"
 
-"@types/sinon@*", "@types/sinon@9.0.5":
+"@types/sinon@*":
   version "9.0.5"
   resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-9.0.5.tgz#56b2a12662dd8c7d081cdc511af5f872cb37377f"
   integrity sha512-4CnkGdM/5/FXDGqL32JQ1ttVrGvhOoesLLF7VnTh4KdjK5N5VQOtxaylFqqTjnHx55MnD9O02Nbk5c1ELC8wlQ==
+  dependencies:
+    "@types/sinonjs__fake-timers" "*"
+
+"@types/sinon@9.0.6":
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-9.0.6.tgz#fb4b6883fe0417e6a1ac5d9753bdcb7016dd4dd0"
+  integrity sha512-j3GK0fiHgn8fe7sqOpInMjm0A2Tary1NBZ8gbI/sZ0C0JxYeO+nh8H0/pW/0l94vNWcH1FnZOZu/cOvIfNZTrg==
   dependencies:
     "@types/sinonjs__fake-timers" "*"
 
@@ -5073,10 +5080,10 @@ escodegen@^1.14.1:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-prettier@6.11.0:
-  version "6.11.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-6.11.0.tgz#f6d2238c1290d01c859a8b5c1f7d352a0b0da8b1"
-  integrity sha512-oB8cpLWSAjOVFEJhhyMZh6NOEOtBVziaqdDQ86+qhDHFbZXoRTM7pNSvFRfW/W/L/LrQ38C99J5CGuRBBzBsdA==
+eslint-config-prettier@6.12.0:
+  version "6.12.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-6.12.0.tgz#9eb2bccff727db1c52104f0b49e87ea46605a0d2"
+  integrity sha512-9jWPlFlgNwRUYVoujvWTQ1aMO8o6648r+K7qU7K5Jmkbyqav1fuEZC0COYpGBxyiAJb65Ra9hrmFx19xRGwXWw==
   dependencies:
     get-stdin "^6.0.0"
 

@@ -12,7 +12,7 @@ export class ShortAnswerMapping implements BaseEntity {
     public spot?: ShortAnswerSpot;
     public question?: ShortAnswerQuestion;
 
-    constructor(spot?: ShortAnswerSpot, solution?: ShortAnswerSolution) {
+    constructor(spot: ShortAnswerSpot | undefined, solution: ShortAnswerSolution | undefined) {
         this.spot = spot;
         this.solution = solution;
         this.invalid = false; // default value

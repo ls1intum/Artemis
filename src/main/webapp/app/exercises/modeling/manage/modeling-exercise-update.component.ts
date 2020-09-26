@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { UMLDiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -25,7 +25,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
-    DiagramType = DiagramType;
+    UMLDiagramType = UMLDiagramType;
     checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
@@ -222,7 +222,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        const semiAutomaticSupportPossible = this.modelingExercise.diagramType === DiagramType.ClassDiagram || this.modelingExercise.diagramType === DiagramType.ActivityDiagram;
+        const semiAutomaticSupportPossible =
+            this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram;
         if (this.isExamMode || !semiAutomaticSupportPossible) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }

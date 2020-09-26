@@ -15,7 +15,7 @@ export class DragAndDropMapping implements BaseEntity {
     public dragItem?: DragItem;
     public dropLocation?: DropLocation;
 
-    constructor(dragItem?: DragItem, dropLocation?: DropLocation) {
+    constructor(dragItem: DragItem | undefined, dropLocation: DropLocation | undefined) {
         this.dragItem = dragItem;
         this.dropLocation = dropLocation;
         this.invalid = false; // default value

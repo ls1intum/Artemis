@@ -20,7 +20,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return Observable.of(new ProgrammingExercise());
+        return Observable.of(new ProgrammingExercise(undefined, undefined));
     }
 }
 

@@ -177,12 +177,12 @@ describe('TeamUpdateDialogComponent', () => {
         studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
         tick();
         fixture.detectChanges();
-        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1));
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students?.slice(1));
 
         // Add three new team members
         mockNonTeamStudents.forEach((student) => comp.onAddStudent(student));
         fixture.detectChanges();
-        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1).concat(mockNonTeamStudents));
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students?.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
         const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');

@@ -6,7 +6,7 @@ export class FileUploadExercise extends Exercise {
     public filePattern?: string;
     public sampleSolution?: string;
 
-    constructor(course?: Course, exerciseGroup?: ExerciseGroup) {
+    constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.FILE_UPLOAD);
         this.course = course;
         this.exerciseGroup = exerciseGroup;

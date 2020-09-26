@@ -230,7 +230,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
+        ArtemisMarkdownService.parseTextHintExplanation(questionText, this.question);
 
         // Extract existing solutions IDs
         const existingSolutionIDs = this.question.solutions!.filter((solution) => solution.id !== undefined).map((solution) => solution.id);

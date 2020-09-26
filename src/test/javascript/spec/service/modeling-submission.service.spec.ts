@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { expect } from '../entry';
 
 describe('ModelingSubmission Service', () => {
     let injector: TestBed;

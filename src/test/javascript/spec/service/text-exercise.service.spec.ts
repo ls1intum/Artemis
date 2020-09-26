@@ -10,6 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { expect } from '../entry';
 
 describe('TextExercise Service', () => {
     let injector: TestBed;
@@ -30,7 +31,7 @@ describe('TextExercise Service', () => {
         service = injector.get(TextExerciseService);
         httpMock = injector.get(HttpTestingController);
 
-        elemDefault = new TextExercise(new Course());
+        elemDefault = new TextExercise(new Course(), undefined);
     });
 
     describe('Service methods', () => {
@@ -54,7 +55,7 @@ describe('TextExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new TextExercise(null))
+                .create(new TextExercise(undefined, undefined))
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });

@@ -4,7 +4,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 /**
- * The DiagramType enumeration. This has to be exactly the same as defined in Apollon (see diagram-type.d.ts)
+ * The UMLDiagramType enumeration. This has to be exactly the same as defined in Apollon (see diagram-type.d.ts)
  */
 export enum UMLDiagramType {
     ClassDiagram = 'ClassDiagram',
@@ -21,7 +21,7 @@ export class ModelingExercise extends Exercise {
     public sampleSolutionModel?: string;
     public sampleSolutionExplanation?: string;
 
-    constructor(diagramType: UMLDiagramType, course?: Course, exerciseGroup?: ExerciseGroup) {
+    constructor(diagramType: UMLDiagramType, course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.MODELING);
         this.course = course;
         this.exerciseGroup = exerciseGroup;
@@ -32,5 +32,3 @@ export class ModelingExercise extends Exercise {
         }
     }
 }
-
-export { UMLDiagramType as DiagramType };

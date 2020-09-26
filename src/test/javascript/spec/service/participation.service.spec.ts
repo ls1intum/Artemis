@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { expect } from '../entry';
 
 describe('Participation Service', () => {
     let injector: TestBed;
@@ -85,7 +86,7 @@ describe('Participation Service', () => {
                 returnedFromService,
             );
             service
-                .findAllParticipationsByExercise(expected)
+                .findAllParticipationsByExercise(1)
                 .pipe(
                     take(1),
                     map((resp) => resp.body),

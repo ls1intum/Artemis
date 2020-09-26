@@ -6,7 +6,7 @@ export class Rating implements BaseEntity {
     public result?: Result;
     public rating?: number;
 
-    constructor(result: Result, rating: number) {
+    constructor(result: Result | undefined, rating: number) {
         this.result = result;
         this.rating = rating;
     }

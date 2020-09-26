@@ -48,6 +48,7 @@ describe('ParticipationWebsocketService', () => {
 
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
+        // @ts-ignore
         participationWebsocketService = new ParticipationWebsocketService(websocketService, participationService);
 
         subscribeSpy = spy(websocketService, 'subscribe');

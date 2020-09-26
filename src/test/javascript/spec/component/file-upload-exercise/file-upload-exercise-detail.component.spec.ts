@@ -91,7 +91,7 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     describe('OnInit with course exercise', () => {
         const course: Course = { id: 123 } as Course;
-        const fileUploadExerciseWithCourse: FileUploadExercise = new FileUploadExercise(course);
+        const fileUploadExerciseWithCourse: FileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExerciseWithCourse.id = 123;
 
         beforeEach(() => {

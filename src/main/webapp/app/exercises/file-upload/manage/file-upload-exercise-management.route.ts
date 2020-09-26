@@ -50,7 +50,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 );
             }
         }
-        return Observable.of(new FileUploadExercise());
+        return Observable.of(new FileUploadExercise(undefined, undefined));
     }
 }
 

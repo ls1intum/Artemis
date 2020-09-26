@@ -2,7 +2,7 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { UMLDiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -10,6 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
+import { expect } from '../entry';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
@@ -30,7 +31,7 @@ describe('ModelingExercise Service', () => {
         service = injector.get(ModelingExerciseService);
         httpMock = injector.get(HttpTestingController);
 
-        elemDefault = new ModelingExercise(DiagramType.ComponentDiagram);
+        elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
     });
 
     describe('Service methods', async () => {
@@ -54,7 +55,7 @@ describe('ModelingExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new ModelingExercise(DiagramType.ComponentDiagram))
+                .create(new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined))
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });

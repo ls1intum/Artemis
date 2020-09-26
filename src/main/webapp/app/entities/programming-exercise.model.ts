@@ -3,6 +3,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -29,17 +30,18 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     // helper attributes
+
     /**
-     * This attribute is used to generate a programming exercise with no connection to
-     * the VCS and CI
-     * This functionality is only for testing purposes
+     * This attribute is used to generate a programming exercise with no connection to the VCS and CI.
+     * This functionality is only for testing purposes.
      */
     public noVersionControlAndContinuousIntegrationAvailable?: boolean;
     public isLocalSimulation?: boolean;
 
-    constructor(course?: Course) {
+    constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.PROGRAMMING);
         this.course = course;
+        this.exerciseGroup = exerciseGroup;
         this.templateParticipation = new TemplateProgrammingExerciseParticipation();
         this.solutionParticipation = new SolutionProgrammingExerciseParticipation();
         this.publishBuildPlanUrl = false; // default value

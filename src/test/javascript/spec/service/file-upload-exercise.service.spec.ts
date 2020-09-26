@@ -10,6 +10,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { expect } from '../entry';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;
@@ -18,7 +19,7 @@ describe('FileUploadExercise Service', () => {
     let elemDefault: FileUploadExercise;
 
     const course: Course = { id: 123 } as Course;
-    const fileUploadExercise = new FileUploadExercise(course);
+    const fileUploadExercise = new FileUploadExercise(course, undefined);
     fileUploadExercise.id = 456;
     fileUploadExercise.filePattern = 'pdf';
 
@@ -35,7 +36,7 @@ describe('FileUploadExercise Service', () => {
         service = injector.get(FileUploadExerciseService);
         httpMock = injector.get(HttpTestingController);
 
-        elemDefault = new FileUploadExercise(0);
+        elemDefault = new FileUploadExercise(undefined, undefined);
     });
 
     describe('Service methods', async () => {
@@ -76,7 +77,7 @@ describe('FileUploadExercise Service', () => {
 
             const expected = Object.assign({}, returnedFromService);
             service
-                .update(expected)
+                .update(expected, 1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'PUT' });

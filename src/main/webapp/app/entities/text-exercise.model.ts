@@ -6,7 +6,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 export class TextExercise extends Exercise {
     public sampleSolution?: string;
 
-    constructor(course?: Course, exerciseGroup?: ExerciseGroup) {
+    constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.TEXT);
         this.course = course;
         this.exerciseGroup = exerciseGroup;

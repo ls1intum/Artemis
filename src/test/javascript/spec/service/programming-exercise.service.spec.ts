@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import { expect } from '../entry';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -41,7 +42,7 @@ describe('ProgrammingExercise Service', () => {
         service = injector.get(ProgrammingExerciseService);
         httpMock = injector.get(HttpTestingController);
 
-        elemDefault = new ProgrammingExercise();
+        elemDefault = new ProgrammingExercise(undefined, undefined);
     });
 
     describe('Service methods', () => {
@@ -65,7 +66,7 @@ describe('ProgrammingExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .automaticSetup(new ProgrammingExercise())
+                .automaticSetup(new ProgrammingExercise(undefined, undefined))
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -111,7 +112,7 @@ describe('ProgrammingExercise Service', () => {
                     take(1),
                     map((resp) => resp.body),
                 )
-                .subscribe((body) => expect(body).toContainEqual(expected));
+                .subscribe((body) => expect(body).toContain(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(JSON.stringify([returnedFromService]));
             httpMock.verify();

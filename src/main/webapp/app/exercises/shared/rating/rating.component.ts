@@ -14,7 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
 export class RatingComponent implements OnInit {
     public rating: Rating;
     public disableRating = false;
-    @Input() result: Result;
+    @Input() result?: Result;
 
     constructor(private ratingService: RatingService, private accountService: AccountService) {}
 

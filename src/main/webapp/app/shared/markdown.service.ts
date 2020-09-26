@@ -23,7 +23,7 @@ export class ArtemisMarkdownService {
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
-    parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
+    static parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
         if (!markdownText || !targetObject) {
             return;
         }

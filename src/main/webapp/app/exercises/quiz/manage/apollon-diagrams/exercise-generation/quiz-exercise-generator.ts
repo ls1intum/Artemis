@@ -80,7 +80,7 @@ export async function generateDragAndDropQuizExercise(
  * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
  */
 function createDragAndDropQuizExercise(course: Course, title: string, question: DragAndDropQuestion): QuizExercise {
-    const quizExercise = new QuizExercise(course);
+    const quizExercise = new QuizExercise(course, undefined);
     quizExercise.title = title;
     quizExercise.duration = 600;
     quizExercise.releaseDate = moment();

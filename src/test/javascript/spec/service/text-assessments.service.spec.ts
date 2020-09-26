@@ -9,7 +9,7 @@ describe('TextAssessment Service', () => {
     let service: TextAssessmentsService;
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
-    let mockResponse;
+    let mockResponse: any;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -61,7 +61,7 @@ describe('TextAssessment Service', () => {
 
     describe('Tracking', async () => {
         it('should not send feedback', async () => {
-            service.trackAssessment(null);
+            service.trackAssessment();
             httpMock.expectNone({ method: 'POST' });
         });
 

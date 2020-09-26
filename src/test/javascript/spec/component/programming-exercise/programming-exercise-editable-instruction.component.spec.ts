@@ -20,7 +20,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -33,7 +33,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
-    let testCaseService: ProgrammingExerciseTestCaseService;
+    let testCaseService: IProgrammingExerciseTestCaseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
     let subscribeForTestCaseSpy: SinonSpy;
@@ -143,7 +143,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         flush();
     }));
 
-    it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
+    it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
         const subject = new Subject<Result>();
@@ -152,7 +152,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         // No test cases available, might be that the solution build never ran to create tests...
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(undefined);
 
         fixture.detectChanges();
 

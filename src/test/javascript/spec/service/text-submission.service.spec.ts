@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { expect } from '../entry';
 
 describe('TextSubmission Service', () => {
     let injector: TestBed;
@@ -30,7 +31,7 @@ describe('TextSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new TextSubmission(null))
+                .create(new TextSubmission(), 1)
                 .pipe(take(1))
                 .subscribe((resp: any) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -47,7 +48,7 @@ describe('TextSubmission Service', () => {
 
             const expected = Object.assign({}, returnedFromService);
             service
-                .update(expected)
+                .update(expected, 1)
                 .pipe(take(1))
                 .subscribe((resp: any) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -55,7 +56,7 @@ describe('TextSubmission Service', () => {
         });
 
         describe('Tracking', async () => {
-            let mockResponse;
+            let mockResponse: any;
             beforeEach(() => {
                 mockResponse = {
                     submissionExerciseType: 'text',

@@ -58,7 +58,7 @@ describe('Component Tests', () => {
 
         const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
-        participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram);
+        participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
         const result = { id: 1 } as Result;
 
@@ -208,7 +208,7 @@ describe('Component Tests', () => {
             fixture.detectChanges();
 
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram);
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.saveDiagram();
             expect(fake).to.have.been.calledOnce;
@@ -221,7 +221,7 @@ describe('Component Tests', () => {
             const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
             comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram);
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.submit();
             expect(fake).to.have.been.calledOnce;

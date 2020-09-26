@@ -339,7 +339,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
         openModalStub.returns({ componentInstance: {} });
-        comp.problemStatement = exercise.problemStatement;
+        comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
         comp.latestResult = result;
         // @ts-ignore
