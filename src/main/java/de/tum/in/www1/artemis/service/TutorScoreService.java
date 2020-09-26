@@ -74,11 +74,11 @@ public class TutorScoreService {
     }
 
     /**
-     * Returns all TutorScores for course.
+     * Returns TutorScores for specific tutor and exercise.
      *
-     * @param tutor tutor user
+     * @param tutor tutor
      * @param exercise exercise
-     * @return list of tutor score objects for that course
+     * @return tutor score object for that tutor and exercise
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<TutorScore> getTutorScoreForTutorAndExercise(User tutor, Exercise exercise) {
@@ -92,8 +92,6 @@ public class TutorScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
-        // TODO: change the entry that is based on this result: find it based on the exercise id and subtract the max points from assessmentPoints, reduce assessments by one
-        // in case, there has been a complaint, complaint response or feedback request, adjust those values as well
         if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
             return;
         }
