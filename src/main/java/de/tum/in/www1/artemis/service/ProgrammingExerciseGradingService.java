@@ -333,15 +333,23 @@ public class ProgrammingExerciseGradingService {
             }).sum();
 
             double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream().mapToDouble(staticCodeAnalysisCategory -> {
-                double penaltySum = staticCodeAnalysisFeedback.stream().filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
-                        .mapToDouble(feedback -> {
-                            double penalty = staticCodeAnalysisCategory.getPenalty();
-                            feedback.setText(feedback.getText() + staticCodeAnalysisCategory.getName());
-                            feedback.setCredits(-penalty);
-                            return penalty;
-                        }).sum();
-                return penaltySum > staticCodeAnalysisCategory.getMaxPenalty() ? staticCodeAnalysisCategory.getMaxPenalty() : penaltySum;
+                List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
+                        .collect(Collectors.toList());
+                double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
+                if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
+                    penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
+                }
+                double perFeedbackPenalty = penaltySum / categoryFeedback.size();
+                categoryFeedback.forEach((feedback -> {
+                    feedback.setText(feedback.getText() + staticCodeAnalysisCategory.getName());
+                    feedback.setCredits(-perFeedbackPenalty);
+                }));
+                return penaltySum;
             }).sum();
+
+            if (codeAnalysisPenaltyPoints > programmingExercise.getMaxStaticCodeAnalysisPenalty()) {
+                codeAnalysisPenaltyPoints = programmingExercise.getMaxStaticCodeAnalysisPenalty();
+            }
 
             successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
             if (successfulTestPoints < 0) {
