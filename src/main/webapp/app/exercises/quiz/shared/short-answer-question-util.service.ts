@@ -38,8 +38,8 @@ export class ShortAnswerQuestionUtil {
                 }, this);
                 if (shareOneSpot) {
                     amountOfSolutionsThatShareOneSpot++;
-                    const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
-                    const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
+                    const allSpotsForSolution1 = this.getAllSpotsForSolution(question.correctMappings, solution1);
+                    const allSpotsForSolution2 = this.getAllSpotsForSolution(question.correctMappings, solution2);
                     // there have to be a least as many solutions that share all spots as the amount of existing spots
                     if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2) && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
                         // condition is violated for this pair of solutions
@@ -71,7 +71,7 @@ export class ShortAnswerQuestionUtil {
      * @param solution {object} the solution that the returned spots have to be mapped to
      * @return {Array} the resulting spots
      */
-    getAllSpotsForSolutions(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
+    getAllSpotsForSolution(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
         return mappings
             .filter(function (mapping) {
                 return this.isSameSolution(mapping.solution, solution);
@@ -217,7 +217,7 @@ export class ShortAnswerQuestionUtil {
      * @param {ShortAnswerQuestion} question
      * @returns {ShortAnswerSolution[]}
      */
-    getSampleSolution(question: ShortAnswerQuestion): ShortAnswerSolution[] {
+    getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
         for (const spot of question.spots) {
             const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);

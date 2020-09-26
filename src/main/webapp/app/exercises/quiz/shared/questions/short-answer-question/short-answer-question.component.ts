@@ -108,7 +108,7 @@ export class ShortAnswerQuestionComponent {
      */
     showSampleSolution() {
         // TODO: the question is not yet available
-        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.question);
         this.showingSampleSolution = true;
     }
 

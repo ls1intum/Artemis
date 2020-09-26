@@ -166,7 +166,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             let spotsForSolution: ShortAnswerSpot[] = [];
             let option = '[-option ';
             let firstSolution = true;
-            spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
+            spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolution(this.question.correctMappings, solution);
 
             for (const spotForSolution of spotsForSolution) {
                 if (spotForSolution === undefined) {
