@@ -131,10 +131,7 @@ public class StudentScoreService {
             log.info("student score in db updated: " + oldScore);
         }
         else {
-            StudentScore newScore = new StudentScore();
-            newScore.setStudent(student.get());
-            newScore.setExercise(exercise);
-            newScore.setResult(updatedResult);
+            StudentScore newScore = new StudentScore(student.get(), exercise, updatedResult);
 
             if (updatedResult.getScore() != null) {
                 newScore.setScore(updatedResult.getScore());

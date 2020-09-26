@@ -275,7 +275,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setTeachingAssistantGroupName("instructor");
         courseRepo.save(course);
 
-        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.FORBIDDEN, TutorScore.class);
+        request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.FORBIDDEN, TutorScore.class);
     }
 
     @Test
