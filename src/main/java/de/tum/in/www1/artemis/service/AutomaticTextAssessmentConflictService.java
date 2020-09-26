@@ -60,6 +60,7 @@ public class AutomaticTextAssessmentConflictService {
         // remove the feedback that does not belong to any text block
         feedbackList.removeIf(f -> !f.hasReference());
 
+        // Create TextAssessmentConflictRequestDTO objects that are used in service calls
         // If text block doesn't have a cluster id don't create an object
         List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = feedbackList.stream().flatMap(feedback -> {
             Optional<TextBlock> textBlock = textBlockRepository
@@ -84,11 +85,6 @@ public class AutomaticTextAssessmentConflictService {
         }
         catch (NetworkingError networkingError) {
             log.error(networkingError.getMessage(), networkingError);
-            return;
-        }
-
-        // If no conflicts found, return
-        if (textAssessmentConflictResponseDTOS.isEmpty()) {
             return;
         }
 
