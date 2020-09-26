@@ -60,12 +60,6 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    @Value("${artemis.continuous-integration.user}")
-    private String username;
-
-    @Value("${artemis.continuous-integration.password}")
-    private String password;
-
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
 
@@ -96,8 +90,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
             planKey = exercise.getProjectKey() + "-" + planKey;
 
-            jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
-            job(exercise.getProjectKey(), planKey).build(useCrumb);
+            jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
+            getJob(exercise.getProjectKey(), planKey).build(useCrumb);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -209,7 +203,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var planKey = participation.getBuildPlanId();
 
         try {
-            job(projectKey, planKey).build(useCrumb);
+            getJob(projectKey, planKey).build(useCrumb);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -231,7 +225,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
         try {
-            jenkinsServer.deleteJob(folder(projectKey), buildPlanId, useCrumb);
+            jenkinsServer.deleteJob(getFolderJob(projectKey), buildPlanId, useCrumb);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -338,7 +332,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        final var isQueued = job(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
+        final var isQueued = getJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
         if (isQueued) {
             return BuildStatus.QUEUED;
         }
@@ -428,9 +422,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
+    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
+        String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+        String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+
         try {
-            final var build = job(projectKey, buildPlanId).getLastBuild();
+            final var build = getJob(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
             final var buildLog = new LinkedList<BuildLogEntry>();
             final var iterator = logHtml.childNodes().iterator();
@@ -502,18 +500,25 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            folder(projectKey);
+            final var job = jenkinsServer.getJob(projectKey);
+            if (job == null) {
+                // means the project does not exist
+                return null;
+            }
+            else {
+                return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
+            }
         }
         catch (Exception emAll) {
-            return emAll.getMessage();
+            log.warn(emAll.getMessage());
+            // in case of an error message, we assume the project does not exist
+            return null;
         }
-
-        return null;
     }
 
     @Override
     public boolean isBuildPlanEnabled(String projectKey, String planId) {
-        return job(projectKey, planId).isBuildable();
+        return getJob(projectKey, planId).isBuildable();
     }
 
     @Override
@@ -556,13 +561,17 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private FolderJob folder(String folderName) {
+    private FolderJob getFolderJob(String folderName) {
         try {
-            final var folder = jenkinsServer.getFolderJob(jenkinsServer.getJob(folderName));
-            if (!folder.isPresent()) {
+            final var job = jenkinsServer.getJob(folderName);
+            if (job == null) {
+                throw new JenkinsException("The job " + folderName + " does not exist!");
+            }
+            final var folderJob = jenkinsServer.getFolderJob(job);
+            if (!folderJob.isPresent()) {
                 throw new JenkinsException("Folder " + folderName + " does not exist!");
             }
-            return folder.get();
+            return folderJob.get();
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -570,8 +579,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private JobWithDetails job(String projectKey, String jobName) {
-        final var folder = folder(projectKey);
+    private JobWithDetails getJob(String projectKey, String jobName) {
+        final var folder = getFolderJob(projectKey);
         try {
             return jenkinsServer.getJob(folder, jobName);
         }
@@ -583,7 +592,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private Document getJobXmlForBuildPlanWith(String projectKey, String jobName) {
         try {
-            final var xmlString = jenkinsServer.getJobXml(folder(projectKey), jobName);
+            final var xmlString = jenkinsServer.getJobXml(getFolderJob(projectKey), jobName);
             return XmlFileUtils.readFromString(xmlString);
         }
         catch (IOException e) {
@@ -593,7 +602,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private void saveJobXml(Document jobXml, String projectKey, String planName) {
-        final var folder = folder(projectKey);
+        final var folder = getFolderJob(projectKey);
         try {
             jenkinsServer.createJob(folder, planName, writeXmlToString(jobXml), useCrumb);
         }
