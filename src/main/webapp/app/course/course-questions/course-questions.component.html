@@ -1,1 +1,30 @@
-<ng-container *ngIf="studentQuestions && studentQuestions.length > 0"></ng-container>
+<ng-container *ngIf="courseId">
+    <h3>
+        Q&A
+    </h3>
+    <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.exercise.title">Creation Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="votes"><span jhiTranslate="artemisApp.exercise.releaseDate">Votes</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.exercise.dueDate">Answers</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.exercise.dueDate">Approved Answers</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let studentQuestion of studentQuestions">
+                    <td>
+                        <a [routerLink]="['/courses', courseId, studentQuestion.exercise ? 'exercises' : 'lectures', studentQuestion.exercise ? studentQuestion.exercise.id : studentQuestion.lecture.id]">{{ studentQuestion.id }}</a>
+                    </td>
+                    <td>{{ studentQuestion.creationDate | artemisDate }}</td>
+                    <td>{{ studentQuestion.votes }}</td>
+                    <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>
+                    <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>
+                    <td>{{ getNumberOfApprovedAnswers(studentQuestion) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</ng-container>

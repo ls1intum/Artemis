@@ -9,6 +9,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
     templateUrl: './course-questions.component.html',
 })
 export class CourseQuestionsComponent implements OnInit, OnDestroy {
+    courseId: number;
     studentQuestions: StudentQuestion[];
 
     paramSub: Subscription;
@@ -20,11 +21,16 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.studentQuestionsService.findQuestionsForCourse(params['courseId']).subscribe((res) => {
+            this.courseId = params['courseId'];
+            this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
                 console.log(res);
                 this.studentQuestions = res.body!;
             });
         });
+    }
+
+    getNumberOfApprovedAnswers(studentQuestion: StudentQuestion): number {
+        return studentQuestion.answers.filter((question) => question.tutorApproved).length;
     }
 
     /**
