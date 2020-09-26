@@ -218,7 +218,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(this.manualResult.feedbacks, complaintResponse, this.manualResult.submission!.id).subscribe(
             (result: Result) => {
-                this.manualResult = result;
+                this.participationForManualResult.results[0] = this.manualResult = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
