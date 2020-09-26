@@ -363,20 +363,4 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     getLetter(index: number) {
         return String.fromCharCode(65 + (index - 1));
     }
-
-    /**
-     * Get the solution that was mapped to the given spot in the sample solution
-     *
-     * @param spot {object} the spot that the solution should be mapped to
-     * @return {object | null} the mapped solution,
-     *                          or null if no solution has been mapped to this location
-     */
-    correctSolutionForSpot(spot: ShortAnswerSpot) {
-        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question, null).filter((mapping) => mapping.spot.id === spot.id)[0];
-        if (currMapping) {
-            return currMapping.solution;
-        } else {
-            return null;
-        }
-    }
 }
