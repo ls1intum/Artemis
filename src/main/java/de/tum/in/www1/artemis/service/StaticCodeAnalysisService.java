@@ -33,10 +33,13 @@ public class StaticCodeAnalysisService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingSubmissionService programmingSubmissionService,
             Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -103,6 +106,10 @@ public class StaticCodeAnalysisService {
             originalCategory.setState(matchingCategory.getState());
         }
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
+
+        // At least one category was updated. We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+
         return originalCategories;
     }
 
