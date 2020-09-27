@@ -6,24 +6,30 @@
         </div>
         <div class="ml-auto">
             <div class="d-flex mb-1">
-                <button
-                    class="btn btn-primary btn-sm mr-1 mb-1"
-                    style="height: 40px"
-                    (click)="openCreateTestRunModal()"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || !examContainsExercises"
-                >
-                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span jhiTranslate="artemisApp.examManagement.testRun.setup">Create a Test Run</span>
-                </button>
-                <button
-                    class="btn btn-primary btn-sm mr-1 mb-1"
-                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
-                    *ngIf="course?.isAtLeastInstructor"
-                    [disabled]="isLoading || !testRunCanBeAssessed"
-                >
-                    <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Your Test Runs</span>
-                </button>
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | translate" [disableTooltip]="examContainsExercises">
+                    <button
+                        class="btn btn-primary btn-sm mr-1 mb-1"
+                        style="height: 40px"
+                        (click)="openCreateTestRunModal()"
+                        *ngIf="course?.isAtLeastInstructor"
+                        [disabled]="isLoading || !examContainsExercises"
+                    >
+                        <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span jhiTranslate="artemisApp.examManagement.testRun.setup">Create a Test Run</span>
+                    </button>
+                </div>
+
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | translate" [disableTooltip]="testRunCanBeAssessed">
+                    <button
+                        class="btn btn-primary btn-sm mr-1 mb-1"
+                        style="height: 40px"
+                        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
+                        *ngIf="course?.isAtLeastInstructor"
+                        [disabled]="isLoading || !testRunCanBeAssessed"
+                    >
+                        <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Your Test Runs</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
