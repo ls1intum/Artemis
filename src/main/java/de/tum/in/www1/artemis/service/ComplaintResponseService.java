@@ -34,12 +34,15 @@ public class ComplaintResponseService {
 
     private AuthorizationCheckService authorizationCheckService;
 
+    private TutorScoreService tutorScoreService;
+
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, TutorScoreService tutorScoreService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userService = userService;
         this.authorizationCheckService = authorizationCheckService;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -87,7 +90,22 @@ public class ComplaintResponseService {
         // make sure the original complaint from the database is connected to the complaint response as we take it out later one and
         // potential changes on the client side (e.g. remove student id) should not be saved
         complaintResponse.setComplaint(originalComplaint);
-        return complaintResponseRepository.save(complaintResponse);
+
+        complaintResponse = complaintResponseRepository.save(complaintResponse);
+
+        // add complaint response to TutorScores
+        tutorScoreService.removeResult(originalResult);
+        tutorScoreService.updateResult(originalResult);
+
+        if (originalComplaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+            var tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(originalResult.getAssessor(), originalResult.getParticipation().getExercise());
+
+            if (tutorScore.isPresent()) {
+                tutorScoreService.removeNotAnsweredFeedbackRequest(tutorScore.get());
+            }
+        }
+
+        return complaintResponse;
     }
 
     /**

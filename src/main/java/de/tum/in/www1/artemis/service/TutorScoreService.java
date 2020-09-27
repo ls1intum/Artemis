@@ -90,25 +90,64 @@ public class TutorScoreService {
     }
 
     /**
+     * Add empty Complaint or FeedbackRequest to TutorScore.
+     *
+     * @param tutorScore tutor score
+     * @param complaint complaint
+     * @param exercise exercise
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void addUnansweredComplaintOrFeedbackRequest(TutorScore tutorScore, Complaint complaint, Exercise exercise) {
+        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
+
+            if (exercise.getMaxScore() != null) {
+                tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
+            }
+        }else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+            tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
+            tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
+
+            if (exercise.getMaxScore() != null) {
+                tutorScore.setFeedbackRequestsPoints(tutorScore.getFeedbackRequestsPoints() + exercise.getMaxScore());
+            }
+        }
+
+        tutorScoreRepository.save(tutorScore);
+    }
+
+    /**
+     * Remove one unanswered FeedbackRequest from TutorScore.
+     *
+     * @param tutorScore tutor score
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void removeNotAnsweredFeedbackRequest(TutorScore tutorScore) {
+        tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
+
+        tutorScoreRepository.save(tutorScore);
+    }
+
+    /**
      * Deletes all TutorScores for result deletedResult.
      *
      * @param deletedResult result to be deleted
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
+        // override deleted result in case of different assessor
+        var result = resultRepository.findById(deletedResult.getId());
+
+        if (result.isPresent()) {
+            deletedResult = result.get();
+        }
+
         if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
             return;
         }
 
         if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
             return;
-        }
-
-        // override deleted result in case of different assessor
-        var result = resultRepository.findByIdWithEagerFeedbacksAndAssessor(deletedResult.getId());
-
-        if (result.isPresent()) {
-            deletedResult = result.get();
         }
 
         var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
@@ -175,12 +214,16 @@ public class TutorScoreService {
                         if (complaintResponse.isPresent()) {
                             var fromComplaintResponse = tutorScoreRepository.findByTutorAndExercise(complaintResponse.get().getReviewer(), exercise).get();
 
-                            if (fromComplaintResponse.getComplaintResponses() > 0 && fromComplaintResponse.getComplaintResponsesPoints() > 0) {
-                                fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
-                                fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
+                            if (fromComplaintResponse.getAnsweredFeedbackRequests() > 0 && fromComplaintResponse.getAnsweredFeedbackRequestsPoints() > 0) {
+                                fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() - 1);
+                                fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() - exercise.getMaxScore());
                             }
 
                             tutorScoreRepository.save(fromComplaintResponse);
+                        }else {
+                            if (tutorScore.getNotAnsweredFeedbackRequests() > 0) {
+                                tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
+                            }
                         }
                     }
                 }
@@ -284,6 +327,8 @@ public class TutorScoreService {
                         fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
 
                         tutorScoreRepository.save(fromComplaintResponse);
+                    }else {
+                        tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
                     }
                 }
             }

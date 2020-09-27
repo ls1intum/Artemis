@@ -41,14 +41,17 @@ public class ComplaintService {
 
     private ExamService examService;
 
+    private TutorScoreService tutorScoreService;
+
     public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService, UserService userService) {
+            ExamService examService, UserService userService, TutorScoreService tutorScoreService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
         this.examService = examService;
         this.userService = userService;
+        this.tutorScoreService = tutorScoreService;
     }
 
     /**
@@ -112,7 +115,16 @@ public class ComplaintService {
 
         resultRepository.save(originalResult);
 
-        return complaintRepository.save(complaint);
+        complaint = complaintRepository.save(complaint);
+
+        // add complaint to matching TutorScore
+        var tutorScore = tutorScoreService.getTutorScoreForTutorAndExercise(originalResult.getAssessor(), originalResult.getParticipation().getExercise());
+
+        if (tutorScore.isPresent()) {
+            tutorScoreService.addUnansweredComplaintOrFeedbackRequest(tutorScore.get(), complaint, originalResult.getParticipation().getExercise());
+        }
+
+        return complaint;
     }
 
     @Transactional(readOnly = true)
