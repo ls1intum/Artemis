@@ -255,7 +255,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void tutorScoreForCourseTutorAndExercise() throws Exception {
+    public void tutorScoreForExerciseAndTutor() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
         exercise = exerciseRepo.findAll().get(0);
 
@@ -276,6 +276,28 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         courseRepo.save(course);
 
         request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.FORBIDDEN, TutorScore.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void tutorScoreDifferentAssessor() throws Exception {
+        user = userRepo.findOneByLogin("tutor1").get();
+        User user2 = userRepo.findOneByLogin("tutor3").get();
+        exercise = exerciseRepo.findAll().get(0);
+        result = resultRepo.findAll().get(0);
+        result = resultRepo.findByIdWithEagerFeedbacksAndAssessor(result.getId()).get();
+
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(1);
+
+        result.setAssessor(user2);
+        result.setScore(80L);
+        resultRepo.save(result);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(0);
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user2.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(1);
     }
 
     @Test
