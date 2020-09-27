@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
+import { Location } from '@angular/common';
 
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -50,6 +51,7 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private location: Location,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
         protected jhiAlertService: JhiAlertService,
@@ -195,12 +197,14 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
         this.overrideBusy = false;
         this.isOverrideDisabled = true;
+        this.location.back();
     }
 
     private handleSolveConflictsSuccessWithAlert(response: TextAssessmentConflict, translationKey: string): void {
         this.jhiAlertService.success(translationKey);
         this.markBusy = false;
         this.isMarkingDisabled = true;
+        this.location.back();
     }
 
     protected handleError(error: HttpErrorResponse): void {
@@ -213,5 +217,9 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
         super.handleError(error);
         this.markBusy = false;
         this.isMarkingDisabled = true;
+    }
+
+    didClickedButtonNoConflict() {
+        this.location.back();
     }
 }
