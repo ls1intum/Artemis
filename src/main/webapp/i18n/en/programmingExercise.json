@@ -117,6 +117,9 @@
                     "resetSuccessful": "The tests were reset successfully.",
                     "resetFailed": "The tests could not be reset."
                 },
+                "categories": {
+                    "notGraded": "Not graded."
+                },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
                 "updatedGradingConfigTooltip": "You have updated the grading configuration, this does not have direct implications on the student results though. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions after the grading updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated grading configuration.",

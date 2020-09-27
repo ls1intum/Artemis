@@ -152,15 +152,22 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Penalty" prop="penalty">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [value]="value" (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"></jhi-table-editable-field>
+                            <jhi-table-editable-field
+                                *ngIf="row.state === CategoryState.GRADED"
+                                [value]="value"
+                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
+                            ></jhi-table-editable-field>
+                            <span *ngElse jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <jhi-table-editable-field
+                                *ngIf="row.state === CategoryState.GRADED"
                                 [value]="value"
                                 (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
                             ></jhi-table-editable-field>
+                            <span *ngElse jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                         </ng-template>
                     </ngx-datatable-column>
                 </ngx-datatable>
