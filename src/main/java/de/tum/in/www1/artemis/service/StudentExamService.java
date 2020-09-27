@@ -436,15 +436,6 @@ public class StudentExamService {
     }
 
     /**
-     * Returns all test runs for a given exam with exercises, participations, submissions and results loaded for the test run submissions
-     * @param examId the id of the exam in question
-     * @return a list of the test run student exams
-     */
-    public List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(Long examId) {
-        return studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
-    }
-
-    /**
      * Returns all test runs for a given exam initiated by the given instructor
      * @param examId the id of the exam in question
      * @param userId the id of the user

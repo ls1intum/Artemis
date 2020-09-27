@@ -1158,9 +1158,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRun() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
-        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -1168,18 +1167,17 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRunWithReferencedParticipations() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
-        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
-        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
         testRun2.setExam(testRun1.getExam());
         testRun2.setUser(instructor);
-        testRun2.setExercises(testRun1.getExercises());
+        testRun2.setExercises(List.of(testRun1.getExercises().get(0)));
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
         SecurityUtils.setAuthorizationObject();
-        var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam1.getId());
+        var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
