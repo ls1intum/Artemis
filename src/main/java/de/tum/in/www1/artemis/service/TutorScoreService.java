@@ -132,15 +132,17 @@ public class TutorScoreService {
     /**
      * Deletes all TutorScores for result deletedResult.
      *
-     * @param deletedResult result to be deleted
+     * @param result result to be deleted
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void removeResult(Result deletedResult) {
-        // override deleted result in case of different assessor
-        var result = resultRepository.findById(deletedResult.getId());
+    public void removeResult(Result result) {
+        var deletedResult = result;
 
-        if (result.isPresent()) {
-            deletedResult = result.get();
+        // override deleted result in case of different assessor
+        var oldResult = resultRepository.findById(deletedResult.getId());
+
+        if (oldResult.isPresent()) {
+            deletedResult = oldResult.get();
         }
 
         if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
