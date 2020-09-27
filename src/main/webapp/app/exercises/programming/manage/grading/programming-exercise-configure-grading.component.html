@@ -8,15 +8,14 @@
             <div class="d-flex align-items-center ml-auto">
                 <jhi-programming-exercise-configure-grading-status
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
-                    [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                    [hasUnsavedTestCaseChanges]="!!changedTestCaseIds.length"
+                    [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                 ></jhi-programming-exercise-configure-grading-status>
                 <jhi-programming-exercise-configure-grading-actions
                     [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
-                    [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                    (onReset)="resetChanges()"
-                    (onSave)="saveChanges()"
+                    [isSaving]="isSaving"
                 ></jhi-programming-exercise-configure-grading-actions>
             </div>
         </div>
@@ -32,6 +31,16 @@
 
         <div class="grading-body-container">
             <div *ngIf="activeTab == 'test-cases'">
+                <div class="d-flex align-items-center justify-content-end">
+                    <jhi-programming-exercise-grading-table-actions
+                        [exercise]="exercise"
+                        [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                        [isSaving]="isSaving"
+                        (onReset)="resetTestCases()"
+                        (onSave)="saveTestCases()"
+                    ></jhi-programming-exercise-grading-table-actions>
+                </div>
+
                 <label class="d-flex align-items-center mb-0">
                     <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
                     <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
@@ -109,6 +118,16 @@
                 </ngx-datatable>
             </div>
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">
+                <div class="d-flex align-items-center justify-content-end">
+                    <jhi-programming-exercise-grading-table-actions
+                        [exercise]="exercise"
+                        [hasUnsavedChanges]="!!changedCategoryIds.length"
+                        [isSaving]="isSaving"
+                        (onReset)="resetCategories()"
+                        (onSave)="saveCategories()"
+                    ></jhi-programming-exercise-grading-table-actions>
+                </div>
+
                 <ngx-datatable
                     id="codeAnalysisTable"
                     class="bootstrap"

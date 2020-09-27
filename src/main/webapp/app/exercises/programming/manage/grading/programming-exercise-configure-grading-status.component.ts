@@ -9,14 +9,32 @@ import { Component, Input } from '@angular/core';
     selector: 'jhi-programming-exercise-configure-grading-status',
     template: `
         <div class="d-flex flex-column justify-content-between">
-            <div id="test-case-status-unsaved-changes" *ngIf="hasUnsavedChanges; else noUnsavedChanges" class="d-flex align-items-center badge badge-warning mb-1">
+            <div
+                id="test-case-status-unsaved-changes"
+                *ngIf="hasUnsavedTestCaseChanges || hasUnsavedCategoryChanges; else noUnsavedChanges"
+                class="d-flex align-items-center badge badge-warning mb-1"
+            >
                 <fa-icon class="ml-2 text-white" icon="exclamation-triangle"></fa-icon>
-                <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.unsavedChanges"></span>
+                <span
+                    *ngIf="hasUnsavedTestCaseChanges && hasUnsavedCategoryChanges"
+                    class="ml-1"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedChanges"
+                ></span>
+                <span
+                    *ngIf="hasUnsavedTestCaseChanges && !hasUnsavedCategoryChanges"
+                    class="ml-1"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedTestCaseChanges"
+                ></span>
+                <span
+                    *ngIf="!hasUnsavedTestCaseChanges && hasUnsavedCategoryChanges"
+                    class="ml-1"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedCategoryChanges"
+                ></span>
             </div>
             <ng-template #noUnsavedChanges>
                 <div id="test-case-status-no-unsaved-changes" class="d-flex align-items-center badge badge-success mb-1">
                     <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
-                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUnsavedChanges"></span>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.noUnsavedChanges"></span>
                 </div>
             </ng-template>
             <ng-container *ngIf="exerciseIsReleasedAndHasResults; else notReleased">
@@ -40,9 +58,9 @@ import { Component, Input } from '@angular/core';
                     <fa-icon
                         class="ml-2 text-white"
                         icon="question-circle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.notReleasedTooltip' | translate"
+                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | translate"
                     ></fa-icon>
-                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.notReleased"></span>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.notReleased"></span>
                 </div>
             </ng-template>
         </div>
@@ -50,6 +68,7 @@ import { Component, Input } from '@angular/core';
 })
 export class ProgrammingExerciseConfigureGradingStatusComponent {
     @Input() exerciseIsReleasedAndHasResults: boolean;
-    @Input() hasUnsavedChanges: boolean;
+    @Input() hasUnsavedTestCaseChanges: boolean;
+    @Input() hasUnsavedCategoryChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
 }

@@ -275,7 +275,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Save the unsaved (edited) changes of the test cases.
      */
-    saveChanges() {
+    saveTestCases() {
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
@@ -304,6 +304,14 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             }),
         );
 
+        saveTestCases.subscribe(() => {
+            this.isSaving = false;
+        });
+    }
+
+    saveCategories() {
+        this.isSaving = true;
+
         const codeAnalysisCategoriesToUpdate = _intersectionWith(
             this.staticCodeAnalysisCategories,
             this.changedCategoryIds,
@@ -313,11 +321,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.exercise.id, codeAnalysisCategoryUpdates);
 
-        zip(saveTestCases, saveCodeAnalysis)
-            .pipe(take(1))
-            .subscribe(() => {
-                this.isSaving = false;
-            });
+        saveCodeAnalysis.subscribe(() => {
+            this.isSaving = false;
+        });
     }
 
     /**
@@ -333,17 +339,17 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Reset all test cases.
      */
-    resetChanges() {
+    resetTestCases() {
         this.isSaving = true;
         this.gradingService
             .reset(this.exercise.id)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.resetSuccessful`);
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
                     this.gradingService.notifyTestCases(this.exercise.id, testCases);
                 }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.resetFailed`);
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
                     return of(null);
                 }),
             )
@@ -351,6 +357,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isSaving = false;
                 this.changedTestCaseIds = [];
             });
+    }
+
+    resetCategories() {
+        //TODO
     }
 
     /**

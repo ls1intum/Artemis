@@ -98,32 +98,31 @@
                 "invalidHint": "The hint with id '{{id}}' could not be found in the database for this programming exercise."
             },
             "manageTestCases": {
-                "title": "Manage Test Cases",
-                "hideInactive": "Hide inactive test cases",
                 "showInactive": "Show inactivate test cases",
-                "reset": "Reset",
-                "resetSuccessful": "The tests were reset successfully.",
-                "resetFailed": "The tests could not be reset.",
-                "save": "Save tests",
-                "testsUpdated": "The tests were updated successfully.",
-                "testsCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
-                "saveTestCases": "Save test cases",
                 "testCasesUpdated": "The test cases were updated successfully.",
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
-                "noUnsavedChanges": "No unsaved changes",
-                "unsavedChanges": "Unsaved changes",
                 "updatedTestCasesShort": "Updated test cases",
                 "updatedTestCases": "Warning: You have updated the exercise's test cases, but you have not triggered all student submissions with the new test case settings. Newly created results will be graded with the new test case settings, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
                 "updatedTestCasesTooltip": "You have updated the test cases, this does not have direct implications on the student results though. Newly created results will be graded with the new test case settings, existing results will not be changed. If you don't trigger all student submissions after the test case updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated test case settings.",
                 "noUpdatedTestCases": "No updated test cases",
-                "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page.",
-                "notReleased": "Not released",
-                "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the test cases without having to trigger existing student submissions with the updated settings."
+                "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page."
             },
             "configureGrading": {
                 "title": "Configure Grading",
                 "save": "Save",
-                "reset": "Reset"
+                "reset": "Reset",
+                "status": {
+                    "unsavedChanges": "Unsaved changes",
+                    "unsavedTestCaseChanges": "Unsaved test cases",
+                    "unsavedCategoryChanges": "Unsaved categories",
+                    "noUnsavedChanges": "No unsaved changes"
+                },
+                "testCases": {
+                    "resetSuccessful": "The tests were reset successfully.",
+                    "resetFailed": "The tests could not be reset."
+                },
+                "notReleased": "Not released",
+                "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the grading without having to trigger existing student submissions with the updated settings."
             },
             "export": {
                 "downloadAllStudents": "Or download the repositories of all students",
