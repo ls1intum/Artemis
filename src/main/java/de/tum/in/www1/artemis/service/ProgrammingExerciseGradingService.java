@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -265,6 +267,9 @@ public class ProgrammingExerciseGradingService {
             // Add feedbacks for tests that were not executed ("test was not executed").
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
+            // Remove feedback that is in an invisible sca category
+            staticCodeAnalysisFeedback = removeInvisibleScaFeedback(result, staticCodeAnalysisFeedback, exercise);
+
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
@@ -310,6 +315,43 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Sets the category for each feedback and removes feedback with no or an inactive category
+     * @param result of the build run
+     * @param staticCodeAnalysisFeedback List of feedback objects
+     * @param programmingExercise The current exercise
+     * @return The filtered list of feedback objects
+     */
+    private List<Feedback> removeInvisibleScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+        var categories = staticCodeAnalysisService.getCategoriesWithMappingForExercise(programmingExercise);
+
+        return staticCodeAnalysisFeedback.stream().filter(feedback -> {
+            ObjectMapper mapper = new ObjectMapper();
+            Optional<StaticCodeAnalysisCategory> category;
+            try {
+                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
+
+                category = categories.stream()
+                        .filter(pair -> pair.right.stream()
+                                .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory())))
+                        .map(ImmutablePair::getLeft).findFirst();
+
+            }
+            catch (JsonProcessingException e) {
+                category = Optional.empty();
+            }
+
+            if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
+                result.removeFeedback(feedback);
+                return false;
+            }
+            else {
+                feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
+                return true;
+            }
+        }).collect(Collectors.toList());
+    }
+
+    /**
      * Update the score given the positive tests score divided by all tests's score.
      * Takes weight, bonus multiplier and absolute bonus points into account
      *
@@ -332,20 +374,21 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
-            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream().mapToDouble(staticCodeAnalysisCategory -> {
-                List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(isInCategory(staticCodeAnalysisCategory, programmingExercise.getProgrammingLanguage()))
-                        .collect(Collectors.toList());
-                double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
-                if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
-                    penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
-                }
-                double perFeedbackPenalty = penaltySum / categoryFeedback.size();
-                categoryFeedback.forEach((feedback -> {
-                    feedback.setText(feedback.getText() + staticCodeAnalysisCategory.getName());
-                    feedback.setCredits(-perFeedbackPenalty);
-                }));
-                return penaltySum;
-            }).sum();
+            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
+                    .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).mapToDouble(staticCodeAnalysisCategory -> {
+                        List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(
+                                feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(staticCodeAnalysisCategory.getName()))
+                                .collect(Collectors.toList());
+                        double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
+                        if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
+                            penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
+                        }
+                        double perFeedbackPenalty = penaltySum / categoryFeedback.size();
+                        categoryFeedback.forEach((feedback -> {
+                            feedback.setCredits(-perFeedbackPenalty);
+                        }));
+                        return penaltySum;
+                    }).sum();
 
             if (codeAnalysisPenaltyPoints > programmingExercise.getMaxStaticCodeAnalysisPenalty()) {
                 codeAnalysisPenaltyPoints = programmingExercise.getMaxStaticCodeAnalysisPenalty();
@@ -369,21 +412,6 @@ public class ProgrammingExerciseGradingService {
         else {
             result.setScore(0L);
         }
-    }
-
-    private Predicate<Feedback> isInCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory, ProgrammingLanguage programmingLanguage) {
-        Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> categoryMappings = staticCodeAnalysisService.getMappingForCategory(staticCodeAnalysisCategory,
-                programmingLanguage);
-        return categoryMappings.<Predicate<Feedback>>map(mappings -> feedback -> {
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
-                return mappings.stream().anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()));
-            }
-            catch (JsonProcessingException e) {
-                return false;
-            }
-        }).orElseGet(() -> fb -> false);
     }
 
     /**

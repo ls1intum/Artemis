@@ -6,11 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.internal.metrics.managementcenter.ConcurrentArrayRingbuffer;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
@@ -101,10 +106,14 @@ public class StaticCodeAnalysisService {
         return originalCategories;
     }
 
-    public Optional<List<StaticCodeAnalysisConfiguration.CategoryMapping>> getMappingForCategory(StaticCodeAnalysisCategory staticCodeAnalysisCategory,
-            ProgrammingLanguage programmingLanguage) {
-        return staticCodeAnalysisDefaultConfigurations.get(programmingLanguage).getDefaultCategories().stream()
-                .filter(defaultCategory -> defaultCategory.getName().equals(staticCodeAnalysisCategory.getName())).findFirst()
-                .map(defaultCategory -> defaultCategory.getCategoryMappings());
+    public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisConfiguration.CategoryMapping>>> getCategoriesWithMappingForExercise(
+            ProgrammingExercise programmingExercise) {
+        var categories = findByExerciseId(programmingExercise.getId());
+        var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage()).getDefaultCategories();
+
+        return categories.stream()
+                .map(category -> defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst()
+                        .map(StaticCodeAnalysisConfiguration.DefaultCategory::getCategoryMappings).map(mappings -> new ImmutablePair<>(category, mappings)))
+                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 }
