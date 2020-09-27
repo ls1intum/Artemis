@@ -31,7 +31,7 @@
 
         <div class="grading-body-container">
             <div *ngIf="activeTab == 'test-cases'">
-                <div class="d-flex align-items-center justify-content-end">
+                <div class="d-flex align-items-center justify-content-end my-3">
                     <jhi-programming-exercise-grading-table-actions
                         [exercise]="exercise"
                         [hasUnsavedChanges]="!!changedTestCaseIds.length"
@@ -118,7 +118,7 @@
                 </ngx-datatable>
             </div>
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">
-                <div class="d-flex align-items-center justify-content-end">
+                <div class="d-flex align-items-center justify-content-end my-3">
                     <jhi-programming-exercise-grading-table-actions
                         [exercise]="exercise"
                         [hasUnsavedChanges]="!!changedCategoryIds.length"
@@ -157,7 +157,7 @@
                                 [value]="value"
                                 (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
                             ></jhi-table-editable-field>
-                            <span *ngElse jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                            <span *ngIf="row.state !== CategoryState.GRADED" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
@@ -167,7 +167,7 @@
                                 [value]="value"
                                 (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
                             ></jhi-table-editable-field>
-                            <span *ngElse jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                            <span *ngIf="row.state !== CategoryState.GRADED" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
                         </ng-template>
                     </ngx-datatable-column>
                 </ngx-datatable>

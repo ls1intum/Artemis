@@ -268,9 +268,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             return;
         }
         this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
-        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories
-            .map((category) => (category.id !== editedCategory.id ? category : { ...category, [field]: newValue }))
-            .map((category) => (category.state === StaticCodeAnalysisCategoryState.GRADED ? category : { ...category, penalty: 0, maxPenalty: 0 }));
+        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+            category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
+        );
     }
 
     /**
@@ -312,6 +312,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     saveCategories() {
         this.isSaving = true;
+
+        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+            category.state === StaticCodeAnalysisCategoryState.GRADED ? category : { ...category, penalty: 0, maxPenalty: 0 },
+        );
 
         const codeAnalysisCategoriesToUpdate = _intersectionWith(
             this.staticCodeAnalysisCategories,
