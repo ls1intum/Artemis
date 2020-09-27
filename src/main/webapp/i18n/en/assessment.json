@@ -19,16 +19,6 @@
                 "nextSubmission": "Assess Next Submission",
                 "resolveConflict": "Resolve Conflicts"
             },
-            "conflict": {
-                "assessor": "Assessor: {{otherUser}}",
-                "conflictingAssessments": "{{number}} conflicts",
-                "type": {
-                    "INCONSISTENT_COMMENT": "INCONSISTENT COMMENT",
-                    "INCONSISTENT_SCORE": "INCONSISTENT SCORE",
-                    "INCONSISTENT_FEEDBACK": "INCONSISTENT FEEDBACK"
-                }
-            },
-
             "detail": {
                 "feedback": "Feedback",
                 "scoreFor": "Assessment for"
