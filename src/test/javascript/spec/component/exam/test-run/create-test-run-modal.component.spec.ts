@@ -14,7 +14,8 @@ describe('Create Test Run Modal Component', () => {
     let artemisDurationPipe: ArtemisDurationFromSecondsPipe;
 
     const course = { id: 1 } as Course;
-    const exerciseGroup1 = { id: 1 } as ExerciseGroup;
+    const exercise = { id: 1 } as Exercise;
+    const exerciseGroup1 = { id: 1, exercises: [exercise] } as ExerciseGroup;
     const exam = { id: 1, course, started: true, startDate: moment(), endDate: moment().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
 
     beforeEach(() => {
@@ -40,6 +41,17 @@ describe('Create Test Run Modal Component', () => {
             expect(!!comp.workingTimeForm).toBeTruthy();
         }));
     });
+
+    describe('Ignore Exercise groups', () => {
+        it('should ingore exercise groups with no exercises', fakeAsync(() => {
+            const exerciseGroup2 = { id: 2 } as ExerciseGroup;
+            comp.exam = exam;
+            comp.exam.exerciseGroups?.push(exerciseGroup2);
+            fixture.detectChanges();
+            expect(comp.exam.exerciseGroups?.length).toBe(1);
+        }));
+    });
+
     describe('Exercise Selection', () => {
         it('should highlight the exercise when pressed', fakeAsync(() => {
             comp.exam = exam;
