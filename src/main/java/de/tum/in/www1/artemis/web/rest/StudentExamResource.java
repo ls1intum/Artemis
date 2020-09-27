@@ -375,7 +375,7 @@ public class StudentExamResource {
      * @return the deleted test run student exam
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
@@ -389,7 +389,7 @@ public class StudentExamResource {
     }
 
     /**
-     * Sets the started flag and inital started date.
+     * Sets the started flag and initial started date.
      * Calls {@link StudentExamResource#fetchParticipationsSubmissionsAndResultsForStudentExam} to set up the exercises.
      * Starts an exam session for the request
      * Filters out unneccesary attributes.
