@@ -55,17 +55,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseGroupService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionExportService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -124,12 +114,14 @@ public class TextExerciseResource {
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService;
 
+    private final AchievementService achievementService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, AchievementService achievementService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -148,6 +140,7 @@ public class TextExerciseResource {
         this.exerciseGroupService = exerciseGroupService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -190,6 +183,11 @@ public class TextExerciseResource {
         }
         if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin(user)) {
             return forbidden();
+        }
+
+        // Generate achievements if enabled in course and not part of exam
+        if (textExercise.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && textExercise.getExerciseGroup().getExam() == null) {
+            achievementService.generateForExercise(textExercise);
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);

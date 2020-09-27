@@ -53,18 +53,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ComplaintService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorDashboardService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
-import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -122,6 +111,8 @@ public class CourseResource {
 
     private final TutorDashboardService tutorDashboardService;
 
+    private final AchievementService achievementService;
+
     private final AuditEventRepository auditEventRepository;
 
     private final Optional<VcsUserManagementService> vcsUserManagementService;
@@ -133,7 +124,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            TutorDashboardService tutorDashboardService) {
+            TutorDashboardService tutorDashboardService, AchievementService achievementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -153,6 +144,7 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.tutorDashboardService = tutorDashboardService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -184,6 +176,11 @@ public class CourseResource {
         }
 
         validateComplaintsConfig(course);
+
+        // Add achievements if enabled
+        if (course.getHasAchievements()) {
+            achievementService.generateForCourse(course);
+        }
 
         try {
 
@@ -298,6 +295,14 @@ public class CourseResource {
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
         if (!shortNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
+        }
+
+        // Add or remove achievements
+        if (updatedCourse.getHasAchievements() && !existingCourse.get().getHasAchievements()) {
+            achievementService.generateForCourse(updatedCourse);
+        }
+        else if (!updatedCourse.getHasAchievements() && existingCourse.get().getHasAchievements()) {
+            achievementService.deleteAchievementsForCourse(updatedCourse);
         }
 
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)

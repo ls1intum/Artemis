@@ -299,10 +299,6 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
         return achievements;
     }
 
-    public void setAchievements(Set<Achievement> achievements) {
-        this.achievements = achievements;
-    }
-
     public void addAchievement(Achievement achievement) {
         this.achievements.add(achievement);
         achievement.getUsers().add(this);

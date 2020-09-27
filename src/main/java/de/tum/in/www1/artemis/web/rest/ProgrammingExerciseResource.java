@@ -92,6 +92,8 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final AchievementService achievementService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -104,7 +106,7 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService) {
+            ExerciseGroupService exerciseGroupService, AchievementService achievementService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -117,6 +119,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -308,6 +311,11 @@ public class ProgrammingExerciseResource {
         Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(programmingExercise);
         if (projectExistsError.isPresent()) {
             return projectExistsError.get();
+        }
+
+        // Generate achievements if enabled in course and not part of exam
+        if (course.getHasAchievements() && programmingExercise.getExerciseGroup().getExam() == null) {
+            achievementService.generateForExercise(programmingExercise);
         }
 
         try {

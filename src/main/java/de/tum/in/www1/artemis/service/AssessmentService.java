@@ -71,7 +71,7 @@ public class AssessmentService {
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
 
-        achievementService.assignPointBasedAchievementIfEarned(result);
+        achievementService.checkForAchievements(result);
 
         return resultRepository.save(result);
     }

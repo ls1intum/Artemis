@@ -58,9 +58,12 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final AchievementService achievementService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService,
+            AchievementService achievementService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
@@ -71,6 +74,7 @@ public class QuizExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
         this.examService = examService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -105,6 +109,11 @@ public class QuizExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
+        }
+
+        // Generate achievements if enabled in course and not part of exam
+        if (course.getHasAchievements() && quizExercise.getExerciseGroup().getExam() == null) {
+            achievementService.generateForExercise(quizExercise);
         }
 
         quizExercise = quizExerciseService.save(quizExercise);

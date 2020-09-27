@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -13,21 +13,29 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class AchievementService {
 
-    private final AchievementRepository achievementRepository;
+    private final PointBasedAchievementService pointBasedAchievementService;
 
-    private final ParticipationService participationService;
+    private final TimeBasedAchievementService timeBasedAchievementService;
+
+    private final ProgressBasedAchievementService progressBasedAchievementService;
+
+    private final AchievementRepository achievementRepository;
 
     private final UserRepository userRepository;
 
-    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, ParticipationService participationService) {
+    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
+            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
         this.achievementRepository = achievementRepository;
-        this.participationService = participationService;
+        this.pointBasedAchievementService = pointBasedAchievementService;
+        this.timeBasedAchievementService = timeBasedAchievementService;
+        this.progressBasedAchievementService = progressBasedAchievementService;
         this.userRepository = userRepository;
     }
 
@@ -55,6 +63,10 @@ public class AchievementService {
         return achievementRepository.save(achievement);
     }
 
+    public void deleteAchievementsForCourse(Course course) {
+        achievementRepository.deleteByCourse_Id(course.getId());
+    }
+
     /**
      * Creates an achievement and persist it
      * @param title title of the achievement
@@ -65,15 +77,16 @@ public class AchievementService {
      * @param exercise which the achievement belongs to
      * @return the created and persisted achievement
      */
-    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course, Exercise exercise) {
+    public Achievement create(String title, String description, String icon, AchievementRank rank, AchievementType type, Course course, Exercise exercise) {
         Achievement achievement = new Achievement();
         achievement.setTitle(title);
         achievement.setDescription(description);
         achievement.setIcon(icon);
         achievement.setRank(rank);
+        achievement.setType(type);
         achievement.setCourse(course);
         achievement.setExercise(exercise);
-        return achievementRepository.save(achievement);
+        return save(achievement);
     }
 
     /**
@@ -90,34 +103,60 @@ public class AchievementService {
         achievementRepository.delete(achievement);
     }
 
-    // @Transactional
-    public void assignPointBasedAchievementIfEarned(Result result) {
-        var score = result.getScore();
-        // TODO: add actually required score for achievements
-        var gold = 0.9;
-        var silver = 0.8;
-        var bronze = 0.7;
+    public void generateForCourse(Course course) {
+        progressBasedAchievementService.generateAchievements(course);
+    }
 
-        // TODO: get respective achievement
-        var achievement = new Achievement();
+    public void generateForExercise(Exercise exercise) {
+        pointBasedAchievementService.generateAchievements(exercise);
+        timeBasedAchievementService.generateAchievements(exercise);
+    }
 
-        var optionalUser = participationService.findOneStudentParticipation(result.getParticipation().getId()).getStudent();
+    public void checkForAchievements(Result result) {
+        if (!result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember().getHasAchievements()) {
+            return;
+        }
+        pointBasedAchievementService.checkForAchievement(result);
+        timeBasedAchievementService.checkForAchievement(result);
+        progressBasedAchievementService.checkForAchievement(result);
+    }
 
-        if (optionalUser.isPresent()) {
-            var user = optionalUser.get();
+    public void rewardAchievement(Course course, Exercise exercise, AchievementType type, AchievementRank rank, User user) {
+        Set<Achievement> achievements;
+        Achievement achievement;
 
-            if (score >= gold && !user.getAchievements().contains(achievement)) {
-                user.addAchievement(achievement);
-                userRepository.save(user);
-            }
-            else if (score >= silver && !user.getAchievements().contains(achievement)) {
-                user.addAchievement(achievement);
-                userRepository.save(user);
-            }
-            else if (score >= bronze && !user.getAchievements().contains(achievement)) {
-                user.addAchievement(achievement);
-                userRepository.save(user);
+        if (exercise == null) {
+            achievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), type);
+        }
+        else {
+            achievements = achievementRepository.findAllForRewardedTypeInExercise(course.getId(), exercise.getId(), type);
+        }
+
+        var optionalAchievement = achievements.stream().filter(a -> a.getRank().equals(rank)).findAny();
+        if (!optionalAchievement.isPresent()) {
+            return;
+        }
+
+        achievement = optionalAchievement.get();
+        if (achievement.getUsers().contains(user)) {
+            return;
+        }
+
+        var optionalAchievementsOfHigherRank = achievements.stream().filter(a -> a.getRank().ordinal() > rank.ordinal()).collect(Collectors.toSet());
+        for (Achievement a : optionalAchievementsOfHigherRank) {
+            if (a.getUsers().contains(user)) {
+                return;
             }
         }
+
+        var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.ordinal()).collect(Collectors.toSet());
+        for (Achievement a : optionalAchievementsOfLowerRank) {
+            if (a.getUsers().contains(user)) {
+                user.removeAchievement(a);
+            }
+        }
+
+        user.addAchievement(achievement);
+        userRepository.save(user);
     }
 }

@@ -69,10 +69,13 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
+    private final AchievementService achievementService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            AchievementService achievementService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -85,6 +88,7 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.achievementService = achievementService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -107,6 +111,11 @@ public class ModelingExerciseResource {
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
+        }
+
+        // Generate achievements if enabled in course and not part of exam
+        if (modelingExercise.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && modelingExercise.getExerciseGroup().getExam() == null) {
+            achievementService.generateForExercise(modelingExercise);
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);

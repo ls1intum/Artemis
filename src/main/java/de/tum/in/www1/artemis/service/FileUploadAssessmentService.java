@@ -86,7 +86,7 @@ public class FileUploadAssessmentService extends AssessmentService {
             fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
 
-        achievementService.assignPointBasedAchievementIfEarned(result);
+        achievementService.checkForAchievements(result);
 
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
