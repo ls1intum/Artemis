@@ -230,6 +230,9 @@ public class StudentExamResource {
 
         // 2nd: mark the student exam as started
         studentExam.setStarted(true);
+        if (studentExam.getStartedDate() == null) {
+            studentExam.setStartedDate(ZonedDateTime.now());
+        }
         studentExamRepository.save(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
@@ -291,6 +294,9 @@ public class StudentExamResource {
 
         // 2nd: mark the student exam as started
         testRun.setStarted(true);
+        if (testRun.getStartedDate() == null) {
+            testRun.setStartedDate(ZonedDateTime.now());
+        }
         studentExamRepository.save(testRun);
 
         // 3rd fetch participations, submissions and results and connect them to the testRun
