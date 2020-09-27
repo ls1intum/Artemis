@@ -155,44 +155,44 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
-        final var search = databse.configureSearch("");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        final var search = database.configureSearch("");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var search = databse.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
-        final var searchPython = databse.configureSearch("Python");
-        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchPython));
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var searchPython = database.configureSearch("Python");
+        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
 
-        final var searchJava = databse.configureSearch("Java");
-        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchJava));
+        final var searchJava = database.configureSearch("Java");
+        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
 
-        final var searchSwift = databse.configureSearch("Swift");
-        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
+        final var searchSwift = database.configureSearch("Swift");
+        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testAdminGetsResultsFromAllCourses() throws Exception {
-        databse.addCourseInOtherInstructionGroupAndExercise("Programming");
-        final var search = databse.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        database.addCourseInOtherInstructionGroupAndExercise("Programming");
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(2);
     }
 
