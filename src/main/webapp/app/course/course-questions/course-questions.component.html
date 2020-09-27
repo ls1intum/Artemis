@@ -26,7 +26,7 @@
                             >{{ studentQuestion.id }}</a
                         >
                     </td>
-                    <td class="w-50"><div class="markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div></td>
+                    <td><div class="question-cell markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div></td>
                     <td>{{ studentQuestion.creationDate | artemisDate }}</td>
                     <td>{{ studentQuestion.votes }}</td>
                     <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>

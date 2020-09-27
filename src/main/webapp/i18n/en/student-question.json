@@ -5,7 +5,7 @@
             "updated": "Question successfully updated",
             "deleted": "Question successfully deleted",
             "text": "Question text",
-            "creationDate": "Asked at",
+            "creationDate": "Asked on",
             "votes": "Votes",
             "answers": "Answers",
             "approvedAnswers": "Approved answers",

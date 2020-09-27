@@ -7,6 +7,7 @@ import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-course-questions',
+    styles: ['.question-cell { max-width: 40vw; max-height: 120px; overflow: auto;}'],
     templateUrl: './course-questions.component.html',
 })
 export class CourseQuestionsComponent implements OnInit, OnDestroy {
