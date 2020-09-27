@@ -36,7 +36,7 @@ public class TutorScoreService {
     private final ResultRepository resultRepository;
 
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-                             ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository) {
+            ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.complaintRepository = complaintRepository;
@@ -104,7 +104,8 @@ public class TutorScoreService {
             if (exercise.getMaxScore() != null) {
                 tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
             }
-        }else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+        }
+        else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
             tutorScore.setAllFeedbackRequests(tutorScore.getAllFeedbackRequests() + 1);
             tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
 
@@ -220,7 +221,8 @@ public class TutorScoreService {
                             }
 
                             tutorScoreRepository.save(fromComplaintResponse);
-                        }else {
+                        }
+                        else {
                             if (tutorScore.getNotAnsweredFeedbackRequests() > 0) {
                                 tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
                             }
@@ -327,7 +329,8 @@ public class TutorScoreService {
                         fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
 
                         tutorScoreRepository.save(fromComplaintResponse);
-                    }else {
+                    }
+                    else {
                         tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
                     }
                 }
