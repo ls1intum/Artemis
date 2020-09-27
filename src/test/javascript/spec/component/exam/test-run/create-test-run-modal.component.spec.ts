@@ -11,7 +11,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
-    let artemisDurationPipe: ArtemisDurationFromSecondsPipe;
 
     const course = { id: 1 } as Course;
     const exercise = { id: 1 } as Exercise;
@@ -29,7 +28,6 @@ describe('Create Test Run Modal Component', () => {
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
         comp = fixture.componentInstance;
-        artemisDurationPipe = fixture.debugElement.injector.get(ArtemisDurationFromSecondsPipe);
     });
 
     describe('OnInit', () => {
@@ -43,19 +41,18 @@ describe('Create Test Run Modal Component', () => {
     });
 
     describe('Ignore Exercise groups', () => {
-        it('should ingore exercise groups with no exercises', fakeAsync(() => {
+        it('should ignore exercise groups with no exercises', function () {
             const exerciseGroup2 = { id: 2 } as ExerciseGroup;
             comp.exam = exam;
             comp.exam.exerciseGroups?.push(exerciseGroup2);
             fixture.detectChanges();
-            expect(comp.exam.exerciseGroups?.length).toBe(1);
-        }));
+            expect(comp.exam.exerciseGroups!.length).toBe(1);
+        });
     });
 
     describe('Exercise Selection', () => {
         it('should highlight the exercise when pressed', fakeAsync(() => {
             comp.exam = exam;
-            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
@@ -64,7 +61,6 @@ describe('Create Test Run Modal Component', () => {
         }));
         it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
             comp.exam = exam;
-            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
