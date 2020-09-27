@@ -118,7 +118,8 @@
                     "resetFailed": "Die Tests konnten nicht zurückgesetzt werden."
                 },
                 "categories": {
-                    "notGraded": "Nicht benotet."
+                    "notGraded": "Nicht benotet.",
+                    "noFeedback": "Ohne sichtbares feedback."
                 },
                 "updatedGradingConfigShort": "Veränderte Benotung",
                 "updatedGradingConfig": "Achtung: Du hast die Benotung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Benotungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
