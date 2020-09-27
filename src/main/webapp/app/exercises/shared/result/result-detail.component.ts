@@ -35,7 +35,6 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestNames = false;
     @Input() showFeedbackCredits = false;
     @Input() exerciseType: ExerciseType;
-    @Input() maxPoints: number;
 
     isLoading = false;
     loadingFailed = false;

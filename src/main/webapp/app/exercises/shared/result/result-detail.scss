@@ -34,7 +34,34 @@
     }
 }
 
-.result-detail-graph,
-result-graph-wrapper {
+.result-detail-graph {
     margin-bottom: 1em;
+}
+
+.result-graph-wrapper {
+    margin-bottom: 1em;
+    display: flex;
+
+    .result-graph-svg {
+        margin-right: 1em;
+    }
+
+    .result-graph-legend {
+        display: flex;
+        flex-flow: column wrap;
+        justify-content: center;
+
+        .result-graph-legend-item {
+            display: flex;
+            align-items: center;
+
+            .result-graph-legend-dot {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                border-radius: 8px;
+                margin-right: 1em;
+            }
+        }
+    }
 }
