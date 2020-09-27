@@ -573,14 +573,11 @@ public class DatabaseUtilService {
 
         Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
         lecture.setDescription("a test lecture");
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture);
-        lecture.addAttachments(attachment1);
         course1.addLectures(lecture);
 
         courseRepo.save(course1);
         textExercise = exerciseRepo.save(textExercise);
         lecture = lectureRepo.save(lecture);
-        attachmentRepo.save(attachment1);
 
         List<StudentQuestion> studentQuestions = new ArrayList<>();
         StudentQuestion studentQuestion1 = new StudentQuestion();
