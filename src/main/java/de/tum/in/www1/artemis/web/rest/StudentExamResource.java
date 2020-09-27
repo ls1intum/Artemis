@@ -343,13 +343,13 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/create-test-run : Create a test run
+     * POST /courses/{courseId}/exams/{examId}/test-run : Create a test run
      * @param courseId the id of the course
      * @param examId the id of the exam
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/create-test-run")
+    @PostMapping("courses/{courseId}/exams/{examId}/test-run")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
@@ -368,13 +368,13 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/delete-test-run/{testRunId} : Delete a test run
+     * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
      * @param courseId the id of the course
      * @param examId the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
