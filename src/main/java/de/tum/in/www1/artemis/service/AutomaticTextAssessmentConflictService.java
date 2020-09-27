@@ -74,10 +74,6 @@ public class AutomaticTextAssessmentConflictService {
             }
         }).collect(toList());
 
-        if (textAssessmentConflictRequestDTOS.isEmpty()) {
-            return;
-        }
-
         // remote service call to athene
         final List<TextAssessmentConflictResponseDTO> textAssessmentConflictResponseDTOS;
         try {
@@ -97,7 +93,7 @@ public class AutomaticTextAssessmentConflictService {
         textAssessmentConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());
             Optional<Feedback> secondFeedback = feedbackRepository.findById(conflict.getSecondFeedbackId());
-            List<TextAssessmentConflict> storedConflicts = this.textAssessmentConflictRepository.findByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
+            List<TextAssessmentConflict> storedConflicts = this.textAssessmentConflictRepository.findConflictsOrMarkedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
                     conflict.getSecondFeedbackId());
             // if the found conflict is present but its type has changed, update it
             if (!storedConflicts.isEmpty() && !storedConflicts.get(0).getType().equals(conflict.getType())) {
@@ -113,6 +109,7 @@ public class AutomaticTextAssessmentConflictService {
                 textAssessmentConflict.setSecondFeedback(secondFeedback.get());
                 textAssessmentConflict.setType(conflict.getType());
                 textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
+                textAssessmentConflict.setMarkedAsNotConflict(false);
                 textAssessmentConflicts.add(textAssessmentConflict);
             }
         });
@@ -143,6 +140,12 @@ public class AutomaticTextAssessmentConflictService {
         return textSubmissionSet;
     }
 
+    /**
+     * Finds the textAssessmentConflict by id and set it as solved.
+     *
+     * @param textAssessmentConflictId - id for the searched textAssessmentConflict
+     * @return TextAssessmentConflict which is changed or null if no conflict has been found.
+     */
     public TextAssessmentConflict setConflictAsSolved(Long textAssessmentConflictId) {
         Optional<TextAssessmentConflict> textAssessmentConflict = this.textAssessmentConflictRepository.findById(textAssessmentConflictId);
         if (textAssessmentConflict.isEmpty()) {
@@ -150,6 +153,7 @@ public class AutomaticTextAssessmentConflictService {
         }
         textAssessmentConflict.get().setSolvedAt(ZonedDateTime.now());
         textAssessmentConflict.get().setConflict(false);
+        textAssessmentConflict.get().setMarkedAsNotConflict(true);
         this.textAssessmentConflictRepository.save(textAssessmentConflict.get());
 
         return textAssessmentConflict.get();
@@ -166,7 +170,7 @@ public class AutomaticTextAssessmentConflictService {
     private List<TextAssessmentConflict> findSolvedConflicts(List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS,
             List<TextAssessmentConflictResponseDTO> textAssessmentConflictResponseDTOS) {
         List<Long> feedbackIds = textAssessmentConflictRequestDTOS.stream().map(TextAssessmentConflictRequestDTO::getFeedbackId).collect(toList());
-        List<TextAssessmentConflict> storedConflicts = this.textAssessmentConflictRepository.findAllByFeedbackList(feedbackIds);
+        List<TextAssessmentConflict> storedConflicts = this.textAssessmentConflictRepository.findAllStoredConflictsByFeedbackList(feedbackIds);
 
         storedConflicts.forEach(conflict -> {
             boolean isPresent = textAssessmentConflictResponseDTOS.stream().anyMatch(newConflicts -> ((newConflicts.getFirstFeedbackId() == conflict.getFirstFeedback().getId()

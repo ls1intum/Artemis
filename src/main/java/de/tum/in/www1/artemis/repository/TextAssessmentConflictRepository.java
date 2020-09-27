@@ -22,15 +22,16 @@ public interface TextAssessmentConflictRepository extends JpaRepository<TextAsse
     List<TextAssessmentConflict> findAllByFeedback(@Param("feedbackId") Long feedbackId);
 
     @Query("select distinct conflict from TextAssessmentConflict conflict where conflict.conflict = true and (conflict.firstFeedback.id in (:feedbackIds) or conflict.secondFeedback.id in (:feedbackIds))")
-    List<TextAssessmentConflict> findAllByFeedbackList(@Param("feedbackIds") List<Long> feedbackIds);
+    List<TextAssessmentConflict> findAllStoredConflictsByFeedbackList(@Param("feedbackIds") List<Long> feedbackIds);
 
     List<TextAssessmentConflict> findByFirstFeedbackIdAndConflict(Long id, Boolean conflict);
 
     List<TextAssessmentConflict> findBySecondFeedbackIdAndConflict(Long id, Boolean conflict);
 
-    @Query("select distinct conflict from TextAssessmentConflict conflict where conflict.conflict = true and "
+    @Query("select distinct conflict from TextAssessmentConflict conflict where (conflict.conflict = true or conflict.markedAsNotConflict = true) and "
             + "((conflict.firstFeedback.id = :firstFeedbackId and conflict.secondFeedback.id = :secondFeedbackId) or "
             + "(conflict.secondFeedback.id = :firstFeedbackId and conflict.firstFeedback.id = :secondFeedbackId))")
-    List<TextAssessmentConflict> findByFirstAndSecondFeedback(@Param("firstFeedbackId") Long firstFeedbackId, @Param("secondFeedbackId") Long secondFeedbackId);
+    List<TextAssessmentConflict> findConflictsOrMarkedOnesByFirstAndSecondFeedback(@Param("firstFeedbackId") Long firstFeedbackId,
+            @Param("secondFeedbackId") Long secondFeedbackId);
 
 }
