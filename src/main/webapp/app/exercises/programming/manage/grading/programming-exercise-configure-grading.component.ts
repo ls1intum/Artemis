@@ -53,8 +53,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     showInactiveValue = false;
     isSaving = false;
     isLoading = false;
-    // This flag means that the test cases were edited, but no submission run was triggered yet.
-    hasUpdatedTestCases = false;
+    // This flag means that the grading config were edited, but no submission run was triggered yet.
+    hasUpdatedGradingConfig = false;
     activeTab: string;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
@@ -135,7 +135,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
                 const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
                     tap((releaseState) => {
-                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                        this.hasUpdatedGradingConfig = releaseState.testCasesChanged;
                         this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
                         this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                     }),
@@ -211,7 +211,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         }
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.exercise.id)
-            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
+            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))
             .subscribe();
     }
 
@@ -384,12 +384,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedTestCases)) {
+        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedGradingConfig)) {
             return true;
         }
         const warning = this.changedTestCaseIds.length
             ? this.translateService.instant('pendingChanges')
-            : this.translateService.instant('artemisApp.programmingExercise.manageTestCases.updatedTestCases');
+            : this.translateService.instant('artemisApp.programmingExercise.configureGrading.updatedGradingConfig');
         return confirm(warning);
     }
 

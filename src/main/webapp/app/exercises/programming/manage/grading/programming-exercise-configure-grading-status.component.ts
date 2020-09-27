@@ -38,18 +38,18 @@ import { Component, Input } from '@angular/core';
                 </div>
             </ng-template>
             <ng-container *ngIf="exerciseIsReleasedAndHasResults; else notReleased">
-                <div id="test-case-status-updated" class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedTestCases; else noUpdatedTestCases">
+                <div id="test-case-status-updated" class="d-flex align-items-center badge badge-warning" *ngIf="hasUpdatedGradingConfig; else noUpdatedGradingConfig">
                     <fa-icon
                         class="ml-2 text-white"
                         icon="exclamation-triangle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.manageTestCases.updatedTestCasesTooltip' | translate"
+                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | translate"
                     ></fa-icon>
-                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.updatedTestCasesShort"></span>
+                    <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.updatedGradingConfigShort"></span>
                 </div>
-                <ng-template #noUpdatedTestCases>
+                <ng-template #noUpdatedGradingConfig>
                     <div id="test-case-status-no-updated" class="d-flex align-items-center badge badge-success">
                         <fa-icon class="ml-2 text-white" icon="check-circle"></fa-icon>
-                        <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.manageTestCases.noUpdatedTestCases"></span>
+                        <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.noUpdatedGradingConfig"></span>
                     </div>
                 </ng-template>
             </ng-container>
@@ -70,5 +70,5 @@ export class ProgrammingExerciseConfigureGradingStatusComponent {
     @Input() exerciseIsReleasedAndHasResults: boolean;
     @Input() hasUnsavedTestCaseChanges: boolean;
     @Input() hasUnsavedCategoryChanges: boolean;
-    @Input() hasUpdatedTestCases: boolean;
+    @Input() hasUpdatedGradingConfig: boolean;
 }

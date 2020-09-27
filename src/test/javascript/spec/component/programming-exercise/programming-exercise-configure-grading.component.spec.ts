@@ -313,7 +313,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedTestCases).to.be.true;
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
 
         fixture.detectChanges();
 

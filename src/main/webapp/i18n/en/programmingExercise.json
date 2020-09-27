@@ -101,10 +101,6 @@
                 "showInactive": "Show inactivate test cases",
                 "testCasesUpdated": "The test cases were updated successfully.",
                 "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
-                "updatedTestCasesShort": "Updated test cases",
-                "updatedTestCases": "Warning: You have updated the exercise's test cases, but you have not triggered all student submissions with the new test case settings. Newly created results will be graded with the new test case settings, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
-                "updatedTestCasesTooltip": "You have updated the test cases, this does not have direct implications on the student results though. Newly created results will be graded with the new test case settings, existing results will not be changed. If you don't trigger all student submissions after the test case updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated test case settings.",
-                "noUpdatedTestCases": "No updated test cases",
                 "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page."
             },
             "configureGrading": {
@@ -121,6 +117,10 @@
                     "resetSuccessful": "The tests were reset successfully.",
                     "resetFailed": "The tests could not be reset."
                 },
+                "updatedGradingConfigShort": "Updated grading",
+                "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
+                "updatedGradingConfigTooltip": "You have updated the grading configuration, this does not have direct implications on the student results though. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions after the grading updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated grading configuration.",
+                "noUpdatedGradingConfig": "No updated grading",
                 "notReleased": "Not released",
                 "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the grading without having to trigger existing student submissions with the updated settings."
             },

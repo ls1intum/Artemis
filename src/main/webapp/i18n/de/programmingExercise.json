@@ -101,10 +101,6 @@
                 "showInactive": "Inaktive Testfälle anzeigen",
                 "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
                 "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
-                "updatedTestCasesShort": "Veränderte Testfälle",
-                "updatedTestCases": "Achtung: Du hast die Testfälle der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
-                "updatedTestCasesTooltip": "Du hast die Testfälle verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit den veränderten Testfällen erneut bewerten.",
-                "noUpdatedTestCases": "Keine veränderten Testfälle",
                 "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen."
             },
             "configureGrading": {
@@ -121,6 +117,10 @@
                     "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
                     "resetFailed": "Die Tests konnten nicht zurückgesetzt werden."
                 },
+                "updatedGradingConfigShort": "Veränderte Benotung",
+                "updatedGradingConfig": "Achtung: Du hast die Benotung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Benotungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
+                "updatedGradingConfigTooltip": "Du hast die Benotung verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Benotungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit der veränderten Benotung erneut bewerten.",
+                "noUpdatedGradingConfig": "Keine veränderte Benotung",
                 "notReleased": "Nicht veröffentlicht",
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Benotung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
             },

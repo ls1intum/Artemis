@@ -12,14 +12,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving"></jhi-programming-exercise-re-evaluate-button>
         <jhi-programming-exercise-trigger-all-button
             [exercise]="exercise"
-            [disabled]="isSaving || !hasUpdatedTestCases"
+            [disabled]="isSaving || !hasUpdatedGradingConfig"
             (onBuildTriggered)="onBuildTriggered.emit()"
         ></jhi-programming-exercise-trigger-all-button>
     `,
 })
 export class ProgrammingExerciseConfigureGradingActionsComponent {
     @Input() exercise: ProgrammingExercise;
-    @Input() hasUpdatedTestCases: boolean;
+    @Input() hasUpdatedGradingConfig: boolean;
     @Input() isSaving: boolean;
 
     @Output() onBuildTriggered = new EventEmitter();
