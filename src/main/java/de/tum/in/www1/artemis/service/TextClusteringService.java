@@ -123,7 +123,7 @@ public class TextClusteringService {
         for (int i = 0; i < blocks.size(); i++) {
             TextBlock block = blocks.get(i);
             block.setTreeId(i);
-            textBlockRepository.save(block);
+            textBlockMap.put(block.getId(), block);
         }
 
         // Invoke clustering for Text Blocks
@@ -131,7 +131,7 @@ public class TextClusteringService {
         final List<TextTreeNode> clusterTree;
         final List<List<Double>> distanceMatrix;
         try {
-            TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
+            TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(embeddings);
             clusters = response.clusters;
             clusterTree = response.clusterTree;
             distanceMatrix = response.distanceMatrix;
@@ -168,6 +168,8 @@ public class TextClusteringService {
             cluster.setExercise(exercise);
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
                     .collect(toList());
+            // To update the treeIds of the cluster
+            cluster.setBlocks(updatedBlockReferences);
 
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
 

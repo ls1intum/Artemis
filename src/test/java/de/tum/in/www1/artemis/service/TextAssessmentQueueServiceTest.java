@@ -12,10 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.text.TextBlock;
-import de.tum.in.www1.artemis.domain.text.TextCluster;
-import de.tum.in.www1.artemis.domain.text.TextExercise;
-import de.tum.in.www1.artemis.domain.text.TextSubmission;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
@@ -33,6 +30,12 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private TextBlockRepository textBlockRepository;
+
+    @Autowired
+    private TextPairwiseDistanceRepository textPairwiseDistanceRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -55,10 +58,22 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Test
     public void calculateAddedDistancesTest() {
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
-        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
+        List<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocksWithTreeId(4);
+        TextExercise exercise = textExerciseRepository.findAll().get(0);
+        exercise.setPairwiseDistances(new ArrayList<>());
+        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0).exercise(exercise);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
-        textCluster.setDistanceMatrix(distanceMatrix);
+        for (int i = 0; i < distanceMatrix.length; i++) {
+            for (int j = i + 1; j < distanceMatrix.length; j++) {
+                TextPairwiseDistance distance = new TextPairwiseDistance().exercise(exercise);
+                distance.setBlockI(i);
+                distance.setBlockJ(j);
+                distance.setDistance(distanceMatrix[i][j]);
+                exercise.addPairwiseDistance(distance);
+                textPairwiseDistanceRepository.save(distance);
+            }
+        }
+        textExerciseRepository.save(exercise);
         textAssessmentQueueService.setAddedDistances(textBlocks, textCluster);
         assertThat(textBlocks.get(0).getAddedDistance()).isCloseTo(1 - 0.1 + 1 - 0.2 + 1 - 0.3, errorRate);
         assertThat(textBlocks.get(1).getAddedDistance()).isCloseTo(1 - 0.1 + 1 - 0.4 + 1 - 0.5, errorRate);
