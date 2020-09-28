@@ -101,8 +101,8 @@ public class ResultService {
      * @param exerciseId the id of the exercise to load from the database
      * @return an list of results.
      */
-    public List<Result> findLatestResultsWithFeedbacksForExercise(Long exerciseId) {
-        return resultRepository.findLatestResultsWithEagerFeedbacksForExercise(exerciseId);
+    public List<Result> findLatestAutomaticResultsWithFeedbacksForExercise(Long exerciseId) {
+        return resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
     }
 
     /**

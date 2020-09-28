@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
-import { ProgrammingExerciseTestCaseStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 /**
  * Describes the editableField
@@ -59,7 +59,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     hasUpdatedGradingConfig = false;
     activeTab: string;
 
-    testCaseStatistics?: ProgrammingExerciseTestCaseStatistics;
+    gradingStatistics?: ProgrammingExerciseGradingStatistics;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
@@ -151,12 +151,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
-                const loadTestCaseStatistics = this.gradingService.getTestCaseStatistics(exerciseId).pipe(
-                    tap((statistics) => (this.testCaseStatistics = statistics)),
+                const loadGradingStatistics = this.gradingService.getGradingStatistics(exerciseId).pipe(
+                    tap((statistics) => (this.gradingStatistics = statistics)),
                     catchError(() => of(null)),
                 );
 
-                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories, loadTestCaseStatistics)
+                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories, loadGradingStatistics)
                     .pipe(take(1))
                     .subscribe(() => {
                         // This subscription e.g. adds new new tests to the table that were just created.
@@ -413,6 +413,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     getTestCaseStats(testName: string): TestCaseStats | undefined {
-        return this.testCaseStatistics?.testCaseStatsList.find((testCaseStats) => testCaseStats.testName === testName);
+        return this.gradingStatistics?.testCaseStatsList.find((testCaseStats) => testCaseStats.testName === testName);
     }
 }

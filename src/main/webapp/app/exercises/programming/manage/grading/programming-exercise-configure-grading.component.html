@@ -117,7 +117,7 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Passed %">
                         <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-test-case-passed-builds-graph [testCaseStats]="getTestCaseStats(row.testName)" [totalParticipations]="testCaseStatistics?.numParticipations">
+                            <jhi-test-case-passed-builds-graph [testCaseStats]="getTestCaseStats(row.testName)" [totalParticipations]="gradingStatistics?.numParticipations">
                             </jhi-test-case-passed-builds-graph>
                         </ng-template>
                     </ngx-datatable-column>

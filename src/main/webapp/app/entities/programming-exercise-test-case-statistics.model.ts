@@ -1,4 +1,4 @@
-export class ProgrammingExerciseTestCaseStatistics {
+export class ProgrammingExerciseGradingStatistics {
     numTestCases: number;
     numParticipations: number;
     testCaseStatsList: TestCaseStats[];

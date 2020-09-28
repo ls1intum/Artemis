@@ -6,10 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -23,15 +21,12 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ParticipationService participationService;
 
-    private final ResultService resultService;
-
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultService resultService) {
+            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
-        this.resultService = resultService;
     }
 
     /**
@@ -143,39 +138,4 @@ public class ProgrammingExerciseTestCaseService {
         return false;
     }
 
-    public ProgrammingExerciseTestCaseStatisticsDTO generateTestCaseStatistics(Long exerciseId) {
-
-        var statistics = new ProgrammingExerciseTestCaseStatisticsDTO();
-
-        var testCases = findByExerciseId(exerciseId);
-        statistics.setNumTestCases(testCases.size());
-
-        var results = resultService.findLatestResultsWithFeedbacksForExercise(exerciseId);
-        statistics.setNumParticipations(results.size());
-
-        testCases.forEach((testCase) -> {
-
-            int passed = 0, failed = 0;
-
-            for (var result : results) {
-                for (var feedback : result.getFeedbacks()) {
-                    if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getText().equals(testCase.getTestName())) {
-                        if (feedback.isPositive()) {
-                            passed++;
-                        }
-                        else {
-                            failed++;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            statistics.addTestCaseStats(new ProgrammingExerciseTestCaseStatisticsDTO.TestCaseStats(testCase.getTestName(), passed, failed));
-
-        });
-
-        return statistics;
-
-    }
 }

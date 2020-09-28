@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * This is a dto for providing statistics for the programming exercise test cases.
  */
-public class ProgrammingExerciseTestCaseStatisticsDTO {
+public class ProgrammingExerciseGradingStatisticsDTO {
 
     private Integer numTestCases;
 

@@ -6,7 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
-import { ProgrammingExerciseTestCaseStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean; bonusMultiplier: number; bonusPoints: number };
 export type StaticCodeAnalysisCategoryUpdate = { id: number; penalty: number; maxPenalty: number; state: string };
@@ -87,8 +87,8 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
         return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/update-test-cases`, updates);
     }
 
-    public getTestCaseStatistics(exerciseId: number): Observable<ProgrammingExerciseTestCaseStatistics> {
-        return this.http.get<ProgrammingExerciseTestCaseStatistics>(`${this.resourceUrl}/${exerciseId}/test-case-statistics`);
+    public getGradingStatistics(exerciseId: number): Observable<ProgrammingExerciseGradingStatistics> {
+        return this.http.get<ProgrammingExerciseGradingStatistics>(`${this.resourceUrl}/${exerciseId}/grading/statistics`);
     }
 
     /**

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
@@ -91,6 +92,29 @@ public class ProgrammingExerciseGradingResource {
         return ResponseEntity.ok(updatedResults.size());
     }
 
+    /**
+     * Get the exercise's test case statistics for the the given exercise id.
+     *
+     * @param exerciseId of the the exercise.
+     * @return the test case statistics for the exercise.
+     */
+    @GetMapping(Endpoints.STATISTICS)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        var statistics = programmingExerciseGradingService.generateGradingStatistics(exerciseId);
+        return ResponseEntity.ok(statistics);
+    }
+
     public static final class Endpoints {
 
         private static final String GRADING = "/programming-exercise/{exerciseId}/grading";
@@ -98,6 +122,8 @@ public class ProgrammingExerciseGradingResource {
         public static final String RESET = GRADING + "/reset";
 
         public static final String RE_EVALUATE = GRADING + "/re-evaluate";
+
+        public static final String STATISTICS = GRADING + "/statistics";
 
         private Endpoints() {
         }

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -48,10 +49,12 @@ public class ProgrammingExerciseGradingService {
 
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final ResultService resultService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate,
-            StaticCodeAnalysisService staticCodeAnalysisService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, ResultService resultService) {
         this.testCaseService = testCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -60,6 +63,7 @@ public class ProgrammingExerciseGradingService {
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.resultService = resultService;
     }
 
     /**
@@ -454,6 +458,42 @@ public class ProgrammingExerciseGradingService {
      */
     private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
         return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
+    }
+
+    public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
+
+        var statistics = new ProgrammingExerciseGradingStatisticsDTO();
+
+        var testCases = testCaseService.findByExerciseId(exerciseId);
+        statistics.setNumTestCases(testCases.size());
+
+        var results = resultService.findLatestAutomaticResultsWithFeedbacksForExercise(exerciseId);
+        statistics.setNumParticipations(results.size());
+
+        testCases.forEach((testCase) -> {
+
+            int passed = 0, failed = 0;
+
+            for (var result : results) {
+                for (var feedback : result.getFeedbacks()) {
+                    if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getText().equals(testCase.getTestName())) {
+                        if (feedback.isPositive()) {
+                            passed++;
+                        }
+                        else {
+                            failed++;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            statistics.addTestCaseStats(new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(testCase.getTestName(), passed, failed));
+
+        });
+
+        return statistics;
+
     }
 
 }
