@@ -6,22 +6,22 @@ $footer-height: 31px;
 
 .plagiarism-inspector {
     height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height});
-    // JHipster .card-body has default padding of 1.25
+    // JHipster's .card-body has default padding of 1.25
     margin: -1.25rem;
 
     .plagiarism-sidebar {
+        border-right: 1px solid $body-bg;
+        bottom: 0;
         display: flex;
         flex-direction: column;
-        width: 200px;
+        left: 0;
         position: absolute;
         top: 0;
-        left: 0;
-        bottom: 0;
-        border-right: 1px solid $body-bg;
+        width: 200px;
 
         &-header {
-            flex-shrink: 0;
             border-bottom: 1px solid $body-bg;
+            flex-shrink: 0;
             padding: 0.75rem;
 
             .btn-link {
@@ -38,27 +38,27 @@ $footer-height: 31px;
             flex-grow: 1;
 
             .plagiarism-list {
-                padding: 0;
-                margin: 0;
-                list-style: none;
                 height: 100%;
+                list-style: none;
+                margin: 0;
                 overflow-y: auto;
+                padding: 0;
 
                 &-item {
-                    display: flex;
                     align-items: center;
-                    justify-content: space-between;
                     cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
                     padding: 0.75rem;
 
                     &-students {
-                        font-size: 10px;
                         color: grey;
+                        font-size: 10px;
                     }
 
                     &-content {
-                        display: flex;
                         align-items: center;
+                        display: flex;
                     }
 
                     &-info {
@@ -67,11 +67,11 @@ $footer-height: 31px;
                     }
 
                     .plagiarism-indicator {
-                        border-radius: 50%;
                         background-color: $body-bg;
+                        border-radius: 50%;
                         height: 8px;
-                        width: 8px;
                         margin-right: 0.75rem;
+                        width: 8px;
 
                         &.confirmed {
                             background-color: green;
@@ -95,8 +95,8 @@ $footer-height: 31px;
 
         &-footer {
             border-top: 1px solid $body-bg;
-            padding: 0.75rem;
             flex-shrink: 0;
+            padding: 0.75rem;
         }
     }
 
@@ -108,10 +108,10 @@ $footer-height: 31px;
     }
 
     .plagiarism-empty {
-        display: flex;
         align-items: center;
-        justify-content: center;
+        display: flex;
         height: 100%;
+        justify-content: center;
         opacity: 0.5;
     }
 

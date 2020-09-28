@@ -72,7 +72,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 this.split.collapse(0);
                 return;
             }
-            case 'half': {
+            case 'even': {
                 this.split.setSizes([50, 50]);
             }
         }

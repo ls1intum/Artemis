@@ -7,8 +7,8 @@
             <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
             <span>{{ 'artemisApp.plagiarism.warning' | translate }}</span>
         </div>
-        <button class="btn btn-success btn-sm" (click)="onTagPlagiarism(true)">{{ 'artemisApp.plagiarism.confirm' | translate }}</button>
-        <button class="btn btn-danger btn-sm" (click)="onTagPlagiarism(false)">{{ 'artemisApp.plagiarism.deny' | translate }}</button>
+        <button class="btn btn-success btn-sm" (click)="tagPlagiarism(true)">{{ 'artemisApp.plagiarism.confirm' | translate }}</button>
+        <button class="btn btn-danger btn-sm" (click)="tagPlagiarism(false)">{{ 'artemisApp.plagiarism.deny' | translate }}</button>
         <div class="vertical-divider"></div>
         <div class="split-controls">
             <div class="split-control" (click)="split.emit('left')">
@@ -17,7 +17,7 @@
                     <path d="M17 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H17V4Z" fill="#E4E5E6" />
                 </svg>
             </div>
-            <div class="split-control" (click)="split.emit('half')">
+            <div class="split-control" (click)="split.emit('even')">
                 <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H11V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="#E4E5E6" />
                     <path d="M13 4H18.5C19.3284 4 20 4.67157 20 5.5V18.5C20 19.3284 19.3284 20 18.5 20H13V4Z" fill="#E4E5E6" />

@@ -143,6 +143,7 @@ Generic styles
     }
 }
 
+// This class refers to the gutter inserted by split.js for its split view
 .gutter {
     background-color: #f1f1f1;
     cursor: col-resize;
@@ -150,16 +151,16 @@ Generic styles
     transition: background-color 0.2s;
 
     &::before {
-        transition: background-color 0.2s;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        background-color: darken($body-bg, 10);
+        border-radius: 1px;
         content: '';
         height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transition: background-color 0.2s;
+        transform: translate(-50%, -50%);
         width: 2px;
-        border-radius: 1px;
-        background-color: darken($body-bg, 10);
     }
 
     &:active,
