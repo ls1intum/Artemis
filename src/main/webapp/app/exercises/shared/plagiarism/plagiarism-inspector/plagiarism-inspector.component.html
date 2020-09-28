@@ -1,11 +1,11 @@
 <div class="plagiarism-inspector">
     <aside class="plagiarism-sidebar">
         <div class="plagiarism-sidebar-header">
-            <button class="btn btn-link" (click)="goBack()">Back</button>
-            <h6>Plagiarism Inspection</h6>
+            <button class="btn btn-link" (click)="goBack()">{{ 'artemisApp.plagiarism.back' | translate }}</button>
+            <h6>{{ 'artemisApp.plagiarism.inspection' | translate }}</h6>
         </div>
         <div class="plagiarism-sidebar-body">
-            <div class="plagiarism-empty" *ngIf="!modelingSubmissionComparisons || !modelingSubmissionComparisons.length">No plagiarism found</div>
+            <div class="plagiarism-empty" *ngIf="!modelingSubmissionComparisons || !modelingSubmissionComparisons.length">{{ 'artemisApp.plagiarism.not-found' | translate }}</div>
             <ul class="plagiarism-list" *ngIf="modelingSubmissionComparisons && modelingSubmissionComparisons.length">
                 <li
                     class="plagiarism-list-item"
@@ -16,7 +16,7 @@
                     <div class="plagiarism-list-item-content">
                         <span class="plagiarism-indicator" [ngClass]="{ confirmed: comparison.confirmed === true, denied: comparison.confirmed === false }"></span>
                         <div class="plagiarism-list-item-info">
-                            <span class="plagiarism-name">Plagiarism #{{ idx + 1 }}</span>
+                            <span class="plagiarism-name">{{ 'artemisApp.plagiarism.plagiarism' | translate }} #{{ idx + 1 }}</span>
                             <span class="plagiarism-list-item-students">
                                 <span>{{ comparison.element1.studentLogin }}, </span>
                                 <span>{{ comparison.element2.studentLogin }}</span>
@@ -43,7 +43,7 @@
         </div>
     </aside>
     <div class="plagiarism-main">
-        <div class="plagiarism-empty" *ngIf="selectedComparisonIndex == undefined">No plagiarism selected</div>
+        <div class="plagiarism-empty" *ngIf="selectedComparisonIndex == undefined">{{ 'artemisApp.plagiarism.not-selected' | translate }}</div>
         <div *ngIf="selectedComparisonIndex != undefined" class="plagiarism-content">
             <jhi-plagiarism-header
                 [comparisonIdx]="selectedComparisonIndex + 1"

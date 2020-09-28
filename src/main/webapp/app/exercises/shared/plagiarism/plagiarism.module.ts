@@ -9,6 +9,6 @@ import { TranslateModule } from '@ngx-translate/core';
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisModelingEditorModule, TranslateModule],
     declarations: [PlagiarismHeaderComponent, PlagiarismInspectorComponent, PlagiarismSplitViewComponent, SplitPaneDirective],
-    exports: [PlagiarismHeaderComponent, PlagiarismInspectorComponent, PlagiarismSplitViewComponent],
+    exports: [PlagiarismInspectorComponent],
 })
 export class ArtemisPlagiarismModule {}
