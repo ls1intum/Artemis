@@ -84,10 +84,6 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private Complaint feedbackRequest;
 
-    private ComplaintResponse complaintResponse;
-
-    private ComplaintResponse answeredFeedbackRequest;
-
     @BeforeEach
     public void initTestCase() {
         database.addUsers(4, 3, 2);
@@ -350,7 +346,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
 
-        complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
         complaintResponseRepo.save(complaintResponse);
         // change score to trigger PostUpdate
         result.setScore(95L);
@@ -384,7 +380,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
 
-        answeredFeedbackRequest = new ComplaintResponse().complaint(feedbackRequest.accepted(true)).reviewer(user);
+        ComplaintResponse answeredFeedbackRequest = new ComplaintResponse().complaint(feedbackRequest.accepted(true)).reviewer(user);
         complaintResponseRepo.save(answeredFeedbackRequest);
         // change score to trigger PostUpdate
         result.setScore(90L);
