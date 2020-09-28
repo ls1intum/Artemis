@@ -208,8 +208,6 @@ Configure Artemis
    server:
        port: 8080                                         # The port of artemis
        url: http://172.20.0.1:8080                        # needs to be an ip
-       // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one  
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,

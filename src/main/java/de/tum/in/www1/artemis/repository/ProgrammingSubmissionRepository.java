@@ -52,8 +52,5 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor" })
     Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
-    Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
-
     Optional<ProgrammingSubmission> findByResultId(long resultId);
 }

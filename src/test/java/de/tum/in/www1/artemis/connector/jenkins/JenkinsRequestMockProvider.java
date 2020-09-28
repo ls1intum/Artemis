@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,6 +19,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.ExtractHeader;
 import com.offbytwo.jenkins.model.FolderJob;
+import com.offbytwo.jenkins.model.Job;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 

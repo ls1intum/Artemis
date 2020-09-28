@@ -611,7 +611,6 @@ public class ModelFactory {
         job.setId(42);
         job.setFailedTests(failedTests);
         job.setSuccessfulTests(successfulTests);
-        job.setLogs(List.of());
 
         summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
         summary.setSuccessfulCount(successfulTestNames.size());

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * Spring Data repository for the Submission entity.

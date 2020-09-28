@@ -14,6 +14,7 @@ buildscript {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
         classpath "com.github.ben-manes:gradle-versions-plugin:0.29.0"
+        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
 
@@ -29,11 +30,12 @@ plugins {
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.6.1"
+    //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
+    id "com.diffplug.spotless" version "5.2.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.5.1"
+version = "4.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -78,7 +80,8 @@ spotless {
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
 
-        removeUnusedImports()
+        // the following command is not compatible with Java switch expressions
+//        removeUnusedImports()
     }
 }
 
@@ -163,6 +166,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    //jhipster-needle-gradle-repositories - JHipster will add additional repositories
 }
 
 dependencies {
@@ -285,7 +289,8 @@ dependencies {
     testImplementation 'org.apache.maven.surefire:surefire-report-parser:2.22.2'
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation 'org.json:json:20200518'
+    testImplementation group: 'org.json', name: 'json', version: '20200518'
+    //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
 task cleanResources(type: Delete) {
@@ -350,7 +355,7 @@ if (project.hasProperty("nodeInstall")) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.36.1"
+    toolVersion "8.36"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0

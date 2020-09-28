@@ -274,8 +274,6 @@ public class BambooBuildResultNotificationDTO {
 
         private List<StaticCodeAnalysisReportDTO> staticAssessmentReports;
 
-        private List<BuildLogDTO> logs;
-
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
         }
@@ -306,14 +304,6 @@ public class BambooBuildResultNotificationDTO {
 
         public void setStaticAssessmentReports(List<StaticCodeAnalysisReportDTO> staticAssessmentReports) {
             this.staticAssessmentReports = staticAssessmentReports;
-        }
-
-        public List<BuildLogDTO> getLogs() {
-            return logs;
-        }
-
-        public void setLogs(List<BuildLogDTO> logs) {
-            this.logs = logs;
         }
     }
 
@@ -358,30 +348,6 @@ public class BambooBuildResultNotificationDTO {
 
         public void setErrors(List<String> errors) {
             this.errors = errors;
-        }
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class BuildLogDTO {
-
-        private ZonedDateTime date;
-
-        private String log;
-
-        public ZonedDateTime getDate() {
-            return date;
-        }
-
-        public void setDate(ZonedDateTime date) {
-            this.date = date;
-        }
-
-        public String getLog() {
-            return log;
-        }
-
-        public void setLog(String log) {
-            this.log = log;
         }
     }
 }
