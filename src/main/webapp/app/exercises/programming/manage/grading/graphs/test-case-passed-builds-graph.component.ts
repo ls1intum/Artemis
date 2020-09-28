@@ -8,8 +8,8 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
             <svg viewBox="0 0 100 10" style="border-radius: 4px">
                 <rect x="0" y="0" width="100" height="10" fill="#ddd"></rect>
 
-                <rect x="0" y="0" [attr.width]="passedPercent" height="10" fill="#00ff00"></rect>
-                <rect [attr.x]="passedPercent" y="0" [attr.width]="failedPercent" height="10" fill="#ff0000"></rect>
+                <rect x="0" y="0" [attr.width]="passedPercent" height="10" fill="#28a745"></rect>
+                <rect [attr.x]="passedPercent" y="0" [attr.width]="failedPercent" height="10" fill="#dc3545"></rect>
             </svg>
         </div>
     `,
