@@ -198,8 +198,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
         }
         // Only half of the matrix is stored in the database, as it is symmetrical (Main diagonal also not stored).
         int matrixSize = (blocks.size() - 1) * blocks.size() / 2; // Gives sum of numbers from 1 to (blocks.size() - 1)
-        // TODO: Works on Bamboo but not on Github
-        // assertThat(pairwiseDistances, hasSize(matrixSize));
+        assertThat(pairwiseDistances, hasSize(matrixSize));
 
         // Getter and setter for lambda value tested
         TextTreeNode testNode = new TextTreeNode();

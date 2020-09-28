@@ -32,12 +32,6 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     private TextBlockRepository textBlockRepository;
 
     @Autowired
-    private TextPairwiseDistanceRepository textPairwiseDistanceRepository;
-
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
@@ -58,22 +52,10 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Test
     public void calculateAddedDistancesTest() {
-        List<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocksWithTreeId(4);
-        TextExercise exercise = textExerciseRepository.findAll().get(0);
-        exercise.setPairwiseDistances(new ArrayList<>());
-        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0).exercise(exercise);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
+        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
-        for (int i = 0; i < distanceMatrix.length; i++) {
-            for (int j = i + 1; j < distanceMatrix.length; j++) {
-                TextPairwiseDistance distance = new TextPairwiseDistance().exercise(exercise);
-                distance.setBlockI(i);
-                distance.setBlockJ(j);
-                distance.setDistance(distanceMatrix[i][j]);
-                exercise.addPairwiseDistance(distance);
-                textPairwiseDistanceRepository.save(distance);
-            }
-        }
-        textExerciseRepository.save(exercise);
+        textCluster.setDistanceMatrix(distanceMatrix);
         textAssessmentQueueService.setAddedDistances(textBlocks, textCluster);
         assertThat(textBlocks.get(0).getAddedDistance()).isCloseTo(1 - 0.1 + 1 - 0.2 + 1 - 0.3, errorRate);
         assertThat(textBlocks.get(1).getAddedDistance()).isCloseTo(1 - 0.1 + 1 - 0.4 + 1 - 0.5, errorRate);

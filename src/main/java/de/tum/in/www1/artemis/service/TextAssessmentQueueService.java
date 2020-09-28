@@ -21,13 +21,9 @@ public class TextAssessmentQueueService {
 
     private final TextSubmissionService textSubmissionService;
 
-    private final TextPairwiseDistanceRepository textPairwiseDistanceRepository;
-
-    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService,
-            TextPairwiseDistanceRepository textPairwiseDistanceRepository) {
+    public TextAssessmentQueueService(TextClusterRepository textClusterRepository, @Lazy TextSubmissionService textSubmissionService) {
         this.textClusterRepository = textClusterRepository;
         this.textSubmissionService = textSubmissionService;
-        this.textPairwiseDistanceRepository = textPairwiseDistanceRepository;
     }
 
     /**
@@ -99,21 +95,10 @@ public class TextAssessmentQueueService {
         if (!cluster.getBlocks().contains(textBlock)) {
             throw new IllegalArgumentException("textBlock must be an element of the cluster");
         }
-        List<TextBlock> blocks = cluster.getBlocks();
-        double sum = 0.0;
-        for (TextBlock block : blocks) {
-            TextPairwiseDistance distance;
-            // TODO: Why 1 - distance? (Entries in textPairwiseDistanceRepository have the actual distances)
-            if (block.getTreeId() < textBlock.getTreeId()) {
-                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), block.getTreeId(), textBlock.getTreeId());
-                sum += 1 - distance.getDistance();
-            }
-            else if (block.getTreeId() > textBlock.getTreeId()) {
-                distance = textPairwiseDistanceRepository.findByExerciseAndAndBlockIAndBlockJ(cluster.getExercise(), textBlock.getTreeId(), block.getTreeId());
-                sum += 1 - distance.getDistance();
-            }
-        }
-        return sum;
+        double[][] distanceMatrix = cluster.getDistanceMatrix();
+        int blockID = cluster.getBlocks().indexOf(textBlock);
+        // subtract 1 because the statement also included the distance to itself, but it should't be included
+        return Arrays.stream(distanceMatrix[blockID]).map(distance -> 1.0 - distance).sum() - 1;
     }
 
     /**
@@ -122,7 +107,6 @@ public class TextAssessmentQueueService {
      * @param textBlockList list of the TextBlocks
      * @param textCluster Cluster
      */
-    @Transactional(readOnly = true)
     public void setAddedDistances(List<TextBlock> textBlockList, TextCluster textCluster) {
         textBlockList.forEach(textBlock -> {
             double addedDistance = calculateAddedDistance(textBlock, textCluster);
