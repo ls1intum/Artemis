@@ -128,17 +128,11 @@ export class TestRunManagementComponent implements OnInit {
         return false;
     }
 
+    /**
+     * Get function to determine if at least one exercise has been configured for the exam
+     */
     get examContainsExercises(): boolean {
-        let atLeastOneExercise = false;
-        if (this.exam.exerciseGroups && this.exam.exerciseGroups.length > 0) {
-            for (const exerciseGroup of this.exam.exerciseGroups) {
-                if (!!exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
-                    atLeastOneExercise = true;
-                    break;
-                }
-            }
-        }
-        return atLeastOneExercise;
+        return !!this.exam.exerciseGroups && this.exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
     }
 
     private onError(error: HttpErrorResponse) {
