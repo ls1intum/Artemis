@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.TutorScoreService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -57,6 +58,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
+    TutorScoreService tutorScoreService;
+
+    @Autowired
     DatabaseUtilService database;
 
     @Autowired
@@ -81,6 +85,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     private Complaint feedbackRequest;
 
     private ComplaintResponse complaintResponse;
+
+    private ComplaintResponse answeredFeedbackRequest;
 
     @BeforeEach
     public void initTestCase() {
@@ -125,6 +131,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         courseRepo.save(course);
         // exercise2
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxScore(5.0);
         exerciseRepo.save(exercise);
 
         // score for tutor1 in exercise2 in course2
@@ -161,6 +168,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // exercise3 in course1
         course = courseRepo.findAll().get(0);
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxScore(3.0);
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
@@ -216,6 +224,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // exercise3 in course1
         course = courseRepo.findAll().get(0);
         exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise.setMaxScore(6.0);
         exerciseRepo.save(exercise);
         // score for tutor1 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
@@ -262,7 +271,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<TutorScore> list = tutorScoresRepo.findAll();
         TutorScore tutorScore = list.get(0);
 
-        TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getId()).as("response id is as expected").isEqualTo(tutorScore.getId());
     }
 
@@ -326,7 +335,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
-        result.setScore(100L);
+        result.setScore(90L);
         resultRepo.save(result);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
@@ -343,6 +352,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
         complaintResponseRepo.save(complaintResponse);
+        // change score to trigger PostUpdate
+        result.setScore(95L);
+        resultRepo.save(result);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllComplaints()).as("complaints amount is as expected").isEqualTo(1);
@@ -372,8 +384,11 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
 
-        complaintResponse = new ComplaintResponse().complaint(feedbackRequest.accepted(true));
-        complaintResponseRepo.save(complaintResponse);
+        answeredFeedbackRequest = new ComplaintResponse().complaint(feedbackRequest.accepted(true)).reviewer(user);
+        complaintResponseRepo.save(answeredFeedbackRequest);
+        // change score to trigger PostUpdate
+        result.setScore(90L);
+        resultRepo.save(result);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
         assertThat(response.getAllFeedbackRequests()).as("feedback request amount is as expected").isEqualTo(1);
@@ -475,5 +490,28 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exercise = exerciseRepo.findAll().get(0);
 
         request.delete("/api/tutor-scores/exercise/" + exercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void removeNotAnsweredFeedbackRequestTest() throws Exception {
+        user = userRepo.findAllInGroup("tutor").get(0);
+        exercise = exerciseRepo.findAll().get(0);
+
+        var response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getNotAnsweredFeedbackRequests()).as("not answered feedback requests is 0").isEqualTo(0);
+
+        // set not answered feedback requests
+        response.setNotAnsweredFeedbackRequests(2);
+        tutorScoresRepo.save(response);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getNotAnsweredFeedbackRequests()).as("not answered feedback requests is 2").isEqualTo(2);
+
+        // remove not answered feedback request
+        tutorScoreService.removeNotAnsweredFeedbackRequest(response);
+
+        response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
+        assertThat(response.getNotAnsweredFeedbackRequests()).as("not answered feedback requests is 1").isEqualTo(1);
     }
 }
