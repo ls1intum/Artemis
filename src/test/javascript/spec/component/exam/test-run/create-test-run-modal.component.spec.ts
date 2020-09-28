@@ -15,6 +15,7 @@ describe('Create Test Run Modal Component', () => {
     const exercise = { id: 1 } as Exercise;
     const exerciseGroup1 = { id: 1, exercises: [exercise] } as ExerciseGroup;
     const exam = { id: 1, course, started: true, startDate: moment(), endDate: moment().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
+    const exerciseGroup2 = { id: 2 } as ExerciseGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,9 +42,8 @@ describe('Create Test Run Modal Component', () => {
 
     describe('Ignore Exercise groups', () => {
         it('should ignore exercise groups with no exercises', function () {
-            const exerciseGroup2 = { id: 2 } as ExerciseGroup;
             comp.exam = exam;
-            comp.exam.exerciseGroups?.push(exerciseGroup2);
+            comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
             expect(comp.exam.exerciseGroups!.length).toBe(1);
         });
