@@ -71,4 +71,14 @@ describe('AssessmentLayoutComponent', () => {
         backButton = fixture.debugElement.query(By.css('fa-icon.back-button'));
         expect(backButton).toBeFalsy();
     });
+
+    it('Assessors should be allowed to respond if test run ', () => {
+        component.complaint = new Complaint();
+        component.isTestRun = true;
+        component.isAssessor = true;
+        fixture.detectChanges();
+        const isAllowedToRespond = component.isAllowedToRespond;
+
+        expect(isAllowedToRespond).toBeTruthy();
+    });
 });

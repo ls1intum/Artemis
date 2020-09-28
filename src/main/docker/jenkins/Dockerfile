@@ -1,22 +1,22 @@
 FROM jenkins/jenkins:lts
- 
+
  LABEL description="Jenkins with maven, python3.6 and gcc libraries pre-installed for Artemis"
- 
+
  USER root
- 
+
  RUN apt update
- 
+
  # Install Java and Maven dependencies
  RUN apt-get install -y maven
  RUN cd /usr/lib/jvm && \
-     wget https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14%2B36.1_openj9-0.19.0/OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz && \
-     tar -zxf OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz \
-     && mv jdk-14+36 java-14-openjdk-amd64 \
-     && rm OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz
- RUN chown -R root:root /usr/lib/jvm/java-14-openjdk-amd64
- RUN JAVA_HOME="/usr/lib/jvm/java-14-openjdk-amd64" && export JAVA_HOME
- ENV JAVA_HOME /usr/lib/jvm/java-14-openjdk-amd64
- 
+     wget https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15%2B36/OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz && \
+     tar -zxf OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz \
+     && mv jdk-15+36 java-15-openjdk-amd64 \
+     && rm OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz
+ RUN chown -R root:root /usr/lib/jvm/java-15-openjdk-amd64
+ RUN JAVA_HOME="/usr/lib/jvm/java-15-openjdk-amd64" && export JAVA_HOME
+ ENV JAVA_HOME /usr/lib/jvm/java-15-openjdk-amd64
+
  # Install C dependencies
  RUN apt install -y gcc gdb make libubsan0 liblsan0 libtsan0
 
@@ -35,8 +35,8 @@ FROM jenkins/jenkins:lts
  RUN apt install -y python3 python3-pip
  RUN cd ..
  RUN rm -r -f Python3.6.9/ && rm -f Python-3.6.9.tgz
- 
+
  # Install pytest for python exercises
  RUN pip3 install -U pytest
- 
+
  USER jenkins

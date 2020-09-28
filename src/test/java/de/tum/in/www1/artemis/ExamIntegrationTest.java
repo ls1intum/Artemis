@@ -739,6 +739,98 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExamWithOneTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + testRun.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTestRunWithReferencedParticipations() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        var testRun2 = new StudentExam();
+        testRun2.setTestRun(true);
+        testRun2.setExam(testRun1.getExam());
+        testRun2.setUser(instructor);
+        testRun2.setExercises(testRun1.getExercises());
+        testRun2.setWorkingTime(testRun1.getWorkingTime());
+        studentExamRepository.save(testRun2);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + testRun2.getId(), HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject();
+        var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam1.getId());
+        assertThat(testRunList.size()).isEqualTo(1);
+        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteTestRunAsTutor() throws Exception {
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/delete-test-run/" + 1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExamForTestRunDashboard_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForTestRunDashboard_conflict() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.CONFLICT, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForTestRunDashboard_ok() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam1, false);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam.getExerciseGroups());
+        exam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/for-exam-tutor-test-run-dashboard", HttpStatus.OK, Exam.class);
+        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).collect(Collectors.toList())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        StudentExam testRunConfiguration = new StudentExam();
+        testRunConfiguration.setExercises(new ArrayList<>());
+        var exam = database.addExerciseGroupsAndExercisesToExam(exam1, false);
+        exam.getExerciseGroups().forEach(exerciseGroup -> testRunConfiguration.getExercises().add(exerciseGroup.getExercises().iterator().next()));
+        testRunConfiguration.setExam(exam);
+        testRunConfiguration.setWorkingTime(6000);
+        testRunConfiguration.setUser(instructor);
+
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/create-test-run", testRunConfiguration, StudentExam.class, HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject();
+        var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
+        assertThat(testRuns.size()).isEqualTo(1);
+        var testRun = testRuns.get(0);
+        assertThat(testRun.getTestRun()).isEqualTo(true);
+        assertThat(testRun.getWorkingTime()).isEqualTo(6000);
+        assertThat(testRun.getUser()).isEqualTo(instructor);
+        testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .forEach(studentParticipation -> assertThat(studentParticipation.isTestRunParticipation()).isEqualTo(true));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteStudentThatDoesNotExist() throws Exception {
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
@@ -1005,8 +1097,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // TODO: it would be nice if we can support programming exercises here as well
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
-        // register user
-        exam.setRegisteredUsers(new HashSet<>(users));
+        // register users. Instructors are ignored from scores as they are exclusive for test run exercises
+        Set<User> registeredStudents = users.stream().filter(user -> !user.getLogin().contains("instructor") && !user.getLogin().contains("admin")).collect(Collectors.toSet());
+        exam.setRegisteredUsers(registeredStudents);
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -1017,13 +1110,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(users.size());
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size());
 
         // start exercises
 
         Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        assertThat(noGeneratedParticipations).isEqualTo(users.size() * exam.getExerciseGroups().size());
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
@@ -1185,6 +1278,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Set student exam without working time and save into database
         StudentExam studentExam = new StudentExam();
         studentExam.setUser(user);
+        studentExam.setTestRun(false);
         studentExam = studentExamRepository.save(studentExam);
 
         // Add student exam to exam and save into database

@@ -19,6 +19,7 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
+    [isTestRun]="isTestRun"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="manualResult"
@@ -91,6 +92,7 @@
                 [exercise]="exercise"
                 [canOverride]="canOverride"
                 [complaint]="complaint"
+                [isTestRun]="isTestRun"
                 (onResultModified)="onResultModified($event)"
             ></jhi-programming-assessment-manual-result-in-code-editor>
         </div>

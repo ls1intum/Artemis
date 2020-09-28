@@ -49,8 +49,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private final ParticipationService participationService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final GroupNotificationService groupNotificationService;
@@ -65,15 +63,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
             CourseService courseService, ExamService examService) {
-        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService);
+        super(submissionRepository, userService, authCheckService, courseService, resultRepository, examService, studentParticipationRepository, participationService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -84,7 +80,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
     }
 
@@ -564,10 +559,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutorId    - the id of the tutor we are interested in
+     * @param examMode - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId) {
-        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForExercise(long exerciseId, long tutorId, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessorIgnoreTestRuns(exerciseId, tutorId);
+        }
+        else {
+            participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+        }
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
     }
@@ -578,10 +580,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+        }
+        else {
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+        }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
@@ -593,23 +602,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
-     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
-        Random r = new Random();
-        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId()).stream()
-                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
-                .collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode) {
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode);
+        if (submissionWithoutResult.isPresent()) {
+            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
+            return Optional.of(programmingSubmission);
         }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, programmingExercise.getDueDate());
-
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return Optional.empty();
     }
 
     /**

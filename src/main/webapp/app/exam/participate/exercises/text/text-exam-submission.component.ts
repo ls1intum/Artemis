@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, ChangeDetectorRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -33,11 +33,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,
+        changeDetectorReference: ChangeDetectorRef,
     ) {
-        super();
+        super(changeDetectorReference);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
     }
@@ -49,8 +50,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     getSubmission(): Submission {
         return this.studentSubmission;
     }
-
-    onActivate(): void {}
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.text) {

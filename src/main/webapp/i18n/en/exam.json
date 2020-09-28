@@ -115,8 +115,9 @@
             "points": "points",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
-            "submitted": "Exercise submitted",
+            "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
             "notSubmitted": "Exercise not submitted",
+            "notSavedOrSubmitted": "You have unsaved/unsubmitted changes",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in early",
@@ -198,6 +199,21 @@
             "assessmentDashboard": "Assessment Dashboard",
             "studentExams": "Student Exams",
             "students": "Students",
+            "testRun": {
+                "testRun": "Test Run",
+                "title": "Test Run Management: ",
+                "setup": "Create a Test Run",
+                "author": "Author",
+                "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
+                "assess": "Assess Your Test Runs",
+                "manage": "Manage Working Time",
+                "text": "Here you can create a test run for the exam. Pick which exercises your exam should contain and run the conduction. Afterwards you will be able to assess your submissions and grade them as a tutor. You have the option to view the results and complain as a student. Additionally, you can also respond to the complaints about the assessment as a tutor.\n<strong>Note:</strong> Submissions made within test runs do not count towards the exam scores.",
+
+                "delete": {
+                    "question": "Should the <strong>{{ title }}</strong> really be deleted? All associated elements will also be deleted, if they are not referenced by any other test run.",
+                    "typeNameToConfirm": "Please type: Test Run to confirm."
+                }
+            },
             "examStudents": {
                 "registeredStudents": "Registered students",
                 "searchResults": "search results",
@@ -272,7 +288,7 @@
             "id": "ID",
             "type": "Type",
             "title": "Title",
-            "result": "Result",
+            "result": "Your points",
             "reviewer": "Reviewer",
             "openSubmission": "Open Submission",
             "openAssessment": " Open Assessment",

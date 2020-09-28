@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
  * Task to process the cached quiz submissions that can be serialized and distributed
  */
 @SpringAware
-class QuizProcessCacheTask implements Runnable, Serializable, NamedTask {
+final class QuizProcessCacheTask implements Runnable, Serializable, NamedTask {
 
     static final String HAZELCAST_PROCESS_CACHE_TASK = Constants.HAZELCAST_QUIZ_PREFIX + "process-cache";
 
@@ -21,7 +21,7 @@ class QuizProcessCacheTask implements Runnable, Serializable, NamedTask {
      */
     private static final long serialVersionUID = 1L;
 
-    @Autowired(required = true)
+    @Autowired
     transient QuizScheduleService quizScheduleService;
 
     @Override

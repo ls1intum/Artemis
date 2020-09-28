@@ -81,7 +81,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToClustersWithoutTreeStructure(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true, false);
         Map<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
         textBlocks.forEach(textBlock -> {
             if (textBlock.getCluster() == clusters.get(0)) {

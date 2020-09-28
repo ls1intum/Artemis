@@ -1,6 +1,6 @@
-import { Component, OnInit, Input, EventEmitter, Output, HostBinding } from '@angular/core';
-import { timer } from 'rxjs';
-import { map, distinctUntilChanged, first } from 'rxjs/operators';
+import { Component, OnInit, Input, EventEmitter, Output, HostBinding, OnDestroy } from '@angular/core';
+import { timer, Observable, Subject } from 'rxjs';
+import { map, distinctUntilChanged, first, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
@@ -10,7 +10,7 @@ import { cloneDeep } from 'lodash';
     templateUrl: './exam-timer.component.html',
     styleUrls: ['./exam-timer.scss'],
 })
-export class ExamTimerComponent implements OnInit {
+export class ExamTimerComponent implements OnInit, OnDestroy {
     @HostBinding('class.row') readonly row = true;
 
     @Input()
@@ -27,20 +27,38 @@ export class ExamTimerComponent implements OnInit {
 
     isCriticalTime: boolean;
 
-    private timer$ = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
+    destroy$: Subject<boolean> = new Subject<boolean>();
+    private timer$: Observable<moment.Duration> = timer(0, 100).pipe(map(() => moment.duration(this.endDate.diff(this.serverDateService.now()))));
 
     displayTime$ = this.timer$.pipe(
         map((timeLeft: moment.Duration) => this.updateDisplayTime(timeLeft)),
         distinctUntilChanged(),
+        takeUntil(this.destroy$),
     );
 
     constructor(private serverDateService: ArtemisServerDateService) {
-        this.timer$.pipe(first((duration: moment.Duration) => duration.asSeconds() <= 1)).subscribe(() => this.timerAboutToEnd.emit());
+        this.timer$
+            .pipe(
+                map((timeLeft: moment.Duration) => timeLeft.asSeconds()),
+                distinctUntilChanged(),
+                first((durationInSeconds) => durationInSeconds <= 1),
+                takeUntil(this.destroy$),
+            )
+            .subscribe(() => {
+                this.timerAboutToEnd.emit();
+                // if timer is displayed and duration is already over
+                // -> display at least one display time, that's why we use setTimeout
+                setTimeout(() => this.destroy$.next(true));
+            });
     }
 
     ngOnInit(): void {
         const duration: moment.Duration = moment.duration(this.endDate.diff(this.serverDateService.now()));
         this.setIsCriticalTime(duration);
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next(true);
     }
 
     updateDisplayTime(timeDiff: moment.Duration) {
