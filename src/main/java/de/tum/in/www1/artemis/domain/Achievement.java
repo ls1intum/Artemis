@@ -55,6 +55,19 @@ public class Achievement implements Serializable {
     @JsonIgnoreProperties({ "achievements" })
     private Set<User> users = new HashSet<>();
 
+    public Achievement() {
+    }
+
+    public Achievement(String title, String description, String icon, AchievementRank rank, AchievementType type, Course course, Exercise exercise) {
+        this.title = title;
+        this.description = description;
+        this.icon = icon;
+        this.rank = rank;
+        this.type = type;
+        this.course = course;
+        this.exercise = exercise;
+    }
+
     public Long getId() {
         return id;
     }

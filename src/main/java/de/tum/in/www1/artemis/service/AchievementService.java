@@ -26,17 +26,20 @@ public class AchievementService {
 
     private final ProgressBasedAchievementService progressBasedAchievementService;
 
+    private final ParticipationService participationService;
+
     private final AchievementRepository achievementRepository;
 
     private final UserRepository userRepository;
 
     public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
-            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
+            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService, ParticipationService participationService) {
         this.achievementRepository = achievementRepository;
         this.pointBasedAchievementService = pointBasedAchievementService;
         this.timeBasedAchievementService = timeBasedAchievementService;
         this.progressBasedAchievementService = progressBasedAchievementService;
         this.userRepository = userRepository;
+        this.participationService = participationService;
     }
 
     public Optional<Achievement> findById(Long achievementId) {
@@ -59,34 +62,8 @@ public class AchievementService {
         return achievementRepository.findAllByUserId(userId);
     }
 
-    public Achievement save(Achievement achievement) {
-        return achievementRepository.save(achievement);
-    }
-
     public void deleteAchievementsForCourse(Course course) {
         achievementRepository.deleteByCourse_Id(course.getId());
-    }
-
-    /**
-     * Creates an achievement and persist it
-     * @param title title of the achievement
-     * @param description description of the achievement
-     * @param icon the font awesome icon string identifier
-     * @param rank rank of the achievement
-     * @param course course which the achievement belongs to
-     * @param exercise which the achievement belongs to
-     * @return the created and persisted achievement
-     */
-    public Achievement create(String title, String description, String icon, AchievementRank rank, AchievementType type, Course course, Exercise exercise) {
-        Achievement achievement = new Achievement();
-        achievement.setTitle(title);
-        achievement.setDescription(description);
-        achievement.setIcon(icon);
-        achievement.setRank(rank);
-        achievement.setType(type);
-        achievement.setCourse(course);
-        achievement.setExercise(exercise);
-        return save(achievement);
     }
 
     /**
@@ -113,17 +90,34 @@ public class AchievementService {
     }
 
     public void checkForAchievements(Result result) {
-        if (!result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember().getHasAchievements()) {
+        var course = result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (!course.getHasAchievements()) {
             return;
         }
-        pointBasedAchievementService.checkForAchievement(result);
-        timeBasedAchievementService.checkForAchievement(result);
-        progressBasedAchievementService.checkForAchievement(result);
+        var exercise = result.getParticipation().getExercise();
+        var optionalUser = participationService.findOneStudentParticipation(result.getParticipation().getId()).getStudent();
+        if (!optionalUser.isPresent()) {
+            return;
+        }
+        var user = optionalUser.get();
+
+        var pointRank = pointBasedAchievementService.checkForAchievement(result);
+        rewardAchievement(course, exercise, AchievementType.POINT, pointRank, user);
+
+        var timeRank = timeBasedAchievementService.checkForAchievement(result);
+        rewardAchievement(course, exercise, AchievementType.TIME, timeRank, user);
+
+        var progressRank = progressBasedAchievementService.checkForAchievement(course, user);
+        rewardAchievement(course, exercise, AchievementType.PROGRESS, progressRank, user);
     }
 
     public void rewardAchievement(Course course, Exercise exercise, AchievementType type, AchievementRank rank, User user) {
         Set<Achievement> achievements;
         Achievement achievement;
+
+        if (rank == null) {
+            return;
+        }
 
         if (exercise == null) {
             achievements = achievementRepository.findAllForRewardedTypeInCourse(course.getId(), type);

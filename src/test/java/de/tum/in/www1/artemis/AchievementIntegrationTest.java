@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
+import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -45,6 +47,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    AchievementRepository achievementRepository;
+
     private User student;
 
     private User instructor;
@@ -71,12 +76,12 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         second_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
         first_exercise = first_course.getExercises().stream().findFirst().get();
 
-        first_achievement = achievementService.create("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, first_course, first_exercise);
-        second_achievement = achievementService.create("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, first_course, null);
-        third_achievement = achievementService.create("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, second_course, first_exercise);
-
-        achievementService.save(first_achievement);
-        achievementService.save(third_achievement);
+        first_achievement = achievementRepository.save(
+                new Achievement("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, AchievementType.PROGRESS, first_course, first_exercise));
+        second_achievement = achievementRepository
+                .save(new Achievement("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, AchievementType.POINT, first_course, null));
+        third_achievement = achievementRepository
+                .save(new Achievement("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, AchievementType.TIME, second_course, first_exercise));
     }
 
     @AfterEach
@@ -157,7 +162,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteAchievement() throws Exception {
         instructor.addAchievement(first_achievement);
         instructor = userRepository.save(instructor);
-        first_achievement = achievementService.save(first_achievement);
+        first_achievement = achievementRepository.save(first_achievement);
         request.delete("/api/achievements/" + first_achievement.getId(), HttpStatus.OK);
 
         assertThat(achievementService.findById(first_achievement.getId())).as("Achievement is deleted").isNotPresent();
@@ -171,7 +176,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testBadRequests() throws Exception {
-        var emptyAchievement = new Achievement();
+        var emptyAchievement = new Achievement("", "", "", null, null, null, null);
         request.put("/api/achievements", emptyAchievement, HttpStatus.BAD_REQUEST);
         request.delete("/api/achievements/" + 999L, HttpStatus.NOT_FOUND);
         instructor.setGroups(new HashSet<>());

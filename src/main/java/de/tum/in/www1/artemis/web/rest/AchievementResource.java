@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -37,11 +38,15 @@ public class AchievementResource {
 
     private final AchievementService achievementService;
 
+    private final AchievementRepository achievementRepository;
+
     private final UserService userService;
 
-    public AchievementResource(AuthorizationCheckService authCheckService, AchievementService achievementService, UserService userService) {
+    public AchievementResource(AuthorizationCheckService authCheckService, AchievementService achievementService, AchievementRepository achievementRepository,
+            UserService userService) {
         this.authCheckService = authCheckService;
         this.achievementService = achievementService;
+        this.achievementRepository = achievementRepository;
         this.userService = userService;
     }
 
@@ -95,7 +100,7 @@ public class AchievementResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Achievement savedAchievement = achievementService.save(achievement);
+        Achievement savedAchievement = achievementRepository.save(achievement);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, savedAchievement.getId().toString())).body(savedAchievement);
     }
 
