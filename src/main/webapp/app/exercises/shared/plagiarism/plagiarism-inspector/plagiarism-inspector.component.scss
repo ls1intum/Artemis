@@ -36,6 +36,7 @@ $footer-height: 31px;
 
         &-body {
             flex-grow: 1;
+            overflow-y: auto;
 
             .plagiarism-list {
                 height: 100%;
