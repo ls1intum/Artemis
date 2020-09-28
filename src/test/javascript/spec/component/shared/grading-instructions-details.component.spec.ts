@@ -7,13 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('Grading Instructions Management Component', () => {
     let comp: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
-    let gradingCriterion = { id: 1, title: 'testCriteria' } as GradingCriterion;
-    let exercise = { id: 1, gradingCriteria: [gradingCriterion] } as Exercise;
+    let gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+    let gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
+    let exercise = { id: 1 } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -33,7 +34,7 @@ describe('Grading Instructions Management Component', () => {
     });
 
     describe('OnInit', function () {
-        it('should Set the grading criteria based on the exercise', fakeAsync(() => {
+        it('should Set the default grading criteria', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -56,6 +57,31 @@ describe('Grading Instructions Management Component', () => {
                     '[feedback]  Add feedback for students here (visible for students)\n' +
                     '\t' +
                     '[maxCountInScore]  0\n\n',
+            );
+        }));
+        it('should set the grading criteria based on the exercise', fakeAsync(() => {
+            comp.exercise.gradingCriteria = [gradingCriterion];
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.questionEditorText).toEqual(
+                '[gradingCriterion]' +
+                    'testCriteria' +
+                    '\n' +
+                    '\t' +
+                    '[gradingInstruction]\n' +
+                    '\t' +
+                    '[credits]' +
+                    ' 1\n' +
+                    '\t' +
+                    '[gradingScale] scale\n' +
+                    '\t' +
+                    '[description] description\n' +
+                    '\t' +
+                    '[feedback] feedback\n' +
+                    '\t' +
+                    '[maxCountInScore] 0\n\n',
             );
         }));
     });
