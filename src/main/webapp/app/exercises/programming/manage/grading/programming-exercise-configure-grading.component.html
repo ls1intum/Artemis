@@ -115,6 +115,12 @@
                             {{ value }}
                         </ng-template>
                     </ngx-datatable-column>
+                    <ngx-datatable-column name="Passed %">
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-test-case-passed-builds-graph [testCaseStats]="getTestCaseStats(row.testName)" [totalParticipations]="testCaseStatistics?.numParticipations">
+                            </jhi-test-case-passed-builds-graph>
+                        </ng-template>
+                    </ngx-datatable-column>
                 </ngx-datatable>
             </div>
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">

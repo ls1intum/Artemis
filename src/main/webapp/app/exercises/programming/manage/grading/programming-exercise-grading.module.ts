@@ -10,6 +10,7 @@ import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercise
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
+import { TestCasePassedBuildsGraphComponent } from 'app/exercises/programming/manage/grading/graphs/test-case-passed-builds-graph.component';
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingDirtyWarningComponent,
         ProgrammingExerciseGradingTableActionsComponent,
+        TestCasePassedBuildsGraphComponent,
     ],
     exports: [ProgrammingExerciseConfigureGradingComponent, ProgrammingExerciseGradingDirtyWarningComponent],
 })

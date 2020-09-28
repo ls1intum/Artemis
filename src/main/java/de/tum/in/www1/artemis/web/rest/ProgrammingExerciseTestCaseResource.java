@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -108,6 +109,29 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
+    /**
+     * Get the exercise's test case statistics for the the given exercise id.
+     *
+     * @param exerciseId of the the exercise.
+     * @return the test case statistics for the exercise.
+     */
+    @GetMapping(Endpoints.TEST_CASE_STATISTICS)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExerciseTestCaseStatisticsDTO> getTestCaseStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        var statistics = programmingExerciseTestCaseService.generateTestCaseStatistics(exerciseId);
+        return ResponseEntity.ok(statistics);
+    }
+
     public static final class Endpoints {
 
         private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
@@ -115,6 +139,8 @@ public class ProgrammingExerciseTestCaseResource {
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
+
+        public static final String TEST_CASE_STATISTICS = PROGRAMMING_EXERCISE + "/test-case-statistics";
 
         private Endpoints() {
         }

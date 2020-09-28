@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
+import { ProgrammingExerciseTestCaseStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 /**
  * Describes the editableField
@@ -57,6 +58,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // This flag means that the grading config were edited, but no submission run was triggered yet.
     hasUpdatedGradingConfig = false;
     activeTab: string;
+
+    testCaseStatistics?: ProgrammingExerciseTestCaseStatistics;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
@@ -148,7 +151,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     catchError(() => of(null)),
                 );
 
-                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories)
+                const loadTestCaseStatistics = this.gradingService.getTestCaseStatistics(exerciseId).pipe(
+                    tap((statistics) => (this.testCaseStatistics = statistics)),
+                    catchError(() => of(null)),
+                );
+
+                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories, loadTestCaseStatistics)
                     .pipe(take(1))
                     .subscribe(() => {
                         // This subscription e.g. adds new new tests to the table that were just created.
@@ -402,5 +410,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;
+    }
+
+    getTestCaseStats(testName: string): TestCaseStats | undefined {
+        return this.testCaseStatistics?.testCaseStatsList.find((testCaseStats) => testCaseStats.testName === testName);
     }
 }
