@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextPairwiseDistanceRepository;
 
 @Service
 @Profile("automaticText")
