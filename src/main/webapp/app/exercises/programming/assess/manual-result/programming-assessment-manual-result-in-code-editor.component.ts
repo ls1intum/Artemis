@@ -34,7 +34,7 @@ export class ProgrammingAssessmentManualResultInCodeEditorComponent implements O
     @Input() exercise: ProgrammingExercise;
     @Input() canOverride: boolean;
     @Input() complaint: Complaint;
-
+    @Input() isTestRun = false;
     @Output() onResultModified = new EventEmitter<Result>();
 
     participation: ProgrammingExerciseStudentParticipation;

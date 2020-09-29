@@ -30,6 +30,9 @@ import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
+import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
+import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -89,7 +92,7 @@ export class StudentExamResolve implements Resolve<StudentExam> {
     resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : null;
         const examId = route.params['examId'] ? route.params['examId'] : null;
-        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : null;
+        const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
                 filter((response: HttpResponse<StudentExam>) => response.ok),
@@ -105,7 +108,7 @@ export const examManagementRoute: Routes = [
         path: '',
         component: ExamManagementComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN', 'ROLE_TA'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -221,6 +224,39 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/test-runs',
+        component: TestRunManagementComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/assess',
+        component: TutorCourseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.examManagement.tutorDashboard',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/:studentExamId/view',
+        component: StudentExamDetailComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/student-exams/:studentExamId/view',
         component: StudentExamDetailComponent,
         resolve: {
@@ -234,6 +270,28 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary',
+        component: StudentExamSummaryComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/test-runs/:testRunId/conduction',
+        component: ExamParticipationComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.exam.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: ':examId/test-runs/:studentExamId/summary',
         component: StudentExamSummaryComponent,
         resolve: {
             studentExam: StudentExamResolve,

@@ -71,10 +71,6 @@ public class ParticipationResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final TextSubmissionService textSubmissionService;
-
-    private final ResultService resultService;
-
     private final UserService userService;
 
     private final AuditEventRepository auditEventRepository;
@@ -87,9 +83,8 @@ public class ParticipationResource {
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration,
-            TeamService teamService, FeatureToggleService featureToggleService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, UserService userService,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -98,8 +93,6 @@ public class ParticipationResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.textSubmissionService = textSubmissionService;
-        this.resultService = resultService;
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
@@ -284,9 +277,10 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        boolean examMode = exercise.hasExerciseGroup();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = participationService.findByExerciseIdWithLatestResult(exerciseId);
+            participations = participationService.findByExerciseIdWithLatestResult(exerciseId, examMode);
         }
         else {
             participations = participationService.findByExerciseId(exerciseId);

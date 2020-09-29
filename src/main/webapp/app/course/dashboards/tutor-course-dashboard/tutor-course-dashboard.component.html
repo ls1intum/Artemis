@@ -4,7 +4,10 @@
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 <h2 *ngIf="!isExamMode">{{ 'artemisApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}</h2>
-                <h2 *ngIf="isExamMode">{{ 'artemisApp.tutorCourseDashboard.pageHeaderExam' | translate }} {{ exam?.title }}</h2>
+                <h2 *ngIf="isExamMode">
+                    {{ !isTestRun ? ('artemisApp.tutorCourseDashboard.pageHeaderExam' | translate) : ('artemisApp.tutorCourseDashboard.pageHeaderExamTestRun' | translate) }}
+                    {{ exam?.title }}
+                </h2>
                 <a
                     class="text-primary card-link"
                     *ngIf="course?.isAtLeastInstructor && !isExamMode"
@@ -16,7 +19,7 @@
             </h2>
         </div>
     </div>
-    <div *ngIf="isExamMode" class="row justify-content-between">
+    <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
         <div class="col-8">
             <ul>
                 <li><span jhiTranslate="artemisApp.exam.endDate">Exam End Date</span> : {{ exam?.endDate | artemisDate }}</li>
@@ -79,7 +82,7 @@
     </div>
 
     <div class="table-responsive">
-        <div class="guided-tour-form-check form-check col-6 align-baseline">
+        <div *ngIf="!isTestRun" class="guided-tour-form-check form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
@@ -96,7 +99,7 @@
                         <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th *ngIf="!isTestRun">{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th jhiSortBy="dueDate" *ngIf="!isExamMode">
                         <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -125,7 +128,7 @@
                         >
                         <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
                     </td>
-                    <td>
+                    <td *ngIf="!isTestRun">
                         <jhi-tutor-participation-graph
                             [exercise]="exercise"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
@@ -151,14 +154,27 @@
                     </td>
 
                     <td>
-                        <button
-                            *ngIf="!exercise.teamMode; else teamsLink"
-                            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'tutor-dashboard']"
-                            class="btn btn-info btn-sm mr-1"
-                            [class.guided-tour]="exercise === exerciseForGuidedTour"
-                        >
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                        </button>
+                        <ng-container *ngIf="!exercise.teamMode; else teamsLink">
+                            <ng-container *ngIf="!isTestRun; else testRun">
+                                <button
+                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'tutor-dashboard']"
+                                    class="btn btn-info btn-sm mr-1"
+                                    [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                >
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                </button>
+                            </ng-container>
+                            <ng-template #testRun>
+                                <button
+                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'test-run-tutor-dashboard']"
+                                    class="btn btn-info btn-sm mr-1"
+                                    [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                >
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                </button>
+                            </ng-template>
+                        </ng-container>
+
                         <ng-template #teamsLink>
                             <button
                                 [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"

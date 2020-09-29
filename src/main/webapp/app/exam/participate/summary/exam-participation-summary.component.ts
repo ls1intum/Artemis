@@ -33,6 +33,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     courseId: number;
 
+    isTestRun = false;
+
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
@@ -42,6 +44,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     ngOnInit(): void {
         // courseId is not part of the exam or the exercise
+        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
@@ -51,6 +54,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get resultsPublished() {
+        if (this.isTestRun) {
+            return true;
+        }
         return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
@@ -137,6 +143,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * the review dates are set and the review start date has passed.
      */
     isAfterStudentReviewStart() {
+        if (this.isTestRun) {
+            return true;
+        }
         if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
         }

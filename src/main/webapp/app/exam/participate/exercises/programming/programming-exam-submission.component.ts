@@ -47,6 +47,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     repositoryIsLocked = false;
     showEditorInstructions = true;
+    hasSubmittedOnce = false;
 
     getSubmission(): Submission | null {
         if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
@@ -93,9 +94,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     onCommitStateChange(commitState: CommitState): void {
         if (this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
-            if (commitState === CommitState.CLEAN) {
+            if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 this.studentParticipation.submissions[0].submitted = true;
                 this.studentParticipation.submissions[0].isSynced = true;
+            } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
+                this.hasSubmittedOnce = true;
             }
         }
     }

@@ -23,9 +23,6 @@ public class JenkinsServerConfiguration {
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
 
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
-
     @Bean
     public JenkinsServer jenkinsServer() throws URISyntaxException {
         return new JenkinsServer(JENKINS_SERVER_URL.toURI(), JENKINS_USER, JENKINS_PASSWORD);

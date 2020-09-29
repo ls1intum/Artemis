@@ -99,7 +99,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        users = database.addUsers(10, 1, 1);
+        users = database.addUsers(10, 1, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
@@ -177,7 +177,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = database.addExerciseGroupsAndExercisesToExam(exam2, true);
 
         // register users
-        Set<User> registeredStudents = new HashSet<>(users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toCollection(ArrayList::new)));
+        Set<User> registeredStudents = users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toSet());
         exam2.setRegisteredUsers(registeredStudents);
         exam2.setRandomizeExerciseOrder(false);
         exam2 = examRepository.save(exam2);
@@ -299,6 +299,54 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // change back to instructor user
         database.changeUser("instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetTestRunForConduction() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        // --> 2 min = 120s working time
+
+        course2 = database.addEmptyCourse();
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        assertThat(testRun.getTestRun()).isTrue();
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "foo");
+        headers.set("X-Artemis-Client-Fingerprint", "bar");
+        headers.set("X-Forwarded-For", "10.0.28.1");
+        var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+        assertThat(response).isEqualTo(testRun);
+        assertThat(response.isStarted()).isTrue();
+        assertThat(response.getTestRun()).isTrue();
+        assertThat(response.getExercises().size()).isEqualTo(exam.getNumberOfExercisesInExam());
+        // Ensure that student exam was marked as started
+        assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testFindAllTestRunsForExam() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var instructor2 = database.getUserByLogin("instructor2");
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        // --> 2 min = 120s working time
+
+        course2 = database.addEmptyCourse();
+        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
+
+        List<StudentExam> response = request.getList("/api/courses/" + course2.getId() + "/exams/" + exam.getId() + "/test-runs/", HttpStatus.OK, StudentExam.class);
+        assertThat(response.size()).isEqualTo(2);
     }
 
     @Test

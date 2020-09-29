@@ -1,0 +1,117 @@
+<div>
+    <jhi-alert-error></jhi-alert-error>
+    <div class="d-flex">
+        <div class="mb-3">
+            <h2><span jhiTranslate="artemisApp.examManagement.testRun.title">Test Run Management</span>{{ exam?.title }}</h2>
+        </div>
+        <div class="ml-auto">
+            <div class="d-flex mb-1">
+                <button class="btn btn-primary btn-sm mr-1 mb-1" style="height: 40px" (click)="openCreateTestRunModal()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span jhiTranslate="artemisApp.examManagement.testRun.setup">Create a Test Run</span>
+                </button>
+                <button
+                    class="btn btn-primary btn-sm mr-1 mb-1"
+                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
+                    *ngIf="course?.isAtLeastInstructor"
+                    [disabled]="isLoading || !testRunCanBeAssessed"
+                >
+                    <span jhiTranslate="artemisApp.examManagement.testRun.assess">Assess Your Test Runs</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <jhi-alert></jhi-alert>
+    <div style="padding-bottom: 10px">
+        <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
+    </div>
+    <div class="table-responsive" *ngIf="testRuns">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
+                    <th class="d-none d-md-table-cell" jhiSortBy="id">
+                        <span>{{ 'global.field.id' | translate }}</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="artemisApp.examManagement.testRun.author"> Author </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="workingTime">
+                        <span jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="started">
+                        <span jhiTranslate="artemisApp.studentExams.started"> Started </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="submitted">
+                        <span jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="submissionDate">
+                        <span jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let testRun of testRuns; trackBy: trackId">
+                    <td class="d-none d-md-table-cell">
+                        <a [routerLink]="[testRun.id, 'view']">{{ testRun.id }}</a>
+                    </td>
+                    <td>
+                        <a> {{ testRun.user.name }}</a>
+                    </td>
+                    <td>{{ testRun.workingTime | artemisDurationFromSeconds }}</td>
+                    <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>
+                    <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>
+                    <td>{{ testRun.submissionDate | artemisDate }}</td>
+                    <td [width]="350">
+                        <div class="w-100 text-right">
+                            <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
+                                <ng-container *ngIf="testRun.user.id == instructor.id; else notOwnerOfTestRun">
+                                    <ng-container *ngIf="!testRun.submitted; else submitted">
+                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                            <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
+                                            <span *ngIf="testRun.started" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
+                                        </button>
+                                    </ng-container>
+                                    <ng-template #submitted>
+                                        <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                        </button>
+                                    </ng-template>
+                                </ng-container>
+                                <ng-template #notOwnerOfTestRun>
+                                    <button class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                        <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+                                    </button>
+                                </ng-template>
+                                <button
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id, 'view']"
+                                    [disabled]="testRun.started"
+                                >
+                                    <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
+                                </button>
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="'artemisApp.examManagement.testRun.testRun' | translate"
+                                    deleteQuestion="artemisApp.examManagement.testRun.delete.question"
+                                    deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
+                                    (delete)="deleteTestRun(testRun.id)"
+                                    [dialogError]="dialogError$"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'times'"></fa-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

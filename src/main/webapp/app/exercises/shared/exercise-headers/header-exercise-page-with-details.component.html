@@ -8,12 +8,12 @@
 
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
                 <h4>
-                    <span class="mr-2"> {{ 'artemisApp.exam.endDate' | translate }} : {{ exam?.endDate | artemisDate }} </span>
-                    <span *ngIf="exam?.endDate" [ngClass]="exerciseStatusBadge" class="badge">
+                    <span class="mr-2" *ngIf="!isTestRun"> {{ 'artemisApp.exam.endDate' | translate }} : {{ exam?.endDate | artemisDate }} </span>
+                    <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exam?.endDate | amTimeAgo }}
                     </span>
                 </h4>
-                <h4>
+                <h4 *ngIf="!isTestRun">
                     <span class="mr-2"> {{ 'artemisApp.exam.publishResultsDate' | translate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exam?.publishResultsDate | artemisDate }}

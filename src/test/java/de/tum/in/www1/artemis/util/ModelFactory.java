@@ -401,6 +401,7 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
         return studentExam;
     }
 
@@ -480,6 +481,16 @@ public class ModelFactory {
         feedbacks.add(moreFeedback);
 
         return feedbacks; // total score should be 3P
+    }
+
+    public static TextAssessmentConflict generateTextAssessmentConflictWithFeedback(Feedback firstFeedback, Feedback secondFeedback) {
+        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
+        textAssessmentConflict.setConflict(true);
+        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
+        textAssessmentConflict.setFirstFeedback(firstFeedback);
+        textAssessmentConflict.setSecondFeedback(secondFeedback);
+        textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_SCORE);
+        return textAssessmentConflict;
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
@@ -609,6 +620,7 @@ public class ModelFactory {
         job.setId(42);
         job.setFailedTests(failedTests);
         job.setSuccessfulTests(successfulTests);
+        job.setLogs(List.of());
 
         summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
         summary.setSuccessfulCount(successfulTestNames.size());

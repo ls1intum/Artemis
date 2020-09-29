@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -41,6 +37,10 @@ public class StudentExamService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final UserService userService;
+
+    private final ExamService examService;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -53,11 +53,14 @@ public class StudentExamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public StudentExamService(StudentExamRepository studentExamRepository, ParticipationService participationService, QuizSubmissionRepository quizSubmissionRepository,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public StudentExamService(StudentExamRepository studentExamRepository, ExamService examService, UserService userService, ParticipationService participationService,
+            QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
+            SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
+        this.examService = examService;
+        this.userService = userService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -128,12 +131,14 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        try {
-            // lock the programming exercise repository access (important in case of early exam submissions)
-            lockStudentRepositories(currentUser, existingStudentExam);
-        }
-        catch (Exception e) {
-            log.error("lockStudentRepositories threw an exception", e);
+        if (!studentExam.getTestRun()) {
+            try {
+                // lock the programming exercise repository access (important in case of early exam submissions)
+                lockStudentRepositories(currentUser, existingStudentExam);
+            }
+            catch (Exception e) {
+                log.error("lockStudentRepositories threw an exception", e);
+            }
         }
 
         return ResponseEntity.ok(studentExam);
@@ -249,12 +254,11 @@ public class StudentExamService {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : existingStudentExam.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
-                    ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                                 currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+                        programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);
@@ -335,5 +339,138 @@ public class StudentExamService {
     public Set<Integer> findAllDistinctWorkingTimesByExamId(Long examId) {
         log.debug("Request to find all distinct working times for Exam : {}", examId);
         return studentExamRepository.findAllDistinctWorkingTimesByExamId(examId);
+    }
+
+    /**
+     * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
+     * Calls {@link StudentExamService#createTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * @param testRunConfiguration the configured studentExam
+     * @return the created testRun studentExam
+     */
+    public StudentExam generateTestRun(StudentExam testRunConfiguration) {
+        StudentExam testRun = createTestRun(testRunConfiguration);
+        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
+        return testRun;
+    }
+
+    /**
+     * Create TestRun student exam based on the configuration provided.
+     *
+     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @return The created test run
+     */
+    private StudentExam createTestRun(StudentExam testRunConfiguration) {
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(testRunConfiguration.getExercises());
+        testRun.setExam(testRunConfiguration.getExam());
+        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setUser(userService.getUser());
+        testRun.setTestRun(true);
+        testRun.setSubmitted(false);
+        testRun = studentExamRepository.save(testRun);
+        return testRun;
+    }
+
+    /**
+     * Sets up the participations and submissions for all the exercises of the test run.
+     * Calls {@link ExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations
+     * and {@link ParticipationService#markSubmissionsOfTestRunParticipations} to mark them as test run participations
+     *
+     * @param testRunId the id of the TestRun
+     */
+    private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        examService.setUpExerciseParticipationsAndSubmissions(generatedParticipations, testRun);
+        participationService.markSubmissionsOfTestRunParticipations(generatedParticipations);
+    }
+
+    /**
+     * Deletes a test run.
+     * In case the participation is  not referenced by other test runs, the participation, submission, buildplans and repositories are deleted as well.
+     * @param testRunId the id of the test run
+     * @return the deleted test run
+     */
+    public StudentExam deleteTestRun(Long testRunId) {
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id: \"" + testRunId + "\" does not exist"));
+        User instructor = testRun.getUser();
+
+        List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()
+                .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
+
+        // Only delete the participation and submission if no other test run references them
+        if (otherTestRunsOfInstructor.isEmpty()) {
+            // filter out the student participations which do not belong to this user
+            testRun.getExercises()
+                    .forEach(exercise -> exercise
+                            .setStudentParticipations(exercise.getStudentParticipations().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent()) // filter
+                                                                                                                                                                                 // out
+                                                                                                                                                                                 // student
+                                                                                                                                                                                 // participations
+                                                                                                                                                                                 // with
+                                                                                                                                                                                 // no
+                                                                                                                                                                                 // user
+                                    .filter(studentParticipation -> studentParticipation.getStudent().get().equals(testRun.getUser())).collect(Collectors.toSet())));
+
+            // Delete participations and submissions
+            for (final Exercise exercise : testRun.getExercises()) {
+                if (exercise.getStudentParticipations().iterator().hasNext()) {
+                    participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                }
+            }
+        }
+        else {
+            // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+            var testRunExercises = testRun.getExercises();
+            var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().collect(Collectors.toList());
+            // filter out exercises which are referenced by other test runs (by extension their participation)
+            var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
+
+            exercisesToBeDeleted.forEach(exercise -> exercise
+                    // filter out student participations with no user
+                    .setStudentParticipations(exercise.getStudentParticipations().stream().filter(studentParticipation -> studentParticipation.getStudent().isPresent())
+                            // filter out the student participations which do not belong to this user
+                            .filter(studentParticipation -> studentParticipation.getStudent().get().equals(testRun.getUser())).collect(Collectors.toSet())));
+
+            for (final Exercise exercise : exercisesToBeDeleted) {
+
+                // delete those participations which are only referenced by one test run
+                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+            }
+        }
+
+        // Delete the test run student exam
+        studentExamRepository.deleteById(testRunId);
+        return testRun;
+    }
+
+    /**
+     * Returns all test runs for a given exam
+     * @param examId the id of the exam in question
+     * @return a list of the test run student exams
+     */
+    public List<StudentExam> findAllTestRuns(Long examId) {
+        return studentExamRepository.findAllTestRunsByExamId(examId);
+    }
+
+    /**
+     * Returns all test runs for a given exam with exercises, participations, submissions and results loaded for the test run submissions
+     * @param examId the id of the exam in question
+     * @return a list of the test run student exams
+     */
+    public List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(Long examId) {
+        return studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(examId);
+    }
+
+    /**
+     * Returns all test runs for a given exam initiated by the given instructor
+     * @param examId the id of the exam in question
+     * @param userId the id of the user
+     * @return a list of the test run student exams
+     */
+    public List<StudentExam> findAllTestRunsWithExercisesForUser(Long examId, Long userId) {
+        return studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(examId, userId);
     }
 }

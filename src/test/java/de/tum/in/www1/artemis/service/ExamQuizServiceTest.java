@@ -157,13 +157,13 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
+        database.changeUser("instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
 
-        database.changeUser("instructor1");
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 
@@ -200,13 +200,13 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
+        database.changeUser("instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
 
-        database.changeUser("instructor1");
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 

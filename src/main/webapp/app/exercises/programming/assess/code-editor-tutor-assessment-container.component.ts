@@ -46,6 +46,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     userId: number;
     // for assessment-layout
     isLoading = false;
+    isTestRun = false;
     saveBusy = false;
     submitBusy = false;
     cancelBusy = false;
@@ -86,6 +87,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Used to check if the assessor is the current user
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
+        });
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.isTestRun = queryParams.get('testRun') === 'true';
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.paramSub = this.route.params.subscribe((params) => {
@@ -217,7 +221,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission);
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
     }
 
     /**

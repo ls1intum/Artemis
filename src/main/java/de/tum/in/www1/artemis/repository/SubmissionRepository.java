@@ -82,14 +82,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.participation.exercise.dueDate IS NULL OR submission.submissionDate <= submission.participation.exercise.dueDate)")
+    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate))")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
+     * Should be used for exam dashboard to ignore test run submissions
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
+    /**
+     *
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND submission.participation.exercise.dueDate IS NOT NULL AND submission.submissionDate > submission.participation.exercise.dueDate")
+    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND (p.exercise.dueDate IS NOT NULL AND s.submissionDate > p.exercise.dueDate))")
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
 
     /**
@@ -99,5 +109,4 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     List<Submission> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
-
 }
