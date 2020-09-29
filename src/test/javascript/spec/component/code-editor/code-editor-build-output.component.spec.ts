@@ -254,7 +254,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
         let emittedAnnotations: Annotation[] = [];
-        comp.onAnnotations.subscribe((emitted) => {
+        comp.onAnnotations.subscribe((emitted: any) => {
             emittedAnnotations = emitted;
         });
         triggerChanges(comp, { property: 'participation', currentValue: participation });

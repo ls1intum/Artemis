@@ -279,7 +279,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: 20, bonusMultiplier: 2, bonusPoints: 1 },
+            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.afterDueDate),
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
