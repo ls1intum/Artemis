@@ -294,6 +294,7 @@ public class ProgrammingExercise extends Exercise {
     @Nullable
     @Override
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+        // TODO: fix so that the same submission is return for this call and findLatestSubmissionWithRatedResultWithCompletionDate, here we need to consider assessment due date
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
                 return submission.getResult().isRated();
