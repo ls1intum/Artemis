@@ -483,7 +483,7 @@ public class ModelFactory {
         return feedbacks; // total score should be 3P
     }
 
-    public static FeedbackConflict generateTextAssessmentConflictWithFeedback(Feedback firstFeedback, Feedback secondFeedback) {
+    public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
         FeedbackConflict feedbackConflict = new FeedbackConflict();
         feedbackConflict.setConflict(true);
         feedbackConflict.setCreatedAt(ZonedDateTime.now());

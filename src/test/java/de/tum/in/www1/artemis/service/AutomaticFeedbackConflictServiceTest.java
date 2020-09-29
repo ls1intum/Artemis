@@ -135,7 +135,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        FeedbackConflict feedbackConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
@@ -176,7 +176,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        FeedbackConflict feedbackConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
         textAssessmentConflictService = mock(TextAssessmentConflictService.class);
@@ -235,7 +235,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
         database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
 
-        FeedbackConflict feedbackConflict = ModelFactory.generateTextAssessmentConflictWithFeedback(feedback1, feedback2);
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
         feedbackConflictRepository.save(feedbackConflict);
 
         return textSubmission;
