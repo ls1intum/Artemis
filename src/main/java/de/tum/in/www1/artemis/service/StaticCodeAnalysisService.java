@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisConfiguration;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 
@@ -24,12 +24,12 @@ public class StaticCodeAnalysisService {
     private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     @Qualifier("staticCodeAnalysisConfiguration")
-    private final Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations;
+    private final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
     }
@@ -52,7 +52,7 @@ public class StaticCodeAnalysisService {
      */
     public void createDefaultCategories(ProgrammingExercise programmingExercise) {
         // Retrieve the default configuration for a specific programming language
-        StaticCodeAnalysisConfiguration defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
+        List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
         if (defaultConfiguration == null) {
             log.debug("Could not create default static code analysis categories for exercise " + programmingExercise.getId() + ". Default configuration not available.");
             return;
@@ -60,7 +60,7 @@ public class StaticCodeAnalysisService {
 
         // Create new static code analysis using the default configuration as a template
         List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
-        for (var defaultCategory : defaultConfiguration.getDefaultCategories()) {
+        for (var defaultCategory : defaultConfiguration) {
             StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
             newCategory.setName(defaultCategory.getName());
             newCategory.setPenalty(defaultCategory.getPenalty());
