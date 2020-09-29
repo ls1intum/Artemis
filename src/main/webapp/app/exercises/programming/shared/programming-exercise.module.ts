@@ -4,7 +4,7 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programmin
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
-import { ArtemisProgrammingExerciseTestCaseModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-test-case.module';
+import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseRowButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-row-buttons.component';
@@ -16,7 +16,7 @@ import { ProgrammingExerciseRowButtonsComponent } from 'app/exercises/programmin
         RouterModule,
         OrionModule,
         ArtemisProgrammingExerciseStatusModule,
-        ArtemisProgrammingExerciseTestCaseModule,
+        ArtemisProgrammingExerciseGradingModule,
         ProgrammingExerciseUtilsModule,
     ],
     declarations: [ProgrammingExerciseComponent, ProgrammingExerciseRowButtonsComponent],

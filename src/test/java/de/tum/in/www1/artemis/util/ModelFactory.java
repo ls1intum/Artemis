@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -448,18 +449,19 @@ public class ModelFactory {
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
         List<Feedback> feedbackList = new ArrayList<>();
         for (int i = 0; i < numOfFeedback; i++) {
-            feedbackList.add(generateStaticCodeAnalysisFeedback(i));
+            feedbackList.add(generateStaticCodeAnalysisFeedback());
         }
         return feedbackList;
     }
 
-    private static Feedback generateStaticCodeAnalysisFeedback(int index) {
+    private static Feedback generateStaticCodeAnalysisFeedback() {
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setType(FeedbackType.AUTOMATIC);
-        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Tool" + index);
-        feedback.setReference("Class:Line" + index);
-        feedback.setDetailText("This is a DetailText " + index);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
+        feedback.setReference("Tool");
+        feedback.setDetailText("{\"filePath\":\"" + Constants.STUDENT_WORKING_DIRECTORY
+                + "/www/withSCA/MergeSort.java\",\"startLine\":9,\"endLine\":9,\"startColumn\":11,\"endColumn\":11,\"rule\":\"rule\",\"category\":\"category\",\"message\":\"message\"}");
         return feedback;
     }
 
@@ -481,6 +483,16 @@ public class ModelFactory {
         feedbacks.add(moreFeedback);
 
         return feedbacks; // total score should be 3P
+    }
+
+    public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
+        FeedbackConflict feedbackConflict = new FeedbackConflict();
+        feedbackConflict.setConflict(true);
+        feedbackConflict.setCreatedAt(ZonedDateTime.now());
+        feedbackConflict.setFirstFeedback(firstFeedback);
+        feedbackConflict.setSecondFeedback(secondFeedback);
+        feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
+        return feedbackConflict;
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
@@ -642,27 +654,33 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
-        final var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        final var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        notification.getBuild().getJobs().get(0).setStaticAssessmentReports(List.of(spotbugsReport));
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        var checkstyleReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.CHECKSTYLE);
+        var pmdReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.PMD);
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport, checkstyleReport, pmdReport));
         return notification;
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
-        final var report = new StaticCodeAnalysisReportDTO();
-        final var issue1 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
-        final var issue2 = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        var report = new StaticCodeAnalysisReportDTO();
         report.setTool(tool);
-        issue1.setType("Error1");
-        issue1.setMessage("Error1 - Message");
-        issue1.setClassname("Class1");
-        issue1.setLine(1);
-        issue2.setType("Error2");
-        issue2.setMessage("Error2 - Message");
-        issue1.setClassname("Class2");
-        issue1.setLine(2);
-        report.setIssues(List.of(issue1, issue2));
+        report.setIssues(List.of(generateStaticCodeAnalysisIssue()));
         return report;
+    }
+
+    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
+        var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
+        issue.setStartLine(1);
+        issue.setEndLine(2);
+        issue.setStartColumn(1);
+        issue.setEndColumn(10);
+        issue.setRule("Rule");
+        issue.setCategory("Category");
+        issue.setMessage("Message");
+        issue.setPriority("Priority");
+        return issue;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
