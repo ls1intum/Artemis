@@ -55,12 +55,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    navigateToPlagiarismInspection() {
-        this.router.navigate(['plagiarism'], {
-            relativeTo: this.route,
-        });
-    }
-
     previousState() {
         window.history.back();
     }

@@ -111,12 +111,6 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
         }
     }
 
-    goBack() {
-        this.router.navigate(['..'], {
-            relativeTo: this.route,
-        });
-    }
-
     checkPlagiarism() {
         this.checkPlagiarismInProgress = true;
 
