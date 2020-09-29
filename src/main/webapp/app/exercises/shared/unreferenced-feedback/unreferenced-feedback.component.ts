@@ -46,7 +46,7 @@ export class UnreferencedFeedbackComponent {
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
     }
-    public addReferencedFeedback(): void {
+    public addUnreferencedFeedback(): void {
         const feedback = new Feedback();
         feedback.credits = 0;
         feedback.referenceId = null;

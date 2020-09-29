@@ -12,6 +12,38 @@ Ace Editor
         &__editor {
             flex: 1 1 auto;
         }
+
+        .inline-feedback-d-none {
+            display: none;
+        }
+
+        .inline-feedback {
+            display: block;
+        }
+
+        .btn-inline-comment {
+            display: none;
+            color: #3e8acc; // btn-primary color
+            height: 16px;
+        }
+
+        .ace_gutter-cell {
+            position: relative;
+        }
+
+        .ace_gutter-cell:hover .btn-inline-comment {
+            display: inline-flex;
+            position: absolute;
+            top: 8px; // standard gutter height is 16px
+            left: 25%;
+            transform: translate(-50%, -50%);
+
+            fa-icon:hover {
+                font-size: 15px;
+                transition: font-size 0.35s ease;
+            }
+        }
+
         &__no-selected {
             justify-self: center;
             width: 100%;

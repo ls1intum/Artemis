@@ -14,14 +14,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 
 /**
  * Represents the conflicts between two feedback of a text exercise.
  */
 @Entity
-@Table(name = "text_assessment_conflict")
-public class TextAssessmentConflict implements Serializable {
+@Table(name = "feedback_conflict")
+public class FeedbackConflict implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,7 +40,7 @@ public class TextAssessmentConflict implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private TextAssessmentConflictType type;
+    private FeedbackConflictType type;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "first_feedback_id", referencedColumnName = "id")
@@ -82,11 +82,11 @@ public class TextAssessmentConflict implements Serializable {
         this.solvedAt = solvedAt;
     }
 
-    public TextAssessmentConflictType getType() {
+    public FeedbackConflictType getType() {
         return type;
     }
 
-    public void setType(TextAssessmentConflictType type) {
+    public void setType(FeedbackConflictType type) {
         this.type = type;
     }
 
