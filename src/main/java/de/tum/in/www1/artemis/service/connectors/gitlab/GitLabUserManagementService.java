@@ -66,13 +66,15 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
+    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         try {
             var userApi = gitlab.getUserApi();
             final var gitlabUser = userApi.getUser(user.getLogin());
 
-            // update the user password
-            userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+            if (shouldSynchronizePassword) {
+                // update the user password in Gitlab with the one stored in the Artemis database
+                userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+            }
 
             // Add as member to new groups
             if (!addedGroups.isEmpty()) {

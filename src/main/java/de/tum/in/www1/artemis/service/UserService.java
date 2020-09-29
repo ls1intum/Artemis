@@ -126,7 +126,7 @@ public class UserService {
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
                     userRepository.save(existingInternalAdmin.get());
-                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
+                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups(), true);
                 }
                 else {
                     log.info("Create internal admin user " + artemisInternalAdminUsername.get());
@@ -493,7 +493,7 @@ public class UserService {
     }
 
     /**
-     * Update all information for a specific user, and return the modified user.
+     * Update all information for a specific user (incl. its password), and return the modified user.
      *
      * @param user The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
@@ -519,24 +519,25 @@ public class UserService {
         user = userRepository.save(user);
         this.clearUserCaches(user);
 
-        updateUserInConnectorsAndAuthProvider(user, oldGroups);
+        updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
 
         log.debug("Changed Information for User: {}", user);
         return user;
     }
 
     /**
-     * Updates the user in all connected systems (like GitLab) if necessary. Also updates the user in the used authentication
-     * provider (like {@link JiraAuthenticationProvider}.
+     * Updates the user (optionally also synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
+     * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
      *
      * @param user The updated user in Artemis
      * @param oldGroups The old groups of the user before the update
+     * @param shouldSynchronizePassword whether the password in the optional vcs user management service should be synchronized (only relevant if internal user management is used)
      */
-    private void updateUserInConnectorsAndAuthProvider(User user, Set<String> oldGroups) {
+    private void updateUserInConnectorsAndAuthProvider(User user, Set<String> oldGroups, boolean shouldSynchronizePassword) {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups, shouldSynchronizePassword));
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group));
         addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group));
     }
@@ -864,7 +865,7 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.addUserToGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
         }
         else {
             artemisAuthenticationProvider.addUserToGroup(user, group);
@@ -883,7 +884,7 @@ public class UserService {
         if (optionalVcsUserManagementService.isPresent()) {
             final var oldGroups = new TreeSet<>(user.getGroups());
             artemisAuthenticationProvider.removeUserFromGroup(user, group);
-            updateUserInConnectorsAndAuthProvider(user, oldGroups);
+            updateUserInConnectorsAndAuthProvider(user, oldGroups, true);
         }
         else {
             artemisAuthenticationProvider.removeUserFromGroup(user, group);
