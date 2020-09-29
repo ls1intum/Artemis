@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
@@ -16,7 +15,6 @@ const expect = chai.expect;
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
-    let debugElement: DebugElement;
     const fileName = 'testFile';
     const codeLine = 1;
 
@@ -33,7 +31,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 };
                 fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
                 // @ts-ignore
                 comp.feedback = undefined;
                 comp.readOnly = false;
