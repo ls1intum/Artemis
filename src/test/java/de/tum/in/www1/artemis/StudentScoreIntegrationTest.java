@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -72,16 +70,16 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addUsers(3, 3, 3);
 
         // course1
-        course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
         courseRepo.save(course);
         // exercise1
-        exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise = course.getExercises().stream().findFirst().get();
         exerciseRepo.save(exercise);
 
         // score for student1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).participation(participation);
+        result = new Result().score(75L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
         result.setScore(70L);
@@ -90,23 +88,23 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 80).participation(participation);
+        result = new Result().score(80L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
         result.setScore(85L);
         resultRepo.save(result);
 
         // course2
-        course = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
         courseRepo.save(course);
         // exercise2
-        exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise = course.getExercises().stream().findFirst().get();
         exerciseRepo.save(exercise);
 
         // score for student1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).participation(participation);
+        result = new Result().score(70L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
         result.setScore(70L);
@@ -128,11 +126,11 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         course = courseRepo.findAll().get(0);
         // exercise3
-        exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise = new TextExercise().course(course);
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).participation(participation);
+        result = new Result().score(60L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
         result.setScore(70L);
@@ -181,11 +179,11 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         course = courseRepo.findAll().get(0);
         // exercise3
-        exercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exercise = new TextExercise().course(course);
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 30).participation(participation);
+        result = new Result().score(30L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
         result.setScore(25L);
@@ -232,10 +230,10 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // score for student3 in exercise1 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).participation(participation);
+        result = new Result().score(90L).participation(participation).rated(true);
         resultRepo.save(result);
         // change score to trigger PostUpdate
-        result.setScore(70L);
+        result.setScore(85L);
         resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
@@ -315,7 +313,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
         assertThat(response.getResult().getId()).as("response result id is old result id").isEqualTo(oldResult.getId());
 
-        Result newResult = ModelFactory.generateResult(true, 20).participation(participation);
+        Result newResult = new Result().score(20L).participation(participation).rated(true);
         resultRepo.save(newResult);
         // change score to trigger PostUpdate
         newResult.setScore(15L);
