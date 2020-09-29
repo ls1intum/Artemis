@@ -5,8 +5,8 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SinonStub, stub } from 'sinon';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -34,7 +34,8 @@ describe('ResultDetailComponent', () => {
         const scaFeedback = new Feedback();
         scaFeedback.id = 42;
         scaFeedback.type = FeedbackType.AUTOMATIC;
-        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'test';
+        scaFeedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER;
+        scaFeedback.detailText = '{"filePath":"www/withSCA/MergeSort.java","startLine":9}';
         return scaFeedback;
     };
 
@@ -72,26 +73,32 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
-        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
+        const scaFeedback = generateSCAFeedback();
+        const testCaseFeedback = generateTestCaseFeedback();
+        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
+        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.isLoading).to.be.false;
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
-        const feedbacks: Feedback[] = [generateSCAFeedback(), generateTestCaseFeedback()];
+        const scaFeedback = generateSCAFeedback();
+        const testCaseFeedback = generateTestCaseFeedback();
+        const feedbacks: Feedback[] = [scaFeedback, testCaseFeedback];
         comp.exerciseType = ExerciseType.PROGRAMMING;
         getFeedbackDetailsForResultStub.returns(of({ body: feedbacks as Feedback[] } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
-        expect([...comp.feedbackList, ...comp.staticCodeAnalysisFeedbackList]).to.have.same.deep.members(feedbacks);
+        expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.isLoading).to.be.false;
     });
 
@@ -105,7 +112,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.staticCodeAnalysisFeedbackList).to.have.same.deep.members([scaFeedback]);
+        expect(comp.staticCodeAnalysisIssues).to.have.same.deep.members([JSON.parse(scaFeedback.detailText!)]);
         expect(comp.feedbackList).to.have.same.deep.members([testCaseFeedback]);
     });
 
@@ -149,6 +156,30 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).to.not.have.been.called;
         expect(comp.buildLogs).to.be.undefined;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('fetchBuildLogs should suppress 403 error', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        const response = new HttpErrorResponse({ status: 403 });
+        buildlogsStub.returns(throwError(response));
+
+        comp.ngOnInit();
+
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(comp.loadingFailed).to.be.false;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('fetchBuildLogs should not suppress errors with status other than 403', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        const response = new HttpErrorResponse({ status: 500 });
+        buildlogsStub.returns(throwError(response));
+
+        comp.ngOnInit();
+
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(comp.loadingFailed).to.be.true;
         expect(comp.isLoading).to.be.false;
     });
 });

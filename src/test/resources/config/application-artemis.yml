@@ -74,6 +74,7 @@ artemis:
         embedding-chunk-size: 50
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
+        feedback-consistency-url: http://localhost:8001/feedback_consistency
         secret: null
     athene:
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
