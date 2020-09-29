@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -20,7 +20,6 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -62,28 +61,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      */
     trackId(index: number, item: ModelingExercise) {
         return item.id;
-    }
-
-    /**
-     * Deletes modeling exercise
-     * @param modelingExerciseId id of the exercise that will be deleted
-     */
-    deleteModelingExercise(modelingExercise: ModelingExercise) {
-        const exerciseId = modelingExercise.id;
-        const groupId = modelingExercise.exerciseGroup ? modelingExercise.exerciseGroup.id : 0;
-        this.modelingExerciseService.delete(modelingExercise.id).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'modelingExerciseListModification',
-                    content: 'Deleted an modelingExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (!!this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId, groupId });
-                }
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
     }
 
     protected getChangeEventName(): string {

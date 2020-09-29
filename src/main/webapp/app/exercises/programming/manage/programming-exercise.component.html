@@ -222,7 +222,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -231,7 +231,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -240,7 +240,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="isInExerciseGroup == null && programmingExercise.teamMode && (programmingExercise.isAtLeastTutor || course.isAtLeastTutor)"
+                                    *ngIf="isInExerciseGroup == null && programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -252,7 +252,7 @@
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
-                                    *ngIf="(programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor) && programmingExercise.templateParticipation"
+                                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
                                     [routerLink]="[
@@ -271,7 +271,7 @@
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -282,7 +282,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -291,7 +291,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -315,7 +315,7 @@
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
-                                    *ngIf="programmingExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"

@@ -12,8 +12,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
-    @Input() isInExerciseGroup?: moment.Moment;
+    @Input() isInExerciseGroup?: boolean;
     @Output() exerciseCount = new EventEmitter<number>();
+    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     showAlertHeading: boolean;
     showHeading: boolean;
     courseId: number;
@@ -95,6 +96,10 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     protected abstract getChangeEventName(): string;
+
+    emitDeleteEvent(exerciseId: number, groupId: number) {
+        this.onDeleteExercise.emit({ exerciseId, groupId });
+    }
 
     private registerChangeInExercises() {
         this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => {

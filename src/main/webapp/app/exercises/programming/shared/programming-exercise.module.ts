@@ -7,7 +7,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseRowButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-row-buttons.component';
 
 @NgModule({
     imports: [
@@ -19,7 +18,7 @@ import { ProgrammingExerciseRowButtonsComponent } from 'app/exercises/programmin
         ArtemisProgrammingExerciseGradingModule,
         ProgrammingExerciseUtilsModule,
     ],
-    declarations: [ProgrammingExerciseComponent, ProgrammingExerciseRowButtonsComponent],
-    exports: [ProgrammingExerciseComponent, ProgrammingExerciseRowButtonsComponent],
+    declarations: [ProgrammingExerciseComponent],
+    exports: [ProgrammingExerciseComponent],
 })
 export class ArtemisProgrammingExerciseModule {}

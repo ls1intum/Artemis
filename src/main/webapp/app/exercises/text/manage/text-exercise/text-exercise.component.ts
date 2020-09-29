@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -20,7 +20,6 @@ import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exer
 })
 export class TextExerciseComponent extends ExerciseComponent implements OnInit {
     @Input() textExercises: TextExercise[];
-    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     constructor(
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
@@ -84,23 +83,6 @@ export class TextExerciseComponent extends ExerciseComponent implements OnInit {
                 this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
             },
             () => {},
-        );
-    }
-    deleteExercise(textExercise: TextExercise) {
-        const exerciseId = textExercise.id;
-        const groupId = textExercise.exerciseGroup ? textExercise.exerciseGroup.id : 0;
-        this.textExerciseService.delete(textExercise.id).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted a textExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (!!this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId, groupId });
-                }
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 }

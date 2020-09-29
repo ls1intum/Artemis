@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -26,7 +26,6 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
-    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     readonly ActionType = ActionType;
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;

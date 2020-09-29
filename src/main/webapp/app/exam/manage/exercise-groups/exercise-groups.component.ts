@@ -65,6 +65,16 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups = examRes.body!.exerciseGroups;
                 this.course = examRes.body!.course;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
+                if (this.exerciseGroups) {
+                    for (const exerciseGroup of this.exerciseGroups!) {
+                        if (exerciseGroup.exercises) {
+                            for (const exercise of exerciseGroup.exercises!) {
+                                exercise.isAtLeastTutor = this.course.isAtLeastTutor;
+                                exercise.isAtLeastInstructor = this.course.isAtLeastInstructor;
+                            }
+                        }
+                    }
+                }
                 this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
                 this.setupExerciseGroupToExerciseTypesDict();
             },

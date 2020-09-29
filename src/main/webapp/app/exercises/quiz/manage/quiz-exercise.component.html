@@ -51,19 +51,13 @@
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="!!isInExerciseGroup && isExamOver() && course.isAtLeastInstructor">
-                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
-                    </td>
-                    <td *ngIf="!!isInExerciseGroup && !isExamOver() && !hasExamStarted()">
-                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
-                    </td>
                     <td *ngIf="!!isInExerciseGroup && hasExamStarted()">
                         <span>{{ quizExercise.id }}</span>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null && (!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor)">
+                    <td *ngIf="isInExerciseGroup == null ? !quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor : !isExamOver() && !hasExamStarted()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null && quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
+                    <td *ngIf="isInExerciseGroup == null ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
@@ -122,7 +116,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    *ngIf="quizExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
@@ -131,7 +125,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                                 </button>
                                 <button
-                                    *ngIf="quizExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
@@ -142,7 +136,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    *ngIf="quizExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
                                     [routerLink]="['/course-management', courseId, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
@@ -151,7 +145,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
                                 </button>
                                 <button
-                                    *ngIf="quizExercise.isAtLeastTutor || course.isAtLeastTutor"
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
                                     [routerLink]="['/course-management', courseId, 'exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
@@ -162,7 +156,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    *ngIf="quizExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     (click)="exportQuizById(quizExercise.id, true)"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
@@ -171,7 +165,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                 </button>
                                 <button
-                                    *ngIf="quizExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [hidden]="quizIsOver(quizExercise)"
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
@@ -182,7 +176,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </button>
                                 <button
-                                    *ngIf="quizExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [hidden]="!quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', courseId, 'quiz-exercises', quizExercise.id, 're-evaluate']"
@@ -207,7 +201,7 @@
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
-                                    *ngIf="quizExercise.isAtLeastInstructor || course.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
                                     [entityTitle]="quizExercise.title"
                                     deleteQuestion="artemisApp.quizExercise.delete.question"

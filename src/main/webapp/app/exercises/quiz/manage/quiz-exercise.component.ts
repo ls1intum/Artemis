@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -22,7 +23,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
 
     @Input() quizExercises: QuizExercise[] = [];
-    @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
+    @Input() latestIndividualEndDate?: Moment;
+    @Input() examStartDate?: Moment;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -83,6 +85,20 @@ export class QuizExerciseComponent extends ExerciseComponent {
         }
         // the quiz hasn't started yet
         return false;
+    }
+
+    /**
+     * Checks whether the exam is over using the latestIndividualEndDate
+     */
+    isExamOver() {
+        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(moment()) : false;
+    }
+
+    /**
+     * Checks whether the exam has started
+     */
+    hasExamStarted() {
+        return this.examStartDate ? this.examStartDate.isBefore(moment()) : false;
     }
 
     /**
@@ -224,20 +240,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
-    }
-
-    /**
-     * Checks whether the exam is over using the latestIndividualEndDate
-     */
-    isExamOver() {
-        return this.isInExerciseGroup ? this.isInExerciseGroup.isBefore(moment()) : false;
-    }
-
-    /**
-     * Checks whether the exam has started
-     */
-    hasExamStarted() {
-        return this.quizExercises[0].exerciseGroup?.exam?.startDate ? this.quizExercises[0].exerciseGroup?.exam?.startDate.isBefore(moment()) : false;
     }
 
     public sortRows() {
