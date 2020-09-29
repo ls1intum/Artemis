@@ -71,10 +71,10 @@ public class Feedback implements Serializable {
     private GradingInstruction gradingInstruction;
 
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
-    private List<AssessmentConflict> firstConflicts = new ArrayList<>();
+    private List<FeedbackConflict> firstConflicts = new ArrayList<>();
 
     @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
-    private List<AssessmentConflict> secondConflicts = new ArrayList<>();
+    private List<FeedbackConflict> secondConflicts = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -217,19 +217,19 @@ public class Feedback implements Serializable {
         this.gradingInstruction = gradingInstruction;
     }
 
-    public List<AssessmentConflict> getFirstConflicts() {
+    public List<FeedbackConflict> getFirstConflicts() {
         return firstConflicts;
     }
 
-    public void setFirstConflicts(List<AssessmentConflict> firstConflicts) {
+    public void setFirstConflicts(List<FeedbackConflict> firstConflicts) {
         this.firstConflicts = firstConflicts;
     }
 
-    public List<AssessmentConflict> getSecondConflicts() {
+    public List<FeedbackConflict> getSecondConflicts() {
         return secondConflicts;
     }
 
-    public void setSecondConflicts(List<AssessmentConflict> secondConflicts) {
+    public void setSecondConflicts(List<FeedbackConflict> secondConflicts) {
         this.secondConflicts = secondConflicts;
     }
 

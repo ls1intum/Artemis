@@ -1,17 +1,17 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentConflictType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 
 /**
- * A DTO representing assessment conflicts (e.g. retrieved from Athene)
+ * A DTO representing feedback conflicts (e.g. retrieved from Athene)
  */
-public class AssessmentConflictResponseDTO {
+public class FeedbackConflictResponseDTO {
 
     private long firstFeedbackId;
 
     private long secondFeedbackId;
 
-    private AssessmentConflictType type;
+    private FeedbackConflictType type;
 
     public long getFirstFeedbackId() {
         return firstFeedbackId;
@@ -29,11 +29,11 @@ public class AssessmentConflictResponseDTO {
         this.secondFeedbackId = secondFeedbackId;
     }
 
-    public AssessmentConflictType getType() {
+    public FeedbackConflictType getType() {
         return type;
     }
 
-    public void setType(AssessmentConflictType type) {
+    public void setType(FeedbackConflictType type) {
         this.type = type;
     }
 }

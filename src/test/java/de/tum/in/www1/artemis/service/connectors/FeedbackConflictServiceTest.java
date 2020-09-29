@@ -14,12 +14,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentConflictType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.service.dto.AssessmentConflictResponseDTO;
-import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictRequestDTO;
+import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
+import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 
-public class AssessmentConflictServiceTest {
+public class FeedbackConflictServiceTest {
 
     private static final String TEXT_ASSESSMENT_CONFLICT_ENDPOINT = "http://localhost:8001/feedback_consistency";
 
@@ -33,28 +33,28 @@ public class AssessmentConflictServiceTest {
         final TextAssessmentConflictService textAssessmentConflictService = new TextAssessmentConflictService();
         ReflectionTestUtils.setField(textAssessmentConflictService, "API_ENDPOINT", TEXT_ASSESSMENT_CONFLICT_ENDPOINT);
 
-        final List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS = new ArrayList<>();
+        final List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS = new ArrayList<>();
 
         String firstSubmissionText = "My answer text block for the question.";
         String firstFeedbackText = "Correct answer.";
-        final TextAssessmentConflictRequestDTO firstRequestObject = new TextAssessmentConflictRequestDTO("1", firstSubmissionText, 1L, 1L, firstFeedbackText, 1.0);
-        textAssessmentConflictRequestDTOS.add(firstRequestObject);
+        final TextFeedbackConflictRequestDTO firstRequestObject = new TextFeedbackConflictRequestDTO("1", firstSubmissionText, 1L, 1L, firstFeedbackText, 1.0);
+        textFeedbackConflictRequestDTOS.add(firstRequestObject);
 
-        textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, -1L, 0);
-        textAssessmentConflictRequestDTOS.clear();
+        textAssessmentConflictService.checkFeedbackConsistencies(textFeedbackConflictRequestDTOS, -1L, 0);
+        textFeedbackConflictRequestDTOS.clear();
 
         String secondSubmissionText = "My answer text block for the question.";
         String secondFeedbackText = "Correct answer.";
-        final TextAssessmentConflictRequestDTO secondRequestObject = new TextAssessmentConflictRequestDTO("2", secondSubmissionText, 1L, 2L, secondFeedbackText, 2.0);
-        textAssessmentConflictRequestDTOS.add(secondRequestObject);
+        final TextFeedbackConflictRequestDTO secondRequestObject = new TextFeedbackConflictRequestDTO("2", secondSubmissionText, 1L, 2L, secondFeedbackText, 2.0);
+        textFeedbackConflictRequestDTOS.add(secondRequestObject);
 
-        List<AssessmentConflictResponseDTO> feedbackConflicts = textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, -1L, 0);
+        List<FeedbackConflictResponseDTO> feedbackConflicts = textAssessmentConflictService.checkFeedbackConsistencies(textFeedbackConflictRequestDTOS, -1L, 0);
         assertThat(feedbackConflicts, is(not(empty())));
         assertThat(feedbackConflicts, hasItem(
                 either(hasProperty("firstFeedbackId", is(firstRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(firstRequestObject.getFeedbackId())))));
         assertThat(feedbackConflicts, hasItem(
                 either(hasProperty("firstFeedbackId", is(secondRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(secondRequestObject.getFeedbackId())))));
-        assertThat(feedbackConflicts, hasItem(hasProperty("type", is(AssessmentConflictType.INCONSISTENT_SCORE))));
+        assertThat(feedbackConflicts, hasItem(hasProperty("type", is(FeedbackConflictType.INCONSISTENT_SCORE))));
     }
 
     @BeforeAll
