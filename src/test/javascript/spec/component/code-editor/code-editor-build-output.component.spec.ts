@@ -25,6 +25,9 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
+import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -74,6 +77,18 @@ describe('CodeEditorBuildOutputComponent', () => {
             timestamp: 1557909131000,
         },
     ];
+
+    const staticCodeAnalysisIssue = {
+        filePath: 'path',
+        startLine: 2,
+        endLine: 3,
+        startColumn: 1,
+        endColumn: 2,
+        message: 'Issue',
+        category: 'Misc',
+        rule: 'Best rule',
+        priority: '1',
+    } as StaticCodeAnalysisIssue;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -222,5 +237,32 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogNoResultHtml).not.to.exist;
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
+    });
+
+    it('should create annotation from static code analysis feedback', () => {
+        const submission = { id: 1, buildFailed: false } as ProgrammingSubmission;
+        const result = { id: 1, successful: true } as Result;
+        result.submission = submission;
+        const participation = { id: 1, results: [result] } as Participation;
+        comp.participation = participation;
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+            detailText: JSON.stringify(staticCodeAnalysisIssue),
+        } as Feedback;
+        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
+        let emittedAnnotations: Annotation[] = [];
+        comp.onAnnotations.subscribe((emitted) => {
+            emittedAnnotations = emitted;
+        });
+        triggerChanges(comp, { property: 'participation', currentValue: participation });
+
+        expect(emittedAnnotations).to.have.length(1);
+        const annotation = emittedAnnotations[0];
+        expect(annotation.fileName).to.equal(staticCodeAnalysisIssue.filePath);
+        expect(annotation.row).to.equal(staticCodeAnalysisIssue.startLine - 1);
+        expect(annotation.column).to.equal(staticCodeAnalysisIssue.startColumn! - 1);
     });
 });
