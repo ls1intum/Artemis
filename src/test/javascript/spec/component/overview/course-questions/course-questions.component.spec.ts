@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CourseQuestionsComponent } from 'app/course/course-questions/course-questions.component';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
+import { StudentQuestionForOverview } from 'app/course/course-questions/course-questions.component';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -47,6 +48,18 @@ describe('CourseQuestionsComponent', () => {
         answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
     } as StudentQuestion;
 
+    const studentQuestionForOverview = {
+        id: 1,
+        questionText: 'question',
+        creationDate: null,
+        votes: 1,
+        answers: 2,
+        approvedAnswers: 1,
+        exerciseOrLectureId: 1,
+        exerciseOrLectureTitle: 'Test exercise',
+        belongsToExercise: true,
+    } as StudentQuestionForOverview;
+
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
@@ -61,8 +74,23 @@ describe('CourseQuestionsComponent', () => {
     });
 
     it('should count approved answers correctly', () => {
-        component.studentQuestions = [studentQuestion];
-        componentFixture.detectChanges();
         expect(component.getNumberOfApprovedAnswers(studentQuestion)).to.deep.equal(1);
+    });
+
+    it('should hide questions with approved answers', () => {
+        component.studentQuestions = [studentQuestionForOverview];
+        component.hideQuestionsWithApprovedAnswers();
+        expect(component.studentQuestionsToDisplay.length).to.deep.equal(0);
+    });
+
+    it('should toggle hiding questions with approved answers', () => {
+        component.studentQuestions = [studentQuestionForOverview];
+        expect(component.showQuestionsWithApprovedAnswers).to.be.false;
+        component.toggleHideQuestions();
+        expect(component.showQuestionsWithApprovedAnswers).to.be.true;
+        expect(component.studentQuestionsToDisplay.length).to.deep.equal(1);
+        component.toggleHideQuestions();
+        expect(component.showQuestionsWithApprovedAnswers).to.be.false;
+        expect(component.studentQuestionsToDisplay.length).to.deep.equal(0);
     });
 });

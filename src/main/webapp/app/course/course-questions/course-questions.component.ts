@@ -7,7 +7,7 @@ import { Moment } from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 
-type StudentQuestionForOverview = {
+export type StudentQuestionForOverview = {
     id: number;
     questionText: string | null;
     creationDate: Moment | null;
@@ -74,10 +74,16 @@ export class CourseQuestionsComponent implements OnInit {
         this.sortService.sortByProperty(this.studentQuestionsToDisplay, this.predicate, this.reverse);
     }
 
+    /**
+     * removes all questions with approved answers from questions to display
+     */
     hideQuestionsWithApprovedAnswers(): void {
         this.studentQuestionsToDisplay = this.studentQuestions.filter((question) => question.approvedAnswers === 0);
     }
 
+    /**
+     * toggles showing questions with approved answers and sets the questions to display
+     */
     toggleHideQuestions(): void {
         if (!this.showQuestionsWithApprovedAnswers) {
             this.studentQuestionsToDisplay = this.studentQuestions;
