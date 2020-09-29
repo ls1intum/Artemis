@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback, FeedbackType, MANUAL_ASSESSMENT_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -20,7 +20,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
     private _feedback: Feedback;
     @Input()
-    fileName: string;
+    selectedFile: string;
     @Input()
     codeLine: number;
     @Input()
@@ -43,9 +43,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     updateFeedback() {
         this.feedback.type = this.MANUAL;
-        this.feedback.reference = `${MANUAL_ASSESSMENT_IDENTIFIER}_file:${this.fileName}_line:${this.codeLine}`;
+        this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
         this.editOnly = true;
-        this.feedback.text = `for file ${this.fileName} at line ${this.codeLine}`;
+        this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
         this.onUpdateFeedback.emit(this.feedback);
     }
 

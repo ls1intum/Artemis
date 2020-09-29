@@ -13,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, MANUAL_ASSESSMENT_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
@@ -153,7 +153,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
             // latest result is the first element of results, see loadParticipationWithLatestResult
             isManualResult = this.latestResult.assessmentType === AssessmentType.MANUAL;
             if (isManualResult) {
-                hasTutorFeedback = this.latestResult.feedbacks.some((feedback) => feedback.reference?.includes(MANUAL_ASSESSMENT_IDENTIFIER));
+                hasTutorFeedback = this.latestResult.feedbacks.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
         this.hasTutorAssessment = isManualResult && hasTutorFeedback;

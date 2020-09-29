@@ -13,7 +13,7 @@
         </div>
         <div *ngFor="let line of lineCounter; let i = index" id="test-{{ i }}" class="inline-feedback-d-none">
             <jhi-code-editor-tutor-assessment-inline-feedback
-                [fileName]="selectedFile"
+                [selectedFile]="selectedFile"
                 [codeLine]="i"
                 [feedback]="fileFeedbackPerLine[i]"
                 [readOnly]="readOnlyManualFeedback"

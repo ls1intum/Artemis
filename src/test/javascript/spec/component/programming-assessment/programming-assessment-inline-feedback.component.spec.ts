@@ -8,7 +8,7 @@ import { spy } from 'sinon';
 
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
-import { MANUAL_ASSESSMENT_IDENTIFIER } from 'app/entities/feedback.model';
+import { FeedbackType } from 'app/entities/feedback.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,9 +34,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                // @ts-ignore
                 comp.feedback = undefined;
                 comp.readOnly = false;
-                comp.fileName = fileName;
+                comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
             });
     });
@@ -45,7 +46,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const onUpdateFeedbackSpy = spy(comp.onUpdateFeedback, 'emit');
         comp.updateFeedback();
 
-        expect(comp.feedback.reference).to.be.equal(`${MANUAL_ASSESSMENT_IDENTIFIER}_file:${fileName}_line:${codeLine}`);
+        expect(comp.feedback.reference).to.be.equal(`file:${fileName}_line:${codeLine}`);
+        expect(comp.feedback.type).to.be.equal(FeedbackType.MANUAL);
         expect(onUpdateFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
     });
 
