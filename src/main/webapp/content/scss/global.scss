@@ -143,13 +143,45 @@ Generic styles
     }
 }
 
+// This class refers to the gutter inserted by split.js for its split view
+.gutter {
+    background-color: #f1f1f1;
+    cursor: col-resize;
+    position: relative;
+    transition: background-color 0.2s;
+
+    &::before {
+        background-color: darken($body-bg, 10);
+        border-radius: 1px;
+        content: '';
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transition: background-color 0.2s;
+        transform: translate(-50%, -50%);
+        width: 2px;
+    }
+
+    &:active,
+    &:hover {
+        background-color: $body-bg;
+
+        &::before {
+            background-color: darken($body-bg, 20);
+        }
+    }
+}
+
 .error {
     color: white;
     background-color: red;
 }
+
 .invalid-feedback {
     display: block;
 }
+
 .pad {
     padding: 10px;
 }
@@ -667,27 +699,35 @@ Course Info Bar
     .background-editor-color {
         background: #f8f9fa;
     }
+
     .red {
         color: #ca2024;
     }
+
     .green {
         color: #3ea119;
     }
+
     .white {
         color: #ffffff;
     }
+
     .black {
         color: #000000;
     }
+
     .yellow {
         color: #fffa5c;
     }
+
     .blue {
         color: #0d3cc2;
     }
+
     .lila {
         color: #b05db8;
     }
+
     .orange {
         color: #d86b1f;
     }
