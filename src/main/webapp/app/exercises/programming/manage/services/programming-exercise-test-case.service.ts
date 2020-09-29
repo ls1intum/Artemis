@@ -88,7 +88,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      */
     public reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset`, {});
+        return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/grading/reset`, {});
     }
 
     /**
@@ -97,7 +97,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      */
     public reEvaluate(exerciseId: number): Observable<number> {
-        return this.http.put<number>(`${this.testCaseUrl}/${exerciseId}/re-evaluate`, {});
+        return this.http.put<number>(`${this.testCaseUrl}/${exerciseId}/grading/re-evaluate`, {});
     }
 
     /**
