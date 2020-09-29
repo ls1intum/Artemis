@@ -11,7 +11,10 @@
             "approvedAnswers": "bestätigte Antworten",
             "exerciseOrLecture": "Aufgabe/ Vorlesung",
             "overview": {
-                "title": "Fragen"
+                "title": "Fragen",
+                "noQuestions": "Es wurden noch keine Fragen in diesem Kurs gestellt",
+                "showApproved": "zeige Fragen mit bestätigten Antworten an",
+                "hideApproved": "verstecke Fragen mit bestätigten Antworten"
             }
         },
         "questionAnswer": {

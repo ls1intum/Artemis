@@ -11,7 +11,10 @@
             "approvedAnswers": "Approved answers",
             "exerciseOrLecture": "Exercise/ Lecture",
             "overview": {
-                "title": "Questions"
+                "title": "Questions",
+                "noQuestions": "There are no questions for this course",
+                "showApproved": "show questions with approved answers",
+                "hideApproved": "hide questions with approved answers"
             }
         },
         "questionAnswer": {

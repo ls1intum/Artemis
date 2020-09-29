@@ -29,6 +29,9 @@ type StudentQuestionForOverview = {
 export class CourseQuestionsComponent implements OnInit {
     courseId: number;
     studentQuestions: StudentQuestionForOverview[];
+    studentQuestionsToDisplay: StudentQuestionForOverview[];
+
+    showQuestionsWithApprovedAnswers = false;
 
     predicate = 'id';
     reverse = true;
@@ -55,6 +58,7 @@ export class CourseQuestionsComponent implements OnInit {
                 exercise: question.exercise,
                 lecture: question.lecture,
             }));
+            this.studentQuestionsToDisplay = this.studentQuestions.filter((question) => question.approvedAnswers === 0);
         });
     }
 
@@ -67,6 +71,19 @@ export class CourseQuestionsComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.studentQuestions, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.studentQuestionsToDisplay, this.predicate, this.reverse);
+    }
+
+    hideQuestionsWithApprovedAnswers(): void {
+        this.studentQuestionsToDisplay = this.studentQuestions.filter((question) => question.approvedAnswers === 0);
+    }
+
+    toggleHideQuestions(): void {
+        if (!this.showQuestionsWithApprovedAnswers) {
+            this.studentQuestionsToDisplay = this.studentQuestions;
+        } else {
+            this.hideQuestionsWithApprovedAnswers();
+        }
+        this.showQuestionsWithApprovedAnswers = !this.showQuestionsWithApprovedAnswers;
     }
 }

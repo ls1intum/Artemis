@@ -1,6 +1,13 @@
 <ng-container *ngIf="courseId">
-    <h3><span jhiTranslate="artemisApp.studentQuestion.overview.title">Questions</span></h3>
-    <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0">
+    <div class="w-100 d-inline-flex justify-content-between pb-2">
+        <h3><span jhiTranslate="artemisApp.studentQuestion.overview.title">Questions</span></h3>
+        <jhi-button
+            (onClick)="toggleHideQuestions()"
+            [icon]="'filter'"
+            [title]="showQuestionsWithApprovedAnswers ? 'artemisApp.studentQuestion.overview.hideApproved' : 'artemisApp.studentQuestion.overview.showApproved'"
+        ></jhi-button>
+    </div>
+    <div class="table-responsive" *ngIf="studentQuestions && studentQuestions.length > 0; else noQuestions">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
@@ -9,14 +16,16 @@
                     <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.studentQuestion.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="votes"><span jhiTranslate="artemisApp.studentQuestion.votes">Votes</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="answers"><span jhiTranslate="artemisApp.studentQuestion.answers">Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="approvedAnswers"><span jhiTranslate="artemisApp.studentQuestion.approvedAnswers">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th *ngIf="showQuestionsWithApprovedAnswers" jhiSortBy="approvedAnswers">
+                        <span jhiTranslate="artemisApp.studentQuestion.approvedAnswers">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="exerciseOrLectureTitle">
                         <span jhiTranslate="artemisApp.studentQuestion.exerciseOrLecture">Exercise / Lecture</span><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let studentQuestion of studentQuestions">
+                <tr *ngFor="let studentQuestion of studentQuestionsToDisplay">
                     <td>
                         <a [routerLink]="['/courses', courseId, studentQuestion.belongsToExercise ? 'exercises' : 'lectures', studentQuestion.exerciseOrLectureId]">{{
                             studentQuestion.id
@@ -26,10 +35,15 @@
                     <td>{{ studentQuestion.creationDate | artemisDate }}</td>
                     <td>{{ studentQuestion.votes }}</td>
                     <td>{{ studentQuestion.answers }}</td>
-                    <td>{{ studentQuestion.approvedAnswers }}</td>
+                    <td *ngIf="showQuestionsWithApprovedAnswers">{{ studentQuestion.approvedAnswers }}</td>
                     <td>{{ studentQuestion.exerciseOrLectureTitle }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
+    <ng-template #noQuestions>
+        <div>
+            {{ 'artemisApp.studentQuestion.overview.noQuestions' | translate }}
+        </div>
+    </ng-template>
 </ng-container>
