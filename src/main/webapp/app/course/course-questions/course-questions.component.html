@@ -8,30 +8,26 @@
                     <th><span jhiTranslate="artemisApp.studentQuestion.text">Question Text</span></th>
                     <th jhiSortBy="creationDate"><span jhiTranslate="artemisApp.studentQuestion.creationDate">Creation Date</span><fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="votes"><span jhiTranslate="artemisApp.studentQuestion.votes">Votes</span><fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th><span jhiTranslate="artemisApp.studentQuestion.answers">Answers</span></th>
-                    <th><span jhiTranslate="artemisApp.studentQuestion.approvedAnswers">Approved Answers</span></th>
-                    <th><span jhiTranslate="artemisApp.studentQuestion.exerciseOrLecture">Exercise / Lecture</span></th>
+                    <th jhiSortBy="answers"><span jhiTranslate="artemisApp.studentQuestion.answers">Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="approvedAnswers"><span jhiTranslate="artemisApp.studentQuestion.approvedAnswers">Approved Answers</span><fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="exerciseOrLectureTitle">
+                        <span jhiTranslate="artemisApp.studentQuestion.exerciseOrLecture">Exercise / Lecture</span><fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let studentQuestion of studentQuestions">
                     <td>
-                        <a
-                            [routerLink]="[
-                                '/courses',
-                                courseId,
-                                studentQuestion.exercise ? 'exercises' : 'lectures',
-                                studentQuestion.exercise ? studentQuestion.exercise.id : studentQuestion.lecture.id
-                            ]"
-                            >{{ studentQuestion.id }}</a
-                        >
+                        <a [routerLink]="['/courses', courseId, studentQuestion.belongsToExercise ? 'exercises' : 'lectures', studentQuestion.exerciseOrLectureId]">{{
+                            studentQuestion.id
+                        }}</a>
                     </td>
                     <td><div class="question-cell markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div></td>
                     <td>{{ studentQuestion.creationDate | artemisDate }}</td>
                     <td>{{ studentQuestion.votes }}</td>
-                    <td>{{ studentQuestion.answers ? studentQuestion.answers.length : 0 }}</td>
-                    <td>{{ getNumberOfApprovedAnswers(studentQuestion) }}</td>
-                    <td>{{ studentQuestion.exercise ? studentQuestion.exercise.title : studentQuestion.lecture.title }}</td>
+                    <td>{{ studentQuestion.answers }}</td>
+                    <td>{{ studentQuestion.approvedAnswers }}</td>
+                    <td>{{ studentQuestion.exerciseOrLectureTitle }}</td>
                 </tr>
             </tbody>
         </table>

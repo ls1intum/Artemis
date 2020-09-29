@@ -3,6 +3,23 @@ import { ActivatedRoute } from '@angular/router';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { Moment } from 'moment';
+import { Exercise } from 'app/entities/exercise.model';
+import { Lecture } from 'app/entities/lecture.model';
+
+type StudentQuestionForOverview = {
+    id: number;
+    questionText: string | null;
+    creationDate: Moment | null;
+    votes: number;
+    answers: number;
+    approvedAnswers: number;
+    exerciseOrLectureId: number;
+    exerciseOrLectureTitle: string;
+    belongsToExercise: boolean;
+    exercise: Exercise;
+    lecture: Lecture;
+};
 
 @Component({
     selector: 'jhi-course-questions',
@@ -11,7 +28,7 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class CourseQuestionsComponent implements OnInit {
     courseId: number;
-    studentQuestions: StudentQuestion[];
+    studentQuestions: StudentQuestionForOverview[];
 
     predicate = 'id';
     reverse = true;
@@ -19,12 +36,25 @@ export class CourseQuestionsComponent implements OnInit {
     constructor(private route: ActivatedRoute, private studentQuestionsService: StudentQuestionService, private sortService: SortService) {}
 
     /**
-     * On init fetch the course
+     * On init fetch the course and the studentQuestions
+     * convert studentQuestions to StudentQuestionForOverview type to allow sorting by all displayed fields
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
-            this.studentQuestions = res.body!;
+            this.studentQuestions = res.body!.map((question) => ({
+                id: question.id,
+                questionText: question.questionText,
+                creationDate: question.creationDate,
+                answers: question.answers ? question.answers.length : 0,
+                approvedAnswers: this.getNumberOfApprovedAnswers(question),
+                votes: question.votes,
+                exerciseOrLectureId: question.exercise ? question.exercise.id : question.lecture.id,
+                exerciseOrLectureTitle: question.exercise ? question.exercise.title : question.lecture.title,
+                belongsToExercise: !!question.exercise,
+                exercise: question.exercise,
+                lecture: question.lecture,
+            }));
         });
     }
 
