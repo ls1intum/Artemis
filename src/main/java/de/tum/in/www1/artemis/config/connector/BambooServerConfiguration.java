@@ -40,6 +40,10 @@ public class BambooServerConfiguration {
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER;
 
+    /**
+     * initializes the bamboo server with the provided token (if available) or with username and password (fallback that will be removed soon)
+     * @return the initialized BambooServer object that can be used to publish build plans
+     */
     @Bean
     public BambooServer bambooServer() {
         if (BAMBOO_TOKEN.isPresent()) {
