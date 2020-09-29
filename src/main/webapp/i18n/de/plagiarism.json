@@ -3,7 +3,7 @@
         "plagiarism": {
             "confirm": "Bestätigen",
             "deny": "Ablehnen",
-            "warning": "Bestätigen/Ablehnen eines Plagiats geht beim Neuladen der Seite verloren.",
+            "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",
             "back": "Zurück",
