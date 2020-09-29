@@ -50,7 +50,7 @@ import { delay } from 'rxjs/operators';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingAssessmentManualResultDialogComponent', () => {
+describe('CodeEditorTutorAssessmentContainerComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
     let comp: CodeEditorTutorAssessmentContainerComponent;

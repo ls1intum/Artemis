@@ -204,10 +204,12 @@
                 "title": "Testlaufverwaltung: ",
                 "setup": "Testlauf Erstellen",
                 "author": "Autor*in",
-                "setupHint": "Wähle für jede Übungsgruppe eine Übung aus, indem du auf die Übung klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Übungen erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis haben.",
+                "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
-                "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschliessend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kann du als Student einsehen und dich Beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von testläufen werden nicht für die Prüfungsergebnisse gezählt.",
+                "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
+                "createTestRunDisabled": "Keine Aufgaben gefunden",
+                "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
                     "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein."
