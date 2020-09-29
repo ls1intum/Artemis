@@ -555,7 +555,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
-        result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
+        result.setScore(0L); // the real score is calculated in the grading service
         result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
@@ -635,34 +635,6 @@ public class BambooService implements ContinuousIntegrationService {
         } catch (Exception e) {
             log.error("Could not get feedback from jobs " + e);
         }
-    }
-
-
-    /**
-     * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
-     *
-     * @param result to calculate score for.
-     * @return the score calculated.
-     */
-    private Long calculateScoreForResult(Result result, int skippedTests) {
-
-        if (result.isSuccessful()) {
-            return (long) 100;
-        }
-
-        if (result.getResultString() != null && !result.getResultString().isEmpty()) {
-
-            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) passed");
-            Matcher matcher = pattern.matcher(result.getResultString());
-
-            if (matcher.find()) {
-                float successfulTests = Float.parseFloat(matcher.group(1));
-                float totalTests = Float.parseFloat(matcher.group(2));
-                float score = successfulTests / totalTests;
-                return (long) (score * 100);
-            }
-        }
-        return (long) 0;
     }
 
     /**
