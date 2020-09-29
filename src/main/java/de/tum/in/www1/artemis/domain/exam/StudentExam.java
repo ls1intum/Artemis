@@ -40,6 +40,9 @@ public class StudentExam extends AbstractAuditingEntity implements Serializable 
     @Column(name = "started")
     private Boolean started;
 
+    @Column(name = "started_date")
+    private ZonedDateTime startedDate;
+
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
@@ -103,6 +106,14 @@ public class StudentExam extends AbstractAuditingEntity implements Serializable 
 
     public void setStarted(Boolean started) {
         this.started = started;
+    }
+
+    public ZonedDateTime getStartedDate() {
+        return startedDate;
+    }
+
+    public void setStartedDate(ZonedDateTime startedDate) {
+        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getSubmissionDate() {
