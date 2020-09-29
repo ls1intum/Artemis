@@ -14,6 +14,7 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 export type ModelingSubmissionComparisonDTO = {
     element1: ModelingSubmissionComparisonElement;
     element2: ModelingSubmissionComparisonElement;
+    confirmed?: boolean;
     similarity: number;
 };
 
