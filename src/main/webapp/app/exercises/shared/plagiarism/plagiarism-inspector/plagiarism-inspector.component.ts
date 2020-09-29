@@ -14,7 +14,7 @@ import { ExportToCsv } from 'export-to-csv';
 })
 export class PlagiarismInspectorComponent implements OnInit {
     selectedComparisonIndex: number;
-    checkPlagiarismInProgress: boolean;
+    plagiarismCheckInProgress: boolean;
     modelingExercise: ModelingExercise;
     modelingSubmissionComparisons: Array<ModelingSubmissionComparisonDTO>;
     splitControlSubject: Subject<string> = new Subject<string>();
@@ -108,14 +108,14 @@ export class PlagiarismInspectorComponent implements OnInit {
     }
 
     checkPlagiarism() {
-        this.checkPlagiarismInProgress = true;
+        this.plagiarismCheckInProgress = true;
 
         this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(
             (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
-                this.checkPlagiarismInProgress = false;
+                this.plagiarismCheckInProgress = false;
                 this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);
             },
-            () => (this.checkPlagiarismInProgress = false),
+            () => (this.plagiarismCheckInProgress = false),
         );
     }
 

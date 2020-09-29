@@ -23,7 +23,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     gradingInstructions: SafeHtml;
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
-    checkPlagiarismInProgress: boolean;
 
     constructor(
         private eventManager: JhiEventManager,
