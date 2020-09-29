@@ -110,14 +110,18 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
-    getExerciseButtonTooltip(exerciseIndex: number): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' {
+    getExerciseButtonTooltip(exerciseIndex: number): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
         const submission = this.getSubmissionForExercise(this.exercises[exerciseIndex]);
         if (submission) {
             if (this.exercises[exerciseIndex].type === ExerciseType.PROGRAMMING) {
-                if (submission.isSynced) {
-                    return 'submitted';
+                if (submission.submitted && submission.isSynced) {
+                    return 'submitted'; // You have submitted an exercise. You can submit again
+                } else if (submission.submitted && !submission.isSynced) {
+                    return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
+                } else if (!submission.submitted && submission.isSynced) {
+                    return 'notSubmitted'; // starting point
                 } else {
-                    return 'notSubmitted';
+                    return 'notSavedOrSubmitted';
                 }
             } else {
                 if (submission.isSynced) {

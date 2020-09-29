@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -383,4 +384,39 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        database.addCourseWithOneModelingExercise();
+        database.addCourseWithOneModelingExercise("Activity Diagram");
+        final var searchClassDiagram = database.configureSearch("ClassDiagram");
+        final var resultClassDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchClassDiagram));
+        assertThat(resultClassDiagram.getResultsOnPage().size()).isEqualTo(2);
+
+        final var searchActivityDiagram = database.configureSearch("Activity Diagram");
+        final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchActivityDiagram));
+        assertThat(resultActivityDiagram.getResultsOnPage().size()).isEqualTo(1);
+
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testAdminGetsResultsFromAllCourses() throws Exception {
+        database.addCourseInOtherInstructionGroupAndExercise("ClassDiagram");
+
+        final var search = database.configureSearch("ClassDiagram");
+        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+    }
+
 }

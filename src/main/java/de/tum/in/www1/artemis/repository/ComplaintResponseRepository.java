@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -33,6 +34,16 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints response associated to exercise exerciseId
      */
     long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(long exerciseId, ComplaintType complaintType);
+
+    /**
+     * Similar to {@link ComplaintResponseRepository#countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType}
+     * but ignores test run submissions
+     * @param exerciseId - the id of the course we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return  number of complaints associated to exercise exerciseId without test runs
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (Select s FROM p.submissions s where s.result Is not null and exists (select c from Complaint c where c.result.id = s.result.id and c.complaintType = :#{#complaintType} and exists (select cr from ComplaintResponse cr where cr.complaint.id = c.id))) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintTypeIgnoreTestRuns(long exerciseId, ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation

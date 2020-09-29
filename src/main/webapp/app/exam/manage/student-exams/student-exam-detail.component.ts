@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
+import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 
 @Component({
@@ -95,18 +96,31 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     /**
-     * Sets the student exam, and calculates the total score of the exam and achieved total score of the student.
+     * Sets the student exam, initialised the component which allows changing the working time and sets the score of the student.
      * @param studentExam
      */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
-        studentExam.exercises.forEach((exercise) => {
+        this.setStudentScores();
+    }
+
+    /**
+     * Set the score of the student if they are present
+     */
+    private setStudentScores() {
+        for (const exercise of this.studentExam?.exercises) {
             this.maxTotalScore += exercise.maxScore;
-            if (!!exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length >= 1) {
+            if (
+                !!exercise.studentParticipations &&
+                exercise.studentParticipations.length > 0 &&
+                !!exercise.studentParticipations[0].results &&
+                exercise.studentParticipations[0].results.length > 0
+            ) {
                 this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score * exercise.maxScore) / 100;
+                this.achievedTotalScore = this.rounding(this.achievedTotalScore);
             }
-        });
+        }
     }
 
     private initWorkingTimeForm() {
@@ -138,5 +152,8 @@ export class StudentExamDetailComponent implements OnInit {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
+    }
+    rounding(number: number) {
+        return round(number, 1);
     }
 }

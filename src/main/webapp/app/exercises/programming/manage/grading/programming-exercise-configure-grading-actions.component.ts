@@ -8,12 +8,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  * - Trigger the submissions for all participations of the given exercise.
  */
 @Component({
-    selector: 'jhi-programming-exercise-manage-test-cases-actions',
+    selector: 'jhi-programming-exercise-configure-grading-actions',
     template: `
         <button
             id="save-test-cases-button"
             class="btn btn-primary ml-3"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.saveTestCases"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             (click)="onSave.emit()"
             [disabled]="isSaving || !hasUnsavedChanges"
         ></button>
@@ -22,7 +22,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             class="btn btn-secondary ml-3"
             (click)="onReset.emit()"
             [disabled]="isSaving"
-            jhiTranslate="artemisApp.programmingExercise.manageTestCases.reset"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
         ></button>
         <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving"></jhi-programming-exercise-re-evaluate-button>
         <jhi-programming-exercise-trigger-all-button
@@ -32,7 +32,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
         ></jhi-programming-exercise-trigger-all-button>
     `,
 })
-export class ProgrammingExerciseManageTestCasesActionsComponent {
+export class ProgrammingExerciseConfigureGradingActionsComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;

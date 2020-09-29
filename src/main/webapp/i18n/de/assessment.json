@@ -21,7 +21,8 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "scoreFor": "Bewertung für"
+                "scoreFor": "Bewertung für",
+                "tutorComment": "Tutor Kommentar:"
             },
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",

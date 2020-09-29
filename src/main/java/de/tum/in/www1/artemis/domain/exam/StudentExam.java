@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Table(name = "student_exam")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StudentExam implements Serializable {
+public class StudentExam extends AbstractAuditingEntity implements Serializable {
 
     @Id
     @Column(name = "id")
@@ -39,8 +40,14 @@ public class StudentExam implements Serializable {
     @Column(name = "started")
     private Boolean started;
 
+    @Column(name = "started_date")
+    private ZonedDateTime startedDate;
+
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
+
+    @Column(name = "test_run")
+    private Boolean testRun;
 
     @ManyToOne
     @JoinColumn(name = "exam_id")
@@ -73,6 +80,14 @@ public class StudentExam implements Serializable {
         return submitted;
     }
 
+    public Boolean getTestRun() {
+        return testRun;
+    }
+
+    public void setTestRun(Boolean testRun) {
+        this.testRun = testRun;
+    }
+
     public void setSubmitted(Boolean submitted) {
         this.submitted = submitted;
     }
@@ -91,6 +106,14 @@ public class StudentExam implements Serializable {
 
     public void setStarted(Boolean started) {
         this.started = started;
+    }
+
+    public ZonedDateTime getStartedDate() {
+        return startedDate;
+    }
+
+    public void setStartedDate(ZonedDateTime startedDate) {
+        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getSubmissionDate() {
@@ -161,6 +184,9 @@ public class StudentExam implements Serializable {
     public Boolean isEnded() {
         if (this.getExam() == null || this.getExam().getStartDate() == null || this.getWorkingTime() == null) {
             return null;
+        }
+        if (Boolean.TRUE.equals(testRun)) {
+            return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
     }

@@ -36,30 +36,16 @@ export class ProgrammingAssessmentManualResultService {
      * and feedbacks will be updated. Original result will be stored as a string on complaint.
      * @param feedbacks list of feedback items (the score is not evaluated from them, as we pass score directly from the result)
      * @param complaintResponse contains main information about the complaint response (time, responseText, reviewer)
-     * @param result updated result (only score and resultString is updated)
      * @param submissionId the id of the submission
      * @return updated result with updated feedbacks and score
      */
-    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, result: Result, submissionId: number): Observable<Result> {
+    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
-            score: result.score,
-            resultString: result.resultString,
         };
         return this.http.put<Result>(url, assessmentUpdate);
-    }
-
-    /**
-     * Creates a new manual result with default values successful=true and score=100
-     * @return Created result
-     */
-    generateInitialManualResult() {
-        const newResult = new Result();
-        newResult.successful = true;
-        newResult.score = 100;
-        return newResult;
     }
 
     cancelAssessment(submissionId: number): Observable<void> {

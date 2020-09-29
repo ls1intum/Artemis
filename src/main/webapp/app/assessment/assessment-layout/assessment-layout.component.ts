@@ -30,6 +30,7 @@ export class AssessmentLayoutComponent {
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
+    @Input() isTestRun = false;
 
     @Input() result: Result | null;
     @Input() assessmentsAreValid: boolean;
@@ -45,11 +46,15 @@ export class AssessmentLayoutComponent {
     /**
      * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
      * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
         if (this.complaint!.team) {
             return this.isAssessor;
         } else {
+            if (this.isTestRun) {
+                return this.isAssessor;
+            }
             return this.complaint!.complaintType === ComplaintType.COMPLAINT ? !this.isAssessor : this.isAssessor;
         }
     }

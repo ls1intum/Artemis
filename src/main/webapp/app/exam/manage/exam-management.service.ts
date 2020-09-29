@@ -95,9 +95,15 @@ export class ExamManagementService {
      * Returns the exam with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
      * @param examId - the id of the exam
+     * @param isTestRun - boolean to determine whether it is a test run
      */
-    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
+        let url: string;
+        if (isTestRun) {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+        } else {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+        }
         return this.http
             .get<Exam>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
@@ -150,6 +156,7 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
+     * @param withParticipationsAndSubmission
      */
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
@@ -164,6 +171,36 @@ export class ExamManagementService {
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Generate a test run student exam based on the testRunConfiguration.
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunConfiguration the desired configuration
+     * @returns the created test run
+     */
+    createTestRun(courseId: number, examId: number, testRunConfiguration: StudentExam): Observable<HttpResponse<StudentExam>> {
+        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run`, testRunConfiguration, { observe: 'response' });
+    }
+
+    /**
+     * Delete a test run
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunId the id of the test run
+     */
+    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<StudentExam>> {
+        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
+    }
+
+    /**
+     * Find all the test runs for the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     */
+    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
+        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
     }
 
     /**

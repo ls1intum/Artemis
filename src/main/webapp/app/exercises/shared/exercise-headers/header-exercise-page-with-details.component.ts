@@ -13,6 +13,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     @Input() public onBackClick: () => void;
     @Input() public title: string;
     @Input() public exam: Exam | null;
+    @Input() public isTestRun = false;
 
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];

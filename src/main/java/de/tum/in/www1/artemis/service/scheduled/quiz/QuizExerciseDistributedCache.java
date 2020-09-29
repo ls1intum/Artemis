@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -24,6 +25,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
+/**
+ * This class represents the cache for a single quiz exercise. 
+ * <p>
+ * This includes the participations, submissions and results, but also the quiz exercise object itself and handlers for
+ * the distributed start task {@link QuizStartTask}.
+ */
 final class QuizExerciseDistributedCache extends QuizExerciseCache implements HazelcastInstanceAware {
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
@@ -34,6 +41,9 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     private static final String HAZELCAST_CACHE_RESULTS = "-results";
 
+    /**
+     * All {@link List} classes that are supported by Hazelcast {@link SerializationServiceV1}
+     */
     private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
 
     /**
@@ -41,7 +51,14 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      */
     List<ScheduledTaskHandler> quizStart;
 
+    /**
+     * The {@link QuizExercise} cached object. This is only cached locally and not distributed. 
+     */
     private transient QuizExercise exercise;
+
+    /*
+     * All three IMaps are distributed Hazelcast objects and must not be (de-)serialized, they are all set in the setHazelcastInstance method.
+     */
 
     private transient IMap<String, StudentParticipation> participations;
 
@@ -52,19 +69,19 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      */
     private transient IMap<Long, Result> results;
 
-    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart, QuizExercise exercise) {
-        super(id);
+    QuizExerciseDistributedCache(Long exerciseId, List<ScheduledTaskHandler> quizStart, QuizExercise exercise) {
+        super(Objects.requireNonNull(exerciseId, "exerciseId must not be null"));
         setQuizStart(quizStart);
         setExercise(exercise);
         log.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
     }
 
-    QuizExerciseDistributedCache(Long id, List<ScheduledTaskHandler> quizStart) {
-        this(id, quizStart, null);
+    QuizExerciseDistributedCache(Long exerciseId, List<ScheduledTaskHandler> quizStart) {
+        this(exerciseId, quizStart, null);
     }
 
-    QuizExerciseDistributedCache(Long id) {
-        this(id, getEmptyQuizStartList());
+    QuizExerciseDistributedCache(Long exerciseId) {
+        this(exerciseId, getEmptyQuizStartList());
     }
 
     @Override
@@ -113,13 +130,15 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         int participationsSize = participations.size();
         int submissionsSize = submissions.size();
         int resultsSize = results.size();
-        if (participationsSize > 0)
+        if (participationsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} participations cached", getExerciseId(), participationsSize);
-        if (submissionsSize > 0)
+        }
+        if (submissionsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} submissions cached", getExerciseId(), submissionsSize);
-        if (resultsSize > 0)
+        }
+        if (resultsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} results cached", getExerciseId(), resultsSize);
-
+        }
         participations.destroy();
         submissions.destroy();
         results.destroy();
@@ -128,12 +147,21 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+        /*
+         * Distributed Hazelcast objects will be automatically created and set up by Hazelcast, and are cached by the Hazelcast instance itself globally. This is a relatively
+         * lightweight operation.
+         */
         participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_PARTICIPATIONS);
         submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_SUBMISSIONS);
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_RESULTS);
     }
 
-    static class QuizExerciseCacheImplStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
+    /**
+     * A serializer and deserializer for distributed quiz cache objects, required for objects distributed via Hazelcast. 
+     * We cannot use standard Java-serialization here, because the individual fields of {@link QuizExerciseDistributedCache}
+     * need to use different serialization mechanisms (e.g. {@link ScheduledTaskHandler} is not {@link Serializable}).
+     */
+    static class QuizExerciseDistributedCacheStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
 
         @Override
         public int getTypeId() {
@@ -142,6 +170,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
+            // Hazelcast will choose the best fit from it's own serializers for each object
             out.writeLong(exerciseCacheImpl.getExerciseId());
             out.writeObject(exerciseCacheImpl.quizStart);
             out.writeObject(exerciseCacheImpl.exercise);
@@ -149,17 +178,17 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public QuizExerciseDistributedCache read(ObjectDataInput in) throws IOException {
-            Long id = in.readLong();
+            Long exerciseId = in.readLong();
             List<ScheduledTaskHandler> quizStart = in.readObject();
             QuizExercise exercise = in.readObject();
-            return new QuizExerciseDistributedCache(id, quizStart, exercise);
+            return new QuizExerciseDistributedCache(exerciseId, quizStart, exercise);
         }
     }
 
     static void registerSerializer(Config config) {
         SerializerConfig serializerConfig = new SerializerConfig();
         serializerConfig.setTypeClass(QuizExerciseDistributedCache.class);
-        serializerConfig.setImplementation(new QuizExerciseCacheImplStreamSerializer());
+        serializerConfig.setImplementation(new QuizExerciseDistributedCacheStreamSerializer());
         config.getSerializationConfig().addSerializerConfig(serializerConfig);
     }
 }

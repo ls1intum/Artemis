@@ -14,16 +14,27 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
 /**
- * Empty cache object representing a cache miss
+ * Empty cache object representing a cache miss.
+ * <p> 
+ * This allows to handle a not-cached quiz exercise elegantly, because most operations on the cache are read operations on the
+ * exercise object or the submission, participation or result map. This immutable, singleton class returning only null or empty
+ * data structures on read operations allows being used as as default, if no real cache exists. This saves us much branching and
+ * checking in the {@link QuizScheduleService}, as we can either just return the {@link EmptyQuizExerciseCache} or create a new
+ * real {@link QuizExerciseCache} for write operations, if no cache can be found.
+ * <p>
+ * All method that modify a {@link QuizExerciseCache} throw an {@link UnsupportedOperationException} for the empty cache. 
  */
 final class EmptyQuizExerciseCache extends QuizExerciseCache {
 
-    static final Logger log = LoggerFactory.getLogger(EmptyQuizExerciseCache.class);
+    private static final Logger log = LoggerFactory.getLogger(EmptyQuizExerciseCache.class);
 
     static final EmptyQuizExerciseCache INSTANCE = new EmptyQuizExerciseCache();
 
+    /**
+     * The empty quiz exercise cache is the only one permitted to have the id <code>null</code>
+     */
     private EmptyQuizExerciseCache() {
-        super(Long.valueOf(-1));
+        super(null);
     }
 
     @Override
@@ -53,17 +64,20 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
 
     @Override
     void setExercise(QuizExercise newExercise) {
+        log.error("EmptyQuizExerciseCache cannot have an exercise set");
         throwModificationAttemptException();
     }
 
     @Override
     void setQuizStart(List<ScheduledTaskHandler> quizStart) {
+        log.error("EmptyQuizExerciseCache cannot have the quiz start set");
         throwModificationAttemptException();
     }
 
     @Override
     void clear() {
-        log.warn("EmptyQuizExerciseCache cannot be destroyed");
+        log.error("EmptyQuizExerciseCache cannot be cleared");
+        throwModificationAttemptException();
     }
 
     private static void throwModificationAttemptException() {

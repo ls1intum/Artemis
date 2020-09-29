@@ -46,13 +46,14 @@ public class StudentExamAccessService {
      * @param courseId      the if of the course
      * @param examId        the id of the exam
      * @param studentExamId the id of the student exam
+     * @param testRun flag to determine if test run
      * @param <T>           The type of the return type of the requesting route so that the
      *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId) {
+    public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, boolean testRun) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        return checkStudentExamAccess(courseId, examId, studentExamId, currentUser);
+        return checkStudentExamAccess(courseId, examId, studentExamId, currentUser, testRun);
     }
 
     /**
@@ -62,12 +63,13 @@ public class StudentExamAccessService {
      * @param examId        the id of the exam
      * @param studentExamId the id of the student exam
      * @param currentUser   the current user
+     * @param testRun       flag to determine if this is a testRun
      * @param <T>           The type of the return type of the requesting route so that the
      *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, User currentUser) {
-        Optional<ResponseEntity<T>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser);
+    public <T> Optional<ResponseEntity<T>> checkStudentExamAccess(Long courseId, Long examId, Long studentExamId, User currentUser, boolean testRun) {
+        Optional<ResponseEntity<T>> courseAndExamAccessFailure = checkCourseAndExamAccess(courseId, examId, currentUser, testRun);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
@@ -97,17 +99,12 @@ public class StudentExamAccessService {
      * @param courseId      the if of the course
      * @param examId        the id of the exam
      * @param currentUser   the user
+     * @param testRun       flag to determine if this is a testRun
      * @param <T>           The type of the return type of the requesting route so that the
      *                      response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser) {
-        // Check that the current user is at least student in the course.
-        Course course = courseService.findOne(courseId);
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
-            return Optional.of(forbidden());
-        }
-
+    public <T> Optional<ResponseEntity<T>> checkCourseAndExamAccess(Long courseId, Long examId, User currentUser, boolean testRun) {
         // Check that the exam exists
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
@@ -119,14 +116,28 @@ public class StudentExamAccessService {
             return Optional.of(conflict());
         }
 
-        // Check that the exam is already visible. After the exam, we directly show the summary!
-        if (exam.get().getVisibleDate() != null && (exam.get().getVisibleDate().isAfter(ZonedDateTime.now()))) {
-            return Optional.of(forbidden());
+        Course course = courseService.findOne(courseId);
+        if (testRun) {
+            // Check that the current user is at least instructor in the course.
+            if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
+                return Optional.of(forbidden());
+            }
         }
+        else {
+            // Check that the current user is at least student in the course.
+            if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+                return Optional.of(forbidden());
+            }
 
-        // Check that the current user is registered for the exam
-        if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-            return Optional.of(forbidden());
+            // Check that the exam is already visible. After the exam, we directly show the summary!
+            if (exam.get().getVisibleDate() != null && (exam.get().getVisibleDate().isAfter(ZonedDateTime.now()))) {
+                return Optional.of(forbidden());
+            }
+
+            // Check that the current user is registered for the exam
+            if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+                return Optional.of(forbidden());
+            }
         }
 
         return Optional.empty();

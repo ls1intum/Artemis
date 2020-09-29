@@ -49,26 +49,27 @@ public class TutorDashboardService {
      *
      * @param exercises exercises to be prepared for the tutor dashboard
      * @param tutorParticipations participations of the tutors
+     * @param examMode flag should be set for exam dashboard
      */
-    public void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations) {
+    public void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
             DueDateStat numberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
             }
             else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), examMode);
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
 
-            exerciseService.calculateNrOfOpenComplaints(exercise);
+            exerciseService.calculateNrOfOpenComplaints(exercise, examMode);
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment

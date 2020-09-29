@@ -67,6 +67,21 @@ describe('FileUploadExercise Management Update Component', () => {
             expect(service.create).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+
+        it('Should trim the exercise title before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new FileUploadExercise();
+            entity.title = 'My Exercise   ';
+            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.fileUploadExercise = entity;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(entity.title).toEqual('My Exercise');
+        }));
     });
 
     describe('ngOnInit with given exerciseGroup', () => {
