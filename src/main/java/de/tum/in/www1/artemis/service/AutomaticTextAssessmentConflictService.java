@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FeedbackConflict;
-import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.text.TextBlock;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.FeedbackConflictRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
