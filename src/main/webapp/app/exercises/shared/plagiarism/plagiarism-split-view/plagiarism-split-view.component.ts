@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 // @ts-ignore
-import Split from 'split.js';
+import { Split } from 'split.js';
 import { Observable } from 'rxjs';
 import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
