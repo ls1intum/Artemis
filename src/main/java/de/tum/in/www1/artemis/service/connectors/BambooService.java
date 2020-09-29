@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchD
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -269,8 +270,28 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
-        return retrieveLatestBuildLogs(buildPlanId);
+    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        // Load the logs from the database
+        List<BuildLogEntry> buildLogsFromDatabase = retrieveLatestBuildLogsFromDatabase(programmingSubmission);
+
+        // If there are logs present in the database, return them (they were already filtered when inserted)
+        if (!buildLogsFromDatabase.isEmpty()) {
+            return buildLogsFromDatabase;
+        }
+
+        // Otherwise return the logs from Bamboo (and filter them now)
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
+
+        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
+
+        // Add reference to ProgrammingSubmission
+        buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
+
+        // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
+        programmingSubmission.setBuildLogEntries(buildLogEntries);
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        return buildLogEntries;
     }
 
     @Override
@@ -452,7 +473,24 @@ public class BambooService implements ContinuousIntegrationService {
             final var hasArtifact = buildResult.getBuild().isArtifact();
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
-            programmingSubmissionRepository.save(programmingSubmission);
+
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+            // Store logs into database. Append logs of multiple jobs.
+            for (var job : buildResult.getBuild().getJobs()) {
+                for (var bambooLog : job.getLogs()) {
+                    // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
+                    buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
+                }
+            }
+
+            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+            programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
+
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
@@ -666,7 +704,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // 3) process static code analysis feedback
                 boolean hasStaticCodeAnalysisFeedback = false;
                 if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
-                    hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticAssessmentReports());
+                    hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticCodeAnalysisReports());
                 }
 
                 // Relevant feedback exists if tests failed or static code analysis found issues
@@ -831,14 +869,23 @@ public class BambooService implements ContinuousIntegrationService {
         return null;
     }
 
+    private List<BuildLogEntry> retrieveLatestBuildLogsFromDatabase(ProgrammingSubmission programmingSubmission) {
+        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
+        if (optionalProgrammingSubmission.isPresent()) {
+            return optionalProgrammingSubmission.get().getBuildLogEntries();
+        }
+
+        return List.of();
+    }
+
     /**
-     * Performs a request to the Bamboo REST API to retrieve the build log of the latest build.
+     * Load the build log from the database.
+     * Performs a request to the Bamboo REST API to retrieve the build log of the latest build, if the log is not available in the database.
      *
      * @param planKey to identify the build logs with.
      * @return the list of retrieved build logs.
      */
-    //TODO: save this on the Artemis server, e.g. in the result class so that Artemis does not need to retrieve it every time
-    public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
+    private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
@@ -863,34 +910,6 @@ public class BambooService implements ContinuousIntegrationService {
                     logString = (String) logEntry.get("log");
                 }
 
-                boolean compilationErrorFound = false;
-
-                if (logString.contains("COMPILATION ERROR")) {
-                    compilationErrorFound = true;
-                }
-
-                if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
-                    // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
-                    break;
-                }
-
-                //filter unnecessary logs
-                if ((logString.startsWith("[INFO]") && !logString.contains("error")) ||
-                        logString.startsWith("[WARNING]") ||
-                        logString.startsWith("[ERROR] [Help 1]") ||
-                        logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
-                        logString.startsWith("[ERROR] Re-run Maven using") ||
-                        logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
-                        logString.startsWith("[ERROR] -> [Help 1]") ||
-                        logString.startsWith("Unable to publish artifact") ||
-                        logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                ) {
-                    continue;
-                }
-
-                //Replace some unnecessary information and hide complex details to make it easier to read the important information
-                logString = logString.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
-
                 Instant instant = Instant.ofEpochMilli((long) logEntry.get("date"));
                 ZonedDateTime logDate = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
                 BuildLogEntry log = new BuildLogEntry(logDate, logString);
@@ -898,6 +917,49 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
         return logs;
+    }
+
+    /**
+     * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     * @param unfilteredBuildLogs the original, unfiltered list
+     * @return the filtered list
+     */
+    private List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs) {
+        List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
+        for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
+            boolean compilationErrorFound = false;
+            String logString = unfilteredBuildLog.getLog();
+
+            if (logString.contains("COMPILATION ERROR")) {
+                compilationErrorFound = true;
+            }
+
+            if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
+                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
+                break;
+            }
+
+            //filter unnecessary logs
+            if ((logString.startsWith("[INFO]") && !logString.contains("error")) ||
+                logString.startsWith("[WARNING]") ||
+                logString.startsWith("[ERROR] [Help 1]") ||
+                logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
+                logString.startsWith("[ERROR] Re-run Maven using") ||
+                logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
+                logString.startsWith("[ERROR] -> [Help 1]") ||
+                logString.startsWith("Unable to publish artifact") ||
+                logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
+            ) {
+                continue;
+            }
+
+            //Replace some unnecessary information and hide complex details to make it easier to read the important information
+            logString = logString.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
+
+            filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), logString, unfilteredBuildLog.getProgrammingSubmission()));
+        }
+
+        return filteredBuildLogs;
     }
 
     /**
@@ -921,13 +983,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Queries Bamboo to find out if the project already exists using the project key and the project name
-     *
-     * @param projectKey to check if a project with this unique key already exists.
-     * @param projectName to check if a project with the same name already exists.
-     * @return true if the project is already existing on Bamboo.
-     */
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);

@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.*;
@@ -67,6 +69,13 @@ public class Feedback implements Serializable {
 
     @ManyToOne
     private GradingInstruction gradingInstruction;
+
+    // TODO: JP remove these two references as they are not really needed
+    @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
+    private List<FeedbackConflict> firstConflicts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
+    private List<FeedbackConflict> secondConflicts = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -207,6 +216,22 @@ public class Feedback implements Serializable {
 
     public void setGradingInstruction(GradingInstruction gradingInstruction) {
         this.gradingInstruction = gradingInstruction;
+    }
+
+    public List<FeedbackConflict> getFirstConflicts() {
+        return firstConflicts;
+    }
+
+    public void setFirstConflicts(List<FeedbackConflict> firstConflicts) {
+        this.firstConflicts = firstConflicts;
+    }
+
+    public List<FeedbackConflict> getSecondConflicts() {
+        return secondConflicts;
+    }
+
+    public void setSecondConflicts(List<FeedbackConflict> secondConflicts) {
+        this.secondConflicts = secondConflicts;
     }
 
     /**

@@ -61,6 +61,16 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
+     * Find complaints for instructor for specified test run exercise (complaintType == 'COMPLAINT').
+     * @param exerciseId
+     */
+    getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
+        return this.http
+            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-test-run-dashboard`, { observe: 'response' })
+            .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
+    }
+
+    /**
      * Find more feedback requests for tutor in this exercise.
      * @param exerciseId
      */

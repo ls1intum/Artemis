@@ -120,6 +120,7 @@ have to configure the file ``application-artemis.yml`` in the folder
            email: artemis@in.tum.de
        automatic-text:
            segmentation-url: http://localhost:8000/segment
+           feedback-consistency-url: http://localhost:8001/feedback_consistency
            material-upload-url: http://localhost:8001/upload
            embedding-url: http://localhost:8001/embed
            embedding-chunk-size: 50

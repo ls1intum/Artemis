@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -58,6 +59,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
+        database.addInstructor("other-instructors", "instructorother");
     }
 
     @AfterEach
@@ -417,5 +419,45 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
         request.postWithoutLocation("/api/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(value = "instructorother1", roles = "INSTRUCTOR")
+    public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetResultsFromOwningCoursesNotEmpty() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+        database.addCourseWithOneReleasedTextExercise("Essay Bachelor");
+        database.addCourseWithOneReleasedTextExercise("Essay Master");
+
+        final var searchText = database.configureSearch("Text");
+        final var resultText = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchText));
+        assertThat(resultText.getResultsOnPage().size()).isEqualTo(1);
+
+        final var searchEssay = database.configureSearch("Essay");
+        final var resultEssay = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchEssay));
+        assertThat(resultEssay.getResultsOnPage().size()).isEqualTo(2);
+
+        final var searchNon = database.configureSearch("Non");
+        final var resultNon = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchNon));
+        assertThat(resultNon.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testAdminGetsResultsFromAllCourses() throws Exception {
+        database.addCourseWithOneReleasedTextExercise();
+        database.addCourseInOtherInstructionGroupAndExercise("Text");
+
+        final var search = database.configureSearch("Text");
+        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
     }
 }

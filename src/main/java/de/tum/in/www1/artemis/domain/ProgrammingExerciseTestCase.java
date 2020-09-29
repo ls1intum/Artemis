@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -86,8 +87,9 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.weight = weight;
     }
 
+    @Nonnull
     public Double getBonusMultiplier() {
-        return bonusMultiplier;
+        return bonusMultiplier != null ? bonusMultiplier : 1.0;
     }
 
     public ProgrammingExerciseTestCase bonusMultiplier(Double bonusMultiplier) {
@@ -99,8 +101,9 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.bonusMultiplier = bonusMultiplier;
     }
 
+    @Nonnull
     public Double getBonusPoints() {
-        return bonusPoints;
+        return bonusPoints != null ? bonusPoints : 0.0;
     }
 
     public ProgrammingExerciseTestCase bonusPoints(Double bonusPoints) {
@@ -193,6 +196,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + getTestName() + "'" + ", weight=" + getWeight() + ", active='" + isActive() + "'" + "}";
+        return "ProgrammingExerciseTestCase{" + "id=" + id + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
+                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
 }

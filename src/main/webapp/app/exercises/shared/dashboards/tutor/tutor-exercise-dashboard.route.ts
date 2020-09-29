@@ -12,4 +12,14 @@ export const tutorExerciseDashboardRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+
+    {
+        path: ':courseId/exercises/:exerciseId/test-run-tutor-dashboard',
+        component: TutorExerciseDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.tutorExerciseDashboard.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];

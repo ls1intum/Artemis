@@ -10,7 +10,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -157,6 +157,8 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Sends a request to either update or create a text exercise
      */
     save() {
+        Exercise.sanitize(this.textExercise);
+
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));

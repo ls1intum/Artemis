@@ -8,6 +8,7 @@
                 "instructionsReviewed": "You reviewed the instructions, you can now read the example submissions"
             },
             "pageHeader": "Tutor Exercise Dashboard for exercise",
+            "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
             "yourStatus": "Your status",
             "youAssessedSoFar": "You assessed {{numberOfTutorAssessments}} submissions so far",
             "needToReadGradingInstructions": "You need to read the grading instructions before starting assessing",
@@ -28,6 +29,7 @@
             "assessingExampleSubmission": "assessing example submission",
             "assessExampleSubmission": "Assess example submission",
             "studentsSubmissions": "Student's submissions",
+            "testRunSubmissions": "Test Run submissions",
             "submissionDate": "Submission date",
             "result": "Result",
             "status": "Status",

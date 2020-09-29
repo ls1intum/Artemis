@@ -30,6 +30,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     @Output() onResultModified = new EventEmitter<Result>();
     @Input() latestResult?: Result | null;
     @Input() exercise: ProgrammingExercise;
+    @Input() isTestRun: boolean;
 
     latestResultSubscription: Subscription;
 
@@ -85,6 +86,6 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             courseId = this.exercise.course!.id;
         }
         const route = `/course-management/${courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
-        await this.router.navigate([route]);
+        await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
     }
 }

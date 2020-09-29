@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ExamSubmissionService {
@@ -27,10 +28,14 @@ public class ExamSubmissionService {
 
     private final ParticipationService participationService;
 
-    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public ExamSubmissionService(StudentExamService studentExamService, ExamService examService, ParticipationService participationService,
+            AuthorizationCheckService authorizationCheckService) {
         this.studentExamService = studentExamService;
         this.examService = examService;
         this.participationService = participationService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -51,7 +56,7 @@ public class ExamSubmissionService {
     }
 
     /**
-     * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise).
+     * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise or it is a test run).
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
@@ -62,7 +67,19 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            StudentExam studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            StudentExam studentExam;
+            try {
+                studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            }
+            catch (EntityNotFoundException entityNotFoundException) {
+                // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+                // isAllowedToSubmit is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit unnecessary database
+                // calls
+                if (!isExamTestRunSubmission(exercise, user, exam)) {
+                    throw entityNotFoundException;
+                }
+                return true;
+            }
 
             // Check that the current user is allowed to submit to this exercise
             if (!studentExam.getExercises().contains(exercise)) {
@@ -78,6 +95,26 @@ public class ExamSubmissionService {
             return isSubmissionInTime(exercise, studentExam);
         }
         return true;
+    }
+
+    /**
+     * Check if the submission is made as part of a test run exam
+     * Only Instructors have access to test runs.
+     * @param exercise the exercise
+     * @param user the user
+     * @param exam the exam
+     * @return returns whether the submission is part of a test run exam.
+     */
+    private boolean isExamTestRunSubmission(Exercise exercise, User user, Exam exam) {
+        // Check if user is an instructor or admin
+        if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
+            // fetch all testRuns for the instructor
+            List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
+            // if a test run contains the exercise, then the instructor is allowed to submit
+            return testRuns.stream().anyMatch(testRun -> testRun.getExercises().contains(exercise));
+        }
+        // only instructors can access and submit to test runs
+        return false;
     }
 
     /**

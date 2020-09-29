@@ -67,6 +67,7 @@ describe('TextExercise Management Update Component', () => {
             expect(service.create).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+
         it('Should call import service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new TextExercise();
@@ -80,6 +81,22 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(service.import).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
+        }));
+
+        it('Should trim the exercise title before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new TextExercise();
+            entity.title = 'My Exercise   ';
+            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.textExercise = entity;
+
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(entity.title).toEqual('My Exercise');
         }));
     });
 
