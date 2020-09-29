@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -122,7 +120,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // course2
-        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");;
+        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
         exercise.setMaxScore(5.0);
