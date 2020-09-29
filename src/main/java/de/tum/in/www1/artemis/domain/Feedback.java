@@ -70,6 +70,7 @@ public class Feedback implements Serializable {
     @ManyToOne
     private GradingInstruction gradingInstruction;
 
+    // TODO: JP remove these two references as they are not really needed
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
     private List<FeedbackConflict> firstConflicts = new ArrayList<>();
 
