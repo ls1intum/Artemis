@@ -37,6 +37,34 @@ public class FeatureToggleService {
     }
 
     /**
+     * Enables the given feature. Also notifies all clients by sending a message via the websocket.
+     *
+     * @param feature The feature that should be enabled
+     */
+    public void enableFeature(Feature feature) {
+        if (!enabledFeatures.contains(feature)) {
+            enabledFeatures.add(feature);
+        }
+        disabledFeatures.remove(feature);
+
+        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures);
+    }
+
+    /**
+     * Disable the given feature. Also notifies all clients by sending a message via the websocket.
+     *
+     * @param feature The feature that should be disabled
+     */
+    public void disableFeature(Feature feature) {
+        if (!disabledFeatures.contains(feature)) {
+            disabledFeatures.add(feature);
+        }
+        enabledFeatures.remove(feature);
+
+        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures);
+    }
+
+    /**
      * Updates the given feature toggles and enables/disables the features based on the given map. Also notifies all clients
      * by sending a message via the websocket.
      *
@@ -74,5 +102,14 @@ public class FeatureToggleService {
      */
     public List<Feature> enabledFeatures() {
         return enabledFeatures;
+    }
+
+    /**
+     * Get all features that are currently disabled on the system
+     *
+     * @return A list of disabled features
+     */
+    public List<Feature> disabledFeatures() {
+        return disabledFeatures;
     }
 }

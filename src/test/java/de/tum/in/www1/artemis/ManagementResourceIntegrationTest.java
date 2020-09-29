@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
 import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -49,6 +50,9 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    FeatureToggleService featureToggleService;
 
     private PersistentAuditEvent persAuditEvent;
 
@@ -76,7 +80,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        Feature.PROGRAMMING_EXERCISES.enable();
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test
@@ -102,8 +106,8 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.PROGRAMMING_EXERCISES, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
-        verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", Feature.enabledFeatures());
-        assertThat(Feature.PROGRAMMING_EXERCISES.isEnabled()).as("Feature was disabled").isFalse();
+        verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
+        assertThat(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
         request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.FORBIDDEN);

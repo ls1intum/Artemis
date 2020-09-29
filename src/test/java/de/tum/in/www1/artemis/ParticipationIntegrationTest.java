@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -58,6 +59,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    FeatureToggleService featureToggleService;
 
     private Course course;
 
@@ -101,7 +105,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        Feature.PROGRAMMING_EXERCISES.enable();
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test
@@ -165,7 +169,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
-        Feature.PROGRAMMING_EXERCISES.disable();
+        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
