@@ -18,6 +18,8 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockActiveModal } from '../../../helpers/mocks/service/mock-active-modal.service';
 import * as sinon from 'sinon';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('Test Run Management Component', () => {
     let comp: TestRunManagementComponent;
@@ -92,6 +94,22 @@ describe('Test Run Management Component', () => {
 
             // THEN
             expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id, exam.id, studentExams[0].id);
+        }));
+    });
+
+    describe('Create test runs', () => {
+        it('Test Run cannot be created because the exam contains no exercises', fakeAsync(() => {
+            comp.exam = exam;
+            fixture.detectChanges();
+            expect(comp.examContainsExercises).toBeFalsy();
+        }));
+        it('Test Run can can be created', fakeAsync(() => {
+            const exercise = { id: 1 } as Exercise;
+            const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
+            exam.exerciseGroups = [exerciseGroup];
+            comp.exam = exam;
+            fixture.detectChanges();
+            expect(comp.examContainsExercises).toBeTruthy();
         }));
     });
 

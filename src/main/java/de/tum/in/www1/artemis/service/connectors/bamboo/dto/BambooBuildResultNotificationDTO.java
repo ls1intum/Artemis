@@ -272,7 +272,9 @@ public class BambooBuildResultNotificationDTO {
 
         private List<BambooTestJobDTO> successfulTests;
 
-        private List<StaticCodeAnalysisReportDTO> staticAssessmentReports;
+        private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+
+        private List<BuildLogDTO> logs;
 
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
@@ -298,12 +300,20 @@ public class BambooBuildResultNotificationDTO {
             this.failedTests = failedTests;
         }
 
-        public List<StaticCodeAnalysisReportDTO> getStaticAssessmentReports() {
-            return staticAssessmentReports;
+        public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
+            return staticCodeAnalysisReports;
         }
 
-        public void setStaticAssessmentReports(List<StaticCodeAnalysisReportDTO> staticAssessmentReports) {
-            this.staticAssessmentReports = staticAssessmentReports;
+        public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+            this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+        }
+
+        public List<BuildLogDTO> getLogs() {
+            return logs;
+        }
+
+        public void setLogs(List<BuildLogDTO> logs) {
+            this.logs = logs;
         }
     }
 
@@ -348,6 +358,30 @@ public class BambooBuildResultNotificationDTO {
 
         public void setErrors(List<String> errors) {
             this.errors = errors;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class BuildLogDTO {
+
+        private ZonedDateTime date;
+
+        private String log;
+
+        public ZonedDateTime getDate() {
+            return date;
+        }
+
+        public void setDate(ZonedDateTime date) {
+            this.date = date;
+        }
+
+        public String getLog() {
+            return log;
+        }
+
+        public void setLog(String log) {
+            this.log = log;
         }
     }
 }
