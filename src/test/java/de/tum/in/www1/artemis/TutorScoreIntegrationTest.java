@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.TutorScoreService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -76,8 +75,6 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private Result result;
 
-    private List<Feedback> feedbacks;
-
     private Complaint complaint;
 
     private Complaint feedbackRequest;
@@ -96,10 +93,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 75).participation(participation);
+        result = new Result().score(75L).participation(participation).rated(true);//ModelFactory.generateResult(true, 75).participation(participation);
         user = userRepo.findAllInGroup("tutor").get(0);
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Nice work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -109,10 +104,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 80).participation(participation);
+        result = new Result().score(80L).participation(participation).rated(true);
         user = userRepo.findAllInGroup("tutor").get(1);
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(1));
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -129,10 +122,8 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 20).participation(participation);
+        result = new Result().score(20L).participation(participation).rated(true);
         user = userRepo.findAllInGroup("tutor").get(0);
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Not so good")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -164,9 +155,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 80).participation(participation);
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Really good!")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
+        result = new Result().score(80L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -220,9 +209,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor1 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = ModelFactory.generateResult(true, 60).participation(participation);
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Pretty good!")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
+        result = new Result().score(60L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -323,7 +310,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = ModelFactory.generateResult(true, 95).participation(participation);
+        result = new Result().score(95L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -358,7 +345,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = ModelFactory.generateResult(true, 90).participation(participation);
+        result = new Result().score(90L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -392,7 +379,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = ModelFactory.generateResult(true, 95).participation(participation);
+        result = new Result().score(95L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
@@ -430,7 +417,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = ModelFactory.generateResult(true, 80).participation(participation);
+        result = new Result().score(80L).participation(participation).rated(true);
         result.setAssessor(user);
         resultRepo.save(result);
         // change score to trigger PostUpdate
