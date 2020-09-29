@@ -737,7 +737,8 @@ public abstract class Exercise implements Serializable {
      * @return all results of given participation, or null, if none exist
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null && isAssessmentOver).collect(Collectors.toSet());
     }
 
     /**
