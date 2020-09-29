@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 
@@ -485,6 +487,14 @@ public class ProgrammingExercise extends Exercise {
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
         super.filterSensitiveInformation();
+    }
+
+    @Override
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return participation.getResults().stream()
+                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+                .collect(Collectors.toSet());
     }
 
     /**
