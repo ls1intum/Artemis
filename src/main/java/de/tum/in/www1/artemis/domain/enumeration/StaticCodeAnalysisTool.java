@@ -9,7 +9,8 @@ import java.util.StringJoiner;
  */
 public enum StaticCodeAnalysisTool {
 
-    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugs.xml");
+    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle:checkstyle", "checkstyle-result.xml"),
+    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml");
 
     private final ProgrammingLanguage language;
 
