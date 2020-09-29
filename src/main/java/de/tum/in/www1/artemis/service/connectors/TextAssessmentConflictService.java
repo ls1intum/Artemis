@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.service.dto.AssessmentConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictRequestDTO;
-import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictResponseDTO;
 
 @Service
 @Profile("automaticText")
@@ -43,7 +43,7 @@ public class TextAssessmentConflictService {
 
     private static class Response {
 
-        public List<TextAssessmentConflictResponseDTO> feedbackInconsistencies;
+        public List<AssessmentConflictResponseDTO> feedbackInconsistencies;
     }
     // endregion
 
@@ -53,11 +53,11 @@ public class TextAssessmentConflictService {
      * @param textAssessmentConflictRequestDTOS list of request objects
      * @param exerciseId exercise id that feedback belong to
      * @param maxRetries number of retries before the request will be canceled
-     * @return A list of TextAssessmentConflictResponseDTO objects
+     * @return A list of AssessmentConflictResponseDTO objects
      * @throws NetworkingError if the request isn't successful
      */
-    public List<TextAssessmentConflictResponseDTO> checkFeedbackConsistencies(List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS, long exerciseId,
-            int maxRetries) throws NetworkingError {
+    public List<AssessmentConflictResponseDTO> checkFeedbackConsistencies(List<TextAssessmentConflictRequestDTO> textAssessmentConflictRequestDTOS, long exerciseId, int maxRetries)
+            throws NetworkingError {
         log.info("Calling Remote Service to check feedback consistencies.");
         final Request request = new Request(textAssessmentConflictRequestDTOS, exerciseId);
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);

@@ -483,14 +483,14 @@ public class ModelFactory {
         return feedbacks; // total score should be 3P
     }
 
-    public static TextAssessmentConflict generateTextAssessmentConflictWithFeedback(Feedback firstFeedback, Feedback secondFeedback) {
-        TextAssessmentConflict textAssessmentConflict = new TextAssessmentConflict();
-        textAssessmentConflict.setConflict(true);
-        textAssessmentConflict.setCreatedAt(ZonedDateTime.now());
-        textAssessmentConflict.setFirstFeedback(firstFeedback);
-        textAssessmentConflict.setSecondFeedback(secondFeedback);
-        textAssessmentConflict.setType(TextAssessmentConflictType.INCONSISTENT_SCORE);
-        return textAssessmentConflict;
+    public static AssessmentConflict generateTextAssessmentConflictWithFeedback(Feedback firstFeedback, Feedback secondFeedback) {
+        AssessmentConflict assessmentConflict = new AssessmentConflict();
+        assessmentConflict.setConflict(true);
+        assessmentConflict.setCreatedAt(ZonedDateTime.now());
+        assessmentConflict.setFirstFeedback(firstFeedback);
+        assessmentConflict.setSecondFeedback(secondFeedback);
+        assessmentConflict.setType(AssessmentConflictType.INCONSISTENT_SCORE);
+        return assessmentConflict;
     }
 
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
- * The TextAssessmentConflictType enumeration.
+ * The AssessmentConflictType enumeration.
  */
-public enum TextAssessmentConflictType {
+public enum AssessmentConflictType {
     INCONSISTENT_COMMENT, INCONSISTENT_SCORE, INCONSISTENT_FEEDBACK
 }

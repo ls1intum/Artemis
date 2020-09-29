@@ -1,17 +1,17 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentConflictType;
 
 /**
- * A DTO representing a text assessment conflicts to be retrieved from the remote Athene service.
+ * A DTO representing assessment conflicts (e.g. retrieved from Athene)
  */
-public class TextAssessmentConflictResponseDTO {
+public class AssessmentConflictResponseDTO {
 
     private long firstFeedbackId;
 
     private long secondFeedbackId;
 
-    private TextAssessmentConflictType type;
+    private AssessmentConflictType type;
 
     public long getFirstFeedbackId() {
         return firstFeedbackId;
@@ -29,11 +29,11 @@ public class TextAssessmentConflictResponseDTO {
         this.secondFeedbackId = secondFeedbackId;
     }
 
-    public TextAssessmentConflictType getType() {
+    public AssessmentConflictType getType() {
         return type;
     }
 
-    public void setType(TextAssessmentConflictType type) {
+    public void setType(AssessmentConflictType type) {
         this.type = type;
     }
 }

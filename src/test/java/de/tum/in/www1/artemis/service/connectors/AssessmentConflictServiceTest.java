@@ -14,12 +14,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentConflictType;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentConflictType;
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.service.dto.AssessmentConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictRequestDTO;
-import de.tum.in.www1.artemis.service.dto.TextAssessmentConflictResponseDTO;
 
-public class TextAssessmentConflictServiceTest {
+public class AssessmentConflictServiceTest {
 
     private static final String TEXT_ASSESSMENT_CONFLICT_ENDPOINT = "http://localhost:8001/feedback_consistency";
 
@@ -48,13 +48,13 @@ public class TextAssessmentConflictServiceTest {
         final TextAssessmentConflictRequestDTO secondRequestObject = new TextAssessmentConflictRequestDTO("2", secondSubmissionText, 1L, 2L, secondFeedbackText, 2.0);
         textAssessmentConflictRequestDTOS.add(secondRequestObject);
 
-        List<TextAssessmentConflictResponseDTO> feedbackConflicts = textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, -1L, 0);
+        List<AssessmentConflictResponseDTO> feedbackConflicts = textAssessmentConflictService.checkFeedbackConsistencies(textAssessmentConflictRequestDTOS, -1L, 0);
         assertThat(feedbackConflicts, is(not(empty())));
         assertThat(feedbackConflicts, hasItem(
                 either(hasProperty("firstFeedbackId", is(firstRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(firstRequestObject.getFeedbackId())))));
         assertThat(feedbackConflicts, hasItem(
                 either(hasProperty("firstFeedbackId", is(secondRequestObject.getFeedbackId()))).or(hasProperty("secondFeedbackId", is(secondRequestObject.getFeedbackId())))));
-        assertThat(feedbackConflicts, hasItem(hasProperty("type", is(TextAssessmentConflictType.INCONSISTENT_SCORE))));
+        assertThat(feedbackConflicts, hasItem(hasProperty("type", is(AssessmentConflictType.INCONSISTENT_SCORE))));
     }
 
     @BeforeAll
