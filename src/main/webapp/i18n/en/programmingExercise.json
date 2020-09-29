@@ -120,6 +120,11 @@
                 "notReleased": "Not released",
                 "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the test cases without having to trigger existing student submissions with the updated settings."
             },
+            "configureGrading": {
+                "title": "Configure Grading",
+                "save": "Save",
+                "reset": "Reset"
+            },
             "export": {
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",

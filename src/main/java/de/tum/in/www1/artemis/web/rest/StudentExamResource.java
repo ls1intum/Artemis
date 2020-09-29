@@ -226,26 +226,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        loadExercisesForStudentExam(studentExam);
-
-        // 2nd: mark the student exam as started
-        studentExam.setStarted(true);
-        studentExamRepository.save(studentExam);
-
-        // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
-
-        // 4th create new exam session
-        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
-        final String userAgent = request.getHeader("User-Agent");
-        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
-        examSession.hideDetails();
-        studentExam.setExamSessions(Set.of(examSession));
-
-        // not needed
-        studentExam.getExam().setCourse(null);
+        prepareStudentExamForConduction(request, currentUser, studentExam);
 
         log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());
@@ -287,26 +268,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        loadExercisesForStudentExam(testRun);
-
-        // 2nd: mark the student exam as started
-        testRun.setStarted(true);
-        studentExamRepository.save(testRun);
-
-        // 3rd fetch participations, submissions and results and connect them to the testRun
-        fetchParticipationsSubmissionsAndResultsForStudentExam(testRun, currentUser);
-
-        // 4th create new exam session
-        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
-        final String userAgent = request.getHeader("User-Agent");
-        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
-        ExamSession examSession = this.examSessionService.startExamSession(testRun, browserFingerprint, userAgent, instanceId, ipAddress);
-        examSession.hideDetails();
-        testRun.setExamSessions(Set.of(examSession));
-
-        // not needed
-        testRun.getExam().setCourse(null);
+        prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + testRun.getExercises().size() + " exercises for user "
                 + currentUser.getLogin());
@@ -381,13 +343,13 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/create-test-run : Create a test run
+     * POST /courses/{courseId}/exams/{examId}/test-run : Create a test run
      * @param courseId the id of the course
      * @param examId the id of the exam
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/create-test-run")
+    @PostMapping("courses/{courseId}/exams/{examId}/test-run")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
@@ -406,14 +368,14 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/delete-test-run/{testRunId} : Delete a test run
+     * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
      * @param courseId the id of the course
      * @param examId the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping("courses/{courseId}/exams/{examId}/delete-test-run/{testRunId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentExam> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
@@ -424,6 +386,41 @@ public class StudentExamResource {
 
         StudentExam testRun = studentExamService.deleteTestRun(testRunId);
         return ResponseEntity.ok(testRun);
+    }
+
+    /**
+     * Sets the started flag and initial started date.
+     * Calls {@link StudentExamResource#fetchParticipationsSubmissionsAndResultsForStudentExam} to set up the exercises.
+     * Starts an exam session for the request
+     * Filters out unneccesary attributes.
+     * @param request the http request for the conduction
+     * @param currentUser the current user
+     * @param studentExam the student exam to be prepared
+     */
+    private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
+        loadExercisesForStudentExam(studentExam);
+
+        // 2nd: mark the student exam as started
+        studentExam.setStarted(true);
+        if (studentExam.getStartedDate() == null) {
+            studentExam.setStartedDate(ZonedDateTime.now());
+        }
+        studentExamRepository.save(studentExam);
+
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
+
+        // 4th create new exam session
+        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+        final String userAgent = request.getHeader("User-Agent");
+        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
+        examSession.hideDetails();
+        studentExam.setExamSessions(Set.of(examSession));
+
+        // not needed
+        studentExam.getExam().setCourse(null);
     }
 
     /**

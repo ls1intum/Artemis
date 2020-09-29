@@ -66,6 +66,12 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
+    // Used to cut off CI specific path segments when receiving static code analysis reports
+    public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
+
+    // Used as a value for <sourceDirectory> for the Java template pom.xml
+    public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
+
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
