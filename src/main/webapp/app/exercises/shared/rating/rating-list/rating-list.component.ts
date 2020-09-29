@@ -30,10 +30,6 @@ export class RatingListComponent implements OnInit {
         });
     }
 
-    back() {
-        this.location.back();
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.ratings, this.ratingsSortingPredicate, this.ratingsReverseOrder);
     }
