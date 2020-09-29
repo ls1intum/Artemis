@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -12,7 +12,7 @@ import { ExportToCsv } from 'export-to-csv';
     styleUrls: ['./plagiarism-inspector.component.scss'],
     templateUrl: './plagiarism-inspector.component.html',
 })
-export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
+export class PlagiarismInspectorComponent implements OnInit {
     selectedComparisonIndex: number;
     checkPlagiarismInProgress: boolean;
     modelingExercise: ModelingExercise;
@@ -29,10 +29,6 @@ export class PlagiarismInspectorComponent implements OnDestroy, OnInit {
                 this.modelingExercise = response.body!;
             });
         });
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
     }
 
     handleTagPlagiarism(confirmed: boolean) {
