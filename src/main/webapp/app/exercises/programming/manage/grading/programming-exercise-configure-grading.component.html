@@ -178,6 +178,18 @@
                             <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                         </ng-template>
                     </ngx-datatable-column>
+                    <ngx-datatable-column name="Issues by students">
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-category-issues-graph
+                                *ngIf="row.state !== CategoryState.INACTIVE"
+                                [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
+                                [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
+                                [totalStudents]="gradingStatistics?.numParticipations || 0"
+                                [maxNumberOfIssues]="maxIssuesInCategory"
+                            >
+                            </jhi-category-issues-graph>
+                        </ng-template>
+                    </ngx-datatable-column>
                 </ngx-datatable>
             </div>
         </div>

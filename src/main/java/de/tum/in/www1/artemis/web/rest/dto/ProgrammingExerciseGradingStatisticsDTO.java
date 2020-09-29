@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -13,6 +14,8 @@ public class ProgrammingExerciseGradingStatisticsDTO {
     private Integer numParticipations;
 
     private List<TestCaseStats> testCaseStatsList = new ArrayList<>();
+
+    private List<HashMap<String, Integer>> categoryHitMap;
 
     public Integer getNumTestCases() {
         return numTestCases;
@@ -36,6 +39,14 @@ public class ProgrammingExerciseGradingStatisticsDTO {
 
     public void addTestCaseStats(TestCaseStats testCaseStats) {
         testCaseStatsList.add(testCaseStats);
+    }
+
+    public List<HashMap<String, Integer>> getCategoryHitMap() {
+        return categoryHitMap;
+    }
+
+    public void setCategoryHitMap(List<HashMap<String, Integer>> categoryHitMap) {
+        this.categoryHitMap = categoryHitMap;
     }
 
     public static class TestCaseStats {

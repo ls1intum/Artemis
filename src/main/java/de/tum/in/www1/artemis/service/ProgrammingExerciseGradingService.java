@@ -464,16 +464,14 @@ public class ProgrammingExerciseGradingService {
 
         var statistics = new ProgrammingExerciseGradingStatisticsDTO();
 
-        var testCases = testCaseService.findByExerciseId(exerciseId);
-        statistics.setNumTestCases(testCases.size());
-
         var results = resultService.findLatestAutomaticResultsWithFeedbacksForExercise(exerciseId);
         statistics.setNumParticipations(results.size());
 
+        var testCases = testCaseService.findByExerciseId(exerciseId);
+        statistics.setNumTestCases(testCases.size());
+
         testCases.forEach((testCase) -> {
-
             int passed = 0, failed = 0;
-
             for (var result : results) {
                 for (var feedback : result.getFeedbacks()) {
                     if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getText().equals(testCase.getTestName())) {
@@ -487,10 +485,22 @@ public class ProgrammingExerciseGradingService {
                     }
                 }
             }
-
             statistics.addTestCaseStats(new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(testCase.getTestName(), passed, failed));
-
         });
+
+        var categoryHitMap = results.stream()
+                .map((result) -> result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback)
+                        .map((feedback) -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()))
+                        .reduce(new HashMap<String, Integer>(), (map, category) -> {
+                            map.merge(category, 1, Integer::sum);
+                            return map;
+                        }, (map1, map2) -> {
+                            map2.forEach((key, value) -> map1.merge(key, value, Integer::sum));
+                            return map1;
+                        }))
+                .collect(Collectors.toList());
+
+        statistics.setCategoryHitMap(categoryHitMap);
 
         return statistics;
 
