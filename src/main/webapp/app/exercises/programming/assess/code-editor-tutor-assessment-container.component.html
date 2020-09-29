@@ -34,9 +34,11 @@
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
-        [participation]="participation"
+        [participation]="participationForManualResult"
         [showEditorInstructions]="showEditorInstructions"
         [isTutorAssessment]="true"
+        [readOnlyManualFeedback]="readOnly()"
+        (onUpdateFeedback)="onUpdateFeedback($event)"
     >
         <span editorTitle>{{ exercise.title }}</span>
         <div editorToolbar>
@@ -76,25 +78,29 @@
                 >Go to repository</a
             >
             <jhi-updating-result
-                *ngIf="participation"
+                *ngIf="participationForManualResult"
                 [exercise]="exercise"
                 [showUngradedResults]="true"
                 [showGradedBadge]="true"
                 [participation]="participationForManualResult"
                 [short]="true"
-                class="mr-2"
+                class="mr-1"
             ></jhi-updating-result>
             <span jhiTranslate="artemisApp.result.manualResult">Manual Result</span>
-            <jhi-programming-assessment-manual-result-in-code-editor
-                editorBottom
-                [participationId]="participation.id"
-                [result]="manualResult"
-                [exercise]="exercise"
-                [canOverride]="canOverride"
-                [complaint]="complaint"
-                [isTestRun]="isTestRun"
-                (onResultModified)="onResultModified($event)"
-            ></jhi-programming-assessment-manual-result-in-code-editor>
+            <span class="badge badge-primary ml-2" [style.fontSize]="'inherit'">
+                <jhi-score-display [score]="totalScore" [maxScore]="exercise.maxScore"></jhi-score-display>
+            </span>
+            <span jhiTranslate="artemisApp.result.currentScore">Current Score</span>
+            <div class="form-group mt-3" *ngIf="exercise.gradingInstructions">
+                <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
+                <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-unreferenced-feedback>
+                    <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-assessment-general-feedback>
+                </div>
+            </div>
         </div>
     </jhi-code-editor-container>
 </jhi-assessment-layout>

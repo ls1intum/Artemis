@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.AutomaticTextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.ExamService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.GradingCriterionService;
@@ -80,12 +81,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
+    private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
+
     private final GradingCriterionService gradingCriterionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockRepository textBlockRepository,
             TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
             WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
-            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService) {
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
+            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
 
         this.textAssessmentService = textAssessmentService;
@@ -96,6 +100,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.messagingService = messagingService;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
+        this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
     }
 
     /**
@@ -173,6 +178,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             studentParticipation.filterSensitiveInformation();
+        }
+
+        // call feedback conflict service
+        if (textExercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
+            this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), result.getFeedbacks(), exerciseId);
         }
 
         return ResponseEntity.ok(result);
