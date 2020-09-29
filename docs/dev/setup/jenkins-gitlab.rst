@@ -20,7 +20,7 @@ GitLab,** ``8080`` **for Jenkins,** ``8081`` **for Artemis)**
 
 .. contents:: Content of this document
     :local:
-    :depth: 1
+    :depth: 2
 
 Artemis
 -------
@@ -96,7 +96,6 @@ Gitlab Server Setup
 
        docker pull gitlab/gitlab-ce:latest
 
-.. _Start-Gitlab:
 Start Gitlab
 ^^^^^^^^^^^^
 
@@ -206,7 +205,7 @@ Gitlab Access Token
 
     There is a known limitation for the local setup: webhook URLs for the
     communication between Gitlab and Artemis and between Gitlab and Jenkins
-    cannot include local IP addresses. This option can be deactivate in
+    cannot include local IP addresses. This option can be deactivated in
     Gitlab on ``<https://gitlab-url>/admin/application_settings/network`` →
     Outbound requests. Another possible solution is to register a local URL,
     e.g. using `ngrok <https://ngrok.com/>`__, to be available over a domain
@@ -276,7 +275,7 @@ starting a new container with the old volumes:
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
-Start a GitLab container just as described in :ref:`Start-Gitlab` and wait for a couple of minutes. GitLab
+Start a GitLab container just as described in `Start-Gitlab <#start-gitlab>`__ and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
 image (see ``docker images``) using ``docker rmi <old-image-id>``.
@@ -313,7 +312,7 @@ Jenkins Server Setup
    is only required once.
 
 3. Run steps 4-6 only if you are **not** using a separate instance,
-   otherwise continue with :ref:`Start-Jenkins`.
+   otherwise continue with `Start-Jenkins <#start-jenkins>`__
 
 4. Create a file increasing the maximum file size for the nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
@@ -356,7 +355,6 @@ Jenkins Server Setup
            --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
            jrcs/letsencrypt-nginx-proxy-companion
 
-.. _Start-Jenkins:
 Start Jenkins
 ^^^^^^^^^^^^^
 
@@ -433,21 +431,23 @@ Required Jenkins Plugins
 You will need to install the following plugins (apart from the
 recommended ones that got installed during the setup process):
 
-1. `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
-webhooks to and from GitLab
-2. `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
-exercise test and assignment repositories in one build
-3. `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
-results to be exported to Artemis
-4. `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
-libraries, for which tests have to have some virtual display
-5. `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
-time to every line of the build output (Timestamper might already be
-installed)
+1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
+    webhooks to and from GitLab
+
+2.  `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
+    exercise test and assignment repositories in one build
+
+3.  `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
+    results to be exported to Artemis
+
+4.  `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
+    libraries, for which tests have to have some virtual display
+
+5.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+    time to every line of the build output (Timestamper might already be installed)
 
 Choose “Download now and install after restart” and checking the
-“Restart Jenkins when installation is complete and no jobs are running”
-box
+“Restart Jenkins when installation is complete and no jobs are running” box
 
 Timestamper Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,7 +491,7 @@ GitLab API Token
 1. Create a new access token in GitLab named “Jenkins” and give it
    **api** rights and **read_repository** rights. For detailed
    instructions on how to create such a token follow `Gitlab Access
-   Token <#Gitlab-Access-Token>`__.
+   Token `<#Gitlab-Access-Token>`__.
 
    .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
       :align: center
@@ -636,7 +636,7 @@ the following steps:
     ``use-crumb`` in ``application-jenkins.yml``.
 
     Depending on the version this setting might not be available anymore.
-    Have a look `here<https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`_ on how you can disable CSRF protection.
+    Have a look `here <https://unix.stackexchange.com/questions/444177/how-to-disable-the-csrf-protection-in-jenkins-by-default>`__ on how you can disable CSRF protection.
 
 Upgrade Jenkins
 ~~~~~~~~~~~~~~~
@@ -652,8 +652,7 @@ container. Make sure to perform this command in the folder where the
         docker rename jenkins jenkins_old
         docker build --no-cache -t jenkins-artemis .
 
-Now start a new Jenkins container just as described in `Start
-Jenkins <#Start-Jenkins>`__.
+Now start a new Jenkins container just as described in `Start-Jenkins <#start-jenkins>`__.
 
 Jenkins should be up and running again. If there are no issues, you can
 delete the old container using ``docker rm jenkins_old`` and the old

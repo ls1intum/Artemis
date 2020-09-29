@@ -60,9 +60,7 @@
                     <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
                     <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + textExercise.assessmentType | translate }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-button [exercise]="textExercise"
-                                                 [course]="this.course"
-                                                 (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                        <jhi-exercise-row-button [exercise]="textExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
                         </jhi-exercise-row-button>
                     </td>
                 </tr>

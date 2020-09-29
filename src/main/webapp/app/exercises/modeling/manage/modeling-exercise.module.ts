@@ -16,6 +16,7 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 
 @NgModule({
     imports: [
@@ -28,6 +29,7 @@ import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.mo
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,
         ArtemisModelingExerciseRoutingModule,
+        ArtemisPlagiarismModule,
         FormDateTimePickerModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
