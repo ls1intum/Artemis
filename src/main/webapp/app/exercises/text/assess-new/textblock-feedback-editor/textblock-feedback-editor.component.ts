@@ -34,7 +34,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     @HostBinding('class.alert-danger') get negativeFeedbackClass(): boolean {
-        return this.feedback.credits !== undefined && this.feedback.credits < 0;
+        return this.feedback.credits !== undefined && this.feedback.credits! < 0;
     }
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}

@@ -29,7 +29,7 @@ export class TextResultBlock {
     }
 
     get feedbackType(): FeedbackType {
-        if (!this.feedback || this.feedback.credits == null) {
+        if (!this.feedback || !this.feedback.credits) {
             return FeedbackType.BLANK;
         } else if (this.feedback.credits > 0) {
             return FeedbackType.POSITIVE;
@@ -43,7 +43,7 @@ export class TextResultBlock {
         return this.feedbackType && this.feedbackType !== FeedbackType.BLANK ? `text-with-feedback ${this.feedbackType}-feedback` : '';
     }
 
-    get icon(): string | null {
+    get icon() {
         switch (this.feedbackType) {
             case FeedbackType.POSITIVE:
                 return 'check';
@@ -51,8 +51,6 @@ export class TextResultBlock {
                 return 'times';
             case FeedbackType.NEUTRAL:
                 return 'dot';
-            default:
-                return null;
         }
     }
 
