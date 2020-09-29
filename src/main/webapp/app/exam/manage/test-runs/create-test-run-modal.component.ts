@@ -37,7 +37,7 @@ export class CreateTestRunModalComponent implements OnInit {
             testRun.exercises = [];
             // add exercises one by one to maintain exerciseGroup order
             for (const exerciseGroup of this.exam.exerciseGroups!) {
-                testRun.exercises.push(this.testRunConfiguration[exerciseGroup.id]);
+                testRun.exercises.push(this.testRunConfiguration[exerciseGroup.id!]);
             }
             testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
             this.activeModal.close(testRun);

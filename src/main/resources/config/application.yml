@@ -50,7 +50,7 @@ management:
             enabled: true
     metrics:
         export:
-            # Prometheus is the default metrics backend
+            # Prometheus is the default metrics server
             prometheus:
                 enabled: true
                 step: 60

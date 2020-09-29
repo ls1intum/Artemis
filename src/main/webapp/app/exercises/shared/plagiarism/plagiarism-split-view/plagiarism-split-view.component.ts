@@ -53,12 +53,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
 
             this.submissionService.getSubmission(comp.element1.submissionId).subscribe((submission: ModelingSubmission) => {
-                submission.model = JSON.parse(submission.model);
+                submission.model = JSON.parse(submission.model!);
                 this.submission1 = submission;
             });
 
             this.submissionService.getSubmission(comp.element2.submissionId).subscribe((submission) => {
-                submission.model = JSON.parse(submission.model);
+                submission.model = JSON.parse(submission.model!);
                 this.submission2 = submission;
             });
         }

@@ -156,7 +156,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
             // latest result is the first element of results, see loadParticipationWithLatestResult
             isManualResult = this.latestResult.assessmentType === AssessmentType.MANUAL;
             if (isManualResult) {
-                hasTutorFeedback = this.latestResult.feedbacks.some((feedback) => feedback.type === FeedbackType.MANUAL);
+                hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
         this.hasTutorAssessment = isManualResult && hasTutorFeedback;
