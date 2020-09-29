@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 

@@ -1,8 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
