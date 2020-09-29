@@ -3,7 +3,7 @@
     <changeSet author="birtan" id="20200726015816">
         <createTable tableName="feedback_conflict">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="assessment_conflictPK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="feedback_conflictPK"/>
             </column>
             <column name="conflict" type="BIT">
                 <constraints nullable="false"/>
