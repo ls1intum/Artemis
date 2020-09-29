@@ -21,7 +21,8 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "scoreFor": "Assessment for"
+                "scoreFor": "Assessment for",
+                "tutorComment": "Tutor Comment:"
             },
             "messages": {
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
