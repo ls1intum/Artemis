@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -17,6 +18,7 @@ export class SplitPaneDirective {
     templateUrl: './plagiarism-split-view.component.html',
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
+    @Input() diagramType: UMLDiagramType;
     @Input() splitControl: Observable<string>;
     @Input() comparison: ModelingSubmissionComparisonDTO;
 
