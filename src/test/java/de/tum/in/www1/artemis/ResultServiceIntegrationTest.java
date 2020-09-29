@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,11 +95,15 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     private ProgrammingExercise programmingExercise;
 
+    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
+
     private ModelingExercise modelingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
     private StudentParticipation studentParticipation;
 
@@ -107,9 +114,11 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         database.addUsers(10, 2, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
 
         database.addCourseWithOneModelingExercise();
         modelingExercise = modelingExerciseRepository.findAll().get(0);
@@ -156,18 +165,74 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticAssessmentReports());
-        final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+        final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
+        // Create comparator to explicitly compare feedback attributes (equals only compares id)
+        Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
+            if (Objects.equals(fb1.getDetailText(), fb2.getDetailText()) && Objects.equals(fb1.getText(), fb2.getText())
+                    && Objects.equals(fb1.getReference(), fb2.getReference())) {
+                return 0;
+            }
+            else {
+                return 1;
+            }
+        };
+
         assertThat(optionalResult).isPresent();
-        assertThat(savedResult.getFeedbacks().containsAll(staticCodeAnalysisFeedback));
-        assertThat(optionalResult.get().getFeedbacks().containsAll(staticCodeAnalysisFeedback));
-        assertThat(optionalResult.get().getFeedbacks().equals(savedResult.getFeedbacks()));
+        var result = optionalResult.get();
+        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
+        assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+        assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testRemoveCIDirectoriesFromPath() throws Exception {
+        // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
+        String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
+
+        var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        for (var reports : resultNotification1.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports()) {
+            for (var issue : reports.getIssues()) {
+                issue.setFilePath(pathWithoutWorkingDir);
+            }
+        }
+        var staticCodeAnalysisFeedback1 = feedbackService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+
+        for (var feedback : staticCodeAnalysisFeedback1) {
+            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
+            assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
+        }
+
+        // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
+        var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var reports2 = resultNotification2.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports();
+        for (int i = 0; i < reports2.size(); i++) {
+            var report = reports2.get(i);
+            // Set null or empty String to test both
+            if (i % 2 == 0) {
+                for (var issue : report.getIssues()) {
+                    issue.setFilePath("");
+                }
+            }
+            else {
+                for (var issue : report.getIssues()) {
+                    issue.setFilePath(null);
+                }
+            }
+        }
+        final var staticCodeAnalysisFeedback2 = feedbackService
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+
+        for (var feedback : staticCodeAnalysisFeedback2) {
+            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
+            assertThat(FeedbackService.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+        }
     }
 
     @Test

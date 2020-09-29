@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
  * - Have test cases been changed but the student submissions were not triggered?
  */
 @Component({
-    selector: 'jhi-programming-exercise-test-cases-dirty-warning',
+    selector: 'jhi-programming-exercise-grading-dirty-warning',
     template: `
         <ng-container *ngIf="hasUpdatedTestCases">
             <fa-icon
@@ -22,7 +22,7 @@ import { Subscription } from 'rxjs';
         </ng-container>
     `,
 })
-export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
     @Input() programmingExerciseId: number;
     @Input() hasUpdatedTestCasesInitialValue: boolean;
 
