@@ -1,5 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { StudentQuestion } from 'app/entities/student-question.model';
@@ -10,11 +9,9 @@ import { SortService } from 'app/shared/service/sort.service';
     styles: ['.question-cell { max-width: 40vw; max-height: 120px; overflow: auto;}'],
     templateUrl: './course-questions.component.html',
 })
-export class CourseQuestionsComponent implements OnInit, OnDestroy {
+export class CourseQuestionsComponent implements OnInit {
     courseId: number;
     studentQuestions: StudentQuestion[];
-
-    paramSub: Subscription;
 
     predicate = 'id';
     reverse = true;
@@ -25,11 +22,9 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
      * On init fetch the course
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
-            this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
-                this.studentQuestions = res.body!;
-            });
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
+            this.studentQuestions = res.body!;
         });
     }
 
@@ -43,12 +38,5 @@ export class CourseQuestionsComponent implements OnInit, OnDestroy {
 
     sortRows() {
         this.sortService.sortByProperty(this.studentQuestions, this.predicate, this.reverse);
-    }
-
-    /**
-     * On destroy unsubscribe.
-     */
-    ngOnDestroy() {
-        this.paramSub.unsubscribe();
     }
 }
