@@ -8,8 +8,8 @@
             <column name="conflict" type="BIT">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_at" type="datetime(6)"/>
-            <column name="solved_at" type="datetime(6)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="solved_at" type="TIMESTAMP"/>
             <column name="type" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
