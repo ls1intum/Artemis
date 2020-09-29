@@ -51,10 +51,10 @@
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="!!isInExerciseGroup && hasExamStarted()">
+                    <td *ngIf="!!isInExerciseGroup && hasExamStarted() && !isExamOver()">
                         <span>{{ quizExercise.id }}</span>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null ? !quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor : !isExamOver() && !hasExamStarted()">
+                    <td *ngIf="isInExerciseGroup == null ? !quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor : !hasExamStarted()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
                     <td *ngIf="isInExerciseGroup == null ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
