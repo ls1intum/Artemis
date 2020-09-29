@@ -433,19 +433,21 @@ recommended ones that got installed during the setup process):
 
 1. `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
 webhooks to and from GitLab
+
 2. `Multiple SCMs <https://plugins.jenkins.io/multiple-scms/>`__ for combining the
 exercise test and assignment repositories in one build
+
 3. `Post Build Task <https://plugins.jenkins.io/postbuild-task/>`__ for preparing build
 results to be exported to Artemis
+
 4. `Xvfb <https://plugins.jenkins.io/xvfb/>`__ for exercises based on GUI
 libraries, for which tests have to have some virtual display
+
 5. `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
-time to every line of the build output (Timestamper might already be
-installed)
+time to every line of the build output (Timestamper might already be installed)
 
 Choose “Download now and install after restart” and checking the
-“Restart Jenkins when installation is complete and no jobs are running”
-box
+“Restart Jenkins when installation is complete and no jobs are running” box
 
 Timestamper Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
