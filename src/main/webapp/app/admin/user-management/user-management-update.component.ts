@@ -33,7 +33,7 @@ export class UserManagementUpdateComponent implements OnInit {
         if (!this.user.id) {
             this.user.groups = [];
         }
-        // Set password to null. ==> If it still is null on save, it won't be changed for existing users. It will be random for new users
+        // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
         this.user.password = undefined;
     }
 

@@ -22,9 +22,8 @@ export class CourseResolve implements Resolve<Course> {
      * @param route - contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
-        const id = route.params['courseId'] ? route.params['courseId'] : undefined;
-        if (id) {
-            return this.service.find(id).pipe(
+        if (route.params['courseId']) {
+            return this.service.find(route.params['courseId']).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );
