@@ -105,7 +105,7 @@ Download the latest version of the jhipster-registry from github, e.g by using
 
 **Service configuration**
 
-1. sudo vim /etc/systemd/system/registry.service
+1. ``sudo vim /etc/systemd/system/registry.service``
 
 .. code:: bash
 
@@ -155,7 +155,7 @@ Download the latest version of the jhipster-registry from github, e.g by using
 
 **Configuration**
 
-1. sudo vim /opt/registry/application-prod.yml
+1. ``sudo vim /opt/registry/application-prod.yml``
 
 .. code:: yaml
 
@@ -175,7 +175,7 @@ Download the latest version of the jhipster-registry from github, e.g by using
             user:
                 password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED
 
-2. sudo vim /opt/registry/bootstrap-prod.yml
+2. ``sudo vim /opt/registry/bootstrap-prod.yml``
 
 .. code:: yaml
 
@@ -196,7 +196,7 @@ Download the latest version of the jhipster-registry from github, e.g by using
                   search-locations: file:./config-server
 
 
-3. sudo vim /opt/registry/config-server/application.yml
+3. ``sudo vim /opt/registry/config-server/application.yml``
 
   .. code:: yaml
 
@@ -220,7 +220,7 @@ Download the latest version of the jhipster-registry from github, e.g by using
 **nginx config**
 You still have to make the registry available:
 
-1. sudo vim /etc/nginx/sites-available/registry.conf
+1. ``sudo vim /etc/nginx/sites-available/registry.conf``
 
   .. code:: bash
   
@@ -251,11 +251,11 @@ You still have to make the registry available:
     }
 }
 
-2. sudo ln -s /etc/nginx/sites-available/registry.conf /etc/nginx/sites-enabled/
+2. ``sudo ln -s /etc/nginx/sites-available/registry.conf /etc/nginx/sites-enabled/``
 
 This enables the registry in nginx
 
-3. sudo service nginx restart
+3. ``sudo service nginx restart``
 
 This will apply the config changes and the registry will be reachable.
 
@@ -374,7 +374,7 @@ It relays message between instances:
     </core>
     </configuration>
 
-8. Service configuration: sudo vim /etc/systemd/system/broker1.service
+8. Service configuration: ``sudo vim /etc/systemd/system/broker1.service``
 
   .. code:: bash
 
