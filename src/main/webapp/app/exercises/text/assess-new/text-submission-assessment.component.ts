@@ -150,7 +150,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
 
-        if (studentParticipation === null) {
+        if (studentParticipation == null) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;
