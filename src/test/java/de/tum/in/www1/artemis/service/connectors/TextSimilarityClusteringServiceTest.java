@@ -3,50 +3,55 @@ package de.tum.in.www1.artemis.service.connectors;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.mockito.Mock;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TextSimilarityClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String CLUSTERING_ENDPOINT = "http://localhost:8002/cluster";
 
+    @Mock
+    private RemoteArtemisServiceConnector<TextSimilarityClusteringService.Request, TextSimilarityClusteringService.Response> connector = mock(RemoteArtemisServiceConnector.class);
+
     private final TextSimilarityClusteringService textSimilarityClusteringService = new TextSimilarityClusteringService();
 
-    private final TextEmbeddingService textEmbeddingService = new TextEmbeddingService();
+    private TextExerciseUtilService textExerciseUtilService = new TextExerciseUtilService();
 
     // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
-    private final String[] sentences = {
-            "The purpose of science is to describe and understand complex systems, such as a system of atoms, a society of human beings, or a solar system.",
+    private final String[] sentences = { "The purpose of science is to describe and understand complex systems,",
+            "such as a system of atoms, a society of human beings, or a solar system.",
             "Traditionally, a distinction is made between natural sciences and social sciences to distinguish between two major types of systems.",
             "The purpose of natural sciences is to understand nature and its subsystems.", "Natural sciences include, for example, biology, chemistry, physics, and paleontology.",
             "The purpose of the social sciences is to understand human beings.", "Social sciences include psychology and sociology.",
             "There is another type of system that we call an artificial system.",
             "Examples of artificial systems include the space shuttle, airline reservation systems, and stock trading systems.",
             "Herbert Simon coined the term sciences of the artificial to describe the sciences that deal with artificial systems [Simon, 1970].",
-            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent.",
-            "Computer science, for example, the science of understanding computer systems, is a child of the twentieth century.",
-            "Many methods that have been successfully applied in the natural sciences and humanities can be applied to the sciences of the artificial as well.",
-            "By looking at the other sciences, we can learn quite a bit.", "One of the basic methods of science is modeling.",
-            "A model is an abstract representation of a system that enables us to answer questions about the system.",
-            "Models are useful when dealing with systems that are too large, too small, too complicated, or too expensive to experience firsthand.",
-            "Models also allow us to visualize and understand systems that either no longer exist or that are only claimed to exist." };
+            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent." };
 
     private final List<TextBlock> blocks = Stream.of(sentences).map(text -> new TextBlock().text(text).startIndex(0).endIndex(text.length())).peek(TextBlock::computeId)
             .collect(toList());
@@ -55,52 +60,112 @@ public class TextSimilarityClusteringServiceTest extends AbstractSpringIntegrati
 
     private TextExercise exercise = (TextExercise) new TextExercise().course(course);
 
-    private TextSimilarityClusteringService.Response response;
-
     @Test
     public void clusterTextBlocks() {
-        // TODO: Split tests of embedding and clustering
-        final Map<Integer, TextCluster> clusterDictionary = response.clusters;
-        assertThat(clusterDictionary.keySet(), hasSize(5));
-        assertThat(clusterDictionary.keySet(), hasItem(-1));
+        try {
+            TextSimilarityClusteringService.Response response = textSimilarityClusteringService.clusterTextBlocks(new ArrayList());
+            assertThat(response.clusters.keySet(), hasSize(5));
+            assertThat(response.clusters.keySet(), hasItem(-1));
 
-        List<List<Double>> matrix = response.distanceMatrix;
-        assertThat(matrix, hasSize(blocks.size()));
+            assertThat(response.distanceMatrix, hasSize(blocks.size()));
 
-        List<TextTreeNode> clusterTree = response.clusterTree;
-        List<TextTreeNode> blocksInTree = clusterTree.stream().filter(TextTreeNode::isBlockNode).collect(toList());
-        // Assert that number of blockNodes in the tree equals number of blocks
-        assertThat(blocksInTree, hasSize(blocks.size()));
-        List<Long> groupByChild = clusterTree.stream().map(TextTreeNode::getChild).distinct().collect(toList());
-        // Assert that child is a unique property of a TextTreeNode
-        assertThat(groupByChild, hasSize(clusterTree.size()));
-        List<Long> groupByParent = clusterTree.stream().map(TextTreeNode::getParent).distinct().collect(toList());
-        // Assert that parent is not a unique property of a TextTreeNode
-        assertThat(groupByParent.size(), lessThan(clusterTree.size()));
+            // Assert that number of blockNodes in the tree equals number of blocks
+            List<TextTreeNode> blocksInTree = response.clusterTree.stream().filter(TextTreeNode::isBlockNode).collect(toList());
+            assertThat(blocksInTree, hasSize(blocks.size()));
+        }
+        catch (NetworkingError error) {
+            fail("Invoke failed with Networking Error.");
+        }
     }
 
     @BeforeAll
-    public void init() throws NetworkingError {
-        assumeTrue(isTextAssessmentClusteringAvailable());
+    public void init() {
         ReflectionTestUtils.setField(textSimilarityClusteringService, "API_ENDPOINT", CLUSTERING_ENDPOINT);
-        ReflectionTestUtils.setField(textEmbeddingService, "API_ENDPOINT", "http://localhost:8001/embed");
+        ReflectionTestUtils.setField(textSimilarityClusteringService, "connector", connector);
         course.setId(1L);
         exercise.setId(2L);
-        List<TextEmbedding> embeddings = textEmbeddingService.embedTextBlocks(blocks, exercise);
-        response = textSimilarityClusteringService.clusterTextBlocks(embeddings, 3);
+
+        // Create mock response
+        TextSimilarityClusteringService.Response invokeResponse = new TextSimilarityClusteringService.Response();
+        int[] clusterSizes = new int[] { 2, 3, 2, 2, 2 };
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(blocks, clusterSizes, exercise);
+        invokeResponse.clusters = new LinkedHashMap<>();
+        for (int i = 0; i <= 4; i++) {
+            invokeResponse.clusters.put(i - 1, clusters.get(i));
+        }
+        try {
+            invokeResponse.clusterTree = parseClusterTree(exercise);
+            List<TextPairwiseDistance> pairwiseDistances = parsePairwiseDistances(exercise);
+            double[][] matrix = new double[blocks.size()][blocks.size()];
+            pairwiseDistances.forEach(dist -> matrix[(int) dist.getBlockI()][(int) dist.getBlockJ()] = dist.getDistance());
+            invokeResponse.distanceMatrix = new ArrayList<>();
+            for (int i = 0; i < blocks.size(); i++) {
+                List<Double> row = new ArrayList<>();
+                for (int j = 0; j < blocks.size(); j++) {
+                    row.add(matrix[i][j]);
+                }
+                invokeResponse.distanceMatrix.add(row);
+            }
+        }
+        catch (ParseException | IOException e) {
+            fail("JSON files for clusterTree or pairwiseDistances not successfully read/parsed.");
+        }
+
+        try {
+            when(connector.invokeWithRetry(eq(CLUSTERING_ENDPOINT), any(), any(), eq(1))).thenReturn(invokeResponse);
+        }
+        catch (NetworkingError error) {
+            fail("Mocks could not be initialized.");
+            return;
+        }
     }
 
-    private static boolean isTextAssessmentClusteringAvailable() {
-        try {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(CLUSTERING_ENDPOINT).openConnection();
-            httpURLConnection.setRequestMethod("HEAD");
-            httpURLConnection.setConnectTimeout(1000);
-            final int responseCode = httpURLConnection.getResponseCode();
+    /**
+     * Reads and parses the cluster tree from json file for given exercise
+     * @param exercise
+     * @return list of tree nodes
+     * @throws IOException
+     * @throws ParseException
+     */
+    private static List<TextTreeNode> parseClusterTree(TextExercise exercise) throws IOException, ParseException {
+        List<TextTreeNode> result = new ArrayList<>();
+        JSONParser jsonParser = new JSONParser();
+        FileReader reader = new FileReader("src/test/resources/test-data/clustering/clusterTree.json");
+        JSONArray treeList = (JSONArray) jsonParser.parse(reader);
+        for (int i = 0; i < treeList.size(); i++) {
+            JSONObject n = (JSONObject) treeList.get(i);
+            TextTreeNode node = new TextTreeNode();
+            node.setExercise(exercise);
+            node.setParent((long) n.get("parent"));
+            node.setLambdaVal((double) n.get("lambdaVal"));
+            node.setChildSize((long) n.get("childSize"));
+            node.setChild((long) n.get("child"));
+            result.add(node);
+        }
+        return result;
+    }
 
-            return (responseCode == 405);
+    /**
+     * Reads and parses the pairwise distances from json file for given exercise
+     * @param exercise
+     * @return list of pairwise distances
+     * @throws IOException
+     * @throws ParseException
+     */
+    private static List<TextPairwiseDistance> parsePairwiseDistances(TextExercise exercise) throws IOException, ParseException {
+        List<TextPairwiseDistance> result = new ArrayList<>();
+        JSONParser jsonParser = new JSONParser();
+        FileReader reader = new FileReader("src/test/resources/test-data/clustering/pairwiseDistances.json");
+        JSONArray distList = (JSONArray) jsonParser.parse(reader);
+        for (int i = 0; i < distList.size(); i++) {
+            JSONObject d = (JSONObject) distList.get(i);
+            TextPairwiseDistance dist = new TextPairwiseDistance();
+            dist.setExercise(exercise);
+            dist.setDistance((double) d.get("distance"));
+            dist.setBlockI((long) d.get("blockI"));
+            dist.setBlockJ((long) d.get("blockJ"));
+            result.add(dist);
         }
-        catch (IOException e) {
-            return false;
-        }
+        return result;
     }
 }

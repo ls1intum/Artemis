@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     // Sentences taken from the book Object-Oriented Software Engineering by B. Bruegge and A. Dutoit
-    private static final String[] blockText = { "The purpose of science is to describe and understand complex systems,",
+    private static final String[] BLOCK_TEXT = { "The purpose of science is to describe and understand complex systems,",
             "such as a system of atoms, a society of human beings, or a solar system.",
             "Traditionally, a distinction is made between natural sciences and social sciences to distinguish between two major types of systems.",
             "The purpose of natural sciences is to understand nature and its subsystems.", "Natural sciences include, for example, biology, chemistry, physics, and paleontology.",
@@ -47,7 +47,7 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
             "There is another type of system that we call an artificial system.",
             "Examples of artificial systems include the space shuttle, airline reservation systems, and stock trading systems.",
             "Herbert Simon coined the term sciences of the artificial to describe the sciences that deal with artificial systems [Simon, 1970].",
-            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent.", };
+            "Whereas natural and social sciences have been around for centuries, the sciences of the artificial are recent." };
 
     @Autowired
     TextClusteringService textClusteringService;
@@ -401,15 +401,15 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
      */
     private void initializeBlocksAndSubmissions(TextExercise exercise) {
         // Create text blocks and first submission, save submission
-        submission = ModelFactory.generateTextSubmission(blockText[0] + " " + blockText[1], Language.ENGLISH, true);
+        submission = ModelFactory.generateTextSubmission(BLOCK_TEXT[0] + " " + BLOCK_TEXT[1], Language.ENGLISH, true);
         database.addTextSubmission(exercise, submission, "student1");
 
-        TextBlock bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[0]);
+        TextBlock bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(BLOCK_TEXT[0]);
         bl.computeId();
         bl.setTreeId(0);
         blocks.add(bl);
 
-        bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(blockText[1]);
+        bl = new TextBlock().automatic().startIndex(1).endIndex(2).submission(submission).text(BLOCK_TEXT[1]);
         bl.computeId();
         bl.setTreeId(1);
         blocks.add(bl);
@@ -419,9 +419,9 @@ public class TextClusteringServiceTest extends AbstractSpringIntegrationBambooBi
 
         // Create text blocks and submissions, save submissions
         for (int i = 2; i <= 10; i++) {
-            submission = ModelFactory.generateTextSubmission(blockText[i], Language.ENGLISH, true);
+            submission = ModelFactory.generateTextSubmission(BLOCK_TEXT[i], Language.ENGLISH, true);
             database.addTextSubmission(exercise, submission, "student" + i);
-            bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(blockText[i]);
+            bl = new TextBlock().automatic().startIndex(0).endIndex(1).submission(submission).text(BLOCK_TEXT[i]);
             bl.computeId();
             bl.setTreeId(i);
             blocks.add(bl);
