@@ -314,7 +314,7 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(submission.getResult());
     }
 
-    @GetMapping("/exercise/{exerciseId}/feedback/{feedbackId}/text-assessment-conflicts")
+    @GetMapping("/exercise/{exerciseId}/feedback/{feedbackId}/feedback-conflicts")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long exerciseId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
@@ -334,23 +334,23 @@ public class TextAssessmentResource extends AssessmentResource {
         return bodyBuilder.body(textSubmissionSet);
     }
 
-    @GetMapping("/textAssessmentConflict/{textAssessmentConflictId}/solve-text-assessment-conflicts")
+    @GetMapping("/feedbackConflict/{feedbackConflictId}/solve-feedback-conflict")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextAssessmentConflict> setConflictsAsSolved(@PathVariable long textAssessmentConflictId) {
-        log.debug("REST request to set text assessment conflict as solved for textAssessmentConflictId: {}", textAssessmentConflictId);
+    public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long feedbackConflictId) {
+        log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
 
         if (automaticTextAssessmentConflictService.isEmpty()) {
             throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
 
-        TextAssessmentConflict textAssessmentConflict = this.automaticTextAssessmentConflictService.get().setConflictAsSolved(textAssessmentConflictId);
+        FeedbackConflict feedbackConflict = this.automaticTextAssessmentConflictService.get().solveFeedbackConflict(feedbackConflictId);
 
-        if (textAssessmentConflict == null) {
-            throw new BadRequestAlertException("Text Assessment Conflict cannot found in the database!", "TextAssessmentConflict", "TextAssessmentConflictNotFound");
+        if (feedbackConflict == null) {
+            throw new BadRequestAlertException("Feedback Conflict cannot found in the database!", "TextAssessmentConflict", "TextAssessmentConflictNotFound");
         }
 
-        return ResponseEntity.ok(textAssessmentConflict);
+        return ResponseEntity.ok(feedbackConflict);
 
     }
 

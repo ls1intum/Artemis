@@ -24,20 +24,20 @@ public class TextAssessmentService extends AssessmentService {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
-    private final TextAssessmentConflictRepository textAssessmentConflictRepository;
+    private final FeedbackConflictRepository feedbackConflictRepository;
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository,
             TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ExamService examService,
-            TextAssessmentConflictRepository textAssessmentConflictRepository) {
+            FeedbackConflictRepository feedbackConflictRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
-        this.textAssessmentConflictRepository = textAssessmentConflictRepository;
+        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
@@ -114,8 +114,8 @@ public class TextAssessmentService extends AssessmentService {
     public List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
         List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
         feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(this.textAssessmentConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
-            feedback.setSecondConflicts(this.textAssessmentConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
+            feedback.setFirstConflicts(this.feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
+            feedback.setSecondConflicts(this.feedbackConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
         });
         return feedbackList;
     }

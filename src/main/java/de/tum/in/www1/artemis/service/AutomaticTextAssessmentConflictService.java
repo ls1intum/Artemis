@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FeedbackConflict;
 import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.FeedbackConflictRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -96,7 +99,8 @@ public class AutomaticTextAssessmentConflictService {
         feedbackConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());
             Optional<Feedback> secondFeedback = feedbackRepository.findById(conflict.getSecondFeedbackId());
-            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findByFirstAndSecondFeedback(conflict.getFirstFeedbackId(), conflict.getSecondFeedbackId());
+            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findConflictsOrMarkedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
+                    conflict.getSecondFeedbackId());
             // if the found conflict is present but its type has changed, update it
             if (!storedConflicts.isEmpty() && !storedConflicts.get(0).getType().equals(conflict.getType())) {
                 storedConflicts.get(0).setType(conflict.getType());
@@ -111,14 +115,54 @@ public class AutomaticTextAssessmentConflictService {
                 feedbackConflict.setSecondFeedback(secondFeedback.get());
                 feedbackConflict.setType(conflict.getType());
                 feedbackConflict.setCreatedAt(ZonedDateTime.now());
+                feedbackConflict.setMarkedAsNotConflict(false);
                 feedbackConflicts.add(feedbackConflict);
             }
         });
 
         // find solved conflicts and add them to list
-        feedbackConflicts.addAll(this.findSolvedConflicts(textFeedbackConflictRequestDTOS, feedbackConflictResponseDTOS));
+        feedbackConflicts.addAll(this.findSolvedConflictsInResponse(textFeedbackConflictRequestDTOS, feedbackConflictResponseDTOS));
 
         feedbackConflictRepository.saveAll(feedbackConflicts);
+    }
+
+    /**
+     * Finds and returns the submissions which have the conflicting feedback with the passed feedback
+     *
+     * @param feedbackId - passed feedback id
+     * @return Set of text submissions
+     */
+    public Set<TextSubmission> getConflictingSubmissions(long feedbackId) {
+        List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllByFeedback(feedbackId);
+        Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
+            if (conflict.getFirstFeedback().getId() == feedbackId) {
+                return (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
+            }
+            else {
+                return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
+            }
+        }).collect(toSet());
+        textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(this.textBlockRepository.findAllBySubmissionId(textSubmission.getId())));
+        return textSubmissionSet;
+    }
+
+    /**
+     * Finds the feedbackConflict by id and set it as solved.
+     *
+     * @param feedbackConflictId - id for the searched feedbackConflict
+     * @return FeedbackConflict which is changed or null if no conflict has been found.
+     */
+    public FeedbackConflict solveFeedbackConflict(Long feedbackConflictId) {
+        Optional<FeedbackConflict> feedbackConflict = this.feedbackConflictRepository.findById(feedbackConflictId);
+        if (feedbackConflict.isEmpty()) {
+            return null;
+        }
+        feedbackConflict.get().setSolvedAt(ZonedDateTime.now());
+        feedbackConflict.get().setConflict(false);
+        feedbackConflict.get().setMarkedAsNotConflict(true);
+        this.feedbackConflictRepository.save(feedbackConflict.get());
+
+        return feedbackConflict.get();
     }
 
     /**
@@ -129,10 +173,10 @@ public class AutomaticTextAssessmentConflictService {
      * @param feedbackConflictResponseDTOS returned list with found conflicts.
      * @return solved conflicts
      */
-    private List<FeedbackConflict> findSolvedConflicts(List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS,
+    private List<FeedbackConflict> findSolvedConflictsInResponse(List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS,
             List<FeedbackConflictResponseDTO> feedbackConflictResponseDTOS) {
         List<Long> feedbackIds = textFeedbackConflictRequestDTOS.stream().map(TextFeedbackConflictRequestDTO::getFeedbackId).collect(toList());
-        List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findAllByFeedbackList(feedbackIds);
+        List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findAllConflictsByFeedbackList(feedbackIds);
 
         storedConflicts.forEach(conflict -> {
             boolean isPresent = feedbackConflictResponseDTOS.stream().anyMatch(newConflicts -> (newConflicts.getFirstFeedbackId() == conflict.getFirstFeedback().getId()

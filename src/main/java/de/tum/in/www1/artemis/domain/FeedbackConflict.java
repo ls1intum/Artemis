@@ -50,6 +50,9 @@ public class FeedbackConflict implements Serializable {
     @JoinColumn(name = "second_feedback_id", referencedColumnName = "id")
     private Feedback secondFeedback;
 
+    @Column(name = "markedAsNotConflict")
+    private Boolean markedAsNotConflict;
+
     public Long getId() {
         return id;
     }
@@ -104,5 +107,13 @@ public class FeedbackConflict implements Serializable {
 
     public void setSecondFeedback(Feedback secondFeedback) {
         this.secondFeedback = secondFeedback;
+    }
+
+    public boolean getMarkedAsNotConflict() {
+        return markedAsNotConflict;
+    }
+
+    public void setMarkedAsNotConflict(Boolean markedAsNotConflict) {
+        this.markedAsNotConflict = markedAsNotConflict;
     }
 }
