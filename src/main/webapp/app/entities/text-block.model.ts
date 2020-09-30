@@ -25,7 +25,7 @@ export class TextBlock {
 
     setTextFromSubmission(submission?: TextSubmission): void {
         this.submission = submission || this.submission;
-        if (this.submission && this.startIndex) {
+        if (this.submission && !(this.startIndex === undefined || this.startIndex === null)) {
             this.text = this.submission.text?.substring(this.startIndex, this.endIndex) || '';
         }
     }
