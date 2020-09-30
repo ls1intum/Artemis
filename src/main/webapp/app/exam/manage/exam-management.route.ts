@@ -90,8 +90,8 @@ export class StudentExamResolve implements Resolve<StudentExam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
-        const examId = route.params['examId'] ? route.params['examId'] : undefined;
+        const courseId = route.params['courseId'] || undefined;
+        const examId = route.params['examId'] || undefined;
         const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
