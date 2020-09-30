@@ -67,9 +67,9 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
-        const examId = route.params['examId'] ? route.params['examId'] : undefined;
-        const exerciseGroupId = route.params['exerciseGroupId'] ? route.params['exerciseGroupId'] : undefined;
+        const courseId = route.params['courseId'] || undefined;
+        const examId = route.params['examId'] || undefined;
+        const exerciseGroupId = route.params['exerciseGroupId'] || undefined;
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
