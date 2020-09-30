@@ -607,12 +607,12 @@ public class BambooService implements ContinuousIntegrationService {
 
                 // 1) add feedback for failed test cases
                 for (final var failedTest: job.getFailedTests()) {
-                    result.addFeedback(feedbackService.createFeedbackFromTestJob(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
+                    result.addFeedback(feedbackService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
                 }
 
                 // 2) add feedback for passed test cases
                 for (final var successfulTest : job.getSuccessfulTests()) {
-                    result.addFeedback(feedbackService.createFeedbackFromTestJob(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
+                    result.addFeedback(feedbackService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
                 }
 
                 // 3) process static code analysis feedback

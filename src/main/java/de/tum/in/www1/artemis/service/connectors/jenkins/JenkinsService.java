@@ -376,7 +376,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
             var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
 
-            result.addFeedback(feedbackService.createFeedbackFromTestJob(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
+            result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
         }));
 
         result.setHasFeedback(true);

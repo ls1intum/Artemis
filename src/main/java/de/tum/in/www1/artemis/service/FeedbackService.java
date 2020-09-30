@@ -104,7 +104,7 @@ public class FeedbackService {
      * @param programmingLanguage the programming language of the exercise.
      * @return Feedback object for the test job
      */
-    public Feedback createFeedbackFromTestJob(String testName, List<String> testErrors, boolean successful, final ProgrammingLanguage programmingLanguage) {
+    public Feedback createFeedbackFromTestCase(String testName, List<String> testErrors, boolean successful, final ProgrammingLanguage programmingLanguage) {
 
         Feedback feedback = new Feedback();
         feedback.setText(testName);
