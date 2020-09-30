@@ -132,7 +132,7 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             var programmingExercise = (ProgrammingExercise) exercise;
             if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || (programmingExercise.getDueDate() != null
-                    && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
+                    && now().isAfter(programmingExercise.getDueDate())
                     && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
