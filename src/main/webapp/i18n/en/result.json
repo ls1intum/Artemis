@@ -22,6 +22,7 @@
             "buildArtifact": "Build Artifact",
             "score": "Score",
             "scorePercentage": "Score (in %)",
+            "currentScore": "Current Score",
             "rated": "Rated",
             "hasFeedback": "Has Feedback",
             "assessmentType": "Assessment Type",

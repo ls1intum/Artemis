@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "4.5.1",
+    "version": "4.5.2",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -73,6 +73,7 @@
         "simple-statistics": "7.2.0",
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.5.0",
+        "split.js": "1.6.2",
         "sugar": "2.0.6",
         "tslib": "2.0.1",
         "webstomp-client": "1.2.6",
