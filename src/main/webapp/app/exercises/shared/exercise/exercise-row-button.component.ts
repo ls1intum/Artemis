@@ -22,7 +22,7 @@ import * as moment from 'moment';
 export class ExerciseRowButtonComponent {
     readonly ActionType = ActionType;
     exerciseType = ExerciseType;
-    featureToggle = FeatureToggle;
+    FeatureToggle = FeatureToggle;
 
     @Input() exercise: Exercise;
     @Input() course: Course;
