@@ -171,6 +171,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+
+        // Reset
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test

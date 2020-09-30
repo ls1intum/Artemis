@@ -116,6 +116,9 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
+
+        // Reset
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test
