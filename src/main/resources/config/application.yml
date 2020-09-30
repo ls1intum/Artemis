@@ -152,6 +152,14 @@ server:
     shutdown: graceful
     forward-headers-strategy: native
 
+sentry:
+    dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    send-default-pii: true
+    logging:
+        enabled: true
+        minimum-breadcrumb-level: error
+        minimum-event-level: error
+
 # Properties to be exposed on the /info management endpoint
 info:
     # Comma separated list of profiles that will trigger the ribbon to show
