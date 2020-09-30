@@ -28,7 +28,7 @@ A load balancer (typically a reverse proxy such as nginx) is added, that distrib
 **Note:** This documentation focuses on the practical setup of this distributed setup.
 More details regarding the theoretical aspects can be found in the Bachelor's Thesis `Securing and Scaling Artemis Websocket Architecture`, which can be found here_:
 
-.. _here: distributed/thesis_securing_scaling_artemis.pdf
+.. _here: thesis_securing_scaling_artemis.pdf
 
 Additional synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
