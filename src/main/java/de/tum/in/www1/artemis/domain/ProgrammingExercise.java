@@ -171,12 +171,12 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
 
-        Pattern p = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
-        Matcher m = p.matcher(repoUrl);
-        if (!m.matches() || m.groupCount() != 1)
+        Pattern pattern = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
+        Matcher matcher = pattern.matcher(repoUrl);
+        if (!matcher.matches() || matcher.groupCount() != 1)
             return null;
 
-        return m.group(1);
+        return matcher.group(1);
     }
 
     public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {

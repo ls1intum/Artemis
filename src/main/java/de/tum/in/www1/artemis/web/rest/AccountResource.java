@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -10,6 +12,7 @@ import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,12 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 @RestController
 @RequestMapping("/api")
 public class AccountResource {
+
+    @Value("${artemis.user-management.registration.enabled:#{null}}")
+    private Optional<Boolean> registrationEnabled;
+
+    @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
+    private Optional<Pattern> allowedEmailPattern;
 
     private static class AccountResourceException extends RuntimeException {
 
@@ -66,9 +75,20 @@ public class AccountResource {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (!checkPasswordLength(managedUserVM.getPassword())) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
+        if (!isPasswordLengthValid(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
+
+        if (allowedEmailPattern.isPresent()) {
+            Matcher emailMatcher = allowedEmailPattern.get().matcher(managedUserVM.getEmail());
+            if (!emailMatcher.matches()) {
+                throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", "Account", "emailInvalid");
+            }
+        }
+
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         mailService.sendActivationEmail(user);
     }
@@ -81,6 +101,9 @@ public class AccountResource {
      */
     @GetMapping("/activate")
     public void activateAccount(@RequestParam(value = "key") String key) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
             throw new InternalServerErrorException("No user was found for this activation key");
@@ -110,7 +133,7 @@ public class AccountResource {
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
-        log.info("GET /account " + SecurityUtils.getCurrentUserLogin().get() + " took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("GET /account " + user.getLogin() + " took " + (System.currentTimeMillis() - start) + "ms");
         return userDTO;
     }
 
@@ -121,8 +144,10 @@ public class AccountResource {
      */
     @GetMapping(value = "/account/password", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getPassword() {
+        // This method is used to show the password for users that have been generated automatically based on LTI
+        // It only allows to decrypt and return the password of internal users and only of the currently logged in user
         Map<String, String> body = new HashMap<>();
-        body.put("password", userService.decryptPassword());
+        body.put("password", userService.decryptPasswordOfCurrentUser());
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
@@ -135,6 +160,9 @@ public class AccountResource {
      */
     @PostMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
         final String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new InternalServerErrorException("Current user login not found"));
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
@@ -155,7 +183,10 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (!checkPasswordLength(passwordChangeDto.getNewPassword())) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
+        if (!isPasswordLengthValid(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();
         }
         userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
@@ -168,6 +199,9 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
         Optional<User> user = userService.requestPasswordReset(mail);
         if (user.isPresent()) {
             mailService.sendPasswordResetMail(user.get());
@@ -188,7 +222,10 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (!checkPasswordLength(keyAndPassword.getNewPassword())) {
+        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+            throw new AccessForbiddenException("User Registration is disabled");
+        }
+        if (!isPasswordLengthValid(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
@@ -198,7 +235,7 @@ public class AccountResource {
         }
     }
 
-    private static boolean checkPasswordLength(String password) {
+    private static boolean isPasswordLengthValid(String password) {
         return !StringUtils.isEmpty(password) && password.length() >= ManagedUserVM.PASSWORD_MIN_LENGTH && password.length() <= ManagedUserVM.PASSWORD_MAX_LENGTH;
     }
 }

@@ -33,6 +33,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     username: string;
     captchaRequired = false;
     credentials: Credentials;
+    isRegistrationEnabled = false;
 
     usernameRegexPattern = TUM_USERNAME_REGEX; // default, might be overridden in ngOnInit
     signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
@@ -74,6 +75,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                         this.externalUserManagementUrl = info.externalUserManagementURL;
                         this.externalUserManagementName = info.externalUserManagementName;
                     }
+
+                    this.isRegistrationEnabled = info.registrationEnabled;
                 }),
             )
             .subscribe();

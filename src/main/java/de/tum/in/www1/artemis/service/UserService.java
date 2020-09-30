@@ -59,13 +59,13 @@ public class UserService {
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Value("${artemis.user-management.external.admin-group-name:#{null}}")
-    private Optional<String> ADMIN_GROUP_NAME;
+    private Optional<String> adminGroupName;
 
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
 
     @Value("${artemis.encryption-password}")
-    private String ENCRYPTION_PASSWORD;
+    private String encryptionPassword;
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -202,7 +202,7 @@ public class UserService {
         }
         encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithMD5AndDES");
-        encryptor.setPassword(ENCRYPTION_PASSWORD);
+        encryptor.setPassword(encryptionPassword);
         return encryptor;
     }
 
@@ -579,7 +579,7 @@ public class UserService {
      * Get decrypted password for the current user
      * @return decrypted password or empty string
      */
-    public String decryptPassword() {
+    public String decryptPasswordOfCurrentUser() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
         try {
             return encryptor().decrypt(user.getPassword());
@@ -912,7 +912,7 @@ public class UserService {
         }
 
         // Check if the user is admin in case the admin group is defined
-        if (ADMIN_GROUP_NAME.isPresent() && groups.contains(ADMIN_GROUP_NAME.get())) {
+        if (adminGroupName.isPresent() && groups.contains(adminGroupName.get())) {
             authorities.add(ADMIN_AUTHORITY);
         }
 
