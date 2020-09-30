@@ -225,32 +225,32 @@ You still have to make the registry available:
 
   .. code::
   
-  server {
-    listen 443 ssl http2;
-    server_name REGISTRY_FQDN;
-    ssl_session_cache shared:RegistrySSL:10m;
-    include /etc/nginx/common/common_ssl.conf;
-    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-    add_header X-Frame-Options DENY;
-    add_header Referrer-Policy same-origin;
-    client_max_body_size 10m;
-    client_body_buffer_size 1m;
+    server {
+        listen 443 ssl http2;
+        server_name REGISTRY_FQDN;
+        ssl_session_cache shared:RegistrySSL:10m;
+        include /etc/nginx/common/common_ssl.conf;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+        add_header X-Frame-Options DENY;
+        add_header Referrer-Policy same-origin;
+        client_max_body_size 10m;
+        client_body_buffer_size 1m;
 
-    location / {
-        proxy_pass              http://localhost:8761;
-        proxy_read_timeout      300;
-        proxy_connect_timeout   300;
-        proxy_http_version      1.1;
-        proxy_redirect          http://         https://;
-        
-        proxy_set_header    Host                $http_host;
-        proxy_set_header    X-Real-IP           $remote_addr;
-        proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
-        proxy_set_header    X-Forwarded-Proto   $scheme;
+        location / {
+            proxy_pass              http://localhost:8761;
+            proxy_read_timeout      300;
+            proxy_connect_timeout   300;
+            proxy_http_version      1.1;
+            proxy_redirect          http://         https://;
+            
+            proxy_set_header    Host                $http_host;
+            proxy_set_header    X-Real-IP           $remote_addr;
+            proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+            proxy_set_header    X-Forwarded-Proto   $scheme;
 
-        gzip off;
+            gzip off;
+        }
     }
-}
 
 2. ``sudo ln -s /etc/nginx/sites-available/registry.conf /etc/nginx/sites-enabled/``
 
@@ -280,39 +280,39 @@ It relays message between instances:
 
   .. code:: bash
 
-  sudo mkdir /opt/activemq-distribution
+        sudo mkdir /opt/activemq-distribution
 
 2. Download ActiveMQ here: http://activemq.apache.org/components/artemis/download/
 
   .. code:: bash
 
-  sudo wget -O /opt/activemq-distribution/activemq.tar.gz https://downloads.apache.org/activemq/activemq-artemis/2.13.0/apache-artemis-2.13.0-bin.tar.gz
+        sudo wget -O /opt/activemq-distribution/activemq.tar.gz https://downloads.apache.org/activemq/activemq-artemis/2.13.0/apache-artemis-2.13.0-bin.tar.gz
 
 3. Extract the downloaded contents
 
   .. code:: bash
 
-    cd /opt/activemq-distribution
-    sudo tar -xf activemq.tar.gz
+        cd /opt/activemq-distribution
+        sudo tar -xf activemq.tar.gz
 
 4. Navigate to the folder with the CLI
 
   .. code:: bash
 
-         cd /opt/activemq-distribution/apache-artemis-2.13.0/bin
+        cd /opt/activemq-distribution/apache-artemis-2.13.0/bin
 
 5. Create a broker in the /opt/broker/broker1 directory, replace USERNAME and PASSWORD accordingly
 
   .. code:: bash
 
-    sudo ./artemis create --user USERNAME --password PASSWORD --require-login /opt/broker/broker1
+        sudo ./artemis create --user USERNAME --password PASSWORD --require-login /opt/broker/broker1
 
 6. Adjust the permissions
 
   .. code:: bash
 
-    sudo chown -R artemis:artemis /opt/broker
-    sudo chmod g+rwx /opt/broker
+        sudo chown -R artemis:artemis /opt/broker
+        sudo chmod g+rwx /opt/broker
 
 7. Adjust the configuration of the broker: ``sudo vim /opt/broker/broker1/etc/broker.xml``
 
