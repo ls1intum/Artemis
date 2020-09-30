@@ -111,15 +111,6 @@ public class TextAssessmentService extends AssessmentService {
         return this.feedbackRepository.findByResult(result);
     }
 
-    public List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
-        List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
-        feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(this.feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
-            feedback.setSecondConflicts(this.feedbackConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
-        });
-        return feedbackList;
-    }
-
     /**
      * Load entities from database needed for text assessment & compute Feedback suggestions (Athene):
      *   1. Create or load the result
@@ -171,5 +162,14 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+    }
+
+    private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
+        List<Feedback> feedbackList = this.feedbackRepository.findByResult(result);
+        feedbackList.forEach(feedback -> {
+            feedback.setFirstConflicts(this.feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback.getId(), true));
+            feedback.setSecondConflicts(this.feedbackConflictRepository.findBySecondFeedbackIdAndConflict(feedback.getId(), true));
+        });
+        return feedbackList;
     }
 }

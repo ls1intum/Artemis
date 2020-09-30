@@ -133,7 +133,7 @@ public class AutomaticTextAssessmentConflictService {
      * @return Set of text submissions
      */
     public Set<TextSubmission> getConflictingSubmissions(long feedbackId) {
-        List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllByFeedback(feedbackId);
+        List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllByFeedbackId(feedbackId);
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
             if (conflict.getFirstFeedback().getId() == feedbackId) {
                 return (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
@@ -147,22 +147,15 @@ public class AutomaticTextAssessmentConflictService {
     }
 
     /**
-     * Finds the feedbackConflict by id and set it as solved.
+     * Set feedbackConflict as solved. Done by user marking the conflict as solved.
      *
-     * @param feedbackConflictId - id for the searched feedbackConflict
-     * @return FeedbackConflict which is changed or null if no conflict has been found.
+     * @param feedbackConflict - feedbackConflict to set as solved
      */
-    public FeedbackConflict solveFeedbackConflict(Long feedbackConflictId) {
-        Optional<FeedbackConflict> feedbackConflict = this.feedbackConflictRepository.findById(feedbackConflictId);
-        if (feedbackConflict.isEmpty()) {
-            return null;
-        }
-        feedbackConflict.get().setSolvedAt(ZonedDateTime.now());
-        feedbackConflict.get().setConflict(false);
-        feedbackConflict.get().setMarkedAsNotConflict(true);
-        this.feedbackConflictRepository.save(feedbackConflict.get());
-
-        return feedbackConflict.get();
+    public void solveFeedbackConflict(FeedbackConflict feedbackConflict) {
+        feedbackConflict.setSolvedAt(ZonedDateTime.now());
+        feedbackConflict.setConflict(false);
+        feedbackConflict.setMarkedAsNotConflict(true);
+        this.feedbackConflictRepository.save(feedbackConflict);
     }
 
     /**
