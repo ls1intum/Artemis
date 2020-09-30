@@ -170,6 +170,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
+        Thread.sleep(10);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
 
         // Reset
