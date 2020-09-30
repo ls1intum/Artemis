@@ -3,7 +3,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { TextAssessmentConflictType } from 'app/entities/text-assessment-conflict';
+import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -25,7 +25,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() readOnly: boolean;
     @Input() isConflictingFeedback: boolean;
     @Input() conflictMode: boolean;
-    @Input() conflictType: TextAssessmentConflictType | null;
+    @Input() conflictType?: FeedbackConflictType;
     @Input() isLeftConflictingFeedback: boolean;
     @Input() isSelectedConflict: boolean;
     private textareaElement: HTMLTextAreaElement;
@@ -37,11 +37,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     @HostBinding('class.alert-success') get setPositiveFeedbackClass(): boolean {
-        return this.feedback.credits > 0 && !this.conflictMode;
+        return this.feedback.credits! > 0 && !this.conflictMode;
     }
 
     @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
-        return this.feedback.credits < 0 && !this.conflictMode;
+        return this.feedback.credits! < 0 && !this.conflictMode;
     }
 
     @HostBinding('class.alert-warning') get setConflictingFeedbackClass(): boolean {

@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, Input, OnChanges, Output, Simple
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { TextAssessmentConflict, TextAssessmentConflictType } from 'app/entities/text-assessment-conflict';
+import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
 
 @Component({
     selector: 'jhi-text-assessment-area',
@@ -19,20 +19,22 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
     @Input() readOnly: boolean;
-    @Input() selectedFeedbackIdWithConflicts: number;
+    @Input() selectedFeedbackIdWithConflicts?: number;
     @Input() conflictMode: boolean;
-    @Input() isLeftConflictingFeedback = false;
-    @Input() conflictingAssessments: TextAssessmentConflict[];
+    @Input() isLeftConflictingFeedback: boolean;
+    @Input() conflictingAssessments: FeedbackConflict[];
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
     @Output() onConflictsClicked = new EventEmitter<number>();
     @Output() didSelectConflictingFeedback = new EventEmitter<number>();
     autoTextBlockAssessment = true;
-    selectedRef: TextBlockRef | null = null;
+    selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
 
-    constructor(private stringCountService: StringCountService) {}
+    constructor(private stringCountService: StringCountService) {
+        this.isLeftConflictingFeedback = false;
+    }
 
     /**
      * Life cycle hook to indicate component change
@@ -78,12 +80,12 @@ export class TextAssessmentAreaComponent implements OnChanges {
         return this.conflictingAssessments?.some((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
     }
 
-    getConflictType(ref: TextBlockRef): TextAssessmentConflictType | null {
+    getConflictType(ref: TextBlockRef): FeedbackConflictType | undefined {
         const conflict = this.conflictingAssessments?.find((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
         if (conflict) {
-            return conflict.type;
+            return conflict.type!;
         }
-        return null;
+        return undefined;
     }
 
     didSelectRef(ref: TextBlockRef): void {

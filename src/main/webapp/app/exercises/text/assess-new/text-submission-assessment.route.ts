@@ -8,7 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentConflictsComponent } from './conflicts/text-assessment-conflicts.component';
+import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
 
 @Injectable({ providedIn: 'root' })
 export class StudentParticipationResolver implements Resolve<StudentParticipation | null> {
@@ -50,7 +50,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 }
 
 @Injectable({ providedIn: 'root' })
-export class TextAssessmentConflictResolver implements Resolve<TextSubmission[] | null> {
+export class FeedbackConflictResolver implements Resolve<TextSubmission[] | null> {
     constructor(private textAssessmentsService: TextAssessmentsService) {}
 
     /**
@@ -58,10 +58,10 @@ export class TextAssessmentConflictResolver implements Resolve<TextSubmission[] 
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const exerciseId = Number(route.paramMap.get('exerciseId'));
+        const submissionId = Number(route.paramMap.get('submissionId'));
         const feedbackId = Number(route.paramMap.get('feedbackId'));
-        if (exerciseId && feedbackId) {
-            return this.textAssessmentsService.getConflictingTextSubmissions(exerciseId, feedbackId).catch(() => Observable.of(null));
+        if (submissionId && feedbackId) {
+            return this.textAssessmentsService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(null));
         }
         return Observable.of(null);
     }
@@ -96,14 +96,14 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':submissionId/text-assessment-conflict/:feedbackId',
-        component: TextAssessmentConflictsComponent,
+        path: ':submissionId/text-feedback-conflict/:feedbackId',
+        component: TextFeedbackConflictsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
-            conflictingTextSubmissions: TextAssessmentConflictResolver,
+            conflictingTextSubmissions: FeedbackConflictResolver,
         },
         runGuardsAndResolvers: 'always',
         canActivate: [UserRouteAccessService],

@@ -36,15 +36,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * For traceability: Keep order in resetComponent() consistent with declaration.
      */
 
-    participation: StudentParticipation | null;
-    submission: TextSubmission | null;
-    exercise: TextExercise | null;
-    result: Result | null;
+    participation?: StudentParticipation;
+    submission?: TextSubmission;
+    result?: Result;
     generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
     textBlockRefs: TextBlockRef[];
     unusedTextBlockRefs: TextBlockRef[];
-    complaint: Complaint | null;
+    complaint?: Complaint;
     totalScore: number;
     isTestRun = false;
     isLoading: boolean;
@@ -103,15 +102,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
      */
     private resetComponent(): void {
-        this.participation = null;
-        this.submission = null;
-        this.exercise = null;
-        this.result = null;
+        this.participation = undefined;
+        this.submission = undefined;
+        this.exercise = undefined;
+        this.result = undefined;
         this.generalFeedback = new Feedback();
         this.unreferencedFeedback = [];
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
-        this.complaint = null;
+        this.complaint = undefined;
         this.totalScore = 0;
 
         this.isLoading = true;
@@ -197,7 +196,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.assessmentsService.save(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -220,7 +219,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.assessmentsService.submit(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -254,7 +253,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
         const navigationExtras: NavigationExtras = { state: { submission: this.submission } };
         await this.router.navigate(
-            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-assessment-conflict', feedbackId],
+            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
             navigationExtras,
         );
     }
@@ -283,7 +282,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise!, this.submission!, this.isTestRun);
     }
 
     /**
@@ -296,7 +295,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
 
-        this.computeTotalScore(this.assessments);
+        this.totalScore = this.computeTotalScore(this.assessments);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {

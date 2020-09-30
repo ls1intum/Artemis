@@ -18,9 +18,9 @@ import { Feedback } from 'app/entities/feedback.model';
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
-    exercise: TextExercise | null;
+    exercise?: TextExercise;
     isAtLeastInstructor: boolean;
-    protected userId: number | null;
+    protected userId?: number | null;
 
     protected get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -63,12 +63,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      * @param unusedTextBlockRefs
      * @param submission
      */
-    protected sortAndSetTextBlockRefs(
-        matchBlocksWithFeedbacks: TextBlockRef[],
-        textBlockRefs: TextBlockRef[],
-        unusedTextBlockRefs: TextBlockRef[],
-        submission: TextSubmission | null,
-    ) {
+    protected sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[], textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[], submission?: TextSubmission) {
         // Sort by start index to process all refs in order
         const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block.startIndex - b.block.startIndex);
 

@@ -12,7 +12,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentConflict } from 'app/entities/text-assessment-conflict';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -27,6 +27,7 @@ export class TextAssessmentsService {
 
     /**
      * Saves the passed feedback items of the assessment.
+     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
@@ -41,6 +42,7 @@ export class TextAssessmentsService {
 
     /**
      * Submits the passed feedback items of the assessment.
+     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
@@ -55,6 +57,7 @@ export class TextAssessmentsService {
 
     /**
      * Updates an assessment after a complaint.
+     *
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}
      * @param complaintResponse response on the complaint of type {ComplaintResponse}
@@ -79,6 +82,7 @@ export class TextAssessmentsService {
 
     /**
      * Cancels an assessment.
+     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param submissionId id of corresponding submission of type {number}
      */
@@ -88,6 +92,7 @@ export class TextAssessmentsService {
 
     /**
      * Get all feedback items for a submission.
+     *
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
     public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
@@ -109,6 +114,7 @@ export class TextAssessmentsService {
 
     /**
      * Gets an example result for defined exercise and submission.
+     *
      * @param exerciseId id of the exercise for which the example result should be retrieved of type {number}
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
@@ -117,16 +123,23 @@ export class TextAssessmentsService {
     }
 
     /**
-     *  Gets an array of text submissions that contains conflicting feedback with the given feedback id.
-     * @param exerciseId id of the exercise feedback belongs to of type {number}
+     * Gets an array of text submissions that contains conflicting feedback with the given feedback id.
+     *
+     * @param submissionId id of the submission feedback belongs to of type {number}
      * @param feedbackId id of the feedback to search for conflicts of type {number}
      */
-    public getConflictingTextSubmissions(exerciseId: number, feedbackId: number): Observable<TextSubmission[]> {
-        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/exercise/${exerciseId}/feedback/${feedbackId}/text-assessment-conflicts`);
+    public getConflictingTextSubmissions(submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
+        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
     }
 
-    public setConflictsAsSolved(textAssessmentConflictId: number): Observable<TextAssessmentConflict> {
-        return this.http.get<TextAssessmentConflict>(`${this.resourceUrl}/textAssessmentConflict/${textAssessmentConflictId}/solve-text-assessment-conflicts`);
+    /**
+     * Set feedback conflict as solved. (Tutor decides it is not a conflict)
+     *
+     * @param exerciseId id of the exercise feedback conflict belongs to
+     * @param feedbackConflictId id of the feedback conflict to be solved
+     */
+    public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
+        return this.http.get<FeedbackConflict>(`${this.resourceUrl}/exercise/${exerciseId}/feedbackConflict/${feedbackConflictId}/solve-feedback-conflict`);
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
@@ -134,12 +147,12 @@ export class TextAssessmentsService {
             f = Object.assign({}, f);
             f.result = null;
             if (f['firstConflicts']) {
-                delete f['firstConflicts'];
+                f['firstConflicts'] = undefined;
             }
             if (f['secondConflicts']) {
-                delete f['secondConflicts'];
+                f['secondConflicts'] = undefined;
             }
-            f.conflictingTextAssessments = null;
+            f.conflictingTextAssessments = undefined;
             return f;
         });
         textBlocks = textBlocks.map((tb) => {
@@ -194,7 +207,7 @@ export class TextAssessmentsService {
      * @param submission - The submission object that holds the data that is tracked
      * @param origin - The method that calls the the tracking method
      */
-    public trackAssessment(submission: TextSubmission | null, origin: string) {
+    public trackAssessment(submission?: TextSubmission, origin?: string) {
         if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);

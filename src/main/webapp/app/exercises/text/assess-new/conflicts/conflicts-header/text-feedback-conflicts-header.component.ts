@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
-    selector: 'jhi-text-assessment-conflicts-header',
-    templateUrl: './text-assessment-conflicts-header.component.html',
-    styleUrls: ['./text-assessment-conflicts-header.component.scss'],
+    selector: 'jhi-text-feedback-conflicts-header',
+    templateUrl: './text-feedback-conflicts-header.component.html',
+    styleUrls: ['./text-feedback-conflicts-header.component.scss'],
 })
-export class TextAssessmentConflictsHeaderComponent {
+export class TextFeedbackConflictsHeaderComponent {
     @Input() numberOfConflicts: number;
     @Input() haveRights: boolean;
     @Input() overrideBusy: boolean;

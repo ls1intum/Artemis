@@ -12,7 +12,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { TextAssessmentConflict } from 'app/entities/text-assessment-conflict';
+import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AccountService } from 'app/core/auth/account.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
@@ -20,27 +20,27 @@ import interact from 'interactjs';
 import * as moment from 'moment';
 
 @Component({
-    selector: 'jhi-text-assessment-conflicts',
-    templateUrl: './text-assessment-conflicts.component.html',
-    styleUrls: ['./text-assessment-conflicts.component.scss'],
+    selector: 'jhi-text-feedback-conflicts',
+    templateUrl: './text-feedback-conflicts.component.html',
+    styleUrls: ['./text-feedback-conflicts.component.scss'],
 })
-export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit {
-    conflictingSubmissions: TextSubmission[] | null;
-    leftSubmission: TextSubmission | null;
+export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit {
+    conflictingSubmissions?: TextSubmission[];
+    leftSubmission?: TextSubmission;
     leftTextBlockRefs: TextBlockRef[];
     leftUnusedTextBlockRefs: TextBlockRef[];
     leftTotalScore: number;
     leftFeedbackId: number;
-    rightSubmission: TextSubmission | null;
+    rightSubmission?: TextSubmission;
     rightTextBlockRefs: TextBlockRef[];
     rightUnusedTextBlockRefs: TextBlockRef[];
     rightTotalScore: number;
-    conflictingAssessments: TextAssessmentConflict[];
+    conflictingAssessments: FeedbackConflict[];
     overrideBusy = false;
     markBusy = false;
     isOverrideDisabled = true;
     isMarkingDisabled = true;
-    selectedRightFeedbackId: number | null;
+    selectedRightFeedbackId?: number;
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]
@@ -104,7 +104,7 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
         this.rightUnusedTextBlockRefs = [];
         this.rightTextBlockRefs = [];
         this.conflictingAssessments = [];
-        this.selectedRightFeedbackId = null;
+        this.selectedRightFeedbackId = undefined;
         this.isMarkingDisabled = true;
         this.setConflictingSubmission(conflictIndex - 1);
     }
@@ -117,7 +117,7 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
     }
 
     private setConflictingSubmission(index: number) {
-        this.rightSubmission = this.conflictingSubmissions ? this.conflictingSubmissions[index] : null;
+        this.rightSubmission = this.conflictingSubmissions ? this.conflictingSubmissions[index] : undefined;
         this.prepareTextBlocksAndFeedbackFor(this.rightSubmission!, this.rightTextBlockRefs, this.rightUnusedTextBlockRefs);
         this.rightTotalScore = this.computeTotalScore(this.rightSubmission!.result.feedbacks);
         this.conflictingAssessments = this.leftSubmission?.result.feedbacks.find((f) => f.id === this.leftFeedbackId)?.conflictingTextAssessments || [];
@@ -164,7 +164,7 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
     }
 
     didSelectConflictingFeedback(rightFeedbackId: number): void {
-        this.selectedRightFeedbackId = rightFeedbackId !== this.selectedRightFeedbackId ? rightFeedbackId : null;
+        this.selectedRightFeedbackId = rightFeedbackId !== this.selectedRightFeedbackId ? rightFeedbackId : undefined;
         this.isMarkingDisabled = !this.selectedRightFeedbackId;
     }
 
@@ -173,15 +173,14 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
             return;
         }
 
-        const textAssessmentConflictId = this.conflictingAssessments.find((conflictingAssessment) => conflictingAssessment.conflictingFeedbackId === this.selectedRightFeedbackId)
-            ?.id;
+        const feedbackConflictId = this.conflictingAssessments.find((conflictingAssessment) => conflictingAssessment.conflictingFeedbackId === this.selectedRightFeedbackId)?.id;
 
-        if (!textAssessmentConflictId) {
+        if (!feedbackConflictId || this.exercise) {
             return;
         }
 
         this.markBusy = true;
-        this.assessmentsService.setConflictsAsSolved(textAssessmentConflictId).subscribe(
+        this.assessmentsService.solveFeedbackConflict(this.exercise!.id, feedbackConflictId).subscribe(
             (response) => this.handleSolveConflictsSuccessWithAlert(response, ''),
             (error) => this.handleSolveConflictsError(error),
         );
@@ -200,7 +199,7 @@ export class TextAssessmentConflictsComponent extends TextAssessmentBaseComponen
         this.location.back();
     }
 
-    private handleSolveConflictsSuccessWithAlert(response: TextAssessmentConflict, translationKey: string): void {
+    private handleSolveConflictsSuccessWithAlert(response: FeedbackConflict, translationKey: string): void {
         this.jhiAlertService.success(translationKey);
         this.markBusy = false;
         this.isMarkingDisabled = true;
