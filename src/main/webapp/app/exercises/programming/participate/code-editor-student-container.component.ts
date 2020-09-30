@@ -13,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
@@ -42,6 +42,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     participationCouldNotBeFetched = false;
     repositoryIsLocked = false;
     showEditorInstructions = true;
+    latestResult: Result | undefined;
+    hasTutorAssessment = false;
 
     constructor(
         private resultService: ResultService,
@@ -72,6 +74,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
                         const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
+                        this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
+                        this.checkForTutorAssessment();
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();
@@ -144,5 +148,17 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
 
     canDeactivate() {
         return this.codeEditorContainer.canDeactivate();
+    }
+    checkForTutorAssessment() {
+        let isManualResult = false;
+        let hasTutorFeedback = false;
+        if (!!this.latestResult) {
+            // latest result is the first element of results, see loadParticipationWithLatestResult
+            isManualResult = this.latestResult.assessmentType === AssessmentType.MANUAL;
+            if (isManualResult) {
+                hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
+            }
+        }
+        this.hasTutorAssessment = isManualResult && hasTutorFeedback;
     }
 }

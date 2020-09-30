@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';

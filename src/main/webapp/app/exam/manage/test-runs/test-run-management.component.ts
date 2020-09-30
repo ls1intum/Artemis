@@ -128,6 +128,13 @@ export class TestRunManagementComponent implements OnInit {
         return false;
     }
 
+    /**
+     * Get function to determine if at least one exercise has been configured for the exam
+     */
+    get examContainsExercises(): boolean {
+        return !!this.exam?.exerciseGroups && this.exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
+    }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }

@@ -121,7 +121,7 @@ export abstract class Exercise implements BaseEntity {
 
     /**
      * Sanitize exercise attributes.
-     * This method should be used before sending an exercise to the backend.
+     * This method should be used before sending an exercise to the server.
      *
      * @param exercise
      */

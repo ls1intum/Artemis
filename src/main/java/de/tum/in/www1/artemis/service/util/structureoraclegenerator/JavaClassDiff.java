@@ -70,7 +70,7 @@ public class JavaClassDiff {
     /**
      * This method gets the type name of both the solution and the template type. We do not talk about the diff here, since both the solution and the template type are supposed to
      * have the same name.
-     * 
+     *
      * @return The name of the solution and template type.
      */
     private String generateName() {
@@ -80,7 +80,7 @@ public class JavaClassDiff {
     /**
      * This method gets the package name the types are contained in. We do not talk about the diff here, since both the solution and the template type are supposed to be in
      * packages with the same names.
-     * 
+     *
      * @return The name of the package the solution and template types are contained in.
      */
     private String generatePackageName() {
@@ -89,7 +89,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the interface stereotype diff of the solution type and the template type, e.g. if the solution type is an interface and the template type is not.
-     * 
+     *
      * @return True, if the solution type is an interface and the template is not, false if they are both interfaces or not.
      */
     private boolean isInterfaceDifferent() {
@@ -98,7 +98,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the enum stereotype diff of the solution type and the template type, e.g. if the solution type is an enum and the template type is not.
-     * 
+     *
      * @return True, if the solution type is an enum and the template is not, false if they are both enums or not.
      */
     private boolean isEnumDifferent() {
@@ -107,7 +107,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the abstract modifier diff of the solution type and the template type, e.g. if the solution type is an abstract type and the template type is not.
-     * 
+     *
      * @return True, if the solution type is abstract and the template is not, false if they are both abstract or not abstract.
      */
     private boolean isAbstractDifferent() {
@@ -116,7 +116,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the super class diff of the solution type and the template type, e.g. the name of the class the solution type extends and the template type does not.
-     * 
+     *
      * @return The simple name of the super class the solution type extends and the template type does not. If both types are subclasses of the same class, return an empty string.
      */
     private String generateSuperClassName() {
@@ -151,7 +151,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the super interfaces diff of the solution and template type, e.g. the interfaces the solution type implements, but the template type does not.
-     * 
+     *
      * @return A set of interfaces the solution type implements, but the template type does not.
      */
     private List<JavaClass> generateSuperInterfaces() {
@@ -186,7 +186,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the attributes diff of the solution and template type, e.g. the attributes defined in the solution type but not in the template type.
-     * 
+     *
      * @return A set of attributes defined in the solution type but not in the template type.
      */
     private List<JavaField> generateAttributesDiff() {
@@ -200,7 +200,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the enums diff of the solution and template type, e.g. the enums defined in the solution type but not in the template type.
-     * 
+     *
      * @return A set of enums defined in the solution type but not in the template type.
      */
     private List<JavaField> generateEnumsDiff() {
@@ -230,7 +230,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the constructors diff of the solution and template type, e.g. the constructors defined in the solution type but not in the template type.
-     * 
+     *
      * @return A set of constructors defined in the solution type but not in the template type.
      */
     private List<JavaConstructor> generateConstructorsDiff() {
@@ -255,7 +255,7 @@ public class JavaClassDiff {
 
     /**
      * This method generates the methods diff of the solution and template type, e.g. the methods defined in the solution type but not in the template type.
-     * 
+     *
      * @return A set of methods defined in the solution type but not in the template type.
      */
     private List<JavaMethod> generateMethodsDiff() {
@@ -286,7 +286,7 @@ public class JavaClassDiff {
 
     /**
      * This method checks if two given methods from the solution and template type respectively have the same name.
-     * 
+     *
      * @param solutionMethod The method defined in the solution type.
      * @param templateMethod The method defined in the template type.
      * @return True, if the name of the methods is the same, false otherwise.
@@ -344,7 +344,7 @@ public class JavaClassDiff {
     /**
      * This method checks if the parameter types of an executable in the solution type are the same to an executable in the template type. An executable can be a method or a
      * constructor.
-     * 
+     *
      * @param solutionExecutable: The executable present in the solution type.
      * @param templateExecutable: The executable present in the template type.
      * @return True, if the parameter types are the same, false otherwise.
@@ -371,7 +371,7 @@ public class JavaClassDiff {
 
     /**
      * This method checks if the solution type is the same in structure as the template type.
-     * 
+     *
      * @return True, if the solution type is the same in structure as the template type, false otherwise.
      */
     boolean classesAreEqual() {
