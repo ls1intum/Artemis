@@ -59,7 +59,8 @@ public class AssessmentService {
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
         Double maxScore = exercise.getMaxScore();
 
-        if (exercise.hasExerciseGroup()) {
+        // Exam results and manual results of programming exercises are always to rated
+        if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
         else {
@@ -107,14 +108,8 @@ public class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
-        if (!(exercise instanceof ProgrammingExercise)) {
-            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here
-            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedScore);
-        }
-        // Note: This also saves the feedback objects in the database because of the 'cascade =
-        // CascadeType.ALL' option.
-        return resultRepository.save(originalResult);
+        Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+        return submitResult(originalResult, exercise, calculatedScore);
     }
 
     /**

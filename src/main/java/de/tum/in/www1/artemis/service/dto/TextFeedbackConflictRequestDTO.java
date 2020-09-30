@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.dto;
 
 /**
- * A DTO representing a text assessment to be sent to remote Athene service the check the feedback conflicts.
+ * A DTO representing a text feedback to be sent to remote Athene service the check the feedback conflicts.
  */
-public class TextAssessmentConflictRequestDTO {
+public class TextFeedbackConflictRequestDTO {
 
     private final String textBlockId;
 
@@ -17,7 +17,7 @@ public class TextAssessmentConflictRequestDTO {
 
     private final Double credits;
 
-    public TextAssessmentConflictRequestDTO(String textBlockId, String text, Long clusterId, Long feedbackId, String feedbackText, Double credits) {
+    public TextFeedbackConflictRequestDTO(String textBlockId, String text, Long clusterId, Long feedbackId, String feedbackText, Double credits) {
         this.textBlockId = textBlockId;
         this.text = text;
         this.clusterId = clusterId;
