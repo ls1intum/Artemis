@@ -16,9 +16,11 @@
     [editable]="!repositoryIsLocked"
     [participation]="participation"
     [showEditorInstructions]="showEditorInstructions"
+    [isTutorAssessment]="hasTutorAssessment"
+    [readOnlyManualFeedback]="true"
 >
     <span editorTitle>{{ exercise.title }}</span>
-    <div editorToolbar>
+    <div editorToolbar class="d-inline-flex">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
