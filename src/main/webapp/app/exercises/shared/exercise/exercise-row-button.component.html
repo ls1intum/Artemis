@@ -1,69 +1,118 @@
 <div class="btn-group flex-btn-group-container">
-    <!-- Scores -->
-    <button *ngIf="exercise.isAtLeastTutor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
-        <fa-icon [icon]="'eye'"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-    </button>
-    <!-- Submissions -->
-    <button
-        type="submit"
-        *ngIf="exercise.isAtLeastInstructor"
-        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
-        class="btn btn-primary btn-sm mr-1"
-    >
-        <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-    </button>
-    <!-- Participations -->
-    <button
-        *ngIf="exercise.isAtLeastTutor"
-        type="submit"
-        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
-        class="btn btn-primary btn-sm mr-1"
-    >
-        <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-    </button>
-    <!-- Teams -->
-    <button
-        type="submit"
-        *ngIf="exercise.teamMode && exercise.isAtLeastTutor"
-        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
-        class="btn btn-primary btn-sm mr-1"
-    >
-        <fa-icon [icon]="'users'"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-    </button>
-    <!-- View -->
-    <button
-        *ngIf="exercise.isAtLeastTutor"
-        type="submit"
-        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
-        class="btn btn-info btn-sm mr-1"
-    >
-        <fa-icon [icon]="'eye'"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-    </button>
-    <!-- Edit -->
-    <button
-        *ngIf="exercise.isAtLeastInstructor"
-        type="submit"
-        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
-        class="btn btn-primary btn-sm mr-1"
-    >
-        <fa-icon [icon]="'pencil-alt'"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-    </button>
-    <!-- Delete -->
-    <button
-        *ngIf="exercise.isAtLeastInstructor"
-        jhiDeleteButton
-        [entityTitle]="exercise.title"
-        deleteQuestion="artemisApp.exercise.delete.question"
-        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-        (delete)="deleteExercise()"
-        [dialogError]="dialogError$"
-    >
-        <fa-icon [icon]="'times'"></fa-icon>
-    </button>
+    <div [ngClass] = "{'btn-group-vertical mr-1 mb-1' : exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ}">
+        <!-- Scores -->
+        <button *ngIf="exercise.isAtLeastTutor" type="submit" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
+            <fa-icon [icon]="'eye'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+        </button>
+        <!-- Submissions -->
+        <button
+            type="submit"
+            *ngIf="exercise.isAtLeastInstructor && exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ"
+            [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']"
+            class="btn btn-primary btn-sm mr-1"
+        >
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+        </button>
+        <!-- Participations -->
+        <button
+            *ngIf="exercise.isAtLeastTutor && exercise.type != exerciseType.QUIZ"
+            type="submit"
+            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
+            class="btn btn-primary btn-sm mr-1"
+        >
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+        </button>
+        <!--  Statistic  -->
+        <button
+            *ngIf="exercise.isAtLeastTutor && exercise.type == exerciseType.QUIZ"
+            type="submit"
+            [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
+            class="btn btn-info btn-sm mr-1 mb-1"
+        >
+            <fa-icon [icon]="'signal'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
+        </button>
+    </div>
+
+    <div [ngClass] = "{'btn-group-vertical mr-1 mb-1' : exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ}">
+        <!-- View -->
+        <button
+            *ngIf="exercise.isAtLeastTutor"
+            type="submit"
+            [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+            class="btn btn-info btn-sm mr-1"
+        >
+            <fa-icon [icon]="'eye'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+        </button>
+        <!-- Edit -->
+        <button
+            *ngIf="exercise.isAtLeastInstructor && !isExamOver()"
+            type="submit"
+            [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
+            [disabled]="hasExamStarted()"
+            class="btn btn-primary btn-sm mr-1"
+        >
+            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        </button>
+    </div>
+    <div [ngClass] = "{'btn-group-vertical mr-1 mb-1' : exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ}">
+        <!-- Teams -->
+        <button
+            type="submit"
+            *ngIf="exercise.teamMode && exercise.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
+            class="btn btn-primary btn-sm mr-1"
+        >
+            <fa-icon [icon]="'users'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+        </button>
+    </div>
+    <div [ngClass] = "{'btn-group-vertical mr-1 mb-1' : exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ}">
+        <!-- Reset -->
+        <button
+            *ngIf="!exercise.exerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.PROGRAMMING"
+            [jhiFeatureToggle]="featureToggle.PROGRAMMING_EXERCISES"
+            jhiDeleteButton
+            [actionType]="ActionType.Reset"
+            [entityTitle]="exercise.title"
+            deleteQuestion="artemisApp.programmingExercise.reset.question"
+            (delete)="resetExercise()"
+            [dialogError]="dialogError$"
+            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            class="mb-1"
+        >
+            <fa-icon [icon]="'times'"></fa-icon>
+        </button>
+
+        <button
+            *ngIf="!exercise.exerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
+            jhiDeleteButton
+            [actionType]="ActionType.Reset"
+            [entityTitle]="exercise.title"
+            deleteQuestion="artemisApp.programmingExercise.reset.question"
+            (delete)="resetExercise()"
+            [dialogError]="dialogError$"
+            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            class="mb-1"
+        >
+            <fa-icon [icon]="'times'"></fa-icon>
+        </button>
+        <!-- Delete -->
+        <button
+            *ngIf="exercise.isAtLeastInstructor"
+            jhiDeleteButton
+            [entityTitle]="exercise.title"
+            deleteQuestion="artemisApp.exercise.delete.question"
+            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            (delete)="deleteExercise()"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="'times'"></fa-icon>
+        </button>
+    </div>
 </div>

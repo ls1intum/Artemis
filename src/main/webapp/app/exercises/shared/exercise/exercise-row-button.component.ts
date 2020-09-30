@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exercise-row-button',
@@ -21,7 +22,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 export class ExerciseRowButtonComponent {
     readonly ActionType = ActionType;
     exerciseType = ExerciseType;
-    FeatureToggle = FeatureToggle;
+    featureToggle = FeatureToggle;
 
     @Input() exercise: Exercise;
     @Input() course: Course;
@@ -101,5 +102,58 @@ export class ExerciseRowButtonComponent {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+    }
+
+    resetExercise() {
+        switch (this.exercise.type) {
+            case ExerciseType.QUIZ:
+                this.resetQuizExercise();
+                break;
+            case ExerciseType.PROGRAMMING:
+                this.resetProgrammingExercise();
+                break;
+        }
+    }
+
+    /**
+     * Resets quiz exercise
+     * @param quizExerciseId id of the quiz exercise that will be deleted
+     */
+    resetQuizExercise() {
+        this.quizExerciseService.reset(this.exercise.id).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Reset an quizExercise',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+        );
+    }
+
+    /**
+     * Resets programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     */
+    resetProgrammingExercise() {
+        this.exerciseService.reset(this.exercise.id).subscribe(
+            () => this.dialogErrorSource.next(''),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    /**
+     * Checks whether the exam is over using the endDate
+     */
+    isExamOver() {
+        return this.exercise.exerciseGroup?.exam?.endDate ? this.exercise.exerciseGroup.exam.endDate.isBefore(moment()) : false;
+    }
+
+    /**
+     * Checks whether the exam has started
+     */
+    hasExamStarted() {
+        return this.exercise.exerciseGroup?.exam?.startDate ? this.exercise.exerciseGroup.exam.startDate.isBefore(moment()) : false;
     }
 }
