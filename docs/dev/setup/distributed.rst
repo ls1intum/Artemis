@@ -218,11 +218,12 @@ Download the latest version of the jhipster-registry from github, e.g by using
                 defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
             
 **nginx config**
+
 You still have to make the registry available:
 
 1. ``sudo vim /etc/nginx/sites-available/registry.conf``
 
-  .. code:: bash
+  .. code::
   
   server {
     listen 443 ssl http2;
@@ -313,7 +314,7 @@ It relays message between instances:
     sudo chown -R artemis:artemis /opt/broker
     sudo chmod g+rwx /opt/broker
 
-7. Adjust the configuration of the broker: sudo vim /opt/broker/broker1/etc/broker.xml
+7. Adjust the configuration of the broker: ``sudo vim /opt/broker/broker1/etc/broker.xml``
 
   .. code:: xml
 
