@@ -26,7 +26,7 @@ export class MultipleChoiceQuestionComponent {
     }
     // TODO: Map vs. Array --> consistency
     @Input()
-    selectedAnswerOptions: Map<number, AnswerOption[]>;
+    selectedAnswerOptions: AnswerOption[];
     @Input()
     clickDisabled: boolean;
     @Input()
@@ -45,7 +45,7 @@ export class MultipleChoiceQuestionComponent {
     submittedQuizExercise: QuizExercise;
 
     @Output()
-    selectedAnswerOptionsChange = new EventEmitter();
+    selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
@@ -79,10 +79,9 @@ export class MultipleChoiceQuestionComponent {
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            const options = this.selectedAnswerOptions.get(this.questionIndex)?.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id) || [];
-            this.selectedAnswerOptions.set(this.questionIndex, options);
+            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
         } else {
-            this.selectedAnswerOptions.get(this.questionIndex)!.push(answerOption);
+            this.selectedAnswerOptions.push(answerOption);
         }
         this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
@@ -97,7 +96,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions.get(this.questionIndex)?.findIndex((selected) => {
+            this.selectedAnswerOptions.findIndex((selected) => {
                 return selected.id === answerOption.id;
             }) !== -1
         );

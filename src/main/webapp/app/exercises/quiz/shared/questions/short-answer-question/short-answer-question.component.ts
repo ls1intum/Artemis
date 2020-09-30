@@ -53,7 +53,7 @@ export class ShortAnswerQuestionComponent {
     fnOnSubmittedTextUpdate: any;
 
     @Output()
-    submittedTextsChange = new EventEmitter();
+    submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
