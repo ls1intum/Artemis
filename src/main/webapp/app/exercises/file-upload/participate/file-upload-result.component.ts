@@ -18,7 +18,7 @@ export class FileUploadResultComponent {
         }
         const [feedbackWithCredits, feedbackWithoutCredits] = partition(result.feedbacks, (feedback) => feedback.credits !== 0);
         this.feedbacks = feedbackWithCredits;
-        this.generalFeedback = feedbackWithoutCredits[0] ? feedbackWithoutCredits[0] : undefined;
+        this.generalFeedback = feedbackWithoutCredits[0] || undefined;
     }
     constructor() {}
 }
