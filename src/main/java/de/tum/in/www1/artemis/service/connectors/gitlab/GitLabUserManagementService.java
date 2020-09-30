@@ -66,20 +66,32 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
+    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         try {
             var userApi = gitlab.getUserApi();
             final var gitlabUser = userApi.getUser(user.getLogin());
 
-            // update the user password
-            userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+            if (shouldSynchronizePassword) {
+                // update the user password in Gitlab with the one stored in the Artemis database
+                userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+            }
 
             // Add as member to new groups
             if (!addedGroups.isEmpty()) {
                 final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
                 for (final var exercise : exercisesWithAddedGroups) {
                     final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
-                    gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
+                    try {
+                        gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
+                    }
+                    catch (GitLabApiException ex) {
+                        // if user is already member of group in GitLab, ignore the exception
+                        // to synchronize the "membership" with artemis
+                        if ("Member already exists".equalsIgnoreCase(ex.getMessage())) {
+                            continue;
+                        }
+                    }
+
                 }
             }
 
@@ -98,7 +110,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     }
                     else {
                         // If the user is not a member of any relevant group any more, we can remove him from the exercise
-                        gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                        try {
+                            gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                        }
+                        catch (GitLabApiException e) {
+                            // If user membership to group is missing on Gitlab, ignore the exception
+                            // and let artemis synchronize with GitLab groups
+                            if (e.getHttpStatus() == 404) {
+                                continue;
+                            }
+                        }
+
                     }
                 }
             }
