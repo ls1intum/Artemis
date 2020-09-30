@@ -261,7 +261,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     public addFeedback(): void {
         const feedback = new Feedback();
-        feedback.credits = 0;
         this.referencedFeedback.push(feedback);
         this.validateAssessment();
     }
