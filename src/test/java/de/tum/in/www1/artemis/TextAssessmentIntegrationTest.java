@@ -96,7 +96,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(2, 2, 1);
+        database.addUsers(2, 3, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -767,8 +767,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void solveFeedbackConflict_student() throws Exception {
+    @WithMockUser(value = "tutor3", roles = "TA")
+    public void solveFeedbackConflict_forbiddenTutor() throws Exception {
         solveFeedbackConflict(HttpStatus.FORBIDDEN);
     }
 
