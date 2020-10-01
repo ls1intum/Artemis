@@ -20,25 +20,25 @@ import com.atlassian.bamboo.specs.util.*;
 public class BambooServerConfiguration {
 
     @Value("${artemis.continuous-integration.user}")
-    private String BAMBOO_USER;
+    private String bambooUser;
 
     @Value("${artemis.continuous-integration.password}")
-    private String BAMBOO_PASSWORD;
+    private String bambooPassword;
 
     @Value("${artemis.continuous-integration.token:#{null}}")
-    private Optional<String> BAMBOO_TOKEN;
+    private Optional<String> bambooToken;
 
     @Value("${artemis.continuous-integration.url}")
-    private URL BAMBOO_SERVER_URL;
+    private URL bambooServerUrl;
 
     @Value("${artemis.version-control.user}")
-    private String BITBUCKET_USER;
+    private String bitbucketUser;
 
     @Value("${artemis.version-control.password}")
-    private String BITBUCKET_PASSWORD;
+    private String bitbucketPassword;
 
     @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER;
+    private URL bitbucketServer;
 
     /**
      * initializes the bamboo server with the provided token (if available) or with username and password (fallback that will be removed soon)
@@ -46,14 +46,14 @@ public class BambooServerConfiguration {
      */
     @Bean
     public BambooServer bambooServer() {
-        if (BAMBOO_TOKEN.isPresent()) {
-            TokenCredentials tokenCredentials = new SimpleTokenCredentials(BAMBOO_TOKEN.get());
-            return new BambooServer(BAMBOO_SERVER_URL.toString(), tokenCredentials);
+        if (bambooToken.isPresent()) {
+            TokenCredentials tokenCredentials = new SimpleTokenCredentials(bambooToken.get());
+            return new BambooServer(bambooServerUrl.toString(), tokenCredentials);
         }
         else {
             // supports the legacy case if BAMBOO_TOKEN is not available --> TODO: Remove soon, because user password credentials are deprecated
-            UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
-            return new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+            UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(bambooUser, bambooPassword);
+            return new BambooServer(bambooServerUrl.toString(), userPasswordCredentials);
         }
     }
 
@@ -68,8 +68,8 @@ public class BambooServerConfiguration {
     public BambooClient bambooClient() {
         final var bambooClient = new BambooClient(createBase());
         // setup the Bamboo Client to use the correct username and password
-        final var args = new String[] { "-s", BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password", BAMBOO_PASSWORD, "--targetServer", BITBUCKET_SERVER.toString(),
-                "--targetUser", BITBUCKET_USER, "--targetPassword", BITBUCKET_PASSWORD };
+        final var args = new String[] { "-s", bambooServerUrl.toString(), "--user", bambooUser, "--password", bambooPassword, "--targetServer", bitbucketServer.toString(),
+                "--targetUser", bitbucketUser, "--targetPassword", bitbucketPassword };
 
         bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
         return bambooClient;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -30,6 +30,9 @@ import com.google.common.base.Joiner;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;

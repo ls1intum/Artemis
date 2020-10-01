@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
@@ -60,16 +60,16 @@ import io.github.jhipster.config.JHipsterConstants;
 public class BambooBuildPlanService {
 
     @Value("${artemis.continuous-integration.user}")
-    private String BAMBOO_USER;
+    private String bambooUser;
 
     @Value("${artemis.user-management.external.admin-group-name}")
-    private String ADMIN_GROUP_NAME;
+    private String adminGroupName;
 
     @Value("${server.url}")
-    private URL ARTEMIS_SERVER_URL;
+    private URL artemisServerUrl;
 
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
-    private String VCS_APPLICATION_LINK_NAME;
+    private String vcsApplicationLinkName;
 
     private final ResourceLoader resourceLoader;
 
@@ -115,7 +115,7 @@ public class BambooBuildPlanService {
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
         final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, instructorGroupName,
-                ADMIN_GROUP_NAME);
+                adminGroupName);
         bambooServer.publish(planPermission);
     }
 
@@ -218,11 +218,11 @@ public class BambooBuildPlanService {
     private Notification createNotification() {
         return new Notification().type(new PlanCompletedNotification())
                 .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
-                        .recipientString(ARTEMIS_SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
+                        .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
-        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(VCS_APPLICATION_LINK_NAME))
+        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(vcsApplicationLinkName))
                 // make sure to use lower case to avoid problems in change detection between Bamboo and Bitbucket
                 .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
                 .changeDetection(new VcsChangeDetection());
@@ -230,7 +230,7 @@ public class BambooBuildPlanService {
 
     private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, String instructorGroupName,
             String adminGroupName) {
-        var permissions = new Permissions().userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
+        var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
         if (teachingAssistantGroupName != null) {
