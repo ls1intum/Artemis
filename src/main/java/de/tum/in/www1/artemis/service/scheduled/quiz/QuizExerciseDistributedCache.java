@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
 /**
- * This class represents the cache for a single quiz exercise. 
+ * This class represents the cache for a single quiz exercise.
  * <p>
  * This includes the participations, submissions and results, but also the quiz exercise object itself and handlers for
  * the distributed start task {@link QuizStartTask}.
@@ -52,7 +52,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     List<ScheduledTaskHandler> quizStart;
 
     /**
-     * The {@link QuizExercise} cached object. This is only cached locally and not distributed. 
+     * The {@link QuizExercise} cached object. This is only cached locally and not distributed.
      */
     private transient QuizExercise exercise;
 
@@ -157,7 +157,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     }
 
     /**
-     * A serializer and deserializer for distributed quiz cache objects, required for objects distributed via Hazelcast. 
+     * A serializer and deserializer for distributed quiz cache objects, required for objects distributed via Hazelcast.
      * We cannot use standard Java-serialization here, because the individual fields of {@link QuizExerciseDistributedCache}
      * need to use different serialization mechanisms (e.g. {@link ScheduledTaskHandler} is not {@link Serializable}).
      */

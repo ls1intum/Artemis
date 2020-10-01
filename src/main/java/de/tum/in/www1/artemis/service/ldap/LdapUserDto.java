@@ -5,7 +5,9 @@ import static de.tum.in.www1.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import javax.naming.Name;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.ldap.odm.annotations.*;
+import org.springframework.ldap.odm.annotations.Attribute;
+import org.springframework.ldap.odm.annotations.Entry;
+import org.springframework.ldap.odm.annotations.Id;
 
 @Entry(base = "ou=users", objectClasses = { "imdPerson" })
 @Profile("ldap")

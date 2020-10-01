@@ -6,7 +6,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 describe('Logs Service', () => {
     let service: JhiMetricsService;
-    let httpMock;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -31,7 +31,7 @@ describe('Logs Service', () => {
         });
 
         it('should return Metrics', () => {
-            const metrics = [];
+            const metrics: any[] = [];
 
             service.getMetrics().subscribe((received) => {
                 expect(received.body[0]).toEqual(metrics);

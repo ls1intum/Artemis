@@ -31,7 +31,7 @@
                             {{ attachmentExtension(submission.filePath!) | uppercase }}
                         </span>
                     </div>
-                    <button class="btn btn-success mt-4" (click)="addReferencedFeedback()" [disabled]="readOnly">
+                    <button class="btn btn-success mt-4" (click)="addFeedback()" [disabled]="readOnly">
                         {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
                     </button>
                     <ng-container *ngIf="!busy && !notFound">

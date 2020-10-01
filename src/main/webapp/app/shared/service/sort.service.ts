@@ -8,34 +8,33 @@ export class SortService {
     constructor() {}
 
     sortByProperty<T>(array: T[], key: string, asc: boolean): T[] {
-        array.sort((a: T, b: T) => {
-            const valueA = this.customGet(a, key, null);
-            const valueB = this.customGet(b, key, null);
+        return array.sort((a: T, b: T) => {
+            const valueA = this.customGet(a, key, undefined);
+            const valueB = this.customGet(b, key, undefined);
 
-            if (valueA === null || valueB === null) {
-                return this.compareWithNull(valueA, valueB);
+            if (!valueA || !valueB) {
+                return SortService.compareWithUndefinedNull(valueA, valueB);
             }
 
             if (moment.isMoment(valueA) && moment.isMoment(valueB)) {
-                return this.compareMoments(valueA, valueB, asc);
+                return SortService.compareMoments(valueA, valueB, asc);
             }
 
-            return this.compareBasic(valueA, valueB, asc);
+            return SortService.compareBasic(valueA, valueB, asc);
         });
-        return array;
     }
 
-    private compareWithNull(valueA: any | null, valueB: any | null) {
-        if (valueA === null && valueB === null) {
+    private static compareWithUndefinedNull(valueA: any, valueB: any) {
+        if (!valueA && !valueB) {
             return 0;
-        } else if (valueA === null) {
+        } else if (!valueA) {
             return 1;
         } else {
             return -1;
         }
     }
 
-    private compareMoments(valueA: moment.Moment, valueB: moment.Moment, ascending: boolean) {
+    private static compareMoments(valueA: moment.Moment, valueB: moment.Moment, ascending: boolean) {
         if (valueA.isSame(valueB)) {
             return 0;
         } else if (ascending) {
@@ -45,7 +44,7 @@ export class SortService {
         }
     }
 
-    private compareBasic(valueA: any, valueB: any, ascending: boolean) {
+    private static compareBasic(valueA: any, valueB: any, ascending: boolean) {
         if (valueA === valueB) {
             return 0;
         } else if (ascending) {

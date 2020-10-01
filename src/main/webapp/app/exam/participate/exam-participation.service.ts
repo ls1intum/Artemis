@@ -56,7 +56,7 @@ export class ExamParticipationService {
     private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam> {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
-                if (studentExam.examSessions) {
+                if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
 
@@ -118,7 +118,7 @@ export class ExamParticipationService {
     }
 
     private static breakCircularDependency(studentExam: StudentExam) {
-        for (const exercise of studentExam.exercises) {
+        studentExam.exercises!.forEach((exercise) => {
             if (!!exercise.studentParticipations) {
                 for (const participation of exercise.studentParticipations) {
                     if (!!participation.results) {
@@ -137,7 +137,7 @@ export class ExamParticipationService {
                     }
                 }
             }
-        }
+        });
     }
 
     /**
@@ -177,13 +177,15 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    private convertExamDateFromServer(exam: Exam): Exam {
-        exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : null;
-        exam.startDate = exam.startDate ? moment(exam.startDate) : null;
-        exam.endDate = exam.endDate ? moment(exam.endDate) : null;
-        exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : null;
-        exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : null;
-        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : null;
+    private convertExamDateFromServer(exam?: Exam) {
+        if (exam) {
+            exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
+            exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
+            exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
+            exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
+            exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
+            exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
+        }
         return exam;
     }
 

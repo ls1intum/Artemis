@@ -22,8 +22,8 @@ export class SubmissionService {
 
     /**
      * Delete an existing submission
-     * @param {number} submissionId - The id of the submission to be deleted
-     * @param {any} req - A request with additional options in it
+     * @param submissionId - The id of the submission to be deleted
+     * @param req - A request with additional options in it
      */
     delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
@@ -53,36 +53,38 @@ export class SubmissionService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : null;
+            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : undefined;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
         }
         return res;
     }
 
-    protected convertParticipationDateFromServer(participation: Participation) {
-        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
-        participation.results = this.convertResultsDateFromServer(participation.results);
-        participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+    protected convertParticipationDateFromServer(participation?: Participation) {
+        if (participation) {
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.results = this.convertResultsDateFromServer(participation.results);
+            participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+        }
         return participation;
     }
 
-    convertResultsDateFromServer(results: Result[]) {
+    convertResultsDateFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
                 convertedResults.push(result);
             });
         }
         return convertedResults;
     }
 
-    convertSubmissionsDateFromServer(submissions: Submission[]) {
+    convertSubmissionsDateFromServer(submissions?: Submission[]) {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : null;
+                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
                     convertedSubmissions.push(submission);
                 }
             });

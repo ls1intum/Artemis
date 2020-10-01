@@ -72,7 +72,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     optionsWithID: string[] = [];
 
     /** For visual mode **/
-    textParts: (string | null)[][];
+    textParts: (string | undefined)[][];
 
     backupQuestion: ShortAnswerQuestion;
 
@@ -108,7 +108,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     ngOnChanges(changes: SimpleChanges): void {
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue != null) {
+        if (changes.question && changes.question.previousValue) {
             this.questionUpdated.emit();
         }
     }
@@ -129,7 +129,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
-        this.numberOfSpot = this.question.spots.length + 1;
+        this.numberOfSpot = this.question.spots!.length + 1;
 
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
@@ -162,26 +162,24 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     setOptionsWithID() {
         this.optionsWithID = [];
-        for (const solution of this.question.solutions) {
-            let spotsForSolution: ShortAnswerSpot[] = [];
+        this.question.solutions!.forEach((solution) => {
             let option = '[-option ';
             let firstSolution = true;
-            spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
-
-            for (const spotForSolution of spotsForSolution) {
-                if (spotForSolution === undefined) {
-                    break;
+            const spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
+            spotsForSolution!.forEach((spotForSolution) => {
+                if (!spotForSolution) {
+                    return;
                 }
                 if (firstSolution) {
-                    option += this.question.spots.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
+                    option += this.question.spots?.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ',' + this.question.spots.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
+                    option += ',' + this.question.spots?.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
-            }
+            });
             option += ']';
             this.optionsWithID.push(option);
-        }
+        });
     }
 
     /**
@@ -196,7 +194,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n\n' +
-            this.question.solutions.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim()).join('\n');
+            this.question.solutions?.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
         return markdownText;
     }
 
@@ -232,15 +230,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
+        ArtemisMarkdownService.parseTextHintExplanation(questionText, this.question);
 
         // Extract existing solutions IDs
-        const existingSolutionIDs = this.question.solutions.filter((solution) => solution.id != null).map((solution) => solution.id);
+        const existingSolutionIDs = this.question.solutions!.filter((solution) => solution.id !== undefined).map((solution) => solution.id);
         this.question.solutions = [];
         this.question.correctMappings = [];
 
         // Extract existing spot IDs
-        const existingSpotIDs = this.question.spots.filter((spot) => spot.id != null).map((spot) => spot.id);
+        const existingSpotIDs = this.question.spots!.filter((spot) => spot.id !== undefined).map((spot) => spot.id);
         this.question.spots = [];
 
         // setup spots
@@ -281,8 +279,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const spotIds = spots.split(',').map(Number);
 
         for (const id of spotIds) {
-            const spotForMapping = this.question.spots.find((spot) => spot.spotNr === id)!;
-            this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
+            const spotForMapping = this.question.spots?.find((spot) => spot.spotNr === id)!;
+            this.question.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
     }
 
@@ -441,7 +439,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param solutionToDelete {object} the solution that should be deleted
      */
     deleteSolution(solutionToDelete: ShortAnswerSolution): void {
-        this.question.solutions = this.question.solutions.filter((solution) => solution !== solutionToDelete);
+        this.question.solutions = this.question.solutions?.filter((solution) => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
         this.questionEditorText = this.generateMarkdown();
     }
@@ -455,7 +453,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.solutions.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
+        dragItem = this.question.solutions?.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -495,13 +493,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Save reference to this due to nested some calls
         const that = this;
         if (
-            this.question.correctMappings.some(function (correctMapping) {
+            this.question.correctMappings?.some((correctMapping) => {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
                         return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
                     })
                 ) {
-                    visitedSpots.push(correctMapping.spot);
+                    visitedSpots.push(correctMapping.spot!);
                 }
                 return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
             })
@@ -640,12 +638,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resetSpot(spot: ShortAnswerSpot): void {
         // Find matching spot in backupQuestion
-        const backupSpot = this.backupQuestion.spots.find((currentSpot) => currentSpot.id === spot.id)!;
+        const backupSpot = this.backupQuestion.spots!.find((currentSpot) => currentSpot.id === spot.id)!;
         // Find current index of our spot
-        const spotIndex = this.question.spots.indexOf(spot);
+        const spotIndex = this.question.spots!.indexOf(spot);
         // Remove current spot at given index and insert the backup at the same position
-        this.question.spots.splice(spotIndex, 1);
-        this.question.spots.splice(spotIndex, 0, backupSpot);
+        this.question.spots!.splice(spotIndex, 1);
+        this.question.spots!.splice(spotIndex, 0, backupSpot);
     }
 
     /**
@@ -654,7 +652,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param spotToDelete {object} the spot to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
-        this.question.spots = this.question.spots.filter((spot) => spot !== spotToDelete);
+        this.question.spots = this.question.spots?.filter((spot) => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
 
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
