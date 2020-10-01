@@ -26,6 +26,7 @@ export class Course implements BaseEntity {
     public maxComplaintTimeDays = 7; // default value
     public complaintsEnabled = true; // default value
     public studentQuestionsEnabled = true; // default value
+    public hasAchievements = false; // default value
 
     // the following values are only used in course administration
     public numberOfStudents: number;

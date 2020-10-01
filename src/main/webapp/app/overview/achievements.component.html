@@ -1,0 +1,41 @@
+<div class="table-responsive table-top" *ngIf="achievements?.length > 0">
+    <h4>Achievements</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th></th>
+                <th class="d-none d-md-table-cell">
+                    <span>{{ 'artemisApp.achievements.title' | translate }}</span>
+                </th>
+                <th class="d-none d-md-table-cell">
+                    <span>{{ 'artemisApp.achievements.description' | translate }}</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let achievement of achievements">
+                <ng-container>
+                    <td class="d-none d-md-table-cell">
+                        <div
+                            class="circle"
+                            [ngClass]="{
+                                gold: achievement.rank == achievementRank.GOLD,
+                                silver: achievement.rank == achievementRank.SILVER,
+                                bronze: achievement.rank == achievementRank.BRONZE,
+                                unranked: achievement.rank == achievementRank.UNRANKED
+                            }"
+                        >
+                            <fa-icon class="achievement-icon" [icon]="achievement.icon"></fa-icon>
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <div>{{ achievement.title }}</div>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <div>{{ achievement.description }}</div>
+                    </td>
+                </ng-container>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,38 @@
+.table-top {
+    margin-top: 10px;
+}
+
+.circle {
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    display: table-cell;
+    text-align: center;
+    position: relative;
+}
+
+.achievement-icon {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    color: white;
+}
+
+.gold {
+    background-color: rgb(255, 196, 0);
+}
+
+.silver {
+    background-color: silver;
+}
+
+.bronze {
+    background-color: #c26a41;
+}
+
+.unranked {
+    background-color: lightseagreen;
+}

@@ -39,6 +39,10 @@
                 "title": "Fragen und Antworten von Studierenden aktivieren",
                 "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
             },
+            "achievementsEnabled": {
+                "title": "Achievements aktivieren",
+                "description": "Achievements aktivieren / deaktivieren. Die Achievements werden automatisch generiert und Benutzern zugewiesen."
+            },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
                 "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
