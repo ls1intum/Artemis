@@ -14,12 +14,12 @@ export enum AchievementType {
 }
 
 export class Achievement implements BaseEntity {
-    id: number;
-    title: string;
-    description: string;
-    icon: string;
-    rank: AchievementRank;
-    type: AchievementType;
+    id?: number;
+    title?: string;
+    description?: string;
+    icon?: string;
+    rank?: AchievementRank;
+    type?: AchievementType;
 
     constructor() {}
 }
