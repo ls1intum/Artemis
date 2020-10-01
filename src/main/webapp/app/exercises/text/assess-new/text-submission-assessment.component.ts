@@ -179,8 +179,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    private checkPermissions(result: Result): void {
-        this.isAssessor = result !== null && result.assessor && result.assessor.id === this.userId;
+    private checkPermissions(result?: Result): void {
+        this.isAssessor = result?.assessor?.id === this.userId;
         // case distinction for exam mode
         this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course!);
     }

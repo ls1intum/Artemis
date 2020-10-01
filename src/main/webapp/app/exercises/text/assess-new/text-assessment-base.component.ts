@@ -20,7 +20,7 @@ import { Feedback } from 'app/entities/feedback.model';
 export abstract class TextAssessmentBaseComponent implements OnInit {
     exercise?: TextExercise;
     isAtLeastInstructor: boolean;
-    protected userId?: number | null;
+    protected userId?: number;
 
     protected get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -37,7 +37,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     async ngOnInit() {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
-        this.userId = identity ? identity.id : null;
+        this.userId = identity?.id;
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
@@ -65,13 +65,13 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      */
     protected sortAndSetTextBlockRefs(matchBlocksWithFeedbacks: TextBlockRef[], textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[], submission?: TextSubmission) {
         // Sort by start index to process all refs in order
-        const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block.startIndex - b.block.startIndex);
+        const sortedRefs = matchBlocksWithFeedbacks.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
 
         let previousIndex = 0;
         const lastIndex = submission?.text?.length || 0;
         for (let i = 0; i <= sortedRefs.length; i++) {
             let ref: TextBlockRef | undefined = sortedRefs[i];
-            const nextIndex = ref ? ref.block.startIndex : lastIndex;
+            const nextIndex = ref ? ref.block!.startIndex! : lastIndex;
 
             // last iteration, nextIndex = lastIndex. PreviousIndex > lastIndex is a sign for illegal state.
             if (!ref && previousIndex > nextIndex) {
@@ -82,20 +82,20 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                 const previousRef = textBlockRefs.pop();
                 if (!previousRef) {
                     console.error('Overlapping Text Blocks with nothing?', previousRef, ref);
-                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.AUTOMATIC)) {
+                } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
                     console.error('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
-                } else if ([ref, previousRef].every((r) => r.block.type === TextBlockType.MANUAL)) {
+                } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     console.error('Overlapping MANUAL Text Blocks!', previousRef, ref);
                 } else {
                     // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
                     switch (TextBlockType.MANUAL) {
-                        case previousRef.block.type:
+                        case previousRef.block!.type:
                             unusedTextBlockRefs.push(ref);
                             ref = previousRef;
                             break;
-                        case ref.block.type:
+                        case ref.block!.type:
                             unusedTextBlockRefs.push(previousRef);
-                            this.addTextBlockByIndices(previousRef.block.startIndex, nextIndex, submission!, textBlockRefs);
+                            this.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
                             break;
                     }
                 }
@@ -109,7 +109,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
             if (ref) {
                 textBlockRefs.push(ref);
-                previousIndex = ref.block.endIndex;
+                previousIndex = ref.block!.endIndex!;
             }
         }
     }
@@ -120,10 +120,12 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         }
 
         const newRef = TextBlockRef.new();
-        newRef.block.startIndex = startIndex;
-        newRef.block.endIndex = endIndex;
-        newRef.block.setTextFromSubmission(submission!);
-        newRef.block.computeId();
+        if (newRef.block) {
+            newRef.block.startIndex = startIndex;
+            newRef.block.endIndex = endIndex;
+            newRef.block.setTextFromSubmission(submission!);
+            newRef.block.computeId();
+        }
         textBlockRefs.push(newRef);
     }
 }

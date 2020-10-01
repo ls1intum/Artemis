@@ -44,8 +44,8 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
     private get textBlocksWithFeedbackForLeftSubmission(): TextBlock[] {
         return [...this.leftTextBlockRefs, ...this.leftUnusedTextBlockRefs]
-            .filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback)
-            .map(({ block }) => block);
+            .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
+            .map(({ block }) => block!);
     }
 
     constructor(
@@ -97,7 +97,11 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
     async ngOnInit() {
         await super.ngOnInit();
-        this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
+        this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => {
+            if (this.leftSubmission) {
+                this.setPropertiesFromServerResponse(conflictingTextSubmissions);
+            }
+        });
     }
 
     didChangeConflictIndex(conflictIndex: number) {
@@ -112,19 +116,21 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     private setPropertiesFromServerResponse(conflictingTextSubmissions: TextSubmission[]) {
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
-        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result.feedbacks);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result!.feedbacks!);
         this.setConflictingSubmission(0);
     }
 
     private setConflictingSubmission(index: number) {
         this.rightSubmission = this.conflictingSubmissions ? this.conflictingSubmissions[index] : undefined;
-        this.prepareTextBlocksAndFeedbackFor(this.rightSubmission!, this.rightTextBlockRefs, this.rightUnusedTextBlockRefs);
-        this.rightTotalScore = this.computeTotalScore(this.rightSubmission!.result.feedbacks);
-        this.conflictingAssessments = this.leftSubmission?.result.feedbacks.find((f) => f.id === this.leftFeedbackId)?.conflictingTextAssessments || [];
+        if (this.rightSubmission) {
+            this.prepareTextBlocksAndFeedbackFor(this.rightSubmission!, this.rightTextBlockRefs, this.rightUnusedTextBlockRefs);
+            this.rightTotalScore = this.computeTotalScore(this.rightSubmission!.result!.feedbacks!);
+            this.conflictingAssessments = this.leftSubmission!.result!.feedbacks!.find((f) => f.id === this.leftFeedbackId)?.conflictingTextAssessments || [];
+        }
     }
 
     isAssessor(result: Result): boolean {
-        return result !== null && result.assessor && result.assessor.id === this.userId;
+        return result?.assessor?.id === this.userId;
     }
 
     canOverride(result: Result): boolean {
@@ -151,7 +157,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.overrideBusy = true;
         this.assessmentsService
-            .submit(this.exercise!.id, this.leftSubmission!.result.id, this.leftSubmission!.result.feedbacks, this.textBlocksWithFeedbackForLeftSubmission)
+            .submit(this.exercise!.id!, this.leftSubmission!.result!.id!, this.leftSubmission!.result!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
                 (error: HttpErrorResponse) => this.handleError(error),
@@ -159,7 +165,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     }
 
     leftTextBlockRefsChange(): void {
-        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result.feedbacks);
+        this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result!.feedbacks!);
         this.isOverrideDisabled = false;
     }
 
@@ -180,14 +186,14 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         }
 
         this.markBusy = true;
-        this.assessmentsService.solveFeedbackConflict(this.exercise!.id, feedbackConflictId).subscribe(
+        this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe(
             (response) => this.handleSolveConflictsSuccessWithAlert(response, ''),
             (error) => this.handleSolveConflictsError(error),
         );
     }
 
     private prepareTextBlocksAndFeedbackFor(submission: TextSubmission, textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[]): void {
-        const feedbackList = submission.result.feedbacks || [];
+        const feedbackList = submission?.result?.feedbacks || [];
         const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(submission?.blocks || [], feedbackList);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, textBlockRefs, unusedTextBlockRefs, submission);
     }

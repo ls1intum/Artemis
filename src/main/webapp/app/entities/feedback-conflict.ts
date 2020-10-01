@@ -8,7 +8,7 @@ export enum FeedbackConflictType {
 }
 
 export class FeedbackConflict implements BaseEntity {
-    public id: number;
+    public id?: number;
     public conflict?: boolean;
     public conflictingFeedbackId?: number;
     public createdAt?: Moment;
