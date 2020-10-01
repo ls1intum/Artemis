@@ -353,7 +353,7 @@ public class DatabaseUtilService {
         else {
             studentParticipation = storedParticipation.get();
         }
-        return addResultToParticipation(studentParticipation);
+        return addResultToParticipation(null, null, studentParticipation);
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
@@ -936,8 +936,9 @@ public class DatabaseUtilService {
         return programmingExerciseRepository.save(exercise);
     }
 
-    public Result addResultToParticipation(Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L);
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
+                .completionDate(completionDate);
         return resultRepo.save(result);
     }
 
