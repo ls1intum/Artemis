@@ -7,7 +7,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 describe('Logs Service', () => {
     let service: LogsService;
-    let httpMock;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,7 +35,7 @@ describe('Logs Service', () => {
             const log = new Log('main', 'ERROR');
 
             service.findAll().subscribe((received) => {
-                expect(received.body[0]).toEqual(log);
+                expect(received.body![0]).toEqual(log);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
@@ -46,7 +46,7 @@ describe('Logs Service', () => {
             const log = new Log('main', 'ERROR');
 
             service.changeLevel(log).subscribe((received) => {
-                expect(received.body[0]).toEqual(log);
+                expect(received.body![0]).toEqual(log);
             });
 
             const req = httpMock.expectOne({ method: 'PUT' });

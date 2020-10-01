@@ -109,7 +109,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      * @returns The ID of the programming exercise
      */
     trackId(index: number, item: ProgrammingExercise): number {
-        return item.id;
+        return item.id!;
     }
 
     /**

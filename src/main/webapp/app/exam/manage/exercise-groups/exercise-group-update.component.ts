@@ -37,10 +37,10 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.exerciseGroup.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id, this.exerciseGroup));
+            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id!, this.exerciseGroup));
         } else {
             this.exerciseGroup.exam = this.exam;
-            this.subscribeToSaveResponse(this.exerciseGroupService.create(this.courseId, this.exam.id, this.exerciseGroup));
+            this.subscribeToSaveResponse(this.exerciseGroupService.create(this.courseId, this.exam.id!, this.exerciseGroup));
         }
     }
 
@@ -62,7 +62,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
+        this.jhiAlertService.error(error.message);
         this.isSaving = false;
     }
 }

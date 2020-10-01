@@ -29,7 +29,7 @@ export class ProgrammingExerciseInstructionService {
      * @param tests
      * @param latestResult
      */
-    public testStatusForTask = (tests: string[], latestResult: Result | null): TaskResult => {
+    public testStatusForTask = (tests: string[], latestResult?: Result): TaskResult => {
         if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length)) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
@@ -37,7 +37,7 @@ export class ProgrammingExerciseInstructionService {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = tests.reduce(
                 (acc, testName) => {
-                    const feedback = latestResult ? latestResult.feedbacks.find(({ text }) => text === testName) : null;
+                    const feedback = latestResult ? latestResult.feedbacks?.find(({ text }) => text === testName) : undefined;
                     // This is a legacy check, results before the 24th May are considered legacy.
                     const resultIsLegacy = isLegacyResult(latestResult!);
                     // If there is no feedback item, we assume that the test was successful (legacy check).
@@ -49,9 +49,9 @@ export class ProgrammingExerciseInstructionService {
                         };
                     } else {
                         return {
-                            failed: feedback && feedback.positive === false ? [...acc.failed, testName] : acc.failed,
-                            successful: feedback && feedback.positive === true ? [...acc.successful, testName] : acc.successful,
-                            notExecuted: !feedback || feedback.positive === undefined ? [...acc.notExecuted, testName] : acc.notExecuted,
+                            failed: feedback?.positive === false ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback?.positive === true ? [...acc.successful, testName] : acc.successful,
+                            notExecuted: feedback?.positive === undefined ? [...acc.notExecuted, testName] : acc.notExecuted,
                         };
                     }
                 },

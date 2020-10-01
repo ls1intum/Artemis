@@ -7,24 +7,26 @@ import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export class Result implements BaseEntity {
-    public id: number;
-    public resultString: string;
-    public completionDate: Moment | null;
-    public successful = false; // default value
-    public hasFeedback: boolean;
-    public score: number;
-    public assessmentType: AssessmentType;
-    public rated: boolean;
-    public hasComplaint: boolean;
-    public exampleResult: boolean;
+    public id?: number;
+    public resultString?: string;
+    public completionDate?: Moment;
+    public successful?: boolean;
+    public hasFeedback?: boolean;
+    public score?: number;
+    public assessmentType?: AssessmentType;
+    public rated?: boolean;
+    public hasComplaint?: boolean;
+    public exampleResult?: boolean;
 
-    public submission: Submission | null;
-    public assessor: User;
-    public feedbacks: Feedback[];
-    public participation: Participation | null;
+    public submission?: Submission;
+    public assessor?: User;
+    public feedbacks?: Feedback[];
+    public participation?: Participation;
 
     // helper attributes
-    public durationInMinutes: number;
+    public durationInMinutes?: number;
 
-    constructor() {}
+    constructor() {
+        this.successful = false; // default value
+    }
 }

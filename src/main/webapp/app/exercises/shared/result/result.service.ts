@@ -93,7 +93,7 @@ export class ResultService implements IResultService {
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
                 result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
             });
         }
@@ -102,7 +102,7 @@ export class ResultService implements IResultService {
 
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.completionDate = res.body.completionDate ? moment(res.body.completionDate) : null;
+            res.body.completionDate = res.body.completionDate ? moment(res.body.completionDate) : undefined;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
         }
         return res;
@@ -110,7 +110,7 @@ export class ResultService implements IResultService {
 
     convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
-            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
             }
