@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,7 +22,9 @@ public class ProgressBasedAchievementService {
 
     private final int EXERCISES_AMOUNT_SILVER = 8;
 
-    private final int EXERCISES_AMOUNT_BRONZE = 6;
+    private final int EXERCISES_AMOUNT_BRONZE = 5;
+
+    private final int EXERCISES_AMOUNT_UNRANKED = 1;
 
     private final long MIN_SCORE_TO_QUALIFY = 50L;
 
@@ -46,15 +51,22 @@ public class ProgressBasedAchievementService {
         else if (numberOfExercises >= EXERCISES_AMOUNT_BRONZE) {
             return AchievementRank.BRONZE;
         }
+        else if (numberOfExercises == EXERCISES_AMOUNT_UNRANKED) {
+            return AchievementRank.UNRANKED;
+        }
         return null;
     }
 
     public void generateAchievements(Course course) {
-        achievementRepository.save(
-                new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "icon", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
-        achievementRepository.save(new Achievement("Course Intermediate", "Solve at least " + EXERCISES_AMOUNT_SILVER + " exercises", "icon", AchievementRank.SILVER,
+        Set<Achievement> achievementsToSave = new HashSet<>();
+        achievementsToSave.add(
+                new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
+        achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + EXERCISES_AMOUNT_SILVER + " exercises", "tasks", AchievementRank.SILVER,
                 AchievementType.PROGRESS, course, null));
-        achievementRepository.save(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "icon", AchievementRank.BRONZE,
+        achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "tasks", AchievementRank.BRONZE,
                 AchievementType.PROGRESS, course, null));
+        achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, course, null));
+
+        achievementRepository.saveAll(achievementsToSave);
     }
 }

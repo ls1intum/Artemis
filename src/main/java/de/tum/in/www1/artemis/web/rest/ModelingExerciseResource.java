@@ -113,12 +113,13 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
+        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
         // Generate achievements if enabled in course and not part of exam
-        if (modelingExercise.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && modelingExercise.getExerciseGroup().getExam() == null) {
-            achievementService.generateForExercise(modelingExercise);
+        if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
+            achievementService.generateForExercise(result);
         }
 
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,6 +21,8 @@ public class PointBasedAchievementService {
 
     private final long PERCENT_BRONZE = 60L;
 
+    private final long PERCENT_UNRANKED = 50L;
+
     public PointBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
     }
@@ -34,16 +39,24 @@ public class PointBasedAchievementService {
         else if (score >= PERCENT_BRONZE) {
             return AchievementRank.BRONZE;
         }
+        else if (score >= PERCENT_UNRANKED) {
+            return AchievementRank.UNRANKED;
+        }
         return null;
     }
 
     public void generateAchievements(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        achievementRepository.save(new Achievement("Point Master", "Score " + PERCENT_GOLD + "% of the points in exercise: " + exercise.getTitle(), "icon", AchievementRank.GOLD,
+        Set<Achievement> achievementsToSave = new HashSet<>();
+        achievementsToSave.add(new Achievement("Point Master", "Score " + PERCENT_GOLD + " percent of the points in exercise " + exercise.getTitle(), "award", AchievementRank.GOLD,
                 AchievementType.POINT, course, exercise));
-        achievementRepository.save(new Achievement("Point Intermediate", "Score at least" + PERCENT_SILVER + "% of the points in exercise: " + exercise.getTitle(), "icon",
+        achievementsToSave.add(new Achievement("Point Intermediate", "Score at least" + PERCENT_SILVER + " percent of the points in exercise " + exercise.getTitle(), "award",
                 AchievementRank.SILVER, AchievementType.POINT, course, exercise));
-        achievementRepository.save(new Achievement("Point Beginner", "Score at least" + PERCENT_BRONZE + "% of the points in exercise: " + exercise.getTitle(), "icon",
+        achievementsToSave.add(new Achievement("Point Beginner", "Score at least" + PERCENT_BRONZE + " percent of the points in exercise " + exercise.getTitle(), "award",
                 AchievementRank.BRONZE, AchievementType.POINT, course, exercise));
+        achievementsToSave.add(new Achievement("Point Amateur", "Score at least" + PERCENT_UNRANKED + " percent of the points in exercise " + exercise.getTitle(), "award",
+                AchievementRank.UNRANKED, AchievementType.POINT, course, exercise));
+
+        achievementRepository.saveAll(achievementsToSave);
     }
 }

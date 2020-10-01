@@ -111,12 +111,12 @@ public class QuizExerciseResource {
             return forbidden();
         }
 
+        quizExercise = quizExerciseService.save(quizExercise);
+
         // Generate achievements if enabled in course and not part of exam
-        if (course.getHasAchievements() && quizExercise.getExerciseGroup().getExam() == null) {
+        if (course.getHasAchievements() && (quizExercise.getExerciseGroup() == null || quizExercise.getExerciseGroup().getExam() == null)) {
             achievementService.generateForExercise(quizExercise);
         }
-
-        quizExercise = quizExerciseService.save(quizExercise);
 
         // Only notify students and tutors if the exercise is created for a course
         if (quizExercise.hasCourse()) {

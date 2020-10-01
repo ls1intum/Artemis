@@ -313,14 +313,15 @@ public class ProgrammingExerciseResource {
             return projectExistsError.get();
         }
 
-        // Generate achievements if enabled in course and not part of exam
-        if (course.getHasAchievements() && programmingExercise.getExerciseGroup().getExam() == null) {
-            achievementService.generateForExercise(programmingExercise);
-        }
-
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
+
+            // Generate achievements if enabled in course and not part of exam
+            if (course.getHasAchievements() && (newProgrammingExercise.getExerciseGroup() == null || newProgrammingExercise.getExerciseGroup().getExam() == null)) {
+                achievementService.generateForExercise(newProgrammingExercise);
+            }
+
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }

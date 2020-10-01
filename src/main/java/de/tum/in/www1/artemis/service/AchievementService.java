@@ -145,7 +145,7 @@ public class AchievementService {
 
         var optionalAchievementsOfLowerRank = achievements.stream().filter(a -> a.getRank().ordinal() < rank.ordinal()).collect(Collectors.toSet());
         for (Achievement a : optionalAchievementsOfLowerRank) {
-            if (a.getUsers().contains(user)) {
+            if (a.getUsers().contains(user) && a.getExercise() != null) {
                 user.removeAchievement(a);
             }
         }
