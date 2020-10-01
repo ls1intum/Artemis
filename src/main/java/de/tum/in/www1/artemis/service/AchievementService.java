@@ -153,4 +153,12 @@ public class AchievementService {
         user.addAchievement(achievement);
         userRepository.save(user);
     }
+
+    public void prepareForClient(Set<Achievement> achievements) {
+        for (Achievement achievement : achievements) {
+            achievement.setExercise(null);
+            achievement.setCourse(null);
+            achievement.setUsers(null);
+        }
+    }
 }

@@ -61,6 +61,7 @@ public class AchievementResource {
         User user = userService.getUser();
         log.debug("REST request to get achievements for user : {}", user.getLogin());
         Set<Achievement> achievements = achievementService.findAllByUserId(user.getId());
+        achievementService.prepareForClient(achievements);
         return ResponseEntity.ok(achievements);
     }
 
@@ -76,7 +77,7 @@ public class AchievementResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get achievements for user : {} in course : {}", user.getLogin(), courseId);
         Set<Achievement> achievements = achievementRepository.findAllByUserIdAndCourseId(user.getId(), courseId);
-
+        achievementService.prepareForClient(achievements);
         return ResponseEntity.ok(achievements);
     }
 
