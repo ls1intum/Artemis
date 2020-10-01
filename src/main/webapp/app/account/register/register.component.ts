@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiLanguageService } from 'ng-jhipster';
 
@@ -23,8 +23,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     success = false;
 
     registerForm = this.fb.group({
-        firstName: ['', [Validators.required, Validators.minLength(4)]],
-        lastName: ['', [Validators.required, Validators.minLength(4)]],
+        firstName: ['', [Validators.required, Validators.minLength(2)]],
+        lastName: ['', [Validators.required, Validators.minLength(2)]],
         login: [
             '',
             [

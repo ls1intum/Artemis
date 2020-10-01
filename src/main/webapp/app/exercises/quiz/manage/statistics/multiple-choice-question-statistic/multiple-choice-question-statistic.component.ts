@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { calculateTickMax } from '../quiz-statistic/quiz-statistic.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';

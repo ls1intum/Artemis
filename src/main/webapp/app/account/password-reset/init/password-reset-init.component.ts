@@ -1,7 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PasswordResetInitService } from './password-reset-init.service';
-import { EMAIL_NOT_FOUND_TYPE } from 'app/shared/constants/error.constants';
-import { Account } from 'app/core/user/account.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, Validators } from '@angular/forms';
 
