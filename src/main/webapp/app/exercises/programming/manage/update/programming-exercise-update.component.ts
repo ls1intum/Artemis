@@ -83,7 +83,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
         if (language !== ProgrammingLanguage.JAVA) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
-            this.programmingExercise.maxStaticCodeAnalysisPenalty = null;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
@@ -288,7 +288,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     onStaticCodeAnalysisChanged() {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
-            this.programmingExercise.maxStaticCodeAnalysisPenalty = null;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
     }
 
