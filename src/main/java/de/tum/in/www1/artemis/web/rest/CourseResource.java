@@ -160,11 +160,6 @@ public class CourseResource {
 
         validateComplaintsConfig(course);
 
-        // Add achievements if enabled
-        if (course.getHasAchievements()) {
-            achievementService.generateForCourse(course);
-        }
-
         try {
 
             // We use default names if a group was not specified by the ADMIN.
@@ -207,6 +202,12 @@ public class CourseResource {
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
         Course result = courseService.save(course);
+
+        // Add achievements if enabled
+        if (result.getHasAchievements()) {
+            achievementService.generateForCourse(result);
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -280,20 +281,21 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
 
-        // Add or remove achievements
-        if (updatedCourse.getHasAchievements() && !existingCourse.get().getHasAchievements()) {
-            achievementService.generateForCourse(updatedCourse);
-        }
-        else if (!updatedCourse.getHasAchievements() && existingCourse.get().getHasAchievements()) {
-            achievementService.deleteAchievementsForCourse(updatedCourse);
-        }
-
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
         // users no longer have TA or instructor rights in the related exercise repositories.
         final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
         Course result = courseService.save(updatedCourse);
+
+        // Add or remove achievements
+        if (result.getHasAchievements() && !existingCourse.get().getHasAchievements()) {
+            achievementService.generateForCourse(result);
+        }
+        else if (!result.getHasAchievements() && existingCourse.get().getHasAchievements()) {
+            achievementService.deleteAchievementsForCourse(result);
+        }
+
         vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
