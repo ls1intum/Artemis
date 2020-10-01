@@ -9,11 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-
-const Sugar = require('sugar');
-Sugar.extend();
-require('sugar/string/truncateOnWord');
-require('sugar/polyfills/es7');
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface DataSet {
     data: Array<number>;
@@ -104,10 +100,16 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
 export interface DataSetProvider {
     getDataSets(): DataSet[];
     getParticipants(): number;
+
+    /**
+     * check if the rated or unrated
+     * load the rated or unrated data into the diagram
+     */
+    loadDataInDiagram(): void;
 }
 
-export function calculateTickMax(datasetProvider: DataSetProvider) {
-    const data = datasetProvider.getDataSets().map((dataset) => {
+export function calculateTickMax(dataSetProvider: DataSetProvider) {
+    const data = dataSetProvider.getDataSets().map((dataset) => {
         return dataset.data;
     });
     const flattened = ([] as number[]).concat(...data);
@@ -156,10 +158,14 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.options = createOptions(this);
     }
 
+    loadDataInDiagram(): void {
+        throw new Error('Method not implemented.');
+    }
+
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -171,7 +177,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
@@ -208,7 +214,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;

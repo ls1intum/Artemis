@@ -54,12 +54,15 @@ export class SettingsComponent implements OnInit {
         this.account.email = this.settingsForm.get('email')!.value;
         this.account.langKey = this.settingsForm.get('langKey')!.value;
 
-        this.accountService.save(this.account).subscribe(() => {
-            this.success = true;
-            this.accountService.authenticate(this.account);
-            if (this.account.langKey !== this.languageService.getCurrentLanguage()) {
-                this.languageService.changeLanguage(this.account.langKey!);
-            }
-        });
+        this.accountService.save(this.account).subscribe(
+            () => {
+                this.success = true;
+                this.accountService.authenticate(this.account);
+                if (this.account.langKey !== this.languageService.getCurrentLanguage()) {
+                    this.languageService.changeLanguage(this.account.langKey!);
+                }
+            },
+            () => (this.success = false),
+        );
     }
 }

@@ -74,7 +74,6 @@
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.5.0",
         "split.js": "1.6.2",
-        "sugar": "2.0.6",
         "tslib": "2.0.1",
         "webstomp-client": "1.2.6",
         "yarn": "1.22.10",

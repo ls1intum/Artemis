@@ -3,6 +3,7 @@ import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.componen
 import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseResolve } from 'app/course/manage/course-management.route';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const apollonDiagramsRoutes: Routes = [
     {
@@ -12,7 +13,7 @@ export const apollonDiagramsRoutes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -24,7 +25,7 @@ export const apollonDiagramsRoutes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],

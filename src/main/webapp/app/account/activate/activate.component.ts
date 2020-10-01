@@ -4,15 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 
 import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { flatMap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
 })
 export class ActivateComponent implements OnInit {
-    error: string | null;
-    success: string | null;
-    modalRef: NgbModalRef;
+    error = false;
+    success = false;
     isRegistrationEnabled = false;
 
     constructor(private activateService: ActivateService, private route: ActivatedRoute, private profileService: ProfileService) {}
@@ -33,17 +33,9 @@ export class ActivateComponent implements OnInit {
     }
 
     activateAccount() {
-        this.route.queryParams.subscribe((params) => {
-            this.activateService.get(params['key']).subscribe(
-                () => {
-                    this.error = null;
-                    this.success = 'OK';
-                },
-                () => {
-                    this.success = null;
-                    this.error = 'ERROR';
-                },
-            );
-        });
+        this.route.queryParams.pipe(flatMap((params) => this.activateService.get(params.key))).subscribe(
+            () => (this.success = true),
+            () => (this.error = true),
+        );
     }
 }

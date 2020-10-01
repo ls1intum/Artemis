@@ -152,7 +152,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userService.createUser(new ManagedUserVM(user));
         // Password Data
-        String updatedPassword = "12345678";
+        String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
         // make request

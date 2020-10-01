@@ -1,13 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ChartOptions } from 'chart.js';
-import { calculateTickMax, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
-import { Subscription } from 'rxjs/Subscription';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -16,13 +12,7 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-
-interface BackgroundColorConfig {
-    backgroundColor: string;
-    borderColor: string;
-    pointBackgroundColor: string;
-    pointBorderColor: string;
-}
+import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -30,37 +20,9 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
     styleUrls: ['./short-answer-question-statistic.component.scss'],
 })
-export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    quizExercise: QuizExercise;
+export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
     question: ShortAnswerQuestion;
     questionStatistic: ShortAnswerQuestionStatistic;
-    questionIdParam: number;
-    private sub: Subscription;
-
-    labels: string[] = [];
-    data: number[] = [];
-    colors: BackgroundColorConfig[] = [];
-    chartType = 'bar';
-    datasets: DataSet[] = [];
-
-    label: string[] = [];
-    ratedData: number[] = [];
-    unratedData: number[] = [];
-    backgroundColor: BackgroundColorConfig[] = [];
-    backgroundSolutionColor: BackgroundColorConfig[] = [];
-    ratedCorrectData: number;
-    unratedCorrectData: number;
-
-    maxScore: number;
-    rated = true;
-    showSolution = false;
-    participants: number;
-    websocketChannelForData: string;
-
-    questionTextRendered?: SafeHtml;
-
-    // options for chart in chart.js style
-    options: ChartOptions;
 
     textParts: string[][];
     lettersForSolutions: number[] = [];
@@ -68,58 +30,25 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     sampleSolutions: ShortAnswerSolution[] = [];
 
     constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private quizStatisticUtil: QuizStatisticUtil,
+        route: ActivatedRoute,
+        router: Router,
+        accountService: AccountService,
+        translateService: TranslateService,
+        quizExerciseService: QuizExerciseService,
+        jhiWebsocketService: JhiWebsocketService,
+        quizStatisticUtil: QuizStatisticUtil,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private artemisMarkdown: ArtemisMarkdownService,
     ) {
-        this.options = createOptions(this);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe((params) => {
-            this.questionIdParam = +params['questionId'];
-            // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuiz(res.body!, false);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.jhiWebsocketService.subscribe(this.websocketChannelForData);
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
-                this.loadQuiz(quiz, true);
-            });
-
-            // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe((xLabel) => {
-                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            });
-            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((yLabel) => {
-                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
-            });
-        });
+        super.init();
     }
 
     ngOnDestroy() {
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-    }
-
-    getDataSets() {
-        return this.datasets;
-    }
-
-    getParticipants() {
-        return this.participants;
+        super.destroy();
     }
 
     /**
@@ -129,21 +58,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      * @param {boolean} refresh: true if method is called from Websocket
      */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
-        // if the Student finds a way to the Website
-        //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-            this.router.navigateByUrl('courses');
-        }
-        // search selected question in quizExercise based on questionId
-        this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = super.loadQuizCommon(quiz);
         this.question = updatedQuestion as ShortAnswerQuestion;
-        // if the Anyone finds a way to the Website,
-        // with a wrong combination of QuizId and QuestionId
-        //      -> go back to Courses
-        if (!this.question) {
-            this.router.navigateByUrl('courses');
-        }
         this.questionStatistic = this.question.quizQuestionStatistic as ShortAnswerQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
@@ -185,25 +101,15 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     loadLayout() {
         // reset old data
-        this.label = [];
-        this.backgroundColor = [];
-        this.backgroundSolutionColor = [];
+        this.labels = [];
+        this.backgroundColors = [];
+        this.backgroundSolutionColors = [];
 
         // set label and backgroundcolor based on the spots
         this.question.spots!.forEach((spot, i) => {
-            this.label.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColor.push({
-                backgroundColor: '#428bca',
-                borderColor: '#428bca',
-                pointBackgroundColor: '#428bca',
-                pointBorderColor: '#428bca',
-            });
-            this.backgroundSolutionColor.push({
-                backgroundColor: '#5cb85c',
-                borderColor: '#5cb85c',
-                pointBackgroundColor: '#5cb85c',
-                pointBorderColor: '#5cb85c',
-            });
+            this.labels.push(String.fromCharCode(65 + i) + '.');
+            this.backgroundColors.push(this.getBackgroundColor('#428bca'));
+            this.backgroundSolutionColors.push(this.getBackgroundColor('#5cb85c'));
         });
 
         this.addLastBarLayout();
@@ -215,25 +121,15 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     addLastBarLayout() {
         // add Color for last bar
-        this.backgroundColor.push({
-            backgroundColor: '#5bc0de',
-            borderColor: '#5bc0de',
-            pointBackgroundColor: '#5bc0de',
-            pointBorderColor: '#5bc0de',
-        });
-        this.backgroundSolutionColor[this.question.spots!.length] = {
-            backgroundColor: '#5bc0de',
-            borderColor: '#5bc0de',
-            pointBackgroundColor: '#5bc0de',
-            pointBorderColor: '#5bc0de',
-        };
+        this.backgroundColors.push(this.getBackgroundColor('#5bc0de'));
+        this.backgroundSolutionColors[this.question.spots!.length] = this.getBackgroundColor('#5bc0de');
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.label[this.question.spots!.length] = lastLabel.split(' ');
-            this.labels.length = 0;
-            for (let i = 0; i < this.label.length; i++) {
-                this.labels.push(this.label[i]);
+            this.labels[this.question.spots!.length] = lastLabel.split(' ');
+            this.chartLabels.length = 0;
+            for (let i = 0; i < this.labels.length; i++) {
+                this.chartLabels.push(this.labels[i]);
             }
         });
     }
@@ -246,20 +142,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
             this.question.spots!.forEach((spot, i) => {
                 if (spot.invalid) {
-                    this.backgroundColor[i] = {
-                        backgroundColor: '#838383',
-                        borderColor: '#838383',
-                        pointBackgroundColor: '#838383',
-                        pointBorderColor: '#838383',
-                    };
-                    this.backgroundSolutionColor[i] = {
-                        backgroundColor: '#838383',
-                        borderColor: '#838383',
-                        pointBackgroundColor: '#838383',
-                        pointBorderColor: '#838383',
-                    };
+                    this.backgroundColors[i] = this.getBackgroundColor('#838383');
+                    this.backgroundSolutionColors[i] = this.getBackgroundColor('#838383');
                     // add 'invalid' to bar-Label
-                    this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
+                    this.labels[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
             });
         });
@@ -284,58 +170,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // add data for the last bar (correct Solutions)
         this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
         this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
-        this.labels.length = 0;
-        for (let i = 0; i < this.label.length; i++) {
-            this.labels.push(this.label[i]);
+        this.chartLabels.length = 0;
+        for (let i = 0; i < this.labels.length; i++) {
+            this.chartLabels.push(this.labels[i]);
         }
 
         this.loadDataInDiagram();
-    }
-
-    /**
-     * check if the rated or unrated
-     * load the rated or unrated data into the diagram
-     */
-    loadDataInDiagram() {
-        // if show Solution is true use the label,
-        // backgroundColor and Data, which show the solution
-        if (this.showSolution) {
-            // show Solution
-            // if show Solution is true use the backgroundColor which shows the solution
-            this.colors = this.backgroundSolutionColor;
-            if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated!;
-                // if rated is true use the rated Data and add the rated CorrectCounter
-                this.data = this.ratedData.slice(0);
-                this.data.push(this.ratedCorrectData);
-            } else {
-                this.participants = this.questionStatistic.participantsUnrated!;
-                // if rated is false use the unrated Data and add the unrated CorrectCounter
-                this.data = this.unratedData.slice(0);
-                this.data.push(this.unratedCorrectData);
-            }
-        } else {
-            // don't show Solution
-            // if show Solution is false use the backgroundColor which doesn't show the solution
-            this.colors = this.backgroundColor;
-            // if rated is true use the rated Data
-            if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated!;
-                this.data = this.ratedData;
-            } else {
-                // if rated is false use the unrated Data
-                this.participants = this.questionStatistic.participantsUnrated!;
-                this.data = this.unratedData;
-            }
-        }
-
-        this.datasets = [
-            {
-                data: this.data,
-                backgroundColor: this.colors,
-            },
-        ];
-        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
     }
 
     /**
