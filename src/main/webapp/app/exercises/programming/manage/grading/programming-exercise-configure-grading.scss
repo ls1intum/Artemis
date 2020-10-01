@@ -10,14 +10,12 @@ $border-color: #979797;
     max-width: 200px;
 }
 
-.tab-bar {
+.top-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    min-height: 60px;
-    $padding-y: 11px;
-
-    padding-top: $padding-y;
-    padding-bottom: $padding-y;
+    padding: 10px 0;
+    justify-content: space-between;
     border-bottom: 1px solid $border-color;
 
     .tab-item {
@@ -45,6 +43,7 @@ $border-color: #979797;
     }
 
     & > div:last-child {
+        border-left: 1px solid #ddd;
         flex-basis: 400px;
     }
 }

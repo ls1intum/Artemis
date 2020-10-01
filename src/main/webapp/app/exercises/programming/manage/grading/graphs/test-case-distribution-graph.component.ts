@@ -21,7 +21,7 @@ export class GraphColumn {
     template: `
         <div>
             <div>
-                <h3>Test Case Distribution</h3>
+                <h4>Test Case Distribution</h4>
                 <p>The distribution of test cases across the metrices 'Weight', 'Weight + Bonus' and 'Points'. Hover over a colored block to see the test-case details.</p>
             </div>
             <div class="bg-light">

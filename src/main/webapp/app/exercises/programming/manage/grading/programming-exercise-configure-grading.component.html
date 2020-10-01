@@ -4,8 +4,17 @@
         <h3 jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
     </div>
     <ng-container *ngIf="!isLoading">
-        <div class="d-flex">
-            <div class="d-flex align-items-center ml-auto">
+        <div class="top-bar">
+            <div class="d-flex align-items-center" *ngIf="exercise.staticCodeAnalysisEnabled">
+                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
+                    <b>Test Cases</b>
+                </div>
+                <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
+                    <b>Code Analysis</b>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center">
                 <jhi-programming-exercise-configure-grading-status
                     [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                     [hasUnsavedTestCaseChanges]="!!changedTestCaseIds.length"
@@ -20,34 +29,27 @@
             </div>
         </div>
 
-        <div class="tab-bar" *ngIf="exercise.staticCodeAnalysisEnabled">
-            <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
-                <b>Test Cases</b>
-            </div>
-            <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
-                <b>Code Analysis</b>
-            </div>
-        </div>
-
-        <div class="grading-body-container">
+        <div class="grading-body-container mt-3">
             <div *ngIf="activeTab == 'test-cases'">
-                <div class="d-flex align-items-center justify-content-end my-3">
-                    <jhi-programming-exercise-grading-table-actions
-                        [exercise]="exercise"
-                        [hasUnsavedChanges]="!!changedTestCaseIds.length"
-                        [isSaving]="isSaving"
-                        (onReset)="resetTestCases()"
-                        (onSave)="saveTestCases()"
-                    ></jhi-programming-exercise-grading-table-actions>
-                </div>
-
-                <label class="d-flex align-items-center mb-0">
-                    <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
-                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
-                </label>
-
                 <div class="grading-table-layout">
                     <div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h2 class="mb-1">Test Cases</h2>
+                                <label class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
+                                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
+                                </label>
+                            </div>
+                            <jhi-programming-exercise-grading-table-actions
+                                [exercise]="exercise"
+                                [hasUnsavedChanges]="!!changedTestCaseIds.length"
+                                [isSaving]="isSaving"
+                                (onReset)="resetTestCases()"
+                                (onSave)="saveTestCases()"
+                            ></jhi-programming-exercise-grading-table-actions>
+                        </div>
+
                         <ngx-datatable
                             id="testCaseTable"
                             class="bootstrap"
@@ -136,7 +138,7 @@
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h1 class="mb-4">Live Charts</h1>
+                        <h2 class="mb-5">Live Charts</h2>
 
                         <jhi-test-case-distribution-graph
                             [testCases]="filteredTestCases"
@@ -148,73 +150,81 @@
                 </div>
             </div>
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">
-                <div class="d-flex align-items-center justify-content-end my-3">
-                    <jhi-programming-exercise-grading-table-actions
-                        [exercise]="exercise"
-                        [hasUnsavedChanges]="!!changedCategoryIds.length"
-                        [isSaving]="isSaving"
-                        (onReset)="resetCategories()"
-                        (onSave)="saveCategories()"
-                    ></jhi-programming-exercise-grading-table-actions>
-                </div>
+                <div class="grading-table-layout">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h2>Code Analysis Categories</h2>
+                            <jhi-programming-exercise-grading-table-actions
+                                [exercise]="exercise"
+                                [hasUnsavedChanges]="!!changedCategoryIds.length"
+                                [isSaving]="isSaving"
+                                (onReset)="resetCategories()"
+                                (onSave)="saveCategories()"
+                            ></jhi-programming-exercise-grading-table-actions>
+                        </div>
 
-                <ngx-datatable
-                    id="codeAnalysisTable"
-                    class="bootstrap"
-                    [headerHeight]="50"
-                    [limit]="20"
-                    [columnMode]="'force'"
-                    [footerHeight]="50"
-                    [rowHeight]="'auto'"
-                    [rows]="staticCodeAnalysisCategories"
-                >
-                    <ngx-datatable-column name="Category" prop="name">
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value }}
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="State" prop="state">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
-                                <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
-                            </select>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Penalty" prop="penalty">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                *ngIf="row.state === CategoryState.GRADED"
-                                [value]="value"
-                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
-                            ></jhi-table-editable-field>
-                            <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                            <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                *ngIf="row.state === CategoryState.GRADED"
-                                [value]="value"
-                                (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
-                            ></jhi-table-editable-field>
-                            <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                            <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Issues by students">
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-category-issues-graph
-                                *ngIf="row.state !== CategoryState.INACTIVE"
-                                [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
-                                [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
-                                [totalStudents]="gradingStatistics?.numParticipations || 0"
-                                [maxNumberOfIssues]="maxIssuesInCategory"
-                            >
-                            </jhi-category-issues-graph>
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
+                        <ngx-datatable
+                            id="codeAnalysisTable"
+                            class="bootstrap"
+                            [headerHeight]="50"
+                            [limit]="20"
+                            [columnMode]="'force'"
+                            [footerHeight]="50"
+                            [rowHeight]="'auto'"
+                            [rows]="staticCodeAnalysisCategories"
+                        >
+                            <ngx-datatable-column name="Category" prop="name">
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="State" prop="state">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
+                                        <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
+                                    </select>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Penalty" prop="penalty">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        *ngIf="row.state === CategoryState.GRADED"
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
+                                    ></jhi-table-editable-field>
+                                    <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <jhi-table-editable-field
+                                        *ngIf="row.state === CategoryState.GRADED"
+                                        [value]="value"
+                                        (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
+                                    ></jhi-table-editable-field>
+                                    <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Issues by students">
+                                <ng-template ngx-datatable-cell-template let-row="row">
+                                    <jhi-category-issues-graph
+                                        *ngIf="row.state !== CategoryState.INACTIVE"
+                                        [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
+                                        [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
+                                        [totalStudents]="gradingStatistics?.numParticipations || 0"
+                                        [maxNumberOfIssues]="maxIssuesInCategory"
+                                    >
+                                    </jhi-category-issues-graph>
+                                </ng-template>
+                            </ngx-datatable-column>
+                        </ngx-datatable>
+                    </div>
+                    <div>
+                        <h2 class="mb-4">Live Charts</h2>
+                    </div>
+                </div>
             </div>
         </div>
     </ng-container>
