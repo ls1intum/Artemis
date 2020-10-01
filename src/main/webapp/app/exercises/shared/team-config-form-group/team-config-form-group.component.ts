@@ -35,7 +35,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
         if (mode === ExerciseMode.TEAM) {
             this.applyCurrentConfig();
         } else {
-            this.exercise.teamAssignmentConfig = null;
+            this.exercise.teamAssignmentConfig = undefined;
         }
     }
 
@@ -44,7 +44,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
      * @param {number} minTeamSize - minimum number of team members
      */
     updateMinTeamSize(minTeamSize: number) {
-        this.config.maxTeamSize = Math.max(this.config.maxTeamSize, minTeamSize);
+        this.config.maxTeamSize = Math.max(this.config.maxTeamSize!, minTeamSize);
         this.applyCurrentConfig();
     }
 
@@ -53,7 +53,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
      * @param {number} maxTeamSize - maximum number of team members
      */
     updateMaxTeamSize(maxTeamSize: number) {
-        this.config.minTeamSize = Math.min(this.config.minTeamSize, maxTeamSize);
+        this.config.minTeamSize = Math.min(this.config.minTeamSize!, maxTeamSize);
         this.applyCurrentConfig();
     }
 

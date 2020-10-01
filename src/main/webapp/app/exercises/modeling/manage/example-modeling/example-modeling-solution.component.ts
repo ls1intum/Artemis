@@ -62,7 +62,6 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                console.error(error);
                 this.jhiAlertService.error(error.message);
             },
         );
@@ -70,13 +69,13 @@ export class ExampleModelingSolutionComponent implements OnInit {
 
     async back() {
         if (this.exercise.course) {
-            await this.router.navigate(['/course-management', this.exercise.course!.id, 'modeling-exercises', this.exerciseId, 'edit']);
+            await this.router.navigate(['/course-management', this.exercise.course?.id, 'modeling-exercises', this.exerciseId, 'edit']);
         } else {
             await this.router.navigate([
                 '/course-management',
-                this.exercise.exerciseGroup!.exam!.course.id,
+                this.exercise.exerciseGroup?.exam?.course?.id,
                 'exams',
-                this.exercise.exerciseGroup!.exam!.id,
+                this.exercise.exerciseGroup?.exam?.id,
                 'exercise-groups',
                 this.exercise.exerciseGroup?.id,
                 'modeling-exercises',

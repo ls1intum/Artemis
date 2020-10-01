@@ -128,7 +128,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 guidedTourService = TestBed.inject(GuidedTourService);
 
-                comp.exerciseId = exercise.id;
+                comp.exerciseId = exercise.id!;
 
                 modelingSubmissionStub = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
             });

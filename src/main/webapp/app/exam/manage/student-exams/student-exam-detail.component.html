@@ -1,7 +1,7 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam.title }">
-            Student exam ({{ studentExam.exam.title }})
+        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+            Student exam ({{ studentExam.exam!.title! }})
         </h4>
     </div>
 </div>

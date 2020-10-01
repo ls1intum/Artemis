@@ -2,43 +2,44 @@
     <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice">
         {{ 'artemisApp.exam.examSummary.missingResultNotice' | translate }}
     </div>
-    <div *ngFor="let question of exercise.quizQuestions; let i = index">
+    <div *ngFor="let question of exercise.quizQuestions!; let i = index">
+        <!-- TODO: Map vs Array consistency -->
         <jhi-multiple-choice-question
             id="question{{ i }}"
             *ngIf="question.type === MULTIPLE_CHOICE"
             [question]="question"
-            [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
+            [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
             [clickDisabled]="true"
             [showResult]="resultsPublished && !showMissingResultsNotice"
             [submittedQuizExercise]="exercise"
-            [submittedResult]="
-                exercise.studentParticipations[0]?.results && exercise.studentParticipations[0]?.results.length > 0 ? exercise.studentParticipations[0].results[0] : null
-            "
+            [submittedResult]="result"
             [forceSampleSolution]="false"
             [questionIndex]="i + 1"
-            [score]="getScoreForQuizQuestion(question.id)"
+            [score]="getScoreForQuizQuestion(question.id!)"
         ></jhi-multiple-choice-question>
+        <!-- TODO: Map vs Array consistency -->
         <jhi-drag-and-drop-question
             id="question{{ i }}"
             *ngIf="question.type === DRAG_AND_DROP"
             [question]="question"
-            [(mappings)]="dragAndDropMappings[question.id]"
+            [mappings]="dragAndDropMappings.get(question.id!)!"
             [clickDisabled]="true"
             [showResult]="resultsPublished && !showMissingResultsNotice"
             [forceSampleSolution]="false"
             [questionIndex]="i + 1"
-            [score]="getScoreForQuizQuestion(question.id)"
+            [score]="getScoreForQuizQuestion(question.id!)"
         ></jhi-drag-and-drop-question>
+        <!-- TODO: Map vs Array consistency -->
         <jhi-short-answer-question
             id="question{{ i }}"
             *ngIf="question.type === SHORT_ANSWER"
             [question]="question"
-            [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+            [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
             [clickDisabled]="true"
             [showResult]="resultsPublished && !showMissingResultsNotice"
             [forceSampleSolution]="false"
             [questionIndex]="i + 1"
-            [score]="getScoreForQuizQuestion(question.id)"
+            [score]="getScoreForQuizQuestion(question.id!)"
         ></jhi-short-answer-question>
     </div>
 </div>

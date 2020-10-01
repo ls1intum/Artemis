@@ -22,9 +22,10 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise, for which the submission is made
      */
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingSubmission);
+        const copy = ModelingSubmissionService.convert(modelingSubmission);
         return this.http
-            .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
+            .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
+                headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
@@ -36,10 +37,10 @@ export class ModelingSubmissionService {
      * @param {number} exerciseId - Id of the exercise, for which the submission is made
      */
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingSubmission);
+        const copy = ModelingSubmissionService.convert(modelingSubmission);
         return this.http
             .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' }, // needed due to stringifyCircular
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
@@ -90,7 +91,7 @@ export class ModelingSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingSubmission = this.convertItemFromServer(res.body!);
+        const body: ModelingSubmission = ModelingSubmissionService.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
@@ -98,7 +99,7 @@ export class ModelingSubmissionService {
         const jsonResponse: ModelingSubmission[] = res.body!;
         const body: ModelingSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
+            body.push(ModelingSubmissionService.convertItemFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
     }
@@ -106,16 +107,14 @@ export class ModelingSubmissionService {
     /**
      * Convert a returned JSON object to ModelingSubmission.
      */
-    private convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        const copy: ModelingSubmission = Object.assign({}, modelingSubmission);
-        return copy;
+    private static convertItemFromServer(modelingSubmission: ModelingSubmission): ModelingSubmission {
+        return Object.assign({}, modelingSubmission);
     }
 
     /**
      * Convert a ModelingSubmission to a JSON which can be sent to the server.
      */
-    private convert(modelingSubmission: ModelingSubmission): ModelingSubmission {
-        const copy: ModelingSubmission = Object.assign({}, modelingSubmission);
-        return copy;
+    private static convert(modelingSubmission: ModelingSubmission): ModelingSubmission {
+        return Object.assign({}, modelingSubmission);
     }
 }

@@ -25,16 +25,16 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
-    @HostBinding('class.alert-secondary') get setNeutralFeedbackClass(): boolean {
+    @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
         return this.feedback.credits === 0;
     }
 
-    @HostBinding('class.alert-success') get setPositiveFeedbackClass(): boolean {
-        return this.feedback.credits > 0;
+    @HostBinding('class.alert-success') get positiveFeedbackClass(): boolean {
+        return this.feedback.credits !== undefined && this.feedback.credits > 0;
     }
 
-    @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
-        return this.feedback.credits < 0;
+    @HostBinding('class.alert-danger') get negativeFeedbackClass(): boolean {
+        return this.feedback.credits !== undefined && this.feedback.credits! < 0;
     }
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}

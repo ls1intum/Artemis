@@ -37,9 +37,6 @@ public class TutorParticipation implements Serializable {
     @Column(name = "status")
     private TutorParticipationStatus status;
 
-    @Column(name = "points")
-    private Integer points;
-
     @ManyToOne
     private Exercise assessedExercise;
 
@@ -72,19 +69,6 @@ public class TutorParticipation implements Serializable {
 
     public void setStatus(TutorParticipationStatus status) {
         this.status = status;
-    }
-
-    public Integer getPoints() {
-        return points;
-    }
-
-    public TutorParticipation points(Integer points) {
-        this.points = points;
-        return this;
-    }
-
-    public void setPoints(Integer points) {
-        this.points = points;
     }
 
     public Exercise getAssessedExercise() {
@@ -161,6 +145,6 @@ public class TutorParticipation implements Serializable {
 
     @Override
     public String toString() {
-        return "TutorParticipation{" + "id=" + getId() + ", status='" + getStatus() + "'" + ", points=" + getPoints() + "}";
+        return "TutorParticipation{" + "id=" + getId() + ", status='" + getStatus() + "}";
     }
 }

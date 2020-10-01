@@ -30,7 +30,7 @@ import { MockComponent } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -58,7 +58,7 @@ describe('Component Tests', () => {
 
         const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
-        participation.exercise = new ModelingExercise('ClassDiagram');
+        participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
         const result = { id: 1 } as Result;
 
@@ -136,8 +136,8 @@ describe('Component Tests', () => {
         });
 
         it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
-            submission.participation.initializationDate = moment().subtract(2, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
+            submission.participation!.initializationDate = moment().subtract(2, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment().subtract(1, 'days');
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -148,8 +148,8 @@ describe('Component Tests', () => {
         });
 
         it('should allow to submit after the deadline if the initialization date is after the due date', () => {
-            submission.participation.initializationDate = moment().add(1, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment();
+            submission.participation!.initializationDate = moment().add(1, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -172,7 +172,7 @@ describe('Component Tests', () => {
         });
 
         it('should get inactive as soon as the due date passes the current date', () => {
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment().add(1, 'days');
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -208,7 +208,7 @@ describe('Component Tests', () => {
             fixture.detectChanges();
 
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise('DeploymentDiagram');
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.saveDiagram();
             expect(fake).to.have.been.calledOnce;
@@ -221,7 +221,7 @@ describe('Component Tests', () => {
             const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
             comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise('DeploymentDiagram');
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.submit();
             expect(fake).to.have.been.calledOnce;
