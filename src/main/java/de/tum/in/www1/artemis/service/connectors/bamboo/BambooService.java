@@ -458,8 +458,9 @@ public class BambooService implements ContinuousIntegrationService {
         log.debug("Retrieving build result (NEW) ...");
         try {
             // Filter the first build plan that was automatically executed when the build plan was created.
-            if (isFirstBuildForThisPlan(buildResult))
+            if (isFirstBuildForThisPlan(buildResult)) {
                 return null;
+            }
 
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
             Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
