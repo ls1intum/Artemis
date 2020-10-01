@@ -73,8 +73,8 @@ export class LectureService {
             endDate: lecture.endDate && lecture.endDate.isValid() ? lecture.endDate.toJSON() : undefined,
         });
         if (copy.course) {
-            delete copy.course.exercises;
-            delete copy.course.lectures;
+            copy.course.exercises = undefined;
+            copy.course.lectures = undefined;
         }
         return copy;
     }
