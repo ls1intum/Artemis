@@ -107,12 +107,12 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
 
-        // Generate achievements if enabled in course and not part of exam
-        if (course.getHasAchievements() && fileUploadExercise.getExerciseGroup().getExam() == null) {
-            achievementService.generateForExercise(fileUploadExercise);
-        }
-
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
+
+        // Generate achievements if enabled in course and not part of exam
+        if (course.getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
+            achievementService.generateForExercise(result);
+        }
 
         // Only notify tutors when the exercise is created for a course
         if (fileUploadExercise.hasCourse()) {

@@ -185,11 +185,6 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // Generate achievements if enabled in course and not part of exam
-        if (textExercise.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && textExercise.getExerciseGroup().getExam() == null) {
-            achievementService.generateForExercise(textExercise);
-        }
-
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
 
@@ -197,6 +192,12 @@ public class TextExerciseResource {
         if (textExercise.hasCourse()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
+
+        // Generate achievements if enabled in course and not part of exam
+        if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
+            achievementService.generateForExercise(result);
+        }
+
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }

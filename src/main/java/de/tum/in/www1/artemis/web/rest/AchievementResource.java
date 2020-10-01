@@ -72,9 +72,11 @@ public class AchievementResource {
      */
     @GetMapping("/courses/{courseId}/achievements")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Achievement>> getAchievementsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get achievements for course : {}", courseId);
-        Set<Achievement> achievements = achievementService.findAllByCourseId(courseId);
+    public ResponseEntity<Set<Achievement>> getAchievementsForUserInCourse(@PathVariable Long courseId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get achievements for user : {} in course : {}", user.getLogin(), courseId);
+        Set<Achievement> achievements = achievementRepository.findAllByUserIdAndCourseId(user.getId(), courseId);
+
         return ResponseEntity.ok(achievements);
     }
 
