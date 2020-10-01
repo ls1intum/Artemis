@@ -37,11 +37,11 @@ public class Achievement implements Serializable {
     private String icon;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "rank")
+    @Column(name = "a_rank")
     private AchievementRank rank;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "a_type")
     private AchievementType type;
 
     @ManyToOne
