@@ -68,7 +68,7 @@
                     [buttonLoading]="exercise.loading"
                     [hideLabelMobile]="false"
                     [projectKey]="projectKey()"
-                    [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
                 ></button>
                 <jhi-programming-exercise-instructions
@@ -108,10 +108,10 @@
                     </h4>
                 </div>
                 <div class="col text-left">
-                    <jhi-result [result]="studentParticipation!.results[0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
+                    <jhi-result [result]="studentParticipation!.results![0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h6 [ngbTooltip]="studentParticipation!.results[0]!.completionDate | artemisDate">({{ studentParticipation!.results[0]!.completionDate! | amTimeAgo }})</h6>
+                    <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">({{ studentParticipation!.results![0].completionDate! | amTimeAgo }})</h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
@@ -135,7 +135,7 @@
                                 </h4>
                             </div>
                             <div class="col text-left">
-                                <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations![0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
                                 <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | amTimeAgo }})</h6>

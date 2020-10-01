@@ -34,7 +34,7 @@ describe('StudentQuestion Service', () => {
 
         elemDefault = new StudentQuestion();
         elemDefault.id = 0;
-        elemDefault.creationDate = null;
+        elemDefault.creationDate = undefined;
         elemDefault.questionText = 'This is a test question';
 
         elem2 = new StudentQuestion();
@@ -97,7 +97,7 @@ describe('StudentQuestion Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .updateVotes(expected.id, 0)
+                .updateVotes(expected.id!, 0)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });

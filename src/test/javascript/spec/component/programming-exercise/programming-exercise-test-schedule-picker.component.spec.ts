@@ -37,7 +37,7 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
 
     it('should do nothing if the release date is set to null', () => {
         comp.exercise = exercise;
-        comp.updateReleaseDate(null);
+        comp.updateReleaseDate(undefined);
 
         expect(comp.exercise.dueDate).to.be.equal(nextDueDate);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).to.be.equal(afterDueDate);

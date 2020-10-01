@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -11,10 +11,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
 })
-export class CourseCardComponent implements OnInit {
+export class CourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
     @Input() hasGuidedTour: boolean;
+
+    nextRelevantExercise?: Exercise;
 
     constructor(
         private router: Router,
@@ -23,18 +25,16 @@ export class CourseCardComponent implements OnInit {
         private exerciseService: ExerciseService,
     ) {}
 
-    ngOnInit() {}
+    ngOnChanges() {
+        this.nextRelevantExercise = this.exerciseService.getNextExerciseForDays(this.course.exercises!);
+    }
 
     displayTotalRelativeScore(): number {
-        if (this.course.exercises.length > 0) {
+        if (this.course.exercises && this.course.exercises.length > 0) {
             return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore')!;
         } else {
             return 0;
         }
-    }
-
-    get nextRelevantExercise(): Exercise {
-        return this.exerciseService.getNextExerciseForDays(this.course.exercises);
     }
 
     startExercise(exercise: Exercise): void {

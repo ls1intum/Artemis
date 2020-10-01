@@ -61,7 +61,7 @@ export class ComplaintInteractionsComponent implements OnInit {
             if (this.course) {
                 // for normal exercises we track the number of allowed complaints
                 if (this.course.complaintsEnabled) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.course.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
                         this.numberOfAllowedComplaints = allowedComplaints;
                     });
                 } else {
@@ -71,7 +71,7 @@ export class ComplaintInteractionsComponent implements OnInit {
         }
         if (this.participation.submissions && this.participation.submissions.length > 0) {
             if (this.result && this.result.completionDate) {
-                this.complaintService.findByResultId(this.result.id).subscribe((res) => {
+                this.complaintService.findByResultId(this.result.id!).subscribe((res) => {
                     if (res.body) {
                         if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
                             this.hasComplaint = true;
@@ -89,7 +89,7 @@ export class ComplaintInteractionsComponent implements OnInit {
         });
     }
 
-    get course(): Course | null {
+    get course(): Course | undefined {
         return this.exercise.course;
     }
 

@@ -19,7 +19,7 @@ describe('FileUploadExercise Management Component', () => {
     let service: CourseExerciseService;
 
     const course: Course = { id: 123 } as Course;
-    const fileUploadExercise = new FileUploadExercise(course);
+    const fileUploadExercise = new FileUploadExercise(course, undefined);
     fileUploadExercise.id = 456;
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
 

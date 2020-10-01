@@ -11,6 +11,6 @@ import { Team } from 'app/entities/team.model';
  */
 export function formatTeamAsSearchResult(team: Team) {
     const { name, shortName, students } = team;
-    const studentsFormatted = students.map((s) => `${s.name} (${s.login})`).join(', ');
-    return `${name} (${shortName})` + (students.length > 0 ? ` ⟹ ${studentsFormatted}` : '');
+    const studentsFormatted = students?.map((s) => `${s.name} (${s.login})`).join(', ');
+    return `${name} (${shortName})` + (students && students.length > 0 ? ` ⟹ ${studentsFormatted}` : '');
 }

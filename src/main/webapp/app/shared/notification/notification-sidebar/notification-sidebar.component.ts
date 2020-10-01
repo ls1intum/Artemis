@@ -21,10 +21,10 @@ export class NotificationSidebarComponent implements OnInit {
     sortedNotifications: Notification[] = [];
     recentNotificationCount = 0;
     totalNotifications = 0;
-    lastNotificationRead: Moment | null = null;
+    lastNotificationRead?: Moment;
     page = 0;
     notificationsPerPage = 25;
-    error: string | null = null;
+    error?: string;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
@@ -32,7 +32,7 @@ export class NotificationSidebarComponent implements OnInit {
      * Load notifications when user is authenticated on component initialization.
      */
     ngOnInit(): void {
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 if (user.lastNotificationRead) {
                     this.lastNotificationRead = user.lastNotificationRead;

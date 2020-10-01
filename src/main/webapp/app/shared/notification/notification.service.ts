@@ -17,7 +17,7 @@ import { Course } from 'app/entities/course.model';
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
-    notificationObserver: BehaviorSubject<Notification | null>;
+    notificationObserver: BehaviorSubject<Notification | undefined>;
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
@@ -83,13 +83,13 @@ export class NotificationService {
 
     protected convertDateFromClient(notification: Notification): Notification {
         return Object.assign({}, notification, {
-            notificationDate: notification.notificationDate && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
+            notificationDate: notification.notificationDate && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : undefined,
         });
     }
 
     protected convertDateFromServer(res: HttpResponse<Notification>): HttpResponse<Notification> {
         if (res.body) {
-            res.body.notificationDate = res.body.notificationDate ? moment(res.body.notificationDate) : null;
+            res.body.notificationDate = res.body.notificationDate ? moment(res.body.notificationDate) : undefined;
         }
         return res;
     }
@@ -97,7 +97,7 @@ export class NotificationService {
     protected convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
-                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
+                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : undefined;
             });
         }
         return res;
@@ -164,7 +164,7 @@ export class NotificationService {
      * Get the notificationObserver.
      * @return {BehaviorSubject<Notification}
      */
-    subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
+    subscribeToSocketMessages(): BehaviorSubject<Notification | undefined> {
         return this.notificationObserver;
     }
 
@@ -173,16 +173,18 @@ export class NotificationService {
      * @param {GroupNotification} notification
      */
     interpretNotification(notification: GroupNotification): void {
-        const target = JSON.parse(notification.target);
-        const courseId = target.course || notification.course.id;
-        this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+        if (notification.target) {
+            const target = JSON.parse(notification.target);
+            const courseId = target.course || notification.course?.id;
+            this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+        }
     }
 
     /**
      * Set new notification observer.
      */
     private initNotificationObserver(): void {
-        this.notificationObserver = new BehaviorSubject<Notification | null>(null);
+        this.notificationObserver = new BehaviorSubject<Notification | undefined>(undefined);
     }
 
     /**

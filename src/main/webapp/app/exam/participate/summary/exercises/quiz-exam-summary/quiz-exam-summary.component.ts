@@ -12,6 +12,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -38,10 +39,19 @@ export class QuizExamSummaryComponent implements OnInit {
     @Input()
     exam: Exam;
 
+    result?: Result;
+
     constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
 
     ngOnInit(): void {
         this.updateViewFromSubmission();
+        this.result =
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0 &&
+            this.exercise.studentParticipations[0].results &&
+            this.exercise.studentParticipations[0].results.length > 0
+                ? this.exercise.studentParticipations[0].results[0]
+                : undefined;
     }
 
     /**
@@ -63,36 +73,36 @@ export class QuizExamSummaryComponent implements OnInit {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find((answer) => {
-                          return answer.quizQuestion.id === question.id;
+                          return answer.quizQuestion!.id === question.id;
                       })
-                    : null;
+                    : undefined;
 
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        this.selectedAnswerOptions[question.id] = selectedOptions ? selectedOptions : [];
+                        this.selectedAnswerOptions.set(question.id!, selectedOptions ? selectedOptions : []);
                     } else {
                         // not found, set to empty array
-                        this.selectedAnswerOptions[question.id] = [];
+                        this.selectedAnswerOptions.set(question.id!, []);
                     }
                 } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        this.dragAndDropMappings[question.id] = mappings ? mappings : [];
+                        this.dragAndDropMappings.set(question.id!, mappings ? mappings : []);
                     } else {
                         // not found, set to empty array
-                        this.dragAndDropMappings[question.id] = [];
+                        this.dragAndDropMappings.set(question.id!, []);
                     }
                 } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? submittedTexts : [];
+                        this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? submittedTexts : []);
                     } else {
                         // not found, set to empty array
-                        this.shortAnswerSubmittedTexts[question.id] = [];
+                        this.shortAnswerSubmittedTexts.set(question.id!, []);
                     }
                 } else {
                     console.error('Unknown question type: ' + question);
@@ -101,7 +111,7 @@ export class QuizExamSummaryComponent implements OnInit {
         }
     }
 
-    getScoreForQuizQuestion(quizQuestionId: number): number | undefined {
+    getScoreForQuizQuestion(quizQuestionId?: number) {
         if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
             const submittedAnswer = this.submission.submittedAnswers.find((answer) => {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;

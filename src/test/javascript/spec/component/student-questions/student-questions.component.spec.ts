@@ -20,27 +20,27 @@ describe('StudentQuestionRowComponent', () => {
 
     const unApprovedStudentQuestionAnswer = {
         id: 1,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'not approved',
         tutorApproved: false,
     } as StudentQuestionAnswer;
 
     const approvedStudentQuestionAnswer = {
         id: 2,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'approved',
         tutorApproved: true,
     } as StudentQuestionAnswer;
 
     const studentQuestion1 = {
         id: 1,
-        creationDate: null,
+        creationDate: undefined,
         answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
     } as StudentQuestion;
 
     const studentQuestion2 = {
         id: 2,
-        creationDate: null,
+        creationDate: undefined,
         answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
     } as StudentQuestion;
 
@@ -48,8 +48,8 @@ describe('StudentQuestionRowComponent', () => {
         id: 1,
         title: 'test',
         description: 'test',
-        startDate: null,
-        endDate: null,
+        startDate: undefined,
+        endDate: undefined,
         studentQuestions: [studentQuestion1, studentQuestion2],
         isAtLeastInstructor: true,
     } as Lecture;
