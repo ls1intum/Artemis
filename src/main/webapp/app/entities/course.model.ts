@@ -7,45 +7,57 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 
 export class Course implements BaseEntity {
-    public id: number;
-    public title: string;
-    public description: string;
-    public shortName: string;
-    public studentGroupName: string;
-    public teachingAssistantGroupName: string;
-    public instructorGroupName: string;
-    public startDate: Moment | null;
-    public endDate: Moment | null;
-    public color: string;
-    public courseIcon: string;
-    public onlineCourse = false; // default value
-    public registrationEnabled = false; // default value
-    public presentationScore = 0; // default value
-    public maxComplaints = 3; // default value
-    public maxTeamComplaints = 3; // default value
-    public maxComplaintTimeDays = 7; // default value
-    public complaintsEnabled = true; // default value
-    public studentQuestionsEnabled = true; // default value
-    public hasAchievements = false; // default value
+    public id?: number;
+    public title?: string;
+    public description?: string;
+    public shortName?: string;
+    public studentGroupName?: string;
+    public teachingAssistantGroupName?: string;
+    public instructorGroupName?: string;
+    public startDate?: Moment;
+    public endDate?: Moment;
+    public color?: string;
+    public courseIcon?: string;
+    public onlineCourse?: boolean;
+    public registrationEnabled?: boolean;
+    public presentationScore?: number;
+    public maxComplaints?: number;
+    public maxTeamComplaints?: number;
+    public maxComplaintTimeDays?: number;
+    public complaintsEnabled?: boolean;
+    public studentQuestionsEnabled?: boolean;
+    public hasAchievements?: boolean;
 
     // the following values are only used in course administration
-    public numberOfStudents: number;
-    public numberOfTeachingAssistants: number;
-    public numberOfInstructors: number;
+    public numberOfStudents?: number;
+    public numberOfTeachingAssistants?: number;
+    public numberOfInstructors?: number;
 
-    public exercises: Exercise[];
-    public lectures: Lecture[];
-    public exams: Exam[];
-    public tutorGroups: TutorGroup[];
+    public exercises?: Exercise[];
+    public lectures?: Lecture[];
+    public exams?: Exam[];
+    public tutorGroups?: TutorGroup[];
 
     // helper attributes
-    public isAtLeastTutor = false; // default value
-    public isAtLeastInstructor = false; // default value
-    public relativeScore: number;
-    public absoluteScore: number;
-    public maxScore: number;
+    public isAtLeastTutor?: boolean;
+    public isAtLeastInstructor?: boolean;
+    public relativeScore?: number;
+    public absoluteScore?: number;
+    public maxScore?: number;
 
-    constructor() {}
+    constructor() {
+        this.onlineCourse = false; // default value
+        this.isAtLeastTutor = false; // default value
+        this.isAtLeastInstructor = false; // default value
+
+        this.registrationEnabled = false; // default value
+        this.presentationScore = 0; // default value
+        this.maxComplaints = 3; // default value
+        this.maxTeamComplaints = 3; // default value
+        this.maxComplaintTimeDays = 7; // default value
+        this.complaintsEnabled = true; // default value
+        this.studentQuestionsEnabled = true; // default value
+    }
 
     /**
      * Correctly initializes a class instance from a typecasted object.
@@ -56,9 +68,9 @@ export class Course implements BaseEntity {
     static from(object: Course): Course {
         const course = Object.assign(new Course(), object);
         if (course.exercises) {
-            course.exercises.forEach((e) => {
-                e.numberOfSubmissions = Object.assign(new DueDateStat(), e.numberOfSubmissions);
-                e.numberOfAssessments = Object.assign(new DueDateStat(), e.numberOfAssessments);
+            course.exercises.forEach((exercise) => {
+                exercise.numberOfSubmissions = Object.assign(new DueDateStat(), exercise.numberOfSubmissions);
+                exercise.numberOfAssessments = Object.assign(new DueDateStat(), exercise.numberOfAssessments);
             });
         }
         return course;

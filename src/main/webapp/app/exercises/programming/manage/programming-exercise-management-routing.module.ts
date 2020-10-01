@@ -16,11 +16,11 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return Observable.of(new ProgrammingExercise());
+        return Observable.of(new ProgrammingExercise(undefined, undefined));
     }
 }
 

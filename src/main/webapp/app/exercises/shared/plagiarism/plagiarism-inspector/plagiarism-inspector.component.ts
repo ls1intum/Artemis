@@ -110,7 +110,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarism() {
         this.plagiarismCheckInProgress = true;
 
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id).subscribe(
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
             (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
                 this.plagiarismCheckInProgress = false;
                 this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);

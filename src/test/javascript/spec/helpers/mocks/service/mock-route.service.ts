@@ -29,7 +29,7 @@ export class MockActivatedRoute extends ActivatedRoute {
 export class MockRouter extends SpyObject {
     navigateSpy: Spy;
     navigateByUrlSpy: Spy;
-    events: Observable<RouterEvent> | null = null;
+    events?: Observable<RouterEvent>;
     routerState: any;
     url = '';
 

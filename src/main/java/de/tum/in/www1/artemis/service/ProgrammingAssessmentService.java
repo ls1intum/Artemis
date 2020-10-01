@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;

@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 
 describe('Logs Service', () => {
     let service: JhiConfigurationService;
-    let httpMock;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

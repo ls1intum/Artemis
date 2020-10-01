@@ -122,7 +122,7 @@ public class TutorParticipationService {
 
     /**
      * Given a course and a tutor, it finds all the participation of that tutor in the course, with related assessed exercise and trained example submissions
-     * 
+     *
      * @param course - the course we are interested in
      * @param user   - the tutor who is querying the service
      * @return a list of tutor participation for the course

@@ -27,7 +27,7 @@ export class ArtemisQuizService {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                         this.shuffle((question as MultipleChoiceQuestion).answerOptions!);
                     } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                        this.shuffle((question as DragAndDropQuestion).dragItems);
+                        this.shuffle((question as DragAndDropQuestion).dragItems!);
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     } else {
                         Sentry.captureException(new Error('Unknown question type: ' + question));

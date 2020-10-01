@@ -126,7 +126,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
@@ -140,7 +140,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         if (this.isQuizStatistic) {
             this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic) {
-            if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
+            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
             } else {
                 // go to previous question-statistic
@@ -160,7 +160,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
         } else if (this.isQuizStatistic) {
             // go to quiz-statistic if the position = last position
-            if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
+            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
             } else {
                 // go to next question-statistic

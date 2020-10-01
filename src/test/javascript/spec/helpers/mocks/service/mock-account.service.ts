@@ -8,8 +8,8 @@ export class MockAccountService implements IAccountService {
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
     hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
     getAuthenticationState = () => of({ id: 99 } as User);
-    isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor;
-    authenticate = (identity: User | null) => {};
+    isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;
+    authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);

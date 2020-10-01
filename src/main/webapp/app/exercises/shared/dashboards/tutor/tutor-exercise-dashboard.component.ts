@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -33,6 +33,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -50,7 +51,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
-    exam: Exam | null = null;
+    exam?: Exam;
     // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
@@ -71,7 +72,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
-    unassessedSubmission: Submission | null;
+    unassessedSubmission?: Submission;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -83,9 +84,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
 
-    formattedGradingInstructions: SafeHtml | null;
-    formattedProblemStatement: SafeHtml | null;
-    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions?: SafeHtml;
+    formattedProblemStatement?: SafeHtml;
+    formattedSampleSolution?: SafeHtml;
 
     readonly ExerciseType = ExerciseType;
 
@@ -105,9 +106,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor: User | null;
+    tutor?: User;
 
-    exerciseForGuidedTour: Exercise | null;
+    exerciseForGuidedTour?: Exercise;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -177,8 +178,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 }
 
                 this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
-                this.tutorParticipation = this.exercise.tutorParticipations[0];
-                this.tutorParticipationStatus = this.tutorParticipation.status;
+                this.tutorParticipation = this.exercise.tutorParticipations![0];
+                this.tutorParticipationStatus = this.tutorParticipation.status!;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
                     this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                     this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
@@ -191,9 +192,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter((e) => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id!;
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id!;
                 }
 
                 // exercise belongs to an exam
@@ -269,6 +270,13 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         );
     }
 
+    language(submission: Submission): string {
+        if (submission.submissionExerciseType === SubmissionExerciseType.TEXT) {
+            return (submission as TextSubmission).language || 'UNKNOWN';
+        }
+        return 'UNKNOWN';
+    }
+
     /**
      * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
@@ -303,7 +311,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 this.submissions = submissions.map((submission) => {
-                    submission.participation.submissions = [submission];
+                    submission.participation!.submissions = [submission];
                     return submission;
                 });
             });
@@ -318,7 +326,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 // reconnect some associations
                 submission.result.submission = submission;
                 submission.result.participation = submission.participation;
-                submission.participation.results = [submission.result];
+                submission.participation!.results = [submission.result];
             }
             return submission;
         });
@@ -354,7 +362,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmission = null;
+                    this.unassessedSubmission = undefined;
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
@@ -370,7 +378,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
-            this.tutorParticipationStatus = this.tutorParticipation.status;
+            this.tutorParticipationStatus = this.tutorParticipation.status!;
             this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
@@ -384,7 +392,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 
     /**
@@ -431,7 +439,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         if (this.isTestRun) {
             await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
@@ -456,9 +464,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.openCodeEditorWithStudentSubmission(complaint.result.participation!.id!);
+            this.openCodeEditorWithStudentSubmission(complaint.result!.participation!.id!);
         } else {
-            this.openAssessmentEditor(complaint.result.submission!);
+            this.openAssessmentEditor(complaint.result!.submission!);
         }
     }
 

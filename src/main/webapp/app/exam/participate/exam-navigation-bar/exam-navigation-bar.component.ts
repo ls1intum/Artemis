@@ -4,7 +4,6 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -87,8 +86,9 @@ export class ExamNavigationBarComponent implements OnInit {
 
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         this.icon = 'edit';
-        if (this.getSubmissionForExercise(this.exercises[exerciseIndex])) {
-            const submission = this.exercises[exerciseIndex].studentParticipations[0].submissions[0];
+        const exercise = this.exercises[exerciseIndex];
+        const submission = this.getSubmissionForExercise(exercise);
+        if (submission) {
             if (submission.submitted) {
                 this.icon = 'check';
             }
@@ -147,7 +147,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     // TODO: find usages of similar logic -> put into utils method
-    private getSubmissionForExercise(exercise: Exercise): Submission | null {
+    private getSubmissionForExercise(exercise: Exercise) {
         if (
             exercise &&
             exercise.studentParticipations &&
@@ -157,7 +157,7 @@ export class ExamNavigationBarComponent implements OnInit {
         ) {
             return exercise.studentParticipations[0].submissions[0];
         } else {
-            return null;
+            return undefined;
         }
     }
 }

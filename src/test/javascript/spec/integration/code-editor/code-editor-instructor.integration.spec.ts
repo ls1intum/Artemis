@@ -199,7 +199,7 @@ describe('CodeEditorInstructorIntegration', () => {
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
             course: { id: 1 },
         } as ProgrammingExercise;
-        exercise.studentParticipations = exercise.studentParticipations.map((p) => {
+        exercise.studentParticipations = exercise.studentParticipations?.map((p) => {
             p.exercise = exercise;
             return p;
         });
