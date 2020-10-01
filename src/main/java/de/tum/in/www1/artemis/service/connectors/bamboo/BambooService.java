@@ -47,9 +47,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
@@ -631,7 +629,7 @@ public class BambooService implements ContinuousIntegrationService {
             for (final var job : jobs) {
 
                 // 1) add feedback for failed test cases
-                for (final var failedTest: job.getFailedTests()) {
+                for (final var failedTest : job.getFailedTests()) {
                     result.addFeedback(feedbackService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
                 }
 
