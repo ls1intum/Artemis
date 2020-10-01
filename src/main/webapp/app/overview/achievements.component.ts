@@ -10,7 +10,7 @@ import { Achievement, AchievementRank } from 'app/entities/achievement.model';
 })
 export class AchievementsComponent implements OnInit, OnDestroy {
     @Input()
-    private courseId: number;
+    public courseId: number;
 
     public achievements: Achievement[];
 
