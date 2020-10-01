@@ -318,7 +318,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
         const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFileStub.returns(Observable.of(null));
+        createFileStub.returns(Observable.of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FILE];
@@ -337,7 +337,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(createFileStub).to.have.been.calledOnceWithExactly(filePath);
-        expect(comp.creatingFile).to.be.null;
+        expect(comp.creatingFile).to.be.undefined;
         expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FILE });
@@ -367,7 +367,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
         const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFolderStub.returns(Observable.of(null));
+        createFolderStub.returns(Observable.of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FOLDER];
@@ -386,7 +386,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         fixture.detectChanges();
         expect(createFolderStub).to.have.been.calledOnceWithExactly(filePath);
-        expect(comp.creatingFile).to.be.null;
+        expect(comp.creatingFile).to.be.undefined;
         expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FOLDER });
@@ -437,7 +437,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(Observable.of(null));
+        renameFileStub.returns(Observable.of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
@@ -461,7 +461,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(renameFileStub).to.have.been.calledOnceWithExactly(fileName, afterRename);
-        expect(comp.renamingFile).to.be.null;
+        expect(comp.renamingFile).to.be.undefined;
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
 
@@ -511,7 +511,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(Observable.of(null));
+        renameFileStub.returns(Observable.of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
@@ -534,7 +534,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
 
         expect(renameFileStub).to.have.been.calledOnceWithExactly(folderName, afterRename);
-        expect(comp.renamingFile).to.be.null;
+        expect(comp.renamingFile).to.be.undefined;
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({
             [[afterRename, 'file1'].join('/')]: FileType.FILE,

@@ -11,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { expect } from '../helpers/jasmine.jest.fix';
 
 describe('Course Service', () => {
     let injector: TestBed;
@@ -137,7 +138,7 @@ describe('Course Service', () => {
                 returnedFromService,
             );
             service
-                .findAllForDashboard(expected)
+                .findAllForDashboard()
                 .pipe(
                     take(1),
                     map((resp) => resp.body),

@@ -42,7 +42,7 @@ export class TextblockAssessmentCardComponent {
     unselect(): void {
         this.didSelect.emit(null);
         delete this.textBlockRef.feedback;
-        if (this.textBlockRef.block.type === TextBlockType.MANUAL) {
+        if (this.textBlockRef.block!.type === TextBlockType.MANUAL) {
             this.didDelete.emit(this.textBlockRef);
         }
         this.feedbackDidChange();

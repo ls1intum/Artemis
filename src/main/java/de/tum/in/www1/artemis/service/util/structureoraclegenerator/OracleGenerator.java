@@ -60,7 +60,7 @@ public class OracleGenerator {
 
     /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
-     * 
+     *
      * @param solutionProjectPath The path to the project of the solution of a programming exercise.
      * @param templateProjectPath The path to the project of the template of a programming exercise.
      * @return The string of the JSON representation of the structure oracle.
@@ -116,7 +116,7 @@ public class OracleGenerator {
 
     /**
      * This method pretty prints a given JSON array.
-     * 
+     *
      * @param jsonArray The JSON array that needs to get pretty printed.
      * @return The pretty printed JSON array in its string representation. If there is any IO exception, an empty string is returned instead.
      */
@@ -139,7 +139,7 @@ public class OracleGenerator {
      * are uniquely defined from their names. The list of the type pairs contains with certainty all the types found in the solution project, but it often happens that no
      * corresponding types are declared in the template. For this, a null type is inserted instead and handled accordingly in the diffs. Also, if the type in the template is the
      * same to the one in the solution, then they get ignored and do not get added to the structure oracle.
-     * 
+     *
      * @param solutionProjectPath The path to the solution project.
      * @param templateProjectPath The path to the template project.
      * @return A hash map containing the type pairs of the solution types and their respective counterparts in the template.

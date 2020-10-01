@@ -35,17 +35,17 @@
                                 <jhi-quiz-submission-exam
                                     *ngSwitchCase="QUIZ"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-text-editor-exam>
                                 <jhi-modeling-submission-exam
                                     *ngSwitchCase="MODELING"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-modeling-submission-exam>
                                 <jhi-programming-submission-exam
                                     *ngSwitchCase="PROGRAMMING"

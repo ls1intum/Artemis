@@ -60,7 +60,7 @@ describe('RatingComponent', () => {
         sinon.spy(ratingService, 'getRating');
         ratingComponent.ngOnInit();
         expect(ratingService.getRating).to.have.been.calledOnce;
-        expect(ratingComponent.result.id).to.equal(89);
+        expect(ratingComponent.result?.id).to.equal(89);
     });
 
     it('should return due to missing result', () => {
@@ -72,14 +72,14 @@ describe('RatingComponent', () => {
 
     it('should return due to missing participation', () => {
         sinon.spy(ratingService, 'getRating');
-        delete ratingComponent.result.participation;
+        delete ratingComponent.result?.participation;
         ratingComponent.ngOnInit();
         expect(ratingService.getRating).to.not.have.been.called;
     });
 
     it('should create new local rating', () => {
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result.id).to.be.equal(89);
+        expect(ratingComponent.rating.result?.id).to.be.equal(89);
         expect(ratingComponent.rating.rating).to.be.equal(0);
     });
 
@@ -87,7 +87,7 @@ describe('RatingComponent', () => {
         const fake = sinon.fake.returns(of(new Rating({ id: 90 } as Result, 1)));
         sinon.replace(ratingService, 'getRating', fake);
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result.id).to.be.equal(90);
+        expect(ratingComponent.rating.result?.id).to.be.equal(90);
         expect(ratingComponent.rating.rating).to.be.equal(1);
     });
 
@@ -117,7 +117,7 @@ describe('RatingComponent', () => {
             });
             expect(ratingService.createRating).to.have.been.calledOnce;
             expect(ratingService.updateRating).to.not.have.been.called;
-            expect(ratingComponent.rating.result.id).to.be.equal(89);
+            expect(ratingComponent.rating.result?.id).to.be.equal(89);
             expect(ratingComponent.rating.rating).to.be.equal(2);
         });
 
@@ -130,7 +130,7 @@ describe('RatingComponent', () => {
             });
             expect(ratingService.updateRating).to.have.been.calledOnce;
             expect(ratingService.createRating).to.not.have.been.called;
-            expect(ratingComponent.rating.result.id).to.be.equal(89);
+            expect(ratingComponent.rating.result?.id).to.be.equal(89);
             expect(ratingComponent.rating.rating).to.be.equal(2);
         });
     });

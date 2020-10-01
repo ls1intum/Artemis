@@ -59,7 +59,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
-    private languageChangeSubscription: Subscription | null;
+    private languageChangeSubscription?: Subscription;
 
     constructor(
         private route: ActivatedRoute,
@@ -80,9 +80,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
                 this.course = res.body!;
-                this.exercises = this.course.exercises
-                    .filter((exercise) => {
-                        return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
+                this.exercises = this.course
+                    .exercises!.filter((exercise) => {
+                        return !exercise.releaseDate || exercise.releaseDate.isBefore(moment());
                     })
                     .sort((e1: Exercise, e2: Exercise) => {
                         if (e1.dueDate! > e2.dueDate!) {
@@ -91,15 +91,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         if (e1.dueDate! < e2.dueDate!) {
                             return -1;
                         }
-                        if (e1.title > e2.title) {
+                        if (e1.title! > e2.title!) {
                             return 1;
                         }
-                        if (e1.title < e2.title) {
+                        if (e1.title! < e2.title!) {
                             return -1;
                         }
                         return 0;
                     });
-                this.getParticipationsWithResults(this.course.id);
+                this.getParticipationsWithResults(this.course.id!);
             });
         });
 
@@ -131,11 +131,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.exercisesPerType.set(exerciseType, exercisesPerType);
             this.exerciseTitlesPerType.set(
                 exerciseType,
-                exercisesPerType.map((exercise) => exercise.title),
+                exercisesPerType.map((exercise) => exercise.title!),
             );
             this.exerciseMaxPointsPerType.set(
                 exerciseType,
-                exercisesPerType.map((exercise) => exercise.maxScore),
+                exercisesPerType.map((exercise) => exercise.maxScore!),
             );
             this.maxNumberOfPointsPerExerciseType.set(
                 exerciseType,
@@ -152,7 +152,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const studentsMap = new Map<number, Student>();
 
         for (const participation of this.participations) {
-            if (participation.results != null && participation.results.length > 0) {
+            if (participation.results && participation.results.length > 0) {
                 for (const result of participation.results) {
                     // reconnect
                     result.participation = participation;
@@ -160,10 +160,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
 
             // find all students by iterating through the participations
-            const participationStudents = participation.student ? [participation.student] : participation.team.students;
+            const participationStudents = participation.student ? [participation.student] : participation.team!.students!;
             for (const participationStudent of participationStudents) {
                 let student = studentsMap.get(participationStudent.id!);
-                if (student == null) {
+                if (!student) {
                     student = new Student(participationStudent);
                     studentsMap.set(participationStudent.id!, student);
                 }
@@ -184,7 +184,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.students.push(student);
 
             for (const exercise of this.exercises) {
-                const participation = student.participations.find((part) => part.exercise.id === exercise.id);
+                const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
                     const result = participation.results[0];
@@ -192,22 +192,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const studentExerciseResultPoints = (result.score * exercise.maxScore) / 100;
+                    const studentExerciseResultPoints = (result.score! * exercise.maxScore!) / 100;
                     student.overallPoints += studentExerciseResultPoints;
-                    student.pointsPerExercise.set(exercise.id, studentExerciseResultPoints);
-                    student.sumPointsPerExerciseType.set(exercise.type, student.sumPointsPerExerciseType.get(exercise.type)! + studentExerciseResultPoints);
+                    student.pointsPerExercise.set(exercise.id!, studentExerciseResultPoints);
+                    student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + studentExerciseResultPoints);
                     student.numberOfParticipatedExercises += 1;
-                    exercise.numberOfParticipationsWithRatedResult += 1;
-                    if (result.score >= 100) {
+                    exercise.numberOfParticipationsWithRatedResult! += 1;
+                    if (result.score! >= 100) {
                         student.numberOfSuccessfulExercises += 1;
-                        exercise.numberOfSuccessfulParticipations += 1;
+                        exercise.numberOfSuccessfulParticipations! += 1;
                     }
 
-                    student.pointsPerExerciseType.get(exercise.type)!.push(studentExerciseResultPoints);
+                    student.pointsPerExerciseType.get(exercise.type!)!.push(studentExerciseResultPoints);
                 } else {
                     // there is no result, the student has not participated or submitted too late
-                    student.pointsPerExercise.set(exercise.id, 0);
-                    student.pointsPerExerciseType.get(exercise.type)!.push(Number.NaN);
+                    student.pointsPerExercise.set(exercise.id!, 0);
+                    student.pointsPerExerciseType.get(exercise.type!)!.push(Number.NaN);
                 }
             }
             for (const exerciseType of this.exerciseTypes) {
@@ -238,10 +238,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.exerciseSuccessfulPerType.set(exerciseType, []); // initialize with empty array
 
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
-                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id)!, 0) / this.students.length;
+                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id!)!, 0) / this.students.length;
                 this.exerciseAveragePointsPerType.get(exerciseType)!.push(exercise.averagePoints);
-                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult);
-                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations);
+                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult!);
+                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations!);
             }
         }
 
@@ -253,7 +253,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportResults() {
         if (this.exportReady && this.students.length > 0) {
-            const rows = [];
+            const rows: any[] = [];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             for (const exerciseType of this.exerciseTypes) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);

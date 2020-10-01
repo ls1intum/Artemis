@@ -14,31 +14,37 @@ export enum QuizStatus {
 }
 
 export class QuizExercise extends Exercise {
-    public id: number;
-    public remainingTime: number; // (computed by server)
-    public timeUntilPlannedStart: number; // (computed by server)
-    public visibleToStudents: boolean; // (computed by server)
-    public randomizeQuestionOrder = true; // default value (set by server)
-    public isVisibleBeforeStart = false; // default value (set by server)
-    public isOpenForPractice = false; // default value (set by server)
-    public isPlannedToStart = false; // default value (set by server)
-    public duration: number;
-    public quizPointStatistic: QuizPointStatistic;
-    public quizQuestions: QuizQuestion[];
-    public status: QuizStatus;
+    public id?: number;
+    public remainingTime?: number; // (computed by server)
+    public timeUntilPlannedStart?: number; // (computed by server)
+    public visibleToStudents?: boolean; // (computed by server)
+    public randomizeQuestionOrder?: boolean;
+    public isVisibleBeforeStart?: boolean;
+    public isOpenForPractice?: boolean;
+    public isPlannedToStart?: boolean;
+    public duration?: number;
+    public quizPointStatistic?: QuizPointStatistic;
+    public quizQuestions?: QuizQuestion[];
+    public status?: QuizStatus;
 
     // helper attributes
-    public adjustedDueDate: Moment;
-    public adjustedReleaseDate: Moment;
-    public ended: boolean;
-    public started: boolean;
+    public adjustedDueDate?: Moment;
+    public adjustedReleaseDate?: Moment;
+    public ended?: boolean;
+    public started?: boolean;
 
-    public isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
-    public isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
+    public isActiveQuiz?: boolean;
+    public isPracticeModeAvailable?: boolean;
 
-    constructor(course?: Course, exerciseGroup?: ExerciseGroup) {
+    constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.QUIZ);
-        this.course = course || null;
-        this.exerciseGroup = exerciseGroup || null;
+        this.course = course;
+        this.exerciseGroup = exerciseGroup;
+        this.randomizeQuestionOrder = true; // default value (set by server)
+        this.isVisibleBeforeStart = false; // default value (set by server)
+        this.isOpenForPractice = false; // default value (set by server)
+        this.isPlannedToStart = false; // default value (set by server)
+        this.isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
+        this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
     }
 }

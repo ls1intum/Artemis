@@ -25,7 +25,7 @@ describe('StudentQuestionAnswerComponent', () => {
 
     const unApprovedStudentQuestionAnswer = {
         id: 1,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'not approved',
         tutorApproved: false,
         author: user1,
@@ -33,7 +33,7 @@ describe('StudentQuestionAnswerComponent', () => {
 
     const approvedStudentQuestionAnswer = {
         id: 2,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'approved',
         tutorApproved: true,
         author: user2,
