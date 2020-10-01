@@ -39,10 +39,13 @@ describe('StudentQuestion Service', () => {
 
         elem2 = new StudentQuestion();
         elem2.id = 1;
-        elem2.creationDate = null;
+        elem2.creationDate = undefined;
         elem2.questionText = 'This is a test question';
 
-        exerciseDefault = new TextExercise();
+        courseDefault = new Course();
+        courseDefault.id = 1;
+
+        exerciseDefault = new TextExercise(courseDefault, undefined);
         exerciseDefault.id = 1;
         exerciseDefault.studentQuestions = [elemDefault];
 
@@ -50,8 +53,6 @@ describe('StudentQuestion Service', () => {
         lectureDefault.id = 1;
         lectureDefault.studentQuestions = [elem2];
 
-        courseDefault = new Course();
-        courseDefault.id = 1;
         courseDefault.exercises = [exerciseDefault];
         courseDefault.lectures = [lectureDefault];
 
@@ -110,7 +111,7 @@ describe('StudentQuestion Service', () => {
 
             const expected = [...studentQuestionList];
             service
-                .findQuestionsForCourse(courseDefault.id)
+                .findQuestionsForCourse(courseDefault.id!)
                 .pipe(take(2))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
