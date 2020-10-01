@@ -27,7 +27,7 @@ export class CategoryIssuesGraphComponent implements OnChanges {
 
     columns: IssueColumn[] = [];
 
-    ngOnChanges(_: SimpleChanges): void {
+    ngOnChanges(): void {
         if (!this.totalStudents) {
             return;
         }

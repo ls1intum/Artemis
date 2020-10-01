@@ -156,6 +156,6 @@ export class TestCaseDistributionGraphComponent implements OnChanges {
     }
 
     getColor(i: number): string {
-        return `hsl(${(i * 360 * 3) % 360}, 60%, 50%)`;
+        return `hsl(${(i * 360 * 3) % 360}, 55%, 55%)`;
     }
 }

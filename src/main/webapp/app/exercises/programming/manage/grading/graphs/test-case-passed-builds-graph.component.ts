@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 @Component({
@@ -14,15 +14,20 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
         </div>
     `,
 })
-export class TestCasePassedBuildsGraphComponent {
+export class TestCasePassedBuildsGraphComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
     @Input() totalParticipations: number;
 
-    get passedPercent() {
-        return ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
-    }
+    passedPercent: number;
+    failedPercent: number;
 
-    get failedPercent() {
-        return ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
+    ngOnChanges(): void {
+        const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
+        const failedPercent = ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
+
+        setTimeout(() => {
+            this.passedPercent = passedPercent;
+            this.failedPercent = failedPercent;
+        });
     }
 }
