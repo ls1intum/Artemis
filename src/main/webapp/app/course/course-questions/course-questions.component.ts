@@ -9,8 +9,8 @@ import { Lecture } from 'app/entities/lecture.model';
 
 export type StudentQuestionForOverview = {
     id: number;
-    questionText: string | null;
-    creationDate: Moment | null;
+    questionText?: string;
+    creationDate?: Moment;
     votes: number;
     answers: number;
     approvedAnswers: number;
@@ -46,17 +46,17 @@ export class CourseQuestionsComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.studentQuestionsService.findQuestionsForCourse(this.courseId).subscribe((res) => {
             this.studentQuestions = res.body!.map((question) => ({
-                id: question.id,
-                questionText: question.questionText,
-                creationDate: question.creationDate,
-                answers: question.answers ? question.answers.length : 0,
+                id: question.id!,
+                questionText: question.questionText!,
+                creationDate: question.creationDate!,
+                answers: question.answers ? question.answers!.length : 0,
                 approvedAnswers: this.getNumberOfApprovedAnswers(question),
-                votes: question.votes,
-                exerciseOrLectureId: question.exercise ? question.exercise.id : question.lecture.id,
-                exerciseOrLectureTitle: question.exercise ? question.exercise.title : question.lecture.title,
+                votes: question.votes!,
+                exerciseOrLectureId: question.exercise ? question.exercise!.id! : question.lecture!.id!,
+                exerciseOrLectureTitle: question.exercise ? question.exercise!.title! : question.lecture!.title!,
                 belongsToExercise: !!question.exercise,
-                exercise: question.exercise,
-                lecture: question.lecture,
+                exercise: question.exercise!,
+                lecture: question.lecture!,
             }));
             this.studentQuestionsToDisplay = this.studentQuestions.filter((question) => question.approvedAnswers === 0);
         });

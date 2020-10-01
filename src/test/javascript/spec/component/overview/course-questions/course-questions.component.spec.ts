@@ -27,7 +27,7 @@ describe('CourseQuestionsComponent', () => {
 
     const unApprovedStudentQuestionAnswer = {
         id: 1,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'not approved',
         tutorApproved: false,
         author: user1,
@@ -35,7 +35,7 @@ describe('CourseQuestionsComponent', () => {
 
     const approvedStudentQuestionAnswer = {
         id: 2,
-        answerDate: null,
+        answerDate: undefined,
         answerText: 'approved',
         tutorApproved: true,
         author: user2,
@@ -44,14 +44,14 @@ describe('CourseQuestionsComponent', () => {
     const studentQuestion = {
         id: 1,
         questionText: 'question',
-        creationDate: null,
+        creationDate: undefined,
         answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
     } as StudentQuestion;
 
     const studentQuestionForOverview = {
         id: 1,
         questionText: 'question',
-        creationDate: null,
+        creationDate: undefined,
         votes: 1,
         answers: 2,
         approvedAnswers: 1,
