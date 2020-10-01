@@ -195,28 +195,47 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Checks if deletion of submission, result and feedback delete the text assessment conflicts from the database.
-     * Additionally, checks the deletion of text assessment conflicts do not cause deletion of feedback.
+     * Checks if deletion of submission delete the text assessment conflicts from the database.
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteSubmissionResultAndFeedback() {
+    public void testSubmissionDelete() {
         TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
-        textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
+    /**
+     * Checks if deletion of a result delete the text assessment conflicts from the database.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResultDelete() {
+        TextSubmission textSubmission = this.createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getResult().getId());
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
+    /**
+     * Checks if deletion of feedback delete the text assessment conflicts from the database.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testFeedbackDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackRepository.deleteAll();
         assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+    }
 
+    /**
+     * Checks the deletion of text assessment conflicts do not cause deletion of feedback.
+     */
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testFeedbackConflictDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
         assertThat(feedbackRepository.findAll(), hasSize(2));
-
     }
 
     private List<FeedbackConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
