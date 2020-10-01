@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasswordService } from './password.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-password',
@@ -16,10 +17,17 @@ export class PasswordComponent implements OnInit {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
+    isRegistrationEnabled = false;
 
-    constructor(private passwordService: PasswordService, private accountService: AccountService) {}
+    constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService) {}
 
     ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+            }
+        });
+
         this.accountService.identity().then((user) => {
             this.user = user!;
         });

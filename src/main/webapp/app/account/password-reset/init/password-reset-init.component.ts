@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { PasswordResetInitService } from './password-reset-init.service';
 import { EMAIL_NOT_FOUND_TYPE } from 'app/shared/constants/error.constants';
+import { Account } from 'app/core/user/account.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-password-reset-init',
@@ -9,13 +11,19 @@ import { EMAIL_NOT_FOUND_TYPE } from 'app/shared/constants/error.constants';
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     error: string | null;
     errorEmailNotExists: string | null;
-    resetAccount: any;
+    resetAccount: Account;
     success: string | null;
+    isRegistrationEnabled = false;
 
-    constructor(private passwordResetInitService: PasswordResetInitService, private elementRef: ElementRef, private renderer: Renderer2) {}
+    constructor(private passwordResetInitService: PasswordResetInitService, private elementRef: ElementRef, private renderer: Renderer2, private profileService: ProfileService) {}
 
     ngOnInit() {
-        this.resetAccount = {};
+        this.resetAccount = new Account();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+            }
+        });
     }
 
     ngAfterViewInit() {
@@ -29,7 +37,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
         this.error = null;
         this.errorEmailNotExists = null;
 
-        this.passwordResetInitService.save(this.resetAccount.email).subscribe(
+        this.passwordResetInitService.save(this.resetAccount.email!).subscribe(
             () => {
                 this.success = 'OK';
             },

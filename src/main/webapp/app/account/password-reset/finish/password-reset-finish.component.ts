@@ -3,6 +3,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-password-reset-finish',
@@ -17,10 +18,23 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     success: string | null;
     modalRef: NgbModalRef;
     key: string;
+    isRegistrationEnabled = false;
 
-    constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private elementRef: ElementRef, private renderer: Renderer2) {}
+    constructor(
+        private passwordResetFinishService: PasswordResetFinishService,
+        private route: ActivatedRoute,
+        private elementRef: ElementRef,
+        private renderer: Renderer2,
+        private profileService: ProfileService,
+    ) {}
 
     ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+            }
+        });
+
         this.route.queryParams.subscribe((params) => {
             this.key = params['key'];
         });

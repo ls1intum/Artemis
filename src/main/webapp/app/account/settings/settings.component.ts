@@ -5,6 +5,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { AccountService } from 'app/core/auth/account.service';
 import { Account } from 'app/core/user/account.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-settings',
@@ -25,10 +26,22 @@ export class SettingsComponent implements OnInit {
         login: [],
         imageUrl: [],
     });
+    isRegistrationEnabled = false;
 
-    constructor(private accountService: AccountService, private fb: FormBuilder, private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {}
+    constructor(
+        private accountService: AccountService,
+        private fb: FormBuilder,
+        private languageService: JhiLanguageService,
+        private languageHelper: JhiLanguageHelper,
+        private profileService: ProfileService,
+    ) {}
 
     ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+            }
+        });
         this.accountService.identity().then((user) => {
             this.updateForm(user!);
         });

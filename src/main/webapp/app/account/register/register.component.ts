@@ -6,8 +6,6 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { tap, filter } from 'rxjs/operators';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -37,18 +35,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     ngOnInit() {
         this.success = false;
         this.registerAccount = new User();
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    this.isRegistrationEnabled = info.registrationEnabled;
-                    this.allowedEmailPattern = info.allowedEmailPattern;
-                    // TODO: show the email pattern to the user
-                    // TODO: check that the user follows the email pattern
-                }),
-            )
-            .subscribe();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.allowedEmailPattern = profileInfo.allowedEmailPattern;
+                // TODO: show the email pattern to the user
+                // TODO: check that the user follows the email pattern
+            }
+        });
     }
 
     ngAfterViewInit() {
