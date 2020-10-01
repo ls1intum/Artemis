@@ -25,6 +25,7 @@ import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { InformativeMarketingInstructorsComponent } from 'app/informative-marketing/instructors/informative-marketing-instructors.component';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -55,6 +56,7 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
+        InformativeMarketingInstructorsComponent,
     ],
     bootstrap: [JhiMainComponent],
 })
