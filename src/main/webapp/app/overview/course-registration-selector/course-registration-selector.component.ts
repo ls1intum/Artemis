@@ -28,7 +28,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 
     trackCourseById(index: number, item: Course) {
@@ -78,7 +78,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         if (this.courseToRegister) {
             this.showCourseSelection = false;
             this.loading = true;
-            this.courseService.registerForCourse(this.courseToRegister.id).subscribe(
+            this.courseService.registerForCourse(this.courseToRegister.id!).subscribe(
                 () => {
                     this.addedSuccessful = true;
                     this.loading = false;

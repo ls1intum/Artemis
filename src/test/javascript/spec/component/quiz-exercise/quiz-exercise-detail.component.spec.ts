@@ -29,7 +29,7 @@ describe('QuizExercise Management Detail Component', () => {
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
 
     const course: Course = { id: 123 } as Course;
-    const quizExercise = new QuizExercise(course);
+    const quizExercise = new QuizExercise(course, undefined);
     const mcQuestion = new MultipleChoiceQuestion();
 
     quizExercise.id = 456;

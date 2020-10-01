@@ -46,6 +46,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     get question() {
         return this._question;
     }
+    // TODO: Map vs. Array --> consistency
     @Input()
     mappings: DragAndDropMapping[];
     @Input()
@@ -70,7 +71,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     fnOnMappingUpdate: any;
 
     @Output()
-    mappingsChange = new EventEmitter();
+    mappingsChange = new EventEmitter<DragAndDropMapping[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -128,11 +129,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
     /**
      * react to the drop event of a drag item
      *
-     * @param dropLocation {object | null} the dropLocation that the drag item was dropped on.
-     *                     May be null if drag item was dragged back to the unassigned items.
+     * @param dropLocation {object | undefined} the dropLocation that the drag item was dropped on.
+     *                     May be undefined if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | undefined, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
 
@@ -215,7 +216,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * @return {Array} an array of all unassigned drag items
      */
     getUnassignedDragItems() {
-        return this.question.dragItems.filter((dragItem) => {
+        return this.question.dragItems?.filter((dragItem) => {
             return !this.mappings.some((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
@@ -288,6 +289,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
      */
     countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
+        this.correctAnswer = this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
     }
 }

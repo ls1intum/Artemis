@@ -58,7 +58,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: SafeHtml | null;
+    questionTextRendered?: SafeHtml;
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -132,7 +132,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions!.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as DragAndDropQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
@@ -162,7 +162,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         this.backgroundSolutionColor = [];
 
         // set label and backgroundcolor based on the dropLocations
-        this.question.dropLocations.forEach((dropLocation, i) => {
+        this.question.dropLocations!.forEach((dropLocation, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
             this.backgroundColor.push({
                 backgroundColor: '#428bca',
@@ -193,7 +193,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             pointBackgroundColor: '#5bc0de',
             pointBorderColor: '#5bc0de',
         });
-        this.backgroundSolutionColor[this.question.dropLocations.length] = {
+        this.backgroundSolutionColor[this.question.dropLocations!.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
             pointBackgroundColor: '#5bc0de',
@@ -202,7 +202,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.label[this.question.dropLocations.length] = lastLabel.split(' ');
+            this.label[this.question.dropLocations!.length] = lastLabel.split(' ');
             this.labels = this.label;
         });
     }
@@ -213,7 +213,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     loadInvalidLayout() {
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
-            this.question.dropLocations.forEach((dropLocation, i) => {
+            this.question.dropLocations!.forEach((dropLocation, i) => {
                 if (dropLocation.invalid) {
                     this.backgroundColor[i] = {
                         backgroundColor: '#838383',
@@ -243,14 +243,14 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         this.unratedData = [];
 
         // set data based on the dropLocations for each dropLocation
-        this.question.dropLocations.forEach((dropLocation) => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find((dlCounter) => dropLocation.id === dlCounter.dropLocation.id)!;
-            this.ratedData.push(dropLocationCounter.ratedCounter);
-            this.unratedData.push(dropLocationCounter.unRatedCounter);
+        this.question.dropLocations!.forEach((dropLocation) => {
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters?.find((dlCounter) => dropLocation.id === dlCounter.dropLocation!.id)!;
+            this.ratedData.push(dropLocationCounter.ratedCounter!);
+            this.unratedData.push(dropLocationCounter.unRatedCounter!);
         });
         // add data for the last bar (correct Solutions)
-        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
-        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter;
+        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
+        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
 
         this.labels = this.label;
 
@@ -269,12 +269,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             // if show Solution is true use the backgroundColor which shows the solution
             this.colors = this.backgroundSolutionColor;
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
                 this.data = this.ratedData.slice(0);
                 this.data.push(this.ratedCorrectData);
             } else {
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 // if rated is false use the unrated Data and add the unrated CorrectCounter
                 this.data = this.unratedData.slice(0);
                 this.data.push(this.unratedCorrectData);
@@ -285,11 +285,11 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             this.colors = this.backgroundColor;
             // if rated is true use the rated Data
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 this.data = this.ratedData;
             } else {
                 // if rated is false use the unrated Data
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 this.data = this.unratedData;
             }
         }
@@ -337,13 +337,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         let change = true;
         while (change) {
             change = false;
-            for (let i = 0; i < this.question.dropLocations.length - 1; i++) {
-                if (this.question.dropLocations[i].posX > this.question.dropLocations[i + 1].posX) {
-                    // switch DropLocations
-                    const temp = this.question.dropLocations[i];
-                    this.question.dropLocations[i] = this.question.dropLocations[i + 1];
-                    this.question.dropLocations[i + 1] = temp;
-                    change = true;
+            if (this.question.dropLocations && this.question.dropLocations.length > 0) {
+                for (let i = 0; i < this.question.dropLocations.length - 1; i++) {
+                    if (this.question.dropLocations[i].posX! > this.question.dropLocations[i + 1].posX!) {
+                        // switch DropLocations
+                        const temp = this.question.dropLocations[i];
+                        this.question.dropLocations[i] = this.question.dropLocations[i + 1];
+                        this.question.dropLocations[i + 1] = temp;
+                        change = true;
+                    }
                 }
             }
         }

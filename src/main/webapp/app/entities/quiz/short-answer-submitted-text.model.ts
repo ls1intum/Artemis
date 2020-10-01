@@ -3,9 +3,9 @@ import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submi
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 
 export class ShortAnswerSubmittedText implements BaseEntity {
-    public id: number;
-    public text: string;
-    public isCorrect: boolean;
-    public spot: ShortAnswerSpot;
-    public submittedAnswer: ShortAnswerSubmittedAnswer;
+    public id?: number;
+    public text?: string;
+    public isCorrect?: boolean;
+    public spot?: ShortAnswerSpot;
+    public submittedAnswer?: ShortAnswerSubmittedAnswer;
 }

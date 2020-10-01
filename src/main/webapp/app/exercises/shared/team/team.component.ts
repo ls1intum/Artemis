@@ -77,7 +77,6 @@ export class TeamComponent implements OnInit {
     }
 
     private onLoadError(error: any) {
-        console.error(error);
         this.jhiAlertService.error(error.message);
         this.isLoading = false;
     }
