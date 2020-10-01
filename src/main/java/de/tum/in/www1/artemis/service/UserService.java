@@ -236,6 +236,7 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             this.clearUserCaches(user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             return user;
         });
     }
@@ -290,6 +291,7 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
+        createUserInExternalSystems(newUser);
         userRepository.save(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
@@ -307,6 +309,7 @@ public class UserService {
         }
         userRepository.delete(existingUser);
         userRepository.flush();
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteUser(existingUser.getLogin()));
         this.clearUserCaches(existingUser);
         return true;
     }
@@ -462,13 +465,20 @@ public class UserService {
         user.setActivated(true);
         userRepository.save(user);
 
-        // If user management is done by Artemis, we also have to create the user in the version control system
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(user));
-
+        createUserInExternalSystems(user);
         artemisAuthenticationProvider.addUserToGroups(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
+    }
+
+    /**
+     * tries to create the user in the external system, in case this is available
+     * @param user the user, that should be created in the external system
+     */
+    private void createUserInExternalSystems(User user) {
+        // If user management is done by Artemis, we also have to create the user in the version control system
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(user));
     }
 
     /**
@@ -488,7 +498,8 @@ public class UserService {
             user.setLangKey(langKey);
             user.setImageUrl(imageUrl);
             this.clearUserCaches(user);
-            log.debug("Changed Information for User: {}", user);
+            log.info("Changed Information for User: {}", user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
         });
     }
 
