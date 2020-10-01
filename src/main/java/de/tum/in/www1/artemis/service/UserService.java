@@ -218,7 +218,7 @@ public class UserService {
             user.setActivated(true);
             user.setActivationKey(null);
             this.clearUserCaches(user);
-            log.debug("Activated user: {}", user);
+            log.info("Activated user: {}", user);
             return user;
         });
     }

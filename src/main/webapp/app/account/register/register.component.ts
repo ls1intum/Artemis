@@ -44,6 +44,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
                 tap((info: ProfileInfo) => {
                     this.isRegistrationEnabled = info.registrationEnabled;
                     this.allowedEmailPattern = info.allowedEmailPattern;
+                    // TODO: show the email pattern to the user
+                    // TODO: check that the user follows the email pattern
                 }),
             )
             .subscribe();
@@ -79,6 +81,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     private processError(response: HttpErrorResponse) {
         this.success = false;
+        // TODO: handle server errors better
         if (response.status === 400 && response.error.type === LOGIN_ALREADY_USED_TYPE) {
             this.errorUserExists = 'ERROR';
         } else if (response.status === 400 && response.error.type === EMAIL_ALREADY_USED_TYPE) {

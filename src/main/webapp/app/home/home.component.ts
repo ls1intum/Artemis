@@ -142,6 +142,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
+                // TODO: if registration is enabled, handle the case "User was not activated"
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
@@ -167,6 +168,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     requestResetPassword() {
         this.router.navigate(['/reset', 'request']);
     }
+
     inputChange($event: any) {
         if ($event.target && $event.target.name === 'username') {
             this.username = $event.target.value;

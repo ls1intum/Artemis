@@ -100,6 +100,10 @@
         },
         "form": {
             "username": "Username",
+            "firstname": "First name",
+            "firstname.placeholder": "Your first name",
+            "lastname": "Last name",
+            "lastname.placeholder": "Your last name",
             "username.placeholder": "Your Username",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
@@ -130,13 +134,13 @@
             "validate": {
                 "newpassword": {
                     "required": "Your password is required.",
-                    "minlength": "Your password is required to be at least 4 characters.",
+                    "minlength": "Your password is required to be at least 8 characters.",
                     "maxlength": "Your password cannot be longer than 50 characters.",
                     "strength": "Password strength:"
                 },
                 "confirmpassword": {
                     "required": "Your confirmation password is required.",
-                    "minlength": "Your confirmation password is required to be at least 4 characters.",
+                    "minlength": "Your confirmation password is required to be at least 8 characters.",
                     "maxlength": "Your confirmation password cannot be longer than 50 characters."
                 },
                 "email": {
