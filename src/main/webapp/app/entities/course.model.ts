@@ -57,6 +57,7 @@ export class Course implements BaseEntity {
         this.maxComplaintTimeDays = 7; // default value
         this.complaintsEnabled = true; // default value
         this.studentQuestionsEnabled = true; // default value
+        this.hasAchievements = false; // default value
     }
 
     /**
