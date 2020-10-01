@@ -192,7 +192,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.quizExercise = quizExercise;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic;
+        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
         this.maxScore = this.calculateMaxScore();
 
         this.loadData();
@@ -206,8 +206,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.quizQuestions.forEach(function (question) {
-            result = result + question.score;
+        this.quizExercise.quizQuestions!.forEach((question) => {
+            result = result + question.score!;
         });
         return result;
     }
@@ -222,10 +222,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.ratedData = [];
         this.unratedData = [];
         // set data based on the pointCounters
-        this.order(this.quizPointStatistic.pointCounters).forEach((pointCounter) => {
-            this.label.push(pointCounter.points.toString());
-            this.ratedData.push(pointCounter.ratedCounter);
-            this.unratedData.push(pointCounter.unRatedCounter);
+        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter) => {
+            this.label.push(pointCounter.points!.toString());
+            this.ratedData.push(pointCounter.ratedCounter!);
+            this.unratedData.push(pointCounter.unRatedCounter!);
             this.backgroundColor.push('#428bca');
         });
 
@@ -242,11 +242,11 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      */
     loadDataInDiagram() {
         if (this.rated) {
-            this.participants = this.quizPointStatistic.participantsRated;
+            this.participants = this.quizPointStatistic.participantsRated!;
             this.data = this.ratedData;
         } else {
             // load the unrated data
-            this.participants = this.quizPointStatistic.participantsUnrated;
+            this.participants = this.quizPointStatistic.participantsUnrated!;
             this.data = this.unratedData;
         }
         this.datasets = [
@@ -264,7 +264,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id).subscribe((res) => {
+        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }
@@ -283,11 +283,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * order the point cursors ascending
      */
     order(pointCursors: Array<PointCounter>) {
+        // TODO: use sorting service
         return pointCursors.sort((a: PointCounter, b: PointCounter) => {
-            if (a.points < b.points) {
+            if (a.points! < b.points!) {
                 return -1;
             }
-            if (a.points > b.points) {
+            if (a.points! > b.points!) {
                 return 1;
             }
             // a must be equal to b

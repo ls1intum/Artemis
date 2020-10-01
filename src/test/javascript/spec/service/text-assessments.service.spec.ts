@@ -9,7 +9,7 @@ describe('TextAssessment Service', () => {
     let service: TextAssessmentsService;
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
-    let mockResponse;
+    let mockResponse: any;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -61,7 +61,7 @@ describe('TextAssessment Service', () => {
 
     describe('Tracking', async () => {
         it('should not send feedback', async () => {
-            service.trackAssessment(null);
+            service.trackAssessment();
             httpMock.expectNone({ method: 'POST' });
         });
 
@@ -73,7 +73,7 @@ describe('TextAssessment Service', () => {
 
         it('should not parse jwt from header', async () => {
             service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
-                expect((studentParticipation.submissions[0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeNull();
+                expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
             });
 
             const mockRequest = httpMock.expectOne({ method: 'GET' });
@@ -82,7 +82,7 @@ describe('TextAssessment Service', () => {
 
         it('should parse jwt from header', async () => {
             service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
-                expect((studentParticipation.submissions[0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
+                expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
             });
 
             const mockRequest = httpMock.expectOne({ method: 'GET' });

@@ -159,8 +159,8 @@ describe('Audit Component Tests', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.query).toBeCalledWith(
-                    expect.objectContaining({
+                expect(service.query).toHaveBeenCalledWith(
+                    jasmine.objectContaining({
                         sort: ['id,desc'],
                     }),
                 );
@@ -176,8 +176,8 @@ describe('Audit Component Tests', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.query).toBeCalledWith(
-                    expect.objectContaining({
+                expect(service.query).toHaveBeenCalledWith(
+                    jasmine.objectContaining({
                         sort: ['timestamp,asc', 'id'],
                     }),
                 );

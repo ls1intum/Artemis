@@ -55,7 +55,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      * @param {string} text
      */
     onQuestionChange(text: string): void {
-        this.artemisMarkdown.parseTextHintExplanation(text, this.question);
+        ArtemisMarkdownService.parseTextHintExplanation(text, this.question);
     }
 
     /**
@@ -105,7 +105,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
         answer.isCorrect = box === CorrectOptionCommand.identifier;
-        this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
+        ArtemisMarkdownService.parseTextHintExplanation(answerOptionText, answer);
     }
 
     /**

@@ -30,7 +30,7 @@ describe('TextExercise Management Detail Component', () => {
 
     describe('OnInit with course exercise', () => {
         const course: Course = { id: 123 } as Course;
-        const textExerciseWithCourse: TextExercise = new TextExercise(course, null);
+        const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
         textExerciseWithCourse.id = 123;
 
         beforeEach(() => {
@@ -62,7 +62,7 @@ describe('TextExercise Management Detail Component', () => {
 
     describe('OnInit with exam exercise', () => {
         const exerciseGroup: ExerciseGroup = new ExerciseGroup();
-        const textExerciseWithExerciseGroup: TextExercise = new TextExercise(null, exerciseGroup);
+        const textExerciseWithExerciseGroup: TextExercise = new TextExercise(undefined, exerciseGroup);
         textExerciseWithExerciseGroup.id = 123;
 
         beforeEach(() => {

@@ -12,7 +12,7 @@ export class HtmlForGuidedTourMarkdownPipe implements PipeTransform {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      * @param {string} markdown the original markdown text
      */
-    transform(markdown: string): SafeHtml | null {
+    transform(markdown: string): SafeHtml {
         return this.markdownService.htmlForGuidedTourMarkdown(markdown);
     }
 }
