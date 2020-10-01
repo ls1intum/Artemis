@@ -18,8 +18,8 @@ export interface IAuthServerProvider {
     login: (credentials: Credentials) => Observable<void>;
     loginWithToken: (jwt: string, rememberMe: boolean) => Promise<string>;
     storeAuthenticationToken: (jwt: string, rememberMe: boolean) => void;
-    removeAuthTokenFromCaches: () => Observable<null>;
-    clearCaches: () => Observable<null>;
+    removeAuthTokenFromCaches: () => Observable<undefined>;
+    clearCaches: () => Observable<undefined>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -60,20 +60,20 @@ export class AuthServerProvider implements IAuthServerProvider {
      * Removes the user's auth tokens from the browser's caches.
      * This will lead to all endpoint requests failing with a 401.
      */
-    removeAuthTokenFromCaches(): Observable<null> {
+    removeAuthTokenFromCaches(): Observable<undefined> {
         this.localStorage.clear('authenticationToken');
         this.sessionStorage.clear('authenticationToken');
         // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
-        return of(null);
+        return of(undefined);
     }
 
     /**
      * Clears all the caches, should be invoked during logout
      */
-    clearCaches(): Observable<null> {
+    clearCaches(): Observable<undefined> {
         this.localStorage.clear();
         this.sessionStorage.clear();
         // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
-        return of(null);
+        return of(undefined);
     }
 }

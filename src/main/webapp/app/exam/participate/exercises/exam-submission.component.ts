@@ -47,6 +47,6 @@ export abstract class ExamSubmissionComponent {
         this.changeDetectorReference.detach();
     }
 
-    abstract getSubmission(): Submission | null;
+    abstract getSubmission(): Submission | undefined;
     abstract getExercise(): Exercise;
 }

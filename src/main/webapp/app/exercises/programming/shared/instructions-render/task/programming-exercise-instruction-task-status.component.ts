@@ -22,9 +22,9 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         return this.testsValue;
     }
     @Input() exerciseHints: ExerciseHint[] = [];
-    @Input() latestResult: Result | null;
+    @Input() latestResult?: Result;
 
-    ngbModalRef: NgbModalRef | null;
+    ngbModalRef?: NgbModalRef;
 
     testsValue: string[];
     testCaseState: TestCaseState;
@@ -74,10 +74,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
         this.ngbModalRef.result.then(
             () => {
-                this.ngbModalRef = null;
+                this.ngbModalRef = undefined;
             },
             () => {
-                this.ngbModalRef = null;
+                this.ngbModalRef = undefined;
             },
         );
     }

@@ -6,10 +6,16 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
-export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
+export class ProgrammingExerciseTestCaseUpdate {
+    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public afterDueDate?: boolean) {}
+
+    static from(testCase: ProgrammingExerciseTestCase) {
+        return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.afterDueDate);
+    }
+}
 
 export interface IProgrammingExerciseTestCaseService {
-    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
@@ -20,7 +26,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     public testCaseUrl = `${SERVER_API_URL}api/programming-exercise`;
 
     private connections: { [exerciseId: string]: string } = {};
-    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
+    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
@@ -40,14 +46,14 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      *
      * @param exerciseId
      */
-    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null> {
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
         if (this.subjects[exerciseId]) {
-            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
+            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | undefined>;
         } else {
             return this.getTestCases(exerciseId).pipe(
-                map((testCases) => (testCases.length ? testCases : null)),
-                catchError(() => of(null)),
-                switchMap((testCases: ProgrammingExerciseTestCase[] | null) => this.initTestCaseSubscription(exerciseId, testCases)),
+                map((testCases) => (testCases.length ? testCases : undefined)),
+                catchError(() => of(undefined)),
+                switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => this.initTestCaseSubscription(exerciseId, testCases)),
             );
         }
     }
@@ -105,7 +111,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      * @param initialValue
      */
-    private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | null) {
+    private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | undefined) {
         const testCaseTopic = `/topic/programming-exercise/${exerciseId}/test-cases`;
         this.jhiWebsocketService.subscribe(testCaseTopic);
         this.connections[exerciseId] = testCaseTopic;
@@ -113,7 +119,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         this.jhiWebsocketService
             .receive(testCaseTopic)
             .pipe(
-                map((testCases) => (testCases.length ? testCases : null)),
+                map((testCases) => (testCases.length ? testCases : undefined)),
                 tap((testCases) => this.notifySubscribers(exerciseId, testCases)),
             )
             .subscribe();
@@ -125,7 +131,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * @param exerciseId
      * @param testCases
      */
-    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | null) {
+    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | undefined) {
         this.subjects[exerciseId].next(testCases);
     }
 }

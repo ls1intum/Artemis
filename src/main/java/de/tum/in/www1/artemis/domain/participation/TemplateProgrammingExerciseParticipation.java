@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

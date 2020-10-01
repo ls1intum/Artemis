@@ -1,6 +1,6 @@
-import { Component, OnInit, Input, EventEmitter, Output, HostBinding, OnDestroy } from '@angular/core';
-import { timer, Observable, Subject } from 'rxjs';
-import { map, distinctUntilChanged, first, takeUntil } from 'rxjs/operators';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Observable, Subject, timer } from 'rxjs';
+import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';

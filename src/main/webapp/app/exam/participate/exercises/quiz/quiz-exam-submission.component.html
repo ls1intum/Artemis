@@ -42,28 +42,34 @@
             <span>[{{ exercise.maxScore }} {{ 'artemisApp.examParticipation.points' | translate }}]</span>
         </h4>
         <div *ngFor="let question of exercise.quizQuestions; let i = index">
+            <!-- TODO: Map vs Array consistency -->
             <jhi-multiple-choice-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === MULTIPLE_CHOICE"
                 [question]="question"
-                [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
+                [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
+                (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                 [fnOnSelection]="onSelectionChanged.bind(this)"
                 [submittedQuizExercise]="exercise"
                 [questionIndex]="i + 1"
             ></jhi-multiple-choice-question>
+            <!-- TODO: Map vs Array consistency -->
             <jhi-drag-and-drop-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === DRAG_AND_DROP"
                 [question]="question"
-                [(mappings)]="dragAndDropMappings[question.id]"
+                [mappings]="dragAndDropMappings.get(question.id!)!"
+                (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                 [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
             ></jhi-drag-and-drop-question>
+            <!-- TODO: Map vs Array consistency -->
             <jhi-short-answer-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === SHORT_ANSWER"
                 [question]="question"
-                [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+                [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
+                (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                 [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
             ></jhi-short-answer-question>

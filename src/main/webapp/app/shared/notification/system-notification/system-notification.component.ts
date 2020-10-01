@@ -28,7 +28,7 @@ export class SystemNotificationComponent implements OnInit {
 
     ngOnInit() {
         this.loadActiveNotification();
-        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+        this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 // maybe use connectedPromise as a set function
                 setTimeout(() => {
@@ -62,8 +62,8 @@ export class SystemNotificationComponent implements OnInit {
                 return;
             }
             systemNotification = systemNotification as SystemNotification;
-            systemNotification.notificationDate = systemNotification.notificationDate ? moment(systemNotification.notificationDate) : null;
-            systemNotification.expireDate = systemNotification.expireDate ? moment(systemNotification.expireDate) : null;
+            systemNotification.notificationDate = systemNotification.notificationDate ? moment(systemNotification.notificationDate) : undefined;
+            systemNotification.expireDate = systemNotification.expireDate ? moment(systemNotification.expireDate) : undefined;
             if (!this.notification) {
                 this.checkNotificationDates(systemNotification);
             } else {
