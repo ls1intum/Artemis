@@ -1,28 +1,15 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-
-export class GraphSection {
-    label: string;
-    color: string;
-    c1: GraphColumn;
-    c2: GraphColumn;
-    c3: GraphColumn;
-    hovered?: boolean;
-}
-export class GraphColumn {
-    x: number;
-    width: number;
-}
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { GraphColumn, GraphSection } from './test-case-distribution-graph.component';
 
 @Component({
-    selector: 'jhi-test-case-distribution-graph',
+    selector: 'jhi-sca-category-distribution-graph',
     template: `
         <div>
             <div>
-                <h4>Test Case Distribution</h4>
-                <p>The distribution of test cases across the metrices 'Weight', 'Weight + Bonus' and 'Points'. Hover over a colored block to see the test-case details.</p>
+                <h4>Category Distribution</h4>
+                <p>The distribution of categories across the metrices 'Penalty', 'Issues' and 'Points'. Hover over a colored block to see the category details.</p>
             </div>
             <div class="bg-light">
                 <svg [attr.viewBox]="'-17 -30 ' + (maxColumnWidth + 42) + ' 90'" style="max-height: 250px">
@@ -67,9 +54,8 @@ export class GraphColumn {
                             height="10"
                         ></rect>
                     </g>
-                    <text x="-3" y="15" dominant-baseline="central" font-size="3" text-anchor="end">Weights</text>
-                    <text x="-3" y="28" dominant-baseline="central" font-size="3" text-anchor="end">Weights</text>
-                    <text x="-3" y="32" dominant-baseline="central" font-size="3" text-anchor="end">&amp; Bonus</text>
+                    <text x="-3" y="15" dominant-baseline="central" font-size="3" text-anchor="end">Penalty</text>
+                    <text x="-3" y="30" dominant-baseline="central" font-size="3" text-anchor="end">Issues</text>
                     <text x="-3" y="45" dominant-baseline="central" font-size="3" text-anchor="end">Points</text>
                     <text x="101" y="55" font-size="3" text-anchor="middle">100%</text>
                 </svg>
@@ -81,22 +67,22 @@ export class GraphColumn {
                     <span>accounts for</span>
                     <br />
                     <span>
-                        <b>{{ hoveredSection!.c1.width?.toFixed(2) }}%</b> of the total score by weights only, </span
+                        <b>{{ hoveredSection!.c1.width.toFixed(2) }}%</b> of the total sum of per-issue penalties, </span
                     ><br />
                     <span>
-                        <b>{{ hoveredSection!.c2.width?.toFixed(2) }}%</b> of the total score by weights and bonus points, </span
+                        <b>{{ hoveredSection!.c2.width.toFixed(2) }}%</b> of the total number of issues, </span
                     ><br />
                     <span>
-                        <b>{{ hoveredSection!.c3.width?.toFixed(2) }}%</b> of the current points of all students.
+                        <b>{{ hoveredSection!.c3.width.toFixed(2) }}%</b> of the current penalty points of all students.
                     </span>
                 </div>
             </div>
         </div>
     `,
 })
-export class TestCaseDistributionGraphComponent implements OnChanges {
-    @Input() testCases: ProgrammingExerciseTestCase[];
-    @Input() testCaseStats?: TestCaseStats[];
+export class ScaCategoryDistributionGraphComponent implements OnChanges {
+    @Input() categories: StaticCodeAnalysisCategory[];
+    @Input() categoryHitMap?: { [category: string]: number }[];
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
@@ -113,34 +99,38 @@ export class TestCaseDistributionGraphComponent implements OnChanges {
             return;
         }
 
-        const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight, 0);
-        const maxScore = (this.exercise.maxScore + this.exercise.bonusPoints) / this.exercise.maxScore;
+        const categoryPenalties = this.categories
+            .map((category) => {
+                const issuesSum = this.categoryHitMap?.reduce((sum, issues) => sum + (issues[category.name] || 0), 0);
+                const penaltySum = this.categoryHitMap?.reduce((sum, issues) => sum + Math.min((issues[category.name] || 0) * category.penalty, category.maxPenalty), 0);
+                return { category, issues: issuesSum || 0, penalty: penaltySum || 0 };
+            })
+            .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.INACTIVE && (category.penalty !== 0 || issues !== 0));
 
-        const testCaseScores = this.testCases.map((testCase) => {
-            const testCaseScore = (totalWeight > 0 ? (testCase.weight * testCase.bonusMultiplier) / totalWeight : 0) + testCase.bonusPoints / this.exercise.maxScore;
-            return { testCase, score: Math.min(testCaseScore, maxScore), stats: this.testCaseStats?.find((stats) => stats.testName === testCase.testName) };
-        });
-
-        const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats!.numPassed : 0)).reduce((sum, points) => sum + points, 0);
+        const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + category.penalty, 0);
+        const totalIssues = categoryPenalties.reduce((sum, { issues }) => sum + issues, 0);
+        const totalPenaltyPoints = categoryPenalties.reduce((sum, { penalty }) => sum + penalty, 0);
 
         const makeColumn = (width: number, prevSection?: GraphColumn) => ({
             x: (prevSection?.x || 0) + (prevSection?.width || 0),
             width,
         });
 
-        const sections: GraphSection[] = testCaseScores.reduce((list: GraphSection[], element, i) => {
+        const sections: GraphSection[] = categoryPenalties.reduce((list: GraphSection[], element, i) => {
             const prevSection = list.length > 0 ? list[list.length - 1] : null;
             return [
                 ...list,
                 {
-                    label: element.testCase.testName,
-                    color: this.getColor(i / this.testCases.length),
-                    c1: makeColumn((totalWeight > 0 ? element.testCase.weight / totalWeight : 0) * 100, prevSection?.c1),
-                    c2: makeColumn(element.score * 100, prevSection?.c2),
-                    c3: makeColumn(element.stats && totalScore > 0 ? ((element.stats!.numPassed * element.score) / totalScore) * 100 : 0, prevSection?.c3),
+                    label: element.category.name,
+                    color: this.getColor(i / this.categories.length),
+                    c1: makeColumn((totalPenalty > 0 ? element.category.penalty / totalPenalty : 0) * 100, prevSection?.c1),
+                    c2: makeColumn((totalIssues > 0 ? element.issues / totalIssues : 0) * 100, prevSection?.c2),
+                    c3: makeColumn((totalPenaltyPoints > 0 ? element.penalty / totalPenaltyPoints : 0) * 100, prevSection?.c3),
                 },
             ];
         }, []);
+
+        console.log(sections);
 
         setTimeout(() => {
             this.sections = sections;

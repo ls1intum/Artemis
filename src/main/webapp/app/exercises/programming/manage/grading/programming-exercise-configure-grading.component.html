@@ -62,11 +62,6 @@
                             [sorts]="[{ prop: 'testName', dir: 'asc' }]"
                             [rowClass]="getRowClass"
                         >
-                            <ngx-datatable-column name="Id" prop="id">
-                                <ng-template ngx-datatable-cell-template let-value="value">
-                                    {{ value }}
-                                </ng-template>
-                            </ngx-datatable-column>
                             <ngx-datatable-column name="Test Name" prop="testName">
                                 <ng-template ngx-datatable-cell-template let-value="value">
                                     {{ value }}
@@ -152,7 +147,7 @@
             <div *ngIf="activeTab == 'code-analysis' && exercise.staticCodeAnalysisEnabled">
                 <div class="grading-table-layout">
                     <div>
-                        <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
                             <h2>Code Analysis Categories</h2>
                             <jhi-programming-exercise-grading-table-actions
                                 [exercise]="exercise"
@@ -222,7 +217,14 @@
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h2 class="mb-4">Live Charts</h2>
+                        <h2 class="mb-5">Live Charts</h2>
+
+                        <jhi-sca-category-distribution-graph
+                            [categories]="staticCodeAnalysisCategories"
+                            [categoryHitMap]="gradingStatistics?.categoryHitMap"
+                            [totalParticipations]="gradingStatistics?.numParticipations"
+                            [exercise]="exercise"
+                        ></jhi-sca-category-distribution-graph>
                     </div>
                 </div>
             </div>

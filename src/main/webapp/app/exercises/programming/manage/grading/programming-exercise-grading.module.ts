@@ -13,6 +13,7 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
 import { TestCasePassedBuildsGraphComponent } from 'app/exercises/programming/manage/grading/graphs/test-case-passed-builds-graph.component';
 import { CategoryIssuesGraphComponent } from 'app/exercises/programming/manage/grading/graphs/category-issues-graph.component';
 import { TestCaseDistributionGraphComponent } from 'app/exercises/programming/manage/grading/graphs/test-case-distribution-graph.component';
+import { ScaCategoryDistributionGraphComponent } from 'app/exercises/programming/manage/grading/graphs/sca-category-distribution-graph.component';
 
 @NgModule({
     imports: [
@@ -35,6 +36,7 @@ import { TestCaseDistributionGraphComponent } from 'app/exercises/programming/ma
         TestCasePassedBuildsGraphComponent,
         CategoryIssuesGraphComponent,
         TestCaseDistributionGraphComponent,
+        ScaCategoryDistributionGraphComponent,
     ],
     exports: [ProgrammingExerciseConfigureGradingComponent, ProgrammingExerciseGradingDirtyWarningComponent],
 })
