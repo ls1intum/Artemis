@@ -29,3 +29,22 @@ $border-color: #979797;
         }
     }
 }
+
+.grading-table-layout {
+    display: flex;
+    flex-flow: row wrap;
+
+    & > div {
+        padding: 20px;
+        flex-shrink: 0;
+        flex-grow: 1;
+    }
+
+    & > div:first-child {
+        flex-basis: 800px;
+    }
+
+    & > div:last-child {
+        flex-basis: 400px;
+    }
+}

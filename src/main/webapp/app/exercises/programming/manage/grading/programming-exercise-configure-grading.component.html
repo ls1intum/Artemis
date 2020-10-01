@@ -46,7 +46,7 @@
                     <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
                 </label>
 
-                <div class="grading-split-view">
+                <div class="grading-table-layout">
                     <div>
                         <ngx-datatable
                             id="testCaseTable"
@@ -136,7 +136,7 @@
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h1>Live Charts</h1>
+                        <h1 class="mb-4">Live Charts</h1>
 
                         <jhi-test-case-distribution-graph
                             [testCases]="filteredTestCases"

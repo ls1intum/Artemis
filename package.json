@@ -181,8 +181,8 @@
         "src/{main,test}/java/**/*.java": "bash ./linting.sh"
     },
     "scripts": {
-        "prettier:format": "prettier --write 'src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}'",
-        "prettier:check": "prettier --check 'src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}'",
+        "prettier:format": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
+        "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
         "lint": "eslint . --ext .ts",
         "lint:fix": "yarn run lint --fix",
         "lint:doc": "tslint --config tslint-doc.json --project tsconfig.json -e 'node_modules/**'",
