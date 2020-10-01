@@ -16,11 +16,13 @@
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+        <!-- TODO: Map vs Array consistency -->
         <jhi-multiple-choice-question
             id="question{{ i }}"
             *ngIf="question.type === MULTIPLE_CHOICE"
             [question]="question"
-            [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
+            [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
+            (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
             [fnOnSelection]="onSelectionChanged.bind(this)"
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
@@ -28,31 +30,35 @@
             [submittedQuizExercise]="quizExercise"
             [forceSampleSolution]="mode === 'solution'"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
+            [score]="questionScores[question.id!]"
         ></jhi-multiple-choice-question>
+        <!-- TODO: Map vs Array consistency -->
         <jhi-drag-and-drop-question
             id="question{{ i }}"
             *ngIf="question.type === DRAG_AND_DROP"
             [question]="question"
-            [(mappings)]="dragAndDropMappings[question.id]"
+            [mappings]="dragAndDropMappings.get(question.id!)!"
+            (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
             [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
             [forceSampleSolution]="mode === 'solution'"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
+            [score]="questionScores[question.id!]"
         ></jhi-drag-and-drop-question>
+        <!-- TODO: Map vs Array consistency -->
         <jhi-short-answer-question
             id="question{{ i }}"
             *ngIf="question.type === SHORT_ANSWER"
             [question]="question"
-            [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+            [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
+            (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
             [forceSampleSolution]="mode === 'solution'"
             [questionIndex]="i + 1"
-            [score]="questionScores[question.id]"
+            [score]="questionScores[question.id!]"
         ></jhi-short-answer-question>
     </div>
 </div>
@@ -109,8 +115,8 @@
                     <span
                         id="remaining-time-value"
                         [ngClass]="{
-                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4,
-                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2
+                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
+                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2
                         }"
                     >
                         {{ remainingTimeText }}

@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 

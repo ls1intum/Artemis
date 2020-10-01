@@ -11,7 +11,7 @@ import * as $ from 'jquery';
     styleUrls: ['./modeling-assessment.component.scss'],
 })
 export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, OnChanges {
-    apollonEditor: ApollonEditor | null = null;
+    apollonEditor?: ApollonEditor;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
@@ -74,7 +74,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     ngOnDestroy() {
-        if (this.apollonEditor !== null) {
+        if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
     }
@@ -92,7 +92,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.highlightedElements) {
             this.highlightedElements = changes.highlightedElements.currentValue;
 
-            if (this.apollonEditor !== null) {
+            if (this.apollonEditor) {
                 this.applyStateConfiguration();
             }
         }
@@ -108,7 +108,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * events of Apollon an passes them on to parent components.
      */
     private initializeApollonEditor() {
-        if (this.apollonEditor !== null) {
+        if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
 
@@ -153,7 +153,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
                 existingFeedback.credits = assessment.score;
-                existingFeedback.text = assessment.feedback || null;
+                existingFeedback.text = assessment.feedback;
             } else {
                 this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }

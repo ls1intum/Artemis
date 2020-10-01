@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -19,7 +19,7 @@ export class FileUploadExamSummaryComponent implements OnInit {
      * @param filePath
      * File Upload Exercise
      */
-    downloadFile(filePath: string | null) {
+    downloadFile(filePath: string | undefined) {
         if (!filePath) {
             return;
         }

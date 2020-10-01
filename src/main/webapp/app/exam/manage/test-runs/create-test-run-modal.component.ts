@@ -22,17 +22,23 @@ export class CreateTestRunModalComponent implements OnInit {
 
     ngOnInit(): void {
         this.initWorkingTimeForm();
+        this.ignoreEmptyExerciseGroups();
     }
 
     /**
      * Creates a test run student exam based on the test run configuration, {@link testRunConfiguration}.
+     * To maintain the order of the exercises we must insert them into the testRun configuration in an orderly fashion
      * Closes the modal and returns the configured testRun.
      */
     createTestRun() {
         if (this.testRunConfigured) {
             const testRun = new StudentExam();
             testRun.exam = this.exam;
-            testRun.exercises = Object.values(this.testRunConfiguration);
+            testRun.exercises = [];
+            // add exercises one by one to maintain exerciseGroup order
+            for (const exerciseGroup of this.exam.exerciseGroups!) {
+                testRun.exercises.push(this.testRunConfiguration[exerciseGroup.id!]);
+            }
             testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
             this.activeModal.close(testRun);
         }
@@ -45,11 +51,11 @@ export class CreateTestRunModalComponent implements OnInit {
      * @param exerciseGroup The exercise group for which the user selected an exercise
      */
     onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
-        this.testRunConfiguration[exerciseGroup.id] = exercise;
+        this.testRunConfiguration[exerciseGroup.id!] = exercise;
     }
 
     /**
-     * Track the items by id on the exercise Tables
+     * Track the items by id on the exercise Tables.
      * @param index {number}
      * @param item {Exercise}
      */
@@ -71,6 +77,24 @@ export class CreateTestRunModalComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Removes the exerciseGroups from the exam which do not contain exercises
+     * @private
+     */
+    private ignoreEmptyExerciseGroups() {
+        const exerciseGroupWithExercises: ExerciseGroup[] = [];
+        for (const exerciseGroup of this.exam.exerciseGroups!) {
+            if (!!exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
+                exerciseGroupWithExercises.push(exerciseGroup);
+            }
+        }
+        this.exam.exerciseGroups = exerciseGroupWithExercises;
+    }
+
+    /**
+     * Sets up the working time form to display the default working time based on the exam dates
+     * @private
+     */
     private initWorkingTimeForm() {
         const defaultWorkingTime = this.exam.endDate?.diff(this.exam.startDate, 'seconds');
         const workingTime = this.artemisDurationFromSecondsPipe.transform(defaultWorkingTime ?? 0);

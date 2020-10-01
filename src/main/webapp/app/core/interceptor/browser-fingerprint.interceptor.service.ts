@@ -18,7 +18,7 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
      * Intercepts all HTTP Requests to the Artemis Server and adds Fingerprint + Instance ID as HTTP Headers
      *
      * @param request The outgoing request object to handle.
-     * @param next The next interceptor in the chain, or the backend if no interceptors remain in the chain.
+     * @param next The next interceptor in the chain, or the server if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

@@ -7,7 +7,7 @@ import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import * as ace from 'brace';
@@ -18,6 +18,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash';
+import { Feedback } from 'app/entities/feedback.model';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -25,16 +26,18 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     styleUrls: ['./code-editor-ace.scss'],
+    encapsulation: ViewEncapsulation.None,
     providers: [RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
-
     @Input()
     selectedFile: string;
     @Input()
-    sessionId: number;
+    sessionId: number | string;
+    @Input()
+    readOnlyManualFeedback: boolean;
     @Input()
     set annotations(annotations: Array<Annotation>) {
         this.setAnnotations(annotations);
@@ -45,19 +48,31 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly editorState: EditorState;
     @Input()
     isTutorAssessment = false;
+    @Input()
+    feedbacks: Feedback[];
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
     onError = new EventEmitter<string>();
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
+    // Line widgets for inline feedback
+    readonly LineWidgets = ace.acequire('ace/line_widgets').LineWidgets;
     /** Ace Editor Options **/
     editorMode: string; // String or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+    // Inline feedback variables
+    fileFeedbacks: Feedback[];
+    lineCounter: any[] = [];
+    private elementArray: Element[] = [];
+    fileFeedbackPerLine: { [line: number]: Feedback } = {};
+    editorSession: any;
 
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
@@ -72,6 +87,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
         });
+        if (this.isTutorAssessment) {
+            this.editor.getEditor().setShowFoldWidgets(false);
+        }
     }
 
     /**
@@ -110,6 +128,20 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Makes sure previous settings are restored and the correct language service is used.
      **/
     initEditorAfterFileChange() {
+        // Setup editorSession for inline feedback using lineWidgets
+        this.editorSession = this.editor.getEditor().getSession();
+        if (!this.editorSession.widgetManager) {
+            this.editorSession.widgetManager = new this.LineWidgets(this.editorSession);
+            this.editorSession.widgetManager.attach(this.editor.getEditor());
+        }
+        // Remove previous lineWidgets
+        if (this.editorSession.lineWidgets) {
+            this.editorSession.lineWidgets.forEach((widget: any) => {
+                if (widget) {
+                    this.editorSession.widgetManager.removeLineWidget(widget);
+                }
+            });
+        }
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
@@ -129,6 +161,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
             this.displayAnnotations();
+
+            // Setup inline feedbacks
+            // Get amount of lines of code in order to render for each line a corresponding inline feedback component
+            if (this.isTutorAssessment) {
+                const lines = this.editor.getEditor().getSession().getLength();
+                this.lineCounter = new Array(lines);
+                if (!this.feedbacks) {
+                    this.feedbacks = [];
+                }
+                this.fileFeedbacks = this.feedbacks.filter((feedback) => feedback.reference && feedback.reference.includes(this.selectedFile));
+                this.fileFeedbackPerLine = {};
+                this.fileFeedbacks.forEach((feedback) => {
+                    const line: number = +feedback.reference!.split('line:')[1];
+                    this.fileFeedbackPerLine[line] = feedback;
+                });
+            }
         }
     }
 
@@ -167,6 +215,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onFileTextChanged(code: string) {
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
+            if (!this.readOnlyManualFeedback) {
+                this.setupLineIcons();
+            }
+            this.displayFeedbacks();
         }
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
@@ -297,5 +349,150 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .getEditor()
             .getSession()
             .setAnnotations(this.annotationsArray.filter((a) => a.fileName === this.selectedFile));
+    }
+
+    /**
+     * Displays the inline feedback of a line of code using lineWidgets. We first go through all feedbacks of the selected file
+     * and create a lineWidget for each feedback. The elementArray contains all inline feedback components which have been added as lineWidget.
+     */
+    displayFeedbacks() {
+        this.fileFeedbacks.forEach((feedback) => {
+            const line: number = +feedback.reference!.split('line:')[1];
+            this.addLineWidgetWithFeedback(line);
+        });
+    }
+
+    /**
+     * Adds the inline comment button to all visible gutters in the ace editor.
+     * We use a MutualObserver to check if children of the gutter layer changes
+     * in order to add the button to all gutters.
+     */
+    setupLineIcons() {
+        const gutterContainer = document.querySelector('.ace_gutter-layer');
+        const container = this.editor.getEditor().container;
+        this.observerDom(gutterContainer!, () => {
+            const gutters = container.querySelectorAll('.ace_gutter-cell');
+            const buttonInlineComment = document.querySelector('.btn-inline-comment');
+            gutters.forEach((gutter: HTMLElement) => {
+                const clone = buttonInlineComment!.cloneNode(true);
+                clone.addEventListener('click', () => this.addLineWidgetWithFeedback(+gutter.innerText - 1));
+                // TODO: Check whether this causes an issue when having annotations
+                if (gutter.childElementCount < 1) {
+                    gutter.appendChild(clone);
+                }
+            });
+        });
+    }
+
+    /**
+     * Add lineWidget for specific line of code.
+     * @param line line of code where the feedback inline component will be added to.
+     */
+    addLineWidgetWithFeedback(line: number) {
+        // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
+        let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+        if (!inlineFeedback) {
+            inlineFeedback = document.querySelector(`#test-${line}`);
+            if (inlineFeedback) {
+                this.elementArray.push(inlineFeedback);
+            }
+        }
+        if (inlineFeedback) {
+            const lineWidget = {
+                row: line,
+                fixedWidth: true,
+                coverGutter: true,
+                el: inlineFeedback,
+            };
+            // Check if lineWidget is already displayed
+            if (this.editorSession.lineWidgets) {
+                const displayedWidget = this.editorSession.lineWidgets.find((w: any) => w && w.row === lineWidget.row);
+                if (!!!displayedWidget) {
+                    lineWidget.el.className = 'inline-feedback';
+                    this.editorSession.widgetManager.addLineWidget(lineWidget);
+                }
+            } else {
+                lineWidget.el.className = 'inline-feedback';
+                this.editorSession.widgetManager.addLineWidget(lineWidget);
+            }
+        }
+    }
+
+    /**
+     * Adjusts the height of the ace editor after the lineWidget (inline feedback component) changed size
+     * @param line Line of code which has inline feedback (lineWidget)
+     */
+    adjustLineWidgetHeight(line: number) {
+        const widget = this.editorSession.lineWidgets.find((w: any) => w && w.el?.id === 'test-' + line);
+        this.editorSession.widgetManager.removeLineWidget(widget);
+        this.editorSession.widgetManager.addLineWidget(widget);
+    }
+
+    /**
+     * Called whenever a inline feedback element is emitted. Updates existing feedbacks or adds onto it
+     * @param feedback Newly created inline feedback.
+     */
+    updateFeedback(feedback: Feedback) {
+        const line: number = +feedback.reference!.split('line:')[1];
+        // Check if feedback already exists and update it, else append it to feedbacks of the file
+        if (this.feedbacks.some((f) => f.reference === feedback.reference)) {
+            const index = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
+            this.feedbacks[index] = feedback;
+            this.fileFeedbackPerLine[line] = feedback;
+        } else {
+            this.feedbacks.push(feedback);
+            this.fileFeedbackPerLine[line] = feedback;
+        }
+        this.onUpdateFeedback.emit(this.feedbacks);
+        this.adjustLineWidgetHeight(line);
+    }
+
+    /**
+     * Called whenever a inline feedback is cancelled. Removes it from ace editor or just aligns height.
+     * @param line
+     */
+    cancelFeedback(line: number) {
+        if (!this.fileFeedbackPerLine[line]) {
+            const widget = this.editorSession.lineWidgets.filter((w: any) => w && w.el?.id === 'test-' + line)[0];
+            this.editorSession.widgetManager.removeLineWidget(widget);
+        } else {
+            this.adjustLineWidgetHeight(line);
+        }
+    }
+
+    /**
+     * Deletes a feedback from the feedbacks
+     * @param feedback Feedback to be removed
+     */
+    deleteFeedback(feedback: Feedback) {
+        const indexToDelete = this.feedbacks.indexOf(feedback);
+        const line: number = +feedback.reference!.split('line:')[1];
+        this.feedbacks.splice(indexToDelete, 1);
+        delete this.fileFeedbackPerLine[line];
+        this.cancelFeedback(line);
+        this.onUpdateFeedback.emit(this.feedbacks);
+    }
+
+    /**
+     * Observes whether the children of the DOM element change.
+     * We need this to detect changes in the gutter layer, to add the inline button to each gutter.
+     * @param obj The DOM element on which we check if children change.
+     * @param callback The method to be called when a change is detected.
+     */
+    observerDom(obj: Element, callback: () => void) {
+        if (!obj || obj.nodeType !== 1) {
+            return;
+        }
+        if (MutationObserver) {
+            // define a new observer
+            const mutationObserver = new MutationObserver(callback);
+
+            // have the observer observe the gutter layer for changes in children
+            mutationObserver.observe(obj, { childList: true, subtree: true });
+        } else {
+            obj.addEventListener('DOMNodeInserted', callback, false);
+            obj.addEventListener('DOMNodeRemoved', callback, false);
+        }
+        callback();
     }
 }

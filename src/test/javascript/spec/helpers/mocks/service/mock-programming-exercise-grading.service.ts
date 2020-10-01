@@ -8,7 +8,7 @@ import {
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 
 export class MockProgrammingExerciseGradingService implements IProgrammingExerciseGradingService {
-    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | null>(null);
+    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
 
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.subject as Observable<ProgrammingExerciseTestCase[]>;
@@ -21,7 +21,7 @@ export class MockProgrammingExerciseGradingService implements IProgrammingExerci
         this.subject = new BehaviorSubject(initialValue);
     }
 
-    next(value: ProgrammingExerciseTestCase[]) {
+    next(value: ProgrammingExerciseTestCase[] | undefined) {
         this.subject.next(value);
     }
 

@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -22,9 +25,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
  * Hazelcast distributed objects are more database like, which means that modifications of the objects themselves
  * will not have any effect until they are send to all other instances, e.g. by replacing the value in the data structure.
  * <p>
- * To handle this better, we provide methods in this class that make {@linkplain #getReadCacheFor(Long) read-operations} and 
- * {@linkplain #getTransientWriteCacheFor(Long) write operations on transient properties} easier and less error prone; 
- * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an 
+ * To handle this better, we provide methods in this class that make {@linkplain #getReadCacheFor(Long) read-operations} and
+ * {@linkplain #getTransientWriteCacheFor(Long) write operations on transient properties} easier and less error prone;
+ * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
  */
 final class QuizCache {
@@ -70,7 +73,7 @@ final class QuizCache {
 
     /**
      * Returns all the ids of currently cached quiz exercises.
-     *  
+     *
      * @return a snapshot of all ids of cached quiz exercises, cannot be modified
      * @implNote This is the {@linkplain Map#keySet() key set} of the map of this cache.
      */
@@ -80,7 +83,7 @@ final class QuizCache {
 
     /**
      * Returns all the {@link QuizExerciseCache} that are currently in the cache.
-     *  
+     *
      * @return a snapshot of all {@link QuizExerciseCache}s in this cache, cannot be modified (apart from transient properties)
      * @implNote This is the {@linkplain Map#values() value collection} of the map of this cache.
      */
@@ -91,8 +94,8 @@ final class QuizCache {
     }
 
     /**
-     * Returns a distributed quiz exercise cache or null. 
-     * 
+     * Returns a distributed quiz exercise cache or null.
+     *
      * @return a {@link QuizExerciseCache} object, can be null
      * @implNote This is just a {@linkplain Map#get(Object) get} operation on the map of the cache.
      */
@@ -196,13 +199,13 @@ final class QuizCache {
     }
 
     /**
-     * This removes the quiz of given id from the cache, if possible. 
+     * This removes the quiz of given id from the cache, if possible.
      * <p>
      * This action will not cancel any scheduled tasks, this needs to be done separately.
-     * Cached data like cached submissions and results will be preserved, if present. 
-     * 
+     * Cached data like cached submissions and results will be preserved, if present.
+     *
      * @param quizExerciseId the id of the quiz exercise cache to remove
-     * @return 
+     * @return
      * @implNote This just removes the {@link QuizExerciseCache} from the cache map
      */
     QuizExerciseCache remove(Long quizExerciseId) {
@@ -212,12 +215,12 @@ final class QuizCache {
     /**
      * This removes the quiz of given id from the cache, if possible, and clears it.
      * <p>
-     * <b>WARNING:</b> The clear operation will clear all cached data like submissions and results. 
+     * <b>WARNING:</b> The clear operation will clear all cached data like submissions and results.
      * Due to the concurrent nature of the cache, it is not possible to determine if this causes data to be lost.
      * When in doubt, use only {@link #remove(Long)} instead.
      * <p>
      * This action will not cancel any scheduled tasks, this needs to be done separately.
-     *  
+     *
      * @param quizExerciseId the id of the quiz exercise cache to remove and clear
      * @see #remove(Long)
      */
@@ -229,7 +232,7 @@ final class QuizCache {
     }
 
     /**
-     * Releases all cached resources, all cached objects will be lost. 
+     * Releases all cached resources, all cached objects will be lost.
      * <p>
      * <b>WARNING:</b> This should only be used for exceptional cases, such as deleting everything or for testing.
      * Due to the concurrent nature of the cache, it is not possible to determine if this causes data to be lost.
@@ -242,8 +245,8 @@ final class QuizCache {
     }
 
     /**
-     * Updates the cached {@link QuizExercise} object, mainly to prevent load on the DB. 
-     * 
+     * Updates the cached {@link QuizExercise} object, mainly to prevent load on the DB.
+     *
      * @param quizExercise the new quiz exercise object
      */
     void updateQuizExercise(QuizExercise quizExercise) {
@@ -254,7 +257,7 @@ final class QuizCache {
 
     /**
      * Set the transient <code>exercise</code> property of the quiz exercise cache for this instance only.
-     * 
+     *
      * @param quizExercise the new quiz exercise object
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {

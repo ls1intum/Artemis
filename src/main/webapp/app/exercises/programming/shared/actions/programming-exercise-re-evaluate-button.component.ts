@@ -42,7 +42,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
      */
     triggerReEvaluate() {
         this.isReEvaluationRunning = true;
-        this.testCaseService.reEvaluate(this.exercise.id).subscribe(
+        this.testCaseService.reEvaluate(this.exercise.id!).subscribe(
             (updatedResultsCount: number) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.success(`artemisApp.programmingExercise.reEvaluateSuccessful`, { number: updatedResultsCount });

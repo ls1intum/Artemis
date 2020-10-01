@@ -73,15 +73,15 @@ export class AssessmentLocksComponent implements OnInit {
         if (confirmCancel) {
             switch (canceledSubmission.submissionExerciseType) {
                 case SubmissionExerciseType.MODELING:
-                    this.modelingAssessmentService.cancelAssessment(canceledSubmission.id).subscribe();
+                    this.modelingAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();
                     break;
                 case SubmissionExerciseType.TEXT:
-                    if (canceledSubmission.participation.exercise?.id !== undefined) {
-                        this.textAssessmentsService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id).subscribe();
+                    if (canceledSubmission.participation?.exercise?.id) {
+                        this.textAssessmentsService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id!).subscribe();
                     }
                     break;
                 case SubmissionExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id).subscribe();
+                    this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id!).subscribe();
                     break;
                 default:
                     break;
@@ -102,7 +102,6 @@ export class AssessmentLocksComponent implements OnInit {
      * @param error
      */
     private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 }

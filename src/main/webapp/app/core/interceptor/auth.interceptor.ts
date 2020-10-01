@@ -12,7 +12,7 @@ export class AuthInterceptor implements HttpInterceptor {
      * Identifies and handles a given HTTP request. If the request is valid, add a authenticationToken from localStorage or sessionStorage
      * and pass on to next.
      * @param request The outgoing request object to handle.
-     * @param next The next interceptor in the chain, or the backend
+     * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */

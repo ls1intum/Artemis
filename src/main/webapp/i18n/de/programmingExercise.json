@@ -128,6 +128,11 @@
                 "notReleased": "Nicht veröffentlicht",
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Benotung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
             },
+            "configureGrading": {
+                "title": "Setze Benotung",
+                "save": "Speichern",
+                "reset": "Zurücksetzen"
+            },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",

@@ -73,7 +73,8 @@ public class ExamSubmissionService {
             }
             catch (EntityNotFoundException entityNotFoundException) {
                 // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
-                // This is called often, everytime an exercise is saved therefore it is best to limit unessesary database calls
+                // isAllowedToSubmit is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit unnecessary database
+                // calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
                     throw entityNotFoundException;
                 }

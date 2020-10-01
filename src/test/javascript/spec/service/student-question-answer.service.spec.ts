@@ -26,7 +26,7 @@ describe('ExerciseHint Service', () => {
 
         elemDefault = new StudentQuestionAnswer();
         elemDefault.id = 0;
-        elemDefault.answerDate = null;
+        elemDefault.answerDate = undefined;
         elemDefault.answerText = 'This is a test answer';
     });
 

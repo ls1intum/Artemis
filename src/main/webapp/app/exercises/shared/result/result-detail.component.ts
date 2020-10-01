@@ -43,7 +43,7 @@ export class ResultDetailComponent implements OnInit {
         of(this.result.feedbacks)
             .pipe(
                 // If the result already has feedbacks assigned to it, don't query the server.
-                switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id))),
+                switchMap((feedbacks: Feedback[] | undefined | null) => (feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.id!))),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
@@ -59,7 +59,7 @@ export class ResultDetailComponent implements OnInit {
                     }
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (this.exerciseType === ExerciseType.PROGRAMMING && (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)) {
-                        return this.fetchAndSetBuildLogs(this.result.participation!.id);
+                        return this.fetchAndSetBuildLogs(this.result.participation!.id!);
                     }
                     return of(null);
                 }),
@@ -117,6 +117,11 @@ export class ResultDetailComponent implements OnInit {
                 this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
             }),
             catchError((error: HttpErrorResponse) => {
+                /**
+                 * The request returns 403 if the build was successful and therefore no build logs exist.
+                 * If no submission is available, the client will attempt to fetch the build logs anyways.
+                 * We catch the error here as it would prevent the displaying of feedback.
+                 */
                 if (error.status === 403) {
                     return of(null);
                 }
