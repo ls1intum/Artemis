@@ -73,7 +73,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createTextAssessmentConflicts() throws NetworkingError {
+    public void createFeedbackConflicts() throws NetworkingError {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission1, "student1");
@@ -121,7 +121,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedTextAssessmentConflictsType() throws NetworkingError {
+    public void changedFeedbackConflictsType() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
@@ -162,7 +162,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveTextAssessmentConflicts() throws NetworkingError {
+    public void solveFeedbackConflicts() throws NetworkingError {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 

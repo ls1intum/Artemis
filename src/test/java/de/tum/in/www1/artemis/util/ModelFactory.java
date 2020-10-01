@@ -492,6 +492,7 @@ public class ModelFactory {
         feedbackConflict.setFirstFeedback(firstFeedback);
         feedbackConflict.setSecondFeedback(secondFeedback);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
+        feedbackConflict.setMarkedAsNotConflict(false);
         return feedbackConflict;
     }
 

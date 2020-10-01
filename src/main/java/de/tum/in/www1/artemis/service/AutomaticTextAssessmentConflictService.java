@@ -60,6 +60,11 @@ public class AutomaticTextAssessmentConflictService {
      */
     @Async
     public void asyncCheckFeedbackConsistency(List<TextBlock> textBlocks, List<Feedback> feedbackList, long exerciseId) {
+        // Null blocks are passed in some test cases
+        if (textBlocks == null || feedbackList == null || textBlocks.isEmpty()) {
+            return;
+        }
+
         // remove the feedback that does not belong to any text block
         feedbackList.removeIf(f -> !f.hasReference());
 
