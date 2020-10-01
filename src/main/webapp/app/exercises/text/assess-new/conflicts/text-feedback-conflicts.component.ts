@@ -175,7 +175,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         const feedbackConflictId = this.conflictingAssessments.find((conflictingAssessment) => conflictingAssessment.conflictingFeedbackId === this.selectedRightFeedbackId)?.id;
 
-        if (!feedbackConflictId || this.exercise) {
+        if (!feedbackConflictId || !this.exercise) {
             return;
         }
 
