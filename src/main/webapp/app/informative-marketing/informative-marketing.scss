@@ -5,6 +5,15 @@ body {
     font-family: 'Ubuntu', sans-serif;
     display: flex;
 }
+
+.wrapper {
+    float: left;
+    align-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+}
+
 .container {
     width: 1200px;
     height: auto;
@@ -99,4 +108,26 @@ body {
     padding: 0;
     color: #fff;
     font-size: 20px;
+}
+
+hr.hr-text {
+    position: relative;
+    border: none;
+    height: 1px;
+    background: #999;
+}
+
+hr.hr-text::before {
+    content: attr(data-content);
+    display: inline-block;
+    background: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: #999;
+    border-radius: 30rem;
+    padding: 0.2rem 2rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }

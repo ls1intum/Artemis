@@ -1,0 +1,13 @@
+{
+    "informativeMarketing": {
+        "instructor": {
+            "feature": {
+                "multipleExerciseTypes": {
+                    "title": "Multiple Exercise Types",
+                    "shortDescription": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sed hendrerit augue.",
+                    "fullDescription": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sed hendrerit augue. In in nibh vitae odio fermentum convallis quis semper purus. Sed sit amet nulla turpis. Praesent tincidunt varius feugiat."
+                }
+            }
+        }
+    }
+}

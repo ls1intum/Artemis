@@ -3,20 +3,27 @@
     <title>Exam Mode for Instructors</title>
 </head>
 <body>
-    <div class="container">
-        <div *ngFor="let feature of features" class="box">
-            <div class="icon">
-                <i class="fa fa-code" aria-hidden="true"></i>
-                <div class="title">
-                    <h3>Programming Exercises</h3>
+    <div class="wrapper">
+        <div class="container">
+            <div *ngFor="let feature of features" class="box">
+                <div class="icon">
+                    <i class="fa fa-code" aria-hidden="true"></i>
+                    <div class="title">
+                        <h3>{{ translateFeatureTitle(feature) }}</h3>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <p>{{ translateFeatureShortDescription(feature) }}</p>
                 </div>
             </div>
-
-            <div class="content">
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sed hendrerit augue. In in nibh vitae odio fermentum convallis quis semper purus. Sed sit amet
-                    nulla turpis. Praesent tincidunt varius feugiat.
-                </p>
+        </div>
+        <div *ngFor="let feature of features" class="moreInformation">
+            <div class="mb-4">
+                <hr data-content="AND" class="hr-text" />
+            </div>
+            <div>
+                <p>{{ translateFeatureDescription(feature) }}</p>
             </div>
         </div>
     </div>
