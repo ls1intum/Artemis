@@ -100,14 +100,20 @@ export class ScaCategoryDistributionGraphComponent implements OnChanges {
         }
 
         const categoryPenalties = this.categories
+            .map((category) => ({
+                ...category,
+                penalty: category.state === StaticCodeAnalysisCategoryState.GRADED ? category.penalty : 0,
+                maxPenalty: category.state === StaticCodeAnalysisCategoryState.GRADED ? category.maxPenalty : 0,
+            }))
             .map((category) => {
                 const issuesSum = this.categoryHitMap?.reduce((sum, issues) => sum + (issues[category.name] || 0), 0);
-                const penaltySum = this.categoryHitMap?.reduce((sum, issues) => sum + Math.min((issues[category.name] || 0) * category.penalty, category.maxPenalty), 0);
-                return { category, issues: issuesSum || 0, penalty: penaltySum || 0 };
+                let penaltySum = this.categoryHitMap?.reduce((sum, issues) => sum + Math.min((issues[category.name] || 0) * category.penalty, category.maxPenalty), 0);
+                penaltySum = Math.min(penaltySum || 0, this.exercise.maxStaticCodeAnalysisPenalty || penaltySum || 0);
+                return { category, issues: issuesSum || 0, penalty: penaltySum };
             })
             .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.INACTIVE && (category.penalty !== 0 || issues !== 0));
 
-        const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + category.penalty, 0);
+        const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + Math.min(category.penalty, category.maxPenalty), 0);
         const totalIssues = categoryPenalties.reduce((sum, { issues }) => sum + issues, 0);
         const totalPenaltyPoints = categoryPenalties.reduce((sum, { penalty }) => sum + penalty, 0);
 
@@ -123,14 +129,12 @@ export class ScaCategoryDistributionGraphComponent implements OnChanges {
                 {
                     label: element.category.name,
                     color: this.getColor(i / this.categories.length),
-                    c1: makeColumn((totalPenalty > 0 ? element.category.penalty / totalPenalty : 0) * 100, prevSection?.c1),
+                    c1: makeColumn((totalPenalty > 0 ? Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty : 0) * 100, prevSection?.c1),
                     c2: makeColumn((totalIssues > 0 ? element.issues / totalIssues : 0) * 100, prevSection?.c2),
                     c3: makeColumn((totalPenaltyPoints > 0 ? element.penalty / totalPenaltyPoints : 0) * 100, prevSection?.c3),
                 },
             ];
         }, []);
-
-        console.log(sections);
 
         setTimeout(() => {
             this.sections = sections;
