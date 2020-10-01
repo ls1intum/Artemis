@@ -43,16 +43,16 @@ export class ExerciseResult {
 }
 
 export class AggregatedExamResult {
-    public meanPoints: number | null = null;
-    public meanPointsRelative: number | null = null;
-    public meanPointsTotal: number | null = null;
-    public meanPointsRelativeTotal: number | null = null;
-    public median: number | null = null;
-    public medianRelative: number | null = null;
-    public medianTotal: number | null = null;
-    public medianRelativeTotal: number | null = null;
-    public standardDeviation: number | null = null;
-    public standardDeviationTotal: number | null = null;
+    public meanPoints: number;
+    public meanPointsRelative: number;
+    public meanPointsTotal: number;
+    public meanPointsRelativeTotal: number;
+    public median: number;
+    public medianRelative: number;
+    public medianTotal: number;
+    public medianRelativeTotal: number;
+    public standardDeviation: number;
+    public standardDeviationTotal: number;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
 
@@ -66,8 +66,8 @@ export class AggregatedExerciseGroupResult {
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
-    public averagePoints: number | null = null;
-    public averagePercentage: number | null = null;
+    public averagePoints?: number;
+    public averagePercentage?: number;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
     constructor(exerciseGroupId: number, title: string, maxPoints: number, totalParticipants: number) {
@@ -85,8 +85,8 @@ export class AggregatedExerciseResult {
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
     public totalPoints = 0;
-    public averagePoints: number | null = null;
-    public averagePercentage: number | null = null;
+    public averagePoints?: number;
+    public averagePercentage?: number;
 
     constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
         this.exerciseId = exerciseId;

@@ -33,8 +33,8 @@ export class UserManagementUpdateComponent implements OnInit {
         if (!this.user.id) {
             this.user.groups = [];
         }
-        // Set password to null. ==> If it still is null on save, it won't be changed for existing users. It will be random for new users
-        this.user.password = null;
+        // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
+        this.user.password = undefined;
     }
 
     /**
@@ -49,7 +49,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
-        if (this.user.id !== null) {
+        if (this.user.id) {
             this.userService.update(this.user).subscribe(
                 () => this.onSaveSuccess(),
                 () => this.onSaveError(),
@@ -80,7 +80,7 @@ export class UserManagementUpdateComponent implements OnInit {
 
     shouldRandomizePassword(useRandomPassword: any) {
         if (useRandomPassword) {
-            this.user.password = null;
+            this.user.password = undefined;
         } else {
             this.user.password = '';
         }

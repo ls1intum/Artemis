@@ -19,7 +19,7 @@ describe('QuizExercise Management Component', () => {
     let service: QuizExerciseService;
 
     const course = { id: 123 } as Course;
-    const quizExercise = new QuizExercise(course);
+    const quizExercise = new QuizExercise(course, undefined);
     quizExercise.id = 456;
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
 

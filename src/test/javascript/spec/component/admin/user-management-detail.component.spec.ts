@@ -10,7 +10,7 @@ describe('User Management Detail Component', () => {
     let comp: UserManagementDetailComponent;
     let fixture: ComponentFixture<UserManagementDetailComponent>;
     const route = ({
-        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
+        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], ['admin']) }),
     } as any) as ActivatedRoute;
 
     beforeEach(async(() => {
@@ -51,15 +51,8 @@ describe('User Management Detail Component', () => {
                     activated: true,
                     langKey: 'en',
                     authorities: ['ROLE_USER'],
-                    createdBy: null,
-                    createdDate: null,
-                    lastModifiedBy: null,
-                    lastModifiedDate: null,
-                    password: null,
-                    groups: 'admin',
+                    groups: ['admin'],
                     guidedTourSettings: [],
-                    imageUrl: null,
-                    lastNotificationRead: null,
                 }),
             );
         });

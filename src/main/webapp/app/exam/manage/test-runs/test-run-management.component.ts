@@ -45,10 +45,10 @@ export class TestRunManagementComponent implements OnInit {
         this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true).subscribe(
             (response: HttpResponse<Exam>) => {
                 this.exam = response.body!;
-                this.isExamStarted = this.exam.started;
-                this.course = this.exam.course;
+                this.isExamStarted = this.exam.started!;
+                this.course = this.exam.course!;
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-                this.examManagementService.findAllTestRunsForExam(this.course.id, this.exam.id).subscribe(
+                this.examManagementService.findAllTestRunsForExam(this.course.id!, this.exam.id!).subscribe(
                     (res) => {
                         this.testRuns = res.body!;
                     },
@@ -72,7 +72,7 @@ export class TestRunManagementComponent implements OnInit {
         modalRef.componentInstance.exam = this.exam;
         modalRef.result
             .then((testRunConfiguration: StudentExam) => {
-                this.examManagementService.createTestRun(this.course.id, this.exam.id, testRunConfiguration).subscribe(
+                this.examManagementService.createTestRun(this.course.id!, this.exam.id!, testRunConfiguration).subscribe(
                     (res) => {
                         if (res.body != null) {
                             this.testRuns.push(res.body!);
@@ -91,7 +91,7 @@ export class TestRunManagementComponent implements OnInit {
      * @param testRunId {number}
      */
     deleteTestRun(testRunId: number) {
-        this.examManagementService.deleteTestRun(this.course.id, this.exam.id, testRunId).subscribe(
+        this.examManagementService.deleteTestRun(this.course.id!, this.exam.id!, testRunId).subscribe(
             () => {
                 this.testRuns = this.testRuns!.filter((testRun) => testRun.id !== testRunId);
                 this.dialogErrorSource.next('');
@@ -120,12 +120,19 @@ export class TestRunManagementComponent implements OnInit {
     get testRunCanBeAssessed(): boolean {
         if (!!this.testRuns && this.testRuns.length > 0) {
             for (const testRun of this.testRuns) {
-                if (testRun.user.id === this.instructor.id && testRun.submitted) {
+                if (testRun.user?.id === this.instructor.id && testRun.submitted) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Get function to determine if at least one exercise has been configured for the exam
+     */
+    get examContainsExercises(): boolean {
+        return !!this.exam?.exerciseGroups && this.exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
     }
 
     private onError(error: HttpErrorResponse) {

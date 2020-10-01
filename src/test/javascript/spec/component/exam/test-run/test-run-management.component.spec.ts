@@ -18,6 +18,8 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockActiveModal } from '../../../helpers/mocks/service/mock-active-modal.service';
 import * as sinon from 'sinon';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('Test Run Management Component', () => {
     let comp: TestRunManagementComponent;
@@ -67,12 +69,12 @@ describe('Test Run Management Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(examManagementService.find).toHaveBeenCalledWith(course.id, exam.id, false, true);
-            expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id, exam.id);
+            expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
+            expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(accountService.fetch).toHaveBeenCalledWith();
 
             expect(comp.exam).toEqual(exam);
-            expect(comp.isExamStarted).toEqual(exam.started);
+            expect(comp.isExamStarted).toEqual(exam.started!);
             expect(comp.course).toEqual(course);
             expect(comp.testRuns).toEqual(studentExams);
             expect(comp.instructor).toEqual(user);
@@ -88,10 +90,26 @@ describe('Test Run Management Component', () => {
             spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(responseFakeDelete));
 
             // WHEN
-            comp.deleteTestRun(studentExams[0].id);
+            comp.deleteTestRun(studentExams[0].id!);
 
             // THEN
-            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id, exam.id, studentExams[0].id);
+            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
+        }));
+    });
+
+    describe('Create test runs', () => {
+        it('Test Run cannot be created because the exam contains no exercises', fakeAsync(() => {
+            comp.exam = exam;
+            fixture.detectChanges();
+            expect(comp.examContainsExercises).toBeFalsy();
+        }));
+        it('Test Run can can be created', fakeAsync(() => {
+            const exercise = { id: 1 } as Exercise;
+            const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
+            exam.exerciseGroups = [exerciseGroup];
+            comp.exam = exam;
+            fixture.detectChanges();
+            expect(comp.examContainsExercises).toBeTruthy();
         }));
     });
 

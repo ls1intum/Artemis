@@ -13,10 +13,12 @@ import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
+
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
@@ -27,16 +29,16 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
             if (route.params['examId'] && route.params['groupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, null, exerciseGroup.body!)),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined)),
                 );
             } else {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body!, null)),
+                    map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body || undefined, undefined)),
                 );
             }
         }
-        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram));
+        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
     }
 }
 
@@ -83,6 +85,14 @@ export const routes: Routes = [
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
         },
         canActivate: [UserRouteAccessService],
     },

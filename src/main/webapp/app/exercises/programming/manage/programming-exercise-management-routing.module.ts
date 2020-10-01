@@ -3,24 +3,24 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Injectable, NgModule } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
-import { ProgrammingExerciseManageTestCasesComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases.component';
-import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return Observable.of(new ProgrammingExercise());
+        return Observable.of(new ProgrammingExercise(undefined, undefined));
     }
 }
 
@@ -62,16 +62,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/test-cases',
-        component: ProgrammingExerciseManageTestCasesComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [CanDeactivateGuard],
-    },
-    {
         path: ':courseId/programming-exercises/:id',
         component: ProgrammingExerciseDetailComponent,
         resolve: {
@@ -82,6 +72,16 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
+        component: ProgrammingExerciseConfigureGradingComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [CanDeactivateGuard],
     },
 ];
 

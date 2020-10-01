@@ -33,16 +33,16 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
             if (route.params['examId'] && route.params['groupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(null, exerciseGroup.body!)),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(undefined, exerciseGroup.body || undefined)),
                 );
             } else {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new TextExercise(course.body!, null)),
+                    map((course: HttpResponse<Course>) => new TextExercise(course.body || undefined, undefined)),
                 );
             }
         }
-        return Observable.of(new TextExercise());
+        return Observable.of(new TextExercise(undefined, undefined));
     }
 }
 

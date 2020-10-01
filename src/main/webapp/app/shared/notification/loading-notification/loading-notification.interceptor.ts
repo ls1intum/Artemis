@@ -14,7 +14,7 @@ export class LoadingNotificationInterceptor implements HttpInterceptor {
      * Identifies and handles a given HTTP request. If any HTTP request is sent we enable the loading screen and count up the active requests.
      * While all HTTP request complete we count down the active requests and when all HTTP requests are completed we disable the loading screen.
      * @param request The outgoing request object to handle.
-     * @param next The next interceptor in the chain, or the backend
+     * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */
