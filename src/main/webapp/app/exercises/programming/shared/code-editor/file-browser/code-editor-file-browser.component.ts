@@ -63,7 +63,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     onError = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
-    selectedFileValue: string | undefined;
+    selectedFileValue?: string;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     filesTreeViewItem: TreeviewItem[];
@@ -74,9 +74,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
     // Triple: [filePath, fileName, fileType]
-    renamingFile: [string, string, FileType] | null = null;
+    renamingFile?: [string, string, FileType];
     // Tuple: [filePath, fileType]
-    creatingFile: [string, FileType] | null = null;
+    creatingFile?: [string, FileType];
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
@@ -147,7 +147,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         ) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
-            this.renamingFile = null;
+            this.renamingFile = undefined;
             this.setupTreeview();
         }
     }
@@ -266,7 +266,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param tree: Filetree obtained by parsing the repository file list
      */
     transformTreeToTreeViewItem(tree: any): TreeviewItem[] {
-        const treeViewItem = [];
+        const treeViewItem = new Array<TreeviewItem>();
         for (const node of tree) {
             treeViewItem.push(new TreeviewItem(node));
         }
@@ -284,9 +284,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         /**
          * Initialize tree if empty
          */
-        if (tree == null) {
-            tree = [];
-        }
+        tree = tree || [];
 
         /**
          * Loop through our file array
@@ -299,7 +297,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             // Check if the first path part is already in our current tree
             let node = tree.find((element) => element.text === fileSplit[0]);
             // Path part doesn't exist => add it to tree
-            if (node == null) {
+            if (!node) {
                 node = {
                     text: fileSplit[0],
                 };
@@ -391,7 +389,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         this.renameFile(filePath, newFileName).subscribe(
             () => {
                 this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
-                this.renamingFile = null;
+                this.renamingFile = undefined;
             },
             () => this.onError.emit('fileOperationFailed'),
         );
@@ -405,10 +403,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Set renamingFile to null to make the input disappear.
+     * Set renamingFile to undefined to make the input disappear.
      **/
     clearRenamingFile() {
-        this.renamingFile = null;
+        this.renamingFile = undefined;
     }
 
     /**
@@ -434,7 +432,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.createFile(file).subscribe(
                 () => {
                     this.handleFileChange(new CreateFileChange(FileType.FILE, file));
-                    this.creatingFile = null;
+                    this.creatingFile = undefined;
                 },
                 () => this.onError.emit('fileOperationFailed'),
             );
@@ -442,7 +440,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.createFolder(file).subscribe(
                 () => {
                     this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
-                    this.creatingFile = null;
+                    this.creatingFile = undefined;
                 },
                 () => this.onError.emit('fileOperationFailed'),
             );
@@ -461,10 +459,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     }
 
     /**
-     * Set creatingFile to null to make the input disappear.
+     * Set creatingFile to undefined to make the input disappear.
      **/
     clearCreatingFile() {
-        this.creatingFile = null;
+        this.creatingFile = undefined;
     }
 
     /**

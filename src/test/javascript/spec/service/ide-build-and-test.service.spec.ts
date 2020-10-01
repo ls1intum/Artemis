@@ -94,7 +94,7 @@ describe('IdeBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations![0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.not.have.been.called;
         expect(onBuildFinishedSpy).to.not.have.been.called;
@@ -111,7 +111,7 @@ describe('IdeBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations![0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.not.have.been.called;
         expect(onBuildFinishedSpy).to.not.have.been.called;
@@ -127,7 +127,7 @@ describe('IdeBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations![0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.have.been.calledTwice;
         expect(onBuildFinishedSpy).to.have.been.calledOnce;
@@ -143,7 +143,7 @@ describe('IdeBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id, true);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations![0].id, true);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.have.been.calledTwice;
         feedbacks.forEach((feedback, index) => {

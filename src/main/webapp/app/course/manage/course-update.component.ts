@@ -30,7 +30,7 @@ export class CourseUpdateComponent implements OnInit {
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile: Blob | File | null;
+    courseImageFile?: Blob | File;
     courseImageFileName: string;
     isUploadingCourseImage: boolean;
     imageChangedEvent: any = '';
@@ -56,7 +56,7 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
             // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-            this.complaintsEnabled = (this.course.maxComplaints > 0 || this.course.maxTeamComplaints > 0) && this.course.maxComplaintTimeDays > 0;
+            this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
         });
 
         this.profileService
@@ -71,13 +71,13 @@ export class CourseUpdateComponent implements OnInit {
                     } else {
                         // developers typically want to customize the groups, therefore this is prefilled
                         this.customizeGroupNames = true;
-                        if (this.course.studentGroupName == null) {
+                        if (!this.course.studentGroupName) {
                             this.course.studentGroupName = 'artemis-dev';
                         }
-                        if (this.course.teachingAssistantGroupName == null) {
+                        if (!this.course.teachingAssistantGroupName) {
                             this.course.teachingAssistantGroupName = 'artemis-dev';
                         }
-                        if (this.course.instructorGroupName == null) {
+                        if (!this.course.instructorGroupName) {
                             this.course.instructorGroupName = 'artemis-dev';
                         }
                     }
@@ -120,7 +120,7 @@ export class CourseUpdateComponent implements OnInit {
             color: new FormControl(this.course.color),
             courseIcon: new FormControl(this.course.courseIcon),
         });
-        this.courseImageFileName = this.course.courseIcon;
+        this.courseImageFileName = this.course.courseIcon!;
         this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
@@ -205,16 +205,16 @@ export class CourseUpdateComponent implements OnInit {
 
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            (result) => {
-                this.courseForm.patchValue({ courseIcon: result.path });
+            (response) => {
+                this.courseForm.patchValue({ courseIcon: response.path });
                 this.isUploadingCourseImage = false;
-                this.courseImageFile = null;
-                this.courseImageFileName = result.path;
+                this.courseImageFile = undefined;
+                this.courseImageFileName = response.path!;
             },
             () => {
                 this.isUploadingCourseImage = false;
-                this.courseImageFile = null;
-                this.courseImageFileName = this.course.courseIcon;
+                this.courseImageFile = undefined;
+                this.courseImageFileName = this.course.courseIcon!;
             },
         );
         this.showCropper = false;
@@ -225,14 +225,9 @@ export class CourseUpdateComponent implements OnInit {
      * @param error The error for providing feedback
      */
     private onSaveError(error: HttpErrorResponse) {
-        let errorMessage: string | null;
-        if (error.error !== null) {
-            errorMessage = error.error.title;
-        } else {
-            errorMessage = error.headers.get('x-artemisapp-alert');
-        }
+        const errorMessage = error.error ? error.error.title : error.headers.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        if (errorMessage != null) {
+        if (errorMessage) {
             const jhiAlert = this.jhiAlertService.error(errorMessage);
             jhiAlert.msg = errorMessage;
         }

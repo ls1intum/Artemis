@@ -226,10 +226,10 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
         if (this.quizExercise.quizQuestions) {
             this.quizExercise.quizQuestions.forEach(function (question) {
-                result = result + question.score;
+                result = result + question.score!;
             });
         } else {
-            result = this.quizExercise.maxScore;
+            result = this.quizExercise.maxScore!;
         }
         return result;
     }
@@ -247,19 +247,23 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.quizQuestions.length; i++) {
+        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
+            const question = this.quizExercise.quizQuestions![i];
+            const statistic = question.quizQuestionStatistic!;
+            const ratedCounter = statistic.ratedCorrectCounter!;
+            const unratedCounter = statistic.unRatedCorrectCounter!;
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
-            this.ratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter);
-            this.unratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter);
-            this.ratedAverage = this.ratedAverage + this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
-            this.unratedAverage = this.unratedAverage + this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
+            this.ratedData.push(ratedCounter);
+            this.unratedData.push(unratedCounter);
+            this.ratedAverage = this.ratedAverage + ratedCounter * question.score!;
+            this.unratedAverage = this.unratedAverage + unratedCounter * question.score!;
         }
 
         // set Background for invalid questions = grey
-        for (let j = 0; j < this.quizExercise.quizQuestions.length; j++) {
-            if (this.quizExercise.quizQuestions[j].invalid) {
-                this.backgroundColor[j] = '#949494';
+        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
+            if (this.quizExercise.quizQuestions![i].invalid) {
+                this.backgroundColor[i] = '#949494';
             }
         }
 
@@ -279,11 +283,11 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
         // if this.rated == true  -> load the rated data
         if (this.rated) {
-            this.participants = this.quizExercise.quizPointStatistic.participantsRated;
+            this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
             this.data = this.ratedData;
         } else {
             // load the unrated data
-            this.participants = this.quizExercise.quizPointStatistic.participantsUnrated;
+            this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
             this.data = this.unratedData;
         }
         this.datasets = [
@@ -305,12 +309,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         if (this.rated) {
             // load unrated Data
             this.data = this.unratedData;
-            this.participants = this.quizExercise.quizPointStatistic.participantsUnrated;
+            this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
             this.rated = false;
         } else {
             // load rated Data
             this.data = this.ratedData;
-            this.participants = this.quizExercise.quizPointStatistic.participantsRated;
+            this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
             this.rated = true;
         }
         this.datasets = [

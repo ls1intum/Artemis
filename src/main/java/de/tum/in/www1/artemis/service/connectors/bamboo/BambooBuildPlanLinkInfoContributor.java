@@ -15,11 +15,11 @@ import de.tum.in.www1.artemis.config.Constants;
 public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
-    private URL BAMBOO_SERVER_URL;
+    private URL bambooServerUrl;
 
     @Override
     public void contribute(Info.Builder builder) {
-        final var buildPlanURLTemplate = BAMBOO_SERVER_URL + "/browse/{buildPlanId}";
+        final var buildPlanURLTemplate = bambooServerUrl + "/browse/{buildPlanId}";
 
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
