@@ -32,7 +32,7 @@ public class TimeBasedAchievementService {
     }
 
     public AchievementRank checkForAchievement(Result result) {
-        if (result.getScore() < MIN_SCORE_TO_QUALIFY) {
+        if (result.getScore() == null || result.getScore() < MIN_SCORE_TO_QUALIFY) {
             return null;
         }
 

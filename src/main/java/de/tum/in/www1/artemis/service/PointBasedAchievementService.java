@@ -30,6 +30,10 @@ public class PointBasedAchievementService {
     public AchievementRank checkForAchievement(Result result) {
         var score = result.getScore();
 
+        if (score == null) {
+            return null;
+        }
+
         if (score >= PERCENT_GOLD) {
             return AchievementRank.GOLD;
         }

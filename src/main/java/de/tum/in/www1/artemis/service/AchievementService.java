@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -62,6 +63,7 @@ public class AchievementService {
         return achievementRepository.findAllByUserId(userId);
     }
 
+    @Transactional
     public void deleteAchievementsForCourse(Course course) {
         achievementRepository.deleteByCourse_Id(course.getId());
     }

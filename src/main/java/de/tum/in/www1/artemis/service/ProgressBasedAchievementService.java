@@ -37,7 +37,8 @@ public class ProgressBasedAchievementService {
         var participations = studentParticipationRepository.findAllByCourseIdAndUserId(course.getId(), user.getId());
         var numberOfExercises = 0;
         for (var participation : participations) {
-            if (participation.findLatestResult().getScore() >= MIN_SCORE_TO_QUALIFY) {
+            var score = participation.findLatestResult().getScore();
+            if (score != null && score >= MIN_SCORE_TO_QUALIFY) {
                 numberOfExercises++;
             }
         }
