@@ -37,7 +37,7 @@
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
-        [feedbacks]="participation?.results ? participation.results[0]?.feedbacks : undefined"
+        [feedbacks]="participation?.results?.length > 0 ? participation.results![0].feedbacks : undefined"
         [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"

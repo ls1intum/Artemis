@@ -13,9 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
-import io.sentry.Sentry;
-import io.sentry.event.UserBuilder;
-
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
  */
@@ -38,8 +35,6 @@ public class JWTFilter extends GenericFilterBean {
         if (StringUtils.hasText(jwt) && this.tokenProvider.validateToken(jwt)) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwt);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            // improve error handling in sentry
-            Sentry.getContext().setUser(new UserBuilder().setUsername(authentication.getName()).build());
         }
         filterChain.doFilter(servletRequest, servletResponse);
     }

@@ -29,16 +29,16 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
             if (route.params['examId'] && route.params['groupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, null, exerciseGroup.body!)),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined)),
                 );
             } else {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body!, null)),
+                    map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body || undefined, undefined)),
                 );
             }
         }
-        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram));
+        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
     }
 }
 

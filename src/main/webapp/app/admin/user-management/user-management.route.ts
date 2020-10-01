@@ -16,9 +16,8 @@ export class UserMgmtResolve implements Resolve<any> {
      * @param route  contains the information about a route associated with a component loaded in an outlet at a particular moment in time
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const login = route.params['login'] ? route.params['login'] : null;
-        if (login) {
-            return this.userService.find(login);
+        if (route.params['login']) {
+            return this.userService.find(route.params['login']);
         }
         return new User();
     }

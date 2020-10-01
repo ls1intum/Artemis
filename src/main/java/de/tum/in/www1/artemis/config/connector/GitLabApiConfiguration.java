@@ -13,13 +13,13 @@ import org.springframework.context.annotation.Profile;
 public class GitLabApiConfiguration {
 
     @Value("${artemis.version-control.secret}")
-    private String GITLAB_PRIVATE_TOKEN;
+    private String gitlabPrivateToken;
 
     @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
+    private URL gitlabServerUrl;
 
     @Bean
     public GitLabApi gitLabApi() {
-        return new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
+        return new GitLabApi(gitlabServerUrl.toString(), gitlabPrivateToken);
     }
 }
