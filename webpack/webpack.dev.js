@@ -103,7 +103,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 target: `http${options.tls ? 's' : ''}://localhost:9060`,
                 ws: true,
                 proxyOptions: {
-                    changeOrigin: false  //pass the Host header to the backend unchanged  https://github.com/Browsersync/browser-sync/issues/430
+                    changeOrigin: false  //pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
                 }
             },
             socket: {

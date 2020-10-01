@@ -27,7 +27,7 @@ export class StudentQuestionComponent implements OnInit {
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
     isQuestionAuthor = false;
-    editText: string | null;
+    editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
 
@@ -39,7 +39,7 @@ export class StudentQuestionComponent implements OnInit {
      */
     ngOnInit(): void {
         if (this.user) {
-            this.isQuestionAuthor = this.studentQuestion.author.id === this.user.id;
+            this.isQuestionAuthor = this.studentQuestion.author!.id === this.user.id;
         }
         this.editText = this.studentQuestion.questionText;
     }
@@ -90,7 +90,7 @@ export class StudentQuestionComponent implements OnInit {
      * @param {number} votes
      */
     updateVotes(voteChange: number): void {
-        this.studentQuestionService.updateVotes(this.studentQuestion.id, voteChange).subscribe((res) => {
+        this.studentQuestionService.updateVotes(this.studentQuestion.id!, voteChange).subscribe((res) => {
             this.studentQuestion = res.body!;
             this.interactQuestion.emit({
                 name: QuestionActionName.VOTE_CHANGE,

@@ -1,8 +1,8 @@
 <div
     class="border rounded"
     [style.max-width]="'780px'"
-    [class.alert-success]="feedback.credits > 0"
-    [class.alert-danger]="feedback.credits < 0"
+    [class.alert-success]="feedback.credits! > 0"
+    [class.alert-danger]="feedback.credits! < 0"
     [class.alert-warning]="feedback.credits === 0"
 >
     <div class="m-2">
@@ -36,7 +36,7 @@
         <div class="row align-items-center">
             <div class="col pl-0">
                 <h5 class="d-inline">
-                    <span class="badge" [class.badge-success]="feedback.credits > 0" [class.badge-danger]="feedback.credits < 0" [class.badge-warning]="feedback.credits === 0">{{
+                    <span class="badge" [class.badge-success]="feedback.credits! > 0" [class.badge-danger]="feedback.credits! < 0" [class.badge-warning]="feedback.credits === 0">{{
                         feedback.credits + 'P'
                     }}</span>
                 </h5>

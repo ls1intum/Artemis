@@ -22,20 +22,24 @@ export enum FeedbackType {
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 
 export class Feedback implements BaseEntity {
-    public id: number;
-    public gradingInstruction: GradingInstruction | null;
-    public text: string | null;
-    public detailText: string | null;
-    public reference: string | null;
-    public credits = 0;
-    public type: FeedbackType | null;
-    public result: Result | null;
-    public positive: boolean | null;
+    public id?: number;
+    public gradingInstruction?: GradingInstruction;
+    public text?: string;
+    public detailText?: string;
+    public reference?: string;
+    public credits?: number;
+    public type?: FeedbackType;
+    public result?: Result;
+    public positive?: boolean;
     public conflictingTextAssessments?: FeedbackConflict[];
 
     // helper attributes for modeling exercise assessments stored in Feedback
-    public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
-    public referenceId: string | null;
+    public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
+    public referenceId?: string;
+
+    constructor() {
+        this.credits = 0;
+    }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
         if (!that.text) {
@@ -58,10 +62,10 @@ export class Feedback implements BaseEntity {
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
         const that = new Feedback();
-        that.referenceId = referenceId || null;
-        that.referenceType = referenceType || null;
+        that.referenceId = referenceId;
+        that.referenceType = referenceType;
         that.credits = credits;
-        that.text = text || null;
+        that.text = text;
         if (referenceType && referenceId) {
             that.reference = referenceType + ':' + referenceId;
         }
@@ -72,13 +76,13 @@ export class Feedback implements BaseEntity {
         const that = new Feedback();
         that.reference = textBlock.id;
         that.credits = credits;
-        that.detailText = detailText || null;
+        that.detailText = detailText;
 
         // Delete unused properties
-        delete that.referenceId;
-        delete that.referenceType;
-        delete that.text;
-        delete that.positive;
+        that.referenceId = undefined;
+        that.referenceType = undefined;
+        that.text = undefined;
+        that.positive = undefined;
 
         return that;
     }

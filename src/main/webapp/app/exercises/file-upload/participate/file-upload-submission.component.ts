@@ -26,13 +26,13 @@ import { Result } from 'app/entities/result.model';
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    submission: FileUploadSubmission | null;
+    submission?: FileUploadSubmission;
     submittedFileName: string;
     submittedFileExtension: string;
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
-    submissionFile: File | null;
+    submissionFile?: File;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isSaving: boolean;
@@ -66,13 +66,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('artemisApp.fileUploadExercise.error', null, undefined);
+            return this.jhiAlertService.error('artemisApp.fileUploadExercise.error');
         }
         this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
             (submission: FileUploadSubmission) => {
                 // reconnect participation <--> result
                 if (submission.result) {
-                    submission.participation.results = [submission.result];
+                    submission.participation!.results = [submission.result];
                 }
                 this.participation = <StudentParticipation>submission.participation;
 
@@ -80,7 +80,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
 
                 this.submission = submission;
-                this.result = submission.result;
+                this.result = submission.result!;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
@@ -92,8 +92,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     !!this.participation.initializationDate &&
                     moment(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
 
-                this.acceptedFileExtensions = this.fileUploadExercise.filePattern
-                    .split(',')
+                this.acceptedFileExtensions = this.fileUploadExercise
+                    .filePattern!.split(',')
                     .map((extension) => `.${extension}`)
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
@@ -102,7 +102,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.setSubmittedFile();
                 }
                 if (this.submission.submitted && this.result && this.result.completionDate) {
-                    this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                    this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
                 }
@@ -124,16 +124,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return;
         }
         this.isSaving = true;
-        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
+        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe(
             (response) => {
                 this.submission = response.body!;
                 this.participation = this.submission.participation as StudentParticipation;
                 // reconnect so that the submission status is displayed correctly in the result.component
-                this.submission.participation.submissions = [this.submission];
+                this.submission.participation!.submissions = [this.submission];
                 this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
-                this.result = this.submission.result;
+                this.result = this.submission.result!;
                 this.setSubmittedFile();
                 if (this.isActive) {
                     this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
@@ -151,7 +151,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
                 }
                 this.fileInput.nativeElement.value = '';
-                this.submissionFile = null;
+                this.submissionFile = undefined;
                 this.isSaving = false;
             },
         );
@@ -165,9 +165,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
-            const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
+            const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
@@ -177,12 +177,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
+        this.jhiAlertService.error(error.message);
     }
 
     private setSubmittedFile() {
         // clear submitted file so that it is not displayed in the input (this might be confusing)
-        this.submissionFile = null;
+        this.submissionFile = undefined;
         const filePath = this.submission!.filePath!.split('/');
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');

@@ -7,7 +7,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 describe('Audits Service', () => {
     let service: AuditsService;
-    let httpMock;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,7 +35,7 @@ describe('Audits Service', () => {
             const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
 
             service.query({}).subscribe((received) => {
-                expect(received.body[0]).toEqual(audit);
+                expect(received.body![0]).toEqual(audit);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });

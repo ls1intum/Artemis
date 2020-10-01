@@ -34,7 +34,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
-                        const fileUploadExercise = new FileUploadExercise(null, exerciseGroup.body!);
+                        const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),
@@ -43,14 +43,14 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => {
-                        const fileUploadExercise = new FileUploadExercise(course.body!, null);
+                        const fileUploadExercise = new FileUploadExercise(course.body!, undefined);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),
                 );
             }
         }
-        return Observable.of(new FileUploadExercise());
+        return Observable.of(new FileUploadExercise(undefined, undefined));
     }
 }
 

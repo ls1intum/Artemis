@@ -3,8 +3,8 @@ import { QuizStatistic } from 'app/entities/quiz/quiz-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export class QuizPointStatistic extends QuizStatistic {
-    public pointCounters: PointCounter[];
-    public quiz: QuizExercise;
+    public pointCounters?: PointCounter[];
+    public quiz?: QuizExercise;
 
     constructor() {
         super();

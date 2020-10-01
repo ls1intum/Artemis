@@ -85,7 +85,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 if (!courseGroups.includes(this.courseGroup)) {
                     return this.router.navigate(['/course-management']);
                 }
-                this.courseService.getAllUsersInCourseGroup(this.course.id, this.courseGroup).subscribe((usersResponse) => {
+                this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup).subscribe((usersResponse) => {
                     this.allCourseGroupUsers = usersResponse.body!;
                     this.isLoading = false;
                 });
@@ -154,7 +154,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         // If the user is not part of this course group yet, perform the server call to add them
         if (!this.allCourseGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
-            this.courseService.addUserToCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
+            this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe(
                 () => {
                     this.isTransitioning = false;
 
@@ -184,7 +184,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     removeFromGroup(user: User) {
         if (user.login) {
-            this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
+            this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe(
                 () => {
                     this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
                     this.dialogErrorSource.next('');

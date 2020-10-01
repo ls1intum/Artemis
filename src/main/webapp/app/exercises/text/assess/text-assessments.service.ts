@@ -27,7 +27,6 @@ export class TextAssessmentsService {
 
     /**
      * Saves the passed feedback items of the assessment.
-     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
@@ -42,7 +41,6 @@ export class TextAssessmentsService {
 
     /**
      * Submits the passed feedback items of the assessment.
-     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param resultId id of the corresponding result of type {number}
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
@@ -57,7 +55,6 @@ export class TextAssessmentsService {
 
     /**
      * Updates an assessment after a complaint.
-     *
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
      * @param textBlocks list of text blocks of type {TextBlock[]}
      * @param complaintResponse response on the complaint of type {ComplaintResponse}
@@ -82,7 +79,6 @@ export class TextAssessmentsService {
 
     /**
      * Cancels an assessment.
-     *
      * @param exerciseId id of the exercise the assessed submission was made to of type {number}
      * @param submissionId id of corresponding submission of type {number}
      */
@@ -92,7 +88,6 @@ export class TextAssessmentsService {
 
     /**
      * Get all feedback items for a submission.
-     *
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      */
     public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
@@ -100,21 +95,24 @@ export class TextAssessmentsService {
             .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response' })
             .pipe(
                 // Wire up Result and Submission
-                tap((response) => (response.body!.submissions[0].result = response.body!.results[0])),
-                tap((response) => (response.body!.submissions[0].participation = response.body!)),
-                tap((response) => (response.body!.results[0].submission = response.body!.submissions[0])),
-                tap((response) => (response.body!.results[0].participation = response.body!)),
-                // Make sure Feedbacks Array is initialized
-                tap((response) => (response.body!.results[0].feedbacks = response.body!.results[0].feedbacks || [])),
-                // Add the jwt token for tutor assessment tracking if athene profile is active, otherwise set it null
-                tap((response) => ((response.body!.submissions[0] as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization'))),
+                tap((response) => {
+                    const participation = response.body!;
+                    const submission = participation.submissions![0];
+                    const result = participation.results![0];
+                    submission.result = participation.results![0];
+                    submission.participation = participation;
+                    result.submission = submission;
+                    result.participation = participation;
+                    // Make sure Feedbacks Array is initialized
+                    result.feedbacks = result.feedbacks || [];
+                    (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+                }),
                 map((response) => response.body!),
             );
     }
 
     /**
      * Gets an example result for defined exercise and submission.
-     *
      * @param exerciseId id of the exercise for which the example result should be retrieved of type {number}
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
@@ -143,22 +141,22 @@ export class TextAssessmentsService {
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
-        feedbacks = feedbacks.map((f) => {
-            f = Object.assign({}, f);
-            f.result = null;
-            if (f['firstConflicts']) {
-                f['firstConflicts'] = undefined;
+        feedbacks = feedbacks.map((feedback) => {
+            feedback = Object.assign({}, f);
+            feedback.result = undefined;
+            if (feedback['firstConflicts']) {
+                feedback['firstConflicts'] = undefined;
             }
-            if (f['secondConflicts']) {
-                f['secondConflicts'] = undefined;
+            if (feedback['secondConflicts']) {
+                feedback['secondConflicts'] = undefined;
             }
-            f.conflictingTextAssessments = undefined;
+            feedback.conflictingTextAssessments = undefined;
             return f;
         });
-        textBlocks = textBlocks.map((tb) => {
-            tb = Object.assign({}, tb);
-            tb.submission = undefined;
-            return tb;
+        textBlocks = textBlocks.map((textBlock) => {
+            textBlock = Object.assign({}, textBlock);
+            textBlock.submission = undefined;
+            return textBlock;
         });
 
         return { feedbacks, textBlocks };
@@ -211,15 +209,19 @@ export class TextAssessmentsService {
         if (submission?.atheneTextAssessmentTrackingToken) {
             // clone submission and resolve circular json properties
             const submissionForSending = cloneDeep(submission);
-            delete submissionForSending.participation?.submissions;
-            delete submissionForSending.participation?.exercise?.course;
-            delete submissionForSending.participation?.exercise?.exerciseGroup;
-            delete submissionForSending.atheneTextAssessmentTrackingToken;
+            if (submissionForSending.participation) {
+                submissionForSending.participation.submissions = [];
+                if (submissionForSending.participation.exercise) {
+                    submissionForSending.participation.exercise.course = undefined;
+                    submissionForSending.participation.exercise.exerciseGroup = undefined;
+                }
+            }
+            submissionForSending.atheneTextAssessmentTrackingToken = undefined;
 
             // eslint-disable-next-line chai-friendly/no-unused-expressions
-            submissionForSending.participation?.results?.forEach((result) => {
-                delete result.participation;
-                delete result.submission;
+            submissionForSending.participation?.results!.forEach((result) => {
+                result.participation = undefined;
+                result.submission = undefined;
             });
 
             const trackingObject = {

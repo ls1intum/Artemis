@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.compass;
 
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.DAYS_TO_KEEP_UNUSED_ENGINE;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.NUMBER_OF_NEW_OPTIMAL_MODELS;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.OPTIMAL_MODEL_THRESHOLD;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

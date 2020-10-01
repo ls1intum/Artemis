@@ -120,7 +120,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     getBuildLogs = () => {
         const [domainType, domainValue] = this.domain;
         if (domainType === DomainType.PARTICIPATION) {
-            return this.buildLogService.getBuildLogs(domainValue.id);
+            return this.buildLogService.getBuildLogs(domainValue.id!);
         }
         return of([]);
     };

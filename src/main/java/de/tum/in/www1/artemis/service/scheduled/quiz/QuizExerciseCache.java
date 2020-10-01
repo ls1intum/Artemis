@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
@@ -93,7 +96,7 @@ abstract class QuizExerciseCache {
 
     /**
      * Returns an empty quiz exercise cache
-     * 
+     *
      * @return the {@link EmptyQuizExerciseCache} instance
      */
     static QuizExerciseCache empty() {

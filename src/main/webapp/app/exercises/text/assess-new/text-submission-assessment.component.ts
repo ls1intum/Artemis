@@ -77,7 +77,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private get textBlocksWithFeedback(): TextBlock[] {
-        return [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback).map(({ block }) => block);
+        return [...this.textBlockRefs, ...this.unusedTextBlockRefs]
+            .filter(({ block, feedback }) => block?.type === TextBlockType.AUTOMATIC || !!feedback)
+            .map(({ block }) => block!);
     }
 
     constructor(
@@ -140,14 +142,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
 
-        if (studentParticipation === null) {
+        if (studentParticipation == null) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
             return;
         }
 
         this.participation = studentParticipation;
-        this.submission = this.participation?.submissions[0] as TextSubmission;
+        this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
 
@@ -227,7 +229,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        this.participation!.results[0] = this.result = response.body!;
+        this.participation!.results![0] = this.result = response.body!;
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -238,7 +240,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.exercise!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
         }
     }
 
@@ -273,8 +275,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-            (error: HttpErrorResponse) => {
-                console.error(error);
+            () => {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
             },
@@ -332,7 +333,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     public recalculateTextBlockRefs(): void {
         // This is racing with another @Output, so we wait one loop
         setTimeout(() => {
-            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block.type === TextBlockType.AUTOMATIC || !!feedback);
+            const refs = [...this.textBlockRefs, ...this.unusedTextBlockRefs].filter(({ block, feedback }) => block!.type === TextBlockType.AUTOMATIC || !!feedback);
             this.textBlockRefs = [];
             this.unusedTextBlockRefs = [];
 
@@ -346,7 +347,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.isLoading = true;
-        this.complaintService.findByResultId(this.result.id).subscribe(
+        this.complaintService.findByResultId(this.result!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

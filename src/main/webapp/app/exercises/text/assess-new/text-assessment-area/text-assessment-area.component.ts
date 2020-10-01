@@ -46,7 +46,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
             this.characterCount = this.stringCountService.countCharacters(text);
         }
 
-        this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
+        this.textBlockRefs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
     }
 
     @HostListener('document:keydown.alt', ['$event', 'false'])
@@ -68,7 +68,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     }
 
     removeTextBlockRef(ref: TextBlockRef): void {
-        const index = this.textBlockRefs.findIndex((elem) => elem.block.id === ref.block.id);
+        const index = this.textBlockRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
         this.textBlockRefs.splice(index, 1);
         this.textBlockRefsAddedRemoved.emit();
     }
