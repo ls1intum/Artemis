@@ -279,6 +279,7 @@ Start a GitLab container just as described in `Start-Gitlab <#start-gitlab>`__ a
 should configure itself automatically. If there are no issues, you can
 delete the old container using ``docker rm gitlab_old`` and the olf
 image (see ``docker images``) using ``docker rmi <old-image-id>``.
+You can also remove all old images using ``docker image prune -a``
 
 Jenkins
 -------
@@ -658,6 +659,7 @@ Now start a new Jenkins container just as described in `Start-Jenkins <#start-je
 Jenkins should be up and running again. If there are no issues, you can
 delete the old container using ``docker rm jenkins_old`` and the old
 image (see ``docker images``) using ``docker rmi <old-image-id>``.
+You can also remove all old images using ``docker image prune -a``
 
 You should also update the Jenkins plugins regularly due to security
 reasons. You can update them directly in the Web User Interface in the
