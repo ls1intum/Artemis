@@ -74,6 +74,11 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        User user = this.userService.getUserWithGroupsAndAuthorities();
+        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            studentQuestionAnswer.setTutorApproved(true);
+        }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
