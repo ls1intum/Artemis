@@ -20,7 +20,7 @@ import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
     styleUrls: ['./short-answer-question-statistic.component.scss'],
 })
-export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
+export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     question: ShortAnswerQuestion;
 
     textParts: string[][];
@@ -42,14 +42,6 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
         super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
     }
 
-    ngOnInit() {
-        super.init();
-    }
-
-    ngOnDestroy() {
-        super.destroy();
-    }
-
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
@@ -67,11 +59,9 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
             this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
             this.generateShortAnswerStructure();
             this.generateLettersForSolutions();
-
             this.loadLayout();
         }
         this.loadData();
-
         this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
     }
 
@@ -100,10 +90,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-        // reset old data
-        this.labels = [];
-        this.backgroundColors = [];
-        this.backgroundSolutionColors = [];
+        this.resetLabelsColors();
 
         // set label and backgroundcolor based on the spots
         this.question.spots!.forEach((spot, i) => {
@@ -112,87 +99,24 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
             this.backgroundSolutionColors.push(this.getBackgroundColor('#5cb85c'));
         });
 
-        this.addLastBarLayout();
-        this.loadInvalidLayout();
-    }
-
-    /**
-     * add Layout for the last bar
-     */
-    addLastBarLayout() {
-        // add Color for last bar
-        this.backgroundColors.push(this.getBackgroundColor('#5bc0de'));
-        this.backgroundSolutionColors[this.question.spots!.length] = this.getBackgroundColor('#5bc0de');
-
-        // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.labels[this.question.spots!.length] = lastLabel.split(' ');
-            this.chartLabels.length = 0;
-            for (let i = 0; i < this.labels.length; i++) {
-                this.chartLabels.push(this.labels[i]);
-            }
-        });
-    }
-
-    /**
-     * change label and Color if a spot is invalid
-     */
-    loadInvalidLayout() {
-        // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
-            this.question.spots!.forEach((spot, i) => {
-                if (spot.invalid) {
-                    this.backgroundColors[i] = this.getBackgroundColor('#838383');
-                    this.backgroundSolutionColors[i] = this.getBackgroundColor('#838383');
-                    // add 'invalid' to bar-Label
-                    this.labels[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
-                }
-            });
-        });
+        this.addLastBarLayout(this.question.spots!.length);
+        this.loadInvalidLayout(this.question.spots!);
     }
 
     /**
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-        // reset old data
-        this.ratedData = [];
-        this.unratedData = [];
+        this.resetData();
 
         // set data based on the spots for each spot
         this.question.spots!.forEach((spot) => {
             const spotCounter = (this.questionStatistic as ShortAnswerQuestionStatistic).shortAnswerSpotCounters?.find((sCounter) => {
                 return spot.id === sCounter.spot?.id;
             })!;
-            this.ratedData.push(spotCounter.ratedCounter!);
-            this.unratedData.push(spotCounter.unRatedCounter!);
+            this.addData(spotCounter.ratedCounter!, spotCounter.unRatedCounter!);
         });
-        // add data for the last bar (correct Solutions)
-        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
-        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
-        this.chartLabels.length = 0;
-        for (let i = 0; i < this.labels.length; i++) {
-            this.chartLabels.push(this.labels[i]);
-        }
-
-        this.loadDataInDiagram();
-    }
-
-    /**
-     * switch between showing and hiding the solution in the chart
-     */
-    switchRated() {
-        this.rated = !this.rated;
-        this.loadDataInDiagram();
-    }
-
-    /**
-     * switch between showing and hiding the solution in the chart
-     *  1. change the bar-Labels
-     */
-    switchSolution() {
-        this.showSolution = !this.showSolution;
-        this.loadDataInDiagram();
+        this.updateData();
     }
 
     /**

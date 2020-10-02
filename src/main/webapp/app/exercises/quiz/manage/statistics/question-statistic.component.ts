@@ -11,6 +11,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ChartOptions } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { OnDestroy, OnInit } from '@angular/core';
+import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
 export interface BackgroundColorConfig {
     backgroundColor: string;
@@ -19,7 +21,7 @@ export interface BackgroundColorConfig {
     pointBorderColor: string;
 }
 
-export abstract class QuestionStatisticComponent implements DataSetProvider {
+export abstract class QuestionStatisticComponent implements DataSetProvider, OnInit, OnDestroy {
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;
 
@@ -34,6 +36,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
+    // solutionLabels is currently only used for multiple choice questions
+    solutionLabels: string[] = [];
     ratedData: number[] = [];
     unratedData: number[] = [];
 
@@ -66,7 +70,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
         this.options = createOptions(this);
     }
 
-    init() {
+    ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
@@ -95,7 +99,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
         });
     }
 
-    destroy() {
+    ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
@@ -105,6 +109,34 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
 
     getParticipants() {
         return this.participants;
+    }
+
+    /**
+     * reset old charts data
+     */
+    resetLabelsColors() {
+        this.labels = [];
+        this.solutionLabels = [];
+        this.backgroundColors = [];
+        this.backgroundSolutionColors = [];
+    }
+
+    resetData() {
+        this.ratedData = [];
+        this.unratedData = [];
+    }
+
+    addData(rated: number, unrated: number) {
+        this.ratedData.push(rated);
+        this.unratedData.push(unrated);
+    }
+
+    updateData() {
+        // add data for the last bar (correct Solutions)
+        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
+        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
+        this.chartLabels = this.labels;
+        this.loadDataInDiagram();
     }
 
     /**
@@ -158,6 +190,39 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
     }
 
     /**
+     * change label and color if an element is invalid
+     */
+    loadInvalidLayout(possibleInvalidElements: CanBecomeInvalid[]) {
+        // set Background for invalid answers = grey
+        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
+            possibleInvalidElements.forEach((element, i) => {
+                if (element.invalid) {
+                    this.backgroundColors[i] = this.getBackgroundColor('#838383');
+                    this.backgroundSolutionColors[i] = this.getBackgroundColor('#838383');
+                    // add 'invalid' to bar-Label
+                    this.labels[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
+                }
+            });
+        });
+    }
+
+    /**
+     * add Layout for the last bar
+     */
+    addLastBarLayout(length: number) {
+        // add Color for last bar
+        this.backgroundColors.push(this.getBackgroundColor('#5bc0de'));
+        this.backgroundSolutionColors[length] = this.getBackgroundColor('#5bc0de');
+
+        // add Text for last label based on the language
+        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
+            this.solutionLabels[length] = lastLabel.split(' ');
+            this.labels[length] = lastLabel.split(' ');
+            this.chartLabels = this.labels;
+        });
+    }
+
+    /**
      * check if the rated or unrated
      * load the rated or unrated data into the diagram
      */
@@ -179,6 +244,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
                 this.data = this.unratedData.slice(0);
                 this.data.push(this.unratedCorrectData);
             }
+            // show Solution
+            this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution
             // if show Solution is false use the backgroundColor which doesn't show the solution
@@ -192,6 +259,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider {
                 this.participants = this.questionStatistic.participantsUnrated!;
                 this.data = this.unratedData;
             }
+            // don't show Solution
+            this.chartLabels = this.labels;
         }
 
         this.datasets = [

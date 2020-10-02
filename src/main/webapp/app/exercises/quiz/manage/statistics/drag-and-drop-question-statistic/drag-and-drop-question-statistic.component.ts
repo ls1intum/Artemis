@@ -37,16 +37,8 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
     }
 
-    ngOnInit() {
-        super.init();
-    }
-
-    ngOnDestroy() {
-        super.destroy();
-    }
-
     /**
-     * This functions loads the Quiz, which is necessary to build the Web-Template
+     * load the Quiz, which is necessary to build the Web-Template
      *
      * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
      * @param {boolean} refresh: true if method is called from Websocket
@@ -69,78 +61,33 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
      */
     loadLayout() {
         this.orderDropLocationByPos();
+        this.resetLabelsColors();
 
-        // reset old data
-        this.labels = [];
-        this.backgroundColors = [];
-        this.backgroundSolutionColors = [];
-
-        // set label and backgroundcolor based on the dropLocations
+        // set label and background color based on the dropLocations
         this.question.dropLocations!.forEach((dropLocation, i) => {
             this.labels.push(String.fromCharCode(65 + i) + '.');
             this.backgroundColors.push(this.getBackgroundColor('#428bca'));
             this.backgroundSolutionColors.push(this.getBackgroundColor('#5cb85c'));
         });
 
-        this.addLastBarLayout();
-        this.loadInvalidLayout();
-    }
-
-    /**
-     * add Layout for the last bar
-     */
-    addLastBarLayout() {
-        // add Color for last bar
-        this.backgroundColors.push(this.getBackgroundColor('#5bc0de'));
-        this.backgroundSolutionColors[this.question.dropLocations!.length] = this.getBackgroundColor('#5bc0de');
-
-        // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.labels[this.question.dropLocations!.length] = lastLabel.split(' ');
-            this.chartLabels = this.labels;
-        });
-    }
-
-    /**
-     * change label and Color if a dropLocation is invalid
-     */
-    loadInvalidLayout() {
-        // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
-            this.question.dropLocations!.forEach((dropLocation, i) => {
-                if (dropLocation.invalid) {
-                    this.backgroundColors[i] = this.getBackgroundColor('#838383');
-                    this.backgroundSolutionColors[i] = this.getBackgroundColor('#838383');
-                    // add 'invalid' to bar-Label
-                    this.labels[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
-                }
-            });
-        });
+        this.addLastBarLayout(this.question.dropLocations!.length);
+        this.loadInvalidLayout(this.question.dropLocations!);
     }
 
     /**
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-        // reset old data
-        this.ratedData = [];
-        this.unratedData = [];
+        this.resetData();
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations!.forEach((dropLocation) => {
             const dropLocationCounter = (this.questionStatistic as DragAndDropQuestionStatistic).dropLocationCounters?.find(
                 (dlCounter) => dropLocation.id === dlCounter.dropLocation!.id,
             )!;
-            this.ratedData.push(dropLocationCounter.ratedCounter!);
-            this.unratedData.push(dropLocationCounter.unRatedCounter!);
+            this.addData(dropLocationCounter.ratedCounter!, dropLocationCounter.unRatedCounter!);
         });
-        // add data for the last bar (correct Solutions)
-        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
-        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
-
-        this.chartLabels = this.labels;
-
-        this.loadDataInDiagram();
+        this.updateData();
     }
 
     /**
@@ -177,8 +124,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
      * Get the drag item that was mapped to the given drop location in the sample solution
      *
      * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | null} the mapped drag item,
-     *                          or null if no drag item has been mapped to this location
+     * @return {object | null} the mapped drag item, or null if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter((mapping) => mapping.dropLocation!.id === dropLocation.id)[0];
