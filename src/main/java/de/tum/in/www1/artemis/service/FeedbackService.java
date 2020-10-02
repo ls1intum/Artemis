@@ -140,6 +140,7 @@ public class FeedbackService {
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             // Splitting string at the first linebreak to only get the first line of the Exception
+            // TODO Improve this to support multi-line exceptions
             return message.split("\\n", 2)[0]
                     // junit 4
                     .replace("java.lang.AssertionError: ", "")
