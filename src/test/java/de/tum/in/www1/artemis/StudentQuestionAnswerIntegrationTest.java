@@ -57,7 +57,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createStudentQuestionAnswer() throws Exception {
+    public void createStudentQuestionAnswer_asInstructor() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
@@ -67,8 +67,42 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setQuestion(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
 
+        // should be automatically approved
+        assertThat(response.isTutorApproved());
         // trying to create same studentQuestionAnswer again --> bad request
         request.postWithResponseBody("/api/student-question-answers", response, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void createStudentQuestionAnswer_asTA() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
+
+        // should be automatically approved
+        assertThat(response.isTutorApproved());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void createStudentQuestionAnswer_asStudent() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
+
+        // shouldn't be automatically approved
+        assertThat(!response.isTutorApproved());
     }
 
     @Test
