@@ -10,7 +10,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
@@ -18,7 +18,6 @@ import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics
     providers: [QuizStatisticUtil, ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
-    questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
 
     solutionLabels: string[] = [];
@@ -54,8 +53,9 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
      */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
-        this.question = updatedQuestion as MultipleChoiceQuestion;
-        this.questionStatistic = this.question.quizQuestionStatistic as MultipleChoiceQuestionStatistic;
+        if (!updatedQuestion) {
+            return;
+        }
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
@@ -168,7 +168,9 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
 
         // set data based on the answerCounters for each AnswerOption
         this.question.answerOptions!.forEach((answerOption) => {
-            const answerOptionCounter = this.questionStatistic.answerCounters!.filter((answerCounter) => answerOption.id === answerCounter.answer!.id)[0];
+            const answerOptionCounter = (this.questionStatistic as MultipleChoiceQuestionStatistic).answerCounters!.filter(
+                (answerCounter) => answerOption.id === answerCounter.answer!.id,
+            )[0];
             this.ratedData.push(answerOptionCounter.ratedCounter!);
             this.unratedData.push(answerOptionCounter.unRatedCounter!);
         });

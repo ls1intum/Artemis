@@ -12,7 +12,7 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -22,7 +22,6 @@ import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
     question: ShortAnswerQuestion;
-    questionStatistic: ShortAnswerQuestionStatistic;
 
     textParts: string[][];
     lettersForSolutions: number[] = [];
@@ -59,8 +58,9 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
      */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
-        this.question = updatedQuestion as ShortAnswerQuestion;
-        this.questionStatistic = this.question.quizQuestionStatistic as ShortAnswerQuestionStatistic;
+        if (!updatedQuestion) {
+            return;
+        }
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
@@ -161,7 +161,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
         // set data based on the spots for each spot
         this.question.spots!.forEach((spot) => {
-            const spotCounter = this.questionStatistic.shortAnswerSpotCounters?.find((sCounter) => {
+            const spotCounter = (this.questionStatistic as ShortAnswerQuestionStatistic).shortAnswerSpotCounters?.find((sCounter) => {
                 return spot.id === sCounter.spot?.id;
             })!;
             this.ratedData.push(spotCounter.ratedCounter!);
