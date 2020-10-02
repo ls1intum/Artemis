@@ -57,11 +57,14 @@ export class ExerciseRowButtonComponent implements OnInit {
             case ExerciseType.MODELING:
                 this.deleteModelingExercise();
                 break;
+            case ExerciseType.QUIZ:
+                this.deleteQuizExercise();
+                break;
         }
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise.id).subscribe(
+        this.textExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
@@ -77,7 +80,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise.id).subscribe(
+        this.modelingExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
@@ -93,7 +96,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise.id).subscribe(
+        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
@@ -103,6 +106,20 @@ export class ExerciseRowButtonComponent implements OnInit {
                 if (this.exercise.exerciseGroup) {
                     this.onDeleteExercise.emit({ exerciseId: this.exercise.id, groupId: this.exercise.exerciseGroup.id });
                 }
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    private deleteQuizExercise() {
+        this.quizExerciseService.delete(this.exercise.id).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Deleted a quiz',
+                });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

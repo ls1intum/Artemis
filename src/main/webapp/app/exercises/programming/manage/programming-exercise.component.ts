@@ -22,6 +22,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { tap } from 'rxjs/operators';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -67,8 +68,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
-                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course || exercise.exerciseGroup!.exam!.course);
-                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course || exercise.exerciseGroup!.exam!.course);
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
@@ -176,6 +177,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             )
             .subscribe();
         return number;
+    }
+
+    openOrionEditor(exercise: ProgrammingExercise) {
+        try {
+            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation?.id]);
+        } catch (e) {
+            this.javaBridge.log(e);
+        }
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

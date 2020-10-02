@@ -70,10 +70,10 @@
                     </td>
                     <td *ngIf="!isInExerciseGroup">{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
                     <td *ngIf="!isInExerciseGroup">
-                        {{ fullMinutesForSeconds(quizExercise.duration) }}
-                        <span jhiTranslate="{{ quizExercise.duration % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
+                        {{ fullMinutesForSeconds(quizExercise.duration!) }}
+                        <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
                         <span *ngIf="quizExercise.duration % 60">
-                            {{ quizExercise.duration % 60 }}
+                            {{ quizExercise.duration! % 60 }}
                             <span jhiTranslate="artemisApp.quizExercise.secondsShort"></span>
                         </span>
                     </td>

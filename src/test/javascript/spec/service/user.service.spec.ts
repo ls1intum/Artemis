@@ -8,7 +8,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 describe('User Service', () => {
     let service: UserService;
-    let httpMock;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,7 +34,7 @@ describe('User Service', () => {
         });
         it('should return User', () => {
             service.find('user').subscribe((received) => {
-                expect(received.body.login).toEqual('user');
+                expect(received.body!.login).toEqual('user');
             });
 
             const req = httpMock.expectOne({ method: 'GET' });

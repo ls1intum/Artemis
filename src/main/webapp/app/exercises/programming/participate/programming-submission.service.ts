@@ -11,6 +11,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { findLatestResult } from 'app/shared/util/utils';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -21,7 +22,7 @@ export enum ProgrammingSubmissionState {
     HAS_FAILED_SUBMISSION = 'HAS_FAILED_SUBMISSION',
 }
 
-export type ProgrammingSubmissionStateObj = { participationId: number; submissionState: ProgrammingSubmissionState; submission: ProgrammingSubmission | null };
+export type ProgrammingSubmissionStateObj = { participationId: number; submissionState: ProgrammingSubmissionState; submission?: ProgrammingSubmission };
 
 export type ExerciseSubmissionState = { [participationId: number]: ProgrammingSubmissionStateObj };
 
@@ -61,12 +62,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     // participationId -> exerciseId
     private participationIdToExerciseId = new Map<number, number>();
 
-    // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
+    // undefined describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> } = {};
     // exerciseId -> ExerciseSubmissionState
     private exerciseBuildStateSubjects = new Map<number, BehaviorSubject<ExerciseSubmissionState | undefined>>();
     // participationId -> Subject
-    private resultTimerSubjects = new Map<number, Subject<null>>();
+    private resultTimerSubjects = new Map<number, Subject<undefined>>();
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
     private resultEtaSubject = new BehaviorSubject<number>(this.DEFAULT_EXPECTED_RESULT_ETA);
 
@@ -118,10 +119,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param participationId
      */
-    private fetchLatestPendingSubmissionByParticipationId = (participationId: number): Observable<ProgrammingSubmission | null> => {
+    private fetchLatestPendingSubmissionByParticipationId = (participationId: number): Observable<ProgrammingSubmission | undefined> => {
         return this.http
             .get<ProgrammingSubmission>(SERVER_API_URL + 'api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
-            .pipe(catchError(() => of(null)));
+            .pipe(catchError(() => of(undefined)));
     };
 
     /**
@@ -133,9 +134,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param exerciseId of programming exercise.
      */
-    private fetchLatestPendingSubmissionsByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | null }> => {
+    private fetchLatestPendingSubmissionsByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> => {
         return this.http
-            .get<{ [participationId: number]: ProgrammingSubmission | null }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`)
+            .get<{ [participationId: number]: ProgrammingSubmission }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`)
             .pipe(catchError(() => of([])));
     };
 
@@ -153,7 +154,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 tap(() => {
                     const resultTimerSubject = this.resultTimerSubjects.get(participationId);
                     if (resultTimerSubject) {
-                        resultTimerSubject.next(null);
+                        resultTimerSubject.next(undefined);
                     }
                 }),
             )
@@ -182,7 +183,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%exerciseId%', exerciseId.toString());
             }
 
-            this.resultTimerSubjects.set(participationId, new Subject<null>());
+            this.resultTimerSubjects.set(participationId, new Subject<undefined>());
             this.participationIdToExerciseId.set(participationId, exerciseId);
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
@@ -198,13 +199,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 return;
                             }
                             const programmingSubmission = submission as ProgrammingSubmission;
-                            this.emitBuildingSubmission(
-                                programmingSubmission.participation.id,
-                                this.participationIdToExerciseId.get(programmingSubmission.participation.id)!,
-                                submission,
-                            );
+                            const submissionParticipationId = programmingSubmission.participation!.id!;
+                            this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission);
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
-                            this.startResultWaitingTimer(programmingSubmission.participation.id);
+                            this.startResultWaitingTimer(submissionParticipationId);
                         }),
                     )
                     .subscribe();
@@ -215,7 +213,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Waits for a new result to come in while a pending submission exists.
-     * Will stop waiting after the timer subject has emited a value.
+     * Will stop waiting after the timer subject has emitted a value.
      *
      * @param participationId that is connected to the result.
      * @param exerciseId that is connected to the participation.
@@ -227,7 +225,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
         const resultObservable = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId, personal, exerciseId).pipe(
             // Make sure that the incoming result belongs the latest submission!
-            filter((result: Result | null) => {
+            filter((result: Result | undefined) => {
                 if (!result || !result.submission) {
                     return false;
                 }
@@ -236,7 +234,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             distinctUntilChanged(),
             tap(() => {
-                // This is the normal case - the last pending submission received a result, so we emit null as the message that there is no pending submission anymore.
+                // This is the normal case - the last pending submission received a result, so we emit undefined as the message that there is no pending submission anymore.
                 this.emitNoPendingSubmission(participationId, exerciseId);
             }),
         );
@@ -260,7 +258,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     private emitNoPendingSubmission = (participationId: number, exerciseId: number) => {
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null };
+        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
 
@@ -274,7 +272,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const newSubmissionState = {
             participationId,
             submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
-            submission: submissionStateObj ? submissionStateObj.submission : null,
+            submission: submissionStateObj ? submissionStateObj.submission : undefined,
         };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     };
@@ -321,7 +319,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exercises
      * @param forceCacheOverride if true it will clear the current value in the cache for each participation of the exercises.
      */
-    public initializeCacheForStudent(exercises: Exercise[], forceCacheOverride = false) {
+    public initializeCacheForStudent(exercises?: Exercise[], forceCacheOverride = false) {
+        if (!exercises) {
+            return;
+        }
         exercises
             .filter((exercise) => {
                 // We only process programming exercises in this service.
@@ -333,21 +334,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // If we already have a value cached for the participation we don't override it.
-                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations![0].id!]) {
                     return false;
                 }
                 // Without submissions we can't determine if the latest submission is pending.
                 return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
             })
             .forEach((exercise) => {
-                const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
-                const latestSubmission = participation.submissions.reduce((current, next) => (current.id > next.id ? current : next)) as ProgrammingSubmission;
-                const latestResult: Result | null =
-                    participation.results && participation.results.length ? participation.results.reduce((current, next) => (current.id > next.id ? current : next)) : null;
+                const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
+                const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
+                const latestResult = findLatestResult(participation.results);
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
                 // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
-                this.submissionSubjects[participation.id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, participation.id, exercise.id, true).subscribe();
+                this.submissionSubjects[participation.id!] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }
 
@@ -360,14 +360,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * Will emit:
      * - A submission if a last pending submission exists.
-     * - A null value when there is no pending submission.
-     * - A null value when no result arrived in time for the submission.
+     * - An undefined value when there is no pending submission.
+     * - An undefined value when no result arrived in time for the submission.
      *
      * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
      *
      * @param participationId id of the ProgrammingExerciseStudentParticipation
      * @param exerciseId id of ProgrammingExercise
      * @param personal whether the current user is a participant in the participation.
+     * @param forceCacheOverride whether the cache should definitely be overridden, default is false
      */
     public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false) => {
         const subject = this.submissionSubjects[participationId];
@@ -407,7 +408,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .pipe(
                 map(Object.entries),
                 map(this.mapParticipationIdToNumber),
-                switchMap((submissions: Array<[number, ProgrammingSubmission | null]>) => {
+                switchMap((submissions: Array<[number, ProgrammingSubmission]>) => {
                     if (!submissions.length) {
                         // This needs to be done as from([]) would stop the stream.
                         return of([]);
@@ -480,7 +481,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param personal whether the current user is a participant in the participation.
      */
     private processPendingSubmission = (
-        submissionToBeProcessed: ProgrammingSubmission | null,
+        submissionToBeProcessed: ProgrammingSubmission | undefined,
         participationId: number,
         exerciseId: number,
         personal: boolean,
@@ -492,7 +493,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId, personal);
             }),
             // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
-            map((submission: ProgrammingSubmission | null) => {
+            map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
                     const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
                     if (remainingTime > 0) {
@@ -505,17 +506,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
                 }
                 this.emitNoPendingSubmission(participationId, exerciseId);
-                return { participationId, submission: null, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
+                return { participationId, submission: undefined, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
             }),
             // Now update the exercise build state object and start the result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj } };
+                const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
     };
 
-    private mapParticipationIdToNumber = (submissions: Array<[string, ProgrammingSubmission | null]>) => {
+    private mapParticipationIdToNumber = (submissions: Array<[string, ProgrammingSubmission | undefined]>) => {
         return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
     };
 
@@ -574,7 +576,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
         this.submissionSubjects = {};
-        this.exerciseBuildStateSubjects.delete(exercise.id);
+        this.exerciseBuildStateSubjects.delete(exercise.id!);
     }
 
     /**

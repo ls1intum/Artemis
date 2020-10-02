@@ -123,7 +123,7 @@
                             </button>
                             <button
                                 *ngIf="
-                                    course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict[exerciseGroup.id].includes(exerciseType.PROGRAMMING);
+                                    course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING);
                                     else containsNoProgrammingExercise
                                 "
                                 jhiDeleteButton
@@ -135,7 +135,7 @@
                                     deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                 }"
                                 (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                [dialogError]="dialogError$"
+                                [dialogError]="dialogError"
                                 class="mb-0"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
@@ -148,7 +148,7 @@
                                     deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                     (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                    [dialogError]="dialogError$"
+                                    [dialogError]="dialogError"
                                     class="mb-0"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>

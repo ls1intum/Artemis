@@ -27,7 +27,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
-    public course: Course | null;
+    public course?: Course;
     public refreshingCourse = false;
     public courseDescription: string;
     public enableShowMore: boolean;
@@ -89,7 +89,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
                 (quizExercise: QuizExercise) => {
                     quizExercise = this.courseExerciseService.convertDateFromServer(quizExercise);
                     // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
-                    if (this.course) {
+                    if (this.course && this.course.exercises) {
                         this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
                         this.course.exercises.push(quizExercise);
                     }
@@ -112,12 +112,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     }
 
     showLongDescription() {
-        this.courseDescription = this.course!.description;
+        this.courseDescription = this.course?.description || '';
         this.longTextShown = true;
     }
 
     showShortDescription() {
-        this.courseDescription = this.course!.description.substr(0, 50) + '...';
+        this.courseDescription = this.course?.description?.substr(0, 50) + '...' || '';
         this.longTextShown = false;
     }
 
@@ -138,7 +138,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
      */
     async subscribeToTeamAssignmentUpdates() {
         this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates).subscribe((teamAssignment: TeamAssignmentPayload) => {
-            const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
+            const exercise = this.course?.exercises?.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
             if (exercise) {
                 exercise.studentAssignedTeamId = teamAssignment.teamId;
                 exercise.studentParticipations = teamAssignment.studentParticipations;

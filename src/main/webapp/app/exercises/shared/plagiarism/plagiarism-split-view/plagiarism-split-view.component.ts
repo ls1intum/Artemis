@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 // @ts-ignore
-import Split from 'split.js';
+import { Split } from 'split.js';
 import { Observable } from 'rxjs';
 import { ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -53,12 +53,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const comp: ModelingSubmissionComparisonDTO = changes.comparison.currentValue;
 
             this.submissionService.getSubmission(comp.element1.submissionId).subscribe((submission: ModelingSubmission) => {
-                submission.model = JSON.parse(submission.model);
+                submission.model = JSON.parse(submission.model!);
                 this.submission1 = submission;
             });
 
             this.submissionService.getSubmission(comp.element2.submissionId).subscribe((submission) => {
-                submission.model = JSON.parse(submission.model);
+                submission.model = JSON.parse(submission.model!);
                 this.submission2 = submission;
             });
         }

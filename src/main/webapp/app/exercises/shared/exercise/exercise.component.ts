@@ -57,7 +57,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     protected load(): void {
-        if (this.course == null) {
+        if (!this.course?.id) {
             this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
             this.loadCourse();
         } else {

@@ -109,11 +109,7 @@
                             </span>
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
-                                *ngIf="
-                                    programmingExercise.templateParticipation &&
-                                    programmingExercise.templateParticipation.results &&
-                                    programmingExercise.templateParticipation.results.length
-                                "
+                                *ngIf="programmingExercise.templateParticipation?.results?.length"
                                 [participationType]="'TEMPLATE'"
                                 [participation]="programmingExercise.templateParticipation"
                                 [exercise]="programmingExercise"
@@ -133,11 +129,7 @@
                             </span>
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
-                                *ngIf="
-                                    programmingExercise.solutionParticipation &&
-                                    programmingExercise.solutionParticipation.results &&
-                                    programmingExercise.solutionParticipation.results.length
-                                "
+                                *ngIf="programmingExercise.solutionParticipation?.results?.length"
                                 [participationType]="'SOLUTION'"
                                 [participation]="programmingExercise.solutionParticipation"
                                 [exercise]="programmingExercise"

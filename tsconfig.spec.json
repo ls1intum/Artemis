@@ -3,7 +3,6 @@
     "compilerOptions": {
         "types": ["jest", "node"],
         "allowJs": true,
-        "inlineSourceMap": true,
         "outDir": "build/www/app",
         "baseUrl": ".",
         "paths": {

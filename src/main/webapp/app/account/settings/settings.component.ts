@@ -48,7 +48,7 @@ export class SettingsComponent implements OnInit {
                     this.updateForm(user!);
                 });
                 this.languageService.getCurrent().then((current) => {
-                    if (this.settingsAccount.langKey !== null && this.settingsAccount.langKey !== current) {
+                    if (this.settingsAccount.langKey && this.settingsAccount.langKey !== current) {
                         this.languageService.changeLanguage(this.settingsAccount.langKey);
                     }
                 });

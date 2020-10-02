@@ -69,20 +69,20 @@ export class LectureService {
 
     protected convertDateFromClient(lecture: Lecture): Lecture {
         const copy: Lecture = Object.assign({}, lecture, {
-            startDate: lecture.startDate && lecture.startDate.isValid() ? lecture.startDate.toJSON() : null,
-            endDate: lecture.endDate && lecture.endDate.isValid() ? lecture.endDate.toJSON() : null,
+            startDate: lecture.startDate && lecture.startDate.isValid() ? lecture.startDate.toJSON() : undefined,
+            endDate: lecture.endDate && lecture.endDate.isValid() ? lecture.endDate.toJSON() : undefined,
         });
         if (copy.course) {
-            delete copy.course.exercises;
-            delete copy.course.lectures;
+            copy.course.exercises = undefined;
+            copy.course.lectures = undefined;
         }
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
         }
         return res;
     }
@@ -107,18 +107,19 @@ export class LectureService {
         return res;
     }
 
-    public convertDatesForLectureFromServer(lecture: Lecture): Lecture {
-        lecture.startDate = lecture.startDate ? moment(lecture.startDate) : null;
-        lecture.endDate = lecture.endDate ? moment(lecture.endDate) : null;
+    public convertDatesForLectureFromServer(lecture?: Lecture) {
+        if (lecture) {
+            lecture.startDate = lecture.startDate ? moment(lecture.startDate) : undefined;
+            lecture.endDate = lecture.endDate ? moment(lecture.endDate) : undefined;
+        }
         return lecture;
     }
 
-    public convertDatesForLecturesFromServer(lectures: Lecture[]): Lecture[] {
-        if (!lectures) {
-            return lectures;
+    public convertDatesForLecturesFromServer(lectures?: Lecture[]) {
+        if (lectures) {
+            return lectures.map((lecture) => {
+                return this.convertDatesForLectureFromServer(lecture)!;
+            });
         }
-        return lectures.map((lecture) => {
-            return this.convertDatesForLectureFromServer(lecture);
-        });
     }
 }
