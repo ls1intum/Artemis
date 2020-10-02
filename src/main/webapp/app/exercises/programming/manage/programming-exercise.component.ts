@@ -19,6 +19,9 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
+import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -42,6 +45,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private javaBridge: OrionConnectorService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
+        private testCaseService: ProgrammingExerciseTestCaseService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -138,6 +142,40 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             () => this.dialogErrorSource.next(''),
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+    }
+
+    getHiddenTestCasesNumber(programmingExerciseId: number): number {
+        let number = 0;
+        this.testCaseService
+            .subscribeForTestCases(programmingExerciseId)
+            .pipe(
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    testCases.forEach((testCase) => {
+                        if (testCase.afterDueDate) {
+                            number++;
+                        }
+                    });
+                }),
+            )
+            .subscribe();
+        return number;
+    }
+
+    getPublicTestCasesNumber(programmingExerciseId: number): number {
+        let number = 0;
+        this.testCaseService
+            .subscribeForTestCases(programmingExerciseId)
+            .pipe(
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    testCases.forEach((testCase) => {
+                        if (!testCase.afterDueDate) {
+                            number++;
+                        }
+                    });
+                }),
+            )
+            .subscribe();
+        return number;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

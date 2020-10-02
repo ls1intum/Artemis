@@ -49,12 +49,12 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
                         <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-<!--                    <th class="d-none d-md-table-cell">-->
-<!--                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfPublicTests">Tests (public)</span>-->
-<!--                    </th>-->
-<!--                    <th class="d-none d-md-table-cell">-->
-<!--                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfHiddenTests">Tests (private)</span>-->
-<!--                    </th>-->
+                    <th class="d-none d-md-table-cell">
+                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfPublicTests">Tests (public)</span>
+                    </th>
+                    <th class="d-none d-md-table-cell">
+                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfHiddenTests">Tests (hidden)</span>
+                    </th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
                     <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
@@ -90,6 +90,8 @@
                     <td *ngIf="!isInExerciseGroup">{{ programmingExercise.releaseDate | artemisDate }}</td>
                     <td *ngIf="!isInExerciseGroup">{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td class="d-none d-md-table-cell">{{ getPublicTestCasesNumber(programmingExercise.id) }}</td>
+                    <td class="d-none d-md-table-cell">{{ getHiddenTestCasesNumber(programmingExercise.id) }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
