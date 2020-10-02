@@ -61,17 +61,7 @@
                 </div>
             </div>
 
-            <jhi-resizable-instructions
-                class="resizable-submission card resizable-instructions"
-                id="instructions"
-                [criteria]="this.exercise.gradingCriteria"
-                [problemStatement]="this.exercise.problemStatement"
-                [gradingInstructions]="this.exercise.gradingInstructions"
-                [sampleSolution]="this.exercise.sampleSolution"
-                [toggleCollapse]="toggleCollapse.bind(this)"
-            >
-                <div resizingbar class="resizing-bar"><span></span></div>
-            </jhi-resizable-instructions>
+            <jhi-collapsable-assessment-instructions *ngIf="exercise" [readOnly]="false" [exercise]="exercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
         </div>
     </div>
 </jhi-assessment-layout>
