@@ -50,20 +50,20 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 }
 
 @Injectable({ providedIn: 'root' })
-export class FeedbackConflictResolver implements Resolve<TextSubmission[] | null> {
+export class FeedbackConflictResolver implements Resolve<TextSubmission[] | undefined> {
     constructor(private textAssessmentsService: TextAssessmentsService) {}
 
     /**
-     * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
+     * Resolves the needed TextSubmissions for the TextFeedbackConflictsComponent using the TextAssessmentsService.
      * @param route
      */
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const feedbackId = Number(route.paramMap.get('feedbackId'));
         if (submissionId && feedbackId) {
-            return this.textAssessmentsService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(null));
+            return this.textAssessmentsService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(undefined));
         }
-        return Observable.of(null);
+        return Observable.of(undefined);
     }
 }
 
