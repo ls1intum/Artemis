@@ -295,6 +295,7 @@ describe('TextEditorComponent', () => {
             } as Participation,
             text: 'abc',
         } as TextSubmission;
+        // @ts-ignore
         sinon.spy(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).to.have.been.calledOnce;

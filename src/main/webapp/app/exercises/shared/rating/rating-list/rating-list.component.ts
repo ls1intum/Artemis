@@ -35,8 +35,8 @@ export class RatingListComponent implements OnInit {
     }
 
     openResult(rating: Rating) {
-        const participation = rating.result.participation;
-        const exercise = rating.result.participation?.exercise;
+        const participation = rating.result?.participation;
+        const exercise = rating.result?.participation?.exercise;
 
         if (participation && exercise) {
             this.router.navigate(['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', participation.id]);
