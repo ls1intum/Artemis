@@ -49,9 +49,9 @@ export class SettingsComponent implements OnInit {
      */
     save() {
         this.success = false;
+        // Note: changing the email is currently not supported, because we would need to send another activation link
         this.account.firstName = this.settingsForm.get('firstName')!.value;
         this.account.lastName = this.settingsForm.get('lastName')!.value;
-        this.account.email = this.settingsForm.get('email')!.value;
         this.account.langKey = this.settingsForm.get('langKey')!.value;
 
         this.accountService.save(this.account).subscribe(

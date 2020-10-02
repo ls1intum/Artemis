@@ -67,7 +67,16 @@
 
                 <div class="form-group">
                     <label class="form-control-label" for="email" jhiTranslate="global.form.email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="{{ 'global.form.email.placeholder' | translate }}" formControlName="email" />
+                    <!-- Note: changing the email is currently not supported, because we would need to send another activation link -->
+                    <input
+                        type="email"
+                        class="form-control"
+                        disabled
+                        id="email"
+                        name="email"
+                        placeholder="{{ 'global.form.email.placeholder' | translate }}"
+                        formControlName="email"
+                    />
 
                     <div *ngIf="settingsForm.get('email')!.invalid && (settingsForm.get('email')!.dirty || settingsForm.get('email')!.touched)">
                         <small class="form-text text-danger" *ngIf="settingsForm.get('email')?.errors?.required" jhiTranslate="global.messages.validate.email.required">
