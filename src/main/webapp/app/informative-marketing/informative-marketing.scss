@@ -57,7 +57,7 @@ body {
     box-sizing: border-box;
 }
 
-.feature-container {
+.container {
     width: 1200px;
     height: auto;
     margin: 0 auto;
@@ -68,7 +68,7 @@ body {
     box-sizing: border-box;
     cursor: pointer;
 }
-.feature-container .box {
+.container .box {
     position: relative;
     height: 250px;
     background: #3e8acc;
@@ -78,7 +78,7 @@ body {
     overflow: hidden;
     border-radius: 10px;
 }
-.feature-container .box .icon {
+.container .box .icon {
     position: absolute;
     top: 0;
     left: 0;
@@ -88,7 +88,7 @@ body {
     transition: 0.5s;
     z-index: 1;
 }
-.feature-container .box:hover .icon {
+.container .box:hover .icon {
     top: 20px;
     left: calc(50% - 40px);
     width: 80px;
@@ -97,7 +97,7 @@ body {
     cursor: pointer;
 }
 
-.feature-container .box .icon .title {
+.container .box .icon .title {
     position: absolute;
     display: inline-block;
     top: calc(50% + 10px);
@@ -109,7 +109,7 @@ body {
     opacity: 1;
 }
 
-.feature-container .box .icon .fa {
+.container .box .icon .fa {
     position: absolute;
     top: calc(50% - 20px);
     left: 50%;
@@ -118,15 +118,15 @@ body {
     transition: 0.5s;
     color: #3e8acc;
 }
-.feature-container .box:hover .icon .fa {
+.container .box:hover .icon .fa {
     top: 50%;
     font-size: 40px;
 }
 
-.feature-container .box:hover .icon .title {
+.container .box:hover .icon .title {
     opacity: 0;
 }
-.feature-container .box .feature-short-description {
+.container .box .feature-short-description {
     position: absolute;
     top: 100%;
     height: calc(100% - 120px);
@@ -136,18 +136,18 @@ body {
     transition: 0.5s;
     opacity: 0;
 }
-.feature-container .box:hover .feature-short-description {
+.container .box:hover .feature-short-description {
     top: 100px;
     opacity: 1;
 }
-.feature-container .box .feature-short-description h3 {
+.container .box .feature-short-description h3 {
     margin: 0;
     padding: 0;
     color: #fff;
     font-size: 24px;
     text-align: center;
 }
-.feature-container .box .feature-short-description p {
+.container .box .feature-short-description p {
     margin: 0;
     padding: 0;
     color: #fff;

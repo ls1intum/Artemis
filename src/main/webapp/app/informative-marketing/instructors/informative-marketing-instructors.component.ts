@@ -72,18 +72,6 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
     }
-
-    translateFeatureTitle(feature: Feature) {
-        return this.translateService.instant(feature.title);
-    }
-
-    translateFeatureShortDescription(feature: Feature) {
-        return this.translateService.instant(feature.shortDescription);
-    }
-
-    translateFeatureDescription(feature: Feature) {
-        return this.translateService.instant(feature.longDescription);
-    }
 }
 
 class Feature {

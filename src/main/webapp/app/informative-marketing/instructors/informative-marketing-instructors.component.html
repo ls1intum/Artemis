@@ -19,17 +19,17 @@
                     <hr data-content="AND" class="hr-text" />
                 </div>
             </div>
-            <div class="feature-container">
+            <div class="container">
                 <div *ngFor="let feature of features" class="box" (click)="navigateToFeature(feature.id)">
                     <div class="icon">
                         <i class="{{ feature.icon }}" aria-hidden="true"></i>
                         <div class="title">
-                            <h3>{{ translateFeatureTitle(feature) }}</h3>
+                            <h3>{{ feature.title | translate }}</h3>
                         </div>
                     </div>
 
                     <div class="feature-short-description">
-                        <p>{{ translateFeatureShortDescription(feature) }}</p>
+                        <p>{{ feature.shortDescription | translate }}</p>
                     </div>
                 </div>
             </div>
@@ -44,7 +44,7 @@
                     <hr data-content="AND" class="hr-text" />
                 </div>
                 <div>
-                    <p>{{ translateFeatureDescription(feature) }}</p>
+                    <p>{{ feature.longDescription | translate }}</p>
                 </div>
             </div>
         </div>
