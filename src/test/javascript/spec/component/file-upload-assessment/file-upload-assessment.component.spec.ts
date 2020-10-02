@@ -37,6 +37,8 @@ import { By } from '@angular/platform-browser';
 import { throwError } from 'rxjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 
 chai.use(sinonChai);
 
@@ -66,7 +68,7 @@ describe('FileUploadAssessmentComponent', () => {
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(ResizableInstructionsComponent),
+                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [
