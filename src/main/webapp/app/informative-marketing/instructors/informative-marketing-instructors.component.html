@@ -4,26 +4,48 @@
 </head>
 <body>
     <div class="wrapper">
-        <div class="container">
-            <div *ngFor="let feature of features" class="box">
-                <div class="icon">
-                    <i class="fa fa-code" aria-hidden="true"></i>
-                    <div class="title">
-                        <h3>{{ translateFeatureTitle(feature) }}</h3>
+        <div class="header">
+            <h1>{{ 'informativeMarketing.title' | translate }}</h1>
+            <svg class="curve" xmlns="http://www.w3.org/2000/svg" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M0 100 C 20 0 50 0 100 100 Z"></path>
+            </svg>
+        </div>
+        <div class="content">
+            <h3>By Students for students</h3>
+            <p>Artemis now supports online exams. Have a quick look over our main features</p>
+            <div class="features-overview">
+                <h2>Feature Overview</h2>
+                <div class="mb-4">
+                    <hr data-content="AND" class="hr-text" />
+                </div>
+            </div>
+            <div class="feature-container">
+                <div *ngFor="let feature of features" class="box" (click)="navigateToFeature(feature.id)">
+                    <div class="icon">
+                        <i class="{{ feature.icon }}" aria-hidden="true"></i>
+                        <div class="title">
+                            <h3>{{ translateFeatureTitle(feature) }}</h3>
+                        </div>
+                    </div>
+
+                    <div class="feature-short-description">
+                        <p>{{ translateFeatureShortDescription(feature) }}</p>
                     </div>
                 </div>
-
-                <div class="content">
-                    <p>{{ translateFeatureShortDescription(feature) }}</p>
+            </div>
+            <div class="features-overview">
+                <div class="mb-4">
+                    <hr data-content="AND" class="hr-text" />
                 </div>
+                <h2>Details</h2>
             </div>
-        </div>
-        <div *ngFor="let feature of features" class="moreInformation">
-            <div class="mb-4">
-                <hr data-content="AND" class="hr-text" />
-            </div>
-            <div>
-                <p>{{ translateFeatureDescription(feature) }}</p>
+            <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-full-description">
+                <div class="mb-4">
+                    <hr data-content="AND" class="hr-text" />
+                </div>
+                <div>
+                    <p>{{ translateFeatureDescription(feature) }}</p>
+                </div>
             </div>
         </div>
     </div>

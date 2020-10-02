@@ -6,35 +6,79 @@ body {
     display: flex;
 }
 
+.header {
+    position: relative;
+    text-align: center;
+    background: #3e8acc;
+}
+
+.curve {
+    fill: #fff;
+    height: 100px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.header h1 {
+    color: #fff;
+    margin: 0;
+    font-size: 5em;
+    padding: 2em;
+    text-shadow: 1px 1px 40px #333333;
+    box-sizing: border-box;
+}
+
+.content {
+    padding: 20px;
+}
+
 .wrapper {
     float: left;
     align-content: center;
     align-items: center;
     box-sizing: border-box;
     width: 100%;
+    background: #fff;
 }
 
-.container {
+.features-overview {
+    margin: 0;
+    padding-left: 20%;
+    padding-right: 20%;
+    text-align: center;
+    color: #3e8acc;
+}
+.features-overview h2 {
+    font-size: 3em;
+    padding-top: 2em;
+    padding-bottom: 1em;
+    box-sizing: border-box;
+}
+
+.feature-container {
     width: 1200px;
     height: auto;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     grid-gap: 15px;
     padding: 10px;
     box-sizing: border-box;
+    cursor: pointer;
 }
-.container .box {
+.feature-container .box {
     position: relative;
     height: 250px;
     background: #3e8acc;
-    padding: 20px 20px 20px;
+    padding: 15px 15px 15px;
     text-align: left;
     box-sizing: border-box;
     overflow: hidden;
     border-radius: 10px;
 }
-.container .box .icon {
+.feature-container .box .icon {
     position: absolute;
     top: 0;
     left: 0;
@@ -44,28 +88,28 @@ body {
     transition: 0.5s;
     z-index: 1;
 }
-.container .box:hover .icon {
+.feature-container .box:hover .icon {
     top: 20px;
     left: calc(50% - 40px);
     width: 80px;
     height: 80px;
     border-radius: 50%;
+    cursor: pointer;
 }
 
-.container .box .icon .title {
+.feature-container .box .icon .title {
     position: absolute;
     display: inline-block;
-    top: calc(50% + 20px);
+    top: calc(50% + 10px);
     padding: 20px;
     color: #3e8acc;
-    font-size: 24px;
-    transition: 0.5s;
+    font-size: 22px;
     width: calc(100% - 40px);
     text-align: center;
     opacity: 1;
 }
 
-.container .box .icon .fa {
+.feature-container .box .icon .fa {
     position: absolute;
     top: calc(50% - 20px);
     left: 50%;
@@ -74,36 +118,36 @@ body {
     transition: 0.5s;
     color: #3e8acc;
 }
-.container .box:hover .icon .fa {
+.feature-container .box:hover .icon .fa {
     top: 50%;
     font-size: 40px;
 }
 
-.container .box:hover .icon .title {
+.feature-container .box:hover .icon .title {
     opacity: 0;
 }
-.container .box .content {
+.feature-container .box .feature-short-description {
     position: absolute;
     top: 100%;
     height: calc(100% - 120px);
     width: calc(100% - 40px);
     box-sizing: border-box;
-    font-size: 20px;
+    font-size: 18px;
     transition: 0.5s;
     opacity: 0;
 }
-.container .box:hover .content {
+.feature-container .box:hover .feature-short-description {
     top: 100px;
     opacity: 1;
 }
-.container .box .content h3 {
+.feature-container .box .feature-short-description h3 {
     margin: 0;
     padding: 0;
     color: #fff;
     font-size: 24px;
     text-align: center;
 }
-.container .box .content p {
+.feature-container .box .feature-short-description p {
     margin: 0;
     padding: 0;
     color: #fff;
@@ -118,7 +162,7 @@ hr.hr-text {
 }
 
 hr.hr-text::before {
-    content: attr(data-content);
+    content: attr(data-feature-short-description);
     display: inline-block;
     background: #fff;
     font-weight: bold;
