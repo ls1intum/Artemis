@@ -12,7 +12,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
-    @Input() isInExerciseGroup?: boolean;
+    @Input() isInExerciseGroup = false;
     @Output() exerciseCount = new EventEmitter<number>();
     @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     showAlertHeading: boolean;
@@ -42,7 +42,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         this.showAlertHeading = !this.embedded;
         this.showHeading = this.embedded;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.isInExerciseGroup == null) {
+        if (!this.isInExerciseGroup) {
             this.load();
         }
         this.registerChangeInExercises();
@@ -62,7 +62,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
             this.loadCourse();
         } else {
             this.courseId = this.course.id;
-            if (this.isInExerciseGroup == null) {
+            if (!this.isInExerciseGroup) {
                 this.loadExercises();
             }
         }
@@ -71,7 +71,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private loadCourse(): void {
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
-            if (this.isInExerciseGroup == null) {
+            if (!this.isInExerciseGroup) {
                 this.loadExercises();
             }
         });
@@ -103,7 +103,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     private registerChangeInExercises() {
         this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => {
-            if (!!this.isInExerciseGroup) {
+            if (this.isInExerciseGroup) {
                 location.reload();
             } else {
                 this.load();

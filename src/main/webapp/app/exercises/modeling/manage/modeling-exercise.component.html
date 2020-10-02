@@ -1,5 +1,5 @@
 <div>
-    <h4 *ngIf="isInExerciseGroup == null">
+    <h4 *ngIf="!isInExerciseGroup">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
         <span jhiTranslate="artemisApp.modelingExercise.home.title">Modeling Exercises</span>
         <button
@@ -30,21 +30,21 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="releaseDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="dueDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentDueDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="assessmentDueDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
+                    <th jhiSortBy="presentationScoreEnabled" *ngIf="!isInExerciseGroup && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
-                    <th jhisortby="" *ngIf="!!isInExerciseGroup">
+                    <th jhisortby="" *ngIf="isInExerciseGroup">
                         <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
                     </th>
                     <th></th>
@@ -56,15 +56,15 @@
                         <a [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.releaseDate | artemisDate }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.dueDate | artemisDate }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ modelingExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ modelingExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ modelingExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ modelingExercise.maxScore }}</td>
-                    <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
+                    <td *ngIf="!isInExerciseGroup && course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
-                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
+                    <td *ngIf="isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-button class="btn-group flex-btn-group-container" [exercise]="modelingExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                        <jhi-exercise-row-button class="btn-group flex-btn-group-container" [isInExerciseGroup]="isInExerciseGroup" [exercise]="modelingExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
                         </jhi-exercise-row-button>
                     </td>
                 </tr>

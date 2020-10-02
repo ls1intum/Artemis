@@ -75,7 +75,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (!!this.isInExerciseGroup) {
+                if (this.isInExerciseGroup) {
                     this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },

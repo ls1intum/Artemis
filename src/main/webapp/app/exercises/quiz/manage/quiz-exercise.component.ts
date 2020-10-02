@@ -217,7 +217,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (!!this.isInExerciseGroup) {
+                if (this.isInExerciseGroup) {
                     this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },

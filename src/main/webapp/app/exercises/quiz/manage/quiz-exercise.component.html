@@ -1,5 +1,5 @@
 <div>
-    <h4 *ngIf="isInExerciseGroup == null">
+    <h4 *ngIf="!isInExerciseGroup">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
         <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
         <button
@@ -33,43 +33,43 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="status" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="status" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="releaseDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="duration" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="duration" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th *ngIf="!!isInExerciseGroup">{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</th>
-                    <th *ngIf="isInExerciseGroup == null">{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
+                    <th *ngIf="isInExerciseGroup">{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</th>
+                    <th *ngIf="!isInExerciseGroup">{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
                     <th></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="!!isInExerciseGroup && hasExamStarted() && !isExamOver()">
+                    <td *ngIf="isInExerciseGroup && hasExamStarted() && !isExamOver()">
                         <span>{{ quizExercise.id }}</span>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null ? !quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor : !hasExamStarted()">
+                    <td *ngIf="!isInExerciseGroup ? !quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor : !hasExamStarted()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
+                    <td *ngIf="!isInExerciseGroup ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
-                    <td *ngIf="isInExerciseGroup == null">
+                    <td *ngIf="!isInExerciseGroup">
                         <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | translate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | translate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | translate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | translate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
                     </td>
-                    <td *ngIf="isInExerciseGroup == null">{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
-                    <td *ngIf="isInExerciseGroup == null">
+                    <td *ngIf="!isInExerciseGroup">{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
+                    <td *ngIf="!isInExerciseGroup">
                         {{ fullMinutesForSeconds(quizExercise.duration) }}
                         <span jhiTranslate="{{ quizExercise.duration % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
                         <span *ngIf="quizExercise.duration % 60">
@@ -78,8 +78,8 @@
                         </span>
                     </td>
                     <td>{{ quizExercise.maxScore }}</td>
-                    <td *ngIf="!!isInExerciseGroup">{{ quizExercise.quizQuestions?.length }}</td>
-                    <td class="text-right" *ngIf="isInExerciseGroup == null">
+                    <td *ngIf="isInExerciseGroup">{{ quizExercise.quizQuestions?.length }}</td>
+                    <td class="text-right" *ngIf="!isInExerciseGroup">
                         <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
@@ -167,7 +167,7 @@
                                 </button>
                             </div>
                             <!-- using generic button solution -->
-                            <jhi-exercise-row-button [exercise]="quizExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                            <jhi-exercise-row-button [isInExerciseGroup]="isInExerciseGroup" [exercise]="quizExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
                             </jhi-exercise-row-button>
                         </div>
                     </td>

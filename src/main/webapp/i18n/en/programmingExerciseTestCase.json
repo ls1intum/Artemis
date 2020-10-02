@@ -18,7 +18,9 @@
             "testName": "Test Name",
             "weight": "Weight",
             "active": "Active",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "numberOfPublicTests": "Tests (public)",
+            "numberOfHiddenTests": "Tests (hidden)"
         }
     }
 }

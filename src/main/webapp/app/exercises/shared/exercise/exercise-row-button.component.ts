@@ -26,6 +26,7 @@ export class ExerciseRowButtonComponent implements OnInit {
 
     @Input() exercise: Exercise;
     @Input() course: Course;
+    @Input() isInExerciseGroup = false;
     @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

@@ -1,5 +1,5 @@
 <div>
-    <h4 *ngIf="isInExerciseGroup == null">
+    <h4 *ngIf="!isInExerciseGroup">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span
         ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
@@ -40,15 +40,21 @@
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
                         <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="releaseDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="dueDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
                         <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+<!--                    <th class="d-none d-md-table-cell">-->
+<!--                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfPublicTests">Tests (public)</span>-->
+<!--                    </th>-->
+<!--                    <th class="d-none d-md-table-cell">-->
+<!--                        <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfHiddenTests">Tests (private)</span>-->
+<!--                    </th>-->
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
                     <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
@@ -57,10 +63,10 @@
                     <th class="d-none d-md-table-cell">
                         <span jhiTranslate="artemisApp.programmingExercise.participationMode">Participation Mode</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
+                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="!isInExerciseGroup && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th class="d-none d-md-table-cell" *ngIf="!!isInExerciseGroup">
+                    <th class="d-none d-md-table-cell" *ngIf="isInExerciseGroup">
                         <span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span>
                     </th>
                     <th></th>
@@ -81,8 +87,8 @@
                         ></jhi-programming-exercise-grading-dirty-warning>
                     </td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ programmingExercise.releaseDate | artemisDate }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ programmingExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ programmingExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ programmingExercise.dueDate | artemisDate }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
@@ -187,7 +193,7 @@
                             {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ programmingExercise.allowOnlineEditor }}
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
+                    <td class="d-none d-md-table-cell" *ngIf="!isInExerciseGroup && course.presentationScore !== 0">
                         {{ programmingExercise.presentationScoreEnabled }}
                     </td>
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
@@ -215,7 +221,7 @@
                             </jhi-ide-button>
                         </ng-template>
                     </td>
-                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + programmingExercise.assessmentType | translate }}</td>
+                    <td *ngIf="isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + programmingExercise.assessmentType | translate }}</td>
 
                     <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
@@ -251,7 +257,7 @@
                                 </button>
                             </div>
                             <!-- using generic one -->
-                            <jhi-exercise-row-button [exercise]="programmingExercise" [course]="course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                            <jhi-exercise-row-button [isInExerciseGroup]="isInExerciseGroup" [exercise]="programmingExercise" [course]="course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
                             </jhi-exercise-row-button>
                         </div>
                     </td>

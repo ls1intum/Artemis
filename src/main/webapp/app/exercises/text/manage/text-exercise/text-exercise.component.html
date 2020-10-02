@@ -1,5 +1,5 @@
 <div>
-    <h4 *ngIf="isInExerciseGroup == null">
+    <h4 *ngIf="!isInExerciseGroup">
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="textExercises && showHeading">{{ getAmountOfExercisesString(textExercises) }} </span>
         <span jhiTranslate="artemisApp.textExercise.home.title">Text Exercises</span>
         <button
@@ -30,20 +30,20 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="releaseDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="releaseDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="dueDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="dueDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessmentDueDate" *ngIf="isInExerciseGroup == null">
+                    <th jhiSortBy="assessmentDueDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="presentationScoreEnabled" *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">
+                    <th jhiSortBy="presentationScoreEnabled" *ngIf="!isInExerciseGroup && course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="!!isInExerciseGroup"><span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span></th>
+                    <th *ngIf="isInExerciseGroup"><span jhitranslate="artemisApp.AssessmentMode">Assessment Mode</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -53,14 +53,14 @@
                         <a [routerLink]="['/course-management', courseId, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>
                     <td>{{ textExercise.title }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ textExercise.releaseDate | artemisDate }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ textExercise.dueDate | artemisDate }}</td>
-                    <td *ngIf="isInExerciseGroup == null">{{ textExercise.assessmentDueDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ textExercise.releaseDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ textExercise.dueDate | artemisDate }}</td>
+                    <td *ngIf="!isInExerciseGroup">{{ textExercise.assessmentDueDate | artemisDate }}</td>
                     <td>{{ textExercise.maxScore }}</td>
-                    <td *ngIf="isInExerciseGroup == null && course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
-                    <td *ngIf="!!isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + textExercise.assessmentType | translate }}</td>
+                    <td *ngIf="!isInExerciseGroup && course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
+                    <td *ngIf="isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + textExercise.assessmentType | translate }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-button class="btn-group flex-btn-group-container" [exercise]="textExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                        <jhi-exercise-row-button class="btn-group flex-btn-group-container" [isInExerciseGroup]="isInExerciseGroup" [exercise]="textExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
                         </jhi-exercise-row-button>
                     </td>
                 </tr>

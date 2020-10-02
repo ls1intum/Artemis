@@ -121,7 +121,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     content: 'Deleted an programmingExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (!!this.isInExerciseGroup) {
+                if (this.isInExerciseGroup) {
                     this.onDeleteExercise.emit({ exerciseId, groupId });
                 }
             },
