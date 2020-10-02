@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 /**
  * This is a dto for updating a programming exercise test case.
- * It is only allowed to alter the weight and afterDueDate flag of a test case from an endpoint, the other attributes are generated automatically.
+ * It is only allowed to alter the weight, bonus multiplier, bonus points and afterDueDate flag of a test case from an
+ * endpoint, the other attributes are generated automatically.
  */
 public class ProgrammingExerciseTestCaseDTO {
 
