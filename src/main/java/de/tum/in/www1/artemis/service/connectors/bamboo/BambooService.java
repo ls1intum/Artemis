@@ -629,7 +629,7 @@ public class BambooService implements ContinuousIntegrationService {
             for (final var job : jobs) {
 
                 // 1) add feedback for failed test cases
-                for (final var failedTest: job.getFailedTests()) {
+                for (final var failedTest : job.getFailedTests()) {
                     result.addFeedback(feedbackService.createFeedbackFromTestJob(failedTest, false, programmingLanguage));
                 }
 
@@ -660,7 +660,6 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Could not get feedback from jobs " + e);
         }
     }
-
 
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.

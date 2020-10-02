@@ -694,6 +694,16 @@ public class ModelFactory {
         return issue;
     }
 
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
+        var category = new StaticCodeAnalysisCategory();
+        category.setName("Bad practice");
+        category.setPenalty(2D);
+        category.setMaxPenalty(10D);
+        category.setState(CategoryState.VISIBLE);
+        category.setProgrammingExercise(programmingExercise);
+        return category;
+    }
+
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
         final var test = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
         test.setErrors(successful ? List.of() : List.of("bad solution, did not work"));

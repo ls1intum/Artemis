@@ -175,20 +175,31 @@
                         ></fa-icon>
                     </div>
                     <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
-                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty" for="field_maxPenalty"
+                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
                             >Max Static Code Analysis Penalty</label
                         >
-                        <input
-                            type="number"
-                            [pattern]="maxPenaltyPattern"
-                            class="form-control"
-                            min="0"
-                            max="100"
-                            name="maxPenalty"
-                            id="field_maxPenalty"
-                            [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
-                            #maxPenalty="ngModel"
-                        />
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | translate }}"
+                        ></fa-icon>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <input
+                                type="number"
+                                [pattern]="maxPenaltyPattern"
+                                class="form-control"
+                                min="0"
+                                max="100"
+                                name="maxPenalty"
+                                id="field_maxPenalty"
+                                [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                                #maxPenalty="ngModel"
+                            />
+                        </div>
                         <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
                             <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>

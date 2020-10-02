@@ -36,8 +36,6 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -48,12 +46,10 @@ public class ProgrammingExerciseGradingService {
 
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
-    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, SimpMessageSendingOperations messagingTemplate,
-            StaticCodeAnalysisService staticCodeAnalysisService) {
+    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
+            ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.testCaseService = testCaseService;
-        this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
         this.continuousIntegrationService = continuousIntegrationService;
