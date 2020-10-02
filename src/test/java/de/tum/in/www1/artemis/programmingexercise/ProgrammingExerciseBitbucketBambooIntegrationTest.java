@@ -8,7 +8,9 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -29,12 +32,15 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
@@ -61,7 +67,14 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     private CourseRepository courseRepository;
 
     @Autowired
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+
+    @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    @Qualifier("staticCodeAnalysisConfiguration")
+    private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     private Course course;
 
@@ -135,6 +148,31 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
+        exercise.setBonusPoints(null);
+        mockConnectorRequestsForSetup(exercise);
+        var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
+        var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
+        assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
+        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis() throws Exception {
+        exercise.setStaticCodeAnalysisEnabled(true);
+        mockConnectorRequestsForSetup(exercise);
+        var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
+
+        exercise.setId(generatedExercise.getId());
+        assertThat(exercise).isEqualTo(generatedExercise);
+        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
+        assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
 
@@ -144,6 +182,51 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_created() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addHintsToExercise(sourceExercise);
+        database.addHintsToProblemStatement(sourceExercise);
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
+
+        // Mock requests
+        List<Verifiable> verifiables = mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+
+        // Import the exercise and load all referenced entities
+        var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+        SecurityUtils.setAuthorizationObject();
+        importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+
+        // Assert correct creation of repos and plans
+        for (var verifiable : verifiables) {
+            verifiable.performVerification();
+        }
+        // Assert correct creation of static code analysis categories
+        var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+        var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+        assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
+        assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
+        // Assert correct creation of test cases
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
+        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+        // Assert correct creation of hints
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
+        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     @Test

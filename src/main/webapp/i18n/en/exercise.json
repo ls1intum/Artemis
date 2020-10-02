@@ -140,6 +140,9 @@
                 },
                 "maxScore": {
                     "pattern": "The maximum score must be between 1 and 9999!"
+                },
+                "maxPenalty": {
+                    "pattern": "The maximum penalty must be between 0 and 100 percent!"
                 }
             },
             "exam": "Exam"
