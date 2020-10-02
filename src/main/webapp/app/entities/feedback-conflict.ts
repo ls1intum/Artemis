@@ -12,8 +12,9 @@ export class FeedbackConflict implements BaseEntity {
     public conflict?: boolean;
     public conflictingFeedbackId?: number;
     public createdAt?: Moment;
-    public solvedAt?: Moment | null;
+    public solvedAt?: Moment;
     public type?: FeedbackConflictType;
+    public markedAsNoConflict?: boolean;
 
     constructor() {}
 }
