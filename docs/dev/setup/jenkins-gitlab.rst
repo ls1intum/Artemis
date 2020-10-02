@@ -303,7 +303,8 @@ Jenkins Server Setup
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`. Copy it in a file named ``Dockerfile``, e.g. in
+   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`.
+   Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
 
    Now run the command ``docker build --no-cache -t jenkins-artemis .``

@@ -55,6 +55,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
     private Boolean staticCodeAnalysisEnabled;
 
+    @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
+    private Integer maxStaticCodeAnalysisPenalty;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
     private ProgrammingLanguage programmingLanguage;
@@ -89,6 +92,10 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
 
     @Transient
     private boolean isLocalSimulationTransient;
@@ -257,6 +264,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setStaticCodeAnalysisEnabled(Boolean staticCodeAnalysisEnabled) {
         this.staticCodeAnalysisEnabled = staticCodeAnalysisEnabled;
+    }
+
+    public Integer getMaxStaticCodeAnalysisPenalty() {
+        return maxStaticCodeAnalysisPenalty;
+    }
+
+    public void setMaxStaticCodeAnalysisPenalty(Integer maxStaticCodeAnalysisPenalty) {
+        this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
     }
 
     public String getProjectKey() {
@@ -432,6 +447,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
+    }
+
+    public Set<StaticCodeAnalysisCategory> getStaticCodeAnalysisCategories() {
+        return staticCodeAnalysisCategories;
+    }
+
+    public void setStaticCodeAnalysisCategories(Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories) {
+        this.staticCodeAnalysisCategories = staticCodeAnalysisCategories;
     }
 
     @JsonProperty("sequentialTestRuns")

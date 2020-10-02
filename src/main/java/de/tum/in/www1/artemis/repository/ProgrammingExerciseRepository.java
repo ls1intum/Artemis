@@ -81,8 +81,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
             String partialCourseTitle, Pageable pageable);
 
-    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
+    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.staticCodeAnalysisCategories left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
