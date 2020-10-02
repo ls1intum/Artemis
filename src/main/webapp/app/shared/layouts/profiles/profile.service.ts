@@ -49,6 +49,7 @@ export class ProfileService {
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;
+                        profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
 
                         return profileInfo;
                     }),

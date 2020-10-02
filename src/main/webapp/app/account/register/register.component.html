@@ -77,6 +77,11 @@
                     </div>
                 </div>
 
+                <div class="form-group" *ngIf="allowedEmailPatternReadable">
+                    <strong jhiTranslate="global.form.email.pattern">Please use an email with the following pattern:</strong>
+                    {{ allowedEmailPatternReadable }}
+                </div>
+
                 <div class="form-group">
                     <label class="form-control-label" for="email" jhiTranslate="global.form.email">Email</label>
                     <input type="email" class="form-control" id="email" name="email" placeholder="{{ 'global.form.email.placeholder' | translate }}" formControlName="email" />
@@ -96,6 +101,10 @@
 
                         <small class="form-text text-danger" *ngIf="registerForm.get('email')?.errors?.maxlength" jhiTranslate="global.messages.validate.email.maxlength">
                             Your email cannot be longer than 100 characters.
+                        </small>
+
+                        <small class="form-text text-danger" *ngIf="registerForm.get('email')?.errors?.pattern" jhiTranslate="global.messages.validate.email.pattern">
+                            Your email does not follow the required pattern.
                         </small>
                     </div>
                 </div>

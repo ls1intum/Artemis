@@ -139,6 +139,8 @@ public final class Constants {
 
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 
+    public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";
+
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
 
     public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";

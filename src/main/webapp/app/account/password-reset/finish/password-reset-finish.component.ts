@@ -31,7 +31,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
 

@@ -22,24 +22,19 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     errorUserExists = false;
     success = false;
 
+    defaultEmailPattern = '^[a-zA-Z0-9!$&*+=?^_`{|}~.-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$|^[_.@A-Za-z0-9-]+$';
+
     registerForm = this.fb.group({
         firstName: ['', [Validators.required, Validators.minLength(2)]],
         lastName: ['', [Validators.required, Validators.minLength(2)]],
-        login: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(4),
-                Validators.maxLength(50),
-                Validators.pattern('^[a-zA-Z0-9!$&*+=?^_`{|}~.-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$|^[_.@A-Za-z0-9-]+$'),
-            ],
-        ],
+        login: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.defaultEmailPattern)]],
         email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(254), Validators.email]],
         password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
         confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
     });
     isRegistrationEnabled = false;
     allowedEmailPattern?: string;
+    allowedEmailPatternReadable?: string;
 
     constructor(private languageService: JhiLanguageService, private registerService: RegisterService, private fb: FormBuilder, private profileService: ProfileService) {}
 
@@ -52,10 +47,13 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
                 this.allowedEmailPattern = profileInfo.allowedEmailPattern;
-                // TODO: show the email pattern to the user
-                // TODO: check that the user follows the email pattern
+                this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+                if (this.allowedEmailPattern) {
+                    const jsRegexPattern = this.allowedEmailPattern;
+                    this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(jsRegexPattern)]);
+                }
             }
         });
     }

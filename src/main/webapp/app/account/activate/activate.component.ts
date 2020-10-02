@@ -22,7 +22,7 @@ export class ActivateComponent implements OnInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
                 if (this.isRegistrationEnabled) {
                     // only try to activate an account if the registration is enabled
                     this.activateAccount();

@@ -19,9 +19,13 @@ public class AccountInfoContributor implements InfoContributor {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
+    @Value("${artemis.user-management.registration.allowed-email-pattern-readable:#{null}}")
+    private Optional<String> allowedEmailPatternReadable;
+
     @Override
     public void contribute(Info.Builder builder) {
         builder.withDetail(Constants.REGISTRATION_ENABLED, registrationEnabled.orElse(Boolean.FALSE));
         allowedEmailPattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN, pattern.toString()));
+        allowedEmailPatternReadable.ifPresent(patternReadable -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN_READABLE, patternReadable));
     }
 }

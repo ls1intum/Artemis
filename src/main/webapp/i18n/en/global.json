@@ -113,6 +113,7 @@
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
             "email.placeholder": "Your email",
+            "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
             "confirm": "Confirm"
         },
@@ -147,7 +148,8 @@
                     "required": "Your email is required.",
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
-                    "maxlength": "Your email cannot be longer than 50 characters."
+                    "maxlength": "Your email cannot be longer than 50 characters.",
+                    "pattern": "Your email does not follow the required pattern."
                 }
             }
         },

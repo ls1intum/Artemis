@@ -28,7 +28,7 @@ export class SettingsComponent implements OnInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
         this.accountService.identity().then((user) => {

@@ -27,7 +27,7 @@ export class PasswordComponent implements OnInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
 

@@ -76,7 +76,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                         this.externalUserManagementName = info.externalUserManagementName;
                     }
 
-                    this.isRegistrationEnabled = info.registrationEnabled;
+                    this.isRegistrationEnabled = info.registrationEnabled || false;
                 }),
             )
             .subscribe();

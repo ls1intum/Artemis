@@ -69,7 +69,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
-                this.isRegistrationEnabled = profileInfo.registrationEnabled;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
 

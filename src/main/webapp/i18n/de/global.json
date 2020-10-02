@@ -113,6 +113,7 @@
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "Email Adresse",
             "email.placeholder": "Email Adresse",
+            "email.pattern": "Bitte nutze eine Email nach folgendem Muster:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen"
         },
@@ -147,7 +148,8 @@
                     "required": "Deine Email Adresse wird benötigt.",
                     "invalid": "Deine Email Adresse ist ungültig.",
                     "minlength": "Deine Email Adresse muss mindestens 8 Zeichen lang sein",
-                    "maxlength": "Deine Email Adresse darf nicht länger als 50 Zeichen sein"
+                    "maxlength": "Deine Email Adresse darf nicht länger als 50 Zeichen sein",
+                    "pattern": "Deine Email Adresse entspricht nicht dem geforderten Muster."
                 }
             }
         },
