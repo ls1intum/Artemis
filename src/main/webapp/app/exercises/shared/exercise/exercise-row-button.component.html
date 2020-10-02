@@ -83,7 +83,7 @@
         <!-- Reset -->
 <!--        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"-->
         <button
-            *ngIf="exercise.exerciseGroup == null && exercise.isAtLeastInstructor && exercise.type == exerciseType.PROGRAMMING"
+            *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.PROGRAMMING"
             jhiDeleteButton
             [actionType]="ActionType.Reset"
             [entityTitle]="exercise.title"
@@ -97,7 +97,7 @@
         </button>
 
         <button
-            *ngIf="!isInExerciseGroup == null && exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
+            *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
             jhiDeleteButton
             [actionType]="ActionType.Reset"
             [entityTitle]="exercise.title"
