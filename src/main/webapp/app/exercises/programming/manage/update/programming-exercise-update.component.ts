@@ -48,6 +48,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
     maxScorePattern = MAX_SCORE_PATTERN;
+    maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
     packageNamePattern =
@@ -79,9 +80,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
-        // If we switch to another language which does not support static code analysis we need to reset the option
+        // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
         if (language !== ProgrammingLanguage.JAVA) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
@@ -282,6 +284,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         this.selectedProgrammingLanguage = language;
         return language;
+    }
+
+    onStaticCodeAnalysisChanged() {
+        if (!this.programmingExercise.staticCodeAnalysisEnabled) {
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
     }
 
     /**
