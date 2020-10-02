@@ -14,9 +14,9 @@ export class ExamInformationComponent {
     /**
      * Calculates the end time depending on the individual working time.
      */
-    endTime(): moment.Moment | null {
+    endTime() {
         if (!this.exam || !this.exam.endDate) {
-            return null;
+            return undefined;
         }
         if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
             return moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');

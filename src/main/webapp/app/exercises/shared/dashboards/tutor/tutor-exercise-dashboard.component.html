@@ -117,7 +117,7 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
-            <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation.repositoryUrl">
+            <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation!.repositoryUrl">
                 <jhi-button jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
             </a>
         </div>
@@ -301,7 +301,7 @@
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
                             <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                {{ 'artemisApp.tutorExerciseDashboard.languages.' + (unassessedSubmission.language ? unassessedSubmission.language : 'UNKNOWN') | translate }}
+                                {{ 'artemisApp.tutorExerciseDashboard.languages.' + language(unassessedSubmission) | translate }}
                             </td>
                             <td>
                                 <button
@@ -318,7 +318,7 @@
                                 </button>
                                 <ng-template #programmingAssessment>
                                     <jhi-programming-assessment-manual-result
-                                        [participationId]="unassessedSubmission.participation.id"
+                                        [participationId]="unassessedSubmission.participation!.id"
                                         [latestResult]="unassessedSubmission.result"
                                         [exercise]="exercise"
                                         [isTestRun]="isTestRun"

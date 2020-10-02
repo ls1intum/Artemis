@@ -106,6 +106,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
@@ -162,6 +163,9 @@ public class DatabaseUtilService {
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -1360,6 +1364,26 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
+        Course course = addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3));
+        programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
+    }
+
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
@@ -1833,9 +1857,8 @@ public class DatabaseUtilService {
         return hints;
     }
 
-    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
-        final var lazyExercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> T addHintsToProblemStatement(T exercise) {

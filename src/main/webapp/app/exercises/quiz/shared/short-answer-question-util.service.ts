@@ -10,6 +10,97 @@ export class ShortAnswerQuestionUtil {
     constructor() {}
 
     /**
+     * Get a sample solution for the given short answer question
+     *
+     * @param question {object} the short answer question we want to solve
+     * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
+     * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
+     */
+    solveShortAnswer(question: ShortAnswerQuestion, mappings?: ShortAnswerMapping[]): ShortAnswerMapping[] {
+        if (!question.correctMappings) {
+            return [];
+        }
+
+        const sampleMappings = new Array<ShortAnswerMapping>();
+        let availableSolutions = question.solutions;
+
+        // filter out spots that do not need to be mapped
+        let remainingSpots: ShortAnswerSpot[] = question.spots!.filter((spot) => {
+            return question.correctMappings!.some((mapping) => {
+                return this.isSameSpot(mapping.spot, spot);
+            }, this);
+        }, this);
+
+        if (remainingSpots.length !== question.spots!.length) {
+            return [];
+        }
+
+        if (mappings) {
+            // add mappings that are already correct
+            mappings.forEach((mapping) => {
+                const correctMapping = this.getShortAnswerMapping(question.correctMappings!, mapping.solution!, mapping.spot!);
+                if (correctMapping) {
+                    sampleMappings.push(correctMapping);
+                    remainingSpots = remainingSpots.filter((spot) => {
+                        return !this.isSameSpot(spot, mapping.spot);
+                    }, this);
+                    availableSolutions = availableSolutions?.filter((solution) => {
+                        return !this.isSameSolution(solution, mapping.solution);
+                    }, this);
+                }
+            }, this);
+        }
+
+        // solve recursively
+        const solved = this.solveShortAnswerRec(question.correctMappings, remainingSpots, availableSolutions!, sampleMappings);
+
+        if (solved) {
+            return sampleMappings;
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Try to solve a short answer question recursively
+     *
+     * @param correctMappings {Array} the correct mappings defined by the creator of the question
+     * @param remainingSpots {Array} the spots that still need to be mapped (recursion stops if this is empty)
+     * @param availableSolutions {Array} the unused solutions that can still be used to map to spots (recursion stops if this is empty)
+     * @param sampleMappings {Array} the mappings so far
+     * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
+     */
+    solveShortAnswerRec(
+        correctMappings: ShortAnswerMapping[],
+        remainingSpots: ShortAnswerSpot[],
+        availableSolutions: ShortAnswerSolution[],
+        sampleMappings: ShortAnswerMapping[],
+    ): boolean {
+        if (remainingSpots.length === 0) {
+            return true;
+        }
+
+        const spot = remainingSpots[0];
+        return availableSolutions.some((solution, index) => {
+            const correctMapping = this.getShortAnswerMapping(correctMappings, solution, spot);
+            if (correctMapping) {
+                sampleMappings.push(correctMapping); // add new mapping
+                remainingSpots.splice(0, 1); // remove first spot
+                availableSolutions.splice(index, 1); // remove the used solution
+                const solved = this.solveShortAnswerRec(correctMappings, remainingSpots, availableSolutions, sampleMappings);
+                remainingSpots.splice(0, 0, spot); // re-insert first spot
+                availableSolutions.splice(index, 0, solution); // re-insert the used solution
+                if (!solved) {
+                    sampleMappings.pop(); // remove new mapping (only if solution was not found)
+                }
+                return solved;
+            } else {
+                return false;
+            }
+        }, this);
+    }
+
+    /**
      * Validate that all correct mappings (and any combination of them that doesn't use a spot or solution twice)
      * can be used in a 100% correct solution.
      * This means that if any pair of solutions share a possible spot, then they must share all spots,
@@ -26,24 +117,26 @@ export class ShortAnswerQuestionUtil {
         }
         let amountOfSolutionsThatShareOneSpot = 0;
         // iterate through all pairs of solutions
-        for (let i = 0; i < question.solutions.length; i++) {
-            for (let j = 0; j < i; j++) {
-                // if these two solutions have one common spot, they must share all spots
-                const solution1 = question.solutions[i];
-                const solution2 = question.solutions[j];
-                const shareOneSpot = question.spots.some(function (spot) {
-                    const isMappedWithSolution1 = this.isMappedTogether(question.correctMappings, solution1, spot);
-                    const isMappedWithSolution2 = this.isMappedTogether(question.correctMappings, solution2, spot);
-                    return isMappedWithSolution1 && isMappedWithSolution2;
-                }, this);
-                if (shareOneSpot) {
-                    amountOfSolutionsThatShareOneSpot++;
-                    const allSpotsForSolution1 = this.getAllSpotsForSolution(question.correctMappings, solution1);
-                    const allSpotsForSolution2 = this.getAllSpotsForSolution(question.correctMappings, solution2);
-                    // there have to be a least as many solutions that share all spots as the amount of existing spots
-                    if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2) && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
-                        // condition is violated for this pair of solutions
-                        return false;
+        if (question.solutions) {
+            for (let i = 0; i < question.solutions.length; i++) {
+                for (let j = 0; j < i; j++) {
+                    // if these two solutions have one common spot, they must share all spots
+                    const solution1 = question.solutions[i];
+                    const solution2 = question.solutions[j];
+                    const shareOneSpot = question.spots?.some((spot) => {
+                        const isMappedWithSolution1 = this.isMappedTogether(question.correctMappings, solution1, spot);
+                        const isMappedWithSolution2 = this.isMappedTogether(question.correctMappings, solution2, spot);
+                        return isMappedWithSolution1 && isMappedWithSolution2;
+                    }, this);
+                    if (shareOneSpot) {
+                        amountOfSolutionsThatShareOneSpot++;
+                        const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
+                        const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
+                        // there have to be a least as many solutions that share all spots as the amount of existing spots
+                        if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2) === true && amountOfSolutionsThatShareOneSpot <= question.spots!.length) {
+                            // condition is violated for this pair of solutions
+                            return false;
+                        }
                     }
                 }
             }
@@ -60,7 +153,7 @@ export class ShortAnswerQuestionUtil {
      * @param spot {object} the spot to search for
      * @return {boolean} true if they are mapped together, otherwise false
      */
-    isMappedTogether(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
+    isMappedTogether(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution, spot?: ShortAnswerSpot) {
         return !!this.getShortAnswerMapping(mappings, solution, spot);
     }
 
@@ -71,13 +164,13 @@ export class ShortAnswerQuestionUtil {
      * @param solution {object} the solution that the returned spots have to be mapped to
      * @return {Array} the resulting spots
      */
-    getAllSpotsForSolution(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
+    getAllSpotsForSolutions(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution) {
         return mappings
-            .filter(function (mapping) {
+            ?.filter(function (mapping) {
                 return this.isSameSolution(mapping.solution, solution);
             }, this)
             .map(function (mapping) {
-                return mapping.spot;
+                return mapping.spot!;
             });
     }
 
@@ -88,13 +181,13 @@ export class ShortAnswerQuestionUtil {
      * @param spot {object} the spot for which to get the solutions
      * @return {Array} the resulting solutions
      */
-    getAllSolutionsForSpot(mappings: ShortAnswerMapping[], spot: ShortAnswerSpot): ShortAnswerSolution[] {
+    getAllSolutionsForSpot(mappings?: ShortAnswerMapping[], spot?: ShortAnswerSpot) {
         return mappings
-            .filter(function (mapping) {
+            ?.filter((mapping) => {
                 return this.isSameSpot(mapping.spot, spot);
             }, this)
-            .map(function (mapping) {
-                return mapping.solution;
+            .map((mapping) => {
+                return mapping.solution!;
             });
     }
 
@@ -105,22 +198,22 @@ export class ShortAnswerQuestionUtil {
      * @param set2 {Array} another set of solutions or spots
      * @return {boolean} true if the sets contain the same items, otherwise false
      */
-    isSameSetOfSpots(set1: ShortAnswerSpot[], set2: ShortAnswerSpot[]): boolean {
+    isSameSetOfSpots(set1?: ShortAnswerSpot[], set2?: ShortAnswerSpot[]) {
         const service = this;
-        if (set1.length !== set2.length) {
+        if (set1?.length !== set2?.length) {
             // different number of elements => impossible to contain the same elements
             return false;
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function (element1: ShortAnswerSpot) {
-                return set2.some(function (element2: ShortAnswerSpot) {
-                    return service.isSameSpot(element1, element2);
+            set1?.every((spot1) => {
+                return set2?.some((spot2) => {
+                    return service.isSameSpot(spot1, spot2);
                 });
             }) &&
-            set2.every(function (element2: ShortAnswerSpot) {
-                return set1.some(function (element1: ShortAnswerSpot) {
-                    return service.isSameSpot(element1, element2);
+            set2?.every((spot2) => {
+                return set1?.some((spot1) => {
+                    return service.isSameSpot(spot1, spot2);
                 });
             })
         );
@@ -132,11 +225,11 @@ export class ShortAnswerQuestionUtil {
      * @param mappings {Array} the existing mappings to consider
      * @param solution {object} the solution to search for
      * @param spot {object} the spot to search for
-     * @return {object | null} the found mapping, or null if it doesn't exist
+     * @return the found mapping, or undefined if it doesn't exist
      */
-    getShortAnswerMapping(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
+    getShortAnswerMapping(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution, spot?: ShortAnswerSpot) {
         const that = this;
-        return mappings.find(function (mapping: ShortAnswerMapping) {
+        return mappings?.find((mapping: ShortAnswerMapping) => {
             return that.isSameSpot(spot, mapping.spot) && that.isSameSolution(solution, mapping.solution);
         }, this);
     }
@@ -148,8 +241,8 @@ export class ShortAnswerQuestionUtil {
      * @param b {object} another spot
      * @return {boolean}
      */
-    isSameSpot(a: ShortAnswerSpot, b: ShortAnswerSpot): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+    isSameSpot(a?: ShortAnswerSpot, b?: ShortAnswerSpot): boolean {
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 
     /**
@@ -159,8 +252,8 @@ export class ShortAnswerQuestionUtil {
      * @param b {object} another solution
      * @return {boolean}
      */
-    isSameSolution(a: ShortAnswerSolution, b: ShortAnswerSolution): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
+    isSameSolution(a?: ShortAnswerSolution, b?: ShortAnswerSolution): boolean {
+        return a === b || (a !== undefined && b !== undefined && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 
     /**
@@ -173,7 +266,8 @@ export class ShortAnswerQuestionUtil {
     everySpotHasASolution(mappings: ShortAnswerMapping[], spots: ShortAnswerSpot[]): boolean {
         let i = 0;
         for (const spot of spots) {
-            if (this.getAllSolutionsForSpot(mappings, spot).length > 0) {
+            const solutions = this.getAllSolutionsForSpot(mappings, spot);
+            if (solutions && solutions.length > 0) {
                 i++;
             }
         }
@@ -203,7 +297,7 @@ export class ShortAnswerQuestionUtil {
         let duplicateValues = 0;
         for (let i = 0; i < mappings.length - 1; i++) {
             for (let j = i + 1; j < mappings.length; j++) {
-                if (mappings[i].spot.spotNr === mappings[j].spot.spotNr && mappings[i].solution.text.toLowerCase() === mappings[j].solution.text.toLowerCase()) {
+                if (mappings[i].spot!.spotNr === mappings[j].spot!.spotNr && mappings[i].solution!.text!.toLowerCase() === mappings[j].solution!.text!.toLowerCase()) {
                     duplicateValues++;
                 }
             }
@@ -219,16 +313,16 @@ export class ShortAnswerQuestionUtil {
      */
     getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
-        for (const spot of question.spots) {
-            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);
-            for (const mapping of question.correctMappings) {
+        for (const spot of question.spots!) {
+            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings!, spot);
+            for (const mapping of question.correctMappings!) {
                 if (
-                    mapping.spot.id === spot.id &&
+                    mapping.spot!.id === spot.id &&
                     !sampleSolutions.some(
-                        (sampleSolution) => sampleSolution.text === mapping.solution.text && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions),
+                        (sampleSolution) => sampleSolution.text === mapping.solution!.text && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions),
                     )
                 ) {
-                    sampleSolutions.push(mapping.solution);
+                    sampleSolutions.push(mapping.solution!);
                     break;
                 }
             }
@@ -243,17 +337,17 @@ export class ShortAnswerQuestionUtil {
      * @param {ShortAnswerSolution[]} sampleSolutions
      * @returns {boolean}
      */
-    allSolutionsAreInSampleSolution(solutionsForSpot: ShortAnswerSolution[], sampleSolutions: ShortAnswerSolution[]): boolean {
+    allSolutionsAreInSampleSolution(solutionsForSpot?: ShortAnswerSolution[], sampleSolutions?: ShortAnswerSolution[]): boolean {
         let i = 0;
-        for (const solutionForSpot of solutionsForSpot) {
-            for (const sampleSolution of sampleSolutions) {
+        for (const solutionForSpot of solutionsForSpot || []) {
+            for (const sampleSolution of sampleSolutions || []) {
                 if (solutionForSpot.text === sampleSolution.text) {
                     i++;
                     break;
                 }
             }
         }
-        return i === solutionsForSpot.length;
+        return i === solutionsForSpot?.length;
     }
 
     /**
@@ -263,7 +357,7 @@ export class ShortAnswerQuestionUtil {
      * @returns {boolean}
      */
     atLeastAsManySolutionsAsSpots(question: ShortAnswerQuestion): boolean {
-        return question.spots.length <= question.solutions.length;
+        return question.spots!.length <= question.solutions!.length;
     }
 
     /**
@@ -325,7 +419,7 @@ export class ShortAnswerQuestionUtil {
      * @param question
      */
     getSpot(spotNr: number, question: ShortAnswerQuestion): ShortAnswerSpot {
-        return question.spots.filter((spot) => spot.spotNr === spotNr)[0];
+        return question.spots!.filter((spot) => spot.spotNr === spotNr)[0];
     }
 
     /**
@@ -336,7 +430,7 @@ export class ShortAnswerQuestionUtil {
      * @param artemisMarkdown
      * @returns {string[][]}
      */
-    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdownService): (string | null)[][] {
+    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdownService): string[][] {
         return textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element)));
     }
 }

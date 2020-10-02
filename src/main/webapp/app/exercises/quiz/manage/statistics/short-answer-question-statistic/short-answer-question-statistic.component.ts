@@ -57,12 +57,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: SafeHtml | null;
+    questionTextRendered?: SafeHtml;
 
     // options for chart in chart.js style
     options: ChartOptions;
 
-    textParts: (string | null)[][];
+    textParts: string[][];
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] = [];
@@ -136,12 +136,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as ShortAnswerQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
         //      -> go back to Courses
-        if (this.question === null) {
+        if (!this.question) {
             this.router.navigateByUrl('courses');
         }
         this.questionStatistic = this.question.quizQuestionStatistic as ShortAnswerQuestionStatistic;
@@ -165,9 +165,9 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     generateLettersForSolutions() {
-        for (const mapping of this.question.correctMappings) {
+        for (const mapping of this.question.correctMappings || []) {
             for (const i in this.question.spots) {
-                if (mapping.spot.id === this.question.spots[i].id) {
+                if (mapping.spot!.id === this.question.spots[i].id) {
                     this.lettersForSolutions.push(+i);
                     break;
                 }
@@ -176,7 +176,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.question.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -190,7 +190,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.backgroundSolutionColor = [];
 
         // set label and backgroundcolor based on the spots
-        this.question.spots.forEach((spot, i) => {
+        this.question.spots!.forEach((spot, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
             this.backgroundColor.push({
                 backgroundColor: '#428bca',
@@ -221,7 +221,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             pointBackgroundColor: '#5bc0de',
             pointBorderColor: '#5bc0de',
         });
-        this.backgroundSolutionColor[this.question.spots.length] = {
+        this.backgroundSolutionColor[this.question.spots!.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
             pointBackgroundColor: '#5bc0de',
@@ -230,7 +230,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.label[this.question.spots.length] = lastLabel.split(' ');
+            this.label[this.question.spots!.length] = lastLabel.split(' ');
             this.labels.length = 0;
             for (let i = 0; i < this.label.length; i++) {
                 this.labels.push(this.label[i]);
@@ -244,7 +244,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     loadInvalidLayout() {
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
-            this.question.spots.forEach((spot, i) => {
+            this.question.spots!.forEach((spot, i) => {
                 if (spot.invalid) {
                     this.backgroundColor[i] = {
                         backgroundColor: '#838383',
@@ -274,16 +274,16 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.unratedData = [];
 
         // set data based on the spots for each spot
-        this.question.spots.forEach((spot) => {
-            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find((sCounter) => {
-                return spot.id === sCounter.spot.id;
+        this.question.spots!.forEach((spot) => {
+            const spotCounter = this.questionStatistic.shortAnswerSpotCounters?.find((sCounter) => {
+                return spot.id === sCounter.spot?.id;
             })!;
-            this.ratedData.push(spotCounter.ratedCounter);
-            this.unratedData.push(spotCounter.unRatedCounter);
+            this.ratedData.push(spotCounter.ratedCounter!);
+            this.unratedData.push(spotCounter.unRatedCounter!);
         });
         // add data for the last bar (correct Solutions)
-        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
-        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter;
+        this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter!;
+        this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter!;
         this.labels.length = 0;
         for (let i = 0; i < this.label.length; i++) {
             this.labels.push(this.label[i]);
@@ -304,12 +304,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             // if show Solution is true use the backgroundColor which shows the solution
             this.colors = this.backgroundSolutionColor;
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
                 this.data = this.ratedData.slice(0);
                 this.data.push(this.ratedCorrectData);
             } else {
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 // if rated is false use the unrated Data and add the unrated CorrectCounter
                 this.data = this.unratedData.slice(0);
                 this.data.push(this.unratedCorrectData);
@@ -320,11 +320,11 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             this.colors = this.backgroundColor;
             // if rated is true use the rated Data
             if (this.rated) {
-                this.participants = this.questionStatistic.participantsRated;
+                this.participants = this.questionStatistic.participantsRated!;
                 this.data = this.ratedData;
             } else {
                 // if rated is false use the unrated Data
-                this.participants = this.questionStatistic.participantsUnrated;
+                this.participants = this.questionStatistic.participantsUnrated!;
                 this.data = this.unratedData;
             }
         }
@@ -362,5 +362,20 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     getLetter(index: number) {
         return String.fromCharCode(65 + (index - 1));
+    }
+
+    /**
+     * Get the solution that was mapped to the given spot in the sample solution
+     *
+     * @param spot {object} the spot that the solution should be mapped to
+     * @return the mapped solution or undefined if no solution has been mapped to this location
+     */
+    correctSolutionForSpot(spot: ShortAnswerSpot) {
+        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question).filter((mapping) => mapping.spot!.id === spot.id)[0];
+        if (currMapping) {
+            return currMapping.solution;
+        } else {
+            return undefined;
+        }
     }
 }

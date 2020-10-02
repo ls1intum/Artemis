@@ -245,10 +245,10 @@
                     style="flex: 1"
                     [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
                     ngxClipboard
-                    [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
+                    [cbContent]="repositoryUrl(exercise.studentParticipations![0])"
                     (cbOnSuccess)="onCopySuccess()"
                     (cbOnError)="onCopyFailure()"
-                    >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
+                    >{{ repositoryUrl(exercise.studentParticipations![0]) }}</pre
                 >
                 <pre
                     *ngIf="sshEnabled"
@@ -264,7 +264,7 @@
             </p>
             <button
                 ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
+                [cbContent]="repositoryUrl(exercise.studentParticipations![0])"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
                 [class.btn-success]="wasCopied"
@@ -274,7 +274,7 @@
             >
                 {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
             </button>
-            <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations[0])) | safeUrl"
+            <a class="btn btn-primary btn-sm mr-2" target="hidden-iframe" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations![0])) | safeUrl"
                 >{{ 'artemisApp.exerciseActions.cloneSourceTree' | translate }}
             </a>
             <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>

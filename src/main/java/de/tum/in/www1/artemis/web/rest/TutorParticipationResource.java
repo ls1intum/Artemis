@@ -13,9 +13,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 

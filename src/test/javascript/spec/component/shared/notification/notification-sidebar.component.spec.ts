@@ -157,7 +157,7 @@ describe('Notification Sidebar Component', () => {
         }));
 
         it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
-            notificationSidebarComponent.lastNotificationRead = null;
+            notificationSidebarComponent.lastNotificationRead = undefined;
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
             const lastNotificationReadNow = moment();
             bell.click();

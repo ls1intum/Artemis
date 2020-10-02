@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.IOException;
 import java.net.URL;
@@ -27,9 +28,18 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -451,6 +461,17 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    public ProgrammingExercise findById(Long programmingExerciseId) {
+        return programmingExerciseRepository.findById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming exercise not found with id " + programmingExerciseId));
+    }
+
+    /**
      * Find a programming exercise by its id, including template and solution but without results.
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -480,34 +501,6 @@ public class ProgrammingExerciseService {
         else {
             throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
         }
-    }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded studentParticipations.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    public ProgrammingExercise findByIdWithEagerStudentParticipations(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
-        if (programmingExercise.isPresent()) {
-            return programmingExercise.get();
-        }
-        else {
-            throw new EntityNotFoundException("programming exercise not found");
-        }
-    }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded studentParticipations, template and solution participation
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    public ProgrammingExercise findByIdWithAllParticipations(long programmingExerciseId) throws EntityNotFoundException {
-        return programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("programming exercise not found"));
     }
 
     /**

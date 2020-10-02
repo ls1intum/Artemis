@@ -27,6 +27,7 @@ export class ShortAnswerQuestionComponent {
         return this._question;
     }
 
+    // TODO: Map vs. Array --> consistency
     @Input()
     submittedTexts: ShortAnswerSubmittedText[];
     @Input()
@@ -52,7 +53,7 @@ export class ShortAnswerQuestionComponent {
     fnOnSubmittedTextUpdate: any;
 
     @Output()
-    submittedTextsChange = new EventEmitter();
+    submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -124,7 +125,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the submitted text
      */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter((submittedText) => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts.filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     /**
@@ -132,7 +133,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the sample solution
      */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.question.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -157,8 +158,8 @@ export class ShortAnswerQuestionComponent {
             this.question.correctMappings,
             this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
         );
-
-        if (solutionsForSpot.filter((solution) => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
+        const solutions = solutionsForSpot?.filter((solution) => solution.text === this.getSubmittedTextForSpot(spotTag)?.text);
+        if (solutions && solutions.length > 0) {
             isTextCorrect = true;
         }
         return isTextCorrect;

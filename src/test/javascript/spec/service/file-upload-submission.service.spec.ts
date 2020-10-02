@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { expect } from '../helpers/jasmine.jest.fix';
 
 describe('FileUploadSubmission Service', () => {
     let injector: TestBed;
@@ -42,7 +43,7 @@ describe('FileUploadSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .update(new FileUploadSubmission(), 1, null)
+                .update(new FileUploadSubmission(), 1, new Blob())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -58,7 +59,7 @@ describe('FileUploadSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .getFileUploadSubmissionsForExercise(1, expected)
+                .getFileUploadSubmissionsForExercise(1, { submittedOnly: true })
                 .pipe(
                     take(1),
                     map((resp) => resp.body),
