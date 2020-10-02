@@ -1,8 +1,10 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess-new/text-submission-assessment.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -12,7 +14,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -27,10 +28,14 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess-new/manual-textblock-selection/manual-textblock-selection.component';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
+import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextBlock } from 'app/entities/text-block.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
+    let textAssessmentsService: TextAssessmentsService;
 
     const route = ({ snapshot: { path: '' } } as unknown) as ActivatedRoute;
     const exercise = {
@@ -50,7 +55,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         submitted: true,
         type: SubmissionType.MANUAL,
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
-        text: 'asdfasdfasdfasdf',
+        text: 'First text. Second text.',
         participation,
     } as unknown) as TextSubmission;
     submission.result = ({
@@ -60,11 +65,35 @@ describe('TextSubmissionAssessmentComponent', () => {
         successful: false,
         score: 8,
         rated: true,
-        hasFeedback: false,
+        hasFeedback: true,
         hasComplaint: false,
         submission,
         participation,
     } as unknown) as Result;
+    submission.result.feedbacks = [
+        {
+            id: 1,
+            detailText: 'First Feedback',
+            credits: 1,
+            reference: 'First text id',
+        } as Feedback,
+    ];
+    submission.blocks = [
+        {
+            id: 'First text id',
+            text: 'First text.',
+            startIndex: 0,
+            endIndex: 11,
+            submission,
+        } as TextBlock,
+        {
+            id: 'second text id',
+            text: 'Second text.',
+            startIndex: 12,
+            endIndex: 24,
+            submission,
+        } as TextBlock,
+    ];
     submission.participation!.submissions = [submission];
     submission.participation!.results = [submission.result];
 
@@ -127,12 +156,86 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
-        const textBlockRef = TextBlockRef.new();
-        textBlockRef.initFeedback();
+        const textBlockRef = textAssessmentAreaComponent.textBlockRefs[0];
         textBlockRef.feedback!.credits = 42;
-        textAssessmentAreaComponent.textBlockRefs.push(textBlockRef);
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
         expect(component.totalScore).toBe(42);
+    });
+
+    it('should save the assessment with correct parameters', function () {
+        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        const result = submission.result;
+        const textBlockRef = component.textBlockRefs[1];
+        textBlockRef.initFeedback();
+        textBlockRef.feedback!.detailText = 'my feedback';
+        textBlockRef.feedback!.credits = 42;
+
+        spyOn(textAssessmentsService, 'save').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: result,
+                }),
+            ),
+        );
+
+        component.validateFeedback();
+        component.save();
+        expect(textAssessmentsService.save).toHaveBeenCalledWith(
+            exercise.id!,
+            result!.id!,
+            [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
+            [component.textBlockRefs[0].block!, textBlockRef.block!],
+        );
+    });
+
+    it('should submit the assessment with correct parameters', function () {
+        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        const result = submission.result;
+        const textBlockRef = component.textBlockRefs[1];
+        textBlockRef.initFeedback();
+        textBlockRef.feedback!.detailText = 'my feedback';
+        textBlockRef.feedback!.credits = 42;
+
+        spyOn(textAssessmentsService, 'submit').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: result,
+                }),
+            ),
+        );
+
+        component.validateFeedback();
+        component.submit();
+        expect(textAssessmentsService.submit).toHaveBeenCalledWith(
+            exercise.id!,
+            result!.id!,
+            [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
+            [component.textBlockRefs[0].block!, textBlockRef.block!],
+        );
+    });
+
+    it('should set feedback conflict', function () {
+        const feedbackConflict = {
+            id: 1,
+            conflict: true,
+            type: 'INCONSISTENT_COMMENT',
+            firstFeedback: submission.result!.feedbacks![0],
+            secondFeedback: new Feedback(),
+        };
+        feedbackConflict.secondFeedback.id = 42;
+        submission.result!.feedbacks![0]['firstConflicts'] = [feedbackConflict];
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments).toBeTruthy();
+        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments!.length).toBe(1);
+        expect(component.textBlockRefs[0]!.feedback!.conflictingTextAssessments![0].conflictingFeedbackId).toBe(42);
     });
 });
