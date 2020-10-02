@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
@@ -19,7 +19,7 @@ import * as moment from 'moment';
     templateUrl: './exercise-row-button.component.html',
     styles: [],
 })
-export class ExerciseRowButtonComponent {
+export class ExerciseRowButtonComponent implements OnInit {
     readonly ActionType = ActionType;
     exerciseType = ExerciseType;
     FeatureToggle = FeatureToggle;
@@ -39,6 +39,9 @@ export class ExerciseRowButtonComponent {
         private eventManager: JhiEventManager,
     ) {}
 
+    ngOnInit(): void {
+        console.log(this.exercise.exerciseGroup);
+    }
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
      */
