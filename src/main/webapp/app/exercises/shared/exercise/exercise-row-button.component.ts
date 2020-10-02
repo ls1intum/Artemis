@@ -108,6 +108,20 @@ export class ExerciseRowButtonComponent implements OnInit {
         );
     }
 
+    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.exercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted a programming exercise',
+                });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
     resetExercise() {
         switch (this.exercise.type) {
             case ExerciseType.QUIZ:
