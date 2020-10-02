@@ -102,6 +102,7 @@ describe('TextFeedbackConflictsComponent', () => {
             conflictingFeedbackId: 5,
             createdAt: moment('2019-07-09T11:51:23.251Z'),
             type: FeedbackConflictType.INCONSISTENT_COMMENT,
+            markedAsNoConflict: false,
         } as FeedbackConflict,
     ];
 
@@ -213,7 +214,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(textAssessmentAreaComponent).toBeTruthy();
     });
 
-    it('should override left submission', () => {
+    it('should solve conflict by overriding left submission', () => {
         textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
@@ -244,5 +245,42 @@ describe('TextFeedbackConflictsComponent', () => {
             [component.leftTextBlockRefs[0].feedback!],
             [component.leftTextBlockRefs[0].block!],
         );
+    });
+
+    it('should be able to select conflicting feedback', () => {
+        component['setPropertiesFromServerResponse']([conflictingSubmission]);
+        fixture.detectChanges();
+
+        const textBlockAssessmentAreas = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
+        textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
+            const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
+            if (textBlockAssessmentCardComponent.textBlockRef === component.rightTextBlockRefs[0]) {
+                textBlockAssessmentCardComponent.select();
+            }
+        });
+
+        expect(component.selectedRightFeedbackId).toBeTruthy();
+        expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.result!.feedbacks![0].id);
+    });
+
+    it('should mark selected as no conflict', () => {
+        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        component['setPropertiesFromServerResponse']([conflictingSubmission]);
+        fixture.detectChanges();
+
+        component.didSelectConflictingFeedback(conflictingSubmission.result!.feedbacks![0].id!);
+
+        const feedbackConflict = textSubmission.result!.feedbacks![0].conflictingTextAssessments![0];
+        feedbackConflict.conflict = false;
+        feedbackConflict.markedAsNoConflict = true;
+        spyOn(textAssessmentsService, 'solveFeedbackConflict').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: feedbackConflict,
+                }),
+            ),
+        );
+        component.markSelectedAsNoConflict();
+        expect(textAssessmentsService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
     });
 });
