@@ -1,9 +1,8 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
-import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { createQuizExercise, deleteQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
+import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
 import {
     newExam,
     newExerciseGroup,
