@@ -79,5 +79,6 @@ artemis:
         feedback-consistency-url: http://localhost:8001/feedback_consistency
         secret: null
     athene:
+        submit-url: http://localhost/submit
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
         token-validity-in-seconds: 10800
