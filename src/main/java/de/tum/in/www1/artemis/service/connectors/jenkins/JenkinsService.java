@@ -371,13 +371,15 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
 
-        report.getResults().forEach(testsuite -> testsuite.getTestCases().forEach(testCase -> {
-            var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
-            var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
-            var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
+        for (final var testSuite : report.getResults()) {
+            for (final var testCase : testSuite.getTestCases()) {
+                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
+                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMessage());
+                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
 
-            result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
-        }));
+                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, errorList.isEmpty(), programmingLanguage));
+            }
+        }
 
         result.setHasFeedback(true);
     }
