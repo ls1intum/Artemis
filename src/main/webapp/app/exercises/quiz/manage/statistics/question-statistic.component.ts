@@ -11,7 +11,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ChartOptions } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
 export interface BackgroundColorConfig {
@@ -21,6 +21,7 @@ export interface BackgroundColorConfig {
     pointBorderColor: string;
 }
 
+@Component({ template: '' })
 export abstract class QuestionStatisticComponent implements DataSetProvider, OnInit, OnDestroy {
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;

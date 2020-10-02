@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -20,7 +20,7 @@ import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics
     styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     question: DragAndDropQuestion;
 
     constructor(

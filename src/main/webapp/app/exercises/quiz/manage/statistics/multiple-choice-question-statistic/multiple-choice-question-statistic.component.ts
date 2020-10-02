@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics
     templateUrl: './multiple-choice-question-statistic.component.html',
     providers: [QuizStatisticUtil, ArtemisMarkdownService],
 })
-export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent implements OnInit, OnDestroy {
+export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
     question: MultipleChoiceQuestion;
 
     answerTextRendered: SafeHtml[];

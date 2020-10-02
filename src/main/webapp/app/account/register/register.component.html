@@ -31,6 +31,7 @@
                         class="form-control"
                         id="firstName"
                         name="firstName"
+                        autocomplete="given-name"
                         placeholder="{{ 'global.form.firstname.placeholder' | translate }}"
                         formControlName="firstName"
                     />
@@ -42,6 +43,7 @@
                         class="form-control"
                         id="lastName"
                         name="lastName"
+                        autocomplete="last-name"
                         placeholder="{{ 'global.form.lastname.placeholder' | translate }}"
                         formControlName="lastName"
                     />
@@ -53,6 +55,7 @@
                         class="form-control"
                         id="login"
                         name="login"
+                        autocomplete="username"
                         placeholder="{{ 'global.form.username.placeholder' | translate }}"
                         formControlName="login"
                         #login
@@ -84,7 +87,15 @@
 
                 <div class="form-group">
                     <label class="form-control-label" for="email" jhiTranslate="global.form.email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="{{ 'global.form.email.placeholder' | translate }}" formControlName="email" />
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        autocomplete="email"
+                        placeholder="{{ 'global.form.email.placeholder' | translate }}"
+                        formControlName="email"
+                    />
 
                     <div *ngIf="registerForm.get('email')!.invalid && (registerForm.get('email')!.dirty || registerForm.get('email')!.touched)">
                         <small class="form-text text-danger" *ngIf="registerForm.get('email')?.errors?.required" jhiTranslate="global.messages.validate.email.required">
@@ -116,6 +127,7 @@
                         class="form-control"
                         id="password"
                         name="password"
+                        autocomplete="password"
                         placeholder="{{ 'global.form.newpassword.placeholder' | translate }}"
                         formControlName="password"
                     />
