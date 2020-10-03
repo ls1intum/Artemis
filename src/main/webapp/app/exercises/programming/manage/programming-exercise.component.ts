@@ -105,45 +105,45 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     openOrionEditor(exercise: ProgrammingExercise) {
         try {
-            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation.id]);
+            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation!.id!]);
         } catch (e) {
             this.javaBridge.log(e);
         }
     }
 
-    /**
-     * Deletes programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event contains additional checks for deleting exercise
-     */
-    deleteProgrammingExercise(programmingExercise: ProgrammingExercise, $event: { [key: string]: boolean }) {
-        const exerciseId = programmingExercise.id;
-        const groupId = programmingExercise.exerciseGroup ? programmingExercise.exerciseGroup.id : 0;
-        return this.programmingExerciseService.delete(programmingExercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'programmingExerciseListModification',
-                    content: 'Deleted an programmingExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId, groupId });
-                }
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
-    /**
-     * Resets programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     */
-    resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => this.dialogErrorSource.next(''),
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
+    // /**
+    //  * Deletes programming exercise
+    //  * @param programmingExerciseId the id of the programming exercise that we want to delete
+    //  * @param $event contains additional checks for deleting exercise
+    //  */
+    // deleteProgrammingExercise(programmingExercise: ProgrammingExercise, $event: { [key: string]: boolean }) {
+    //     const exerciseId = programmingExercise.id ? programmingExercise.id : 0;
+    //     const groupId = programmingExercise.exerciseGroup ? programmingExercise.exerciseGroup.id : 0;
+    //     return this.programmingExerciseService.delete(exerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    //         () => {
+    //             this.eventManager.broadcast({
+    //                 name: 'programmingExerciseListModification',
+    //                 content: 'Deleted an programmingExercise',
+    //             });
+    //             this.dialogErrorSource.next('');
+    //             if (this.isInExerciseGroup) {
+    //                 this.onDeleteExercise.emit({ exerciseId, groupId });
+    //             }
+    //         },
+    //         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+    //     );
+    // }
+    //
+    // /**
+    //  * Resets programming exercise
+    //  * @param programmingExerciseId the id of the programming exercise that we want to delete
+    //  */
+    // resetProgrammingExercise(programmingExerciseId: number) {
+    //     this.exerciseService.reset(programmingExerciseId).subscribe(
+    //         () => this.dialogErrorSource.next(''),
+    //         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+    //     );
+    // }
 
     getHiddenTestCasesNumber(programmingExerciseId: number): number {
         let number = 0;
@@ -177,14 +177,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             )
             .subscribe();
         return number;
-    }
-
-    openOrionEditor(exercise: ProgrammingExercise) {
-        try {
-            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation?.id]);
-        } catch (e) {
-            this.javaBridge.log(e);
-        }
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

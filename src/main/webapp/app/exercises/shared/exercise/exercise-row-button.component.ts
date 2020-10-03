@@ -30,6 +30,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
     constructor(
         private exerciseService: ExerciseService,
         private textExerciseService: TextExerciseService,
@@ -41,7 +42,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        console.log(this.exercise.exerciseGroup);
+        console.log(this.exercise.exerciseGroup?.id);
     }
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
@@ -72,7 +73,7 @@ export class ExerciseRowButtonComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.exercise.exerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id, groupId: this.exercise.exerciseGroup.id });
+                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id!, groupId: this.exercise.exerciseGroup.id! });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -88,7 +89,7 @@ export class ExerciseRowButtonComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.exercise.exerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id, groupId: this.exercise.exerciseGroup.id });
+                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id!, groupId: this.exercise.exerciseGroup.id! });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -104,7 +105,7 @@ export class ExerciseRowButtonComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.exercise.exerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id, groupId: this.exercise.exerciseGroup.id });
+                    this.onDeleteExercise.emit({ exerciseId: this.exercise.id!, groupId: this.exercise.exerciseGroup.id! });
                 }
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -112,7 +113,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise.id).subscribe(
+        this.quizExerciseService.delete(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -126,7 +127,7 @@ export class ExerciseRowButtonComponent implements OnInit {
     }
 
     public deleteProgrammingExercise($event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise.id, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+        this.programmingExerciseService.delete(this.exercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
@@ -155,7 +156,7 @@ export class ExerciseRowButtonComponent implements OnInit {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     resetQuizExercise() {
-        this.quizExerciseService.reset(this.exercise.id).subscribe(
+        this.quizExerciseService.reset(this.exercise.id!).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -172,7 +173,7 @@ export class ExerciseRowButtonComponent implements OnInit {
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise() {
-        this.exerciseService.reset(this.exercise.id).subscribe(
+        this.exerciseService.reset(this.exercise.id!).subscribe(
             () => this.dialogErrorSource.next(''),
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

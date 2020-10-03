@@ -203,45 +203,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
-    /**
-     * Deletes quiz exercise
-     * @param quizExerciseId id of the quiz exercise that will be deleted
-     */
-    deleteQuizExercise(quizExercise: QuizExercise) {
-        const exerciseId = quizExercise.id;
-        const groupId = quizExercise.exerciseGroup ? quizExercise.exerciseGroup.id : 0;
-        return this.quizExerciseService.delete(quizExercise.id).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted an quizExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId, groupId });
-                }
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
-        );
-    }
-
-    /**
-     * Resets quiz exercise
-     * @param quizExerciseId id of the quiz exercise that will be deleted
-     */
-    resetQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.reset(quizExerciseId).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Reset an quizExercise',
-                });
-                this.dialogErrorSource.next('');
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
-        );
-    }
-
     public sortRows() {
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
     }

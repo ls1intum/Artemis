@@ -61,28 +61,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         return item.id;
     }
 
-    /**
-     * Deletes file upload exercise
-     * @param fileUploadExerciseId id of the exercise that will be deleted
-     */
-    deleteFileUploadExercise(fileUploadExercise: FileUploadExercise) {
-        const exerciseId = fileUploadExercise.id;
-        const groupId = fileUploadExercise.exerciseGroup ? fileUploadExercise.exerciseGroup.id : 0;
-        this.fileUploadExerciseService.delete(fileUploadExercise.id).subscribe(
-            () => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted an fileUploadExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (this.isInExerciseGroup) {
-                    this.onDeleteExercise.emit({ exerciseId, groupId });
-                }
-            },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
-    }
-
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';
     }
