@@ -203,7 +203,7 @@ describe('TextFeedbackConflictsComponent', () => {
         fixture.detectChanges();
         expect(component.rightSubmission).toBe(conflictingSubmission);
         expect(component.rightTotalScore).toBe(1.5);
-        expect(component.conflictingAssessments).toBe(textSubmission.result!.feedbacks![0].conflictingTextAssessments!);
+        expect(component.feedbackConflicts).toBe(textSubmission.result!.feedbacks![0].conflictingTextAssessments!);
         expect(component.rightTextBlockRefs[0].feedback).toBe(conflictingSubmission.result!.feedbacks![0]);
     });
 
@@ -282,5 +282,23 @@ describe('TextFeedbackConflictsComponent', () => {
         );
         component.markSelectedAsNoConflict();
         expect(textAssessmentsService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
+    });
+
+    it('should switch submissions when it changed in the header', () => {
+        const secondConflictingSubmission = Object.assign({}, conflictingSubmission);
+        secondConflictingSubmission.id! += 1;
+        secondConflictingSubmission.result!.id! += 1;
+        secondConflictingSubmission.result!.feedbacks![0].id! += 1;
+
+        component['setPropertiesFromServerResponse']([conflictingSubmission, secondConflictingSubmission]);
+        fixture.detectChanges();
+
+        const textFeedbackConflictsHeader = fixture.debugElement.query(By.directive(TextFeedbackConflictsHeaderComponent));
+        const textFeedbackConflictsHeaderComponent = textFeedbackConflictsHeader.componentInstance as TextFeedbackConflictsHeaderComponent;
+        expect(textFeedbackConflictsHeaderComponent.numberOfConflicts).toBe(2);
+        textFeedbackConflictsHeaderComponent.onNextConflict();
+        expect(component.rightSubmission).toBe(secondConflictingSubmission);
+        textFeedbackConflictsHeaderComponent.onPrevConflict();
+        expect(component.rightSubmission).toBe(conflictingSubmission);
     });
 });

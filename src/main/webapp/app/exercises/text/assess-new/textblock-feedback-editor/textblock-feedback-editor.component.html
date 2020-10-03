@@ -5,7 +5,7 @@
 
 <span class="badge badge-warning" *ngIf="!conflictMode && feedback.conflictingTextAssessments?.length > 0" (click)="onConflictsClicked.emit(feedback.id)">
     <fa-icon [icon]="'balance-scale-right'"></fa-icon>
-    <span [jhiTranslate]="'artemisApp.textAssessment.conflict.conflictingAssessments'" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
+    <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
 </span>
 
 <span class="badge badge-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
