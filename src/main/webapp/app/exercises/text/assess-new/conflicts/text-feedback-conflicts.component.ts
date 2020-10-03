@@ -35,7 +35,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     rightTextBlockRefs: TextBlockRef[];
     rightUnusedTextBlockRefs: TextBlockRef[];
     rightTotalScore: number;
-    conflictingAssessments: FeedbackConflict[];
+    feedbackConflicts: FeedbackConflict[];
     overrideBusy = false;
     markBusy = false;
     isOverrideDisabled = true;
@@ -67,9 +67,13 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.leftUnusedTextBlockRefs = [];
         this.rightTextBlockRefs = [];
         this.rightUnusedTextBlockRefs = [];
-        this.conflictingAssessments = [];
+        this.feedbackConflicts = [];
     }
 
+    /**
+     *  Handles the resizable layout on the right hand side. Adapted from:
+     *  @see resizeable-container.component.ts
+     */
     ngAfterViewInit() {
         interact('.movable')
             .resizable({
@@ -104,15 +108,6 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    didChangeConflictIndex(conflictIndex: number) {
-        this.rightUnusedTextBlockRefs = [];
-        this.rightTextBlockRefs = [];
-        this.conflictingAssessments = [];
-        this.selectedRightFeedbackId = undefined;
-        this.isMarkingDisabled = true;
-        this.setConflictingSubmission(conflictIndex - 1);
-    }
-
     private setPropertiesFromServerResponse(conflictingTextSubmissions: TextSubmission[]) {
         this.conflictingSubmissions = conflictingTextSubmissions;
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
@@ -125,14 +120,40 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         if (this.rightSubmission) {
             this.prepareTextBlocksAndFeedbackFor(this.rightSubmission!, this.rightTextBlockRefs, this.rightUnusedTextBlockRefs);
             this.rightTotalScore = this.computeTotalScore(this.rightSubmission!.result!.feedbacks!);
-            this.conflictingAssessments = this.leftSubmission!.result!.feedbacks!.find((f) => f.id === this.leftFeedbackId)?.conflictingTextAssessments || [];
+            this.feedbackConflicts = this.leftSubmission!.result!.feedbacks!.find((f) => f.id === this.leftFeedbackId)?.conflictingTextAssessments || [];
         }
     }
 
+    /**
+     * Changes the displayed submission in the right text assessment area.
+     * @param conflictIndex
+     */
+    didChangeConflictIndex(conflictIndex: number) {
+        this.rightUnusedTextBlockRefs = [];
+        this.rightTextBlockRefs = [];
+        this.feedbackConflicts = [];
+        this.selectedRightFeedbackId = undefined;
+        this.isMarkingDisabled = true;
+        this.setConflictingSubmission(conflictIndex - 1);
+    }
+
+    /**
+     * Checks if the current user is the assessor of the passed result.
+     * Passed result could be belong to left or right submission
+     *
+     * @param result - result to check its assessor
+     */
     isAssessor(result: Result): boolean {
         return result?.assessor?.id === this.userId;
     }
 
+    /**
+     * Checks if the current user can override the submission.
+     * Only possible if the user is an instructor for the exercise or
+     * If s/he is an assessor of the submission and it is still before assessment due date.
+     *
+     * @param result - result to check override access
+     */
     canOverride(result: Result): boolean {
         if (this.exercise) {
             if (this.isAtLeastInstructor) {
@@ -150,6 +171,9 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         return false;
     }
 
+    /**
+     * submits the left submission
+     */
     overrideLeftSubmission() {
         if (!this.leftSubmission || !this.leftSubmission.result || !this.leftSubmission.result.id || this.overrideBusy) {
             return;
@@ -164,22 +188,33 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             );
     }
 
+    /**
+     * if the there is a change in left text block (one with the conflicts), total score is calculated again and
+     * override button is enabled.
+     */
     leftTextBlockRefsChange(): void {
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.result!.feedbacks!);
         this.isOverrideDisabled = false;
     }
 
+    /**
+     * selects and unselects one of the right conflicting feedback
+     * @param rightFeedbackId - feedback id to un/select
+     */
     didSelectConflictingFeedback(rightFeedbackId: number): void {
         this.selectedRightFeedbackId = rightFeedbackId !== this.selectedRightFeedbackId ? rightFeedbackId : undefined;
         this.isMarkingDisabled = !this.selectedRightFeedbackId;
     }
 
+    /**
+     * Finds the feedback conflict id based on the selected conflicting right feedback's id and calls the service function to solve conflict.
+     */
     markSelectedAsNoConflict(): void {
         if (this.markBusy || !this.selectedRightFeedbackId) {
             return;
         }
 
-        const feedbackConflictId = this.conflictingAssessments.find((conflictingAssessment) => conflictingAssessment.conflictingFeedbackId === this.selectedRightFeedbackId)?.id;
+        const feedbackConflictId = this.feedbackConflicts.find((feedbackConflict) => feedbackConflict.conflictingFeedbackId === this.selectedRightFeedbackId)?.id;
 
         if (!feedbackConflictId || !this.exercise) {
             return;

@@ -252,6 +252,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
+    /**
+     * if the conflict badge is clicked, navigate to conflict page and add the submission to the extras.
+     * @param feedbackId - selected feedback id with conflicts.
+     */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
         const navigationExtras: NavigationExtras = { state: { submission: this.submission } };
         await this.router.navigate(

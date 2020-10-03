@@ -35,6 +35,7 @@ export class TextblockAssessmentCardComponent {
 
     /**
      * Select a text block
+     * If it is conflict mode and this text block is already selected, then send null block to unselect it.
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {

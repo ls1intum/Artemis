@@ -22,7 +22,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() selectedFeedbackIdWithConflicts?: number;
     @Input() conflictMode: boolean;
     @Input() isLeftConflictingFeedback: boolean;
-    @Input() conflictingAssessments: FeedbackConflict[];
+    @Input() feedbackConflicts: FeedbackConflict[];
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
     @Output() onConflictsClicked = new EventEmitter<number>();
@@ -62,32 +62,55 @@ export class TextAssessmentAreaComponent implements OnChanges {
         this.textBlockRefsChange.emit(this.textBlockRefs);
     }
 
+    /**
+     * It is called if a text block is added manually.
+     * @param ref - added text block
+     */
     addTextBlockRef(ref: TextBlockRef): void {
         this.textBlockRefs.push(ref);
         this.textBlockRefsAddedRemoved.emit();
     }
 
+    /**
+     * It is called if the assessment for a text block is deleted. So, textBlockRef is deleted
+     * @param ref - TextBlockRef that has a deleted assessment(feedback).
+     */
     removeTextBlockRef(ref: TextBlockRef): void {
         const index = this.textBlockRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
         this.textBlockRefs.splice(index, 1);
         this.textBlockRefsAddedRemoved.emit();
     }
 
+    /**
+     * Checks if the passed TextBlockRef has a conflicting feedback.
+     * If this is the left assessment checks the left conflicting feedback id otherwise searches the feedback id inside the conflicts array.
+     * Returns false for text-submission-assessment component
+     * @param ref - TextBlockRef to check if its feedback is conflicting.
+     */
     getIsConflictingFeedback(ref: TextBlockRef): boolean {
         if (this.isLeftConflictingFeedback && this.selectedFeedbackIdWithConflicts) {
             return this.selectedFeedbackIdWithConflicts === ref.feedback?.id;
         }
-        return this.conflictingAssessments?.some((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
+        return this.feedbackConflicts?.some((feedbackConflict) => feedbackConflict.conflictingFeedbackId === ref.feedback?.id);
     }
 
+    /**
+     * Gets FeedbackConflictType from conflicting feedback. Returns undefined for non conflicts.
+     * @param ref - TextBlockRef to get FeedbackConflictType of its conflicting feedback.
+     */
     getConflictType(ref: TextBlockRef): FeedbackConflictType | undefined {
-        const conflict = this.conflictingAssessments?.find((textAssessmentConflict) => textAssessmentConflict.conflictingFeedbackId === ref.feedback?.id);
+        const conflict = this.feedbackConflicts?.find((feedbackConflict) => feedbackConflict.conflictingFeedbackId === ref.feedback?.id);
         if (conflict) {
             return conflict.type!;
         }
         return undefined;
     }
 
+    /**
+     * It is called when a text block is selected.
+     * If it is in conflict mode and right assessment area, emit feedback id since it is a selected conflict.
+     * @param ref - selected TextBlockRef
+     */
     didSelectRef(ref: TextBlockRef): void {
         this.selectedRef = ref;
         if (this.conflictMode && !this.isLeftConflictingFeedback) {

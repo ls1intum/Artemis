@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockType } from 'app/entities/text-block.model';
@@ -18,6 +17,10 @@ import { Feedback } from 'app/entities/feedback.model';
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
+    /*
+     * Base Component for TextSubmissionAssessmentComponent and TextFeedbackConflictsComponent since they share a lot of same functions.
+     */
+
     exercise?: TextExercise;
     isAtLeastInstructor: boolean;
     protected userId?: number;
