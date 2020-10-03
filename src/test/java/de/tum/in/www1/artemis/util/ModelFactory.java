@@ -670,16 +670,6 @@ public class ModelFactory {
         return report;
     }
 
-    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
-        var category = new StaticCodeAnalysisCategory();
-        category.setName("Bad practice");
-        category.setPenalty(2D);
-        category.setMaxPenalty(10D);
-        category.setState(CategoryState.VISIBLE);
-        category.setProgrammingExercise(programmingExercise);
-        return category;
-    }
-
     private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
