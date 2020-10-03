@@ -14,6 +14,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -956,11 +957,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getTestCases_asTutor() throws Exception {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
-        final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
-        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final List<ProgrammingExerciseTestCase> returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
+        final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
-
-        assertThat(new HashSet<>(returnedTests)).usingElementComparatorIgnoringFields("exercise").isEqualTo(testsInDB);
+        assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(testsInDB);
     }
 
     @Test
