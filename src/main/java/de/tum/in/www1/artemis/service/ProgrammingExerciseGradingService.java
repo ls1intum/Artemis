@@ -22,10 +22,10 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -380,14 +380,17 @@ public class ProgrammingExerciseGradingService {
                             penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
                         }
                         double perFeedbackPenalty = penaltySum / categoryFeedback.size();
+                        // update credits of feedbacks in category
                         categoryFeedback.forEach((feedback -> {
                             feedback.setCredits(-perFeedbackPenalty);
                         }));
                         return penaltySum;
                     }).sum();
 
-            if (codeAnalysisPenaltyPoints > programmingExercise.getMaxStaticCodeAnalysisPenalty()) {
-                codeAnalysisPenaltyPoints = programmingExercise.getMaxStaticCodeAnalysisPenalty();
+            // maxStaticCodeAnalysisPenalty is in percent
+            final var maxExercisePenaltyPoints = (double)programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
+            if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
+                codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
             }
 
             successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
