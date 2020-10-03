@@ -381,9 +381,7 @@ public class ProgrammingExerciseGradingService {
                         }
                         double perFeedbackPenalty = penaltySum / categoryFeedback.size();
                         // update credits of feedbacks in category
-                        categoryFeedback.forEach((feedback -> {
-                            feedback.setCredits(-perFeedbackPenalty);
-                        }));
+                        categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
                         return penaltySum;
                     }).sum();
 

@@ -111,6 +111,11 @@ public class StaticCodeAnalysisService {
         return originalCategories;
     }
 
+    /**
+     * Links the categories of an exercise with the default category mappings.
+     * @param programmingExercise The programming exercise
+     * @return A list of pairs of categories and their mappings.
+     */
     public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> getCategoriesWithMappingForExercise(
             ProgrammingExercise programmingExercise) {
         var categories = findByExerciseId(programmingExercise.getId());
