@@ -67,4 +67,9 @@ public class BuildLogEntry extends DomainObject {
     public void setProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
         this.programmingSubmission = programmingSubmission;
     }
+
+    @Override
+    public String toString() {
+        return "BuildLogEntry{" + "time=" + time + ", log='" + log + '\'' + '}';
+    }
 }

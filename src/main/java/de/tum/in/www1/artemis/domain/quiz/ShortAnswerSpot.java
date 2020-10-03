@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -13,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -23,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "short_answer_spot")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpot extends DomainObject {
+public class ShortAnswerSpot extends TempIdObject {
 
     @Column(name = "spotNr")
     @JsonView(QuizView.Before.class)
@@ -45,23 +44,6 @@ public class ShortAnswerSpot extends DomainObject {
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerMapping> mappings = new HashSet<>();
-
-    /**
-     * tempID is needed to refer to spots that have not been persisted yet in the correctMappings of a question (so user can create mappings in the UI before saving new spots)
-     */
-    @Transient
-    // variable name must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
-    private Long tempIDTransient;
-
-    public Long getTempID() {
-        return tempIDTransient;
-    }
-
-    public void setTempID(Long tempID) {
-        this.tempIDTransient = tempID;
-    }
 
     public Integer getSpotNr() {
         return spotNr;
@@ -119,21 +101,6 @@ public class ShortAnswerSpot extends DomainObject {
         this.mappings.remove(mapping);
         mapping.setSpot(null);
         return this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerSpot shortAnswerSpot = (ShortAnswerSpot) o;
-        if (shortAnswerSpot.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), shortAnswerSpot.getTempID())) {
-            return true;
-        }
-        return super.equals(o);
     }
 
     @Override
