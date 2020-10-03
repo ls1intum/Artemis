@@ -1219,10 +1219,14 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise() {
+        return addCourseWithOneProgrammingExercise(false);
+    }
+
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        var programmingExercise = addProgrammingExerciseToCourse(course, false);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis);
 
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -1287,7 +1291,9 @@ public class DatabaseUtilService {
         programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
-        programmingExercise.setMaxStaticCodeAnalysisPenalty(enableStaticCodeAnalysis ? 20 : null);
+        if (enableStaticCodeAnalysis) {
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(20);
+        }
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
@@ -1366,7 +1372,7 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
-        Course course = addCourseWithOneProgrammingExercise();
+        Course course = addCourseWithOneProgrammingExercise(true);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
