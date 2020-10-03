@@ -39,6 +39,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
+import { cloneDeep } from 'lodash';
 
 export interface Reason {
     translateKey: string;
@@ -212,7 +213,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise(undefined, undefined);
+        this.savedEntity = this.entity.id ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
         if (!this.quizExercise.course && !this.isExamMode) {
             this.quizExercise.course = this.course;
         }
@@ -1154,7 +1155,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     private onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = JSON.parse(JSON.stringify(quizExercise));
+        this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
     }
