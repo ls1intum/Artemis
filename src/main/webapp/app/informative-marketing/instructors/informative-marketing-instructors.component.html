@@ -43,20 +43,65 @@
                 <h3>{{ feature.title | translate }}</h3>
                 <div class="feature-full-description">
                     <ng-container *ngIf="feature.descriptionTextTwo; else noSecondText">
-                        <img *ngIf="feature.imageOne" class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" style="max-width: 600px; width: 100%" />
-                        <p>{{ feature.descriptionTextOne | translate }}</p>
-                        <img *ngIf="feature.imageTwo" class="text-wrap-left" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 600px; width: 100%" />
-                        <p>{{ feature.descriptionTextTwo | translate }}</p>
+                        <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeftTwoImages">
+                            <img
+                                *ngIf="feature.imageOne"
+                                class="text-wrap-right"
+                                src="{{ feature.imageOne }}"
+                                alt="feature-image-one"
+                                style="margin-top: 5px; max-width: 600px; width: 100%"
+                            />
+                            <p>{{ feature.descriptionTextOne | translate }}</p>
+                            <img *ngIf="feature.imageTwo" class="text-wrap-left" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 600px; width: 100%" />
+                            <p>{{ feature.descriptionTextTwo | translate }}</p>
+                        </ng-container>
+                        <ng-template #alignFirstImageLeftTwoImages>
+                            <img
+                                *ngIf="feature.imageOne"
+                                class="text-wrap-left"
+                                src="{{ feature.imageOne }}"
+                                alt="feature-image-one"
+                                style="margin-top: 5px; max-width: 600px; width: 100%"
+                            />
+                            <p>{{ feature.descriptionTextOne | translate }}</p>
+                            <img *ngIf="feature.imageTwo" class="text-wrap-right" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 600px; width: 100%" />
+                            <p>{{ feature.descriptionTextTwo | translate }}</p>
+                        </ng-template>
                     </ng-container>
                     <ng-template #noSecondText>
-                        <ng-container *ngIf="!feature.textOneCentered; else centerText">
-                            <img *ngIf="feature.imageOne" class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" style="max-width: 600px; width: 100%" />
-                            <p>{{ feature.descriptionTextOne | translate }}</p>
-                            <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                        <ng-container *ngIf="!feature.textOneCentered; else centerTextAndImage">
+                            <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeft">
+                                <img
+                                    *ngIf="feature.imageOne"
+                                    class="text-wrap-right"
+                                    src="{{ feature.imageOne }}"
+                                    alt="feature-image-one"
+                                    style="margin-top: 5px; max-width: 600px; width: 100%"
+                                />
+                                <p>{{ feature.descriptionTextOne | translate }}</p>
+                                <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                            </ng-container>
+                            <ng-template #alignFirstImageLeft>
+                                <img
+                                    *ngIf="feature.imageOne"
+                                    class="text-wrap-left"
+                                    src="{{ feature.imageOne }}"
+                                    alt="feature-image-one"
+                                    style="margin-top: 5px; max-width: 600px; width: 100%"
+                                />
+                                <p>{{ feature.descriptionTextOne | translate }}</p>
+                                <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                            </ng-template>
                         </ng-container>
-                        <ng-template #centerText>
+                        <ng-template #centerTextAndImage>
                             <p style="text-align: center">{{ feature.descriptionTextOne | translate }}</p>
-                            <img *ngIf="feature.imageOne" src="{{ feature.imageOne }}" class="center" alt="feature-image-one" style="max-width: 1000px; width: 100%" />
+                            <img
+                                *ngIf="feature.imageOne"
+                                src="{{ feature.imageOne }}"
+                                class="center"
+                                alt="feature-image-one"
+                                style="margin-top: 5px; max-width: 1000px; width: 100%"
+                            />
                             <img *ngIf="feature.imageTwo" src="{{ feature.imageTwo }}" class="center" alt="feature-image-one" style="max-width: 1000px; width: 100%" />
                         </ng-template>
                     </ng-template>

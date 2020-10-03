@@ -17,6 +17,8 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
         );
+        featureOne.centerTextAndImageOne();
+
         const featureTwo = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
@@ -25,7 +27,7 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             undefined,
             'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
         );
-        featureTwo.centerTextOne();
+
         const featureThree = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
@@ -34,14 +36,27 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             undefined,
             'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
         );
+        featureThree.alignFirstImageLeft();
+
         const featureFour = new Feature(
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
+            'fa fa-code',
+            undefined,
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+        );
+        featureFour.centerTextAndImageOne();
+
+        const featureFive = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
         );
-        const featureFive = new Feature(
+
+        const featureSix = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
@@ -50,7 +65,8 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
             'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
         );
-        const featureSix = new Feature(
+
+        const featureSeven = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
@@ -59,18 +75,18 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
             'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
         );
-        const featureSeven = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
-        );
+
         const featureEight = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
         );
+        featureEight.alignFirstImageLeft();
+
         this.features = [featureOne, featureTwo, featureThree, featureFour, featureFive, featureSix, featureSeven, featureEight];
     }
 
@@ -93,6 +109,7 @@ class Feature {
     descriptionTextTwo?: string;
     imageOne?: string;
     imageTwo?: string;
+    firstImageLeft = false;
     icon: string;
     id: string;
 
@@ -120,7 +137,14 @@ class Feature {
      * Centers the text and first image.
      * Note: Only has an effect if there is no second text
      */
-    centerTextOne(): void {
+    centerTextAndImageOne(): void {
         this.textOneCentered = true;
+    }
+
+    /**
+     * Align the first image to the left, instead of the right
+     */
+    alignFirstImageLeft() {
+        this.firstImageLeft = true;
     }
 }
