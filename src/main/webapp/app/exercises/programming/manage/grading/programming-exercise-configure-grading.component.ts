@@ -10,7 +10,11 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import {
+    ProgrammingExerciseGradingService,
+    ProgrammingExerciseTestCaseUpdate,
+    StaticCodeAnalysisCategoryUpdate
+} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
 
@@ -294,13 +298,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 // Find out if there are test cases that were not updated, show an error.
                 const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
                 if (notUpdatedTestCases.length) {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: notUpdatedTestCases });
                 } else {
-                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
                 }
             }),
             catchError(() => {
-                this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
                 return of(null);
             }),
         );
@@ -317,14 +321,34 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
         );
 
-        const codeAnalysisCategoriesToUpdate = _intersectionWith(
+        const categoriesToUpdate = _intersectionWith(
             this.staticCodeAnalysisCategories,
             this.changedCategoryIds,
             (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
         );
-        const codeAnalysisCategoryUpdates = codeAnalysisCategoriesToUpdate.map(({ id, state, penalty, maxPenalty }) => ({ id, state, penalty, maxPenalty }));
+        const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
 
-        const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.exercise.id!, codeAnalysisCategoryUpdates);
+        const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.exercise.id!, categoryUpdates).pipe(
+            tap((updatedCategories: StaticCodeAnalysisCategory[]) => {
+                // From successfully updated categories from dirty checking list.
+                this.changedCategoryIds = _differenceWith(this.changedCategoryIds, updatedCategories, (id: number, category: StaticCodeAnalysisCategory) => category.id === id);
+
+                // Generate the new list of categories.
+                this.staticCodeAnalysisCategories = _unionBy(updatedCategories, this.staticCodeAnalysisCategories, 'id');
+
+                // Find out if there are test cases that were not updated, show an error.
+                const notUpdatedCategories = _differenceBy(categoriesToUpdate, updatedCategories, 'id');
+                if (notUpdatedCategories.length) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: notUpdatedCategories });
+                } else {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.updated`);
+                }
+            }),
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: categoriesToUpdate });
+                return of(null);
+            }),
+        );
 
         saveCodeAnalysis.subscribe(() => {
             this.isSaving = false;

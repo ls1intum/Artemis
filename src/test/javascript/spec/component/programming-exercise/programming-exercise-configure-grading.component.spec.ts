@@ -26,10 +26,14 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
+import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import {
+    ProgrammingExerciseGradingService,
+    ProgrammingExerciseTestCaseUpdate,
+    StaticCodeAnalysisCategoryUpdate,
+} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
@@ -49,6 +53,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
 
     let updateTestCasesStub: SinonStub;
+    let updateCategoriesStub: SinonStub;
+    let resetTestCasesStub: SinonStub;
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
@@ -65,6 +71,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
     const saveTableButton = '#save-table-button';
+    const resetTableButton = '#reset-table-button';
     const triggerSubmissionRunButton = '#trigger-all-button > button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
@@ -110,6 +117,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     const getSaveButton = () => {
         return getElement(debugElement, saveTableButton);
+    };
+
+    const getResetButton = () => {
+        return getElement(debugElement, resetTableButton);
     };
 
     const getTriggerButton = () => {
@@ -162,7 +173,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
 
                 updateTestCasesStub = stub(gradingService, 'updateTestCase');
+                updateCategoriesStub = stub(gradingService, 'updateCodeAnalysisCategories');
                 notifyTestCasesSpy = spy(gradingService, 'notifyTestCases');
+                resetTestCasesStub = stub(gradingService, 'reset');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -319,10 +332,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         tick();
         fixture.destroy();
         flush();
-
-        tick();
-        fixture.destroy();
-        flush();
     }));
 
     it('should be able to update the value of the afterDueDate boolean', async () => {
@@ -461,6 +470,64 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         flush();
     }));
 
+    it('should reset all test cases when the reset button is clicked', fakeAsync(() => {
+        comp.ngOnInit();
+        routeSubject.next({ exerciseId, tab: 'test-cases' });
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, moment()));
+        getCodeAnalysisCategoriesSubject.next(codeAnalysisCategories1);
+
+        (gradingService as any).next(testCases1);
+
+        fixture.detectChanges();
+
+        comp.updateEditedField(3, testCases1[0], EditableField.WEIGHT);
+        comp.updateEditedField(4, testCases1[1], EditableField.WEIGHT);
+
+        comp.updateEditedField(2, testCases1[1], EditableField.BONUS_MULTIPLIER);
+        comp.updateEditedField(3, testCases1[2], EditableField.BONUS_MULTIPLIER);
+
+        comp.updateEditedField(4, testCases1[0], EditableField.BONUS_POINTS);
+        comp.updateEditedField(10, testCases1[2], EditableField.BONUS_POINTS);
+
+        const updatedTestCases: ProgrammingExerciseTestCase[] = [
+            { ...testCases1[0], weight: 3, bonusPoints: 4 },
+            { ...testCases1[1], weight: 4, bonusMultiplier: 2 },
+            { ...testCases1[2], bonusMultiplier: 3, bonusPoints: 10 },
+        ];
+        updateTestCasesStub.returns(of(updatedTestCases));
+
+        // Save tests.
+        comp.saveTestCases();
+
+        fixture.detectChanges();
+
+        expect(updateTestCasesStub).to.have.been.calledOnce;
+
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+        testCasesChangedSubject.next(true);
+
+        // Reset button is now enabled because the tests were saved.
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        resetTestCasesStub.returns(of(testCases1));
+
+        const resetButton = getResetButton();
+        expectElementToBeEnabled(resetButton);
+        resetButton.click();
+
+        fixture.detectChanges();
+
+        expect(resetTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(comp.testCases).to.deep.equal(testCases1);
+        expect(comp.changedTestCaseIds).to.have.lengthOf(0);
+
+        tick();
+        fixture.destroy();
+        flush();
+    }));
+
     it('should update sca category when an input field is updated', fakeAsync(() => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId, tab: 'code-analysis' });
@@ -495,9 +562,39 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.changedCategoryIds).to.deep.equal([comp.staticCodeAnalysisCategories[0].id]);
-        expect(comp.staticCodeAnalysisCategories[0]).to.deep.equal({ ...comp.staticCodeAnalysisCategories[0], penalty: 20, maxPenalty: 100 });
+        expect(comp.changedCategoryIds).to.deep.equal([gradedCategories[0].id]);
 
+        // Trigger button should be disabled.
+        let triggerButton = getTriggerButton();
+        expectElementToBeDisabled(triggerButton);
+
+        const updatedCategory: StaticCodeAnalysisCategory = { ...gradedCategories[0], penalty: 20, maxPenalty: 100 };
+
+        // Save weight.
+        updateCategoriesStub.returns(of([updatedCategory]));
+        const saveButton = getSaveButton();
+        expectElementToBeEnabled(saveButton);
+        saveButton.click();
+
+        fixture.detectChanges();
+
+        expect(updateCategoriesStub).to.have.been.calledOnceWithExactly(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
+
+        const categoryThatWasUpdated = comp.staticCodeAnalysisCategories.find((category) => category.id === updatedCategory.id)!;
+        expect(categoryThatWasUpdated.penalty).to.equal(20);
+        expect(categoryThatWasUpdated.maxPenalty).to.equal(100);
+        expect(comp.changedCategoryIds).to.have.lengthOf(0);
+
+        testCasesChangedSubject.next(true);
+        // Trigger button is now enabled because the tests were saved.
+        expect(comp.hasUpdatedGradingConfig).to.be.true;
+
+        fixture.detectChanges();
+
+        triggerButton = getTriggerButton();
+        expectElementToBeEnabled(triggerButton);
+
+        tick();
         fixture.destroy();
         flush();
     }));

@@ -160,7 +160,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      * @param updates dto for updating sca categories to avoid setting automatic parameters
      */
-    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]> {
-        return this.http.patch<StaticCodeAnalysisCategoryUpdate[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
+    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategory[]> {
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
     }
 }

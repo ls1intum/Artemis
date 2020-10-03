@@ -100,12 +100,6 @@
                 "ok": "Hinweise ok.",
                 "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
             },
-            "manageTestCases": {
-                "showInactive": "Inaktive Testfälle anzeigen",
-                "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
-                "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
-                "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen."
-            },
             "configureGrading": {
                 "title": "Setze Benotung",
                 "save": "Speichern",
@@ -118,11 +112,17 @@
                 },
                 "testCases": {
                     "resetSuccessful": "Die Tests wurden erfolgreich zurückgesetzt.",
-                    "resetFailed": "Die Tests konnten nicht zurückgesetzt werden."
+                    "resetFailed": "Die Tests konnten nicht zurückgesetzt werden.",
+                    "updated": "Die Testfälle wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
+                    "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
+                    "showInactive": "Inaktive Testfälle anzeigen"
                 },
                 "categories": {
                     "notGraded": "Nicht benotet.",
-                    "noFeedback": "Ohne sichtbares feedback."
+                    "noFeedback": "Ohne sichtbares feedback.",
+                    "updated": "Die Kategorien wurden erfolgreich gespeichert.",
+                    "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}."
                 },
                 "updatedGradingConfigShort": "Veränderte Benotung",
                 "updatedGradingConfig": "Achtung: Du hast die Benotung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Benotungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
@@ -130,11 +130,6 @@
                 "noUpdatedGradingConfig": "Keine veränderte Benotung",
                 "notReleased": "Nicht veröffentlicht",
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Benotung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
-            },
-            "configureGrading": {
-                "title": "Setze Benotung",
-                "save": "Speichern",
-                "reset": "Zurücksetzen"
             },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",

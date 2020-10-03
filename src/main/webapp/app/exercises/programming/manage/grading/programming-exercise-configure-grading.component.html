@@ -43,7 +43,7 @@
 
                 <label class="d-flex align-items-center mb-0">
                     <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
-                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive">Show inactive</span>
+                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
                 </label>
                 <ngx-datatable
                     id="testCaseTable"
@@ -95,7 +95,7 @@
                             ></fa-icon>
                             <ng-template #popoverContent>
                                 <div class="d-flex flex-column run-after-due-date-disabled">
-                                    <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
+                                    <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
                                     <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
                                         <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                                     </a>
