@@ -41,7 +41,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
-        final var storedPassword = userService.decryptPasswordByLogin(user.get().getLogin()).get();
+        final var storedPassword = userService.decryptPassword(user.get());
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
@@ -61,7 +61,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         else {
             user = optionalUser.get();
             if (!skipPasswordCheck) {
-                final var storedPassword = userService.decryptPasswordByLogin(user.getLogin()).get();
+                final var storedPassword = userService.decryptPassword(user);
                 if (!password.equals(storedPassword)) {
                     throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
                 }

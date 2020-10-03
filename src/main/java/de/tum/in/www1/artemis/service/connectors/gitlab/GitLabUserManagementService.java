@@ -73,7 +73,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
             if (shouldSynchronizePassword) {
                 // update the user password in Gitlab with the one stored in the Artemis database
-                userApi.updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
+                userApi.updateUser(gitlabUser, userService.decryptPassword(user));
             }
 
             // Add as member to new groups
@@ -287,7 +287,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
-            return gitlab.getUserApi().createUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get(), false);
+            return gitlab.getUserApi().createUser(gitlabUser, userService.decryptPassword(user), false);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);

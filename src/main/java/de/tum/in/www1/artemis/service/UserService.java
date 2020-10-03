@@ -238,6 +238,7 @@ public class UserService {
             user.setPassword(passwordEncoder().encode(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
+            userRepository.save(user);
             this.clearUserCaches(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             return user;
@@ -585,6 +586,8 @@ public class UserService {
             }
             String encryptedPassword = passwordEncoder().encode(newPassword);
             user.setPassword(encryptedPassword);
+            userRepository.save(user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             this.clearUserCaches(user);
             log.debug("Changed password for User: {}", user);
         });
@@ -602,6 +605,15 @@ public class UserService {
         catch (Exception e) {
             return "";
         }
+    }
+
+    /**
+     * Get decrypted password for given user
+     * @param user the user
+     * @return decrypted password or empty string
+     */
+    public String decryptPassword(User user) {
+        return encryptor().decrypt(user.getPassword());
     }
 
     /**
