@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -77,7 +78,7 @@ public class ProgrammingExerciseGradingService {
         try {
             result = continuousIntegrationService.get().onBuildCompleted((ProgrammingExerciseParticipation) participation, requestBody);
         }
-        catch (Exception ex) {
+        catch (ContinousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
             return Optional.empty();
         }
@@ -304,7 +305,7 @@ public class ProgrammingExerciseGradingService {
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> feedback.isPositive() == Boolean.FALSE
+        if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
                 || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED))))
             result.setHasFeedback(false);
     }
@@ -440,7 +441,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
         return testCase -> result.getFeedbacks().stream()
-                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && feedback.isPositive() == Boolean.TRUE);
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equals(testCase.getTestName()) && Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     /**
