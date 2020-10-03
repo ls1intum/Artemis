@@ -1009,6 +1009,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of questions) {
             // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
+            question.exercise = undefined;
             question.quizQuestionStatistic = undefined;
             question.invalid = false;
             question.id = undefined;
