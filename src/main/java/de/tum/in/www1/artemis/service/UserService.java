@@ -294,8 +294,9 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
+        newUser = userRepository.save(newUser);
+        // we need to save first so that the user can be found in the database in the subsequent method
         createUserInExternalSystems(newUser);
-        userRepository.save(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
