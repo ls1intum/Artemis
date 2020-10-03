@@ -285,14 +285,16 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
         return achievements;
     }
 
+    public void setAchievements(Set<Achievement> achievements) {
+        this.achievements = achievements;
+    }
+
     public void addAchievement(Achievement achievement) {
         this.achievements.add(achievement);
-        achievement.getUsers().add(this);
     }
 
     public void removeAchievement(Achievement achievement) {
         this.achievements.remove(achievement);
-        achievement.getUsers().remove(this);
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

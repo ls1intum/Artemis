@@ -13,17 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Achievement;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
-import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -42,29 +38,26 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     CourseService courseService;
 
     @Autowired
-    ExerciseService exerciseService;
-
-    @Autowired
     UserRepository userRepository;
 
     @Autowired
     AchievementRepository achievementRepository;
 
+    @Autowired
+    CourseRepository courseRepository;
+
+    @Autowired
+    ParticipationRepository participationRepository;
+
     private User student;
 
     private User instructor;
 
-    private Course first_course;
+    private Course firstCourse;
 
-    private Course second_course;
+    private Course secondCourse;
 
-    private Exercise first_exercise;
-
-    private Achievement first_achievement;
-
-    private Achievement second_achievement;
-
-    private Achievement third_achievement;
+    private Exercise firstExercise;
 
     @BeforeEach
     public void initTestCase() {
@@ -72,16 +65,15 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         student = users.get(0);
         instructor = users.get(1);
         instructor.setGroups(new HashSet<>(Arrays.asList("instructor")));
-        first_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        second_course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        first_exercise = first_course.getExercises().stream().findFirst().get();
+        firstCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        firstCourse.setHasAchievements(true);
+        courseRepository.save(firstCourse);
+        secondCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        firstExercise = firstCourse.getExercises().stream().findFirst().get();
 
-        first_achievement = achievementRepository.save(
-                new Achievement("Test Achievement", "Create correct relations", "test-icon", AchievementRank.UNRANKED, AchievementType.PROGRESS, first_course, first_exercise));
-        second_achievement = achievementRepository
-                .save(new Achievement("Test Achievement", "Get 100 percent test coverage", "test-icon", AchievementRank.GOLD, AchievementType.POINT, first_course, null));
-        third_achievement = achievementRepository
-                .save(new Achievement("Test Achievement", "Get PR ready to be merged", "test-icon", AchievementRank.SILVER, AchievementType.TIME, second_course, first_exercise));
+        achievementService.generateForCourse(firstCourse);
+        achievementService.generateForCourse(secondCourse);
+        achievementService.generateForExercise(firstExercise);
     }
 
     @AfterEach
@@ -90,101 +82,67 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    public void testManyToManyRelationToUser() {
-        assertThat(student.getAchievements().size()).as("Number of achievements for user should be 0").isEqualTo(0);
+    @WithMockUser(value = "student1", roles = "ADMIN")
+    public void testDeleteUser() throws Exception {
+        initTest();
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.NOT_FOUND, Set.class);
+        assertThat(achievementsFirstCourse).as("Achievements for user should be null in course " + firstCourse.getId()).isNullOrEmpty();
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.NOT_FOUND, Set.class);
+        assertThat(achievementsSecondCourse).as("Achievements for user should be null in course " + secondCourse.getId()).isNullOrEmpty();
+    }
 
-        student.addAchievement(first_achievement);
-        assertThat(student.getAchievements().size()).as("Number of achievements for user should be 1").isEqualTo(1);
-        assertThat(student.getAchievements().contains(first_achievement)).as("User has correct achievement").isTrue();
-        assertThat(first_achievement.getUsers().size()).as("Number of users for achievement should be 1").isEqualTo(1);
-        assertThat(first_achievement.getUsers().contains(student)).as("Achievement has correct user").isTrue();
+    @Test
+    @WithMockUser(value = "student1", roles = "ADMIN")
+    public void testDeleteCourse() throws Exception {
+        initTest();
+        var courseId = firstCourse.getId();
+        request.delete("/api/courses/" + courseId, HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("Achievements in course " + courseId + " get deleted if course " + courseId + " is deleted").isEqualTo(0);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted").isEqualTo(4);
+    }
 
-        student.removeAchievement(first_achievement);
-        assertThat(student.getAchievements().size()).as("Number of achievements for user should be 0").isEqualTo(0);
-        assertThat(student.getAchievements().contains(first_achievement)).as("User does not have removed achievement").isFalse();
-        assertThat(first_achievement.getUsers().size()).as("Number of users for achievement should be 0").isEqualTo(0);
-        assertThat(first_achievement.getUsers().contains(student)).as("Achievement does not have incorrect user").isFalse();
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExercise() throws Exception {
+        initTest();
+        request.delete("/api/modeling-exercises/" + firstExercise.getId(), HttpStatus.OK);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 4 in course " + firstCourse.getId()).isEqualTo(4);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 4 in course " + secondCourse.getId()).isEqualTo(4);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testDeleteUser() throws Exception {
-        student.addAchievement(first_achievement);
+    public void testRewardAchievement() throws Exception {
+        var participation = database.addParticipationForExercise(firstExercise, student.getLogin());
+        var result = database.addResultToParticipation(participation);
+        Set<Result> results = new HashSet<>();
+        results.add(result);
+        participation.setResults(results);
+        participationRepository.save(participation);
+        achievementService.checkForAchievements(result);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("User got an achievement").isEqualTo(1);
+    }
+
+    private void initTest() throws Exception {
+        var allAchievements = achievementRepository.findAllByCourseId(firstCourse.getId());
+        allAchievements.addAll(achievementRepository.findAllByCourseId(secondCourse.getId()));
+
+        for (Achievement achievement : allAchievements) {
+            student.addAchievement(achievement);
+            instructor.addAchievement(achievement);
+        }
         student = userRepository.save(student);
-
-        var achievements = request.get("/api/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievements.size()).as("Number of achievements for user should be 1").isEqualTo(1);
-
-        userRepository.delete(student);
-        assertThat(achievementService.findAll().contains(first_achievement)).as("Achievement does not get deleted if user does").isTrue();
-    }
-
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testDeleteCourse() throws Exception {
-        student.addAchievement(first_achievement);
-        student = userRepository.save(student);
-
-        var achievements = request.get("/api/courses/" + first_course.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievements.size()).as("Number of achievements for course should be 2").isEqualTo(2);
-
-        request.delete("/api/courses/" + first_course.getId(), HttpStatus.OK);
-        assertThat(achievementService.findAll().contains(first_achievement)).as("Achievement gets deleted if course does").isFalse();
-    }
-
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testDeleteExercise() throws Exception {
-        student.addAchievement(first_achievement);
-        student = userRepository.save(student);
-
-        var achievements = achievementService.findAllByExerciseId(first_exercise.getId());
-        assertThat(achievements.size()).as("Number of achievements for course should be 2").isEqualTo(2);
-
-        exerciseService.delete(first_exercise.getId(), false, false);
-        assertThat(achievementService.findById(first_achievement.getId())).as("Achievement gets deleted if exercise does").isNotPresent();
-        assertThat(achievementService.findById(third_achievement.getId())).as("Achievement gets deleted if exercise does").isNotPresent();
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateAchievement() throws Exception {
-        instructor.addAchievement(first_achievement);
-        userRepository.save(instructor);
-        var achievementToUpdate = achievementService.findById(first_achievement.getId()).get();
-        achievementToUpdate.setDescription("Updated achievement");
-        request.put("/api/achievements", achievementToUpdate, HttpStatus.OK);
-        assertThat(achievementService.findById(first_achievement.getId()).get()).as("Achievement is updated correctly").isEqualTo(achievementToUpdate);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAchievement() throws Exception {
-        instructor.addAchievement(first_achievement);
         instructor = userRepository.save(instructor);
-        first_achievement = achievementRepository.save(first_achievement);
-        request.delete("/api/achievements/" + first_achievement.getId(), HttpStatus.OK);
 
-        assertThat(achievementService.findById(first_achievement.getId())).as("Achievement is deleted").isNotPresent();
-        assertThat(userRepository.findById(instructor.getId()).isPresent()).as("User is not deleted").isTrue();
-        assertThat(request.get("/api/achievements", HttpStatus.OK, Set.class).size()).as("User has no achievements").isEqualTo(0);
-        assertThat(courseService.findOne(first_course.getId())).as("Course is not deleted").isNotNull();
-        var achievements = request.get("/api/courses/" + first_course.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievements.size()).as("Course has only one achievement").isEqualTo(1);
+        var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
+        var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
+        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 4 in course " + secondCourse.getId()).isEqualTo(4);
     }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testBadRequests() throws Exception {
-        var emptyAchievement = new Achievement("", "", "", null, null, null, null);
-        request.put("/api/achievements", emptyAchievement, HttpStatus.BAD_REQUEST);
-        request.delete("/api/achievements/" + 999L, HttpStatus.NOT_FOUND);
-        instructor.setGroups(new HashSet<>());
-        userRepository.save(instructor);
-        emptyAchievement.setId(2L);
-        emptyAchievement.setCourse(first_course);
-        request.put("/api/achievements", emptyAchievement, HttpStatus.FORBIDDEN);
-        request.delete("/api/achievements/" + first_achievement.getId(), HttpStatus.FORBIDDEN);
-    }
-
 }

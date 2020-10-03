@@ -292,10 +292,7 @@ public class ExerciseService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         // delete the Achievements
-        Set<Achievement> achievements = achievementService.findAllByExerciseId(exercise.getId());
-        for (Achievement achievement : achievements) {
-            achievementService.delete(achievement);
-        }
+        achievementService.deleteByExerciseId(exercise.getId());
 
         if (exercise.hasExerciseGroup()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());

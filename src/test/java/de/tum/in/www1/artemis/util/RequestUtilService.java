@@ -239,6 +239,16 @@ public class RequestUtilService {
         return mapper.readValue(stringResponse, responseType);
     }
 
+    public void patch(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
+    }
+
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
@@ -282,6 +292,11 @@ public class RequestUtilService {
         }
 
         return mapper.readValue(res, responseType);
+    }
+
+    public <T> T get(String path, HttpStatus expectedStatus, TypeReference<T> responseType) throws Exception {
+        var stringResponse = get(path, expectedStatus, String.class, new LinkedMultiValueMap<>(), new HttpHeaders());
+        return mapper.readValue(stringResponse, responseType);
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {

@@ -35,8 +35,12 @@ public class TimeBasedAchievementService {
         if (result.getScore() == null || result.getScore() < MIN_SCORE_TO_QUALIFY) {
             return null;
         }
+        var submission = result.getSubmission();
+        if (submission == null) {
+            return null;
+        }
 
-        var submissionDay = result.getSubmission().getSubmissionDate().truncatedTo(DAYS);
+        var submissionDay = submission.getSubmissionDate().truncatedTo(DAYS);
         var exerciseReleaseDay = result.getParticipation().getExercise().getReleaseDate().truncatedTo(DAYS);
 
         if (submissionDay.minusDays(DAYS_GOLD).isEqual(exerciseReleaseDay)) {

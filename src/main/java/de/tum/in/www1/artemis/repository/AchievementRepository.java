@@ -16,14 +16,11 @@ import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 @Repository
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
-    @Query("SELECT a FROM Achievement a WHERE a.course.id = :#{#courseId}")
+    @Query("SELECT a FROM Achievement a LEFT JOIN FETCH a.users WHERE a.course.id = :#{#courseId}")
     Set<Achievement> findAllByCourseId(@Param("courseId") Long courseId);
 
-    @Query("SELECT a FROM Achievement a WHERE a.exercise.id = :#{#exerciseId}")
+    @Query("SELECT a FROM Achievement a LEFT JOIN FETCH a.users WHERE a.exercise.id = :#{#exerciseId}")
     Set<Achievement> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
-
-    @Query("SELECT a FROM Achievement a JOIN a.users u WHERE u.id = :#{#userId}")
-    Set<Achievement> findAllByUserId(@Param("userId") Long userId);
 
     @Query("SELECT a FROM Achievement a JOIN a.users u WHERE u.id = :#{#userId} AND a.course.id = :#{#courseId}")
     Set<Achievement> findAllByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
@@ -33,7 +30,4 @@ public interface AchievementRepository extends JpaRepository<Achievement, Long> 
 
     @Query("SELECT a FROM Achievement a LEFT JOIN FETCH a.users u WHERE a.course.id = :#{#courseId} AND a.exercise.id = :#{#exerciseId} AND a.type = :#{#type}")
     Set<Achievement> findAllForRewardedTypeInExercise(@Param("courseId") Long courseId, @Param("exerciseId") Long exerciseId, @Param("type") AchievementType type);
-
-    void deleteByCourse_Id(Long courseId);
-
 }

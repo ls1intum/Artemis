@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -43,43 +42,38 @@ public class AchievementService {
         this.participationService = participationService;
     }
 
-    public Optional<Achievement> findById(Long achievementId) {
-        return achievementRepository.findById(achievementId);
-    }
-
-    public List<Achievement> findAll() {
-        return achievementRepository.findAll();
-    }
-
-    public Set<Achievement> findAllByCourseId(Long courseId) {
-        return achievementRepository.findAllByCourseId(courseId);
-    }
-
-    public Set<Achievement> findAllByExerciseId(Long exerciseId) {
-        return achievementRepository.findAllByExerciseId(exerciseId);
-    }
-
-    public Set<Achievement> findAllByUserId(Long userId) {
-        return achievementRepository.findAllByUserId(userId);
+    public Set<Achievement> findAllByUserIdAndCourseId(Long userId, Long courseId) {
+        return achievementRepository.findAllByUserIdAndCourseId(userId, courseId);
     }
 
     @Transactional
-    public void deleteAchievementsForCourse(Course course) {
-        achievementRepository.deleteByCourse_Id(course.getId());
+    public void deleteByCourseId(Long courseId) {
+        Set<Achievement> achievements = achievementRepository.findAllByCourseId(courseId);
+        for (Achievement achievement : achievements) {
+            removeFromUsers(achievement);
+        }
+        achievementRepository.deleteAll(achievements);
+    }
+
+    @Transactional
+    public void deleteByExerciseId(Long exerciseId) {
+        Set<Achievement> achievements = achievementRepository.findAllByExerciseId(exerciseId);
+        for (Achievement achievement : achievements) {
+            removeFromUsers(achievement);
+        }
+        achievementRepository.deleteAll(achievements);
     }
 
     /**
-     * Deletes an achievement by also removing it from all users
+     * Removes an achievement from all users
      * @param achievement achievement to be deleted
      */
-    public void delete(Achievement achievement) {
-        var users = userRepository.findAllByAchievementId(achievement.getId());
-        achievement.setUsers(users);
+    public void removeFromUsers(Achievement achievement) {
+        var users = achievement.getUsers();
         for (User user : users) {
             user.removeAchievement(achievement);
-            userRepository.save(user);
         }
-        achievementRepository.delete(achievement);
+        userRepository.saveAll(users);
     }
 
     public void generateForCourse(Course course) {
@@ -91,9 +85,10 @@ public class AchievementService {
         timeBasedAchievementService.generateAchievements(exercise);
     }
 
+    @Transactional
     public void checkForAchievements(Result result) {
         var course = result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-        if (!course.getHasAchievements()) {
+        if (course.getHasAchievements() == null || !course.getHasAchievements()) {
             return;
         }
         var exercise = result.getParticipation().getExercise();

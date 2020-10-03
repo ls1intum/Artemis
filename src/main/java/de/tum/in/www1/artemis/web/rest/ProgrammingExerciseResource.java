@@ -94,6 +94,8 @@ public class ProgrammingExerciseResource {
 
     private final AchievementService achievementService;
 
+    private final StaticCodeAnalysisService staticCodeAnalysisService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -106,7 +108,7 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, AchievementService achievementService) {
+            ExerciseGroupService exerciseGroupService, AchievementService achievementService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +122,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
         this.achievementService = achievementService;
+        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**
@@ -224,6 +227,44 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Validates static code analysis settings
+     * 1. The flag staticCodeAnalysisEnabled must not be null
+     * 2. Static code analysis can only be enabled for supported programming languages
+     * 3. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 4. Static code analysis max penalty must be positive
+     *
+     * @param programmingExercise exercise to validate
+     * @return Optional validation error response
+     */
+    private Optional<ResponseEntity<ProgrammingExercise>> validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
+        // Check if the static code analysis flag was set
+        if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null));
+        }
+
+        // Static code analysis is only supported for Java at the moment
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava"))
+                    .body(null));
+        }
+
+        // Static code analysis max penalty must only be set if static code analysis is enabled
+        if (Boolean.FALSE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
+            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "Max static code analysis penalty must only be set if static code analysis is enabled", "staticCodeAnalysisDisabledButPenaltySet")).body(null));
+        }
+
+        // Static code analysis max penalty must be positive
+        if (programmingExercise.getMaxStaticCodeAnalysisPenalty() != null && programmingExercise.getMaxStaticCodeAnalysisPenalty() < 0) {
+            return Optional.of(ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Max static code analysis penalty must be positive", "staticCodeAnalysisMaxPenaltyNegative")).body(null));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * POST /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to setup
@@ -264,21 +305,9 @@ public class ProgrammingExerciseResource {
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
-        // Check if the static code analysis flag was set
-        if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null);
-        }
-
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
-        }
-
-        // Static code analysis is only supported for Java at the moment
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava")).body(null);
         }
 
         // Check if package name is set
@@ -307,6 +336,12 @@ public class ProgrammingExerciseResource {
             return optionalShortNameValidationError.get();
         }
 
+        // Validate static code analysis settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(programmingExercise);
+        if (optionalStaticCodeAnalysisError.isPresent()) {
+            return optionalStaticCodeAnalysisError.get();
+        }
+
         programmingExercise.generateAndSetProjectKey();
         Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(programmingExercise);
         if (projectExistsError.isPresent()) {
@@ -322,6 +357,10 @@ public class ProgrammingExerciseResource {
                 achievementService.generateForExercise(newProgrammingExercise);
             }
 
+            // Create default static code analysis categories
+            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+                staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
+            }
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
@@ -406,21 +445,15 @@ public class ProgrammingExerciseResource {
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
-        // Check if the static code analysis flag was set
-        if (newExercise.isStaticCodeAnalysisEnabled() == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null);
-        }
-
         // Check if programming language is set
         if (newExercise.getProgrammingLanguage() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
 
-        // Static code analysis is only supported for Java at the moment
-        if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && newExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis can only be enabled for Java", "staticCodeAnalysisOnlyAvailableForJava")).body(null);
+        // Validate static code analysis settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(newExercise);
+        if (optionalStaticCodeAnalysisError.isPresent()) {
+            return optionalStaticCodeAnalysisError.get();
         }
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
@@ -442,7 +475,8 @@ public class ProgrammingExerciseResource {
             return optionalShortNameValidationError.get();
         }
 
-        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        final var optionalOriginalProgrammingExercise = programmingExerciseRepository
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
@@ -484,6 +518,7 @@ public class ProgrammingExerciseResource {
 
         // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);
+        importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
         importedProgrammingExercise.setTemplateParticipation(null);
         importedProgrammingExercise.setSolutionParticipation(null);
         importedProgrammingExercise.setExerciseHints(null);
@@ -511,6 +546,12 @@ public class ProgrammingExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         exerciseService.checkCourseAndExerciseGroupExclusivity(updatedProgrammingExercise, ENTITY_NAME);
+
+        // Validate static code analysis settings
+        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
+        if (optionalStaticCodeAnalysisError.isPresent()) {
+            return optionalStaticCodeAnalysisError.get();
+        }
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
