@@ -72,6 +72,8 @@ public class AtheneService {
 
     private static class Response {
 
+        public String detail;
+
     }
     // endregion
 
@@ -116,7 +118,7 @@ public class AtheneService {
             final Request request = new Request(exercise.getId(), textSubmissions, ARTEMIS_SERVER_URL + ATHENE_RESULT_API_PATH + exercise.getId());
             Response response = connector.invokeWithRetry(API_ENDPOINT, request, authorizationHeaderForSymmetricSecret(API_SECRET), maxRetries);
 
-            log.info("Remote Service responded " + response.toString());
+            log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
         } else {
 
