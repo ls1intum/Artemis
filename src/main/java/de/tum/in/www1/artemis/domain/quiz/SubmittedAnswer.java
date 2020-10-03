@@ -116,7 +116,7 @@ public abstract class SubmittedAnswer implements Serializable {
             question.filterForStudentsDuringQuiz();
         }
         this.setScoreInPoints(null);
-    };
+    }
 
     /**
      * Delete all references to quizQuestion and quizQuestion-elements if the quiz was changed

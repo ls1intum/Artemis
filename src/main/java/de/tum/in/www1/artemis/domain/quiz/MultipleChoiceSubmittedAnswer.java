@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -56,7 +57,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     public boolean isSelected(AnswerOption answerOption) {
         // search for this answer option in the selected answer options
         for (AnswerOption selectedOption : getSelectedOptions()) {
-            if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
+            if (Objects.equals(selectedOption.getId(), answerOption.getId())) {
                 // this answer option is selected => we can stop searching
                 return true;
             }

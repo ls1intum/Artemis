@@ -91,7 +91,7 @@ public class ProgrammingSubmission extends Submission implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), commitHash, buildFailed, buildArtifact);
+        return Objects.hashCode(getId());
     }
 
     @Override

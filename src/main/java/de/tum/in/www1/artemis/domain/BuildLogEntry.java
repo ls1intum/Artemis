@@ -106,6 +106,6 @@ public class BuildLogEntry {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, time, log);
+        return Objects.hashCode(getId());
     }
 }

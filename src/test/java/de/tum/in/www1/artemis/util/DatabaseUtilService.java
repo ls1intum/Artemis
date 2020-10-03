@@ -2029,8 +2029,8 @@ public class DatabaseUtilService {
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
-        System.out.println(sa.toString());
-        System.out.println(sa.hashCode());
+        System.out.println("ShortAnswer: " + sa.toString());
+        System.out.println("ShortAnswer.hashCode: " + sa.hashCode());
         sa.copyQuestionId();
         return sa;
     }
@@ -2075,8 +2075,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         dnd.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(dnd.toString());
-        System.out.println(dnd.hashCode());
+        System.out.println("DnD: " + dnd.toString());
+        System.out.println("DnD.hashCode: " + dnd.hashCode());
         dnd.copyQuestionId();
         return dnd;
     }
@@ -2093,8 +2093,8 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(mc.toString());
-        System.out.println(mc.hashCode());
+        System.out.println("MC: " + mc.toString());
+        System.out.println("MC.hashCode: " + mc.hashCode());
         mc.copyQuestionId();
         return mc;
     }
@@ -2106,7 +2106,7 @@ public class DatabaseUtilService {
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
      */
-    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+    public QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
         QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
         QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);

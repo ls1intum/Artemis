@@ -191,7 +191,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(testName) + Objects.hashCode(getExercise().getId());
+        return Objects.hashCode(getId());
     }
 
     @Override
