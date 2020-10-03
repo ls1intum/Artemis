@@ -159,7 +159,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).isEqualTo(expectedTestCases);
+        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").isEqualTo(expectedTestCases);
         assertThat(optionalResult).isPresent();
         assertThat(optionalResult.get().getScore()).isEqualTo(100L);
     }

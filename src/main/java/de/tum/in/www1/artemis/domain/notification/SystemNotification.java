@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -13,9 +11,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "S")
-public class SystemNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SystemNotification extends Notification {
 
     @Column(name = "expire_date")
     private ZonedDateTime expireDate;
@@ -24,7 +20,6 @@ public class SystemNotification extends Notification implements Serializable {
     @Column(name = "jhi_type")
     private SystemNotificationType type;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public ZonedDateTime getExpireDate() {
         return expireDate;
     }
@@ -49,27 +44,6 @@ public class SystemNotification extends Notification implements Serializable {
 
     public void setType(SystemNotificationType type) {
         this.type = type;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SystemNotification systemNotification = (SystemNotification) o;
-        if (systemNotification.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), systemNotification.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
