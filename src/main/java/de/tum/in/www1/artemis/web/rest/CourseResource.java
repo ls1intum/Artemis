@@ -293,7 +293,7 @@ public class CourseResource {
             achievementService.generateForCourse(result);
         }
         else if (!result.getHasAchievements() && existingCourse.get().getHasAchievements()) {
-            achievementService.deleteAchievementsForCourse(result);
+            achievementService.deleteByCourseId(result.getId());
         }
 
         vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
