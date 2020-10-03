@@ -6,17 +6,16 @@
     <div class="wrapper">
         <div class="header">
             <h1>{{ 'informativeMarketing.title' | translate }}</h1>
+            <h2>{{ 'informativeMarketing.subTitle' | translate }}</h2>
             <svg class="curve" xmlns="http://www.w3.org/2000/svg" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <path d="M0 100 C 20 0 50 0 100 100 Z"></path>
             </svg>
         </div>
         <div class="content">
-            <h3>By Students for students</h3>
-            <p>Artemis now supports online exams. Have a quick look over our main features</p>
             <div class="features-overview">
-                <h2>Feature Overview</h2>
+                <h2>{{ 'informativeMarketing.featureOverview' | translate }}</h2>
                 <div class="mb-4">
-                    <hr data-content="AND" class="hr-text" />
+                    <hr class="hr-text" />
                 </div>
             </div>
             <div class="container">
@@ -33,12 +32,13 @@
                     </div>
                 </div>
             </div>
-            <div class="features-overview">
+            <div style="padding-bottom: 3em; padding-top: 8px" class="features-overview">
                 <div class="mb-4">
-                    <hr data-content="AND" class="hr-text" />
+                    <hr class="hr-text" />
                 </div>
-                <h2>Details</h2>
             </div>
+            <hr class="hr-gradient" />
+            <h2 style="padding-top: 1.5em">{{ 'informativeMarketing.featureDetails' | translate }}</h2>
             <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
                 <h3>{{ feature.title | translate }}</h3>
                 <div class="feature-full-description">

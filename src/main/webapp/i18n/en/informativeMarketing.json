@@ -1,6 +1,9 @@
 {
     "informativeMarketing": {
         "title": "Online Exams in Artemis",
+        "subTitle": "by Students for Students",
+        "featureOverview": "Feature Overview",
+        "featureDetails": "Feature Details",
         "instructor": {
             "feature": {
                 "multipleExerciseTypes": {

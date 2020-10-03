@@ -24,8 +24,21 @@ body {
 .header h1 {
     color: #fff;
     margin: 0;
+    padding-top: 1em;
+    padding-left: 2em;
+    padding-right: 2em;
     font-size: 5em;
-    padding: 2em;
+    text-shadow: 1px 1px 40px #333333;
+    box-sizing: border-box;
+}
+
+.header h2 {
+    color: #fff;
+    margin: 0;
+    font-size: 2.5em;
+    padding-left: 2em;
+    padding-right: 2em;
+    padding-bottom: 3em;
     text-shadow: 1px 1px 40px #333333;
     box-sizing: border-box;
 }
@@ -50,9 +63,13 @@ body {
     text-align: center;
     color: #3e8acc;
 }
-.features-overview h2 {
+.content h2 {
+    margin: 0;
+    padding-left: 20%;
+    padding-right: 20%;
+    text-align: center;
+    color: #3e8acc;
     font-size: 3em;
-    padding-top: 2em;
     padding-bottom: 1em;
     box-sizing: border-box;
 }
@@ -152,6 +169,24 @@ body {
     padding: 0;
     color: #fff;
     font-size: 20px;
+}
+
+hr.hr-gradient {
+    height: 10px;
+    position: relative;
+    width: calc(100% - 300px);
+    background: radial-gradient(ellipse farthest-side at top center, rgba(0, 0, 0, 0.06), transparent);
+}
+
+hr.hr-gradient:before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(left, transparent, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02), transparent);
 }
 
 hr.hr-text {
