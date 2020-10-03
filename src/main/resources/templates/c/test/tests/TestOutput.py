@@ -13,7 +13,7 @@ class TestOutput(AbstractTest):
     executable: str
 
     def __init__(self, makefileLocation: str, rot: int, input: str, requirements: List[str] = list(), name: str = "TestOutput", executable: str = "rotX.out"):
-        super(TestOutput, self).__init__(name, requirements, timeoutSec=15)
+        super(TestOutput, self).__init__(name, requirements, timeoutSec=10)
         self.makefileLocation = makefileLocation
         self.rot = rot
         self.input = input
