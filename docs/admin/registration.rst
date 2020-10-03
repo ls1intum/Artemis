@@ -27,6 +27,11 @@ Example:
             ssl:
                 trust: <host>
 
+jhipster:
+    mail:
+        base-url: https://artemis.ase.in.tum.de
+        from: artemis.in@tum.de
+
 Users can register a new account on the start page based on ``allowed-email-pattern``.
 If no email pattern is defined, any email address can be used.
 Upon registration, users receive an email to activate their account.
