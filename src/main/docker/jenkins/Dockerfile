@@ -25,16 +25,16 @@ FROM jenkins/jenkins:lts
  libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
  xz-utils tk-dev libffi-dev liblzma-dev
 
- # Install Python3.6
- RUN wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz && \
-	 tar xvf Python-3.6.9.tgz \
-	 && cd Python-3.6.9 \
-	 && ./configure --enable-optimizations --enable-shared \
+ # Install Python3.8
+ RUN wget https://www.python.org/ftp/python/3.8.6/Python-3.8.6.tgz && \
+	 tar xvf Python-3.8.6.tgz \
+	 && cd Python-3.8.6 \
+	 && ./configure --enable-shared \
 	 && make -j8 \
 	 && make altinstall
  RUN apt install -y python3 python3-pip
  RUN cd ..
- RUN rm -r -f Python3.6.9/ && rm -f Python-3.6.9.tgz
+ RUN rm -r -f Python3.8.6/ && rm -f Python-3.8.6.tgz
 
  # Install pytest for python exercises
  RUN pip3 install -U pytest
