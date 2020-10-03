@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
@@ -44,17 +42,14 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final UserService userService;
 
-    private final ResultRepository resultRepository;
-
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService, ResultRepository resultRepository) {
+            AuthorizationCheckService authCheckService, UserService userService) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
         this.userService = userService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -117,61 +112,13 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
-    /**
-     * Use with care: Set the weight of all test cases of an exercise to 1.
-     *
-     * @param exerciseId the id of the exercise to reset the test case weights of.
-     * @return the updated set of test cases for the programming exercise.
-     */
-    @PatchMapping(Endpoints.RESET)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<ProgrammingExerciseTestCase>> reset(@PathVariable Long exerciseId) {
-        log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
-        return ResponseEntity.ok(testCases);
-    }
-
-    /**
-     * Use with care: Re-evaluates all latest automatic results for the given programming exercise.
-     *
-     * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
-     * @return the number of results that were updated.
-     */
-    @PutMapping(Endpoints.RE_EVALUATE)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Integer> reEvaluateProgrammingExerciseFromTestCases(@PathVariable Long exerciseId) {
-        log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(exerciseId);
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
-        List<Result> updatedResults = programmingExerciseTestCaseService.updateAllResultsFromTestCases(programmingExercise);
-        resultRepository.saveAll(updatedResults);
-        return ResponseEntity.ok(updatedResults.size());
-    }
-
     public static final class Endpoints {
 
         private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
 
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 
-        public static final String RESET = PROGRAMMING_EXERCISE + "/test-cases/reset";
-
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
-
-        public static final String RE_EVALUATE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
         private Endpoints() {
         }

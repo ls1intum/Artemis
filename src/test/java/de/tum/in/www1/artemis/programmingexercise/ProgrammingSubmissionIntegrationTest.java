@@ -250,7 +250,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         final var participation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId()).get();
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockRetrieveBuildStatus(participation.getBuildPlanId());
 
         request.postWithoutLocation("/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
     }
