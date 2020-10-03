@@ -22,7 +22,10 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            undefined,
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
         );
+        featureTwo.centerTextOne();
         const featureThree = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
@@ -86,6 +89,7 @@ class Feature {
     title: string;
     shortDescription: string;
     descriptionTextOne: string;
+    textOneCentered = false;
     descriptionTextTwo?: string;
     imageOne?: string;
     imageTwo?: string;
@@ -110,5 +114,13 @@ class Feature {
      */
     setId(): string {
         return ':' + Math.random().toString(36).substr(2, 9);
+    }
+
+    /**
+     * Centers the text and first image.
+     * Note: Only has an effect if there is no second text
+     */
+    centerTextOne(): void {
+        this.textOneCentered = true;
     }
 }

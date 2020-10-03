@@ -183,9 +183,26 @@ hr.hr-text::before {
     padding-right: 35px;
 }
 
+.feature-content h3 {
+    margin: 0;
+    text-align: center;
+    color: #3e8acc;
+    font-size: 2em;
+    padding: 1em 20% 0.5em;
+    box-sizing: border-box;
+}
+
 .feature-full-description {
     overflow: auto;
     padding: 35px;
+}
+
+.feature-full-description p {
+    font-size: 16px;
+    line-height: 26px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 .text-wrap-right {
     float: right;
@@ -201,8 +218,9 @@ hr.hr-text::before {
     margin-bottom: 7px;
 }
 
-.text-wrap-left-no-second-text {
-    float: left;
-    margin-right: 15px;
-    margin-bottom: 7px;
+.center {
+    clear: right;
+    display: block;
+    margin: 30px auto;
+    width: 50%;
 }
