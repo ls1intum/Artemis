@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingExerciseTestCaseService', () => {
+describe('ProgrammingExerciseGradingService', () => {
     let websocketService: IWebsocketService;
     let httpService: MockHttpService;
     let exercise1TestCaseSubject: Subject<Result>;
@@ -24,7 +24,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     let unsubscribeSpy: SinonSpy;
     let getStub: SinonStub;
 
-    let testCaseService: ProgrammingExerciseGradingService;
+    let gradingService: ProgrammingExerciseGradingService;
 
     const exercise1 = { id: 1 };
     const exercise2 = { id: 2 };
@@ -46,7 +46,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
         httpService = new MockHttpService();
-        testCaseService = new ProgrammingExerciseGradingService(websocketService as any, httpService as any);
+        gradingService = new ProgrammingExerciseGradingService(websocketService as any, httpService as any);
 
         subscribeSpy = spy(websocketService, 'subscribe');
         unsubscribeSpy = spy(websocketService, 'unsubscribe');
@@ -57,8 +57,8 @@ describe('ProgrammingExerciseTestCaseService', () => {
         exercise2TestCaseSubject = new Subject();
         receiveStub.withArgs(exercise1Topic).returns(exercise1TestCaseSubject);
         receiveStub.withArgs(exercise2Topic).returns(exercise2TestCaseSubject);
-        getStub.withArgs(`${testCaseService.resourceUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));
-        getStub.withArgs(`${testCaseService.resourceUrl}/${exercise2.id}/test-cases`).returns(of(testCases2));
+        getStub.withArgs(`${gradingService.resourceUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));
+        getStub.withArgs(`${gradingService.resourceUrl}/${exercise2.id}/test-cases`).returns(of(testCases2));
     }));
 
     afterEach(() => {
@@ -72,7 +72,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
         let testCasesExercise1;
         let testCasesExercise2;
 
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
@@ -81,7 +81,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
         expect(testCasesExercise1).to.deep.equal(testCases1);
         expect(testCasesExercise2).to.be.undefined;
 
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise2.id)
             .pipe(tap((newTestCases) => (testCasesExercise2 = newTestCases)))
             .subscribe();
@@ -94,12 +94,12 @@ describe('ProgrammingExerciseTestCaseService', () => {
     it('should reuse the same subject when there already is a connection established and not call the REST endpoint', () => {
         let testCasesExercise1;
         // Subscriber 1.
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
@@ -113,12 +113,12 @@ describe('ProgrammingExerciseTestCaseService', () => {
         let testCasesExercise1Subscriber1;
         let testCasesExercise1Subscriber2;
         // Subscriber 1.
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap((newTestCases) => (testCasesExercise1Subscriber1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
-        testCaseService
+        gradingService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap((newTestCases) => (testCasesExercise1Subscriber2 = newTestCases)))
             .subscribe();
@@ -126,7 +126,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
         expect(testCasesExercise1Subscriber1).to.equal(testCases1);
         expect(testCasesExercise1Subscriber2).to.equal(testCases1);
 
-        testCaseService.notifyTestCases(exercise1.id, newTestCasesOracle);
+        gradingService.notifyTestCases(exercise1.id, newTestCasesOracle);
 
         expect(testCasesExercise1Subscriber1).to.equal(newTestCasesOracle);
         expect(testCasesExercise1Subscriber2).to.equal(newTestCasesOracle);
