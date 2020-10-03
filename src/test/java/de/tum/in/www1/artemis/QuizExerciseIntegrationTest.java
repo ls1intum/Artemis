@@ -819,8 +819,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
                 .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        // TODO: sometimes 0.0 is flaky and will be pc30 instead of pc20
-        // TODO: sometimes 4.0 is flaky and will be pc20 instead of pc30
+
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
 
         // set a question invalid and reevaluate
