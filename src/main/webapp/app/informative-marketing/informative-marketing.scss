@@ -158,20 +158,51 @@ hr.hr-text {
     position: relative;
     border: none;
     height: 1px;
-    background: #999;
+    background-color: #3e8acc;
 }
 
 hr.hr-text::before {
-    content: attr(data-feature-short-description);
+    content: attr(data-content);
     display: inline-block;
-    background: #fff;
+    background-color: #fff;
     font-weight: bold;
     font-size: 0.85rem;
-    color: #999;
+    color: #fff;
     border-radius: 30rem;
     padding: 0.2rem 2rem;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+
+.feature-content {
+    margin: 0;
+    box-sizing: border-box;
+    padding-left: 35px;
+    padding-right: 35px;
+}
+
+.feature-full-description {
+    overflow: auto;
+    padding: 35px;
+}
+.text-wrap-right {
+    float: right;
+    margin-top: 5px;
+    margin-left: 15px;
+    margin-bottom: 7px;
+}
+
+.text-wrap-left {
+    clear: right;
+    float: left;
+    margin-right: 15px;
+    margin-bottom: 7px;
+}
+
+.text-wrap-left-no-second-text {
+    float: left;
+    margin-right: 15px;
+    margin-bottom: 7px;
 }

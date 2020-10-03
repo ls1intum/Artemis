@@ -39,12 +39,27 @@
                 </div>
                 <h2>Details</h2>
             </div>
-            <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-full-description">
-                <div class="mb-4">
-                    <hr data-content="AND" class="hr-text" />
+            <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
+                <h3>{{ feature.title | translate }}</h3>
+                <div class="feature-full-description">
+                    <img *ngIf="feature.imageOne" class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" style="max-width: 600px; width: 100%" />
+                    <p>{{ feature.descriptionTextOne | translate }}</p>
+                    <ng-container *ngIf="feature.descriptionTextTwo; else noSecondText">
+                        <img *ngIf="feature.imageTwo" class="text-wrap-left" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 600px; width: 100%" />
+                        <p>{{ feature.descriptionTextTwo | translate }}</p>
+                    </ng-container>
+                    <ng-template #noSecondText>
+                        <img
+                            *ngIf="feature.imageTwo"
+                            class="text-wrap-left-no-second-text"
+                            src=" {{ feature.imageTwo }}"
+                            alt="feature-image-two"
+                            style="max-width: 600px; width: 100%"
+                        />
+                    </ng-template>
                 </div>
-                <div>
-                    <p>{{ feature.longDescription | translate }}</p>
+                <div class="mb-4">
+                    <hr class="hr-text" />
                 </div>
             </div>
         </div>

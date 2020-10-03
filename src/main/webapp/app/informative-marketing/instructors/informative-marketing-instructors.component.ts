@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-informative-marketing',
@@ -9,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class InformativeMarketingInstructorsComponent implements OnInit {
     features: Feature[];
 
-    constructor(private translateService: TranslateService) {}
+    constructor() {}
 
     ngOnInit(): void {
         const featureOne = new Feature(
@@ -29,24 +28,33 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            undefined,
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
         );
         const featureFour = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
         );
         const featureFive = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            undefined,
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
         );
         const featureSix = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
             'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
             'fa fa-code',
+            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
+            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
         );
         const featureSeven = new Feature(
             'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
@@ -77,14 +85,20 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
 class Feature {
     title: string;
     shortDescription: string;
-    longDescription: string;
+    descriptionTextOne: string;
+    descriptionTextTwo?: string;
+    imageOne?: string;
+    imageTwo?: string;
     icon: string;
     id: string;
 
-    constructor(title: string, shortDescription: string, longDescription: string, icon: string) {
+    constructor(title: string, shortDescription: string, descriptionTextOne: string, icon: string, descriptionTextTwo?: string, imageOne?: string, imageTwo?: string) {
         this.title = title;
         this.shortDescription = shortDescription;
-        this.longDescription = longDescription;
+        this.descriptionTextOne = descriptionTextOne;
+        this.descriptionTextTwo = descriptionTextTwo;
+        this.imageOne = imageOne;
+        this.imageTwo = imageTwo;
         this.icon = icon;
         this.id = this.setId();
     }
