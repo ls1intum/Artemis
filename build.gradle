@@ -24,7 +24,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.5.0"
+    id "com.google.cloud.tools.jib" version "2.5.1"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -236,7 +236,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.49.Final"
     implementation "io.projectreactor.netty:reactor-netty:0.9.12.RELEASE"
     implementation "org.springframework:spring-messaging:5.2.9.RELEASE"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.8.RELEASE_1"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.9.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
