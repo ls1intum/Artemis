@@ -64,7 +64,13 @@
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                     <td *ngIf="isInExerciseGroup">{{ 'artemisApp.AssessmentType.' + modelingExercise.assessmentType | translate }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-button class="btn-group flex-btn-group-container" [isInExerciseGroup]="isInExerciseGroup" [exercise]="modelingExercise" [course]="this.course" (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)">
+                        <jhi-exercise-row-button
+                            class="btn-group flex-btn-group-container"
+                            [isInExerciseGroup]="isInExerciseGroup"
+                            [exercise]="modelingExercise"
+                            [course]="this.course"
+                            (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)"
+                        >
                         </jhi-exercise-row-button>
                     </td>
                 </tr>

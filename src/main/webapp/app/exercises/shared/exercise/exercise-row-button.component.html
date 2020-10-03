@@ -1,6 +1,10 @@
 <div class="btn-group flex-btn-group-container">
-    <div [ngClass]="{ 'btn-group-vertical mr-1 mb-1': (exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ),
-     'btn-group flex-btn-group-container': (exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ) }">
+    <div
+        [ngClass]="{
+            'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ,
+            'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ
+        }"
+    >
         <!-- Scores -->
         <button
             *ngIf="exercise.isAtLeastTutor"
@@ -43,8 +47,7 @@
         </button>
     </div>
 
-    <div [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING,
-     'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING }">
+    <div [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING, 'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING }">
         <!-- View -->
         <button
             *ngIf="exercise.isAtLeastTutor && exercise.type != exerciseType.QUIZ"
@@ -78,10 +81,14 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
     </button>
 
-    <div [ngClass]="{ 'btn-group-vertical mr-1 mb-1': (exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ),
-     'btn-group flex-btn-group-container': (exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ) }">
+    <div
+        [ngClass]="{
+            'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ,
+            'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ
+        }"
+    >
         <!-- Reset -->
-<!--        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"-->
+        <!--        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"-->
         <button
             *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.PROGRAMMING"
             jhiDeleteButton
@@ -132,9 +139,9 @@
             [dialogError]="dialogError$"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
             [additionalChecks]="{
-            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-        }"
+                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+            }"
         >
             <fa-icon [icon]="'times'"></fa-icon>
         </button>
