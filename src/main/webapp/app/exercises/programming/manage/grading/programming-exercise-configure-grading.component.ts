@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
-    StaticCodeAnalysisCategoryUpdate
+    StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';

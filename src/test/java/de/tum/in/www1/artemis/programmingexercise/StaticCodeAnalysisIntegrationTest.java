@@ -56,11 +56,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var tempProgrammingEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
         programmingExercise = programmingExerciseRepository.save(tempProgrammingEx);
+        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     private String parameterizeEndpoint(String endpoint, ProgrammingExercise exercise) {
@@ -111,6 +113,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories() throws Exception {
+        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator();
