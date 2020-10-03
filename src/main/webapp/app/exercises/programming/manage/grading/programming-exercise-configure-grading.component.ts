@@ -10,7 +10,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
 
@@ -280,7 +280,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
-        const testCaseUpdates = testCasesToUpdate.map(({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }) => ({ id, weight, bonusMultiplier, bonusPoints, afterDueDate }));
+        const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
         const saveTestCases = this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
