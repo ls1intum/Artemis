@@ -5,14 +5,9 @@ import static java.util.Arrays.asList;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
-import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -38,17 +31,9 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final LtiService ltiService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final ObjectMapper objectMapper;
-
-    private final ProgrammingExerciseTestCaseService testCaseService;
-
-    private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final FeedbackRepository feedbackRepository;
 
@@ -62,19 +47,13 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
-    public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
-            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            RatingRepository ratingRepository) {
+    public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
+            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
-        this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
-        this.testCaseService = testCaseService;
-        this.programmingSubmissionService = programmingSubmissionService;
         this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -135,105 +114,6 @@ public class ResultService {
     public void setAssessor(Result result) {
         User currentUser = userService.getUser();
         result.setAssessor(currentUser);
-    }
-
-    // TODO: We should think about moving this method to a separate ProgrammingResultService as it can be confusing that this functionality is exclusive for programming exercises.
-    /**
-     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
-     * extracted from the feedbacks & the result is updated with the information from the test cases.
-     *
-     * @param participation the participation for which the build was finished
-     * @param requestBody   RequestBody containing the build result and its feedback items
-     * @return result after compilation
-     */
-    public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
-        log.debug("Received new build result (NEW) for participation " + participation.getId());
-
-        if (!(participation instanceof ProgrammingExerciseParticipation))
-            throw new EntityNotFoundException("Participation with id " + participation.getId() + " is not a programming exercise participation!");
-
-        Result result;
-        try {
-            result = continuousIntegrationService.get().onBuildCompletedNew((ProgrammingExerciseParticipation) participation, requestBody);
-        }
-        catch (Exception ex) {
-            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex);
-            return Optional.empty();
-        }
-
-        if (result != null) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-            boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
-            boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (isSolutionParticipation) {
-                extractTestCasesFromResult(programmingExercise, result);
-            }
-            result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            result = resultRepository.save(result);
-            // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
-
-            // If the solution participation was updated, also trigger the template participation build.
-            if (isSolutionParticipation) {
-                // This method will return without triggering the build if the submission is not of type TEST.
-                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), result.getId());
-            }
-        }
-        return Optional.ofNullable(result);
-    }
-
-    /**
-     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
-     * Will use the commitHash of the submission for triggering the template build.
-     *
-     * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
-     *
-     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
-     * @param resultId              Result id.
-     */
-    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, long resultId) {
-        ProgrammingSubmission submission;
-        try {
-            submission = programmingSubmissionService.findByResultId(resultId);
-        }
-        catch (EntityNotFoundException ex) {
-            // This is an unlikely error that would mean that no submission could be created for the result. In this case we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no submission could be found for the provided result id " + resultId);
-            return;
-        }
-        // We only trigger the template build when the test repository was changed.
-        if (!submission.getType().equals(SubmissionType.TEST)) {
-            return;
-        }
-        // We use the last commitHash of the test repository.
-        ObjectId testCommitHash = ObjectId.fromString(submission.getCommitHash());
-        try {
-            programmingSubmissionService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, testCommitHash, SubmissionType.TEST);
-        }
-        catch (EntityNotFoundException ex) {
-            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no template participation could be found for the given exercise");
-        }
-    }
-
-    /**
-     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
-     * through the websocket!
-     *
-     * @param exercise the programming exercise for which the test cases should be extracted from the new result
-     * @param result   from which to extract the test cases.
-     */
-    private void extractTestCasesFromResult(ProgrammingExercise exercise, Result result) {
-        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), exercise);
-        if (haveTestCasesChanged) {
-            // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
-        }
     }
 
     /**

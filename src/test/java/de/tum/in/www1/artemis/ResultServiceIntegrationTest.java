@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FeedbackService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -88,6 +89,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     SubmissionRepository submissionRepository;
+
+    @Autowired
+    ProgrammingExerciseGradingService gradingService;
 
     private Course course;
 
@@ -152,7 +156,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L).bonusMultiplier(1D).bonusPoints(0D));
 
         final var resultNotification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
-        final var optionalResult = resultService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);
@@ -166,7 +170,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
-        final var optionalResult = resultService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
