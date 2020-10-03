@@ -1008,8 +1008,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of questions) {
+            // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
             question.quizQuestionStatistic = undefined;
-            question.exercise = this.quizExercise;
             question.invalid = false;
             question.id = undefined;
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -1131,7 +1131,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         } else {
             this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
@@ -1143,7 +1142,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         }
     }
 
@@ -1154,6 +1152,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
+        this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
