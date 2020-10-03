@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -30,9 +29,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-public class QuizExercise extends Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizExercise extends Exercise {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)

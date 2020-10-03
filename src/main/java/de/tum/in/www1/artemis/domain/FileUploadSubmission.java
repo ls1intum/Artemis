@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -15,9 +13,7 @@ import de.tum.in.www1.artemis.service.FileService;
  */
 @Entity
 @DiscriminatorValue(value = "F")
-public class FileUploadSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class FileUploadSubmission extends Submission {
 
     @Transient
     private transient FileService fileService = new FileService();

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -16,9 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "G")
-public class GroupNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class GroupNotification extends Notification {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")

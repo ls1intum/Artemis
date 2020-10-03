@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.List;
 
 import javax.persistence.*;
@@ -13,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-public class TextExercise extends Exercise implements Serializable {
+public class TextExercise extends Exercise {
 
     @Column(name = "sample_solution")
     @Lob

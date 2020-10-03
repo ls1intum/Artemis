@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -20,9 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

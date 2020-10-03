@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,9 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "QP")
-public class QuizPointStatistic extends QuizStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizPointStatistic extends QuizStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

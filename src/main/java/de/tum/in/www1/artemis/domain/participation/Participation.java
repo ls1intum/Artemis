@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -12,6 +11,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -37,14 +37,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
         @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
         @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Participation implements Serializable, ParticipationInterface {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public abstract class Participation extends DomainObject implements ParticipationInterface {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
@@ -102,15 +95,6 @@ public abstract class Participation implements Serializable, ParticipationInterf
 
     public void setSubmissionCount(Integer submissionCount) {
         this.submissionCount = submissionCount;
-    }
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public InitializationState getInitializationState() {
@@ -243,28 +227,8 @@ public abstract class Participation implements Serializable, ParticipationInterf
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Participation participation = (Participation) o;
-        if (participation.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), participation.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
-        return "Participation{" + "id=" + id + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
+        return "Participation{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
                 + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
     }
 

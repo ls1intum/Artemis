@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 import javax.persistence.DiscriminatorValue;
@@ -17,9 +16,7 @@ import de.tum.in.www1.artemis.domain.User;
  */
 @Entity
 @DiscriminatorValue(value = "U")
-public class SingleUserNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SingleUserNotification extends Notification {
 
     @ManyToOne
     private User recipient;

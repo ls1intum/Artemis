@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -12,9 +10,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
  */
 @Entity
 @DiscriminatorValue(value = "M")
-public class ModelingExercise extends Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ModelingExercise extends Exercise {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "diagram_type")

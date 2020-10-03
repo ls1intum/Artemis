@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -16,9 +14,7 @@ import de.tum.in.www1.artemis.domain.Submission;
  */
 @Entity
 @DiscriminatorValue(value = "M")
-public class ModelingSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ModelingSubmission extends Submission {
 
     @Column(name = "model")
     @Lob

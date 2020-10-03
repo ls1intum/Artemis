@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 
@@ -17,13 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "programming_exercise_test_case")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class ProgrammingExerciseTestCase implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ProgrammingExerciseTestCase extends DomainObject {
 
     @Column(name = "test_name")
     private String testName;
@@ -47,16 +38,8 @@ public class ProgrammingExerciseTestCase implements Serializable {
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private ProgrammingExercise exercise;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ProgrammingExerciseTestCase id(Long id) {
-        this.id = id;
+        setId(id);
         return this;
     }
 
@@ -169,26 +152,6 @@ public class ProgrammingExerciseTestCase implements Serializable {
     }
 
     /**
-     * this methods checks for database equality based on the id
-     * @param o another object
-     * @return whether this and the other object are equal based on the database id
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ProgrammingExerciseTestCase testCase = (ProgrammingExerciseTestCase) o;
-        if (testCase.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), exercise.getId());
-    }
-
-    /**
      * this methods checks for logical equality based on the name and the exercise
      * @param testCase another test case which should be checked for being the same
      * @return whether this and the other test case are the same based on name and exercise
@@ -198,13 +161,8 @@ public class ProgrammingExerciseTestCase implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + id + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
+        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
 }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -12,9 +11,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "S")
-public class SystemNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SystemNotification extends Notification {
 
     @Column(name = "expire_date")
     private ZonedDateTime expireDate;

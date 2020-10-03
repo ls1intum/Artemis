@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,14 +43,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public abstract class Exercise extends DomainObject {
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -186,15 +178,6 @@ public abstract class Exercise implements Serializable {
 
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -764,26 +747,6 @@ public abstract class Exercise implements Serializable {
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Exercise exercise = (Exercise) o;
-        if (exercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), exercise.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

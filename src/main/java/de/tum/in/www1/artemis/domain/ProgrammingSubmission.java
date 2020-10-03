@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-public class ProgrammingSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ProgrammingSubmission extends Submission {
 
     @Column(name = "commit_hash")
     private String commitHash;

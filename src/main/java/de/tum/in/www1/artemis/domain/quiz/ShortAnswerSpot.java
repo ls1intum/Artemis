@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -13,6 +12,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -22,14 +23,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "short_answer_spot")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpot implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class ShortAnswerSpot extends DomainObject {
 
     @Column(name = "spotNr")
     @JsonView(QuizView.Before.class)
@@ -67,15 +61,6 @@ public class ShortAnswerSpot implements Serializable {
 
     public void setTempID(Long tempID) {
         this.tempIDTransient = tempID;
-    }
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Integer getSpotNr() {
@@ -148,16 +133,7 @@ public class ShortAnswerSpot implements Serializable {
         if (shortAnswerSpot.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), shortAnswerSpot.getTempID())) {
             return true;
         }
-        if (shortAnswerSpot.getId() == null || getId() == null) {
-            return false;
-        }
-
-        return Objects.equals(getId(), shortAnswerSpot.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
+        return super.equals(o);
     }
 
     @Override

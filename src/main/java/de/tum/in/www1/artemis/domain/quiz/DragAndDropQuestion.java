@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,9 +24,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropQuestion extends QuizQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragAndDropQuestion extends QuizQuestion {
 
     @Transient
     private transient FileService fileService = new FileService();

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -12,7 +10,7 @@ import javax.persistence.Lob;
  */
 @Entity
 @DiscriminatorValue(value = "F")
-public class FileUploadExercise extends Exercise implements Serializable {
+public class FileUploadExercise extends Exercise {
 
     @Column(name = "sample_solution")
     @Lob

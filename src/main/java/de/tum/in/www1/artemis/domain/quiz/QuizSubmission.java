@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,9 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-public class QuizSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizSubmission extends Submission {
 
     @Column(name = "score_in_points")
     @JsonView(QuizView.After.class)

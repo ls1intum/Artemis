@@ -37,8 +37,6 @@ public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
-    private static final long serialVersionUID = 1L;
-
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
 

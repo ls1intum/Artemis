@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,9 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-public class TextSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class TextSubmission extends Submission {
 
     private static final int MAX_EXCERPT_LENGTH = 100;
 

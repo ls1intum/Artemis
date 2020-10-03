@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -19,14 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class AbstractAuditingEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public abstract class AbstractAuditingEntity extends DomainObject {
 
     @CreatedBy
     @Column(name = "created_by", nullable = false, length = 50, updatable = false)
@@ -47,14 +38,6 @@ public abstract class AbstractAuditingEntity implements Serializable {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate = Instant.now();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCreatedBy() {
         return createdBy;
@@ -86,25 +69,5 @@ public abstract class AbstractAuditingEntity implements Serializable {
 
     public void setLastModifiedDate(Instant lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        AbstractAuditingEntity entity = (AbstractAuditingEntity) o;
-        if (entity.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), entity.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }

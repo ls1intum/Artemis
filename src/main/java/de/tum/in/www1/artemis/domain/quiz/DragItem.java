@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -24,20 +24,13 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @Table(name = "drag_item")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class DragItem implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragItem extends DomainObject {
 
     @Transient
     private transient FileService fileService = new FileService();
 
     @Transient
     private String prevPictureFilePath;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
 
     @Column(name = "picture_file_path")
     @JsonView(QuizView.Before.class)
@@ -76,14 +69,6 @@ public class DragItem implements Serializable {
 
     public void setTempID(Long tempID) {
         this.tempIDTransient = tempID;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getPictureFilePath() {
@@ -201,15 +186,7 @@ public class DragItem implements Serializable {
         if (dragItem.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dragItem.getTempID())) {
             return true;
         }
-        if (dragItem.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragItem.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
+        return super.equals(o);
     }
 
     @Override
