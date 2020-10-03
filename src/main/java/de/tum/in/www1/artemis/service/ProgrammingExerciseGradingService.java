@@ -370,30 +370,32 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
-            double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
-                    .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).mapToDouble(staticCodeAnalysisCategory -> {
-                        List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(
-                                feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(staticCodeAnalysisCategory.getName()))
-                                .collect(Collectors.toList());
-                        double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
-                        if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
-                            penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
-                        }
-                        double perFeedbackPenalty = penaltySum / categoryFeedback.size();
-                        // update credits of feedbacks in category
-                        categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
-                        return penaltySum;
-                    }).sum();
+            if (programmingExercise.isStaticCodeAnalysisEnabled() && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(0) > 0) {
+                double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
+                        .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).mapToDouble(staticCodeAnalysisCategory -> {
+                            List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(feedback -> feedback.getText()
+                                    .substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(staticCodeAnalysisCategory.getName()))
+                                    .collect(Collectors.toList());
+                            double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
+                            if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
+                                penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
+                            }
+                            double perFeedbackPenalty = penaltySum / categoryFeedback.size();
+                            // update credits of feedbacks in category
+                            categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+                            return penaltySum;
+                        }).sum();
 
-            // maxStaticCodeAnalysisPenalty is in percent
-            final var maxExercisePenaltyPoints = (double)programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
-            if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
-                codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
-            }
+                // maxStaticCodeAnalysisPenalty is in percent
+                final var maxExercisePenaltyPoints = (double) programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
+                if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
+                    codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
+                }
 
-            successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
-            if (successfulTestPoints < 0) {
-                successfulTestPoints = 0;
+                successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
+                if (successfulTestPoints < 0) {
+                    successfulTestPoints = 0;
+                }
             }
 
             double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);

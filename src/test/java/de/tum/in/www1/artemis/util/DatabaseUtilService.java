@@ -1287,6 +1287,7 @@ public class DatabaseUtilService {
         programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(enableStaticCodeAnalysis ? 20 : 0);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
