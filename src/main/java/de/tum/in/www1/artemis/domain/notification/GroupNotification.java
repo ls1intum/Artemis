@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -67,22 +66,6 @@ public class GroupNotification extends Notification implements Serializable {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        GroupNotification groupNotification = (GroupNotification) o;
-        if (groupNotification.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), groupNotification.getId());
     }
 
     public String getExerciseCreatedTarget(Exercise exercise) {
@@ -166,11 +149,6 @@ public class GroupNotification extends Notification implements Serializable {
 
     public String getTopic() {
         return "/topic/course/" + getCourse().getId() + "/" + getType();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

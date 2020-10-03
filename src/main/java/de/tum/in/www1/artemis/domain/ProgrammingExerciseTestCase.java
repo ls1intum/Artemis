@@ -179,14 +179,11 @@ public class ProgrammingExerciseTestCase implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ProgrammingExerciseTestCase programmingExerciseTestCase = (ProgrammingExerciseTestCase) o;
-        if (programmingExerciseTestCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(programmingExerciseTestCase.getExercise().getId())) {
-            return true;
-        }
-        if (getId() == null && programmingExerciseTestCase.getId() == null) {
+        ProgrammingExerciseTestCase testCase = (ProgrammingExerciseTestCase) o;
+        if (testCase.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), programmingExerciseTestCase.getId());
+        return Objects.equals(getId(), exercise.getId());
     }
 
     @Override

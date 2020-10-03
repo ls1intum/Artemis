@@ -21,34 +21,31 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ParticipationService participationService;
-
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.participationService = participationService;
     }
 
     /**
      * Returns all test cases for a programming exercise.
      *
-     * @param id of a programming exercise.
+     * @param exerciseId of a programming exercise.
      * @return test cases of a programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseId(id);
+    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId) {
+        return this.testCaseRepository.findByExerciseId(exerciseId);
     }
 
     /**
      * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
      *
-     * @param id of a programming exercise.
+     * @param exerciseId of a programming exercise.
      * @return active test cases of a programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long exerciseId) {
+        return this.testCaseRepository.findByExerciseIdAndActive(exerciseId, true);
     }
 
     /**

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -25,8 +24,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     @Column(name = "file_path")
     private String filePath;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     /**
      * Deletes solution file for this submission
@@ -66,27 +63,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) o;
-        if (fileUploadSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), fileUploadSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

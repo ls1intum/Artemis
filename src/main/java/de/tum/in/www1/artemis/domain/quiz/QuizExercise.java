@@ -549,21 +549,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return null;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizExercise quizExercise = (QuizExercise) o;
-        if (quizExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizExercise.getId());
-    }
-
     /**
      * correct the associated quizPointStatistic
      * 1. add new PointCounters for new Scores
@@ -692,11 +677,6 @@ public class QuizExercise extends Exercise implements Serializable {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

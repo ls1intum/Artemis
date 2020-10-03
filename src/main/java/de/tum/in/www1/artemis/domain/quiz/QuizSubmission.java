@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -117,28 +116,7 @@ public class QuizSubmission extends Submission implements Serializable {
             }
         }
         // set total score
-
         setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizSubmission quizSubmission = (QuizSubmission) o;
-        if (quizSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

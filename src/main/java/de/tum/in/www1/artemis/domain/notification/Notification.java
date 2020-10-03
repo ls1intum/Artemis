@@ -64,7 +64,6 @@ public abstract class Notification implements Serializable {
     @ManyToOne
     private User author;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -163,7 +162,6 @@ public abstract class Notification implements Serializable {
     public void setAuthor(User user) {
         this.author = user;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
