@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -16,12 +17,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
-import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -43,6 +43,21 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
+    ProgrammingExerciseGradingService gradingService;
+
+    @Autowired
+    ProgrammingExerciseTestCaseService testCaseService;
+
+    @Autowired
+    ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
@@ -51,7 +66,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(2, 1, 1);
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         var tempProgrammingEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
@@ -113,7 +128,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories() throws Exception {
-        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
+        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
+                .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         // Change the first category
@@ -213,4 +229,102 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(categories).isEmpty();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldCalculateScoreWithStaticCodeAnalysisPenalties() throws Exception {
+
+        database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
+
+        // activate test cases
+        var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        testCases.get(0).active(true).afterDueDate(false);
+        testCases.get(1).active(true).afterDueDate(false);
+        testCases.get(2).active(true).afterDueDate(false);
+        testCaseRepository.saveAll(testCases);
+
+        // update categories
+        var categories = new ArrayList<>(staticCodeAnalysisService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        categories.get(0).setName("Bad Practice");
+        categories.get(0).setState(CategoryState.GRADED);
+        categories.get(0).setPenalty(3D);
+        categories.get(1).setName("Code Style");
+        categories.get(1).setState(CategoryState.GRADED);
+        categories.get(1).setPenalty(5D);
+        categories.get(2).setName("Miscellaneous");
+        categories.get(2).setState(CategoryState.INACTIVE);
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
+
+        // create results
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        {
+            // score 50 %
+            var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
+            participation1.setResults(Set.of(result1));
+            updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
+        }
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        {
+            // score 75 %
+            var result2 = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100L);
+            participation2.setResults(Set.of(result2));
+            updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
+        }
+
+        // check results
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 4L, "1 of 3 passed", true, 4, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 46L, "2 of 3 passed", true, 6, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+    }
+
+    private void testParticipationResult(Result result, long score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
+        assertThat(result.getScore()).isEqualTo(score);
+        assertThat(result.getResultString()).isEqualTo(resultString);
+        assertThat(result.getHasFeedback()).isEqualTo(hasFeedback);
+        assertThat(result.getFeedbacks()).hasSize(feedbackSize);
+        assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
+    }
+
+    private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2) {
+        result.addFeedback(new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC));
+
+        for (int i = 0; i < issuesCategory1; i++) {
+            result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS")
+                    .detailText("{\"category\": \"BAD_PRACTICE\"}").type(FeedbackType.AUTOMATIC));
+        }
+        for (int i = 0; i < issuesCategory2; i++) {
+            result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"STYLE\"}")
+                    .type(FeedbackType.AUTOMATIC));
+        }
+
+        result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
+                .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC));
+
+        result.rated(true) //
+                .hasFeedback(true) //
+                .successful(test1Passes && test2Passes && test3Passes) //
+                .completionDate(ZonedDateTime.now()) //
+                .assessmentType(AssessmentType.AUTOMATIC);
+
+        gradingService.updateResult(result, programmingExerciseSCAEnabled, true);
+
+        return resultRepository.save(result);
+    }
+
 }
