@@ -1047,7 +1047,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise").isEqualTo(testsInDB);
+        assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));

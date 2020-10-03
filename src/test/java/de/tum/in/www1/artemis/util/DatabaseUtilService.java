@@ -1458,9 +1458,10 @@ public class DatabaseUtilService {
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
