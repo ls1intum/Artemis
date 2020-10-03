@@ -790,6 +790,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
 
+        // check that the statistic is correct before any re-evaluate
+        assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
+
         // reevaluate without changing anything and check if statistics are still correct (i.e. unchanged)
         QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
