@@ -95,6 +95,7 @@ body {
     overflow: hidden;
     border-radius: 10px;
 }
+
 .container .box .icon {
     position: absolute;
     top: 0;
@@ -105,6 +106,7 @@ body {
     transition: 0.5s;
     z-index: 1;
 }
+
 .container .box:hover .icon {
     top: 20px;
     left: calc(50% - 40px);
@@ -116,6 +118,7 @@ body {
 
 .container .box .icon .title {
     position: absolute;
+    margin-left: 20px;
     display: inline-block;
     top: calc(50% + 10px);
     padding: 20px;
@@ -146,6 +149,7 @@ body {
 .container .box .feature-short-description {
     position: absolute;
     top: 100%;
+    text-align: center;
     height: calc(100% - 120px);
     width: calc(100% - 40px);
     box-sizing: border-box;
@@ -156,6 +160,7 @@ body {
 .container .box:hover .feature-short-description {
     top: 100px;
     opacity: 1;
+    text-align: center;
 }
 .container .box .feature-short-description h3 {
     margin: 0;

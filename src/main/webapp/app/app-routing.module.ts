@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { InformativeMarketingInstructorsComponent } from 'app/informative-marketing/instructors/informative-marketing-instructors.component';
+import { InformativeMarketingStudentsComponent } from 'app/informative-marketing/students/informative-marketing-students.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -65,6 +66,16 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'informative-marketing/instructors',
                     component: InformativeMarketingInstructorsComponent,
+                    data: {
+                        pageTitle: 'informativeMarketing.instructor.pageTitle',
+                    },
+                },
+                {
+                    path: 'informative-marketing/students',
+                    component: InformativeMarketingStudentsComponent,
+                    data: {
+                        pageTitle: 'informativeMarketing.students.pageTitle',
+                    },
                 },
             ],
             { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },

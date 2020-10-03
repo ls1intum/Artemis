@@ -101,7 +101,7 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
     }
 }
 
-class Feature {
+export class Feature {
     title: string;
     shortDescription: string;
     descriptionTextOne: string;
