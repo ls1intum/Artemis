@@ -102,6 +102,9 @@ public class Course extends DomainObject {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
+    @Column(name = "has_achievements", columnDefinition = "boolean default false")
+    private Boolean hasAchievements;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -466,6 +469,14 @@ public class Course extends DomainObject {
         if (exam.getCourse() == this) {
             exam.setCourse(null);
         }
+    }
+
+    public Boolean getHasAchievements() {
+        return hasAchievements;
+    }
+
+    public void setHasAchievements(Boolean hasAchievements) {
+        this.hasAchievements = hasAchievements;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

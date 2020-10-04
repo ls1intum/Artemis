@@ -12,7 +12,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
+import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 
 @Entity
 @Table(name = "achievement")
@@ -35,8 +37,12 @@ public class Achievement implements Serializable {
     private String icon;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "rank")
+    @Column(name = "`rank`")
     private AchievementRank rank;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`type`")
+    private AchievementType type;
 
     @ManyToOne
     private Course course;
@@ -48,6 +54,19 @@ public class Achievement implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "achievements" })
     private Set<User> users = new HashSet<>();
+
+    public Achievement() {
+    }
+
+    public Achievement(String title, String description, String icon, AchievementRank rank, AchievementType type, Course course, Exercise exercise) {
+        this.title = title;
+        this.description = description;
+        this.icon = icon;
+        this.rank = rank;
+        this.type = type;
+        this.course = course;
+        this.exercise = exercise;
+    }
 
     public Long getId() {
         return id;
@@ -89,6 +108,14 @@ public class Achievement implements Serializable {
         this.rank = rank;
     }
 
+    public AchievementType getType() {
+        return type;
+    }
+
+    public void setType(AchievementType type) {
+        this.type = type;
+    }
+
     public Set<User> getUsers() {
         return users;
     }
@@ -115,8 +142,8 @@ public class Achievement implements Serializable {
 
     @Override
     public String toString() {
-        return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank=" + getRank()
-                + "}";
+        return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank='"
+                + getRank() + "'" + ", type='" + getType() + "'" + "}";
     }
 
     @Override
@@ -128,12 +155,12 @@ public class Achievement implements Serializable {
             return false;
         }
         Achievement that = (Achievement) o;
-        return id.equals(that.id) && title.equals(that.title) && description.equals(that.description) && icon.equals(that.icon) && rank.equals(that.rank)
+        return id.equals(that.id) && title.equals(that.title) && description.equals(that.description) && icon.equals(that.icon) && rank.equals(that.rank) && type.equals(that.type)
                 && course.equals(that.course);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, description, icon, rank, course, exercise);
+        return Objects.hash(id, title, description, icon, rank, type, course, exercise);
     }
 }

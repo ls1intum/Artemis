@@ -92,12 +92,14 @@ public class TextExerciseResource {
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService;
 
+    private final AchievementService achievementService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, AchievementService achievementService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -116,6 +118,7 @@ public class TextExerciseResource {
         this.exerciseGroupService = exerciseGroupService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -167,6 +170,12 @@ public class TextExerciseResource {
         if (textExercise.hasCourse()) {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
+
+        // Generate achievements if enabled in course and exercise not part of exam
+        if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
+            achievementService.generateForExercise(result);
+        }
+
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }

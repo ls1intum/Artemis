@@ -75,10 +75,13 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
+    private final AchievementService achievementService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService) {
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            AchievementService achievementService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -91,6 +94,7 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.achievementService = achievementService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -116,6 +120,12 @@ public class ModelingExerciseResource {
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        // Generate achievements if enabled in course and exercise not part of exam
+        if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
+            achievementService.generateForExercise(result);
+        }
+
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

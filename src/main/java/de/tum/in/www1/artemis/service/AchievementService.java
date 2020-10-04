@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+
+import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
@@ -10,78 +10,108 @@ import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class AchievementService {
 
+    private final PointBasedAchievementService pointBasedAchievementService;
+
+    private final TimeBasedAchievementService timeBasedAchievementService;
+
+    private final ProgressBasedAchievementService progressBasedAchievementService;
+
     private final AchievementRepository achievementRepository;
 
     private final UserRepository userRepository;
 
-    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository) {
+    public AchievementService(AchievementRepository achievementRepository, UserRepository userRepository, PointBasedAchievementService pointBasedAchievementService,
+            TimeBasedAchievementService timeBasedAchievementService, ProgressBasedAchievementService progressBasedAchievementService) {
         this.achievementRepository = achievementRepository;
+        this.pointBasedAchievementService = pointBasedAchievementService;
+        this.timeBasedAchievementService = timeBasedAchievementService;
+        this.progressBasedAchievementService = progressBasedAchievementService;
         this.userRepository = userRepository;
     }
 
-    public Optional<Achievement> findById(Long achievementId) {
-        return achievementRepository.findById(achievementId);
-    }
-
-    public List<Achievement> findAll() {
-        return achievementRepository.findAll();
-    }
-
-    public Set<Achievement> findAllByCourseId(Long courseId) {
-        return achievementRepository.findAllByCourseId(courseId);
-    }
-
-    public Set<Achievement> findAllByExerciseId(Long exerciseId) {
-        return achievementRepository.findAllByExerciseId(exerciseId);
-    }
-
-    public Set<Achievement> findAllByUserId(Long userId) {
-        return achievementRepository.findAllByUserId(userId);
-    }
-
-    public Achievement save(Achievement achievement) {
-        return achievementRepository.save(achievement);
-    }
-
     /**
-     * Creates an achievement and persist it
-     * @param title title of the achievement
-     * @param description description of the achievement
-     * @param icon the font awesome icon string identifier
-     * @param rank rank of the achievement
-     * @param course course which the achievement belongs to
-     * @param exercise which the achievement belongs to
-     * @return the created and persisted achievement
+     * Finds all achievements for a user in a given course and returns them as a set
+     * @param userId
+     * @param courseId
      */
-    public Achievement create(String title, String description, String icon, AchievementRank rank, Course course, Exercise exercise) {
-        Achievement achievement = new Achievement();
-        achievement.setTitle(title);
-        achievement.setDescription(description);
-        achievement.setIcon(icon);
-        achievement.setRank(rank);
-        achievement.setCourse(course);
-        achievement.setExercise(exercise);
-        return achievementRepository.save(achievement);
+    public Set<Achievement> findAllByUserIdAndCourseId(Long userId, Long courseId) {
+        return achievementRepository.findAllByUserIdAndCourseId(userId, courseId);
     }
 
     /**
-     * Deletes an achievement by also removing it from all users
+     * Deletes all achievements that belong to the course with the given courseId
+     * Used when a course is deleted or when achievements are disabled again for a course
+     * @param courseId
+     */
+    @Transactional
+    public void deleteByCourseId(Long courseId) {
+        Set<Achievement> achievements = achievementRepository.findAllByCourseId(courseId);
+        for (Achievement achievement : achievements) {
+            removeFromUsers(achievement);
+        }
+        achievementRepository.deleteAll(achievements);
+    }
+
+    /**
+     * Deletes all achievements that belong to the exercise with the given exerciseId
+     * Used when an exercise is deleted
+     * @param exerciseId
+     */
+    @Transactional
+    public void deleteByExerciseId(Long exerciseId) {
+        Set<Achievement> achievements = achievementRepository.findAllByExerciseId(exerciseId);
+        for (Achievement achievement : achievements) {
+            removeFromUsers(achievement);
+        }
+        achievementRepository.deleteAll(achievements);
+    }
+
+    /**
+     * Removes an achievement from all users
      * @param achievement achievement to be deleted
      */
-    public void delete(Achievement achievement) {
-        var users = userRepository.findAllByAchievementId(achievement.getId());
-        achievement.setUsers(users);
+    public void removeFromUsers(Achievement achievement) {
+        var users = achievement.getUsers();
         for (User user : users) {
             user.removeAchievement(achievement);
-            userRepository.save(user);
         }
-        achievementRepository.delete(achievement);
+        userRepository.saveAll(users);
+    }
+
+    /**
+     * Generates achievements for a course
+     * Used when course is updated or created and achievements are enabled for course
+     * @param course
+     */
+    public void generateForCourse(Course course) {
+        progressBasedAchievementService.generateAchievements(course);
+    }
+
+    /**
+     * Generates achievements for an exercise
+     * Used when exercise is created and achievements are enabled for corresponding course
+     * @param exercise
+     */
+    public void generateForExercise(Exercise exercise) {
+        pointBasedAchievementService.generateAchievements(exercise);
+        timeBasedAchievementService.generateAchievements(exercise);
+    }
+
+    /**
+     * Prepares the given set of achievements to be sent to the client by removing exercise, course and users
+     * @param achievements
+     */
+    public void prepareForClient(Set<Achievement> achievements) {
+        for (Achievement achievement : achievements) {
+            achievement.setExercise(null);
+            achievement.setCourse(null);
+            achievement.setUsers(null);
+        }
     }
 }

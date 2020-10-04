@@ -92,6 +92,8 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final AchievementService achievementService;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     /**
@@ -106,7 +108,7 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            ExerciseGroupService exerciseGroupService, AchievementService achievementService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -119,6 +121,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
+        this.achievementService = achievementService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -348,6 +351,12 @@ public class ProgrammingExerciseResource {
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
+
+            // Generate achievements if enabled in course and exercise not part of exam
+            if (course.getHasAchievements() && (newProgrammingExercise.getExerciseGroup() == null || newProgrammingExercise.getExerciseGroup().getExam() == null)) {
+                achievementService.generateForExercise(newProgrammingExercise);
+            }
+
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);

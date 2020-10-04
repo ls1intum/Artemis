@@ -94,6 +94,8 @@ public class CourseResource {
 
     private final TutorDashboardService tutorDashboardService;
 
+    private final AchievementService achievementService;
+
     private final AuditEventRepository auditEventRepository;
 
     private final Optional<VcsUserManagementService> vcsUserManagementService;
@@ -105,7 +107,7 @@ public class CourseResource {
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
-            TutorDashboardService tutorDashboardService) {
+            TutorDashboardService tutorDashboardService, AchievementService achievementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -125,6 +127,7 @@ public class CourseResource {
         this.auditEventRepository = auditEventRepository;
         this.env = env;
         this.tutorDashboardService = tutorDashboardService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -199,6 +202,12 @@ public class CourseResource {
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
         Course result = courseService.save(course);
+
+        // Add achievements if enabled
+        if (result.getHasAchievements()) {
+            achievementService.generateForCourse(result);
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -278,6 +287,15 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
         Course result = courseService.save(updatedCourse);
+
+        // Add or remove achievements
+        if (result.getHasAchievements() && !existingCourse.get().getHasAchievements()) {
+            achievementService.generateForCourse(result);
+        }
+        else if (!result.getHasAchievements() && existingCourse.get().getHasAchievements()) {
+            achievementService.deleteByCourseId(result.getId());
+        }
+
         vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }

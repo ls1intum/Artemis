@@ -9,6 +9,7 @@
             <column name="icon" type="VARCHAR(255)"/>
             <column name="rank" type="VARCHAR(255)"/>
             <column name="title" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(255)"/>
             <column name="course_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
         </createTable>
@@ -20,6 +21,9 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
+        <addColumn tableName="course">
+            <column defaultValueBoolean="false" name="has_achievements" type="boolean"/>
+        </addColumn>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="achievement" constraintName="FKqdk7gj5csvsa1dq48aihd4lk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>

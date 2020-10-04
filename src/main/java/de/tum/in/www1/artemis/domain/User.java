@@ -275,12 +275,10 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void addAchievement(Achievement achievement) {
         this.achievements.add(achievement);
-        achievement.getUsers().add(this);
     }
 
     public void removeAchievement(Achievement achievement) {
         this.achievements.remove(achievement);
-        achievement.getUsers().remove(this);
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

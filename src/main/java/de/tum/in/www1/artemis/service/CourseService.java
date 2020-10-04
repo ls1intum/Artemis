@@ -249,11 +249,8 @@ public class CourseService {
             examService.deleteById(exam.getId());
         }
 
-        // delete the Achievements
-        Set<Achievement> achievements = achievementService.findAllByCourseId(course.getId());
-        for (Achievement achievement : achievements) {
-            achievementService.delete(achievement);
-        }
+        // delete the achievements
+        achievementService.deleteByCourseId(course.getId());
 
         courseRepository.deleteById(course.getId());
     }
