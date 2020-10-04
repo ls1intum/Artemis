@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -18,11 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "grading_instruction")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class GradingInstruction implements Serializable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class GradingInstruction extends DomainObject {
 
     // the score students get if this grading instruction is applicable
     @Column(name = "credits")
@@ -52,15 +46,6 @@ public class GradingInstruction implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public double getCredits() {
         return credits;
@@ -162,28 +147,6 @@ public class GradingInstruction implements Serializable {
 
     public void setFeedbacks(Set<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
-    }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        GradingInstruction gradingInstruction = (GradingInstruction) o;
-        if (gradingInstruction.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), gradingInstruction.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

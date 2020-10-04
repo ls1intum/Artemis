@@ -1,16 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -28,13 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 @Table(name = "static_code_analysis_category")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StaticCodeAnalysisCategory implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class StaticCodeAnalysisCategory extends DomainObject {
 
     @Column(name = "name")
     private String name;
@@ -52,14 +40,6 @@ public class StaticCodeAnalysisCategory implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("staticCodeAnalysisCategories")
     private ProgrammingExercise exercise;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;
@@ -102,24 +82,7 @@ public class StaticCodeAnalysisCategory implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        StaticCodeAnalysisCategory that = (StaticCodeAnalysisCategory) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
     public String toString() {
-        return "StaticCodeAnalysisCategory{" + "id=" + id + ", name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';
+        return "StaticCodeAnalysisCategory{" + "id=" + getId() + ", name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';
     }
 }

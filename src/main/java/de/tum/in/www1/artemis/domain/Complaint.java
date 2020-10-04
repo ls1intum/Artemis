@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.persistence.*;
@@ -24,13 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 @Table(name = "complaint")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Complaint implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Complaint extends DomainObject {
 
     @Column(name = "complaint_text")
     @Size(max = 2000)
@@ -59,15 +51,6 @@ public class Complaint implements Serializable {
 
     @ManyToOne
     private Team team;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getComplaintText() {
         return complaintText;
@@ -192,26 +175,6 @@ public class Complaint implements Serializable {
      */
     public void filterSensitiveInformation() {
         setParticipant(null);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Complaint complaint = (Complaint) o;
-        if (complaint.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), complaint.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

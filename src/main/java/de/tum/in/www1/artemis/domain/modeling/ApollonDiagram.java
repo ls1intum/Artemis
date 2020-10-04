@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
 /**
@@ -18,13 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 @Table(name = "apollon_diagram")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ApollonDiagram implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ApollonDiagram extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -39,15 +32,6 @@ public class ApollonDiagram implements Serializable {
 
     @Column(name = "course_id")
     private Long courseId;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -95,26 +79,6 @@ public class ApollonDiagram implements Serializable {
 
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ApollonDiagram apollonDiagram = (ApollonDiagram) o;
-        if (apollonDiagram.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), apollonDiagram.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

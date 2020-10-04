@@ -153,7 +153,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
@@ -196,7 +196,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
