@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -22,13 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "student_question")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StudentQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class StudentQuestion extends DomainObject {
 
     @Size(max = 1000)
     @Column(name = "question_text")
@@ -57,15 +49,6 @@ public class StudentQuestion implements Serializable {
     @ManyToOne
     @JsonIgnoreProperties("studentQuestions")
     private Lecture lecture;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getQuestionText() {
         return questionText;
@@ -196,26 +179,6 @@ public class StudentQuestion implements Serializable {
             return getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        StudentQuestion studentQuestion = (StudentQuestion) o;
-        if (studentQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), studentQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

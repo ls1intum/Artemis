@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -15,9 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-public class TextSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class TextSubmission extends Submission {
 
     private static final int MAX_EXCERPT_LENGTH = 100;
 
@@ -28,8 +24,6 @@ public class TextSubmission extends Submission implements Serializable {
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("submission")
     private List<TextBlock> blocks = new ArrayList<>();
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public TextSubmission() {
     }
@@ -92,30 +86,9 @@ public class TextSubmission extends Submission implements Serializable {
     public void setBlocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public boolean isEmpty() {
         return text == null || text.isEmpty();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        TextSubmission textSubmission = (TextSubmission) o;
-        if (textSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), textSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
