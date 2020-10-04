@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
@@ -10,10 +10,14 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { BaseChartDirective } from 'ng2-charts';
 
+/**
+ * this interface is adapted from chart.js
+ */
 export interface DataSet {
-    data: Array<number>;
-    backgroundColor: Array<any>;
+    data: number[];
+    backgroundColor: string[];
 }
 
 export interface ChartElement {
@@ -76,8 +80,8 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
     return {
         duration: 500,
         onComplete: (chartElement: ChartElement) => {
-            const chartInstance = chartElement.chart,
-                ctx = chartInstance.ctx!;
+            const chartInstance = chartElement.chart;
+            const ctx = chartInstance.ctx!;
 
             ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
             ctx.textAlign = 'center';
@@ -108,13 +112,14 @@ export interface DataSetProvider {
     loadDataInDiagram(): void;
 }
 
-export function calculateTickMax(dataSetProvider: DataSetProvider) {
+export function calculateHeightOfChart(dataSetProvider: DataSetProvider) {
     const data = dataSetProvider.getDataSets().map((dataset) => {
         return dataset.data;
     });
     const flattened = ([] as number[]).concat(...data);
     const max = Math.max(...flattened);
-    return Math.ceil((max + 1) / 10) * 10 + 20;
+    // we provide 300 as buffer at the top to display labels
+    return Math.ceil((max + 1) / 10) * 10 + 400;
 }
 
 @Component({
@@ -122,6 +127,8 @@ export function calculateTickMax(dataSetProvider: DataSetProvider) {
     templateUrl: './quiz-statistic.component.html',
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+
     quizExercise: QuizExercise;
     private sub: Subscription;
 
@@ -185,12 +192,10 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe((xLabel) => {
-                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            });
-            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((yLabel) => {
-                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
-            });
+            const xLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
+            const yLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+            this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
+            this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
         });
     }
 
@@ -283,9 +288,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.colors = this.backgroundColor;
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.average').subscribe((lastLabel) => {
-            this.label.push(lastLabel);
-        });
+        const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
+        this.label.push(lastLabel);
 
         // if this.rated == true  -> load the rated data
         if (this.rated) {
@@ -296,14 +300,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.participants = this.quizExercise.quizPointStatistic!.participantsUnrated!;
             this.data = this.unratedData;
         }
-        this.datasets = [
-            {
-                data: this.data,
-                backgroundColor: this.colors,
-            },
-        ];
 
-        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
+        this.updateChart();
     }
 
     /**
@@ -323,12 +321,19 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.participants = this.quizExercise.quizPointStatistic!.participantsRated!;
             this.rated = true;
         }
-        this.datasets = [
-            {
-                data: this.data,
-                backgroundColor: this.colors,
-            },
-        ];
-        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
+
+        this.updateChart();
+    }
+
+    /**
+     * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
+     */
+    updateChart() {
+        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+
+        if (this.chart) {
+            this.chart.options.scales!.yAxes![0]!.ticks!.max = calculateHeightOfChart(this);
+            this.chart.update();
+        }
     }
 }

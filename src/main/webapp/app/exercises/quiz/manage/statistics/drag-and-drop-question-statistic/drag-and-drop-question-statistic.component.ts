@@ -11,7 +11,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -65,9 +65,9 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
 
         // set label and background color based on the dropLocations
         this.question.dropLocations!.forEach((dropLocation, i) => {
-            this.labels.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColors.push(this.getBackgroundColor('#428bca'));
-            this.backgroundSolutionColors.push(this.getBackgroundColor('#5cb85c'));
+            this.labels.push(this.getLetter(i) + '.');
+            this.backgroundColors.push(blueColor);
+            this.backgroundSolutionColors.push(greenColor);
         });
 
         this.addLastBarLayout(this.question.dropLocations!.length);
@@ -88,15 +88,6 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
             this.addData(dropLocationCounter.ratedCounter!, dropLocationCounter.unRatedCounter!);
         });
         this.updateData();
-    }
-
-    /**
-     * converts a number in a letter (0 -> A, 1 -> B, ...)
-     *
-     * @param index the given number
-     */
-    getLetter(index: number) {
-        return String.fromCharCode(65 + index);
     }
 
     /**

@@ -10,7 +10,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { blueColor, greenColor, QuestionStatisticComponent, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
@@ -66,8 +66,8 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
 
         // set label and background-Color based on the AnswerOptions
         answerOptions.forEach((answerOption, i) => {
-            this.labels.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColors.push(this.getBackgroundColor('#428bca'));
+            this.labels.push(this.getLetter(i) + '.');
+            this.backgroundColors.push(blueColor);
         });
         this.addLastBarLayout(this.question.answerOptions!.length);
         this.loadInvalidLayout(this.question.answerOptions!);
@@ -79,29 +79,23 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.questionStatistic.correct').subscribe((correctLabel) => {
-            this.question.answerOptions!.forEach((answerOption, i) => {
-                if (answerOption.isCorrect) {
-                    // check if the answer is valid and if true: change solution-label and -color
-                    if (!answerOption.invalid) {
-                        this.backgroundSolutionColors[i] = this.getBackgroundColor('#5cb85c');
-                        this.solutionLabels[i] = String.fromCharCode(65 + i) + '. (' + correctLabel + ')';
-                    }
+        const correctLabel = this.translateService.instant('showStatistic.questionStatistic.correct');
+        const incorrectLabel = this.translateService.instant('showStatistic.questionStatistic.incorrect');
+        this.question.answerOptions!.forEach((answerOption, i) => {
+            if (answerOption.isCorrect === true) {
+                // check if the answer is valid and if true: change solution-label and -color
+                if (!answerOption.invalid) {
+                    this.backgroundSolutionColors[i] = greenColor;
+                    this.solutionLabels[i] = this.getLetter(i) + '. (' + correctLabel + ')';
                 }
-            });
-        });
-
-        // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe((incorrectLabel) => {
-            this.question.answerOptions!.forEach((answerOption, i) => {
-                if (!answerOption.isCorrect) {
-                    // check if the answer is valid and if false: change solution-label and -color
-                    if (!answerOption.invalid) {
-                        this.backgroundSolutionColors[i] = this.getBackgroundColor('#d9534f');
-                        this.solutionLabels[i] = String.fromCharCode(65 + i) + '. (' + incorrectLabel + ')';
-                    }
+            }
+            if (answerOption.isCorrect === false) {
+                // check if the answer is valid and if false: change solution-label and -color
+                if (!answerOption.invalid) {
+                    this.backgroundSolutionColors[i] = redColor;
+                    this.solutionLabels[i] = this.getLetter(i) + '. (' + incorrectLabel + ')';
                 }
-            });
+            }
         });
     }
 

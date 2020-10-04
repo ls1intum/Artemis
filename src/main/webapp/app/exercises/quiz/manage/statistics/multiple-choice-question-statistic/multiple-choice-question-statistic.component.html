@@ -27,7 +27,7 @@
                             </p>
                         </div>
                     </div>
-                    <canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <canvas #chart baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">

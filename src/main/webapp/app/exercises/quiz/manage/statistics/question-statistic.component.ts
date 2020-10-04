@@ -1,4 +1,4 @@
-import { calculateTickMax, createOptions, DataSet, DataSetProvider } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { calculateHeightOfChart, createOptions, DataSet, DataSetProvider } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -11,18 +11,20 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ChartOptions } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { BaseChartDirective } from 'ng2-charts';
 
-export interface BackgroundColorConfig {
-    backgroundColor: string;
-    borderColor: string;
-    pointBackgroundColor: string;
-    pointBorderColor: string;
-}
+export const redColor = '#d9534f';
+export const greenColor = '#5cb85c';
+export const blueColor = '#428bca';
+export const lightBlueColor = '#5bc0de';
+export const greyColor = '#838383';
 
 @Component({ template: '' })
 export abstract class QuestionStatisticComponent implements DataSetProvider, OnInit, OnDestroy {
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;
 
@@ -53,12 +55,11 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
 
     questionTextRendered?: SafeHtml;
 
-    // options for chart in chart.js style
     options: ChartOptions;
 
-    backgroundColors: BackgroundColorConfig[] = [];
-    backgroundSolutionColors: BackgroundColorConfig[] = [];
-    colors: BackgroundColorConfig[] = [];
+    backgroundColors: string[] = [];
+    backgroundSolutionColors: string[] = [];
+    colors: string[] = [];
 
     constructor(
         protected route: ActivatedRoute,
@@ -68,6 +69,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         protected quizExerciseService: QuizExerciseService,
         protected jhiWebsocketService: JhiWebsocketService,
     ) {
+        // TODO: this is an outdated way how to create the option, adapt the new way how to do this by looking at exam-scores.component.ts
         this.options = createOptions(this);
     }
 
@@ -91,12 +93,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe((xLabel) => {
-                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            });
-            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe((yLabel) => {
-                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
-            });
+            this.getOptions().scales!.xAxes![0].scaleLabel!.labelString = this.translateService.instant('showStatistic.questionStatistic.xAxes');
+            this.getOptions().scales!.yAxes![0].scaleLabel!.labelString = this.translateService.instant('showStatistic.questionStatistic.yAxes');
         });
     }
 
@@ -130,6 +128,15 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
     addData(rated: number, unrated: number) {
         this.ratedData.push(rated);
         this.unratedData.push(unrated);
+    }
+
+    /**
+     * converts a number in a letter (0 -> A, 1 -> B, ...)
+     *
+     * @param index the given number
+     */
+    getLetter(index: number) {
+        return String.fromCharCode(65 + index);
     }
 
     updateData() {
@@ -181,29 +188,19 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         return updatedQuestion;
     }
 
-    getBackgroundColor(color: string) {
-        return {
-            backgroundColor: color,
-            borderColor: color,
-            pointBackgroundColor: color,
-            pointBorderColor: color,
-        };
-    }
-
     /**
      * change label and color if an element is invalid
      */
     loadInvalidLayout(possibleInvalidElements: CanBecomeInvalid[]) {
         // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
-            possibleInvalidElements.forEach((element, i) => {
-                if (element.invalid) {
-                    this.backgroundColors[i] = this.getBackgroundColor('#838383');
-                    this.backgroundSolutionColors[i] = this.getBackgroundColor('#838383');
-                    // add 'invalid' to bar-Label
-                    this.labels[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
-                }
-            });
+        const invalidLabel = this.translateService.instant('showStatistic.invalid');
+        possibleInvalidElements.forEach((element, i) => {
+            if (element.invalid) {
+                this.backgroundColors[i] = greyColor;
+                this.backgroundSolutionColors[i] = greyColor;
+                // add 'invalid' to bar-Label
+                this.labels[i] = this.getLetter(i) + '. ' + invalidLabel;
+            }
         });
     }
 
@@ -212,64 +209,68 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
      */
     addLastBarLayout(length: number) {
         // add Color for last bar
-        this.backgroundColors.push(this.getBackgroundColor('#5bc0de'));
-        this.backgroundSolutionColors[length] = this.getBackgroundColor('#5bc0de');
+        this.backgroundColors.push(lightBlueColor);
+        this.backgroundSolutionColors[length] = lightBlueColor;
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
-            this.solutionLabels[length] = lastLabel.split(' ');
-            this.labels[length] = lastLabel.split(' ');
-            this.chartLabels = this.labels;
-        });
+        const lastLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+        this.solutionLabels[length] = lastLabel.split(' ');
+        this.labels[length] = lastLabel.split(' ');
+        this.chartLabels = this.labels;
+    }
+
+    getOptions() {
+        if (this.chart) {
+            return this.chart.options;
+        } else {
+            return this.options;
+        }
     }
 
     /**
-     * check if the rated or unrated
-     * load the rated or unrated data into the diagram
+     * check if the rated or unrated, then load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        // if show Solution is true use the label,
-        // backgroundColor and Data, which show the solution
+        // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
-            // show Solution
-            // if show Solution is true use the backgroundColor which shows the solution
+            // show Solution: use the backgroundColor which shows the solution
             this.colors = this.backgroundSolutionColors;
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
-                this.data = this.ratedData.slice(0);
+                this.data = [...this.ratedData];
+                // additionally show how many people on average have the complete answer correct (which should only be shown when the solution is displayed)
                 this.data.push(this.ratedCorrectData);
             } else {
                 this.participants = this.questionStatistic.participantsUnrated!;
                 // if rated is false use the unrated Data and add the unrated CorrectCounter
-                this.data = this.unratedData.slice(0);
+                this.data = [...this.unratedData];
+                // additionally show how many people on average have the complete answer correct (which should only be shown when the solution is displayed)
                 this.data.push(this.unratedCorrectData);
             }
             // show Solution
             this.chartLabels = this.solutionLabels;
         } else {
-            // don't show Solution
-            // if show Solution is false use the backgroundColor which doesn't show the solution
+            // don't show Solution: use the backgroundColor which doesn't show the solution
             this.colors = this.backgroundColors;
             // if rated is true use the rated Data
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;
-                this.data = this.ratedData;
+                this.data = [...this.ratedData];
             } else {
                 // if rated is false use the unrated Data
                 this.participants = this.questionStatistic.participantsUnrated!;
-                this.data = this.unratedData;
+                this.data = [...this.unratedData];
             }
             // don't show Solution
             this.chartLabels = this.labels;
         }
 
-        this.datasets = [
-            {
-                data: this.data,
-                backgroundColor: this.colors,
-            },
-        ];
-        this.options.scales!.yAxes![0]!.ticks!.max = calculateTickMax(this);
+        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
+        if (this.chart) {
+            this.chart.options.scales!.yAxes![0]!.ticks!.max = calculateHeightOfChart(this);
+            this.chart.update();
+        }
     }
 }

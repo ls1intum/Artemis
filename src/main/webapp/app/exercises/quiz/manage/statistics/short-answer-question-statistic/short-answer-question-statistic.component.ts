@@ -12,7 +12,7 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 @Component({
     selector: 'jhi-short-answer-question-statistic',
@@ -94,9 +94,9 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
         // set label and backgroundcolor based on the spots
         this.question.spots!.forEach((spot, i) => {
-            this.labels.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColors.push(this.getBackgroundColor('#428bca'));
-            this.backgroundSolutionColors.push(this.getBackgroundColor('#5cb85c'));
+            this.labels.push(this.getLetter(i) + '.');
+            this.backgroundColors.push(blueColor);
+            this.backgroundSolutionColors.push(greenColor);
         });
 
         this.addLastBarLayout(this.question.spots!.length);
@@ -117,15 +117,6 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
             this.addData(spotCounter.ratedCounter!, spotCounter.unRatedCounter!);
         });
         this.updateData();
-    }
-
-    /**
-     * converts a number in a letter (0 -> A, 1 -> B, ...)
-     *
-     * @param index the given number
-     */
-    getLetter(index: number) {
-        return String.fromCharCode(65 + (index - 1));
     }
 
     /**
