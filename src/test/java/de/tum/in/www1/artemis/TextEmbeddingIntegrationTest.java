@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.TextEmbedding;
+import de.tum.in.www1.artemis.domain.text.TextEmbedding;
 
 public class TextEmbeddingIntegrationTest {
 
