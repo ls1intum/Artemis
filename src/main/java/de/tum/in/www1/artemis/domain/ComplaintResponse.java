@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -19,13 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "complaint_response")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ComplaintResponse implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ComplaintResponse extends DomainObject {
 
     @Column(name = "response_text")
     @Size(max = 2000)
@@ -40,15 +32,6 @@ public class ComplaintResponse implements Serializable {
 
     @ManyToOne
     private User reviewer;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getResponseText() {
         return responseText;
@@ -100,27 +83,6 @@ public class ComplaintResponse implements Serializable {
 
     public void setReviewer(User user) {
         this.reviewer = user;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ComplaintResponse complaintResponse = (ComplaintResponse) o;
-        if (complaintResponse.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), complaintResponse.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 
@@ -17,13 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "programming_exercise_test_case")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class ProgrammingExerciseTestCase implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ProgrammingExerciseTestCase extends DomainObject {
 
     @Column(name = "test_name")
     private String testName;
@@ -47,17 +38,8 @@ public class ProgrammingExerciseTestCase implements Serializable {
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private ProgrammingExercise exercise;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ProgrammingExerciseTestCase id(Long id) {
-        this.id = id;
+        setId(id);
         return this;
     }
 
@@ -157,8 +139,6 @@ public class ProgrammingExerciseTestCase implements Serializable {
         return this;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
     /**
      * This method needs to be checked and updated if there is a new class attribute. Creates a clone with all attributes set to the value of the object, including the id.
      *
@@ -171,32 +151,18 @@ public class ProgrammingExerciseTestCase implements Serializable {
         return clone;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ProgrammingExerciseTestCase programmingExerciseTestCase = (ProgrammingExerciseTestCase) o;
-        if (programmingExerciseTestCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(programmingExerciseTestCase.getExercise().getId())) {
-            return true;
-        }
-        if (getId() == null && programmingExerciseTestCase.getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), programmingExerciseTestCase.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(testName) + Objects.hashCode(getExercise().getId());
+    /**
+     * this methods checks for logical equality based on the name and the exercise
+     * @param testCase another test case which should be checked for being the same
+     * @return whether this and the other test case are the same based on name and exercise
+     */
+    public boolean isSameTestCase(ProgrammingExerciseTestCase testCase) {
+        return testCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
     }
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + id + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
+        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
 }
