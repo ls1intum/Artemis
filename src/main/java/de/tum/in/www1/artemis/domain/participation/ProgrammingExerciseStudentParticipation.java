@@ -18,8 +18,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @DiscriminatorValue(value = "PESP")
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
-    private static final long serialVersionUID = 1L;
-
     @Column(name = "repository_url")
     @JsonView(QuizView.Before.class)
     private String repositoryUrl;

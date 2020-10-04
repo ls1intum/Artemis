@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -24,19 +23,13 @@ import de.tum.in.www1.artemis.service.FileService;
 @Table(name = "attachment")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Attachment implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class Attachment extends DomainObject implements Serializable {
 
     @Transient
     private transient FileService fileService = new FileService();
 
     @Transient
     private String prevLink;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(name = "name")
     private String name;
@@ -128,14 +121,6 @@ public class Attachment implements Serializable {
             // delete old file if necessary
             fileService.manageFilesForUpdatedFilePath(prevLink, null, FilePathService.getLectureAttachmentFilepath() + getLecture().getId() + '/', getLecture().getId(), true);
         }
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -240,27 +225,6 @@ public class Attachment implements Serializable {
 
     public void setLecture(Lecture lecture) {
         this.lecture = lecture;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Attachment attachment = (Attachment) o;
-        if (attachment.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), attachment.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

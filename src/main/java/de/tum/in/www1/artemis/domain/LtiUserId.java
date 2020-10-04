@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -14,13 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 @Entity
 @Table(name = "lti_user_id")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class LtiUserId implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class LtiUserId extends DomainObject {
 
     @Column(name = "lti_user_id")
     private String ltiUserId;
@@ -28,15 +19,6 @@ public class LtiUserId implements Serializable {
     @OneToOne
     @JoinColumn(unique = true)
     private User user;
-
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getLtiUserId() {
         return ltiUserId;
@@ -62,27 +44,6 @@ public class LtiUserId implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
-    }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        LtiUserId ltiUserId = (LtiUserId) o;
-        if (ltiUserId.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), ltiUserId.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
