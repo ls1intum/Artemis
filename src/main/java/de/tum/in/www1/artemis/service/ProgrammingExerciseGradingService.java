@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -318,31 +317,41 @@ public class ProgrammingExerciseGradingService {
      * @return The filtered list of feedback objects
      */
     private List<Feedback> removeInvisibleScaFeedback(Result result, List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        var categories = staticCodeAnalysisService.getCategoriesWithMappingForExercise(programmingExercise);
+        var categoryPairs = staticCodeAnalysisService.getCategoriesWithMappingForExercise(programmingExercise);
 
         return staticCodeAnalysisFeedback.stream().filter(feedback -> {
+            // ObjectMapper to extract the static code analysis issue from the feedback
             ObjectMapper mapper = new ObjectMapper();
-            Optional<StaticCodeAnalysisCategory> category;
+            // the category for this feedback
+            Optional<StaticCodeAnalysisCategory> category = Optional.empty();
             try {
+
+                // extract the sca issue
                 var issue = mapper.readValue(feedback.getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class);
 
-                category = categories.stream()
-                        .filter(pair -> pair.right.stream()
-                                .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory())))
-                        .map(ImmutablePair::getLeft).findFirst();
+                // find the category for this issue
+                for (var categoryPair : categoryPairs) {
+                    var categoryMappings = categoryPair.right;
+                    if (categoryMappings.stream()
+                            .anyMatch(mapping -> mapping.getTool().name().equals(feedback.getReference()) && mapping.getCategory().equals(issue.getCategory()))) {
+                        category = Optional.of(categoryPair.left);
+                        break;
+                    }
+                }
 
             }
-            catch (JsonProcessingException e) {
-                category = Optional.empty();
+            catch (JsonProcessingException ignored) {
             }
 
             if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
+                // remove feedback in no or inactive category
                 result.removeFeedback(feedback);
-                return false;
+                return false; // filter this feedback
             }
             else {
+                // add the category name to the feedback text
                 feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
-                return true;
+                return true; // keep this feedback
             }
         }).collect(Collectors.toList());
     }
@@ -361,6 +370,7 @@ public class ProgrammingExerciseGradingService {
 
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
+            // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
                 double testWeight = test.getWeight() * test.getBonusMultiplier();
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxScore();
@@ -370,39 +380,21 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
+            // if static code analysis is enabled, reduce the points by the calculated penalty
             if (programmingExercise.isStaticCodeAnalysisEnabled() && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(0) > 0) {
-                double codeAnalysisPenaltyPoints = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
-                        .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).mapToDouble(staticCodeAnalysisCategory -> {
-                            List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream().filter(feedback -> feedback.getText()
-                                    .substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(staticCodeAnalysisCategory.getName()))
-                                    .collect(Collectors.toList());
-                            double penaltySum = categoryFeedback.size() * staticCodeAnalysisCategory.getPenalty();
-                            if (penaltySum > staticCodeAnalysisCategory.getMaxPenalty()) {
-                                penaltySum = staticCodeAnalysisCategory.getMaxPenalty();
-                            }
-                            double perFeedbackPenalty = penaltySum / categoryFeedback.size();
-                            // update credits of feedbacks in category
-                            categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
-                            return penaltySum;
-                        }).sum();
+                successfulTestPoints -= calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
 
-                // maxStaticCodeAnalysisPenalty is in percent
-                final var maxExercisePenaltyPoints = (double) programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
-                if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
-                    codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
-                }
-
-                successfulTestPoints = successfulTestPoints - codeAnalysisPenaltyPoints;
                 if (successfulTestPoints < 0) {
                     successfulTestPoints = 0;
                 }
             }
 
-            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
             // The points are capped by the maximum achievable points
+            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
             }
+
             // The score is calculated as a percentage of the maximum points
             long score = (long) (successfulTestPoints / programmingExercise.getMaxScore() * 100.0);
 
@@ -411,6 +403,50 @@ public class ProgrammingExerciseGradingService {
         else {
             result.setScore(0L);
         }
+    }
+
+    /**
+     * Calculates the total penalty over all static code analysis issues
+     * @param staticCodeAnalysisFeedback The list of static code analysis feedback
+     * @param programmingExercise The current exercise
+     * @return The sum of all penalties, capped at the maximum allowed penalty
+     */
+    private double calculateStaticCodeAnalysisPenalty(List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+
+        double codeAnalysisPenaltyPoints = 0;
+
+        var gradedCategories = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).collect(Collectors.toList());
+
+        for (var category : gradedCategories) {
+
+            // get all feedback in this category
+            List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream()
+                    .filter(feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(category.getName()))
+                    .collect(Collectors.toList());
+
+            // calculate the sum of all per-feedback penalties
+            double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
+
+            // cap at the maximum allowed penalty for this category
+            if (categoryPenaltyPoints > category.getMaxPenalty()) {
+                categoryPenaltyPoints = category.getMaxPenalty();
+            }
+
+            // update credits of feedbacks in category
+            double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
+            categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+
+            codeAnalysisPenaltyPoints += categoryPenaltyPoints;
+        }
+
+        // cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent)
+        final var maxExercisePenaltyPoints = (double) programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
+        if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
+            codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
+        }
+
+        return codeAnalysisPenaltyPoints;
     }
 
     /**

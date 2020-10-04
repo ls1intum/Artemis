@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
@@ -121,9 +120,16 @@ public class StaticCodeAnalysisService {
         var categories = findByExerciseId(programmingExercise.getId());
         var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
 
-        return categories.stream()
-                .map(category -> defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst()
-                        .map(StaticCodeAnalysisDefaultCategory::getCategoryMappings).map(mappings -> new ImmutablePair<>(category, mappings)))
-                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
+
+        for (var category : categories) {
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
+            if (defaultCategoryMatch.isPresent()) {
+                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
+                categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
+            }
+        }
+
+        return categoryPairsWithMapping;
     }
 }
