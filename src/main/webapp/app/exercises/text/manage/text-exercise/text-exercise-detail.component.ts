@@ -120,6 +120,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    checkPlagiarismJPlag() {}
+
     checkPlagiarismCsv() {
         this.checkPlagiarism((data) => {
             if (data.length > 0) {
