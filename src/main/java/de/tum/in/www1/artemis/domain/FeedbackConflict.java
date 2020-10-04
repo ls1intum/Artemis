@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
@@ -12,13 +11,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
  */
 @Entity
 @Table(name = "feedback_conflict")
-public class FeedbackConflict implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class FeedbackConflict extends DomainObject {
 
     @Column(name = "conflict", nullable = false)
     private Boolean conflict;
@@ -43,14 +36,6 @@ public class FeedbackConflict implements Serializable {
 
     @Column(name = "markedAsNotConflict")
     private Boolean markedAsNotConflict;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Boolean getConflict() {
         return conflict;
