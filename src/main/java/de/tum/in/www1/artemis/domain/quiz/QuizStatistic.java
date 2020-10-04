@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -10,6 +7,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  * A QuizStatistic.
@@ -22,27 +20,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public abstract class QuizStatistic extends DomainObject {
 
     @Column(name = "participants_rated")
     private Integer participantsRated = 0;
 
     @Column(name = "participants_unrated")
     private Integer participantsUnrated = 0;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Integer getParticipantsRated() {
         return participantsRated;
@@ -58,25 +42,5 @@ public abstract class QuizStatistic implements Serializable {
 
     public void setParticipantsUnrated(Integer participantsUnrated) {
         this.participantsUnrated = participantsUnrated;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizStatistic quizStatistic = (QuizStatistic) o;
-        if (quizStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }

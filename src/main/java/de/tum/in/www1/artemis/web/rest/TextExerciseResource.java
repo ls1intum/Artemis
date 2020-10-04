@@ -171,7 +171,7 @@ public class TextExerciseResource {
             groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         }
 
-        // Generate achievements if enabled in course and not part of exam
+        // Generate achievements if enabled in course and exercise not part of exam
         if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
             achievementService.generateForExercise(result);
         }

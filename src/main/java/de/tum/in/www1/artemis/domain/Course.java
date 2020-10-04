@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -31,20 +29,13 @@ import de.tum.in.www1.artemis.service.FileService;
 @Table(name = "course")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Course implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class Course extends DomainObject {
 
     @Transient
     private transient FileService fileService = new FileService();
 
     @Transient
     private String prevCourseIcon;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -142,15 +133,6 @@ public class Course implements Serializable {
 
     @Transient
     private Long numberOfStudentsTransient;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -545,26 +527,6 @@ public class Course implements Serializable {
     public void onDelete() {
         // delete old file if necessary
         fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, FilePathService.getCourseIconFilepath(), getId());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Course course = (Course) o;
-        if (course.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), course.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -36,9 +36,9 @@ public class AchievementResource {
     }
 
     /**
-     * GET /courses/{courseId}/achievements : Get all achievements for course.
+     * GET /courses/{courseId}/achievements : Get all achievements for requesting user in given course.
      *
-     * @param courseId the course to which the achievements belong to
+     * @param courseId
      * @return the ResponseEntity with status 200 (OK) and with the found achievements as body
      */
     @GetMapping("/courses/{courseId}/achievements")
