@@ -92,42 +92,39 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(75L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         user = userRepo.findAllInGroup("tutor").get(0);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(70L);
         resultRepo.save(result);
 
         // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(80L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         user = userRepo.findAllInGroup("tutor").get(1);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(1));
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(85L);
         resultRepo.save(result);
 
         // course2
         course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
-        exercise.setMaxScore(5.0);
+        exercise.setMaxScore(8.0);
         exerciseRepo.save(exercise);
 
         // score for tutor1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(20L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         user = userRepo.findAllInGroup("tutor").get(0);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(25L);
-        resultRepo.save(result);
+
+        var stuff = tutorScoresRepo.findAll();
+        stuff.isEmpty();
     }
 
     @AfterEach
@@ -154,11 +151,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(80L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(85L);
         resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -208,11 +203,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor1 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(60L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(55L);
         resultRepo.save(result);
 
         responseCourseOne = request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -278,7 +271,6 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(response.getAssessments()).as("assessments are as expected").isEqualTo(1);
 
         result.setAssessor(user2);
-        result.setScore(80L);
         resultRepo.save(result);
 
         response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
@@ -309,11 +301,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = new Result().score(95L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(90L);
         resultRepo.save(result);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
@@ -344,11 +334,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = new Result().score(90L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(95L);
         resultRepo.save(result);
 
         TutorScore response = request.get("/api/tutor-scores/exercise/" + exercise.getId() + "/tutor/" + user.getLogin(), HttpStatus.OK, TutorScore.class);
@@ -378,11 +366,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = new Result().score(95L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(90L);
         resultRepo.save(result);
 
         // add complaint
@@ -416,11 +402,9 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         participation = database.addParticipationForExercise(exercise, "student3");
-        result = new Result().score(80L).participation(participation).rated(true);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setAssessor(user);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(90L);
         resultRepo.save(result);
 
         // add feedback request
