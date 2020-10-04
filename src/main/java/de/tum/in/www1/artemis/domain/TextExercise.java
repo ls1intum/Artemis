@@ -26,11 +26,6 @@ public class TextExercise extends Exercise {
         return sampleSolution;
     }
 
-    public TextExercise sampleSolution(String sampleSolution) {
-        this.sampleSolution = sampleSolution;
-        return this;
-    }
-
     public void setSampleSolution(String sampleSolution) {
         this.sampleSolution = sampleSolution;
     }

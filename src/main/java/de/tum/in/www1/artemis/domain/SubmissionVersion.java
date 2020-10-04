@@ -39,22 +39,12 @@ public class SubmissionVersion extends DomainObject {
         return submission;
     }
 
-    public SubmissionVersion submission(Submission submission) {
-        this.submission = submission;
-        return this;
-    }
-
     public void setSubmission(Submission submission) {
         this.submission = submission;
     }
 
     public User getAuthor() {
         return author;
-    }
-
-    public SubmissionVersion author(User author) {
-        this.author = author;
-        return this;
     }
 
     public void setAuthor(User author) {
@@ -65,11 +55,6 @@ public class SubmissionVersion extends DomainObject {
         return content;
     }
 
-    public SubmissionVersion content(String content) {
-        this.content = content;
-        return this;
-    }
-
     public void setContent(String content) {
         this.content = content;
     }
@@ -78,22 +63,12 @@ public class SubmissionVersion extends DomainObject {
         return createdDate;
     }
 
-    public SubmissionVersion createdDate(Instant createdDate) {
-        this.createdDate = createdDate;
-        return this;
-    }
-
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
     }
 
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    public SubmissionVersion lastModifiedDate(Instant lastModifiedDate) {
-        this.lastModifiedDate = lastModifiedDate;
-        return this;
     }
 
     public void setLastModifiedDate(Instant lastModifiedDate) {
