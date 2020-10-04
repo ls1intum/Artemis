@@ -563,11 +563,15 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
+    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam(required = false) String strategy) {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+
         if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
+
+        log.info("TEXT PLAGIARISM STRATEGY: " + strategy);
+
         TextExercise textExercise = optionalTextExercise.get();
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
@@ -589,8 +593,8 @@ public class TextExerciseResource {
                 .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
                         new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
                 .parallel()
-                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX(), strategy.getY(), 0.8).entrySet()
-                        .stream().map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
+                .flatMap(strat -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strat.getX(), strat.getY(), 0.8).entrySet().stream()
+                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strat.getY(), entry.getValue())))
                 .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
     }
 
