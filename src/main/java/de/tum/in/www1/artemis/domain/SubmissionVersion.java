@@ -14,11 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "submission_version")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @EntityListeners(AuditingEntityListener.class)
-public class SubmissionVersion {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class SubmissionVersion extends DomainObject {
 
     @ManyToOne
     private Submission submission;
@@ -38,19 +34,6 @@ public class SubmissionVersion {
     @LastModifiedDate
     @Column(name = "last_modified_date")
     private Instant lastModifiedDate = Instant.now();
-
-    public Long getId() {
-        return id;
-    }
-
-    public SubmissionVersion id(Long id) {
-        this.id = id;
-        return this;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Submission getSubmission() {
         return submission;
