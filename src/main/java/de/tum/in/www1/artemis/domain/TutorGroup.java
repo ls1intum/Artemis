@@ -60,22 +60,12 @@ public class TutorGroup extends DomainObject {
         return name;
     }
 
-    public TutorGroup name(String name) {
-        this.name = name;
-        return this;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     public Integer getCapacity() {
         return capacity;
-    }
-
-    public TutorGroup capacity(Integer capacity) {
-        this.capacity = capacity;
-        return this;
     }
 
     public void setCapacity(Integer capacity) {
@@ -86,22 +76,12 @@ public class TutorGroup extends DomainObject {
         return weekday;
     }
 
-    public TutorGroup weekday(Weekday weekday) {
-        this.weekday = weekday;
-        return this;
-    }
-
     public void setWeekday(Weekday weekday) {
         this.weekday = weekday;
     }
 
     public String getTimeSlot() {
         return timeSlot;
-    }
-
-    public TutorGroup timeSlot(String timeSlot) {
-        this.timeSlot = timeSlot;
-        return this;
     }
 
     public void setTimeSlot(String timeSlot) {
@@ -112,22 +92,12 @@ public class TutorGroup extends DomainObject {
         return language;
     }
 
-    public TutorGroup language(Language language) {
-        this.language = language;
-        return this;
-    }
-
     public void setLanguage(Language language) {
         this.language = language;
     }
 
     public String getRoom() {
         return room;
-    }
-
-    public TutorGroup room(String room) {
-        this.room = room;
-        return this;
     }
 
     public void setRoom(String room) {
@@ -138,11 +108,6 @@ public class TutorGroup extends DomainObject {
         return tutor;
     }
 
-    public TutorGroup tutor(User user) {
-        this.tutor = user;
-        return this;
-    }
-
     public void setTutor(User user) {
         this.tutor = user;
     }
@@ -151,32 +116,12 @@ public class TutorGroup extends DomainObject {
         return students;
     }
 
-    public TutorGroup students(Set<User> users) {
-        this.students = users;
-        return this;
-    }
-
-    public TutorGroup addStudents(User user) {
-        this.students.add(user);
-        return this;
-    }
-
-    public TutorGroup removeStudents(User user) {
-        this.students.remove(user);
-        return this;
-    }
-
     public void setStudents(Set<User> users) {
         this.students = users;
     }
 
     public Course getCourse() {
         return course;
-    }
-
-    public TutorGroup course(Course course) {
-        this.course = course;
-        return this;
     }
 
     public void setCourse(Course course) {

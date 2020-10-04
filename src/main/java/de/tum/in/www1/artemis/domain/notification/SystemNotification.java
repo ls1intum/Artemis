@@ -24,22 +24,12 @@ public class SystemNotification extends Notification {
         return expireDate;
     }
 
-    public SystemNotification expireDate(ZonedDateTime expireDate) {
-        this.expireDate = expireDate;
-        return this;
-    }
-
     public void setExpireDate(ZonedDateTime expireDate) {
         this.expireDate = expireDate;
     }
 
     public SystemNotificationType getType() {
         return type;
-    }
-
-    public SystemNotification type(SystemNotificationType type) {
-        this.type = type;
-        return this;
     }
 
     public void setType(SystemNotificationType type) {
