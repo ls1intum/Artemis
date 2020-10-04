@@ -8,7 +8,6 @@ import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/con
 import { RegisterService } from 'app/account/register/register.service';
 import { RegisterComponent } from 'app/account/register/register.component';
 import { MockLanguageService } from '../../helpers/mocks/service/mock-language.service';
-import { Account } from 'app/core/user/account.model';
 import { User } from 'app/core/user/user.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

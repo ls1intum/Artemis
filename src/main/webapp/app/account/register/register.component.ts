@@ -47,7 +47,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     // TEST CODE BEGIN
     // updateAllowedEmailPattern() {
     //     if (this.allowedEmailPattern) {
-    //         this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.allowedEmailPattern)]);
+    //         this.registerForm.get('email')!
+    //         .setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.allowedEmailPattern)]);
     //     }
     // }
     // TEST CODE END
