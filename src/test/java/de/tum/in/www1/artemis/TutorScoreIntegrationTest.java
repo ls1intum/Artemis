@@ -122,9 +122,6 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(0);
         result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
         resultRepo.save(result);
-
-        var stuff = tutorScoresRepo.findAll();
-        stuff.isEmpty();
     }
 
     @AfterEach
