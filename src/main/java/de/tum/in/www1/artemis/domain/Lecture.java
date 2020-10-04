@@ -77,22 +77,12 @@ public class Lecture extends DomainObject {
         return startDate;
     }
 
-    public Lecture startDate(ZonedDateTime startDate) {
-        this.startDate = startDate;
-        return this;
-    }
-
     public void setStartDate(ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
     public ZonedDateTime getEndDate() {
         return endDate;
-    }
-
-    public Lecture endDate(ZonedDateTime endDate) {
-        this.endDate = endDate;
-        return this;
     }
 
     public void setEndDate(ZonedDateTime endDate) {
@@ -103,20 +93,9 @@ public class Lecture extends DomainObject {
         return attachments;
     }
 
-    public Lecture attachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
-        return this;
-    }
-
     public Lecture addAttachments(Attachment attachment) {
         this.attachments.add(attachment);
         attachment.setLecture(this);
-        return this;
-    }
-
-    public Lecture removeAttachments(Attachment attachment) {
-        this.attachments.remove(attachment);
-        attachment.setLecture(null);
         return this;
     }
 
@@ -126,23 +105,6 @@ public class Lecture extends DomainObject {
 
     public Set<StudentQuestion> getStudentQuestions() {
         return studentQuestions;
-    }
-
-    public Lecture studentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
-        return this;
-    }
-
-    public Lecture addStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.add(studentQuestion);
-        studentQuestion.setLecture(this);
-        return this;
-    }
-
-    public Lecture removeStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.remove(studentQuestion);
-        studentQuestion.setLecture(null);
-        return this;
     }
 
     public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {

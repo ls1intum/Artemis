@@ -43,11 +43,6 @@ public class ModelingSubmission extends Submission {
         return explanationText;
     }
 
-    public ModelingSubmission explanationText(String explanationText) {
-        this.explanationText = explanationText;
-        return this;
-    }
-
     public void setExplanationText(String explanationText) {
         this.explanationText = explanationText;
     }
