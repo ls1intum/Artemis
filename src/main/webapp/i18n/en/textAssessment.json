@@ -52,9 +52,11 @@
             },
             "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>Hold <code>alt</code>/<code>option</code> while selecting a piece of text to assess custom blocks.",
             "conflict": {
-                "assessor": "Assessor: {{otherUser}}",
+                "assessor": "Assessor: You",
+                "otherAssessor": "Assessor: {{otherUser}}",
                 "conflictingAssessments": "{{number}} conflicts",
                 "notFound": "We haven't found any conflicts for the selected feedback, please go back.",
+                "solveFeedbackConflictSuccessful": "Feedback conflict solved successfully.",
                 "type": {
                     "INCONSISTENT_COMMENT": "INCONSISTENT COMMENT",
                     "INCONSISTENT_SCORE": "INCONSISTENT SCORE",

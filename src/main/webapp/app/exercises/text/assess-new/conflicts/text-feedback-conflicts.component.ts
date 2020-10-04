@@ -222,7 +222,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.markBusy = true;
         this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe(
-            (response) => this.handleSolveConflictsSuccessWithAlert(response, ''),
+            (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
             (error) => this.handleSolveConflictsError(error),
         );
     }
