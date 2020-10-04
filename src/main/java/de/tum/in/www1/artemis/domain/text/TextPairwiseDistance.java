@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.text;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**

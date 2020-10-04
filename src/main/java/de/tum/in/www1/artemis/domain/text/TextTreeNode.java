@@ -5,7 +5,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.NaturalId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
