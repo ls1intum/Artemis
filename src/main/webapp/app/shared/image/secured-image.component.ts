@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -30,37 +30,43 @@ export enum CachingStrategy {
     selector: 'jhi-secured-image',
     template: `
         <ng-template [ngIf]="!this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl$ | async" alt="alt" />
+            <img [attr.src]="dataUrl | async" alt="alt" />
         </ng-template>
         <ng-template [ngIf]="this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl$ | async" class="dnd-drag-start" draggable="true" alt="alt" dnd-draggable />
+            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" dnd-draggable />
         </ng-template>
     `,
 })
-export class SecuredImageComponent implements OnChanges {
+export class SecuredImageComponent implements OnChanges, OnInit {
     // This part just creates an rxjs stream from the src
     // this makes sure that we can handle it when the src changes
     // or even when the component gets destroyed
     @Input() mobileDragAndDrop = false;
-    @Input() private src: string;
+    @Input() src: string;
     @Input() cachingStrategy = CachingStrategy.SESSION_STORAGE;
     @Input() alt = '';
-    private src$ = new BehaviorSubject(this.src);
+    private srcSubject?: BehaviorSubject<string>;
+    dataUrl: Observable<string>;
     private retryCounter = 0;
 
     @Output()
     endLoadingProcess = new EventEmitter<ImageLoadingStatus>();
 
-    // this stream will contain the actual url that our img tag will load
-    // everytime the src changes, the previous call would be canceled and the
-    // new resource would be loaded
-    dataUrl$ = this.src$.pipe(
-        filter((url) => !!url),
-        switchMap((url) => this.loadImage(url)),
-    );
+    ngOnInit(): void {
+        this.srcSubject = new BehaviorSubject(this.src);
+        // this stream will contain the actual url that our img tag will load
+        // everytime the src changes, the previous call would be canceled and the
+        // new resource would be loaded
+        this.dataUrl = this.srcSubject.pipe(
+            filter((url) => !!url),
+            switchMap((url) => this.loadImage(url)),
+        );
+    }
 
     ngOnChanges(): void {
-        this.src$.next(this.src);
+        if (this.srcSubject) {
+            this.srcSubject.next(this.src);
+        }
     }
 
     // we need HttpClient to load the image and DomSanitizer to trust the url
@@ -81,7 +87,7 @@ export class SecuredImageComponent implements OnChanges {
      * @param url of the image on the server.
      */
     private loadImage(url: string): Observable<any> {
-        return of(null).pipe(
+        return of(undefined).pipe(
             // Load the image from the server with the active caching strategy.
             switchMap(() => {
                 let res;

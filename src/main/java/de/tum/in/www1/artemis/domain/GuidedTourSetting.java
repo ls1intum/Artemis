@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -14,17 +12,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "guided_tour_setting")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GuidedTourSetting implements Serializable {
+public class GuidedTourSetting extends DomainObject {
 
     public enum Status {
         STARTED, FINISHED
     }
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(name = "guided_tour_key")
     private String guidedTourKey;
@@ -38,14 +30,6 @@ public class GuidedTourSetting implements Serializable {
     @ManyToOne
     @JsonIgnore
     private User user;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getGuidedTourKey() {
         return guidedTourKey;
@@ -91,7 +75,7 @@ public class GuidedTourSetting implements Serializable {
 
     @Override
     public String toString() {
-        return "GuidedTourSetting{" + "id=" + id + ", guidedTourKey='" + guidedTourKey + '\'' + ", guidedTourStep=" + guidedTourStep + ", guidedTourState=" + guidedTourState
+        return "GuidedTourSetting{" + "id=" + getId() + ", guidedTourKey='" + guidedTourKey + '\'' + ", guidedTourStep=" + guidedTourStep + ", guidedTourState=" + guidedTourState
                 + ", user=" + user + '}';
     }
 }

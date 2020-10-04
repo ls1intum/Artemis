@@ -603,7 +603,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 if (exercise.getTutorParticipations().size() > 0) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
                     assertThat(tutorParticipation.getStatus()).as("Tutor participation status is correctly initialized").isEqualTo(TutorParticipationStatus.NOT_PARTICIPATED);
-                    assertThat(tutorParticipation.getPoints()).as("Tutor participation points are correctly initialized").isNull();
                 }
             }
 
@@ -624,10 +623,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             else {
                 assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfSubmissions(),
-                        "inTime", "late");
-                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfAssessments(),
-                        "inTime", "late");
+                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
+                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfAssessments());
             }
         }
     }
@@ -720,10 +717,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
-            String[] fields = { "studentGroupName", "teachingAssistantGroupName", "instructorGroupName", "startDate", "endDate", "maxComplaints", "presentationScore" };
-            assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").isEqualToComparingOnlyGivenFields(courseOnly, fields);
-            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly")
-                    .isEqualToComparingOnlyGivenFields(courseOnly, fields);
+            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService" };
+            assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
+            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly").usingRecursiveComparison()
+                    .ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations

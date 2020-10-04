@@ -92,7 +92,6 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exercise = exerciseRepo.save(exercise);
-
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
         tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
     }
@@ -100,6 +99,23 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testTeamAssignmentConfig() {
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(exercise);
+        assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
+        System.out.println(teamAssignmentConfig.toString());
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepo.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).get();
+        assertThat(exercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
+        assertThat(exercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
+        assertThat(exercise.getTeamAssignmentConfig().getId()).isNotNull();
     }
 
     @Test

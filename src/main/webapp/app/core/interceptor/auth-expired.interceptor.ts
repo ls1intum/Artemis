@@ -11,7 +11,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
     /**
      * Identifies and handles a given HTTP request. If the request's error status is 401, the current user will be logged out.
      * @param request The outgoing request object to handle.
-     * @param next The next interceptor in the chain, or the backend
+     * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */

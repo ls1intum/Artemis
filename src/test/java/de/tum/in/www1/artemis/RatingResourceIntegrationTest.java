@@ -102,6 +102,8 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     public void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
+        // also test toString()
+        System.out.println(savedRating.toString());
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }

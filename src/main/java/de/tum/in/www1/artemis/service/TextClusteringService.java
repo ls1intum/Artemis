@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.List;

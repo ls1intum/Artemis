@@ -1,8 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -57,7 +55,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (this.isTestRun) {
             return true;
         }
-        return this.studentExam.exam.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
+        return this.studentExam?.exam?.publishResultsDate && moment(this.studentExam.exam.publishResultsDate).isBefore(moment());
     }
 
     /**
@@ -77,9 +75,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, null if no participation could be found
+     * returns the students submission for the exercise, undefined if no participation could be found
      */
-    getSubmissionForExercise(exercise: Exercise): Submission | null {
+    getSubmissionForExercise(exercise: Exercise) {
         if (
             exercise &&
             exercise.studentParticipations &&
@@ -88,20 +86,16 @@ export class ExamParticipationSummaryComponent implements OnInit {
             exercise.studentParticipations[0].submissions.length > 0
         ) {
             return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return null;
         }
     }
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, null if no participation could be found
+     * returns the students submission for the exercise, undefined if no participation could be found
      */
-    getParticipationForExercise(exercise: Exercise): Participation | null {
+    getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations && exercise.studentParticipations[0]) {
             return exercise.studentParticipations[0];
-        } else {
-            return null;
         }
     }
 
@@ -132,9 +126,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     setExamWithOnlyIdAndStudentReviewPeriod() {
         const exam = new Exam();
-        exam.id = this.studentExam.exam.id;
-        exam.examStudentReviewStart = this.studentExam.exam.examStudentReviewStart;
-        exam.examStudentReviewEnd = this.studentExam.exam.examStudentReviewEnd;
+        exam.id = this.studentExam?.exam?.id;
+        exam.examStudentReviewStart = this.studentExam?.exam?.examStudentReviewStart;
+        exam.examStudentReviewEnd = this.studentExam?.exam?.examStudentReviewEnd;
         this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
@@ -146,7 +140,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (this.isTestRun) {
             return true;
         }
-        if (this.studentExam.exam.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
+        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
         }
         return false;

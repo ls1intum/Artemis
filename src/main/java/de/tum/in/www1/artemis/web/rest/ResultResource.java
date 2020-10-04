@@ -77,10 +77,12 @@ public class ResultResource {
 
     private final AssessmentService assessmentService;
 
+    private ProgrammingExerciseGradingService programmingExerciseGradingService;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            AssessmentService assessmentService, ExamService examService) {
+            AssessmentService assessmentService, ExamService examService, ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -94,6 +96,7 @@ public class ResultResource {
         this.assessmentService = assessmentService;
         this.userService = userService;
         this.examService = examService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
     /**
@@ -142,7 +145,7 @@ public class ResultResource {
         ProgrammingExerciseParticipation participation = optionalParticipation.get();
         Optional<Result> result;
         // Process the new result from the build result.
-        result = resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
+        result = programmingExerciseGradingService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
