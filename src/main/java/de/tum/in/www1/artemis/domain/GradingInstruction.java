@@ -51,11 +51,6 @@ public class GradingInstruction extends DomainObject {
         return credits;
     }
 
-    public GradingInstruction credits(double credits) {
-        this.credits = credits;
-        return this;
-    }
-
     public void setCredits(double credits) {
         this.credits = credits;
     }
@@ -68,18 +63,8 @@ public class GradingInstruction extends DomainObject {
         return usageCount;
     }
 
-    public GradingInstruction usageCount(int usageCount) {
-        this.usageCount = usageCount;
-        return this;
-    }
-
     public String getInstructionDescription() {
         return instructionDescription;
-    }
-
-    public GradingInstruction instructionDescription(String instructionDescription) {
-        this.instructionDescription = instructionDescription;
-        return this;
     }
 
     public void setInstructionDescription(String instructionDescription) {
@@ -90,22 +75,12 @@ public class GradingInstruction extends DomainObject {
         return gradingScale;
     }
 
-    public GradingInstruction gradingScale(String gradingScale) {
-        this.gradingScale = gradingScale;
-        return this;
-    }
-
     public void setGradingScale(String gradingScale) {
         this.gradingScale = gradingScale;
     }
 
     public String getFeedback() {
         return feedback;
-    }
-
-    public GradingInstruction feedback(String feedback) {
-        this.instructionDescription = feedback;
-        return this;
     }
 
     public void setFeedback(String feedback) {
@@ -116,33 +91,12 @@ public class GradingInstruction extends DomainObject {
         return gradingCriterion;
     }
 
-    public GradingInstruction gradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriterion = gradingCriterion;
-        return this;
-    }
-
     public void setGradingCriterion(GradingCriterion gradingCriterion) {
         this.gradingCriterion = gradingCriterion;
     }
 
     public Set<Feedback> getFeedbacks() {
         return feedbacks;
-    }
-
-    public GradingInstruction feedbacks(Set<Feedback> feedbacks) {
-        this.feedbacks = feedbacks;
-        return this;
-    }
-
-    public void addFeedback(Feedback feedback) {
-        this.feedbacks.add(feedback);
-        feedback.setGradingInstruction(this);
-    }
-
-    public GradingInstruction removeFeedbacks(Feedback feedback) {
-        this.feedbacks.remove(feedback);
-        feedback.setGradingInstruction(null);
-        return this;
     }
 
     public void setFeedbacks(Set<Feedback> feedbacks) {
