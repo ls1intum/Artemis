@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import jplag.ExitException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -563,14 +565,12 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam(required = false) String strategy) {
+    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
 
         if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
-
-        log.info("TEXT PLAGIARISM STRATEGY: " + strategy);
 
         TextExercise textExercise = optionalTextExercise.get();
 
@@ -587,15 +587,29 @@ public class TextExerciseResource {
 
         log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
 
-        // TODO: allow one more alternative using JPlag with text compare, see ProgrammingExerciseResource:961 --> checkPlagiarism()
-        // TODO: let the user specify the minimum similarity in the client
-        return ResponseEntity.ok(Stream
+        Stream<SubmissionComparisonDTO> submissionComparisonDTOStream = Stream
                 .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
                         new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
                 .parallel()
-                .flatMap(strat -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strat.getX(), strat.getY(), 0.8).entrySet().stream()
-                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strat.getY(), entry.getValue())))
-                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
+                .flatMap(comparisonStrategy -> textPlagiarismDetectionService
+                        .compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy.getX(), comparisonStrategy.getY(), 0.8).entrySet().stream()
+                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(comparisonStrategy.getY(), entry.getValue())))
+                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted();
+
+        // TODO: Let the user specify the minimum similarity in the client
+        return ResponseEntity.ok(submissionComparisonDTOStream);
+    }
+
+    /**
+     * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
+     *
+     * @param exerciseId for which all submission should be checked
+     * @return the JPlag result directory as zip file
+     */
+    @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
+        return ResponseEntity.ok("Works");
     }
 
 }
