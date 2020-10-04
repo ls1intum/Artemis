@@ -1,24 +1,17 @@
 package de.tum.in.www1.artemis.domain.text;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  *  Pairwise distance between two TextBlocks
  */
 @Entity
 @Table(name = "text_pairwise_distance")
-public class TextPairwiseDistance implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
-    private Long id;
+public class TextPairwiseDistance extends DomainObject {
 
     @Column(name = "block_i", nullable = false)
     private long blockI;
@@ -32,14 +25,6 @@ public class TextPairwiseDistance implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public long getBlockI() {
         return blockI;

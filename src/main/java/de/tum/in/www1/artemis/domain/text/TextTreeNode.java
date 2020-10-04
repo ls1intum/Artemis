@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.domain.text;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.NaturalId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  *  An node in the cluster tree. The nodes here actually have the properties of edges.
@@ -15,14 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @Table(name = "text_tree_node")
-public class TextTreeNode implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
-    private Long id;
+public class TextTreeNode extends DomainObject {
 
     @Column(name = "parent", nullable = false)
     private long parent;
@@ -40,14 +33,6 @@ public class TextTreeNode implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextExercise exercise;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public long getParent() {
         return parent;
