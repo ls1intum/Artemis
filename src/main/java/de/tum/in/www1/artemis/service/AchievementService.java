@@ -42,10 +42,20 @@ public class AchievementService {
         this.participationService = participationService;
     }
 
+    /**
+     * Finds all achievements for a user in a given course and returns them as a set
+     * @param userId
+     * @param courseId
+     */
     public Set<Achievement> findAllByUserIdAndCourseId(Long userId, Long courseId) {
         return achievementRepository.findAllByUserIdAndCourseId(userId, courseId);
     }
 
+    /**
+     * Deletes all achievements that belong to the course with the given courseId
+     * Used when a course is deleted or when achievements are disabled again for a course
+     * @param courseId
+     */
     @Transactional
     public void deleteByCourseId(Long courseId) {
         Set<Achievement> achievements = achievementRepository.findAllByCourseId(courseId);
@@ -55,6 +65,11 @@ public class AchievementService {
         achievementRepository.deleteAll(achievements);
     }
 
+    /**
+     * Deletes all achievements that belong to the exercise with the given exerciseId
+     * Used when an exercise is deleted
+     * @param exerciseId
+     */
     @Transactional
     public void deleteByExerciseId(Long exerciseId) {
         Set<Achievement> achievements = achievementRepository.findAllByExerciseId(exerciseId);
@@ -76,15 +91,29 @@ public class AchievementService {
         userRepository.saveAll(users);
     }
 
+    /**
+     * Generates achievements for a course
+     * Used when course is updated or created and achievements are enabled for course
+     * @param course
+     */
     public void generateForCourse(Course course) {
         progressBasedAchievementService.generateAchievements(course);
     }
 
+    /**
+     * Generates achievements for an exercise
+     * Used when exercise is created and achievements are enabled for corresponding course
+     * @param exercise
+     */
     public void generateForExercise(Exercise exercise) {
         pointBasedAchievementService.generateAchievements(exercise);
         timeBasedAchievementService.generateAchievements(exercise);
     }
 
+    /**
+     * Checks the result if it earned any achievements
+     * @param result
+     */
     @Transactional
     public void checkForAchievements(Result result) {
         var course = result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
@@ -105,9 +134,12 @@ public class AchievementService {
         rewardAchievement(course, exercise, AchievementType.TIME, timeRank, user);
 
         var progressRank = progressBasedAchievementService.checkForAchievement(course, user);
-        rewardAchievement(course, exercise, AchievementType.PROGRESS, progressRank, user);
+        rewardAchievement(course, null, AchievementType.PROGRESS, progressRank, user);
     }
 
+    /**
+     * Rewards or replaces an achievement
+     */
     public void rewardAchievement(Course course, Exercise exercise, AchievementType type, AchievementRank rank, User user) {
         Set<Achievement> achievements;
         Achievement achievement;
@@ -151,6 +183,10 @@ public class AchievementService {
         userRepository.save(user);
     }
 
+    /**
+     * Prepares the given set of achievements to be sent to the client by removing exercise, course and users
+     * @param achievements
+     */
     public void prepareForClient(Set<Achievement> achievements) {
         for (Achievement achievement : achievements) {
             achievement.setExercise(null);

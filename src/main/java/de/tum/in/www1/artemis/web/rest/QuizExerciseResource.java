@@ -114,7 +114,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // Generate achievements if enabled in course and not part of exam
+        // Generate achievements if enabled in course and exercise not part of exam
         if (course.getHasAchievements() && (quizExercise.getExerciseGroup() == null || quizExercise.getExerciseGroup().getExam() == null)) {
             achievementService.generateForExercise(quizExercise);
         }

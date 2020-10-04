@@ -352,7 +352,7 @@ public class ProgrammingExerciseResource {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
 
-            // Generate achievements if enabled in course and not part of exam
+            // Generate achievements if enabled in course and exercise not part of exam
             if (course.getHasAchievements() && (newProgrammingExercise.getExerciseGroup() == null || newProgrammingExercise.getExerciseGroup().getExam() == null)) {
                 achievementService.generateForExercise(newProgrammingExercise);
             }

@@ -291,7 +291,7 @@ public class ExerciseService {
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
-        // delete the Achievements
+        // delete the achievements
         achievementService.deleteByExerciseId(exercise.getId());
 
         if (exercise.hasExerciseGroup()) {

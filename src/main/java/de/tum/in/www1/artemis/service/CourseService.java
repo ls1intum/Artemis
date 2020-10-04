@@ -249,7 +249,7 @@ public class CourseService {
             examService.deleteById(exam.getId());
         }
 
-        // delete the Achievements
+        // delete the achievements
         achievementService.deleteByCourseId(course.getId());
 
         courseRepository.deleteById(course.getId());
