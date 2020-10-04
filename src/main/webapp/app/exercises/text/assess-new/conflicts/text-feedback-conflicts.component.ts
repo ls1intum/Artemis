@@ -61,8 +61,8 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         super(jhiAlertService, accountService, assessmentsService, translateService, structuredGradingCriterionService);
         const state = router.getCurrentNavigation()?.extras.state as { submission: TextSubmission };
         this.leftFeedbackId = Number(activatedRoute.snapshot.paramMap.get('feedbackId'));
-        this.leftSubmission = state.submission;
-        this.exercise = this.leftSubmission.participation?.exercise as TextExercise;
+        this.leftSubmission = state?.submission;
+        this.exercise = this.leftSubmission?.participation?.exercise as TextExercise;
         this.leftTextBlockRefs = [];
         this.leftUnusedTextBlockRefs = [];
         this.rightTextBlockRefs = [];
