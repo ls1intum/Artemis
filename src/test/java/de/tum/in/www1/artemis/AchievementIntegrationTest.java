@@ -126,7 +126,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         participationRepository.save(participation);
         achievementService.checkForAchievements(result);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsFirstCourse.size()).as("User got an achievement").isEqualTo(1);
+        assertThat(achievementsFirstCourse.size()).as("User got two achievements").isEqualTo(2);
     }
 
     private void initTest() throws Exception {
