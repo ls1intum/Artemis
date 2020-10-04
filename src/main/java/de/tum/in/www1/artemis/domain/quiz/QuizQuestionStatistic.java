@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -20,9 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
-public abstract class QuizQuestionStatistic extends QuizStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public abstract class QuizQuestionStatistic extends QuizStatistic {
 
     @Column(name = "rated_correct_counter")
     private Integer ratedCorrectCounter = 0;

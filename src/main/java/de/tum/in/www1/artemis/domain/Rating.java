@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,11 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @Entity
 @Table(name = "result_rating")
 @JsonInclude(Include.NON_EMPTY)
-public class Rating implements Serializable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Rating extends DomainObject {
 
     @Column(name = "rating")
     private Integer rating;
@@ -26,14 +19,6 @@ public class Rating implements Serializable {
     @OneToOne
     @JoinColumn(name = "result_id")
     private Result result;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Integer getRating() {
         return rating;
@@ -49,11 +34,6 @@ public class Rating implements Serializable {
 
     public void setResult(Result result) {
         this.result = result;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

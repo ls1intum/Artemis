@@ -106,6 +106,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
@@ -162,6 +163,9 @@ public class DatabaseUtilService {
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -1417,6 +1421,26 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
+        Course course = addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3));
+        programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
+    }
+
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
@@ -1491,9 +1515,10 @@ public class DatabaseUtilService {
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -1890,9 +1915,8 @@ public class DatabaseUtilService {
         return hints;
     }
 
-    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
-        final var lazyExercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> T addHintsToProblemStatement(T exercise) {
@@ -2063,8 +2087,8 @@ public class DatabaseUtilService {
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
-        System.out.println(sa.toString());
-        System.out.println(sa.hashCode());
+        System.out.println("ShortAnswer: " + sa.toString());
+        System.out.println("ShortAnswer.hashCode: " + sa.hashCode());
         sa.copyQuestionId();
         return sa;
     }
@@ -2109,8 +2133,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         dnd.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(dnd.toString());
-        System.out.println(dnd.hashCode());
+        System.out.println("DnD: " + dnd.toString());
+        System.out.println("DnD.hashCode: " + dnd.hashCode());
         dnd.copyQuestionId();
         return dnd;
     }
@@ -2127,8 +2151,8 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(mc.toString());
-        System.out.println(mc.hashCode());
+        System.out.println("MC: " + mc.toString());
+        System.out.println("MC.hashCode: " + mc.hashCode());
         mc.copyQuestionId();
         return mc;
     }
@@ -2140,7 +2164,7 @@ public class DatabaseUtilService {
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
      */
-    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+    public QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
         QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
         QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
@@ -2179,8 +2203,6 @@ public class DatabaseUtilService {
             else {
                 quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
             }
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
         }
         quizSubmission.submitted(submitted);
         quizSubmission.submissionDate(submissionDate);

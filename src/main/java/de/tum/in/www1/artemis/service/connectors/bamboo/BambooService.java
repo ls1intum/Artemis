@@ -47,9 +47,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
@@ -453,7 +451,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the created result.
      */
     @Override
-    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
+    public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {
@@ -582,10 +580,11 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
-        result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
+        result.setScore(0L); // the real score is calculated in the grading service
         result.setParticipation((Participation) participation);
 
-        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
+        addFeedbackToResult(result, buildResult.getBuild().getJobs(), participation.getProgrammingExercise().isStaticCodeAnalysisEnabled());
+        return result;
     }
 
     /**
@@ -613,89 +612,15 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Converts build result details into feedback and stores it in the result object
-     * Use addFeedbackToResultNew
-     *
-     * @param result to which to add the feedback.
-     * @param failedTests All failed tests from the the rest API of bamboo
-     * @return a list of feedbacks itemsstored in a result
-     */
-    @Deprecated(since = "4.4.0", forRemoval = true)
-    public List<Feedback> addFeedbackToResult(Result result, List<BambooTestResultDTO> failedTests) {
-        if (failedTests == null) {
-            return null;
-        }
-
-        try {
-            final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
-            if (!failedTests.isEmpty()) {
-                result.setHasFeedback(true);
-            }
-            failedTests.forEach(failedTest -> {
-                final var errorMessageString = failedTest.getErrors().getErrorMessages().stream().map(BambooTestResultDTO.BambooTestErrorDTO::getMessage)
-                        .map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).reduce("", String::concat);
-
-                createAutomaticFeedback(result, failedTest.getMethodName(), false, errorMessageString);
-            });
-        }
-        catch (Exception failedToParse) {
-            log.error("Parsing from bamboo to feedback failed" + failedToParse);
-        }
-
-        return result.getFeedbacks();
-    }
-
-    /**
-     * Filters and processes a feedback error message, thereby removing any unwanted strings depending on
-     * the programming language, or just reformatting it to only show the most important details.
-     *
-     * @param programmingLanguage The programming language for which the feedback was generated
-     * @param message The raw error message in the feedback
-     * @return A filtered and better formatted error message
-     */
-    private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            // Splitting string at the first linebreak to only get the first line of the Exception
-            return message.split("\\n", 2)[0]
-                    // junit 4
-                    .replace("java.lang.AssertionError: ", "")
-                    // junit 5
-                    .replace("org.opentest4j.AssertionFailedError: ", "");
-        }
-
-        return message;
-    }
-
-    /**
-     * Create an automatic feedback object from the given parameter.
-     * @param result to which the feedback belongs.
-     * @param methodName test case method name.
-     * @param positive if the test case was successful.
-     * @param errorMessageString if there was an error what the error is. Will be shortened if longer than FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS.
-     */
-    private void createAutomaticFeedback(Result result, String methodName, boolean positive, @Nullable String errorMessageString) {
-        Feedback feedback = new Feedback();
-        feedback.setText(methodName);
-        // The assertion message can be longer than the allowed char limit, so we shorten it here if needed.
-        if (errorMessageString != null && errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
-            errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
-        }
-        feedback.setDetailText(errorMessageString);
-        feedback.setType(FeedbackType.AUTOMATIC);
-        feedback.setPositive(positive);
-        result.addFeedback(feedback);
-    }
-
-    /**
-     * Converts build result details into feedback and stores it in the result object
      *
      * @param result the result for which the feedback should be added
      * @param jobs   the jobs list of the requestBody
      * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
      * @return a list of feedback items stored in a result
      */
-    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
+    private void addFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
         if (jobs == null) {
-            return null;
+            return;
         }
 
         try {
@@ -705,26 +630,23 @@ public class BambooService implements ContinuousIntegrationService {
 
                 // 1) add feedback for failed test cases
                 for (final var failedTest : job.getFailedTests()) {
-                    String methodName = failedTest.getName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
-
-                    final String errorMessageString = failedTest.getErrors().stream().map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).reduce("",
-                            String::concat);
-
-                    log.debug("errorMSGString is {}", errorMessageString);
-
-                    createAutomaticFeedback(result, methodName, false, errorMessageString);
+                    result.addFeedback(feedbackService.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
                 }
 
                 // 2) add feedback for passed test cases
                 for (final var successfulTest : job.getSuccessfulTests()) {
-                    String methodName = successfulTest.getName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
-
-                    createAutomaticFeedback(result, methodName, true, null);
+                    result.addFeedback(feedbackService.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
                 }
+
                 // 3) process static code analysis feedback
                 boolean hasStaticCodeAnalysisFeedback = false;
                 if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled)) {
-                    hasStaticCodeAnalysisFeedback = addStaticCodeAnalysisFeedbackToResult(result, job.getStaticCodeAnalysisReports());
+                    var reports = job.getStaticCodeAnalysisReports();
+                    if (reports != null) {
+                        var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
+                        result.addFeedbacks(feedbackList);
+                        hasStaticCodeAnalysisFeedback = feedbackList.size() > 0;
+                    }
                 }
 
                 // Relevant feedback exists if tests failed or static code analysis found issues
@@ -737,91 +659,6 @@ public class BambooService implements ContinuousIntegrationService {
         catch (Exception e) {
             log.error("Could not get feedback from jobs " + e);
         }
-
-        return result;
-    }
-
-    /**
-     * Transforms build result static code analysis reports to feedback.
-     *
-     * @param result The result to which the static assessment feedback will be added
-     * @param reports Static assessment reports to be transformed
-     * @return true if static code analysis feedback was created else false
-     */
-    private boolean addStaticCodeAnalysisFeedbackToResult(Result result, List<StaticCodeAnalysisReportDTO> reports) {
-        if (reports == null) {
-            return false;
-        }
-        var feedbackList = feedbackService.createFeedbackFromStaticCodeAnalysisReports(reports);
-        result.addFeedbacks(feedbackList);
-        return feedbackList.size() > 0;
-    }
-
-    /**
-     * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
-     *
-     * @param result to calculate score for.
-     * @return the score calculated.
-     */
-    private Long calculateScoreForResult(Result result, int skippedTests) {
-
-        if (result.isSuccessful()) {
-            return (long) 100;
-        }
-
-        if (result.getResultString() != null && !result.getResultString().isEmpty()) {
-
-            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) passed");
-            Matcher matcher = pattern.matcher(result.getResultString());
-
-            if (matcher.find()) {
-                float successfulTests = Float.parseFloat(matcher.group(1));
-                float totalTests = Float.parseFloat(matcher.group(2));
-                float score = successfulTests / totalTests;
-                return (long) (score * 100);
-            }
-        }
-        return (long) 0;
-    }
-
-    @Override
-    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
-        final var buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
-        if (buildResults == null) {
-            return Optional.empty();
-        }
-        // The retrieved build result must match the commitHash of the provided submission.
-        String commitHash = buildResults.getVcsRevisionKey();
-        if (!commitHash.equalsIgnoreCase(submission.getCommitHash())) {
-            return Optional.empty();
-        }
-        Result result = new Result();
-        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
-
-        if (buildResults.getBuildTestSummary().equals("No tests found")) {
-            result.setResultString("No tests found");
-        }
-        else {
-            int total = buildResults.getTestResults().getAll();
-            int passed = buildResults.getTestResults().getSuccessful();
-            result.setResultString(String.format("%d of %d passed", passed, total));
-        }
-
-        result.setCompletionDate(buildResults.getBuildCompletedDate());
-        result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
-        result.setParticipation((Participation) participation);
-        result.setSubmission(submission);
-
-        addFeedbackToResult(result, buildResults.getTestResults().getFailedTests().getTestResults());
-        result = resultRepository.save(result);
-
-        submission.setBuildArtifact(buildResults.getArtifacts() != null && !buildResults.getArtifacts().getArtifacts().isEmpty());
-        submission.setBuildFailed(result.getResultString().equals("No tests found"));
-        programmingSubmissionRepository.save(submission);
-
-        return Optional.of(result);
     }
 
     /**

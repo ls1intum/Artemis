@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -18,11 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "build_log_entry")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class BuildLogEntry {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class BuildLogEntry extends DomainObject {
 
     @Column(name = "time")
     private ZonedDateTime time;
@@ -47,14 +42,6 @@ public class BuildLogEntry {
         this.time = time;
         this.log = log;
         this.programmingSubmission = programmingSubmission;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public ZonedDateTime getTime() {
@@ -82,30 +69,7 @@ public class BuildLogEntry {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
-            return false;
-        }
-        BuildLogEntry that = (BuildLogEntry) object;
-        if (id != null && that.id != null) {
-            return Objects.equals(id, that.id);
-        }
-        else if (time != null && that.time != null) {
-            return Objects.equals(time.toInstant(), that.time.toInstant()) && Objects.equals(log, that.log);
-        }
-        else if (time == null && that.time == null) {
-            return Objects.equals(log, that.log);
-        }
-        else {
-            return false;
-        }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, time, log);
+    public String toString() {
+        return "BuildLogEntry{" + "time=" + time + ", log='" + log + '\'' + '}';
     }
 }

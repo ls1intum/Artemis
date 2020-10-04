@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -39,14 +37,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
         @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"), @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public abstract class Submission extends DomainObject {
 
     @Column(name = "submitted")
     @JsonView(QuizView.Before.class)
@@ -133,14 +124,6 @@ public abstract class Submission implements Serializable {
         this.submissionDate = submissionDate;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Boolean isSubmitted() {
         return submitted != null ? submitted : false;
     }
@@ -191,26 +174,6 @@ public abstract class Submission implements Serializable {
 
     public void setExampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Submission submission = (Submission) o;
-        if (submission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), submission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
