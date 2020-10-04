@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.AchievementRepository;
 import de.tum.in.www1.artemis.service.AchievementService;
 import de.tum.in.www1.artemis.service.UserService;
 
@@ -25,13 +24,10 @@ public class AchievementResource {
 
     private final AchievementService achievementService;
 
-    private final AchievementRepository achievementRepository;
-
     private final UserService userService;
 
-    public AchievementResource(AchievementService achievementService, AchievementRepository achievementRepository, UserService userService) {
+    public AchievementResource(AchievementService achievementService, UserService userService) {
         this.achievementService = achievementService;
-        this.achievementRepository = achievementRepository;
         this.userService = userService;
     }
 
@@ -46,7 +42,7 @@ public class AchievementResource {
     public ResponseEntity<Set<Achievement>> getAchievementsForUserInCourse(@PathVariable Long courseId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get achievements for user : {} in course : {}", user.getLogin(), courseId);
-        Set<Achievement> achievements = achievementRepository.findAllByUserIdAndCourseId(user.getId(), courseId);
+        Set<Achievement> achievements = achievementService.findAllByUserIdAndCourseId(user.getId(), courseId);
         achievementService.prepareForClient(achievements);
         return ResponseEntity.ok(achievements);
     }
