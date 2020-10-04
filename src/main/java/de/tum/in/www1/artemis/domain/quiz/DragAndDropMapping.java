@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -11,6 +8,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,14 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "drag_and_drop_mapping")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragAndDropMapping implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class DragAndDropMapping extends DomainObject {
 
     @Column(name = "drag_item_index")
     @JsonView(QuizView.Before.class)
@@ -56,15 +48,6 @@ public class DragAndDropMapping implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestion question;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Integer getDragItemIndex() {
         return dragItemIndex;
@@ -130,26 +113,6 @@ public class DragAndDropMapping implements Serializable {
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropMapping dragAndDropMapping = (DragAndDropMapping) o;
-        if (dragAndDropMapping.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropMapping.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
