@@ -11,83 +11,125 @@ export class InformativeMarketingInstructorsComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        const featureOne = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
+        const featureUnifiedProcess = new Feature(
+            'informativeMarketing.instructor.feature.unifiedProcess.title',
+            'informativeMarketing.instructor.feature.unifiedProcess.shortDescription',
+            'informativeMarketing.instructor.feature.unifiedProcess.descriptionTextOne',
+            'informativeMarketing.instructor.feature.unifiedProcess.icon',
         );
-        featureOne.centerTextAndImageOne();
+        featureUnifiedProcess.centerTextAndImageOne();
 
-        const featureTwo = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
+        const featureConfiguration = new Feature(
+            'informativeMarketing.instructor.feature.configuration.title',
+            'informativeMarketing.instructor.feature.configuration.shortDescription',
+            'informativeMarketing.instructor.feature.configuration.descriptionTextOne',
+            'informativeMarketing.instructor.feature.configuration.icon',
             undefined,
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'informativeMarketing.instructor.feature.configuration.imageOne',
         );
 
-        const featureThree = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
+        const featureExerciseTypes = new Feature(
+            'informativeMarketing.instructor.feature.exerciseTypes.title',
+            'informativeMarketing.instructor.feature.exerciseTypes.shortDescription',
+            'informativeMarketing.instructor.feature.exerciseTypes.descriptionTextOne',
+            'informativeMarketing.instructor.feature.exerciseTypes.icon',
             undefined,
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'informativeMarketing.instructor.feature.exerciseTypes.imageOne',
         );
-        featureThree.alignFirstImageLeft();
+        featureExerciseTypes.alignFirstImageLeft();
 
-        const featureFour = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
+        const featureExerciseVariants = new Feature(
+            'informativeMarketing.instructor.feature.exerciseVariants.title',
+            'informativeMarketing.instructor.feature.exerciseVariants.shortDescription',
+            'informativeMarketing.instructor.feature.exerciseVariants.descriptionTextOne',
+            'informativeMarketing.instructor.feature.exerciseVariants.icon',
             undefined,
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
+            'informativeMarketing.instructor.feature.exerciseVariants.imageOne',
         );
-        featureFour.centerTextAndImageOne();
+        featureExerciseVariants.centerTextAndImageOne();
 
-        const featureFive = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
+        const featureSessionMonitoring = new Feature(
+            'informativeMarketing.instructor.feature.sessionMonitoring.title',
+            'informativeMarketing.instructor.feature.sessionMonitoring.shortDescription',
+            'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
+            'informativeMarketing.instructor.feature.sessionMonitoring.icon',
+            'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
         );
 
-        const featureSix = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
+        const featurePlagiarismDetection = new Feature(
+            'informativeMarketing.instructor.feature.plagiarismDetection.title',
+            'informativeMarketing.instructor.feature.plagiarismDetection.shortDescription',
+            'informativeMarketing.instructor.feature.plagiarismDetection.descriptionTextOne',
+            'informativeMarketing.instructor.feature.plagiarismDetection.icon',
             undefined,
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
-            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
+            'informativeMarketing.instructor.feature.plagiarismDetection.imageOne',
+            'informativeMarketing.instructor.feature.plagiarismDetection.imageTwo',
         );
 
-        const featureSeven = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
-            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
+        const featureAssessment = new Feature(
+            'informativeMarketing.instructor.feature.assessment.title',
+            'informativeMarketing.instructor.feature.assessment.shortDescription',
+            'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessment.icon',
+            'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessment.imageOne',
+            'informativeMarketing.instructor.feature.assessment.imageTwo',
         );
 
-        const featureEight = new Feature(
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.title',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.shortDescription',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'fa fa-code',
-            'informativeMarketing.instructor.feature.multipleExerciseTypes.fullDescription',
-            'https://www.talkwalker.com/images/2020/blog-headers/image-analysis.png',
-            'https://cdn.eso.org/images/thumb300y/eso1907a.jpg',
+        const featureAssessmentMonitoring = new Feature(
+            'informativeMarketing.instructor.feature.assessmentMonitoring.title',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.shortDescription',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.icon',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.imageOne',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.imageTwo',
         );
-        featureEight.alignFirstImageLeft();
+        featureAssessmentMonitoring.alignFirstImageLeft();
 
-        this.features = [featureOne, featureTwo, featureThree, featureFour, featureFive, featureSix, featureSeven, featureEight];
+        const featureGamification = new Feature(
+            'informativeMarketing.instructor.feature.assessmentGamification.title',
+            'informativeMarketing.instructor.feature.assessmentGamification.shortDescription',
+            'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.icon',
+            'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.imageOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.imageTwo',
+        );
+
+        const featureComplaints = new Feature(
+            'informativeMarketing.instructor.feature.complaints.title',
+            'informativeMarketing.instructor.feature.complaints.shortDescription',
+            'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
+            'informativeMarketing.instructor.feature.complaints.icon',
+            'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
+            'informativeMarketing.instructor.feature.complaints.imageOne',
+            'informativeMarketing.instructor.feature.complaints.imageTwo',
+        );
+
+        const featureStatistics = new Feature(
+            'informativeMarketing.instructor.feature.statistics.title',
+            'informativeMarketing.instructor.feature.statistics.shortDescription',
+            'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
+            'informativeMarketing.instructor.feature.statistics.icon',
+            'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
+            'informativeMarketing.instructor.feature.statistics.imageOne',
+            'informativeMarketing.instructor.feature.statistics.imageTwo',
+        );
+
+        this.features = [
+            featureUnifiedProcess,
+            featureConfiguration,
+            featureExerciseTypes,
+            featureExerciseVariants,
+            featureSessionMonitoring,
+            featurePlagiarismDetection,
+            featureAssessment,
+            featureAssessmentMonitoring,
+            featureGamification,
+            featureComplaints,
+            featureStatistics,
+        ];
     }
 
     navigateToFeature(featureId: string): void {
