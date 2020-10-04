@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -11,9 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "SA")
-public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ShortAnswerSpotCounter extends QuizStatisticCounter {
 
     @ManyToOne
     @JsonIgnore

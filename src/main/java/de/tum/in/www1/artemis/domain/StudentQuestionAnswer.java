@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -19,13 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "student_question_answer")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StudentQuestionAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class StudentQuestionAnswer extends DomainObject {
 
     @Lob
     @Column(name = "answer_text")
@@ -47,15 +39,6 @@ public class StudentQuestionAnswer implements Serializable {
     @ManyToOne
     @JsonIgnoreProperties("answers")
     private StudentQuestion question;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getAnswerText() {
         return answerText;
@@ -133,27 +116,6 @@ public class StudentQuestionAnswer implements Serializable {
 
     public void setQuestion(StudentQuestion studentQuestion) {
         this.question = studentQuestion;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        StudentQuestionAnswer studentQuestionAnswer = (StudentQuestionAnswer) o;
-        if (studentQuestionAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), studentQuestionAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
