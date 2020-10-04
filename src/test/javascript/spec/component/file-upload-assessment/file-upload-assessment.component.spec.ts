@@ -14,7 +14,6 @@ import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -37,7 +36,6 @@ import { By } from '@angular/platform-browser';
 import { throwError } from 'rxjs';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 
 chai.use(sinonChai);
