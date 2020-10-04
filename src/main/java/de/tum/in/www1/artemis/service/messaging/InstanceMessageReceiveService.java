@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
-import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -33,14 +33,14 @@ public class InstanceMessageReceiveService {
 
     protected TextExerciseService textExerciseService;
 
-    private Optional<TextClusteringScheduleService> textClusteringScheduleService;
+    private Optional<AtheneScheduleService> atheneScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseService textExerciseService, Optional<TextClusteringScheduleService> textClusteringScheduleService, HazelcastInstance hazelcastInstance) {
+                                         TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseService = textExerciseService;
-        this.textClusteringScheduleService = textClusteringScheduleService;
+        this.atheneScheduleService = atheneScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -77,18 +77,18 @@ public class InstanceMessageReceiveService {
     public void processScheduleTextExercise(Long exerciseId) {
         log.info("Received schedule update for text exercise " + exerciseId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(textExercise));
+        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForAtheneIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for text exercise " + exerciseId);
-        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(exerciseId));
+        atheneScheduleService.ifPresent(service -> service.cancelScheduledAthene(exerciseId));
     }
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
         log.info("Received schedule instant clustering for text exercise " + exerciseId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForInstantClustering(textExercise));
+        atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
     }
 
     public void processUnlockAllRepositories(Long exerciseId) {

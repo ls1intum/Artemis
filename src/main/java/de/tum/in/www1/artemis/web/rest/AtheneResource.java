@@ -5,8 +5,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +46,16 @@ public class AtheneResource {
 
     private final TextSubmissionService textSubmissionService;
 
+    private final AtheneService atheneService;
+
     public AtheneResource(TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository, TextAssessmentQueueService textAssessmentQueueService,
-                          TextExerciseRepository textExerciseRepository, TextSubmissionService textSubmissionService) {
+                          TextExerciseRepository textExerciseRepository, TextSubmissionService textSubmissionService, AtheneService atheneService) {
         this.textBlockRepository = textBlockRepository;
         this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionService = textSubmissionService;
+        this.atheneService = atheneService;
     }
 
     /**
@@ -71,6 +74,7 @@ public class AtheneResource {
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList();
         for (AtheneDTO.TextBlock t: blocks) {
+            // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
             newBlock.setId(t.id);
             newBlock.setText(t.text);
@@ -120,6 +124,7 @@ public class AtheneResource {
             cluster.setBlocks(updatedBlockReferences);
         }
 
+        // Save clusters in Database
         textClusterRepository.saveAll(savedClusters);
     }
 
@@ -133,12 +138,17 @@ public class AtheneResource {
      */
     @PostMapping(value = "/{exerciseId}", consumes = APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<Result> testMethod(@PathVariable Long exerciseId, @RequestBody AtheneDTO requestBody, @RequestHeader("Authorization") String auth) {
+    public ResponseEntity<Result> saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneDTO requestBody, @RequestHeader("Authorization") String auth) {
         log.debug("REST request to inform about new Athene results for exercise: {}", exerciseId);
 
         // Check Authorization header
         if (!auth.equals(API_SECRET)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Check if job should be running, otherwise reject results
+        if (!atheneService.isTaskRunning(exerciseId)) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
         }
 
         // Parse requestBody
@@ -152,8 +162,10 @@ public class AtheneResource {
         //Save clusters in Database
         processClusters(clusters, textBlockMap, exerciseId);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        // Notify atheneService of finished task
+        atheneService.finishTask(exerciseId);
 
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 }
