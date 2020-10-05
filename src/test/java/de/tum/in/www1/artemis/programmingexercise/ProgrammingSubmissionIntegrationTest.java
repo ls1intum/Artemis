@@ -148,7 +148,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var firstParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login1);
         final var secondParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login2);
         final var thirdParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login3);
-        // Set test cases changed to true; after the build run it should be false);
+        // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
         bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
