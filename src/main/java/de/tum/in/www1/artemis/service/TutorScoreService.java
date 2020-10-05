@@ -228,7 +228,7 @@ public class TutorScoreService {
      */
     private TutorScore addComplaintsAndFeedbackRequests(Result result, TutorScore tutorScore, Exercise exercise) {
         // add complaints and feedback requests
-        if (result.hasComplaint() == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(result.hasComplaint())) {
             var complaintOptional = complaintRepository.findByResult_Id(result.getId());
 
             if (complaintOptional.isPresent()) {
@@ -239,7 +239,7 @@ public class TutorScoreService {
                     tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
                     tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() + exercise.getMaxScore());
 
-                    if (complaint.isAccepted() == Boolean.TRUE) {
+                    if (Boolean.TRUE.equals(complaint.isAccepted())) {
                         tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() + 1);
                     }
 
@@ -287,7 +287,7 @@ public class TutorScoreService {
      */
     private TutorScore removeComplaintsAndFeedbackRequests(TutorScore tutorScore, Result deletedResult, Exercise exercise) {
         // handle complaints and feedback requests
-        if (deletedResult.hasComplaint() == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(deletedResult.hasComplaint())) {
             var complaintOptional = complaintRepository.findByResult_Id(deletedResult.getId());
 
             if (complaintOptional.isPresent()) {
@@ -300,7 +300,7 @@ public class TutorScoreService {
                         tutorScore.setComplaintsPoints(tutorScore.getComplaintsPoints() - exercise.getMaxScore());
                     }
 
-                    if (complaint.isAccepted() == Boolean.TRUE) {
+                    if (Boolean.TRUE.equals(complaint.isAccepted())) {
                         tutorScore.setAcceptedComplaints(tutorScore.getAcceptedComplaints() - 1);
                     }
 
