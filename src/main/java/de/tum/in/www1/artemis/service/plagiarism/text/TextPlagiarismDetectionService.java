@@ -115,12 +115,12 @@ public class TextPlagiarismDetectionService {
         // 1) filter empty submissions, i.e. repositories with no student commits
         // 2) filter submissions with a result score of 0%
 
-        final var JPLAG_RESULT_FOLDER_NAME = "./tmp/jplag-result";
-        final var SUBMISSIONS_FOLDER_NAME = "./tmp/submissions";
-        final var ZIP_FILE_PATH = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
+        final var jplagResultFolderName = "./tmp/jplag-result";
+        final var submissionsFolderName = "./tmp/submissions";
+        final var zipFilePath = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
                 textExercise.getShortName(), System.currentTimeMillis()));
 
-        final var submissionFolderFile = new File(SUBMISSIONS_FOLDER_NAME);
+        final var submissionFolderFile = new File(submissionsFolderName);
         submissionFolderFile.mkdirs();
 
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
@@ -131,14 +131,14 @@ public class TextPlagiarismDetectionService {
             submission.getParticipation().setSubmissions(null);
 
             try {
-                textSubmissionExportService.saveSubmissionToFile(textExercise, submission, SUBMISSIONS_FOLDER_NAME);
+                textSubmissionExportService.saveSubmissionToFile(textExercise, submission, submissionsFolderName);
             }
             catch (IOException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
             }
         });
 
-        final var jplagResultFolderFile = new File(JPLAG_RESULT_FOLDER_NAME);
+        final var jplagResultFolderFile = new File(jplagResultFolderName);
         jplagResultFolderFile.mkdirs();
 
         final var jplagArgs = new String[] {
@@ -146,7 +146,7 @@ public class TextPlagiarismDetectionService {
                 "-l", "text",
 
                 // Name of directory in which the resulting web pages will be stored
-                "-r", JPLAG_RESULT_FOLDER_NAME,
+                "-r", jplagResultFolderName,
 
                 // Option to look at sub-directories too
                 "-s",
@@ -158,14 +158,14 @@ public class TextPlagiarismDetectionService {
                 "-vq",
 
                 // The root-directory that contains all submissions
-                SUBMISSIONS_FOLDER_NAME };
+                submissionsFolderName };
 
         final CommandLineOptions options = new CommandLineOptions(jplagArgs, null);
         final Program program = new Program(options);
         program.run();
 
-        zipFileService.createZipFileWithFolderContent(ZIP_FILE_PATH, jplagResultFolderFile.toPath());
-        fileService.scheduleForDeletion(ZIP_FILE_PATH, 5);
+        zipFileService.createZipFileWithFolderContent(zipFilePath, jplagResultFolderFile.toPath());
+        fileService.scheduleForDeletion(zipFilePath, 5);
 
         // cleanup
         if (jplagResultFolderFile.exists()) {
@@ -176,7 +176,7 @@ public class TextPlagiarismDetectionService {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        return new File(ZIP_FILE_PATH.toString());
+        return new File(zipFilePath.toString());
     }
 
 }
