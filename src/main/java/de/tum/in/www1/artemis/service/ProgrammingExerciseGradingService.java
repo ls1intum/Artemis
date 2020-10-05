@@ -415,15 +415,17 @@ public class ProgrammingExerciseGradingService {
 
         double codeAnalysisPenaltyPoints = 0;
 
-        var gradedCategories = staticCodeAnalysisService.findByExerciseId(programmingExercise.getId()).stream()
-                .filter(staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getState().equals(CategoryState.GRADED)).collect(Collectors.toList());
+        var feedbackByCategory = staticCodeAnalysisFeedback.stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length())));
 
-        for (var category : gradedCategories) {
+        for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
+
+            if (!category.getState().equals(CategoryState.GRADED)) {
+                continue;
+            }
 
             // get all feedback in this category
-            List<Feedback> categoryFeedback = staticCodeAnalysisFeedback.stream()
-                    .filter(feedback -> feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length()).equals(category.getName()))
-                    .collect(Collectors.toList());
+            List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
 
             // calculate the sum of all per-feedback penalties
             double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
