@@ -258,7 +258,7 @@ describe('TextEditorComponent', () => {
                 {
                     id: 1,
                     detailText: 'abc',
-                    reference: null,
+                    reference: undefined,
                     type: FeedbackType.MANUAL,
                 } as Feedback,
             ],
@@ -273,7 +273,7 @@ describe('TextEditorComponent', () => {
             feedbacks: [
                 {
                     id: 1,
-                    reference: null,
+                    reference: undefined,
                     type: FeedbackType.MANUAL_UNREFERENCED,
                 } as Feedback,
             ],
