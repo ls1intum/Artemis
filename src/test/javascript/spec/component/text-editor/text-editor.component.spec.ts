@@ -227,6 +227,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should not submit without submission', () => {
+        // @ts-ignore
         delete comp.submission;
         sinon.spy(textSubmissionService, 'update');
         comp.submit();
