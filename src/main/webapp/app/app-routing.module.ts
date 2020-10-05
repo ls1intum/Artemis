@@ -2,8 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
-import { InformativeMarketingInstructorsComponent } from 'app/informative-marketing/instructors/informative-marketing-instructors.component';
-import { InformativeMarketingStudentsComponent } from 'app/informative-marketing/students/informative-marketing-students.component';
+import { InformativeMarketingComponent } from 'app/informative-marketing/informative-marketing.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -65,14 +64,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'informative-marketing/instructors',
-                    component: InformativeMarketingInstructorsComponent,
+                    component: InformativeMarketingComponent,
                     data: {
                         pageTitle: 'informativeMarketing.instructor.pageTitle',
                     },
                 },
                 {
                     path: 'informative-marketing/students',
-                    component: InformativeMarketingStudentsComponent,
+                    component: InformativeMarketingComponent,
                     data: {
                         pageTitle: 'informativeMarketing.students.pageTitle',
                     },

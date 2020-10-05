@@ -1,10 +1,9 @@
 {
     "informativeMarketing": {
         "title": "Online Exams in Artemis",
-        "subTitle": "by Students for Students",
         "instructor": {
             "pageTitle": "Exam Features for Instructors",
-            "featureOverview": "Feature Showcase for Instructors",
+            "featureOverview": "Features Instructors",
             "featureDetails": "Feature Details",
             "feature": {
                 "unifiedProcess": {
@@ -104,7 +103,7 @@
         },
         "students": {
             "pageTitle": "Exam Features for Students",
-            "featureOverview": "Feature Showcase for Students",
+            "featureOverview": "Features Students",
             "featureDetails": "Feature Details",
             "feature": {
                 "multipleExerciseTypes": {
