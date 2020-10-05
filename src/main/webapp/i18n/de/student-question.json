@@ -13,8 +13,8 @@
             "overview": {
                 "title": "Fragen",
                 "noQuestions": "Es wurden noch keine Fragen in diesem Kurs gestellt",
-                "showApproved": "zeige Fragen mit bestätigten Antworten an",
-                "hideApproved": "verstecke Fragen mit bestätigten Antworten"
+                "showApproved": "Zeige Fragen mit bestätigten Antworten an",
+                "hideApproved": "Verstecke Fragen mit bestätigten Antworten"
             }
         },
         "questionAnswer": {
