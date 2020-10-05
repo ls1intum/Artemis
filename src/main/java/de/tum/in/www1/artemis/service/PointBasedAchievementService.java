@@ -15,13 +15,13 @@ public class PointBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final static long percentGold = 100L;
+    private final static long PERCENT_GOLD = 100L;
 
-    private final static long percentSilver = 80L;
+    private final static long PERCENT_SILVER = 80L;
 
-    private final static long percentBronze = 60L;
+    private final static long PERCENT_BRONZE = 60L;
 
-    private final static long percentUnranked = 50L;
+    private final static long PERCENT_UNRANKED = 50L;
 
     public PointBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
@@ -34,16 +34,16 @@ public class PointBasedAchievementService {
             return null;
         }
 
-        if (score >= percentGold) {
+        if (score >= PERCENT_GOLD) {
             return AchievementRank.GOLD;
         }
-        else if (score >= percentSilver) {
+        else if (score >= PERCENT_SILVER) {
             return AchievementRank.SILVER;
         }
-        else if (score >= percentBronze) {
+        else if (score >= PERCENT_BRONZE) {
             return AchievementRank.BRONZE;
         }
-        else if (score >= percentUnranked) {
+        else if (score >= PERCENT_UNRANKED) {
             return AchievementRank.UNRANKED;
         }
         return null;
@@ -56,13 +56,13 @@ public class PointBasedAchievementService {
     public void generateAchievements(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Set<Achievement> achievementsToSave = new HashSet<>();
-        achievementsToSave.add(new Achievement("Point Master", "Score " + percentGold + " percent of the points in exercise " + exercise.getTitle(), "award", AchievementRank.GOLD,
+        achievementsToSave.add(new Achievement("Point Master", "Score " + PERCENT_GOLD + " percent of the points in exercise " + exercise.getTitle(), "award", AchievementRank.GOLD,
                 AchievementType.POINT, course, exercise));
-        achievementsToSave.add(new Achievement("Point Intermediate", "Score at least" + percentSilver + " percent of the points in exercise " + exercise.getTitle(), "award",
+        achievementsToSave.add(new Achievement("Point Intermediate", "Score at least" + PERCENT_SILVER + " percent of the points in exercise " + exercise.getTitle(), "award",
                 AchievementRank.SILVER, AchievementType.POINT, course, exercise));
-        achievementsToSave.add(new Achievement("Point Beginner", "Score at least" + percentBronze + " percent of the points in exercise " + exercise.getTitle(), "award",
+        achievementsToSave.add(new Achievement("Point Beginner", "Score at least" + PERCENT_BRONZE + " percent of the points in exercise " + exercise.getTitle(), "award",
                 AchievementRank.BRONZE, AchievementType.POINT, course, exercise));
-        achievementsToSave.add(new Achievement("Point Amateur", "Score at least" + percentUnranked + " percent of the points in exercise " + exercise.getTitle(), "award",
+        achievementsToSave.add(new Achievement("Point Amateur", "Score at least" + PERCENT_UNRANKED + " percent of the points in exercise " + exercise.getTitle(), "award",
                 AchievementRank.UNRANKED, AchievementType.POINT, course, exercise));
 
         achievementRepository.saveAll(achievementsToSave);
