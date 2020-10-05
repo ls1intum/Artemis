@@ -102,8 +102,8 @@ public class QuizExercise extends Exercise {
         this.isOpenForPractice = isOpenForPractice;
     }
 
-    public Boolean isIsPlannedToStart() {
-        return isPlannedToStart;
+    public boolean isIsPlannedToStart() {
+        return Boolean.TRUE.equals(isPlannedToStart);
     }
 
     public QuizExercise isPlannedToStart(Boolean isPlannedToStart) {
@@ -144,7 +144,7 @@ public class QuizExercise extends Exercise {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart != null && isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isIsPlannedToStart() && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
