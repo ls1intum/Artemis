@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.ObjectMethodTestExclusions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -66,19 +67,22 @@ class ObjectMethodTest {
     Optional<DynamicNode> generateTestsForClass(ClassNode classNode) {
         Class<?> domainClass = classNode.getContainedClass();
         ClassInfo info = classNode.getClassInfo();
-
-        // Ignore interfaces, abstract classes, anonymous classes and annotations
-        if (info.isInterfaceOrAnnotation() || info.isAnonymousInnerClass() || info.isAbstract()) {
+        // Ignore interfaces, abstract classes, anonymous classes, annotations and generated classes
+        if (info.isInterfaceOrAnnotation() || info.isAnonymousInnerClass() || info.isAbstract() || info.getName().endsWith("_")) {
+            return Optional.empty();
+        }
+        // Ignore classes that are excluded from everything
+        if (isClassExcludedFrom(domainClass, ALL_TESTS)) {
             return Optional.empty();
         }
 
         // Add tests
-        ArrayList<DynamicNode> tests = new ArrayList<>();
+        List<DynamicNode> tests = new ArrayList<>();
         if (info.isEnum()) {
             generateTestsForEnum(tests, domainClass);
         }
         else {
-            generateTestsForStandardClasses(domainClass, info, tests);
+            generateTestsForStandardClasses(tests, domainClass, info);
         }
 
         // Only return a test container if there are any tests that can be run
@@ -91,21 +95,30 @@ class ObjectMethodTest {
     /**
      * Generates tests for {@link Enum}s in the Artemis domain package
      */
-    private static void generateTestsForEnum(ArrayList<DynamicNode> tests, Class<?> domainClass) {
+    private static void generateTestsForEnum(List<DynamicNode> tests, Class<?> domainClass) {
         // test toString and name()
-        tests.add(dynamicContainer("toString() and name() are equal", Stream.of(domainClass.getEnumConstants()).map(constant -> {
-            var name = ((Enum<?>) constant).name();
-            return dynamicTest(name, () -> assertThat(constant).hasToString(name));
-        })));
+        if (isClassNotExcludedFrom(domainClass, ENUM_TOSTRING_NAME_EQUALITY)) {
+            tests.add(dynamicContainer("toString() and name() are equal", Stream.of(domainClass.getEnumConstants()).map(constant -> {
+                var name = ((Enum<?>) constant).name();
+                return dynamicTest(name, () -> assertThat(constant).hasToString(name));
+            })));
+        }
         /*
-         * equals() and hashCode() cannot be changed for enums and don't need to be tested
+         * equals() and hashCode() cannot be changed for Enum and don't need to be tested
          */
     }
 
     /**
      * Generates tests for regular classes in the Artemis domain package
      */
-    private static void generateTestsForStandardClasses(Class<?> domainClass, ClassInfo info, ArrayList<DynamicNode> tests) {
+    private static void generateTestsForStandardClasses(List<DynamicNode> tests, Class<?> domainClass, ClassInfo info) {
+        // Tests that don't require instances
+        // >>> None at the moment <<<
+
+        // Tests that depend on creating instances
+        if (isClassExcludedFrom(domainClass, INSTANCE_TESTS)) {
+            return;
+        }
         // try to find a no-args constructor
         var noArgsConstructors = info.getConstructorInfo().filter(f -> f.getParameterInfo().length == 0);
         if (noArgsConstructors.size() == 1) {
@@ -129,7 +142,7 @@ class ObjectMethodTest {
         }
     }
 
-    private static void generateObjectMethodTests(ArrayList<DynamicNode> tests, Constructor<?> noArgsConstructor) {
+    private static void generateObjectMethodTests(List<DynamicNode> tests, Constructor<?> noArgsConstructor) {
         tests.add(dynamicTest("toString() does not throw exceptions", () -> {
             Object instance = noArgsConstructor.newInstance();
             assertDoesNotThrow(instance::toString);
@@ -144,54 +157,67 @@ class ObjectMethodTest {
         }));
     }
 
-    private static void generateIdRelatedTests(ArrayList<DynamicNode> tests, Class<?> domainClass, Constructor<?> noArgsConstructor) throws NoSuchMethodException {
+    private static void generateIdRelatedTests(List<DynamicNode> tests, Class<?> domainClass, Constructor<?> noArgsConstructor) throws NoSuchMethodException {
+        if (isClassExcludedFrom(domainClass, ID_RELATED_TESTS)) {
+            return;
+        }
         var getId = domainClass.getMethod("getId");
         var idType = getId.getReturnType();
         var setId = domainClass.getMethod("setId", idType);
         var testValues = ID_TEST_VALUES.get(idType);
+
         if (testValues == null || testValues.size() != 2) {
             tests.add(dynamicTest(GENERATE_TESTS, () -> fail("No id test values found for " + idType)));
         }
         else {
             var idA = testValues.get(0);
             var idB = testValues.get(1);
-            // getId and setId
-            tests.add(dynamicTest("getId() and setId(" + idType.getSimpleName() + ") match each other", () -> {
-                Object instance = noArgsConstructor.newInstance();
-                assertThat(getId.invoke(instance)).isNull();
-                setId.invoke(instance, idA);
-                assertThat(getId.invoke(instance)).isEqualTo(idA);
-            }));
-            // two instances without id
-            tests.add(dynamicTest("equals(Object) for two instances without id returns false", () -> {
-                Object instanceA = noArgsConstructor.newInstance();
-                Object instanceB = noArgsConstructor.newInstance();
-                assertThat(instanceA).isNotEqualTo(instanceB);
-            }));
-            // two instances with the same id
-            tests.add(dynamicTest("hashCode() for two instances with the same id is equal", () -> {
-                Object instanceA = noArgsConstructor.newInstance();
-                Object instanceB = noArgsConstructor.newInstance();
-                setId.invoke(instanceA, idA);
-                setId.invoke(instanceB, idA);
-                assertThat(instanceA).hasSameHashCodeAs(instanceB);
-            }));
-            tests.add(dynamicTest("equals(Object) for two instances with the same id returns true", () -> {
-                Object instanceA = noArgsConstructor.newInstance();
-                Object instanceB = noArgsConstructor.newInstance();
-                setId.invoke(instanceA, idA);
-                setId.invoke(instanceB, idA);
-                assertThat(instanceA).isEqualTo(instanceB);
-            }));
-            // two instances with different id
-            tests.add(dynamicTest("equals(Object) for two instances with different id returns false", () -> {
-                Object instanceA = noArgsConstructor.newInstance();
-                Object instanceB = noArgsConstructor.newInstance();
-                setId.invoke(instanceA, idA);
-                setId.invoke(instanceB, idB);
-                assertThat(instanceA).isNotEqualTo(instanceB);
-            }));
+
+            if (isClassNotExcludedFrom(domainClass, ID_GET_AND_SET)) {
+                // getId and setId
+                tests.add(dynamicTest("getId() and setId(" + idType.getSimpleName() + ") match each other", () -> {
+                    Object instance = noArgsConstructor.newInstance();
+                    assertThat(getId.invoke(instance)).isNull();
+                    setId.invoke(instance, idA);
+                    assertThat(getId.invoke(instance)).isEqualTo(idA);
+                }));
+            }
+            if (isClassNotExcludedFrom(domainClass, ID_HASHCODE)) {
+                // two instances with the same id
+                tests.add(dynamicTest("hashCode() for two instances with the same id is equal", () -> {
+                    Object instanceA = noArgsConstructor.newInstance();
+                    Object instanceB = noArgsConstructor.newInstance();
+                    setId.invoke(instanceA, idA);
+                    setId.invoke(instanceB, idA);
+                    assertThat(instanceA).hasSameHashCodeAs(instanceB);
+                }));
+            }
+            if (isClassNotExcludedFrom(domainClass, ID_EQUALS)) {
+                // two instances without id
+                tests.add(dynamicTest("equals(Object) for two instances without id returns false", () -> {
+                    Object instanceA = noArgsConstructor.newInstance();
+                    Object instanceB = noArgsConstructor.newInstance();
+                    assertThat(instanceA).isNotEqualTo(instanceB);
+                }));
+                // two instances with the same id
+                tests.add(dynamicTest("equals(Object) for two instances with the same id returns true", () -> {
+                    Object instanceA = noArgsConstructor.newInstance();
+                    Object instanceB = noArgsConstructor.newInstance();
+                    setId.invoke(instanceA, idA);
+                    setId.invoke(instanceB, idA);
+                    assertThat(instanceA).isEqualTo(instanceB);
+                }));
+                // two instances with different id
+                tests.add(dynamicTest("equals(Object) for two instances with different id returns false", () -> {
+                    Object instanceA = noArgsConstructor.newInstance();
+                    Object instanceB = noArgsConstructor.newInstance();
+                    setId.invoke(instanceA, idA);
+                    setId.invoke(instanceB, idB);
+                    assertThat(instanceA).isNotEqualTo(instanceB);
+                }));
+            }
         }
+
     }
 
     private static boolean classPathElementFilter(String classPathElement) {
