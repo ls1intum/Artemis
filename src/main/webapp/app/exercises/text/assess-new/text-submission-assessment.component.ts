@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import * as moment from 'moment';
 
 import { AccountService } from 'app/core/auth/account.service';
@@ -87,7 +87,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private router: Router,
         private location: Location,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,
@@ -229,7 +229,16 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        this.participation!.results![0] = this.result = response.body!;
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        response.body!.feedbacks?.forEach((newFeedback) => {
+            newFeedback.conflictingTextAssessments = this.result?.feedbacks?.find((feedback) => feedback.id === newFeedback.id)?.conflictingTextAssessments;
+        });
+        response.body!.completionDate = this.result?.completionDate;
+        response.body!.submission = undefined;
+        response.body!.participation = undefined;
+        this.result = response.body!;
+        this.participation!.results![0] = this.result;
+        this.submission!.result = this.result;
         this.saveBusy = this.submitBusy = false;
     }
 
@@ -313,6 +322,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 ...(feedback['firstConflicts'] ? feedback['firstConflicts'] : []),
                 ...(feedback['secondConflicts'] ? feedback['secondConflicts'] : []),
             ];
+            delete feedback['firstConflicts'];
+            delete feedback['secondConflicts'];
             feedback.conflictingTextAssessments.forEach(function (textAssessmentConflict) {
                 textAssessmentConflict.conflictingFeedbackId =
                     textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;

@@ -144,12 +144,12 @@ export class TextAssessmentsService {
         feedbacks = feedbacks.map((feedback) => {
             feedback = Object.assign({}, feedback);
             feedback.result = undefined;
-            if (feedback['firstConflicts']) {
+            /*if (feedback['firstConflicts']) {
                 feedback['firstConflicts'] = undefined;
             }
             if (feedback['secondConflicts']) {
                 feedback['secondConflicts'] = undefined;
-            }
+            }*/
             feedback.conflictingTextAssessments = undefined;
             return feedback;
         });
