@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Set;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Achievement;
@@ -50,7 +48,6 @@ public class AchievementService {
      * Used when a course is deleted or when achievements are disabled again for a course
      * @param courseId
      */
-    @Transactional
     public void deleteByCourseId(Long courseId) {
         Set<Achievement> achievements = achievementRepository.findAllByCourseId(courseId);
         for (Achievement achievement : achievements) {
@@ -64,7 +61,6 @@ public class AchievementService {
      * Used when an exercise is deleted
      * @param exerciseId
      */
-    @Transactional
     public void deleteByExerciseId(Long exerciseId) {
         Set<Achievement> achievements = achievementRepository.findAllByExerciseId(exerciseId);
         for (Achievement achievement : achievements) {
