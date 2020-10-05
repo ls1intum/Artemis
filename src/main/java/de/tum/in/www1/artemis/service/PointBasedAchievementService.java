@@ -15,13 +15,13 @@ public class PointBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final long PERCENT_GOLD = 100L;
+    private final static long PERCENT_GOLD = 100L;
 
-    private final long PERCENT_SILVER = 80L;
+    private final static long PERCENT_SILVER = 80L;
 
-    private final long PERCENT_BRONZE = 60L;
+    private final static long PERCENT_BRONZE = 60L;
 
-    private final long PERCENT_UNRANKED = 50L;
+    private final static long PERCENT_UNRANKED = 50L;
 
     public PointBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
@@ -49,6 +49,10 @@ public class PointBasedAchievementService {
         return null;
     }
 
+    /**
+     * Generates all point based achievements for an exercise
+     * @param exercise
+     */
     public void generateAchievements(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Set<Achievement> achievementsToSave = new HashSet<>();

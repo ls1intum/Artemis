@@ -17,15 +17,15 @@ public class TimeBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final long DAYS_GOLD = 1L;
+    private final static long DAYS_GOLD = 1L;
 
-    private final long DAYS_SILVER = 2L;
+    private final static long DAYS_SILVER = 2L;
 
-    private final long DAYS_BRONZE = 3L;
+    private final static long DAYS_BRONZE = 3L;
 
-    private final long DAYS_UNRANKED = 4L;
+    private final static long DAYS_UNRANKED = 4L;
 
-    private final long MIN_SCORE_TO_QUALIFY = 50L;
+    private final static long MIN_SCORE_TO_QUALIFY = 50L;
 
     public TimeBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
@@ -58,6 +58,10 @@ public class TimeBasedAchievementService {
         return null;
     }
 
+    /**
+     * Generates all time based achievements for an exercise
+     * @param exercise
+     */
     public void generateAchievements(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         Set<Achievement> achievementsToSave = new HashSet<>();

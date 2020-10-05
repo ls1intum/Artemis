@@ -46,6 +46,7 @@ public class AchievementService {
      * Finds all achievements for a user in a given course and returns them as a set
      * @param userId
      * @param courseId
+     * @return set of achievements
      */
     public Set<Achievement> findAllByUserIdAndCourseId(Long userId, Long courseId) {
         return achievementRepository.findAllByUserIdAndCourseId(userId, courseId);

@@ -18,15 +18,15 @@ public class ProgressBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final int EXERCISES_AMOUNT_GOLD = 10;
+    private final static int EXERCISES_AMOUNT_GOLD = 10;
 
-    private final int EXERCISES_AMOUNT_SILVER = 8;
+    private final static int EXERCISES_AMOUNT_SILVER = 8;
 
-    private final int EXERCISES_AMOUNT_BRONZE = 5;
+    private final static int EXERCISES_AMOUNT_BRONZE = 5;
 
-    private final int EXERCISES_AMOUNT_UNRANKED = 1;
+    private final static int EXERCISES_AMOUNT_UNRANKED = 1;
 
-    private final long MIN_SCORE_TO_QUALIFY = 50L;
+    private final static long MIN_SCORE_TO_QUALIFY = 50L;
 
     public ProgressBasedAchievementService(StudentParticipationRepository studentParticipationRepository, AchievementRepository achievementRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
@@ -58,6 +58,10 @@ public class ProgressBasedAchievementService {
         return null;
     }
 
+    /**
+     * Generates all progress based achievements for a course
+     * @param course
+     */
     public void generateAchievements(Course course) {
         Set<Achievement> achievementsToSave = new HashSet<>();
         achievementsToSave.add(
