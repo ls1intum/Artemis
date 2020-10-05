@@ -117,11 +117,19 @@ public class AchievementService {
      */
     @Transactional
     public void checkForAchievements(Result result) {
-        var course = result.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-        if (course.getHasAchievements() == null || !course.getHasAchievements()) {
+        var participation = result.getParticipation();
+        if (participation == null) {
             return;
         }
-        var exercise = result.getParticipation().getExercise();
+        var exercise = participation.getExercise();
+        if (exercise == null) {
+            return;
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null || course.getHasAchievements() == null || !course.getHasAchievements()) {
+            return;
+        }
+
         var optionalUser = participationService.findOneStudentParticipation(result.getParticipation().getId()).getStudent();
         if (!optionalUser.isPresent()) {
             return;
