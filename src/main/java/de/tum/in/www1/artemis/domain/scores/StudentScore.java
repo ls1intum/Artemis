@@ -2,18 +2,14 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "student_score")
-public class StudentScore {
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+public class StudentScore extends DomainObject {
 
     @ManyToOne
     private User student;
@@ -29,14 +25,6 @@ public class StudentScore {
 
     @Column(name = "score")
     private long score;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public User getStudent() {
         return student;

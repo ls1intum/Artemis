@@ -2,17 +2,13 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "tutor_score")
-public class TutorScore {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private long id;
+public class TutorScore extends DomainObject {
 
     @ManyToOne
     private User tutor;
@@ -55,14 +51,6 @@ public class TutorScore {
 
     @Column(name = "answered_feedback_requests_points")
     private double answeredFeedbackRequestsPoints;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public User getTutor() {
         return tutor;
@@ -118,10 +106,6 @@ public class TutorScore {
 
     public double getAnsweredFeedbackRequestsPoints() {
         return answeredFeedbackRequestsPoints;
-    }
-
-    public void setId(long id) {
-        this.id = id;
     }
 
     public void setTutor(User tutor) {
