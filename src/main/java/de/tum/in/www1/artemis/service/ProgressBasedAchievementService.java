@@ -18,15 +18,15 @@ public class ProgressBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final int EXERCISES_AMOUNT_GOLD = 10;
+    private final static int exercisesAmountGold = 10;
 
-    private final int EXERCISES_AMOUNT_SILVER = 8;
+    private final static int exercisesAmountSilver = 8;
 
-    private final int EXERCISES_AMOUNT_BRONZE = 5;
+    private final static int exercisesAmountBronze = 5;
 
-    private final int EXERCISES_AMOUNT_UNRANKED = 1;
+    private final static int exercisesAmountUnranked = 1;
 
-    private final long MIN_SCORE_TO_QUALIFY = 50L;
+    private final static long minScoreToQualify = 50L;
 
     public ProgressBasedAchievementService(StudentParticipationRepository studentParticipationRepository, AchievementRepository achievementRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
@@ -38,33 +38,37 @@ public class ProgressBasedAchievementService {
         var numberOfExercises = 0;
         for (var participation : participations) {
             var score = participation.findLatestResult().getScore();
-            if (score != null && score >= MIN_SCORE_TO_QUALIFY) {
+            if (score != null && score >= minScoreToQualify) {
                 numberOfExercises++;
             }
         }
 
-        if (numberOfExercises >= EXERCISES_AMOUNT_GOLD) {
+        if (numberOfExercises >= exercisesAmountGold) {
             return AchievementRank.GOLD;
         }
-        else if (numberOfExercises >= EXERCISES_AMOUNT_SILVER) {
+        else if (numberOfExercises >= exercisesAmountSilver) {
             return AchievementRank.SILVER;
         }
-        else if (numberOfExercises >= EXERCISES_AMOUNT_BRONZE) {
+        else if (numberOfExercises >= exercisesAmountBronze) {
             return AchievementRank.BRONZE;
         }
-        else if (numberOfExercises == EXERCISES_AMOUNT_UNRANKED) {
+        else if (numberOfExercises == exercisesAmountUnranked) {
             return AchievementRank.UNRANKED;
         }
         return null;
     }
 
+    /**
+     * Generates all progress based achievements for a course
+     * @param course
+     */
     public void generateAchievements(Course course) {
         Set<Achievement> achievementsToSave = new HashSet<>();
         achievementsToSave.add(
-                new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
-        achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + EXERCISES_AMOUNT_SILVER + " exercises", "tasks", AchievementRank.SILVER,
+                new Achievement("Course Master", "Solve at least " + exercisesAmountGold + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
+        achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + exercisesAmountSilver + " exercises", "tasks", AchievementRank.SILVER,
                 AchievementType.PROGRESS, course, null));
-        achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "tasks", AchievementRank.BRONZE,
+        achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + exercisesAmountBronze + " exercises", "tasks", AchievementRank.BRONZE,
                 AchievementType.PROGRESS, course, null));
         achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, course, null));
 
