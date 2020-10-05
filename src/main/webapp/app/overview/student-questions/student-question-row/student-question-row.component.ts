@@ -143,7 +143,8 @@ export class StudentQuestionRowComponent implements OnInit {
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.tutorApproved = false;
         studentQuestionAnswer.answerDate = moment();
-        this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
+        const courseId = this.studentQuestion.exercise ? this.studentQuestion.exercise.course!.id! : this.studentQuestion.lecture!.course!.id!;
+        this.studentQuestionAnswerService.create(courseId, studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
             if (!this.studentQuestion.answers) {
                 this.studentQuestion.answers = [];
             }

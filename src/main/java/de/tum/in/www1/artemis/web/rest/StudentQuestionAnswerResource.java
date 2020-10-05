@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -41,6 +42,8 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
@@ -50,8 +53,10 @@ public class StudentQuestionAnswerResource {
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService) {
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService,
+            CourseRepository courseRepository) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.courseRepository = courseRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.authorizationCheckService = authorizationCheckService;
@@ -66,15 +71,15 @@ public class StudentQuestionAnswerResource {
      *         an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/student-question-answers")
+    @PostMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
+            throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        Course course = courseRepository.getOne(courseId);
         User user = this.userService.getUserWithGroupsAndAuthorities();
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));

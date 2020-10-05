@@ -22,10 +22,10 @@ export class StudentQuestionAnswerService {
      * @param {StudentQuestionAnswer} studentQuestionAnswer
      * @return {Observable<EntityResponseType>}
      */
-    create(studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
+    create(courseId: number, studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestionAnswer);
         return this.http
-            .post<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' })
+            .post<StudentQuestionAnswer>('api/courses/' + courseId + '/student-question-answers', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

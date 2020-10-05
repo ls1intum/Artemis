@@ -47,7 +47,7 @@ describe('ExerciseHint Service', () => {
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
             service
-                .create(new StudentQuestionAnswer())
+                .create(1, new StudentQuestionAnswer())
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
