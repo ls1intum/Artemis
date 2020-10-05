@@ -111,40 +111,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         }
     }
 
-    // /**
-    //  * Deletes programming exercise
-    //  * @param programmingExerciseId the id of the programming exercise that we want to delete
-    //  * @param $event contains additional checks for deleting exercise
-    //  */
-    // deleteProgrammingExercise(programmingExercise: ProgrammingExercise, $event: { [key: string]: boolean }) {
-    //     const exerciseId = programmingExercise.id ? programmingExercise.id : 0;
-    //     const groupId = programmingExercise.exerciseGroup ? programmingExercise.exerciseGroup.id : 0;
-    //     return this.programmingExerciseService.delete(exerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
-    //         () => {
-    //             this.eventManager.broadcast({
-    //                 name: 'programmingExerciseListModification',
-    //                 content: 'Deleted an programmingExercise',
-    //             });
-    //             this.dialogErrorSource.next('');
-    //             if (this.isInExerciseGroup) {
-    //                 this.onDeleteExercise.emit({ exerciseId, groupId });
-    //             }
-    //         },
-    //         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-    //     );
-    // }
-    //
-    // /**
-    //  * Resets programming exercise
-    //  * @param programmingExerciseId the id of the programming exercise that we want to delete
-    //  */
-    // resetProgrammingExercise(programmingExerciseId: number) {
-    //     this.exerciseService.reset(programmingExerciseId).subscribe(
-    //         () => this.dialogErrorSource.next(''),
-    //         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-    //     );
-    // }
-
     getHiddenTestCasesNumber(programmingExerciseId: number): number {
         let number = 0;
         this.testCaseService
