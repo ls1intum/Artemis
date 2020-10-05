@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 import org.slf4j.Logger;
@@ -19,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -38,93 +34,11 @@ public class AtheneResource {
 
     private final TextBlockRepository textBlockRepository;
 
-    private final TextClusterRepository textClusterRepository;
-
-    private final TextAssessmentQueueService textAssessmentQueueService;
-
-    private final TextExerciseRepository textExerciseRepository;
-
-    private final TextSubmissionService textSubmissionService;
-
     private final AtheneService atheneService;
 
-    public AtheneResource(TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository, TextAssessmentQueueService textAssessmentQueueService,
-                          TextExerciseRepository textExerciseRepository, TextSubmissionService textSubmissionService, AtheneService atheneService) {
+    public AtheneResource(TextBlockRepository textBlockRepository, AtheneService atheneService) {
         this.textBlockRepository = textBlockRepository;
-        this.textClusterRepository = textClusterRepository;
-        this.textAssessmentQueueService = textAssessmentQueueService;
-        this.textExerciseRepository = textExerciseRepository;
-        this.textSubmissionService = textSubmissionService;
         this.atheneService = atheneService;
-    }
-
-    /**
-     * Parse text blocks of type AtheneDTO.TextBlock to TextBlocks linked to their submission
-     *
-     * @param blocks The list of AtheneDTO-blocks to parse
-     * @param exerciseId The exerciseId of the exercise the blocks belong to
-     * @return list of TextBlocks
-     */
-    private List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
-        // Create submissionsMap for lookup
-        List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
-        Map<Long, TextSubmission> submissionsMap = submissions.stream()
-            .collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
-
-        // Map textBlocks to submissions
-        List<TextBlock> textBlocks = new LinkedList();
-        for (AtheneDTO.TextBlock t: blocks) {
-            // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
-            TextBlock newBlock = new TextBlock();
-            newBlock.setId(t.id);
-            newBlock.setText(t.text);
-            newBlock.setStartIndex(t.startIndex);
-            newBlock.setEndIndex(t.endIndex);
-            newBlock.automatic();
-
-            // take the corresponding TextSubmission and add the text blocks.
-            // The addBlocks method also sets the submission in the textBlock
-            submissionsMap.get(t.submissionId).addBlock(newBlock);
-            textBlocks.add(newBlock);
-        }
-
-        return textBlocks;
-
-    }
-
-    /**
-     * Process clusters and save to database
-     *
-     * @param clusterMap The map of clusters to process
-     * @param textBlockMap The map of textBlocks belonging to the clusters
-     * @param exerciseId The exerciseId of the exercise the blocks belong to
-     */
-    private void processClusters(Map<Integer, TextCluster> clusterMap, Map<String, TextBlock> textBlockMap, Long exerciseId) {
-        // Remove Cluster with Key "-1" as it is only contains the blocks belonging to no cluster.
-        clusterMap.remove(-1);
-        final List<TextCluster> savedClusters = textClusterRepository.saveAll(clusterMap.values());
-
-        // Find exercise, which the clusters belong to
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
-        if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athene clusters. Exercise with id " + exerciseId + "not found");
-            new Error().printStackTrace();
-            return;
-        }
-        TextExercise textExercise = optionalTextExercise.get();
-
-        // Link clusters with blocks
-        for (TextCluster cluster : savedClusters) {
-            cluster.setExercise(textExercise);
-            List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
-                .collect(toList());
-            textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
-            updatedBlockReferences = textBlockRepository.saveAll(updatedBlockReferences);
-            cluster.setBlocks(updatedBlockReferences);
-        }
-
-        // Save clusters in Database
-        textClusterRepository.saveAll(savedClusters);
     }
 
     /**
@@ -152,14 +66,14 @@ public class AtheneResource {
 
         // Parse requestBody
         Map<Integer, TextCluster> clusters = requestBody.clusters;
-        List<TextBlock> textBlocks = parseTextBlocks(requestBody.blocks, exerciseId);
+        List<TextBlock> textBlocks = atheneService.parseTextBlocks(requestBody.blocks, exerciseId);
 
         //Save textBlocks in Database
         final Map<String, TextBlock> textBlockMap;
         textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
 
         //Save clusters in Database
-        processClusters(clusters, textBlockMap, exerciseId);
+        atheneService.processClusters(clusters, textBlockMap, exerciseId);
 
         // Notify atheneService of finished task
         atheneService.finishTask(exerciseId);
