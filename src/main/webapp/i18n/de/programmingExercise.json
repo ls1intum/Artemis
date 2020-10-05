@@ -49,7 +49,14 @@
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
-            "enableStaticCodeAnalysis": "Aktiviere Statische Code Analyse",
+            "enableStaticCodeAnalysis": {
+                "title": "Aktiviere Statische Code Analyse",
+                "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code Analyse unterzogen. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann nach der Erstellung der Aufgabe nicht mehr geändert werden."
+            },
+            "maxStaticCodeAnalysisPenalty": {
+                "title": "Max Statische Code Analyse Strafe",
+                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine 10 Punkte Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
+            },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
@@ -115,6 +122,11 @@
                 "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
                 "notReleased": "Nicht veröffentlicht",
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher können die Testfälle geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
+            },
+            "configureGrading": {
+                "title": "Setze Benotung",
+                "save": "Speichern",
+                "reset": "Zurücksetzen"
             },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",

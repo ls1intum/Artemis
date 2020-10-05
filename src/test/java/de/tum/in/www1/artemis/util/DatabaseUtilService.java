@@ -106,6 +106,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
@@ -162,6 +163,9 @@ public class DatabaseUtilService {
 
     @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -426,6 +430,7 @@ public class DatabaseUtilService {
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        fileUploadExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
@@ -560,7 +565,7 @@ public class DatabaseUtilService {
 
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
-        exerciseGroupsWithExercises.stream().forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
+        exerciseGroupsWithExercises.forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
         var testRun = generateTestRunForInstructor(exam, instructor, exercises);
         return studentExamRepository.save(testRun);
     }
@@ -1050,7 +1055,7 @@ public class DatabaseUtilService {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
-        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM");
+        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1218,8 +1223,16 @@ public class DatabaseUtilService {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
+        var programmingExercise = addProgrammingExerciseToCourse(course, false);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+
+        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+    }
+
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC");
+        populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", enableStaticCodeAnalysis);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -1229,7 +1242,7 @@ public class DatabaseUtilService {
 
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        return programmingExercise;
     }
 
     /**
@@ -1241,7 +1254,7 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, false);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -1255,10 +1268,10 @@ public class DatabaseUtilService {
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
-        populateProgrammingExercise(programmingExercise, shortName, "Programming");
+        populateProgrammingExercise(programmingExercise, shortName, "Programming", false);
     }
 
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title) {
+    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -1274,7 +1287,7 @@ public class DatabaseUtilService {
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
-        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
@@ -1302,7 +1315,7 @@ public class DatabaseUtilService {
             course = courseRepo.save(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-            populateProgrammingExercise(programmingExercise, "TSTEXC");
+            populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -1350,6 +1363,26 @@ public class DatabaseUtilService {
         assertThat(tests).as("test case is initialized").hasSize(3);
 
         return courseRepo.findById(course.getId()).get();
+    }
+
+    public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
+        Course course = addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
+        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3));
+        programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
     }
 
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
@@ -1426,9 +1459,10 @@ public class DatabaseUtilService {
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -1825,9 +1859,8 @@ public class DatabaseUtilService {
         return hints;
     }
 
-    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
-        final var lazyExercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
+    public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> T addHintsToProblemStatement(T exercise) {
@@ -1938,7 +1971,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -1949,7 +1982,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -1998,8 +2031,8 @@ public class DatabaseUtilService {
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
-        System.out.println(sa.toString());
-        System.out.println(sa.hashCode());
+        System.out.println("ShortAnswer: " + sa.toString());
+        System.out.println("ShortAnswer.hashCode: " + sa.hashCode());
         sa.copyQuestionId();
         return sa;
     }
@@ -2044,8 +2077,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         dnd.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(dnd.toString());
-        System.out.println(dnd.hashCode());
+        System.out.println("DnD: " + dnd.toString());
+        System.out.println("DnD.hashCode: " + dnd.hashCode());
         dnd.copyQuestionId();
         return dnd;
     }
@@ -2062,8 +2095,8 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(mc.toString());
-        System.out.println(mc.hashCode());
+        System.out.println("MC: " + mc.toString());
+        System.out.println("MC.hashCode: " + mc.hashCode());
         mc.copyQuestionId();
         return mc;
     }
@@ -2075,7 +2108,7 @@ public class DatabaseUtilService {
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
      */
-    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+    public QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
         QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
         QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
@@ -2114,8 +2147,6 @@ public class DatabaseUtilService {
             else {
                 quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
             }
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
         }
         quizSubmission.submitted(submitted);
         quizSubmission.submissionDate(submissionDate);

@@ -12,7 +12,7 @@ export class NotificationInterceptor implements HttpInterceptor {
      * Identifies and handles a given HTTP request. If the event is a HttpResponse and contains an alert, the alert
      * and its parameters are broadcasted to the AlertService.
      * @param request The outgoing request object to handle.
-     * @param next The next interceptor in the chain, or the backend
+     * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */

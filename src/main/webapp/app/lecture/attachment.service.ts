@@ -57,16 +57,16 @@ export class AttachmentService {
 
     protected convertDateFromClient(attachment: Attachment): Attachment {
         const copy: Attachment = Object.assign({}, attachment, {
-            releaseDate: attachment.releaseDate && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : null,
-            uploadDate: attachment.uploadDate && attachment.uploadDate.isValid() ? attachment.uploadDate.toJSON() : null,
+            releaseDate: attachment.releaseDate && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : undefined,
+            uploadDate: attachment.uploadDate && attachment.uploadDate.isValid() ? attachment.uploadDate.toJSON() : undefined,
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : null;
-            res.body.uploadDate = res.body.uploadDate ? moment(res.body.uploadDate) : null;
+            res.body.releaseDate = res.body.releaseDate ? moment(res.body.releaseDate) : undefined;
+            res.body.uploadDate = res.body.uploadDate ? moment(res.body.uploadDate) : undefined;
         }
         return res;
     }
@@ -74,8 +74,8 @@ export class AttachmentService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {
-                attachment.releaseDate = attachment.releaseDate ? moment(attachment.releaseDate) : null;
-                attachment.uploadDate = attachment.uploadDate ? moment(attachment.uploadDate) : null;
+                attachment.releaseDate = attachment.releaseDate ? moment(attachment.releaseDate) : undefined;
+                attachment.uploadDate = attachment.uploadDate ? moment(attachment.uploadDate) : undefined;
             });
         }
         return res;

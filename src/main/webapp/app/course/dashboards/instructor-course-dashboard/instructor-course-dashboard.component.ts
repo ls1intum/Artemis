@@ -128,7 +128,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.course.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        this.sortService.sortByProperty(this.course.exercises!, this.exercisesSortingPredicate, this.exercisesReverseOrder);
     }
 
     /**
@@ -136,6 +136,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
      * @param error
      */
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 }

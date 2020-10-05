@@ -24,6 +24,7 @@ export class MultipleChoiceQuestionComponent {
     get question(): MultipleChoiceQuestion {
         return this._question;
     }
+    // TODO: Map vs. Array --> consistency
     @Input()
     selectedAnswerOptions: AnswerOption[];
     @Input()
@@ -44,7 +45,7 @@ export class MultipleChoiceQuestionComponent {
     submittedQuizExercise: QuizExercise;
 
     @Output()
-    selectedAnswerOptionsChange = new EventEmitter();
+    selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
@@ -95,8 +96,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions != null &&
-            this.selectedAnswerOptions.findIndex(function (selected) {
+            this.selectedAnswerOptions.findIndex((selected) => {
                 return selected.id === answerOption.id;
             }) !== -1
         );
