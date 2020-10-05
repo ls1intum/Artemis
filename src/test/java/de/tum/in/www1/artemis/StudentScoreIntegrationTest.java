@@ -53,8 +53,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     RequestUtilService request;
 
-    // private StudentScore studentScore;
-
     private User user;
 
     private Course course;
@@ -82,19 +80,17 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // score for student1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(75L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
         result.setScore(70L);
         resultRepo.save(result);
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(80L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(85L);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
+        result.setScore(80L);
         resultRepo.save(result);
 
         // course2
@@ -110,10 +106,9 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // score for student1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(70L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(70L);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
+        result.setScore(60L);
         resultRepo.save(result);
     }
 
@@ -136,10 +131,9 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(60L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(70L);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
+        result.setScore(75L);
         resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -189,10 +183,9 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         exerciseRepo.save(exercise);
         // score for student2 in exercise3 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(30L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(25L);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
+        result.setScore(30L);
         resultRepo.save(result);
 
         responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -236,10 +229,9 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // score for student3 in exercise1 in course1
         participation = database.addParticipationForExercise(exercise, user.getLogin());
-        result = new Result().score(90L).participation(participation).rated(true);
-        resultRepo.save(result);
-        // change score to trigger PostUpdate
-        result.setScore(85L);
+        result = database.addResultToParticipation(participation);
+        result.setRated(true);
+        result.setScore(90L);
         resultRepo.save(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
@@ -319,9 +311,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         StudentScore response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
         assertThat(response.getResult().getId()).as("response result id is old result id").isEqualTo(oldResult.getId());
 
-        Result newResult = new Result().score(20L).participation(participation).rated(true);
-        resultRepo.save(newResult);
-        // change score to trigger PostUpdate
+        Result newResult = database.addResultToParticipation(participation);
+        newResult.setRated(true);
         newResult.setScore(15L);
         resultRepo.save(newResult);
 

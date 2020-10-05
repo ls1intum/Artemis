@@ -87,6 +87,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
+        courseRepo.save(course);
         // exercise1
         exercise = course.getExercises().stream().findFirst().get();
         exercise.setMaxScore(5.0);
@@ -115,6 +116,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setStudentGroupName("tumuser");
         course.setTeachingAssistantGroupName("tutor");
         course.setInstructorGroupName("instructor");
+        courseRepo.save(course);
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
         exercise.setMaxScore(8.0);
