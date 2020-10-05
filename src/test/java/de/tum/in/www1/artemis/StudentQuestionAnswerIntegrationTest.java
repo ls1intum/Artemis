@@ -69,7 +69,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
 
         // should be automatically approved
-        assertThat(response.isTutorApproved());
+        assertThat(response.isTutorApproved()).isTrue();
         // trying to create same studentQuestionAnswer again --> bad request
         request.postWithResponseBody("/api/student-question-answers", response, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
     }
@@ -88,7 +88,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
 
         // shouldn't be automatically approved
-        assertThat(!response.isTutorApproved());
+        assertThat(response.isTutorApproved()).isFalse();
     }
 
     @Test
@@ -105,7 +105,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
 
         // shouldn't be automatically approved
-        assertThat(!response.isTutorApproved());
+        assertThat(response.isTutorApproved()).isFalse();
     }
 
     @Test
