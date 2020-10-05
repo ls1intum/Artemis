@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -18,11 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "grading_criterion")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class GradingCriterion implements Serializable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class GradingCriterion extends DomainObject {
 
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
@@ -35,22 +29,8 @@ public class GradingCriterion implements Serializable {
     @Column(name = "title")
     private String title;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getTitle() {
         return title;
-    }
-
-    public GradingCriterion title(String title) {
-        this.title = title;
-        return this;
     }
 
     public void setTitle(String title) {
@@ -61,20 +41,9 @@ public class GradingCriterion implements Serializable {
         return structuredGradingInstructions;
     }
 
-    public GradingCriterion structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
-        setStructuredGradingInstructions(structuredGradingInstructions);
-        return this;
-    }
-
     public GradingCriterion addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
-        return this;
-    }
-
-    public GradingCriterion removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
-        this.structuredGradingInstructions.remove(structuredGradingInstruction);
-        structuredGradingInstruction.setGradingCriterion(null);
         return this;
     }
 
@@ -94,33 +63,8 @@ public class GradingCriterion implements Serializable {
         return exercise;
     }
 
-    public GradingCriterion exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
-    }
-
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        GradingCriterion gradingCriterion = (GradingCriterion) o;
-        if (gradingCriterion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), gradingCriterion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

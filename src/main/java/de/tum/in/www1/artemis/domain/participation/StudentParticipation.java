@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @DiscriminatorValue(value = "SP")
 public class StudentParticipation extends Participation {
 
-    private static final long serialVersionUID = 1L;
-
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
@@ -34,11 +32,6 @@ public class StudentParticipation extends Participation {
 
     public Integer getPresentationScore() {
         return presentationScore;
-    }
-
-    public StudentParticipation presentationScore(Integer presentationScore) {
-        this.presentationScore = presentationScore;
-        return this;
     }
 
     public void setPresentationScore(Integer presentationScore) {

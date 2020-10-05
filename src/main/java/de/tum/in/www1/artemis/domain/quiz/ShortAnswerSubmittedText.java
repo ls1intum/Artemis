@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
@@ -12,6 +9,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,14 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @Table(name = "short_answer_submitted_text")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class ShortAnswerSubmittedText implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class ShortAnswerSubmittedText extends DomainObject {
 
     @Column(name = "text")
     @JsonView(QuizView.Before.class)
@@ -45,15 +37,6 @@ public class ShortAnswerSubmittedText implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private ShortAnswerSubmittedAnswer submittedAnswer;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getText() {
         return text;
@@ -96,26 +79,6 @@ public class ShortAnswerSubmittedText implements Serializable {
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
         return FuzzySearch.ratio(submittedText.toLowerCase(), solution.toLowerCase()) > 85;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerSubmittedText shortAnswerSubmittedText = (ShortAnswerSubmittedText) o;
-        if (shortAnswerSubmittedText.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSubmittedText.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

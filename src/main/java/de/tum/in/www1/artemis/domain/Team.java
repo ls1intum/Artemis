@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -24,13 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 @Table(name = "team", uniqueConstraints = { @UniqueConstraint(columnNames = { "exercise_id", "short_name" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Team extends AbstractAuditingEntity implements Serializable, Participant {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Team extends AbstractAuditingEntity implements Participant {
 
     @Column(name = "name")
     private String name;
@@ -74,18 +66,9 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
         this.owner = team.owner;
     }
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Team id(Long id) {
-        this.id = id;
+        this.setId(id);
         return this;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -120,11 +103,6 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
 
     public String getImage() {
         return image;
-    }
-
-    public Team image(String image) {
-        this.image = image;
-        return this;
     }
 
     public void setImage(String image) {
@@ -183,11 +161,6 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
         return this.owner != null && this.owner.equals(user);
     }
 
-    public Team owner(User owner) {
-        this.owner = owner;
-        return this;
-    }
-
     public void setOwner(User owner) {
         this.owner = owner;
     }
@@ -221,26 +194,6 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
             student.setLangKey(null);
             student.setLastNotificationRead(null);
         });
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Team team = (Team) o;
-        if (team.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), team.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
