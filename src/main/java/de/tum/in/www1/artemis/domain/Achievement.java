@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,12 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 @Table(name = "achievement")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Achievement implements Serializable {
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Achievement extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -65,14 +59,6 @@ public class Achievement implements Serializable {
         this.type = type;
         this.course = course;
         this.exercise = exercise;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getTitle() {
