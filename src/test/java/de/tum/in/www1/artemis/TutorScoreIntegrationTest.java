@@ -96,19 +96,19 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
+        user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(participation);
         result.setRated(true);
-        user = userRepo.findAllInGroup("tutor").get(0);
-        result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
+        result.setAssessor(user);
         resultRepo.save(result);
 
         // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
+        user = userRepo.findAllInGroup("tutor").get(1);
         result = database.addResultToParticipation(participation);
         result.setRated(true);
-        user = userRepo.findAllInGroup("tutor").get(1);
-        result.setAssessor(userRepo.findAllInGroup("tutor").get(1));
+        result.setAssessor(user);
         resultRepo.save(result);
 
         // course2
@@ -125,10 +125,10 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         participation = database.addParticipationForExercise(exercise, user.getLogin());
+        user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(participation);
         result.setRated(true);
-        user = userRepo.findAllInGroup("tutor").get(0);
-        result.setAssessor(userRepo.findAllInGroup("tutor").get(0));
+        result.setAssessor(user);
         resultRepo.save(result);
     }
 
