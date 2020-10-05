@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -45,9 +42,8 @@ public class AtheneResource {
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
     @PostMapping(value = "/{exerciseId}", consumes = APPLICATION_JSON_VALUE)
-    @Transactional
     public ResponseEntity<Result> saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneDTO requestBody, @RequestHeader("Authorization") String auth) {
-        log.debug("REST request to inform about new Athene results for exercise: {}", exerciseId);
+        log.debug("REST call to inform about new Athene results for exercise: {}", exerciseId);
 
         // Check Authorization header
         if (!auth.equals(API_SECRET)) {
@@ -59,12 +55,10 @@ public class AtheneResource {
             return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
         }
 
-        // Parse requestBody
-        Map<Integer, TextCluster> clusters = requestBody.clusters;
-        List<TextBlock> textBlocks = atheneService.parseTextBlocks(requestBody.blocks, exerciseId);
-
         // The atheneService will manage the processing and database saving
-        atheneService.processResult(clusters, textBlocks, exerciseId);
+        atheneService.processResult(requestBody.clusters, requestBody.blocks, exerciseId);
+
+        log.debug("REST call for new Athene results for exercise {} finished", exerciseId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

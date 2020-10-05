@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -162,7 +163,7 @@ public class AtheneService {
                 // Register task for exercise as running, AtheneResource calls finishTask on result receive
                 startTask(exercise.getId());
             } catch (NetworkingError networkingError) {
-                log.error("Error while calling Remote Service: ", networkingError);
+                log.error("Error while calling Remote Service", networkingError);
             }
 
         } else {
@@ -188,10 +189,16 @@ public class AtheneService {
     /**
      * Processes results coming back from the Athene system via callbackUrl (see AtheneResource)
      * @param clusters the Map of calculated clusters to save to the database
-     * @param textBlocks the list of calculated textBlocks to save to the database
+     * @param blocks the list of calculated textBlocks to save to the database
      * @param exerciseId the exercise the automatic feedback suggestions were calculated for
      */
-    public void processResult(Map<Integer, TextCluster> clusters, List<TextBlock> textBlocks, Long exerciseId) {
+    @Transactional
+    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
+        log.info("Start processing incoming Athene results");
+
+        // Parse textBlocks (blocks will come as AtheneDTO.TextBlock with their submissionId and need to be parsed)
+        List<TextBlock> textBlocks = parseTextBlocks(blocks, exerciseId);
+
         //Save textBlocks in Database
         final Map<String, TextBlock> textBlockMap;
         textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
@@ -201,6 +208,8 @@ public class AtheneService {
 
         // Notify atheneService of finished task
         finishTask(exerciseId);
+
+        log.info("Finished processing incoming Athene results");
     }
 
     /**
