@@ -7,6 +7,7 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 /**
  * A TextSubmission.
@@ -21,6 +22,10 @@ public class TextSubmission extends Submission {
     @Lob
     private String text;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    private Language language;
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("submission")
     private List<TextBlock> blocks = new ArrayList<>();
@@ -34,6 +39,14 @@ public class TextSubmission extends Submission {
 
     public String getText() {
         return text;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
     }
 
     /**
@@ -66,20 +79,9 @@ public class TextSubmission extends Submission {
         return blocks;
     }
 
-    public TextSubmission blocks(List<TextBlock> textBlocks) {
-        this.blocks = textBlocks;
-        return this;
-    }
-
     public TextSubmission addBlock(TextBlock textBlock) {
         this.blocks.add(textBlock);
         textBlock.setSubmission(this);
-        return this;
-    }
-
-    public TextSubmission removeBlock(TextBlock textBlock) {
-        this.blocks.remove(textBlock);
-        textBlock.setSubmission(null);
         return this;
     }
 

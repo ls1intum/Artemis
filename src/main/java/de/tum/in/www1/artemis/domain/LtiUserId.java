@@ -24,22 +24,12 @@ public class LtiUserId extends DomainObject {
         return ltiUserId;
     }
 
-    public LtiUserId ltiUserId(String ltiUserId) {
-        this.ltiUserId = ltiUserId;
-        return this;
-    }
-
     public void setLtiUserId(String ltiUserId) {
         this.ltiUserId = ltiUserId;
     }
 
     public User getUser() {
         return user;
-    }
-
-    public LtiUserId user(User user) {
-        this.user = user;
-        return this;
     }
 
     public void setUser(User user) {
