@@ -140,22 +140,12 @@ public class Course extends DomainObject {
         return title;
     }
 
-    public Course title(String title) {
-        this.title = title;
-        return this;
-    }
-
     public void setDescription(String description) {
         this.description = description;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public Course description(String description) {
-        this.description = description;
-        return this;
     }
 
     public void setTitle(String title) {
@@ -166,22 +156,12 @@ public class Course extends DomainObject {
         return shortName;
     }
 
-    public Course shortName(String shortName) {
-        this.shortName = shortName;
-        return this;
-    }
-
     public void setShortName(String shortName) {
         this.shortName = shortName;
     }
 
     public String getStudentGroupName() {
         return studentGroupName;
-    }
-
-    public Course studentGroupName(String studentGroupName) {
-        this.studentGroupName = studentGroupName;
-        return this;
     }
 
     public void setStudentGroupName(String studentGroupName) {
@@ -192,22 +172,12 @@ public class Course extends DomainObject {
         return teachingAssistantGroupName;
     }
 
-    public Course teachingAssistantGroupName(String teachingAssistantGroupName) {
-        this.teachingAssistantGroupName = teachingAssistantGroupName;
-        return this;
-    }
-
     public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
         this.teachingAssistantGroupName = teachingAssistantGroupName;
     }
 
     public String getInstructorGroupName() {
         return instructorGroupName;
-    }
-
-    public Course instructorGroupName(String instructorGroupName) {
-        this.instructorGroupName = instructorGroupName;
-        return this;
     }
 
     public void setInstructorGroupName(String instructorGroupName) {
@@ -233,22 +203,12 @@ public class Course extends DomainObject {
         return startDate;
     }
 
-    public Course startDate(ZonedDateTime startDate) {
-        this.startDate = startDate;
-        return this;
-    }
-
     public void setStartDate(ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
     public ZonedDateTime getEndDate() {
         return endDate;
-    }
-
-    public Course endDate(ZonedDateTime endDate) {
-        this.endDate = endDate;
-        return this;
     }
 
     public void setEndDate(ZonedDateTime endDate) {
@@ -259,22 +219,12 @@ public class Course extends DomainObject {
         return onlineCourse == null ? false : onlineCourse;
     }
 
-    public Course onlineCourse(Boolean onlineCourse) {
-        this.onlineCourse = onlineCourse;
-        return this;
-    }
-
     public void setOnlineCourse(Boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
     }
 
     public Integer getMaxComplaints() {
         return maxComplaints;
-    }
-
-    public Course maxComplaints(Integer maxComplaints) {
-        this.maxComplaints = maxComplaints;
-        return this;
     }
 
     public void setMaxComplaints(Integer maxComplaints) {
@@ -285,22 +235,12 @@ public class Course extends DomainObject {
         return maxTeamComplaints;
     }
 
-    public Course maxTeamComplaints(Integer maxTeamComplaints) {
-        this.maxTeamComplaints = maxTeamComplaints;
-        return this;
-    }
-
     public void setMaxTeamComplaints(Integer maxTeamComplaints) {
         this.maxTeamComplaints = maxTeamComplaints;
     }
 
     public Integer getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
-    }
-
-    public Course maxComplaintTimeDays(Integer maxComplaintTimeDays) {
-        this.maxComplaintTimeDays = maxComplaintTimeDays;
-        return this;
     }
 
     public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
@@ -315,22 +255,12 @@ public class Course extends DomainObject {
         return studentQuestionsEnabled;
     }
 
-    public Course studentQuestionsEnabled(boolean studentQuestionsEnabled) {
-        this.studentQuestionsEnabled = studentQuestionsEnabled;
-        return this;
-    }
-
     public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
         this.studentQuestionsEnabled = studentQuestionsEnabled;
     }
 
     public String getColor() {
         return color;
-    }
-
-    public Course color(String color) {
-        this.color = color;
-        return this;
     }
 
     public void setColor(String color) {
@@ -341,22 +271,12 @@ public class Course extends DomainObject {
         return courseIcon;
     }
 
-    public Course courseIcon(String courseIcon) {
-        this.courseIcon = courseIcon;
-        return this;
-    }
-
     public void setCourseIcon(String courseIcon) {
         this.courseIcon = courseIcon;
     }
 
     public Boolean isRegistrationEnabled() {
         return registrationEnabled;
-    }
-
-    public Course registrationEnabled(Boolean registrationEnabled) {
-        this.registrationEnabled = registrationEnabled;
-        return this;
     }
 
     public void setRegistrationEnabled(Boolean registrationEnabled) {
@@ -367,11 +287,6 @@ public class Course extends DomainObject {
         return presentationScore;
     }
 
-    public Course presentationScore(Integer presentationScore) {
-        this.presentationScore = presentationScore;
-        return this;
-    }
-
     public void setPresentationScore(Integer presentationScore) {
         this.presentationScore = presentationScore;
     }
@@ -380,20 +295,9 @@ public class Course extends DomainObject {
         return exercises;
     }
 
-    public Course exercises(Set<Exercise> exercises) {
-        this.exercises = exercises;
-        return this;
-    }
-
     public Course addExercises(Exercise exercise) {
         this.exercises.add(exercise);
         exercise.setCourse(this);
-        return this;
-    }
-
-    public Course removeExercises(Exercise exercise) {
-        this.exercises.remove(exercise);
-        exercise.setCourse(null);
         return this;
     }
 
@@ -405,20 +309,9 @@ public class Course extends DomainObject {
         return lectures;
     }
 
-    public Course lectures(Set<Lecture> lectures) {
-        this.lectures = lectures;
-        return this;
-    }
-
     public Course addLectures(Lecture lecture) {
         this.lectures.add(lecture);
         lecture.setCourse(this);
-        return this;
-    }
-
-    public Course removeLectures(Lecture lecture) {
-        this.lectures.remove(lecture);
-        lecture.setCourse(null);
         return this;
     }
 
@@ -428,23 +321,6 @@ public class Course extends DomainObject {
 
     public Set<TutorGroup> getTutorGroups() {
         return tutorGroups;
-    }
-
-    public Course tutorGroups(Set<TutorGroup> tutorGroups) {
-        this.tutorGroups = tutorGroups;
-        return this;
-    }
-
-    public Course addTutorGroups(TutorGroup tutorGroup) {
-        this.tutorGroups.add(tutorGroup);
-        tutorGroup.setCourse(this);
-        return this;
-    }
-
-    public Course removeTutorGroups(TutorGroup tutorGroup) {
-        this.tutorGroups.remove(tutorGroup);
-        tutorGroup.setCourse(null);
-        return this;
     }
 
     public void setTutorGroups(Set<TutorGroup> tutorGroups) {
@@ -466,13 +342,6 @@ public class Course extends DomainObject {
         }
     }
 
-    public void removeExam(Exam exam) {
-        this.exams.remove(exam);
-        if (exam.getCourse() == this) {
-            exam.setCourse(null);
-        }
-    }
-
     public Boolean getHasAchievements() {
         return hasAchievements;
     }
@@ -480,8 +349,6 @@ public class Course extends DomainObject {
     public void setHasAchievements(Boolean hasAchievements) {
         this.hasAchievements = hasAchievements;
     }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /*
      * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced

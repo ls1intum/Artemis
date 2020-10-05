@@ -82,11 +82,6 @@ public class Complaint extends DomainObject {
         return submittedTime;
     }
 
-    public Complaint submittedTime(ZonedDateTime submittedTime) {
-        this.submittedTime = submittedTime;
-        return this;
-    }
-
     public void setSubmittedTime(ZonedDateTime submittedTime) {
         this.submittedTime = submittedTime;
     }
@@ -106,11 +101,6 @@ public class Complaint extends DomainObject {
 
     public String getResultBeforeComplaint() {
         return resultBeforeComplaint;
-    }
-
-    public Complaint resultBeforeComplaint(String resultBeforeComplaint) {
-        this.resultBeforeComplaint = resultBeforeComplaint;
-        return this;
     }
 
     public void setResultBeforeComplaint(String resultBeforeComplaint) {
