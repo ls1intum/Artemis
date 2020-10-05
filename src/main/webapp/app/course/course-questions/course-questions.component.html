@@ -38,7 +38,7 @@
                     <td *ngIf="showQuestionsWithApprovedAnswers">{{ studentQuestion.approvedAnswers }}</td>
                     <td>
                         <a [routerLink]="['/courses', courseId, studentQuestion.belongsToExercise ? 'exercises' : 'lectures', studentQuestion.exerciseOrLectureId]">{{
-                        studentQuestion.exerciseOrLectureTitle
+                            studentQuestion.exerciseOrLectureTitle
                         }}</a>
                     </td>
                 </tr>
