@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -103,7 +102,6 @@ public class Course extends DomainObject {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
-    @Nullable
     @Column(name = "has_achievements", columnDefinition = "Boolean default false")
     private Boolean hasAchievements = false; // default value
 

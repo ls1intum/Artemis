@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -37,11 +36,11 @@ public class Achievement implements Serializable {
     private String icon;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "`rank`")
+    @Column(name = "achievement_rank")
     private AchievementRank rank;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "`type`")
+    @Column(name = "achievement_type")
     private AchievementType type;
 
     @ManyToOne
@@ -144,23 +143,5 @@ public class Achievement implements Serializable {
     public String toString() {
         return "Achievement{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", icon='" + getIcon() + "'" + ", rank='"
                 + getRank() + "'" + ", type='" + getType() + "'" + "}";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Achievement that = (Achievement) o;
-        return id.equals(that.id) && title.equals(that.title) && description.equals(that.description) && icon.equals(that.icon) && rank.equals(that.rank) && type.equals(that.type)
-                && course.equals(that.course);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, title, description, icon, rank, type, course, exercise);
     }
 }
