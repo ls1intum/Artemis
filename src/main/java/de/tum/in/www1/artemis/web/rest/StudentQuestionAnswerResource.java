@@ -76,9 +76,8 @@ public class StudentQuestionAnswerResource {
         }
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         User user = this.userService.getUserWithGroupsAndAuthorities();
-        if (this.authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            studentQuestionAnswer.setTutorApproved(true);
-        }
+        // answer to approved if written by an instructor
+        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);

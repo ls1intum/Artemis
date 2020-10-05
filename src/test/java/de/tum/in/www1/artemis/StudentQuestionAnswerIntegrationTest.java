@@ -57,7 +57,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createStudentQuestionAnswer_asInstructor() throws Exception {
+    public void createStudentQuestionAnswerAsInstructor() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
@@ -75,7 +75,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createStudentQuestionAnswer_asTA() throws Exception {
+    public void createStudentQuestionAnswerAsTA() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
@@ -85,13 +85,13 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setQuestion(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
 
-        // should be automatically approved
-        assertThat(response.isTutorApproved());
+        // shouldn't be automatically approved
+        assertThat(!response.isTutorApproved());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void createStudentQuestionAnswer_asStudent() throws Exception {
+    public void createStudentQuestionAnswerAsStudent() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
