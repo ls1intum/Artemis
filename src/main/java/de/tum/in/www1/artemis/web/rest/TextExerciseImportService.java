@@ -129,7 +129,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
             newSubmission.setExampleSubmission(true);
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
-            newSubmission.setLanguage(originalSubmission.getLanguage());
+            newSubmission.setLanguage(((TextSubmission) originalSubmission).getLanguage());
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
@@ -139,5 +139,4 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
         return newSubmission;
     }
-
 }

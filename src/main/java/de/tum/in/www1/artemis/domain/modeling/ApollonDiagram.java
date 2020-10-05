@@ -37,11 +37,6 @@ public class ApollonDiagram extends DomainObject {
         return title;
     }
 
-    public ApollonDiagram title(String title) {
-        this.title = title;
-        return this;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
@@ -50,23 +45,12 @@ public class ApollonDiagram extends DomainObject {
         return jsonRepresentation;
     }
 
-    public ApollonDiagram jsonRepresentation(String jsonRepresentation) {
-        this.jsonRepresentation = jsonRepresentation;
-        return this;
-    }
-
     public void setJsonRepresentation(String jsonRepresentation) {
         this.jsonRepresentation = jsonRepresentation;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public DiagramType getDiagramType() {
         return diagramType;
-    }
-
-    public ApollonDiagram diagramType(DiagramType diagramType) {
-        this.diagramType = diagramType;
-        return this;
     }
 
     public void setDiagramType(DiagramType diagramType) {

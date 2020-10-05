@@ -153,11 +153,6 @@ public class Attachment extends DomainObject implements Serializable {
         return version;
     }
 
-    public Attachment version(Integer version) {
-        this.version = version;
-        return this;
-    }
-
     public void setVersion(Integer version) {
         this.version = version;
     }
@@ -166,22 +161,12 @@ public class Attachment extends DomainObject implements Serializable {
         return uploadDate;
     }
 
-    public Attachment uploadDate(ZonedDateTime uploadDate) {
-        this.uploadDate = uploadDate;
-        return this;
-    }
-
     public void setUploadDate(ZonedDateTime uploadDate) {
         this.uploadDate = uploadDate;
     }
 
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
-    }
-
-    public Attachment releaseDate(ZonedDateTime releaseDate) {
-        this.releaseDate = releaseDate;
-        return this;
     }
 
     public void setReleaseDate(ZonedDateTime releaseDate) {
@@ -205,22 +190,12 @@ public class Attachment extends DomainObject implements Serializable {
         return exercise;
     }
 
-    public Attachment exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
-    }
-
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
 
     public Lecture getLecture() {
         return lecture;
-    }
-
-    public Attachment lecture(Lecture lecture) {
-        this.lecture = lecture;
-        return this;
     }
 
     public void setLecture(Lecture lecture) {

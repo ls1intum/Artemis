@@ -37,11 +37,6 @@ public class TextCluster extends DomainObject {
         return castFromBinary(probabilities);
     }
 
-    public TextCluster probabilities(double[] probabilities) {
-        setProbabilities(probabilities);
-        return this;
-    }
-
     public void setProbabilities(double[] probabilities) {
         this.probabilities = castToBinary(probabilities);
     }

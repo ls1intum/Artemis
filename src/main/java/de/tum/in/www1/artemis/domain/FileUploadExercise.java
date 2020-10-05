@@ -23,22 +23,12 @@ public class FileUploadExercise extends Exercise {
         return filePattern;
     }
 
-    public FileUploadExercise filePattern(String filePattern) {
-        this.filePattern = filePattern;
-        return this;
-    }
-
     public void setFilePattern(String filePattern) {
         this.filePattern = filePattern;
     }
 
     public String getSampleSolution() {
         return sampleSolution;
-    }
-
-    public FileUploadExercise sampleSolution(String sampleSolution) {
-        this.sampleSolution = sampleSolution;
-        return this;
     }
 
     public void setSampleSolution(String sampleSolution) {
