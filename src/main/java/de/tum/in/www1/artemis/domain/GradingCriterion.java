@@ -33,11 +33,6 @@ public class GradingCriterion extends DomainObject {
         return title;
     }
 
-    public GradingCriterion title(String title) {
-        this.title = title;
-        return this;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
@@ -46,20 +41,9 @@ public class GradingCriterion extends DomainObject {
         return structuredGradingInstructions;
     }
 
-    public GradingCriterion structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
-        setStructuredGradingInstructions(structuredGradingInstructions);
-        return this;
-    }
-
     public GradingCriterion addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
-        return this;
-    }
-
-    public GradingCriterion removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
-        this.structuredGradingInstructions.remove(structuredGradingInstruction);
-        structuredGradingInstruction.setGradingCriterion(null);
         return this;
     }
 
@@ -77,11 +61,6 @@ public class GradingCriterion extends DomainObject {
 
     public Exercise getExercise() {
         return exercise;
-    }
-
-    public GradingCriterion exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
     }
 
     public void setExercise(Exercise exercise) {
