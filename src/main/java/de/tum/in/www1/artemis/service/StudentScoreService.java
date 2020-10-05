@@ -91,7 +91,6 @@ public class StudentScoreService {
 
             studentScore.setScore(updatedResult.getScore());
 
-            // studentScore = studentScoreRepository.save(studentScore);
             log.info("updated student score in db: " + studentScore);
         }
 
@@ -125,7 +124,6 @@ public class StudentScoreService {
                 oldScore.setScore(0);
             }
 
-            oldScore = studentScoreRepository.save(oldScore);
             log.info("student score in db updated: " + oldScore);
         }
         else {
