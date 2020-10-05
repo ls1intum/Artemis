@@ -19,12 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
 @Table(name = "achievement")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Achievement implements Serializable {
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Achievement extends DomainObject {
 
     @Column(name = "title")
     private String title;
