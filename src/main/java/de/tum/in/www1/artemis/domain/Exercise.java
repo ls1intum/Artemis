@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,14 +43,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public abstract class Exercise extends DomainObject {
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -187,15 +179,6 @@ public abstract class Exercise implements Serializable {
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -211,11 +194,6 @@ public abstract class Exercise implements Serializable {
 
     public String getShortName() {
         return shortName;
-    }
-
-    public Exercise shortName(String shortName) {
-        this.shortName = shortName;
-        return this;
     }
 
     public void setShortName(String shortName) {
@@ -274,22 +252,12 @@ public abstract class Exercise implements Serializable {
         return maxScore;
     }
 
-    public Exercise maxScore(Double maxScore) {
-        this.maxScore = maxScore;
-        return this;
-    }
-
     public void setMaxScore(Double maxScore) {
         this.maxScore = maxScore;
     }
 
     public Double getBonusPoints() {
         return bonusPoints;
-    }
-
-    public Exercise bonusPoints(Double bonusPoints) {
-        this.bonusPoints = bonusPoints;
-        return this;
     }
 
     public void setBonusPoints(Double bonusPoints) {
@@ -300,22 +268,12 @@ public abstract class Exercise implements Serializable {
         return assessmentType;
     }
 
-    public Exercise assessmentType(AssessmentType assessmentType) {
-        this.assessmentType = assessmentType;
-        return this;
-    }
-
     public void setAssessmentType(AssessmentType assessmentType) {
         this.assessmentType = assessmentType;
     }
 
     public String getProblemStatement() {
         return problemStatement;
-    }
-
-    public Exercise problemStatement(String problemStatement) {
-        this.problemStatement = problemStatement;
-        return this;
     }
 
     public void setProblemStatement(String problemStatement) {
@@ -326,22 +284,12 @@ public abstract class Exercise implements Serializable {
         return gradingInstructions;
     }
 
-    public Exercise gradingInstructions(String gradingInstructions) {
-        this.gradingInstructions = gradingInstructions;
-        return this;
-    }
-
     public void setGradingInstructions(String gradingInstructions) {
         this.gradingInstructions = gradingInstructions;
     }
 
     public DifficultyLevel getDifficulty() {
         return difficulty;
-    }
-
-    public Exercise difficulty(DifficultyLevel difficulty) {
-        this.difficulty = difficulty;
-        return this;
     }
 
     public void setDifficulty(DifficultyLevel difficulty) {
@@ -365,34 +313,12 @@ public abstract class Exercise implements Serializable {
         return teamAssignmentConfig;
     }
 
-    public Exercise teamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
-        this.teamAssignmentConfig = teamAssignmentConfig;
-        return this;
-    }
-
     public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
         this.teamAssignmentConfig = teamAssignmentConfig;
     }
 
     public Set<Team> getTeams() {
         return teams;
-    }
-
-    public Exercise teams(Set<Team> teams) {
-        this.teams = teams;
-        return this;
-    }
-
-    public Exercise addTeam(Team team) {
-        this.teams.add(team);
-        team.setExercise(this);
-        return this;
-    }
-
-    public Exercise removeTeam(Team team) {
-        this.teams.remove(team);
-        team.setExercise(null);
-        return this;
     }
 
     public void setTeams(Set<Team> teams) {
@@ -490,11 +416,6 @@ public abstract class Exercise implements Serializable {
         return exampleSubmissions;
     }
 
-    public Exercise exampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
-        this.exampleSubmissions = exampleSubmissions;
-        return this;
-    }
-
     public Exercise addExampleSubmission(ExampleSubmission exampleSubmission) {
         this.exampleSubmissions.add(exampleSubmission);
         exampleSubmission.setExercise(this);
@@ -515,46 +436,12 @@ public abstract class Exercise implements Serializable {
         return attachments;
     }
 
-    public Exercise attachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
-        return this;
-    }
-
-    public Exercise addAttachment(Attachment attachment) {
-        this.attachments.add(attachment);
-        attachment.setExercise(this);
-        return this;
-    }
-
-    public Exercise removeAttachment(Attachment attachment) {
-        this.attachments.remove(attachment);
-        attachment.setExercise(null);
-        return this;
-    }
-
     public void setAttachments(Set<Attachment> attachments) {
         this.attachments = attachments;
     }
 
     public Set<StudentQuestion> getStudentQuestions() {
         return studentQuestions;
-    }
-
-    public Exercise studentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
-        return this;
-    }
-
-    public Exercise addStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.add(studentQuestion);
-        studentQuestion.setExercise(this);
-        return this;
-    }
-
-    public Exercise removeStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.remove(studentQuestion);
-        studentQuestion.setExercise(null);
-        return this;
     }
 
     public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
@@ -767,34 +654,6 @@ public abstract class Exercise implements Serializable {
         return null;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Exercise exercise = (Exercise) o;
-        if (exercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), exercise.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
-                + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
-                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", mode='" + getMode() + "'"
-                + ", categories='" + getCategories() + "'" + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
-    }
-
     public Set<TutorParticipation> getTutorParticipations() {
         return tutorParticipations;
     }
@@ -895,20 +754,9 @@ public abstract class Exercise implements Serializable {
         return gradingCriteria;
     }
 
-    public Exercise gradingCriteria(List<GradingCriterion> gradingCriteria) {
-        reconnectCriteriaWithExercise(gradingCriteria);
-        return this;
-    }
-
     public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
         this.gradingCriteria.add(gradingCriterion);
         gradingCriterion.setExercise(this);
-        return this;
-    }
-
-    public Exercise removeGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.remove(gradingCriterion);
-        gradingCriterion.setExercise(null);
         return this;
     }
 
