@@ -17,6 +17,8 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.util.classpath.ClassNode;
 import de.tum.in.www1.artemis.util.classpath.ClassPathNode;
@@ -27,6 +29,8 @@ import io.github.classgraph.ClassInfo;
  * Tests that the methods from {@link Object} are properly overridden.
  */
 class ObjectMethodTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectMethodTest.class);
 
     private static final String GENERATE_TESTS = "Generate tests";
 
@@ -138,7 +142,7 @@ class ObjectMethodTest {
             }
         }
         else {
-            System.out.println(domainClass + " does not have a no-args constructor");
+            LOG.warn("{} does not have a no-args constructor", domainClass);
         }
     }
 
