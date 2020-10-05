@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.exam;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -21,12 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Table(name = "student_exam")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class StudentExam extends AbstractAuditingEntity implements Serializable {
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class StudentExam extends AbstractAuditingEntity {
 
     @Column(name = "submitted")
     private Boolean submitted;
@@ -67,14 +61,6 @@ public class StudentExam extends AbstractAuditingEntity implements Serializable 
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Boolean isSubmitted() {
         return submitted;
@@ -219,20 +205,5 @@ public class StudentExam extends AbstractAuditingEntity implements Serializable 
     @JsonIgnore
     public boolean areResultsPublishedYet() {
         return exam.resultsPublished();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        StudentExam that = (StudentExam) o;
-        return Objects.equals(getId(), that.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 }

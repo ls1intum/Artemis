@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -16,17 +13,13 @@ import de.tum.in.www1.artemis.service.FileService;
  */
 @Entity
 @DiscriminatorValue(value = "F")
-public class FileUploadSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class FileUploadSubmission extends Submission {
 
     @Transient
     private transient FileService fileService = new FileService();
 
     @Column(name = "file_path")
     private String filePath;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     /**
      * Deletes solution file for this submission
@@ -49,11 +42,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
         return filePath;
     }
 
-    public FileUploadSubmission filePath(String filePath) {
-        this.filePath = filePath;
-        return this;
-    }
-
     /**
      * Builds file path for file upload submission.
      * @param exerciseId the id of the exercise
@@ -66,27 +54,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) o;
-        if (fileUploadSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), fileUploadSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

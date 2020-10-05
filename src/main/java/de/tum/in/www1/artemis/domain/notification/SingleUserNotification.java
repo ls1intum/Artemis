@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -18,27 +16,18 @@ import de.tum.in.www1.artemis.domain.User;
  */
 @Entity
 @DiscriminatorValue(value = "U")
-public class SingleUserNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SingleUserNotification extends Notification {
 
     @ManyToOne
     private User recipient;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public User getRecipient() {
         return recipient;
-    }
-
-    public SingleUserNotification recipient(User user) {
-        this.recipient = user;
-        return this;
     }
 
     public void setRecipient(User user) {
         this.recipient = user;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public String getTopic() {
         return "/topic/user/" + getRecipient().getId() + "/notifications";
@@ -85,26 +74,6 @@ public class SingleUserNotification extends Notification implements Serializable
         target.addProperty("course", studentQuestionAnswer.getQuestion().getLecture().getCourse().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SingleUserNotification singleUserNotification = (SingleUserNotification) o;
-        if (singleUserNotification.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), singleUserNotification.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -149,7 +148,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var firstParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login1);
         final var secondParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login2);
         final var thirdParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login3);
-        // Set test cases changed to true; after the build run it should be false);
+        // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
         bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
@@ -243,14 +242,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     public void triggerFailedBuild_resultPresentInCI_ok() throws Exception {
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
-        submission.setLanguage(Language.ENGLISH);
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         final var participation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId()).get();
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockRetrieveBuildStatus(participation.getBuildPlanId());
 
         request.postWithoutLocation("/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
     }

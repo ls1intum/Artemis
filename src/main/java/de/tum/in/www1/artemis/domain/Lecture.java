@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -21,13 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "lecture")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Lecture implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Lecture extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -54,15 +46,6 @@ public class Lecture implements Serializable {
     @ManyToOne
     @JsonIgnoreProperties("lectures")
     private Course course;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -94,22 +77,12 @@ public class Lecture implements Serializable {
         return startDate;
     }
 
-    public Lecture startDate(ZonedDateTime startDate) {
-        this.startDate = startDate;
-        return this;
-    }
-
     public void setStartDate(ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
     public ZonedDateTime getEndDate() {
         return endDate;
-    }
-
-    public Lecture endDate(ZonedDateTime endDate) {
-        this.endDate = endDate;
-        return this;
     }
 
     public void setEndDate(ZonedDateTime endDate) {
@@ -120,20 +93,9 @@ public class Lecture implements Serializable {
         return attachments;
     }
 
-    public Lecture attachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
-        return this;
-    }
-
     public Lecture addAttachments(Attachment attachment) {
         this.attachments.add(attachment);
         attachment.setLecture(this);
-        return this;
-    }
-
-    public Lecture removeAttachments(Attachment attachment) {
-        this.attachments.remove(attachment);
-        attachment.setLecture(null);
         return this;
     }
 
@@ -143,23 +105,6 @@ public class Lecture implements Serializable {
 
     public Set<StudentQuestion> getStudentQuestions() {
         return studentQuestions;
-    }
-
-    public Lecture studentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
-        return this;
-    }
-
-    public Lecture addStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.add(studentQuestion);
-        studentQuestion.setLecture(this);
-        return this;
-    }
-
-    public Lecture removeStudentQuestions(StudentQuestion studentQuestion) {
-        this.studentQuestions.remove(studentQuestion);
-        studentQuestion.setLecture(null);
-        return this;
     }
 
     public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
@@ -177,27 +122,6 @@ public class Lecture implements Serializable {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Lecture lecture = (Lecture) o;
-        if (lecture.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), lecture.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -17,9 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @Entity
 @DiscriminatorValue(value = "P")
-public class ProgrammingSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ProgrammingSubmission extends Submission {
 
     @Column(name = "commit_hash")
     private String commitHash;
@@ -37,8 +33,6 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public String getCommitHash() {
         return commitHash;
     }
@@ -51,7 +45,6 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     public void setCommitHash(String commitHash) {
         this.commitHash = commitHash;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public boolean isBuildFailed() {
         return buildFailed;
@@ -75,23 +68,6 @@ public class ProgrammingSubmission extends Submission implements Serializable {
 
     public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ProgrammingSubmission))
-            return false;
-        if (!super.equals(o))
-            return false;
-        ProgrammingSubmission that = (ProgrammingSubmission) o;
-        return buildFailed == that.buildFailed && buildArtifact == that.buildArtifact && Objects.equals(commitHash, that.commitHash);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), commitHash, buildFailed, buildArtifact);
     }
 
     @Override
