@@ -172,9 +172,7 @@ public class TextExerciseResource {
         }
 
         // Generate achievements if enabled in course and exercise not part of exam
-        if (result.getCourseViaExerciseGroupOrCourseMember().getHasAchievements() && (result.getExerciseGroup() == null || result.getExerciseGroup().getExam() == null)) {
-            achievementService.generateForExercise(result);
-        }
+        exerciseService.generateAchievementsIfEnabledInCourse(course, result);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
