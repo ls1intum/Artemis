@@ -36,7 +36,11 @@
                     <td>{{ studentQuestion.votes }}</td>
                     <td>{{ studentQuestion.answers }}</td>
                     <td *ngIf="showQuestionsWithApprovedAnswers">{{ studentQuestion.approvedAnswers }}</td>
-                    <td>{{ studentQuestion.exerciseOrLectureTitle }}</td>
+                    <td>
+                        <a [routerLink]="['/courses', courseId, studentQuestion.belongsToExercise ? 'exercises' : 'lectures', studentQuestion.exerciseOrLectureId]">{{
+                        studentQuestion.exerciseOrLectureTitle
+                        }}</a>
+                    </td>
                 </tr>
             </tbody>
         </table>
