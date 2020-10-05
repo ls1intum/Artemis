@@ -140,7 +140,7 @@ public class AtheneScheduleService {
 
         // Check future for scheduled tasks
         // Check atheneService for running tasks
-        return (!done && !cancelled && delay <= 0 || atheneService.isTaskRunning(exercise.getId()));
+        return !done && !cancelled && delay <= 0 || atheneService.isTaskRunning(exercise.getId());
     }
 
 }

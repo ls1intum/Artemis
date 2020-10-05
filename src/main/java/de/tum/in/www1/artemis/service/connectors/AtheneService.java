@@ -30,11 +30,22 @@ public class AtheneService {
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
 
+    @Value("${artemis.athene.submit-url}")
+    private String API_ENDPOINT;
+
+    @Value("${artemis.athene.base64-secret}")
+    private String API_SECRET;
+
     private final TextSubmissionService textSubmissionService;
 
     private final TextBlockRepository textBlockRepository;
 
     private final TextBlockService textBlockService;
+
+    private final RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
+
+    // Contains tasks submitted to Athene and currently processing
+    private final List<Long> runningAtheneTasks = new ArrayList<>();
 
     public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextBlockService textBlockService) {
         this.textSubmissionService = textSubmissionService;
@@ -75,17 +86,6 @@ public class AtheneService {
 
     }
     // endregion
-
-    @Value("${artemis.athene.submit-url}")
-    private String API_ENDPOINT;
-
-    @Value("${artemis.athene.base64-secret}")
-    private String API_SECRET;
-
-    private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
-
-    // Contains tasks submitted to Athene and currently processing
-    private List<Long> runningAtheneTasks = new ArrayList<>();
 
     /**
      * Register an Athene task for an exercise as running

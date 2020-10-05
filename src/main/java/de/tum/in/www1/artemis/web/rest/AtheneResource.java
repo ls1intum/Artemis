@@ -69,7 +69,7 @@ public class AtheneResource {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
         Map<Long, TextSubmission> submissionsMap = submissions.stream()
-            .collect(toMap(/* Key: */ (submission -> submission.getId()), /* Value: */ (submission -> submission)));
+            .collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList();
@@ -84,7 +84,6 @@ public class AtheneResource {
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock
-            TextSubmission s = submissionsMap.get(t.submissionId);
             submissionsMap.get(t.submissionId).addBlock(newBlock);
             textBlocks.add(newBlock);
         }
