@@ -34,11 +34,6 @@ public class StudentParticipation extends Participation {
         return presentationScore;
     }
 
-    public StudentParticipation presentationScore(Integer presentationScore) {
-        this.presentationScore = presentationScore;
-        return this;
-    }
-
     public void setPresentationScore(Integer presentationScore) {
         this.presentationScore = presentationScore;
     }

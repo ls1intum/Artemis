@@ -183,11 +183,6 @@ public class ProgrammingExercise extends Exercise {
         return m.group(1);
     }
 
-    public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {
-        this.testRepositoryUrl = testRepositoryUrl;
-        return this;
-    }
-
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateBuildPlanId() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -220,11 +215,6 @@ public class ProgrammingExercise extends Exercise {
         return publishBuildPlanUrl;
     }
 
-    public ProgrammingExercise publishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-        return this;
-    }
-
     public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
         this.publishBuildPlanUrl = publishBuildPlanUrl;
     }
@@ -233,22 +223,12 @@ public class ProgrammingExercise extends Exercise {
         return allowOnlineEditor;
     }
 
-    public ProgrammingExercise allowOnlineEditor(Boolean allowOnlineEditor) {
-        this.allowOnlineEditor = allowOnlineEditor;
-        return this;
-    }
-
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
     public Boolean isAllowOfflineIde() {
         return allowOfflineIde;
-    }
-
-    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
-        this.allowOfflineIde = allowOfflineIde;
-        return this;
     }
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
@@ -328,11 +308,6 @@ public class ProgrammingExercise extends Exercise {
 
     public String getPackageName() {
         return packageName;
-    }
-
-    public ProgrammingExercise packageName(String packageName) {
-        this.packageName = packageName;
-        return this;
     }
 
     public void setPackageName(String packageName) {
@@ -455,7 +430,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @JsonProperty("sequentialTestRuns")
-    public Boolean hasSequentialTestRuns() {
+    public boolean hasSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
         }

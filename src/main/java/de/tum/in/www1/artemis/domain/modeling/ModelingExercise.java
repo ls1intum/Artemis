@@ -28,11 +28,6 @@ public class ModelingExercise extends Exercise {
         return diagramType;
     }
 
-    public ModelingExercise diagramType(DiagramType diagramType) {
-        this.diagramType = diagramType;
-        return this;
-    }
-
     public void setDiagramType(DiagramType diagramType) {
         this.diagramType = diagramType;
     }
@@ -41,22 +36,12 @@ public class ModelingExercise extends Exercise {
         return sampleSolutionModel;
     }
 
-    public ModelingExercise sampleSolutionModel(String sampleSolutionModel) {
-        this.sampleSolutionModel = sampleSolutionModel;
-        return this;
-    }
-
     public void setSampleSolutionModel(String sampleSolutionModel) {
         this.sampleSolutionModel = sampleSolutionModel;
     }
 
     public String getSampleSolutionExplanation() {
         return sampleSolutionExplanation;
-    }
-
-    public ModelingExercise sampleSolutionExplanation(String sampleSolutionExplanation) {
-        this.sampleSolutionExplanation = sampleSolutionExplanation;
-        return this;
     }
 
     public void setSampleSolutionExplanation(String sampleSolutionExplanation) {

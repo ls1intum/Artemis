@@ -34,11 +34,6 @@ public class TeamAssignmentConfig extends DomainObject {
         return exercise;
     }
 
-    public TeamAssignmentConfig exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
-    }
-
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
@@ -47,22 +42,12 @@ public class TeamAssignmentConfig extends DomainObject {
         return minTeamSize;
     }
 
-    public TeamAssignmentConfig minTeamSize(Integer minTeamSize) {
-        this.minTeamSize = minTeamSize;
-        return this;
-    }
-
     public void setMinTeamSize(Integer minTeamSize) {
         this.minTeamSize = minTeamSize;
     }
 
     public Integer getMaxTeamSize() {
         return maxTeamSize;
-    }
-
-    public TeamAssignmentConfig maxTeamSize(Integer maxTeamSize) {
-        this.maxTeamSize = maxTeamSize;
-        return this;
     }
 
     public void setMaxTeamSize(Integer maxTeamSize) {
