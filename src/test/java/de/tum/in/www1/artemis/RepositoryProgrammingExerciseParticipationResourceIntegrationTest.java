@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -386,7 +385,9 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(1);
-        assertThat(receivedLogs).isEqualTo(logs);
+        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
+        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
+        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
@@ -394,7 +395,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     public void testBuildLogsFromDatabase() throws Exception {
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
-        submission.setLanguage(Language.ENGLISH);
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
@@ -405,6 +405,10 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
+        // also test toString()
+        submission.getBuildLogEntries().forEach(entry -> {
+            System.out.println(entry.toString());
+        });
         database.addProgrammingSubmission(programmingExercise, submission, "student1");
 
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);

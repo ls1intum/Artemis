@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,6 +43,6 @@ public class Context {
 
     @Override
     public int hashCode() {
-        return contextElementIDs.hashCode();
+        return Objects.hashCode(getContextElementIDs());
     }
 }

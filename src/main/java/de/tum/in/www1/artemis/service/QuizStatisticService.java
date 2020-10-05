@@ -170,7 +170,7 @@ public class QuizStatisticService {
 
         // update QuizPointStatistic with the result
         if (result != null) {
-            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
