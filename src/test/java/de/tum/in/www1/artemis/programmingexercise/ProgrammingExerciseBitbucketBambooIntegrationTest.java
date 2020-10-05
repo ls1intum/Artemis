@@ -169,6 +169,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
+        staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()).forEach(config -> {
+            config.getCategoryMappings().forEach(mapping -> {
+                assertThat(mapping.getTool()).isNotNull();
+                assertThat(mapping.getCategory()).isNotNull();
+            });
+        });
     }
 
     @Test
