@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-import static java.util.stream.Collectors.toMap;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -68,15 +67,8 @@ public class AtheneResource {
         Map<Integer, TextCluster> clusters = requestBody.clusters;
         List<TextBlock> textBlocks = atheneService.parseTextBlocks(requestBody.blocks, exerciseId);
 
-        //Save textBlocks in Database
-        final Map<String, TextBlock> textBlockMap;
-        textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
-
-        //Save clusters in Database
-        atheneService.processClusters(clusters, textBlockMap, exerciseId);
-
-        // Notify atheneService of finished task
-        atheneService.finishTask(exerciseId);
+        // The atheneService will manage the processing and database saving
+        atheneService.processResult(clusters, textBlocks, exerciseId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

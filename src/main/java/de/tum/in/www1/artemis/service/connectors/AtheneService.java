@@ -186,6 +186,24 @@ public class AtheneService {
     }
 
     /**
+     * Processes results coming back from the Athene system via callbackUrl (see AtheneResource)
+     * @param clusters the Map of calculated clusters to save to the database
+     * @param textBlocks the list of calculated textBlocks to save to the database
+     * @param exerciseId the exercise the automatic feedback suggestions were calculated for
+     */
+    public void processResult(Map<Integer, TextCluster> clusters, List<TextBlock> textBlocks, Long exerciseId) {
+        //Save textBlocks in Database
+        final Map<String, TextBlock> textBlockMap;
+        textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
+
+        //Save clusters in Database
+        processClusters(clusters, textBlockMap, exerciseId);
+
+        // Notify atheneService of finished task
+        finishTask(exerciseId);
+    }
+
+    /**
      * Parse text blocks of type AtheneDTO.TextBlock to TextBlocks linked to their submission
      *
      * @param blocks The list of AtheneDTO-blocks to parse
