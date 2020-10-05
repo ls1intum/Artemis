@@ -144,7 +144,7 @@ public class QuizExercise extends Exercise {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isPlannedToStart != null && isPlannedToStart && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
