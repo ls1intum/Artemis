@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -39,17 +40,20 @@ export class StudentQuestionRowComponent implements OnInit {
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
     EditorMode = EditorMode;
+    courseId: number;
 
     constructor(
         private studentQuestionAnswerService: StudentQuestionAnswerService,
         private studentQuestionService: StudentQuestionService,
         private localStorage: LocalStorageService,
+        private route: ActivatedRoute,
     ) {}
 
     /**
      * sort answers when component is initialized
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.sortQuestionAnswers();
     }
 
@@ -143,8 +147,7 @@ export class StudentQuestionRowComponent implements OnInit {
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.tutorApproved = false;
         studentQuestionAnswer.answerDate = moment();
-        const courseId = this.studentQuestion.exercise ? this.studentQuestion.exercise.course!.id! : this.studentQuestion.lecture!.course!.id!;
-        this.studentQuestionAnswerService.create(courseId, studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.create(this.courseId, studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
             if (!this.studentQuestion.answers) {
                 this.studentQuestion.answers = [];
             }
