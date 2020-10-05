@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -115,7 +114,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<Authority> authorities = new HashSet<>();
 
     @ManyToMany
-    @Nullable
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "user_achievement", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "achievement_id", referencedColumnName = "id") })

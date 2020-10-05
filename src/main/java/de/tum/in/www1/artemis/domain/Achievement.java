@@ -45,7 +45,7 @@ public class Achievement extends DomainObject {
 
     @ManyToMany(mappedBy = "achievements")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties({ "achievements" })
+    @JsonIgnoreProperties("achievements")
     private Set<User> users = new HashSet<>();
 
     public Achievement() {
