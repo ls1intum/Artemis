@@ -18,7 +18,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -117,7 +116,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "user_achievement", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "achievement_id", referencedColumnName = "id") })
-    @JsonIgnoreProperties("users")
+    @JsonIgnore
     private Set<Achievement> achievements = new HashSet<>();
 
     public String getLogin() {
