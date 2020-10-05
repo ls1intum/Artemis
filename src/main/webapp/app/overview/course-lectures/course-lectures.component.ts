@@ -21,7 +21,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
-    public course: Course | null;
+    public course?: Course;
     public weeklyIndexKeys: string[];
     public weeklyLecturesGrouped: object;
 
@@ -77,7 +77,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
         sortedLectures.forEach((lecture) => {
-            const dateValue = lecture.startDate ? moment(lecture.startDate) : null;
+            const dateValue = lecture.startDate ? moment(lecture.startDate) : undefined;
             if (!dateValue) {
                 notAssociatedLectures.push(lecture);
                 return;

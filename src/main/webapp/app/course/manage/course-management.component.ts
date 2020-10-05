@@ -31,7 +31,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    courseForGuidedTour: Course | null;
+    courseForGuidedTour?: Course;
 
     constructor(
         private courseService: CourseManagementService,

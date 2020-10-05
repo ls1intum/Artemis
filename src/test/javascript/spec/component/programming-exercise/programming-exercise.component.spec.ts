@@ -18,7 +18,7 @@ import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-cour
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
-    const programmingExercise = new ProgrammingExercise(course);
+    const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
 
     let comp: ProgrammingExerciseComponent;

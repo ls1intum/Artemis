@@ -26,7 +26,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     describe('OnInit for course exercise', () => {
-        const programmingExercise = new ProgrammingExercise(new Course());
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
 
         beforeEach(() => {
@@ -46,7 +46,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
     describe('OnInit for exam exercise', () => {
         const exerciseGroup = new ExerciseGroup();
-        const programmingExercise = new ProgrammingExercise();
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.id = 123;
         programmingExercise.exerciseGroup = exerciseGroup;
 

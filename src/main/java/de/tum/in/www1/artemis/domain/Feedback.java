@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -23,17 +21,11 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 @Table(name = "feedback")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Feedback implements Serializable {
+public class Feedback extends DomainObject {
 
     public static final int MAX_REFERENCE_LENGTH = 2000;
 
-    private static final long serialVersionUID = 1L;
-
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Size(max = 500)
     @Column(name = "text")
@@ -76,15 +68,6 @@ public class Feedback implements Serializable {
 
     @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
     private List<FeedbackConflict> secondConflicts = new ArrayList<>();
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getText() {
         return text;
@@ -243,28 +226,8 @@ public class Feedback implements Serializable {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Feedback feedback = (Feedback) o;
-        if (feedback.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), feedback.getId());
-    }
-
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

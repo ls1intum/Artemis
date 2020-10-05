@@ -19,7 +19,10 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildRunState;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -494,10 +497,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         var programmingExercise = optionalProgrammingExercise.get();
 
-        // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
-        // should get an updated result.
+        // If the flag testCasesChanged has not changed, we can stop the execution
+        // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
+        // It is only relevant when there are student submissions that should get an updated result.
 
-        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId())) {
+        boolean resultsExist = resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);

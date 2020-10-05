@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -33,15 +33,15 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
-    course: Course | null;
+    course?: Course;
     startEnabled: boolean;
     endEnabled: boolean;
     confirmed: boolean;
 
-    testRun: boolean;
+    testRun?: boolean;
 
-    formattedGeneralInformation: SafeHtml | null;
-    formattedConfirmationText: SafeHtml | null;
+    formattedGeneralInformation?: SafeHtml;
+    formattedConfirmationText?: SafeHtml;
 
     interval: number;
     waitingForExamStart = false;
@@ -128,7 +128,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      */
     startExam() {
         if (this.testRun) {
-            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, this.studentExam);
+            this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             if (this.hasStarted()) {
                 this.onExamStarted.emit(this.studentExam);
             } else {
@@ -138,9 +138,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                 }, 100);
             }
         } else {
-            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course.id, this.exam.id).subscribe((studentExam: StudentExam) => {
+            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!).subscribe((studentExam: StudentExam) => {
                 this.studentExam = studentExam;
-                this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course.id, this.exam.id, studentExam);
+                this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
                 if (this.hasStarted()) {
                     this.onExamStarted.emit(studentExam);
                 } else {

@@ -55,7 +55,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
                 .subscribeForLatestResultOfParticipation(this.participationId, false, this.exercise.id)
                 .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
                 .subscribe((manualResult) => {
-                    let assessor: User | null = null;
+                    let assessor: User | undefined;
                     // TODO: workaround to fix an issue when the assessor gets lost due to the websocket update
                     // we should properly fix this in the future and make sure the assessor is not cut off in the first place
                     if (this.latestResult && this.latestResult.assessor && this.latestResult.id === manualResult.id) {
@@ -79,12 +79,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     }
 
     async openCodeEditorWithStudentSubmission() {
-        let courseId;
-        if (!!this.exercise.exerciseGroup) {
-            courseId = this.exercise.exerciseGroup.exam?.course.id;
-        } else {
-            courseId = this.exercise.course!.id;
-        }
+        const courseId = this.exercise.exerciseGroup?.exam?.course?.id || this.exercise.course?.id;
         const route = `/course-management/${courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${this.participationId}/assessment`;
         await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
     }

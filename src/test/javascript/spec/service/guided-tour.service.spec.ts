@@ -281,16 +281,16 @@ describe('GuidedTourService', () => {
             const course2 = { id: 2, shortName: 'test' } as Course;
 
             function resetCurrentTour(): void {
-                guidedTourService['currentCourse'] = null;
-                guidedTourService['currentExercise'] = null;
+                guidedTourService['currentCourse'] = undefined;
+                guidedTourService['currentExercise'] = undefined;
                 guidedTourService.currentTour = completedTour;
                 guidedTourService.resetTour();
             }
 
             function currentCourseAndExerciseNull(): void {
-                expect(guidedTourService.currentTour).to.be.null;
-                expect(guidedTourService['currentCourse']).to.be.null;
-                expect(guidedTourService['currentExercise']).to.be.null;
+                expect(guidedTourService.currentTour).to.be.undefined;
+                expect(guidedTourService['currentCourse']).to.be.undefined;
+                expect(guidedTourService['currentExercise']).to.be.undefined;
             }
 
             beforeEach(async () => {
@@ -317,7 +317,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).to.equal(course1);
-                expect(guidedTourService['currentExercise']).to.be.null;
+                expect(guidedTourService['currentExercise']).to.be.undefined;
                 resetCurrentTour();
             });
 
@@ -330,7 +330,7 @@ describe('GuidedTourService', () => {
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
-                guidedTourService.currentTour = null;
+                guidedTourService.currentTour = undefined;
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();
                 resetCurrentTour();
@@ -356,13 +356,13 @@ describe('GuidedTourService', () => {
             });
 
             it('should start the tour for the matching course / exercise short name', () => {
-                guidedTourService.currentTour = null;
+                guidedTourService.currentTour = undefined;
 
                 // enable tour for matching course / exercise short name
                 guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
 
-                course1.exercises.forEach((exercise) => {
+                course1.exercises!.forEach((exercise) => {
                     exercise.course = course1;
                     if (exercise === exercise1) {
                         expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).to.be.true;
@@ -372,15 +372,15 @@ describe('GuidedTourService', () => {
                 });
 
                 // disable tour for not matching course without exercise
-                guidedTourService.currentTour = null;
+                guidedTourService.currentTour = undefined;
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).to.be.null;
+                expect(guidedTourService.currentTour).to.be.undefined;
 
                 // disable tour for not matching course but matching exercise identifier
-                guidedTourService.currentTour = null;
+                guidedTourService.currentTour = undefined;
                 course2.exercises = [exercise3];
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).to.be.null;
+                expect(guidedTourService.currentTour).to.be.undefined;
             });
 
             describe('Tour with student participation', () => {
@@ -398,12 +398,12 @@ describe('GuidedTourService', () => {
                     deleteGuidedTourSettingStub.reset();
                     navigationStub.reset();
                     findParticipationStub.returns(Observable.of(httpResponse));
-                    deleteParticipationStub.returns(Observable.of(null));
-                    deleteGuidedTourSettingStub.returns(Observable.of(null));
+                    deleteParticipationStub.returns(Observable.of(undefined));
+                    deleteGuidedTourSettingStub.returns(Observable.of(undefined));
                 }
 
                 it('should find and delete the student participation for exercise', () => {
-                    course1.exercises.push(exercise4);
+                    course1.exercises!.push(exercise4);
 
                     prepareParticipation(exercise1, studentParticipation1, httpResponse1);
                     guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
@@ -421,8 +421,8 @@ describe('GuidedTourService', () => {
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
                     expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
-                    const index = course1.exercises.findIndex((exercise) => (exercise.id = exercise4.id));
-                    course1.exercises.splice(index, 1);
+                    const index = course1.exercises!.findIndex((exercise) => (exercise.id = exercise4.id));
+                    course1.exercises!.splice(index, 1);
                 });
             });
         });
