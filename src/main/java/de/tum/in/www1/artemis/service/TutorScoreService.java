@@ -95,9 +95,7 @@ public class TutorScoreService {
      * @param complaint complaint
      * @param exercise exercise
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addUnansweredComplaintOrFeedbackRequest(TutorScore tutorScore, Complaint complaint, Exercise exercise) {
-        // TODO: Get score using find() Method and remove transactional
         if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
 
@@ -144,37 +142,7 @@ public class TutorScoreService {
             deletedResult = oldResult.get();
         }
 
-        // TODO: Move to helper method to increase readability
-        if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
-            return;
-        }
-
-        if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
-            return;
-        }
-
-        var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
-
-        if (participation.isEmpty()) {
-            return;
-        }
-
-        Exercise exercise = participation.get().getExercise();
-
-        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
-
-        if (existingTutorScore.isPresent()) {
-            TutorScore tutorScore = existingTutorScore.get();
-
-            if (tutorScore.getAssessments() > 0) {
-                tutorScore.setAssessments(tutorScore.getAssessments() - 1);
-                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
-            }
-
-            removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
-
-            // tutorScoreRepository.save(tutorScore);
-        }
+        removeResultFromTutorScore(deletedResult);
     }
 
     /**
@@ -210,9 +178,7 @@ public class TutorScoreService {
             tutorScore.setAssessments(tutorScore.getAssessments() + 1);
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
-            tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
-
-            // tutorScoreRepository.save(tutorScore);
+            addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
@@ -251,8 +217,6 @@ public class TutorScoreService {
 
                         fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() + 1);
                         fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() + exercise.getMaxScore());
-
-                        tutorScoreRepository.save(fromComplaintResponse);
                     }
                 }
 
@@ -269,8 +233,6 @@ public class TutorScoreService {
 
                         fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() + 1);
                         fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() + exercise.getMaxScore());
-
-                        tutorScoreRepository.save(fromComplaintResponse);
                     }
                     else {
                         tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() + 1);
@@ -280,6 +242,40 @@ public class TutorScoreService {
         }
 
         return tutorScore;
+    }
+
+    /**
+     * Helper method for removing result from tutor scores.
+     */
+    private void removeResultFromTutorScore(Result deletedResult) {
+        if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
+            return;
+        }
+
+        if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
+            return;
+        }
+
+        var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
+
+        if (participation.isEmpty()) {
+            return;
+        }
+
+        Exercise exercise = participation.get().getExercise();
+
+        var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
+
+        if (existingTutorScore.isPresent()) {
+            TutorScore tutorScore = existingTutorScore.get();
+
+            if (tutorScore.getAssessments() > 0) {
+                tutorScore.setAssessments(tutorScore.getAssessments() - 1);
+                tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
+            }
+
+            removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
+        }
     }
 
     /**
@@ -314,8 +310,6 @@ public class TutorScoreService {
                             fromComplaintResponse.setComplaintResponses(fromComplaintResponse.getComplaintResponses() - 1);
                             fromComplaintResponse.setComplaintResponsesPoints(fromComplaintResponse.getComplaintResponsesPoints() - exercise.getMaxScore());
                         }
-
-                        tutorScoreRepository.save(fromComplaintResponse);
                     }
                 }
 
@@ -336,8 +330,6 @@ public class TutorScoreService {
                             fromComplaintResponse.setAnsweredFeedbackRequests(fromComplaintResponse.getAnsweredFeedbackRequests() - 1);
                             fromComplaintResponse.setAnsweredFeedbackRequestsPoints(fromComplaintResponse.getAnsweredFeedbackRequestsPoints() - exercise.getMaxScore());
                         }
-
-                        tutorScoreRepository.save(fromComplaintResponse);
                     }
                     else {
                         if (tutorScore.getNotAnsweredFeedbackRequests() > 0) {
