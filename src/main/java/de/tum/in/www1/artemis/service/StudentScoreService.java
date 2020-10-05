@@ -59,7 +59,6 @@ public class StudentScoreService {
      * @param exercise exercise
      * @return list of student score objects for that course
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<StudentScore> getStudentScoreForStudentAndExercise(User student, Exercise exercise) {
         return studentScoreRepository.findByStudentAndExercise(student, exercise);
     }
@@ -69,7 +68,6 @@ public class StudentScoreService {
      *
      * @param deletedResult result to be deleted
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeResult(Result deletedResult) {
         studentScoreRepository.deleteByResult(deletedResult);
     }
@@ -93,7 +91,7 @@ public class StudentScoreService {
 
             studentScore.setScore(updatedResult.getScore());
 
-            studentScore = studentScoreRepository.save(studentScore);
+            // studentScore = studentScoreRepository.save(studentScore);
             log.info("updated student score in db: " + studentScore);
         }
 

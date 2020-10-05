@@ -84,7 +84,6 @@ public class TutorScoreService {
      * @param exercise exercise
      * @return tutor score object for that tutor and exercise
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<TutorScore> getTutorScoreForTutorAndExercise(User tutor, Exercise exercise) {
         return tutorScoreRepository.findByTutorAndExercise(tutor, exercise);
     }
@@ -98,6 +97,7 @@ public class TutorScoreService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addUnansweredComplaintOrFeedbackRequest(TutorScore tutorScore, Complaint complaint, Exercise exercise) {
+        // TODO: Get score using find() Method and remove transactional
         if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             tutorScore.setAllComplaints(tutorScore.getAllComplaints() + 1);
 
@@ -122,7 +122,6 @@ public class TutorScoreService {
      *
      * @param tutorScore tutor score
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeNotAnsweredFeedbackRequest(TutorScore tutorScore) {
         tutorScore.setNotAnsweredFeedbackRequests(tutorScore.getNotAnsweredFeedbackRequests() - 1);
 
@@ -145,6 +144,7 @@ public class TutorScoreService {
             deletedResult = oldResult.get();
         }
 
+        // TODO: Move to helper method to increase readability
         if (deletedResult.getParticipation() == null || deletedResult.getParticipation().getId() == null) {
             return;
         }
@@ -171,9 +171,9 @@ public class TutorScoreService {
                 tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() - exercise.getMaxScore());
             }
 
-            tutorScore = removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
+            removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
 
-            tutorScoreRepository.save(tutorScore);
+            // tutorScoreRepository.save(tutorScore);
         }
     }
 
@@ -212,7 +212,7 @@ public class TutorScoreService {
 
             tutorScore = addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
 
-            tutorScoreRepository.save(tutorScore);
+            // tutorScoreRepository.save(tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);

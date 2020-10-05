@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.listeners;
 
-import javax.persistence.*;
+import javax.persistence.PostUpdate;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +36,11 @@ public class ResultListener {
     }
 
     /**
-     * After result gets deleted, delete all StudentScores/TutorScores with this result.
+     * Before result gets deleted, delete all StudentScores/TutorScores with this result.
      *
      * @param deletedResult deleted result
      */
-    @PostRemove
+    @PreRemove
     public void postRemove(Result deletedResult) {
         log.info("Result " + deletedResult + " was deleted");
         // remove from Student Scores and Tutor Scores
