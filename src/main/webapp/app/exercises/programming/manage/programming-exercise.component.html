@@ -89,9 +89,8 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td class="d-none d-md-table-cell">
                         <span>
-                            {{ getPublicTestCasesNumber(programmingExercise.id) }} + {{ getHiddenTestCasesNumber(programmingExercise.id) }} ({{
-                                'artemisApp.programmingExerciseTestCase.hiddenTests' | translate
-                            }})
+                            {{ getPublicTestCasesNumber(programmingExercise.id) }} ({{ 'artemisApp.programmingExerciseTestCase.publicTests' | translate }})
+                            {{ getHiddenTestCasesNumber(programmingExercise.id) }} ({{ 'artemisApp.programmingExerciseTestCase.hiddenTests' | translate }})
                         </span>
                     </td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">

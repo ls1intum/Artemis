@@ -20,7 +20,8 @@
             "active": "Active",
             "exercise": "Exercise",
             "numberOfTests": "Tests Number",
-            "hiddenTests": "hidden"
+            "hiddenTests": "hidden",
+            "publicTests": "public"
         }
     }
 }

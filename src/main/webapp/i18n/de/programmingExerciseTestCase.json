@@ -20,7 +20,8 @@
             "active": "Active",
             "exercise": "Exercise",
             "numberOfTests": "Anzahl der Tests",
-            "hiddenTests": "versteckt"
+            "hiddenTests": "versteckt",
+            "publicTests": "öffentlich"
         }
     }
 }
