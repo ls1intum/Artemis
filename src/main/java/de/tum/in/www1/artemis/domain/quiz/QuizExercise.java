@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -30,9 +29,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-public class QuizExercise extends Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizExercise extends Exercise {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -339,7 +336,7 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
-        int maxScore = getMaxTotalScore();
+        double maxScore = getMaxTotalScore();
         // map the resulting score to the 0 to 100 scale
         return Math.round(100.0 * score / maxScore);
     }
@@ -525,8 +522,8 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
-    public Integer getMaxTotalScore() {
-        int maxScore = 0;
+    public Double getMaxTotalScore() {
+        double maxScore = 0.0;
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
@@ -544,24 +541,9 @@ public class QuizExercise extends Exercise implements Serializable {
             return score;
         }
         else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return getMaxTotalScore().doubleValue();
+            return getMaxTotalScore();
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizExercise quizExercise = (QuizExercise) o;
-        if (quizExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizExercise.getId());
     }
 
     /**
@@ -692,11 +674,6 @@ public class QuizExercise extends Exercise implements Serializable {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

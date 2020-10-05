@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -21,9 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-public class QuizSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizSubmission extends Submission {
 
     @Column(name = "score_in_points")
     @JsonView(QuizView.After.class)
@@ -117,28 +113,7 @@ public class QuizSubmission extends Submission implements Serializable {
             }
         }
         // set total score
-
         setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizSubmission quizSubmission = (QuizSubmission) o;
-        if (quizSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
