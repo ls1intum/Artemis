@@ -45,7 +45,7 @@ class ObjectMethodTest {
 
     /**
      * Maps the class path structure to the dynamic test structure.
-     * 
+     *
      * @return the test structure or an empty optional, if no tests could be generated for the whole ClassPathNode
      */
     Optional<DynamicNode> generateTestContainerForClasses(ClassPathNode classPathStructure) {
@@ -60,7 +60,7 @@ class ObjectMethodTest {
 
     /**
      * Maps a single domain class node to its dynamic test structure. This basically just generates tests based on the properties of the class.
-     * 
+     *
      * @return the test structure or an empty optional, if no tests could be generated for this ClassNode
      */
     Optional<DynamicNode> generateTestsForClass(ClassNode classNode) {

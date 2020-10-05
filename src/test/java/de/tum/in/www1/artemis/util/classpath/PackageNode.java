@@ -15,13 +15,16 @@ import io.github.classgraph.ClassInfo;
  */
 public class PackageNode extends ClassPathNode {
 
-    private final TreeMap<String, PackageNode> subPackages = new TreeMap<>();
+    /**
+     * Using a map here to find sub-packages by their segment name quickly.
+     */
+    private final SortedMap<String, PackageNode> subPackages = new TreeMap<>();
 
-    private final TreeSet<ClassNode> ownClasses = new TreeSet<>();
+    private final SortedSet<ClassNode> ownClasses = new TreeSet<>();
 
     /**
      * Creates a new package node with <code>null</code> parent, only for {@link RootNode}.
-     * 
+     *
      * @param segmentName this nodes segment name, must not be <code>null</code>.
      */
     PackageNode(String segmentName) {
@@ -30,7 +33,7 @@ public class PackageNode extends ClassPathNode {
 
     /**
      * Creates a new package node with the given {@linkplain ClassPathNode#getParent() parent} and {@linkplain ClassPathNode#getSegmentName() segment name}.
-     * 
+     *
      * @param parent      this nodes parent package, must not be <code>null</code>
      * @param segmentName this nodes segment name. Must not be <code>null</code>, contain '<code>.</code>' or be blank.
      */
@@ -46,7 +49,7 @@ public class PackageNode extends ClassPathNode {
 
     /**
      * Returns the direct sub-package nodes of this {@link PackageNode}.
-     * 
+     *
      * @return an unmodifiable collection of direct sub-package nodes in lexicographical order, never <code>null</code>.
      */
     public Collection<PackageNode> getSubPackages() {
@@ -55,7 +58,7 @@ public class PackageNode extends ClassPathNode {
 
     /**
      * Returns the classes directly contained in / owned by this {@link PackageNode}.
-     * 
+     *
      * @return an unmodifiable collection of classes in this {@link PackageNode} in lexicographical order, never <code>null</code>.
      */
     public Collection<ClassNode> getOwnClasses() {
@@ -69,7 +72,7 @@ public class PackageNode extends ClassPathNode {
 
     /**
      * This recursively adds a given class to the package structure, used by {@link RootNode#add(ClassInfo)}.
-     * 
+     *
      * @param classInfo         the classes {@link ClassInfo}, may be <code>null</code>
      * @param clazz             the {@link Class} object, must not be <code>null</code>
      * @param remainingSegments the list of segments left to process

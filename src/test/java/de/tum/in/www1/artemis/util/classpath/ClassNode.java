@@ -19,7 +19,7 @@ public class ClassNode extends ClassPathNode {
 
     /**
      * Creates a new class node.
-     * 
+     *
      * @param parent         the parent node of this class node, must not be <code>null</code>.
      * @param containedClass the {@link Class} object, must not be <code>null</code>.
      * @param classInfo      the {@link ClassInfo} describing this class node's class, may be <code>null</code>.
@@ -32,7 +32,7 @@ public class ClassNode extends ClassPathNode {
 
     /**
      * Returns the {@link Class} object of this class node.
-     * 
+     *
      * @return the {@link Class} object, never <code>null</code>
      */
     public Class<?> getContainedClass() {
@@ -40,8 +40,8 @@ public class ClassNode extends ClassPathNode {
     }
 
     /**
-     * Returns the {@link Class} object of this class node.
-     * 
+     * Returns the {@link ClassInfo} of this class node.
+     *
      * @return the {@link ClassInfo}, allowed to be <code>null</code>.
      */
     public ClassInfo getClassInfo() {

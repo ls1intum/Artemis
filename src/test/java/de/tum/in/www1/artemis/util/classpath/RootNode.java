@@ -25,7 +25,7 @@ public class RootNode extends PackageNode {
 
     /**
      * Creates a new <b>restricted</b> root node.
-     * 
+     *
      * @param name the {@linkplain ClassPathNode#getSegmentName() segment name} of this root node and the start of the names of all its children in the class path tree.
      */
     public RootNode(String name) {
@@ -34,7 +34,7 @@ public class RootNode extends PackageNode {
 
     /**
      * Adds the given {@link ClassInfo} to this root nodes class path tree.
-     * 
+     *
      * @param classInfo the {@link ClassInfo} describing the class that should be added
      * @return true if the class was not previously contained in the class path tree
      * @throws IllegalArgumentException if the class name of the given {@link ClassInfo} does not start with this root nodes name
@@ -47,7 +47,7 @@ public class RootNode extends PackageNode {
 
     /**
      * Adds the given {@link Class} to this root nodes class path tree, <b>without {@link ClassInfo}</b>.
-     * 
+     *
      * @param clazz the {@link Class} object
      * @return true if the class was not previously contained in the class path tree
      * @throws IllegalArgumentException if the class name of the given {@link Class} does not start with this root nodes name
@@ -59,7 +59,7 @@ public class RootNode extends PackageNode {
 
     /**
      * Adds all given {@link ClassInfo}s to this root nodes class path tree.
-     * 
+     *
      * @param classes the {@link Class} objects
      * @return this, for easier usage.
      * @throws IllegalArgumentException if the class name of the given {@link ClassInfo} does not start with this root nodes name
@@ -72,7 +72,7 @@ public class RootNode extends PackageNode {
 
     /**
      * Adds all given {@link Class}es to this root nodes class path tree, <b>without {@link ClassInfo}</b>.
-     * 
+     *
      * @param classes the {@link ClassInfo}s describing the classes that should be added
      * @return this, for easier usage.
      * @throws IllegalArgumentException if the class name of the given {@link Class} does not start with this root nodes name
@@ -90,8 +90,9 @@ public class RootNode extends PackageNode {
         }
         name = name.substring(getName().length() + 1); // + 1 for the dot
         var remainingSegments = List.of(name.split("\\."));
-        if (remainingSegments.stream().anyMatch(String::isBlank))
+        if (remainingSegments.stream().anyMatch(String::isBlank)) {
             throw new IllegalArgumentException(clazz + " has a blank class path segment name");
+        }
         return remainingSegments;
     }
 }
