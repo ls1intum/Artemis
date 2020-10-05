@@ -35,7 +35,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     selectedFile: string;
     @Input()
-    sessionId: number;
+    sessionId: number | string;
     @Input()
     readOnlyManualFeedback: boolean;
     @Input()

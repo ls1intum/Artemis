@@ -75,7 +75,7 @@ describe('CodeEditorContainerIntegration', () => {
     let getStudentParticipationWithLatestResultStub: SinonStub;
     let getLatestPendingSubmissionStub: SinonStub;
     let guidedTourService: GuidedTourService;
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
     const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
@@ -122,7 +122,7 @@ describe('CodeEditorContainerIntegration', () => {
                 domainService = containerDebugElement.injector.get(DomainService);
                 const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -152,7 +152,7 @@ describe('CodeEditorContainerIntegration', () => {
         commitStub.restore();
         getStudentParticipationWithLatestResultStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
@@ -183,7 +183,7 @@ describe('CodeEditorContainerIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
-        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null });
+        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined });
 
         containerFixture.detectChanges();
 
@@ -222,7 +222,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnce;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results![0].id);
     };
 
     const loadFile = (fileName: string, fileContent: string) => {
@@ -245,7 +245,7 @@ describe('CodeEditorContainerIntegration', () => {
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
-        subscribeForLatestResultOfParticipationStub.returns(of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(undefined));
         getFeedbackDetailsForResultStub.returns(of([]));
         getBuildLogsStub.returns(getBuildLogsSubject);
 
@@ -259,7 +259,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
-        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null });
+        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined });
 
         containerFixture.detectChanges();
 
@@ -299,7 +299,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnce;
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results![0].id);
 
         setTimeout(() => {
             // called by build output
@@ -363,7 +363,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.editorState).to.equal(EditorState.SAVING);
 
         // emit saving result
-        saveFilesSubject.next({ [selectedFile]: null, [otherFileWithUnsavedChanges]: null });
+        saveFilesSubject.next({ [selectedFile]: undefined, [otherFileWithUnsavedChanges]: undefined });
         containerFixture.detectChanges();
 
         // check if saving result updates comps as expected
@@ -407,11 +407,11 @@ describe('CodeEditorContainerIntegration', () => {
 
         // commit
         expect(container.actions.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
-        commitStub.returns(of(null));
+        commitStub.returns(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id,
+            participationId: successfulResult!.participation!.id!,
         });
         container.actions.commit();
         containerFixture.detectChanges();
@@ -422,8 +422,8 @@ describe('CodeEditorContainerIntegration', () => {
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-            submission: null,
-            participationId: successfulResult!.participation!.id,
+            submission: undefined,
+            participationId: successfulResult!.participation!.id!,
         });
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
@@ -459,13 +459,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(commitStub).to.not.have.been.called;
         expect(container.commitState).to.equal(CommitState.COMMITTING);
         expect(container.fileBrowser.status.commitState).to.equal(CommitState.COMMITTING);
-        saveFilesSubject.next({ [unsavedFile]: null });
+        saveFilesSubject.next({ [unsavedFile]: undefined });
         expect(container.editorState).to.equal(EditorState.CLEAN);
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id,
+            participationId: successfulResult!.participation!.id!,
         });
         containerFixture.detectChanges();
 
@@ -475,8 +475,8 @@ describe('CodeEditorContainerIntegration', () => {
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
-            submission: null,
-            participationId: successfulResult!.participation!.id,
+            submission: undefined,
+            participationId: successfulResult!.participation!.id!,
         });
         containerFixture.detectChanges();
 

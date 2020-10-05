@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../test.module';
+import { expect } from '../helpers/jasmine.jest.fix';
 
 describe('QuizExercise Service', () => {
     let injector: TestBed;
@@ -27,7 +28,7 @@ describe('QuizExercise Service', () => {
         service = injector.get(QuizExerciseService);
         httpMock = injector.get(HttpTestingController);
 
-        elemDefault = new QuizExercise(new Course());
+        elemDefault = new QuizExercise(new Course(), undefined);
     });
 
     describe('Service methods', async () => {
@@ -51,7 +52,7 @@ describe('QuizExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new QuizExercise(null))
+                .create(new QuizExercise(undefined, undefined))
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -98,7 +99,7 @@ describe('QuizExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .query(expected)
+                .query()
                 .pipe(
                     take(1),
                     map((resp) => resp.body),

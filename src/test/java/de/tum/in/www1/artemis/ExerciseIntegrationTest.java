@@ -137,7 +137,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 if (exerciseServer instanceof FileUploadExercise) {
                     FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseServer;
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was set correctly").isNotNull();
                 }
                 if (exerciseServer instanceof ModelingExercise) {
                     ModelingExercise modelingExercise = (ModelingExercise) exerciseServer;
@@ -223,7 +223,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 if (exerciseWithDetails instanceof FileUploadExercise) {
                     FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseWithDetails;
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was set correctly").isNotNull();
                     assertThat(fileUploadExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
                 }
                 if (exerciseWithDetails instanceof ModelingExercise) {

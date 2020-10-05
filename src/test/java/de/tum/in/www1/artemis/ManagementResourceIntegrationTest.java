@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
@@ -93,7 +91,6 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doReturn(Optional.of(new Result())).when(continuousIntegrationService).retrieveLatestBuildResult(any(), any());
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);

@@ -22,6 +22,7 @@ function setUserAgent(userAgent: string) {
         try {
             Object.defineProperty(window.navigator, 'userAgent', userAgentProp);
         } catch (e) {
+            // @ts-ignore
             window.navigator = Object.create(navigator, {
                 userAgent: userAgentProp,
             });
@@ -45,7 +46,9 @@ describe('OrionValidatorService', () => {
     const legacy = 'IntelliJ';
 
     beforeEach(() => {
+        // @ts-ignore
         profileService = new MockProfileService();
+        // @ts-ignore
         router = new MockRouter();
         orionVersionValidator = new OrionVersionValidator(profileService, router);
 

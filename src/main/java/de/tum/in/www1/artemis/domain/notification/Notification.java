@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -14,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 
@@ -33,13 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
         @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public abstract class Notification extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -63,15 +56,6 @@ public abstract class Notification implements Serializable {
 
     @ManyToOne
     private User author;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -163,31 +147,10 @@ public abstract class Notification implements Serializable {
     public void setAuthor(User user) {
         this.author = user;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Notification notification = (Notification) o;
-        if (notification.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), notification.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
 
     @Override
     public String toString() {
-        return "Notification{" + "id=" + id + ", title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\''
+        return "Notification{" + "id=" + getId() + ", title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\''
                 + ", priority=" + priority + ", outdated=" + outdated + ", author=" + author + '}';
     }
 }

@@ -21,6 +21,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { findLatestResult } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -42,13 +43,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue: Result | null;
+    public latestResultValue?: Result;
 
     get latestResult() {
         return this.latestResultValue;
     }
 
-    set latestResult(result: Result | null) {
+    set latestResult(result: Result | undefined) {
         this.latestResultValue = result;
         this.programmingExerciseTaskWrapper.setExercise(this.exercise);
         this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
@@ -87,7 +88,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                switchMap(() => (this.exerciseHints ? of(this.exerciseHints) : this.loadExerciseHints(this.exercise.id))),
+                switchMap(() => (this.exerciseHints ? of(this.exerciseHints) : this.loadExerciseHints(this.exercise.id!))),
                 tap((hints: ExerciseHint[]) => {
                     this.exerciseHints = hints;
                     this.programmingExerciseTaskWrapper.exerciseHints = hints;
@@ -119,7 +120,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                     this.onNoInstructionsAvailable.emit();
                                     this.isLoading = false;
                                     this.isInitial = false;
-                                    return Observable.of(null);
+                                    return Observable.of(undefined);
                                 }
                             }),
                             filter((problemStatement) => !!problemStatement),
@@ -139,14 +140,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
                         this.updateMarkdown();
-                        return of(null);
+                        return of(undefined);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement!;
-                        return of(null);
+                        return of(undefined);
                     } else {
-                        return of(null);
+                        return of(undefined);
                     }
                 }),
             )
@@ -197,7 +198,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, this.personalParticipation, this.exercise.id)
+            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -224,29 +225,29 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    loadInitialResult(): Observable<Result | null> {
+    loadInitialResult(): Observable<Result | undefined> {
         if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
-            const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+            const latestResult = findLatestResult(this.participation.results);
             if (!latestResult) {
-                return Observable.of(null);
+                return Observable.of(undefined);
             }
             return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
             return this.loadLatestResult();
         } else {
-            return Observable.of(null);
+            return Observable.of(undefined);
         }
     }
 
     /**
      * Retrieve latest result for the participation/exercise/course combination.
-     * If there is no result, return null.
+     * If there is no result, return undefined.
      */
-    loadLatestResult(): Observable<Result | null> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id).pipe(
-            catchError(() => Observable.of(null)),
+    loadLatestResult(): Observable<Result | undefined> {
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
+            catchError(() => Observable.of(undefined)),
             flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : Observable.of(latestResult))),
         );
     }
@@ -257,7 +258,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -272,15 +273,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions(): Observable<string | null> {
-        if (this.exercise.problemStatement !== null && this.exercise.problemStatement !== undefined) {
+    loadInstructions(): Observable<string | undefined> {
+        if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
             if (!this.participation.id) {
-                return Observable.of(null);
+                return Observable.of(undefined);
             }
             return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
-                catchError(() => Observable.of(null)),
+                catchError(() => Observable.of(undefined)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map((fileObj) => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
             );

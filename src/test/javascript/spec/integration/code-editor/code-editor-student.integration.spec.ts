@@ -66,7 +66,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getFeedbackDetailsForResultStub: SinonStub;
     let getStudentParticipationWithLatestResultStub: SinonStub;
 
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let routeSubject: Subject<Params>;
 
     const result = { id: 3, successful: false, completionDate: moment().subtract(2, 'days') };
@@ -108,7 +108,7 @@ describe('CodeEditorStudentIntegration', () => {
                 programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
                 routeSubject = new Subject<Params>();
                 // @ts-ignore
@@ -129,7 +129,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFeedbackDetailsForResultStub.restore();
         getStudentParticipationWithLatestResultStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();

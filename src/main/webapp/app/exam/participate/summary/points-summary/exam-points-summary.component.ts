@@ -31,7 +31,7 @@ export class ExamPointsSummaryComponent {
      */
     calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return round(exercise.maxScore * (exercise.studentParticipations[0].results[0].score / 100), 1);
+            return round(exercise.maxScore! * (exercise.studentParticipations![0].results![0].score! / 100), 1);
         }
         return 0;
     }

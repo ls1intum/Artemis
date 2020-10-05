@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
@@ -23,19 +23,17 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     templateUrl: './courses.component.html',
     styleUrls: ['./courses.component.scss'],
 })
-export class CoursesComponent implements OnInit, OnDestroy {
+export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     public courses: Course[];
-    public nextRelevantCourse: Course;
-    nextRelevantCourseForExam: Course;
-    nextRelevantExams: Exam[] | undefined;
+    public nextRelevantCourse?: Course;
+    nextRelevantCourseForExam?: Course;
+    nextRelevantExams?: Exam[];
     exams: Exam[] = [];
 
-    courseForGuidedTour: Course | null;
-    quizExercisesChannels: string[];
+    courseForGuidedTour?: Course;
+    quizExercisesChannels: string[] = [];
 
-    isQuizLive = false;
-    liveQuiz: QuizExercise;
-    liveQuizCourse: Course;
+    nextRelevantExercise?: Exercise;
 
     constructor(
         private courseService: CourseManagementService,
@@ -56,6 +54,10 @@ export class CoursesComponent implements OnInit, OnDestroy {
         (await this.teamService.teamAssignmentUpdates).subscribe();
     }
 
+    ngOnChanges() {
+        this.nextRelevantExercise = this.findNextRelevantExercise();
+    }
+
     /**
      * Unsubscribe from all websocket subscriptions.
      */
@@ -71,9 +73,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
-                // TODO: Stephan Krusche: this is deactivate at the moment, I think we need a more generic solution in more components, e.g. using the the existing notification
-                // sent to the client, when a quiz starts. This should slide in from the side.
-                // this.subscribeForQuizStartForCourses();
 
                 // get all exams of courses
                 this.courses.forEach((course) => {
@@ -97,12 +96,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
     }
 
-    get nextRelevantExercise(): Exercise | undefined {
+    findNextRelevantExercise() {
         const relevantExercises = new Array<Exercise>();
-        let relevantExercise: Exercise | null = null;
+        let relevantExercise: Exercise | undefined;
         if (this.courses) {
             this.courses.forEach((course) => {
-                const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
+                const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises || []);
                 if (relevantExerciseForCourse) {
                     relevantExerciseForCourse.course = course;
                     relevantExercises.push(relevantExerciseForCourse);
@@ -132,7 +131,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
      * Sets the course for the next upcoming exam and returns the next upcoming exam or undefined
      */
     get nextRelevantExam(): Exam | undefined {
-        let relevantExam: Exam | undefined = undefined;
+        let relevantExam: Exam | undefined;
         if (this.nextRelevantExams) {
             if (this.nextRelevantExams.length === 0) {
                 return undefined;
@@ -143,7 +142,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                     return moment(a.startDate).valueOf() - moment(b.startDate).valueOf();
                 })[0];
             }
-            this.nextRelevantCourseForExam = relevantExam.course;
+            this.nextRelevantCourseForExam = relevantExam.course!;
             return relevantExam;
         }
     }
@@ -152,40 +151,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
      * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        this.router.navigate(['courses', this.nextRelevantCourseForExam.id, 'exams', this.nextRelevantExam!.id]);
-        // TODO: store the (plain) selected exam in the some service so that it can be obtained on other pages
-        // also make sure that the exam objects does not contain the course and all exercises
-    }
-
-    /**
-     * TODO: this code is currently unused: instead use a high priority notification and display a notification to the students in the notification center
-     */
-    subscribeForQuizStartForCourses() {
-        if (this.courses) {
-            // subscribe to quiz exercises that are live
-            if (!this.quizExercisesChannels) {
-                this.quizExercisesChannels = this.courses.map((course) => {
-                    return '/topic/courses/' + course.id + '/quizExercises';
-                });
-                // quizExercises channels => react to the start of a quiz exercise for all courses
-                this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.subscribe(channel));
-                this.quizExercisesChannels.forEach((channel) =>
-                    this.jhiWebsocketService.receive(channel).subscribe(
-                        (quizExercise: QuizExercise) => {
-                            // TODO: conversion to moment is missing for exercise dates
-                            if (quizExercise.started) {
-                                // ignore set visible
-                                this.isQuizLive = true;
-                                this.liveQuiz = quizExercise;
-                                this.liveQuizCourse = quizExercise.course!;
-                            } else if (quizExercise.visibleToStudents) {
-                                // TODO: show the exercise at the top
-                            }
-                        },
-                        () => {},
-                    ),
-                );
-            }
-        }
+        this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
     }
 }
