@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -12,6 +10,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,14 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @Table(name = "drop_location")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class DropLocation implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class DropLocation extends TempIdObject {
 
     @Column(name = "pos_x")
     @JsonView(QuizView.Before.class)
@@ -57,32 +50,6 @@ public class DropLocation implements Serializable {
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
-
-    /**
-     * tempID is needed to refer to drop locations that have not been persisted yet in the correctMappings of a question (so user can create mappings in the UI before saving new
-     * drop locations)
-     */
-    @Transient
-    // variable name must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
-    private Long tempIDTransient;
-
-    public Long getTempID() {
-        return tempIDTransient;
-    }
-
-    public void setTempID(Long tempID) {
-        this.tempIDTransient = tempID;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Double getPosX() {
         return posX;
@@ -183,29 +150,6 @@ public class DropLocation implements Serializable {
         // this drop location was meant to stay empty and user didn't drag anything onto it
         // OR the user dragged one of the correct drag items onto this drop location
         // => this is correct => Return true;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DropLocation dropLocation = (DropLocation) o;
-        if (dropLocation.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dropLocation.getTempID())) {
-            return true;
-        }
-        if (dropLocation.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dropLocation.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -14,9 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "PC")
-public class PointCounter extends QuizStatisticCounter implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class PointCounter extends QuizStatisticCounter {
 
     @Column(name = "points")
     private Double points;

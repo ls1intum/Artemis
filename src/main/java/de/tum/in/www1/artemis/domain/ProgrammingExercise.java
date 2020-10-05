@@ -5,7 +5,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,8 +36,6 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
-
-    private static final long serialVersionUID = 1L;
 
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
@@ -186,11 +183,6 @@ public class ProgrammingExercise extends Exercise {
         return m.group(1);
     }
 
-    public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {
-        this.testRepositoryUrl = testRepositoryUrl;
-        return this;
-    }
-
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateBuildPlanId() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -223,11 +215,6 @@ public class ProgrammingExercise extends Exercise {
         return publishBuildPlanUrl;
     }
 
-    public ProgrammingExercise publishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-        return this;
-    }
-
     public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
         this.publishBuildPlanUrl = publishBuildPlanUrl;
     }
@@ -236,22 +223,12 @@ public class ProgrammingExercise extends Exercise {
         return allowOnlineEditor;
     }
 
-    public ProgrammingExercise allowOnlineEditor(Boolean allowOnlineEditor) {
-        this.allowOnlineEditor = allowOnlineEditor;
-        return this;
-    }
-
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
     public Boolean isAllowOfflineIde() {
         return allowOfflineIde;
-    }
-
-    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
-        this.allowOfflineIde = allowOfflineIde;
-        return this;
     }
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
@@ -331,11 +308,6 @@ public class ProgrammingExercise extends Exercise {
 
     public String getPackageName() {
         return packageName;
-    }
-
-    public ProgrammingExercise packageName(String packageName) {
-        this.packageName = packageName;
-        return this;
     }
 
     public void setPackageName(String packageName) {
@@ -518,26 +490,6 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) o;
-        if (programmingExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), programmingExercise.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

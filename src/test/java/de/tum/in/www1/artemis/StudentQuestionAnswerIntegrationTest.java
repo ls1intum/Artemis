@@ -258,7 +258,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         assertThat(updatedStudentQuestionAnswer2).isEqualTo(studentQuestionAnswer);
     }
 
-    private List<StudentQuestionAnswer> createStudentQuestionAnswersOnServer() throws Exception {
+    private List<StudentQuestionAnswer> createStudentQuestionAnswersOnServer() {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
         List<StudentQuestionAnswer> answers = new ArrayList<>();
 
