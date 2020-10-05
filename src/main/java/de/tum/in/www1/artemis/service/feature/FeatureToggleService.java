@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.feature;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -15,23 +16,20 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final List<Feature> enabledFeatures;
-
-    private final List<Feature> disabledFeatures;
+    private final Map<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
 
         // The lists will automatically be distributed between all instances by Hazelcast.
         // If this instance is the first instance to boot up, both instances will be empty, otherwise at least one will have entries.
-        enabledFeatures = hazelcastInstance.getList("enabled_features");
-        disabledFeatures = hazelcastInstance.getList("disabled_features");
+        features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!enabledFeatures.contains(feature) && !disabledFeatures.contains(feature)) {
-                enabledFeatures.add(feature);
+            if (!features.containsKey(feature)) {
+                features.put(feature, true);
             }
         }
     }
@@ -42,12 +40,8 @@ public class FeatureToggleService {
      * @param feature The feature that should be enabled
      */
     public void enableFeature(Feature feature) {
-        if (!enabledFeatures.contains(feature)) {
-            enabledFeatures.add(feature);
-        }
-        disabledFeatures.remove(feature);
-
-        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures);
+        features.put(feature, true);
+        sendUpdate();
     }
 
     /**
@@ -56,12 +50,8 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
-        if (!disabledFeatures.contains(feature)) {
-            disabledFeatures.add(feature);
-        }
-        enabledFeatures.remove(feature);
-
-        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures);
+        features.put(feature, false);
+        sendUpdate();
     }
 
     /**
@@ -71,18 +61,12 @@ public class FeatureToggleService {
      * @param features A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
-        features.forEach((feature, setEnabled) -> {
-            if (setEnabled) {
-                enabledFeatures.add(feature);
-                disabledFeatures.remove(feature);
-            }
-            else {
-                disabledFeatures.add(feature);
-                enabledFeatures.remove(feature);
-            }
-        });
+        features.forEach(this.features::put);
+        sendUpdate();
+    }
 
-        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures);
+    private void sendUpdate() {
+        websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
     }
 
     /**
@@ -92,7 +76,8 @@ public class FeatureToggleService {
      * @return if the feature is enabled
      */
     public boolean isFeatureEnabled(Feature feature) {
-        return enabledFeatures.contains(feature);
+        Boolean isEnabled = features.get(feature);
+        return Boolean.TRUE.equals(isEnabled);
     }
 
     /**
@@ -101,7 +86,7 @@ public class FeatureToggleService {
      * @return A list of enabled features
      */
     public List<Feature> enabledFeatures() {
-        return enabledFeatures;
+        return features.entrySet().stream().filter(e -> Boolean.TRUE.equals(e.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
     }
 
     /**
@@ -110,6 +95,6 @@ public class FeatureToggleService {
      * @return A list of disabled features
      */
     public List<Feature> disabledFeatures() {
-        return disabledFeatures;
+        return features.entrySet().stream().filter(e -> Boolean.FALSE.equals(e.getValue())).map(Map.Entry::getKey).collect(Collectors.toList());
     }
 }
