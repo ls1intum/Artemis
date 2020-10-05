@@ -46,8 +46,7 @@ enum ObjectMethodTestExclusions {
     ID_EQUALS;
 
     private static final Map<Class<?>, EnumSet<ObjectMethodTestExclusions>> EXCLUSIONS = Map.ofEntries( //
-            exclusionEntry(RepositoryType.class, ENUM_TOSTRING_NAME_EQUALITY), //
-            exclusionEntry(TextEmbedding.class, ID_HASHCODE, ID_EQUALS) // TODO: fix this
+            exclusionEntry(RepositoryType.class, ENUM_TOSTRING_NAME_EQUALITY) // Reason: toString() returns the repository names
     );
 
     /**
