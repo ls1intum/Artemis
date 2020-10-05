@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 import org.slf4j.Logger;
@@ -31,12 +30,9 @@ public class AtheneResource {
 
     private final Logger log = LoggerFactory.getLogger(AtheneResource.class);
 
-    private final TextBlockRepository textBlockRepository;
-
     private final AtheneService atheneService;
 
-    public AtheneResource(TextBlockRepository textBlockRepository, AtheneService atheneService) {
-        this.textBlockRepository = textBlockRepository;
+    public AtheneResource(AtheneService atheneService) {
         this.atheneService = atheneService;
     }
 
