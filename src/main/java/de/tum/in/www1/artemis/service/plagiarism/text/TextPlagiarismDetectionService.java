@@ -3,20 +3,39 @@ package de.tum.in.www1.artemis.service.plagiarism.text;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
+
+import jplag.ExitException;
+import jplag.Program;
+import jplag.options.CommandLineOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
 public class TextPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
+
+    private final ZipFileService zipFileService;
+
+    private final FileService fileService;
+
+    public TextPlagiarismDetectionService(FileService fileService, ZipFileService zipFileService) {
+        this.fileService = fileService;
+        this.zipFileService = zipFileService;
+    }
 
     /**
      * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
@@ -77,6 +96,76 @@ public class TextPlagiarismDetectionService {
                 .collect(toList());
         log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
         return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
+    }
+
+    /**
+     * Download all submissions of the exercise, run JPlag, and return the result
+     *
+     * @param textExercise to detect plagiarism for
+     * @return a zip file that can be returned to the client
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException   is thrown for file handling errors
+     */
+    public File checkPlagiarism(TextExercise textExercise) throws ExitException, IOException {
+        // TODO: offer the following options in the client
+        // 1) filter empty submissions, i.e. repositories with no student commits
+        // 2) filter submissions with a result score of 0%
+
+        final var JPLAG_RESULT_FOLDER_NAME = "./tmp/jplag-result";
+        final var SUBMISSIONS_FOLDER_NAME = "./tmp/submissions";
+        final var ZIP_FILE_PATH = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
+                textExercise.getShortName(), System.currentTimeMillis()));
+
+        final var submissionFolderFile = new File(SUBMISSIONS_FOLDER_NAME);
+        submissionFolderFile.mkdirs();
+
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
+
+        textSubmissions.forEach(submission -> {
+            submission.getParticipation().setExercise(null);
+            submission.setResult(null);
+            submission.getParticipation().setSubmissions(null);
+
+            // TODO: Download each submission
+        });
+
+        final var jplagResultFolderFile = new File(JPLAG_RESULT_FOLDER_NAME);
+        jplagResultFolderFile.mkdirs();
+
+        final var jplagArgs = new String[] {
+                // Language: text
+                "-l", "text",
+
+                // Name of directory in which the resulting web pages will be stored
+                "-r", JPLAG_RESULT_FOLDER_NAME,
+
+                // Option to look at sub-directories too
+                "-s",
+
+                // Name of the directory which contains the base code
+                // "-bc", templateRepoName,
+
+                // Specify verbosity
+                "-vq",
+
+                // The root-directory that contains all submissions
+                SUBMISSIONS_FOLDER_NAME };
+
+        final CommandLineOptions options = new CommandLineOptions(jplagArgs, null);
+        final Program program = new Program(options);
+        program.run();
+
+        zipFileService.createZipFileWithFolderContent(ZIP_FILE_PATH, jplagResultFolderFile.toPath());
+        fileService.scheduleForDeletion(ZIP_FILE_PATH, 5);
+
+        // cleanup
+        if (jplagResultFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(jplagResultFolderFile);
+        }
+
+        // TODO: Delete submissions folder
+
+        return new File(ZIP_FILE_PATH.toString());
     }
 
 }
