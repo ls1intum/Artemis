@@ -83,7 +83,10 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addUsers(4, 3, 2);
 
         // course1
-        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
+        course = database.addCourseWithOneFinishedTextExercise();
+        course.setStudentGroupName("tumuser");
+        course.setTeachingAssistantGroupName("tutor");
+        course.setInstructorGroupName("instructor");
         // exercise1
         exercise = course.getExercises().stream().findFirst().get();
         exercise.setMaxScore(5.0);
@@ -108,7 +111,10 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         resultRepo.save(result);
 
         // course2
-        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
+        course = database.addCourseWithOneFinishedTextExercise();
+        course.setStudentGroupName("tumuser");
+        course.setTeachingAssistantGroupName("tutor");
+        course.setInstructorGroupName("instructor");
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
         exercise.setMaxScore(8.0);
@@ -143,7 +149,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // exercise3 in course1
         course = courseRepo.findAll().get(0);
-        exercise = new TextExercise().course(course).maxScore(3.0);
+        exercise = new TextExercise().course(course);
         exercise.setMaxScore(3.0);
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1

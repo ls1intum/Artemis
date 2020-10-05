@@ -70,7 +70,10 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addUsers(3, 3, 3);
 
         // course1
-        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
+        course = database.addCourseWithOneFinishedTextExercise();
+        course.setStudentGroupName("tumuser");
+        course.setTeachingAssistantGroupName("tutor");
+        course.setInstructorGroupName("instructor");
         courseRepo.save(course);
         // exercise1
         exercise = course.getExercises().stream().findFirst().get();
@@ -95,7 +98,10 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         resultRepo.save(result);
 
         // course2
-        course = database.addCourseWithOneFinishedTextExercise().studentGroupName("tumuser").teachingAssistantGroupName("tutor").instructorGroupName("instructor");
+        course = database.addCourseWithOneFinishedTextExercise();
+        course.setStudentGroupName("tumuser");
+        course.setTeachingAssistantGroupName("tutor");
+        course.setInstructorGroupName("instructor");
         courseRepo.save(course);
         // exercise2
         exercise = course.getExercises().stream().findFirst().get();
