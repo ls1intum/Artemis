@@ -63,6 +63,17 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    public void testTextBlockProbabilities() {
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
+        TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
+        // also test toString() and getProbabilities
+        System.out.println(textCluster.toString());
+        var probabilities = new double[] { 1.0d, 2.0d };
+        textCluster.setProbabilities(probabilities);
+        assertThat(textCluster.getProbabilities()).isEqualTo(probabilities);
+    }
+
+    @Test
     // Note: this transaction is necessary, because the method call textSubmissionService.getTextSubmissionsByExerciseId does not eagerly load the text blocks that are
     // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
     // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case

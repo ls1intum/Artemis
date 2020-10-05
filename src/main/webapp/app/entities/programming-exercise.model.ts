@@ -20,6 +20,7 @@ export class ProgrammingExercise extends Exercise {
     public publishBuildPlanUrl?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
+    public maxStaticCodeAnalysisPenalty?: number;
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;

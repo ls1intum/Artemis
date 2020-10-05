@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -15,6 +16,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -22,11 +26,15 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -59,7 +67,13 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    ProgrammingExerciseGradingService gradingService;
+
+    @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    RequestUtilService request;
 
     private ProgrammingExercise programmingExercise;
 
@@ -67,7 +81,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 0);
+        database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         result = new Result();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
@@ -204,7 +218,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseRepository.deleteAll();
 
         Long scoreBeforeUpdate = result.getScore();
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+        gradingService.updateResult(result, programmingExercise, true);
 
         assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
     }
@@ -219,7 +233,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+        gradingService.updateResult(result, programmingExercise, true);
 
         Long expectedScore = 25L;
 
@@ -259,14 +273,14 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         // Build failure
         var resultBF = new Result().feedbacks(List.of()).rated(true).score(0L).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
                 .assessmentType(AssessmentType.AUTOMATIC);
-        testCaseService.updateResultFromTestCases(resultBF, programmingExercise, true);
+        gradingService.updateResult(resultBF, programmingExercise, true);
 
         // Missing feedback
         var resultMF = new Result();
         var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0L).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        testCaseService.updateResultFromTestCases(resultMF, programmingExercise, true);
+        gradingService.updateResult(resultMF, programmingExercise, true);
 
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(55L);
@@ -393,7 +407,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+        gradingService.updateResult(result, programmingExercise, true);
 
         // All available test cases are fulfilled, however there are more test cases that will be run after due date.
         Long expectedScore = 25L;
@@ -419,7 +433,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise, false);
+        gradingService.updateResult(result, programmingExercise, false);
 
         // All available test cases are fulfilled.
         Long expectedScore = 25L;
@@ -444,7 +458,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+        gradingService.updateResult(result, programmingExercise, true);
 
         // All available test cases are fulfilled.
         Long expectedScore = 25L;
@@ -477,7 +491,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         }
         testCaseRepository.saveAll(testCases);
 
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
+        gradingService.updateResult(result, programmingExercise, true);
 
         // No test case was executed.
         Long expectedScore = 0L;
@@ -492,7 +506,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReEvaluateScoreOfTheCorrectResults() {
+    public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
@@ -503,6 +517,128 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCases.get("test2").active(true).afterDueDate(false).setWeight(1.);
         testCases.get("test3").active(true).afterDueDate(false).setWeight(2.);
         testCaseRepository.saveAll(testCases.values());
+
+        var testParticipations = createTestParticipations();
+
+        // change test case weights
+        testCases.get("test1").setWeight(0.);
+        testCases.get("test2").setWeight(1.);
+        testCases.get("test3").setWeight(3.);
+        testCaseRepository.saveAll(testCases.values());
+
+        // re-evaluate
+        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
+        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        assertThat(response).isEqualTo(6);
+
+        // this fixes an issue with the authentication context after a mock request
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        // Tests
+        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
+
+        // template 0 %
+        {
+            var participation = programmingExercise.getTemplateParticipation();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 0L, "0 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        // solution 100 %
+        {
+            var participation = programmingExercise.getSolutionParticipation();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 100L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        // student1 25 %
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[0].getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 25L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        // student2 100 % / 75 %
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[1].getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(2);
+
+            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findAny();
+            assertThat(manualResultOptional).isPresent();
+            testParticipationResult(manualResultOptional.get(), 100L, "nice job", true, 0, AssessmentType.MANUAL);
+            assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
+
+            var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
+            assertThat(automaticResultOptional).isPresent();
+            testParticipationResult(automaticResultOptional.get(), 75L, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+        }
+
+        // student3 no result
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[2].getId()).get();
+            var results = participation.getResults();
+            assertThat(results).isNullOrEmpty();
+            assertThat(participation.findLatestResult()).isNull();
+        }
+
+        // student4 100%
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[3].getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 100L, "3 of 3 passed", false, 3, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        // student5 Build Failed
+        {
+            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[4].getId()).get();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 0L, "Build Failed", false, 0, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+    }
+
+    private void testParticipationResult(Result result, long score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
+        assertThat(result.getScore()).isEqualTo(score);
+        assertThat(result.getResultString()).isEqualTo(resultString);
+        assertThat(result.getHasFeedback()).isEqualTo(hasFeedback);
+        assertThat(result.getFeedbacks()).hasSize(feedbackSize);
+        assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
+    }
+
+    private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
+        var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback1);
+        var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback2);
+        var feedback3 = new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC);
+        result.addFeedback(feedback3);
+        result.rated(true) //
+                .hasFeedback(true) //
+                .successful(test1Passes && test2Passes && test3Passes) //
+                .completionDate(ZonedDateTime.now()) //
+                .assessmentType(AssessmentType.AUTOMATIC);
+        gradingService.updateResult(result, programmingExercise, true);
+        return resultRepository.save(result);
+    }
+
+    private Participation[] createTestParticipations() {
+
+        var testParticipations = new Participation[5];
 
         // template does not pass any tests
         var participationTemplate = programmingExercise.getTemplateParticipation();
@@ -519,7 +655,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             // score 75 %
             var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100L);
             participationSolution.setResults(Set.of(resultSolution));
-            resultSolution = updateAndSaveAutomaticResult(resultSolution, false, true, true);
+            updateAndSaveAutomaticResult(resultSolution, false, true, true);
         }
 
         // student1 only has one automatic result
@@ -528,8 +664,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             // score 50 %
             var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100L);
             participation1.setResults(Set.of(result1));
-            result1 = updateAndSaveAutomaticResult(result1, true, true, false);
+            updateAndSaveAutomaticResult(result1, true, true, false);
         }
+        testParticipations[0] = participation1;
 
         // student2 has an automatic result and a manual result as well
         var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
@@ -550,9 +687,11 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             result2b = resultRepository.save(result2b);
             participation2.setResults(Set.of(result2a, result2b));
         }
+        testParticipations[1] = participation2;
 
         // student3 only started the exercise, but did not submit anything
         var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
+        testParticipations[2] = participation3;
 
         // student4 only has one automatic result
         var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
@@ -562,6 +701,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
             result4 = updateAndSaveAutomaticResult(result4, true, true, true);
             participation4.setResults(Set.of(result4));
         }
+        testParticipations[3] = participation4;
 
         // student5 has a build failure
         var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student5");
@@ -576,141 +716,13 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                     .successful(false) //
                     .completionDate(ZonedDateTime.now()) //
                     .assessmentType(AssessmentType.AUTOMATIC);
-            testCaseService.updateResultFromTestCases(result5, programmingExercise, true);
+            gradingService.updateResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
             participation5.setResults(Set.of(result5));
         }
+        testParticipations[4] = participation5;
 
-        // change test case weights
-        testCases.get("test1").setWeight(0.);
-        testCases.get("test2").setWeight(1.);
-        testCases.get("test3").setWeight(3.);
-        testCaseRepository.saveAll(testCases.values());
-
-        // TODO: we should instead invoke the REST call here
-        // re-evaluate
-        var updatedResults = testCaseService.updateAllResultsFromTestCases(programmingExercise);
-        resultRepository.saveAll(updatedResults);
-
-        // Tests
-        programmingExercise = programmingExerciseService.findWithTemplateAndSolutionParticipationWithResultsById(programmingExercise.getId());
-
-        // template 0 %
-        {
-            var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(0L);
-            assertThat(singleResult.getResultString()).isEqualTo("0 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-
-        // solution 100 %
-        {
-            var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(100L);
-            assertThat(singleResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-
-        // student1 25 %
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(25L);
-            assertThat(singleResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isTrue();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-
-        // student2 100 % / 75 %
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(2);
-
-            var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.MANUAL).findAny();
-            assertThat(manualResultOptional).isPresent();
-            var manualResult = manualResultOptional.get();
-            assertThat(manualResult.getScore()).isEqualTo(100L);
-            assertThat(manualResult.getResultString()).isEqualTo("nice job");
-            assertThat(manualResult.getHasFeedback()).isTrue();
-            assertThat(manualResult.getFeedbacks()).hasSize(0);
-            assertThat(manualResult).isEqualTo(participation.findLatestResult());
-
-            var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
-            assertThat(automaticResultOptional).isPresent();
-            var automaticResult = automaticResultOptional.get();
-            assertThat(automaticResult.getScore()).isEqualTo(75L);
-            assertThat(automaticResult.getResultString()).isEqualTo("2 of 3 passed");
-            assertThat(manualResult.getHasFeedback()).isTrue();
-            assertThat(automaticResult.getFeedbacks()).hasSize(3);
-        }
-
-        // student3 no result
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).isNullOrEmpty();
-            assertThat(participation.findLatestResult()).isNull();
-        }
-
-        // student4 100%
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(100L);
-            assertThat(singleResult.getResultString()).isEqualTo("3 of 3 passed");
-            assertThat(singleResult.getHasFeedback()).isFalse();
-            assertThat(singleResult.getFeedbacks()).hasSize(3);
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
-
-        // student5 Build Failed
-        {
-            var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation5.getId()).get();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            assertThat(singleResult.getScore()).isEqualTo(0L);
-            assertThat(singleResult.getResultString()).isEqualTo("Build Failed");
-            assertThat(singleResult.getHasFeedback()).isFalse();
-            assertThat(singleResult.getFeedbacks()).isEmpty();
-            assertThat(singleResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
-        }
+        return testParticipations;
     }
 
-    private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
-        var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback1);
-        var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback2);
-        var feedback3 = new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC);
-        result.addFeedback(feedback3);
-        result.rated(true) //
-                .hasFeedback(true) //
-                .successful(test1Passes && test2Passes && test3Passes) //
-                .completionDate(ZonedDateTime.now()) //
-                .assessmentType(AssessmentType.AUTOMATIC);
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-        return resultRepository.save(result);
-    }
 }
