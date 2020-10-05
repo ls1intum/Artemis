@@ -42,11 +42,6 @@ public class FileUploadSubmission extends Submission {
         return filePath;
     }
 
-    public FileUploadSubmission filePath(String filePath) {
-        this.filePath = filePath;
-        return this;
-    }
-
     /**
      * Builds file path for file upload submission.
      * @param exerciseId the id of the exercise

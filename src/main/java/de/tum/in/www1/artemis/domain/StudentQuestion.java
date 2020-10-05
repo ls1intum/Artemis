@@ -54,22 +54,12 @@ public class StudentQuestion extends DomainObject {
         return questionText;
     }
 
-    public StudentQuestion questionText(String questionText) {
-        this.questionText = questionText;
-        return this;
-    }
-
     public void setQuestionText(String questionText) {
         this.questionText = questionText;
     }
 
     public ZonedDateTime getCreationDate() {
         return creationDate;
-    }
-
-    public StudentQuestion creationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
-        return this;
     }
 
     public void setCreationDate(ZonedDateTime creationDate) {
@@ -80,22 +70,12 @@ public class StudentQuestion extends DomainObject {
         return visibleForStudents;
     }
 
-    public StudentQuestion visibleForStudents(Boolean visibleForStudents) {
-        this.visibleForStudents = visibleForStudents;
-        return this;
-    }
-
     public void setVisibleForStudents(Boolean visibleForStudents) {
         this.visibleForStudents = visibleForStudents;
     }
 
     public Integer getVotes() {
         return votes;
-    }
-
-    public StudentQuestion votes(Integer votes) {
-        this.votes = votes;
-        return this;
     }
 
     public void setVotes(Integer votes) {
@@ -106,34 +86,12 @@ public class StudentQuestion extends DomainObject {
         return answers;
     }
 
-    public StudentQuestion answers(Set<StudentQuestionAnswer> studentQuestionAnswers) {
-        this.answers = studentQuestionAnswers;
-        return this;
-    }
-
-    public StudentQuestion addAnswers(StudentQuestionAnswer studentQuestionAnswer) {
-        this.answers.add(studentQuestionAnswer);
-        studentQuestionAnswer.setQuestion(this);
-        return this;
-    }
-
-    public StudentQuestion removeAnswers(StudentQuestionAnswer studentQuestionAnswer) {
-        this.answers.remove(studentQuestionAnswer);
-        studentQuestionAnswer.setQuestion(null);
-        return this;
-    }
-
     public void setAnswers(Set<StudentQuestionAnswer> studentQuestionAnswers) {
         this.answers = studentQuestionAnswers;
     }
 
     public User getAuthor() {
         return author;
-    }
-
-    public StudentQuestion author(User user) {
-        this.author = user;
-        return this;
     }
 
     public void setAuthor(User user) {
@@ -144,11 +102,6 @@ public class StudentQuestion extends DomainObject {
         return exercise;
     }
 
-    public StudentQuestion exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
-    }
-
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
@@ -157,15 +110,9 @@ public class StudentQuestion extends DomainObject {
         return lecture;
     }
 
-    public StudentQuestion lecture(Lecture lecture) {
-        this.lecture = lecture;
-        return this;
-    }
-
     public void setLecture(Lecture lecture) {
         this.lecture = lecture;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Convenience method to retrieve the relevant course from linked Lecture or Exercise.

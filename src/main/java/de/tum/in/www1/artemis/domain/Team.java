@@ -105,11 +105,6 @@ public class Team extends AbstractAuditingEntity implements Participant {
         return image;
     }
 
-    public Team image(String image) {
-        this.image = image;
-        return this;
-    }
-
     public void setImage(String image) {
         this.image = image;
     }
@@ -164,11 +159,6 @@ public class Team extends AbstractAuditingEntity implements Participant {
 
     public boolean isOwner(User user) {
         return this.owner != null && this.owner.equals(user);
-    }
-
-    public Team owner(User owner) {
-        this.owner = owner;
-        return this;
     }
 
     public void setOwner(User owner) {
