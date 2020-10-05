@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 
@@ -31,6 +32,20 @@ public class TextSubmissionExportService extends SubmissionExportService {
             writer.write(((TextSubmission) submission).getText());
             writer.close();
         }
+    }
+
+    public void saveSubmissionToFile(TextExercise exercise, TextSubmission submission, String submissionsFolderName) throws IOException {
+        String submissionFileName = String.format("%s-Submission-%s%s", exercise.getTitle(), submission.getId(), this.getFileEndingForSubmission(submission));
+
+        File submissionExportFile = new File(submissionsFolderName, submissionFileName);
+
+        if (!submissionExportFile.exists()) {
+            submissionExportFile.createNewFile();
+        }
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile));
+        writer.write(submission.getText());
+        writer.close();
     }
 
     @Override

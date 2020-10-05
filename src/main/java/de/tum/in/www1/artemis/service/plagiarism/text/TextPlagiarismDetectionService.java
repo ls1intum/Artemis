@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
@@ -28,12 +29,15 @@ public class TextPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
-    private final ZipFileService zipFileService;
-
     private final FileService fileService;
 
-    public TextPlagiarismDetectionService(FileService fileService, ZipFileService zipFileService) {
+    private final TextSubmissionExportService textSubmissionExportService;
+
+    private final ZipFileService zipFileService;
+
+    public TextPlagiarismDetectionService(FileService fileService, TextSubmissionExportService textSubmissionExportService, ZipFileService zipFileService) {
         this.fileService = fileService;
+        this.textSubmissionExportService = textSubmissionExportService;
         this.zipFileService = zipFileService;
     }
 
@@ -126,7 +130,12 @@ public class TextPlagiarismDetectionService {
             submission.setResult(null);
             submission.getParticipation().setSubmissions(null);
 
-            // TODO: Download each submission
+            try {
+                textSubmissionExportService.saveSubmissionToFile(textExercise, submission, SUBMISSIONS_FOLDER_NAME);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         });
 
         final var jplagResultFolderFile = new File(JPLAG_RESULT_FOLDER_NAME);
@@ -163,7 +172,9 @@ public class TextPlagiarismDetectionService {
             FileSystemUtils.deleteRecursively(jplagResultFolderFile);
         }
 
-        // TODO: Delete submissions folder
+        if (submissionFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(submissionFolderFile);
+        }
 
         return new File(ZIP_FILE_PATH.toString());
     }
