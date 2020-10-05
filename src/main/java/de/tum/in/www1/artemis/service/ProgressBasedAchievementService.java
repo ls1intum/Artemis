@@ -15,11 +15,11 @@ public class ProgressBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final static int exercisesAmountGold = 10;
+    private final static int EXERCISES_AMOUNT_GOLD = 10;
 
-    private final static int exercisesAmountSilver = 8;
+    private final static int EXERCISES_AMOUNT_SILVER = 8;
 
-    private final static int exercisesAmountBronze = 5;
+    private final static int EXERCISES_AMOUNT_BRONZE = 5;
 
     public ProgressBasedAchievementService(AchievementRepository achievementRepository) {
         this.achievementRepository = achievementRepository;
@@ -32,10 +32,10 @@ public class ProgressBasedAchievementService {
     public void generateAchievements(Course course) {
         Set<Achievement> achievementsToSave = new HashSet<>();
         achievementsToSave.add(
-                new Achievement("Course Master", "Solve at least " + exercisesAmountGold + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
-        achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + exercisesAmountSilver + " exercises", "tasks", AchievementRank.SILVER,
+                new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
+        achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + EXERCISES_AMOUNT_SILVER + " exercises", "tasks", AchievementRank.SILVER,
                 AchievementType.PROGRESS, course, null));
-        achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + exercisesAmountBronze + " exercises", "tasks", AchievementRank.BRONZE,
+        achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "tasks", AchievementRank.BRONZE,
                 AchievementType.PROGRESS, course, null));
         achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, course, null));
 
