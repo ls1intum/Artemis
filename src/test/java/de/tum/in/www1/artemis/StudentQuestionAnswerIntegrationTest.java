@@ -86,7 +86,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
 
         // shouldn't be automatically approved
-        assertThat(!response.isTutorApproved());
+        assertThat(response.isTutorApproved()).isFalse();
     }
 
     @Test
