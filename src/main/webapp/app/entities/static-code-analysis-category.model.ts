@@ -10,6 +10,6 @@ export class StaticCodeAnalysisCategory implements BaseEntity {
 
 export enum StaticCodeAnalysisCategoryState {
     Inactive = 'INACTIVE',
-    Feedback = 'FEEDBACK',
+    Feedback = 'VISIBLE',
     Graded = 'GRADED',
 }
