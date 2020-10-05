@@ -66,6 +66,7 @@ public class StudentQuestionAnswerResource {
     /**
      * POST /question-answers : Create a new studentQuestionAnswer.
      *
+     * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already
      *         an ID
@@ -79,10 +80,14 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Course course = courseRepository.getOne(courseId);
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        if (optionalCourse.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
         User user = this.userService.getUserWithGroupsAndAuthorities();
         // answer to approved if written by an instructor
-        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
+        studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(optionalCourse.get(), user));
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);

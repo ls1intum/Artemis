@@ -61,7 +61,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("instructor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
@@ -71,7 +71,8 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         // should be automatically approved
         assertThat(response.isTutorApproved()).isTrue();
         // trying to create same studentQuestionAnswer again --> bad request
-        request.postWithResponseBody("/api/student-question-answers", response, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", response, StudentQuestionAnswer.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -97,7 +98,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("student1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
