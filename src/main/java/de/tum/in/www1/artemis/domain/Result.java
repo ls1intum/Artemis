@@ -379,11 +379,6 @@ public class Result extends DomainObject {
         return assessor;
     }
 
-    public Result assessor(User assessor) {
-        this.assessor = assessor;
-        return this;
-    }
-
     public void setAssessor(User assessor) {
         this.assessor = assessor;
     }
@@ -431,11 +426,6 @@ public class Result extends DomainObject {
 
     public Boolean isExampleResult() {
         return exampleResult;
-    }
-
-    public Result exampleResult(Boolean exampleResult) {
-        this.exampleResult = exampleResult;
-        return this;
     }
 
     public void setExampleResult(Boolean exampleResult) {

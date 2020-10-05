@@ -44,22 +44,12 @@ public class StudentQuestionAnswer extends DomainObject {
         return answerText;
     }
 
-    public StudentQuestionAnswer answerText(String answerText) {
-        this.answerText = answerText;
-        return this;
-    }
-
     public void setAnswerText(String answerText) {
         this.answerText = answerText;
     }
 
     public ZonedDateTime getAnswerDate() {
         return answerDate;
-    }
-
-    public StudentQuestionAnswer answerDate(ZonedDateTime answerDate) {
-        this.answerDate = answerDate;
-        return this;
     }
 
     public void setAnswerDate(ZonedDateTime answerDate) {
@@ -70,22 +60,12 @@ public class StudentQuestionAnswer extends DomainObject {
         return verified;
     }
 
-    public StudentQuestionAnswer verified(Boolean verified) {
-        this.verified = verified;
-        return this;
-    }
-
     public void setVerified(Boolean verified) {
         this.verified = verified;
     }
 
     public Boolean isTutorApproved() {
         return tutorApproved;
-    }
-
-    public StudentQuestionAnswer tutorApproved(Boolean tutorApproved) {
-        this.tutorApproved = tutorApproved;
-        return this;
     }
 
     public void setTutorApproved(Boolean tutorApproved) {
@@ -96,22 +76,12 @@ public class StudentQuestionAnswer extends DomainObject {
         return author;
     }
 
-    public StudentQuestionAnswer author(User user) {
-        this.author = user;
-        return this;
-    }
-
     public void setAuthor(User user) {
         this.author = user;
     }
 
     public StudentQuestion getQuestion() {
         return question;
-    }
-
-    public StudentQuestionAnswer question(StudentQuestion studentQuestion) {
-        this.question = studentQuestion;
-        return this;
     }
 
     public void setQuestion(StudentQuestion studentQuestion) {
