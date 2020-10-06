@@ -310,7 +310,11 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Sets the category for each feedback and removes feedback with no or an inactive category
+     * Sets the category for each feedback and removes feedback with no or an inactive category.
+     * The feedback is removed permanently, which has the advantage that the server or client doesn't have to filter out
+     * invisible feedback every time it is requested. The drawback is that the re-evaluate functionality can't take
+     * the removed feedback into account.
+     *
      * @param result of the build run
      * @param staticCodeAnalysisFeedback List of feedback objects
      * @param programmingExercise The current exercise
@@ -381,6 +385,18 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
+            /**
+             * The points are capped by the maximum achievable points.
+             * The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
+             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still
+             * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
+             * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
+             */
+            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+            if (successfulTestPoints > maxPoints) {
+                successfulTestPoints = maxPoints;
+            }
+
             // if static code analysis is enabled, reduce the points by the calculated penalty
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
                     && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
@@ -389,12 +405,6 @@ public class ProgrammingExerciseGradingService {
                 if (successfulTestPoints < 0) {
                     successfulTestPoints = 0;
                 }
-            }
-
-            // The points are capped by the maximum achievable points
-            double maxPoints = programmingExercise.getMaxScore() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
-            if (successfulTestPoints > maxPoints) {
-                successfulTestPoints = maxPoints;
             }
 
             // The score is calculated as a percentage of the maximum points
