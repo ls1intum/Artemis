@@ -68,10 +68,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         protected translateService: TranslateService,
         protected quizExerciseService: QuizExerciseService,
         protected jhiWebsocketService: JhiWebsocketService,
-    ) {
-        // TODO: this is an outdated way how to create the option, adapt the new way how to do this by looking at exam-scores.component.ts
-        this.options = createOptions(this);
-    }
+    ) {}
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -91,10 +88,6 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadQuiz(quiz, true);
             });
-
-            // add Axes-labels based on selected language
-            this.getOptions().scales!.xAxes![0].scaleLabel!.labelString = this.translateService.instant('showStatistic.questionStatistic.xAxes');
-            this.getOptions().scales!.yAxes![0].scaleLabel!.labelString = this.translateService.instant('showStatistic.questionStatistic.yAxes');
         });
     }
 
@@ -219,14 +212,6 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         this.chartLabels = this.labels;
     }
 
-    getOptions() {
-        if (this.chart) {
-            return this.chart.options;
-        } else {
-            return this.options;
-        }
-    }
-
     /**
      * check if the rated or unrated, then load the rated or unrated data into the diagram
      */
@@ -268,9 +253,13 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
 
         this.datasets = [{ data: this.data, backgroundColor: this.colors }];
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
+        const height = calculateHeightOfChart(this);
+        // add Axes-labels based on selected language
+        const xLabel = this.translateService.instant('showStatistic.questionStatistic.xAxes');
+        const yLabel = this.translateService.instant('showStatistic.questionStatistic.yAxes');
+        this.options = createOptions(this, height, height / 5, xLabel, yLabel);
         if (this.chart) {
-            this.chart.options.scales!.yAxes![0]!.ticks!.max = calculateHeightOfChart(this);
-            this.chart.update();
+            this.chart.update(0);
         }
     }
 }

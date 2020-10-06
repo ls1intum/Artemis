@@ -15,19 +15,19 @@
                 <div class="col-md-8 text-center">
                     <p>&nbsp;</p>
                     <div class="row">
-                        <div class="col-md-8 text-left">
+                        <div class="col-md-7 text-left">
                             <p id="text" style="font-size: large">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
-                        <div class="col-md-3 text-right">
+                        <div class="col-md-5 text-right">
                             <p style="font-size: large">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>
                     </div>
-                    <canvas #chart baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">

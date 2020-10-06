@@ -253,7 +253,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         if (this.chart) {
             this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
-            this.chart.update();
+            this.chart.update(0);
         }
     }
 

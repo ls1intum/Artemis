@@ -25,7 +25,7 @@ export interface ChartElement {
 }
 
 // this code is reused in 4 different statistic components
-export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
+export function createOptions(dataSetProvider: DataSetProvider, max: number, stepSize: number, xLabel: string, yLabel: string): ChartOptions {
     return {
         layout: {
             padding: {
@@ -51,12 +51,15 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
         scales: {
             yAxes: [
                 {
+                    display: true,
                     scaleLabel: {
-                        labelString: '',
+                        labelString: xLabel,
                         display: true,
                     },
                     ticks: {
                         beginAtZero: true,
+                        stepSize,
+                        max,
                         min: 0,
                     } as LinearTickOptions,
                 },
@@ -64,7 +67,7 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
             xAxes: [
                 {
                     scaleLabel: {
-                        labelString: '',
+                        labelString: yLabel,
                         display: true,
                     },
                 },
@@ -119,7 +122,16 @@ export function calculateHeightOfChart(dataSetProvider: DataSetProvider) {
     const flattened = ([] as number[]).concat(...data);
     const max = Math.max(...flattened);
     // we provide 300 as buffer at the top to display labels
-    return Math.ceil((max + 1) / 10) * 10 + 400;
+    const height = Math.ceil((max + 1) / 10) * 10;
+    if (height < 10) {
+        return height + 3;
+    } else if (height < 1000) {
+        // add 25%, round to the next 10
+        return Math.ceil(height * 0.125) * 10;
+    } else {
+        // add 25%, round to the next 100
+        return Math.ceil(height * 0.0125) * 100;
+    }
 }
 
 @Component({
@@ -161,9 +173,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-    ) {
-        this.options = createOptions(this);
-    }
+    ) {}
 
     loadDataInDiagram(): void {
         throw new Error('Method not implemented.');
@@ -190,12 +200,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                     });
                 }
             });
-
-            // add Axes-labels based on selected language
-            const xLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
-            const yLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
-            this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
         });
     }
 
@@ -330,10 +334,14 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      */
     updateChart() {
         this.datasets = [{ data: this.data, backgroundColor: this.colors }];
-
+        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
+        const height = calculateHeightOfChart(this);
+        // add Axes-labels based on selected language
+        const xLabel = this.translateService.instant('showStatistic.quizStatistic.xAxes');
+        const yLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+        this.options = createOptions(this, height, height / 5, xLabel, yLabel);
         if (this.chart) {
-            this.chart.options.scales!.yAxes![0]!.ticks!.max = calculateHeightOfChart(this);
-            this.chart.update();
+            this.chart.update(0);
         }
     }
 }

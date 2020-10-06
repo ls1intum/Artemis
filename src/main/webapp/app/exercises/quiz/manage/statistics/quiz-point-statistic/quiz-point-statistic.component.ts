@@ -61,9 +61,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-    ) {
-        this.options = createOptions(this);
-    }
+    ) {}
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
@@ -97,12 +95,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadNewData(quiz.quizPointStatistic);
             });
-
-            // add Axes-labels based on selected language
-            const xLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
-            const yLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
-            this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
         });
 
         // update displayed times in UI regularly
@@ -252,10 +244,17 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.participants = this.quizPointStatistic.participantsUnrated!;
             this.data = this.unratedData;
         }
+
         this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
+        const height = calculateHeightOfChart(this);
+
+        // add Axes-labels based on selected language
+        const xLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
+        const yLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
+        this.options = createOptions(this, height, height / 5, xLabel, yLabel);
         if (this.chart) {
-            this.chart.options.scales!.yAxes![0]!.ticks!.max = calculateHeightOfChart(this);
-            this.chart.update();
+            this.chart.update(0);
         }
     }
 

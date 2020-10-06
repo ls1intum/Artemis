@@ -11,7 +11,7 @@
                             <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element) && !showSolution">
                                 <input class="short-answer-question-container__input" disabled />
                                 <div class="short-answer-question-container__statistic-letter">
-                                    <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element)) + '.' }}</span>
+                                    <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element) - 1) + '.' }}</span>
                                 </div>
                             </div>
                             <div class="short-answer-question-container" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showSolution">
@@ -23,7 +23,7 @@
                                     size="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text!.length + 4 : 5 }}"
                                 />
                                 <div class="short-answer-question-container__statistic-letter-solution">
-                                    <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element)) + '.' }}</span>
+                                    <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element) - 1) + '.' }}</span>
                                 </div>
                             </div>
                             &nbsp;
@@ -34,19 +34,19 @@
                 <div>
                     <p>&nbsp;</p>
                     <div class="row">
-                        <div class="col-md-8 text-left">
+                        <div class="col-md-7 text-left">
                             <p id="text" style="font-size: large">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
-                        <div class="col-md-3 text-right">
+                        <div class="col-md-5 text-right">
                             <p style="font-size: large">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>
                         </div>
                     </div>
-                    <canvas #chart baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+                    <canvas baseChart [datasets]="datasets" [labels]="chartLabels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">
