@@ -39,6 +39,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
+import { cloneDeep } from 'lodash';
 
 export interface Reason {
     translateKey: string;
@@ -212,7 +213,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise(undefined, undefined);
+        this.savedEntity = this.entity.id ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
         if (!this.quizExercise.course && !this.isExamMode) {
             this.quizExercise.course = this.course;
         }
@@ -1001,8 +1002,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of questions) {
+            // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
+            question.exercise = undefined;
             question.quizQuestionStatistic = undefined;
-            question.exercise = this.quizExercise;
             question.invalid = false;
             question.id = undefined;
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -1124,7 +1126,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         } else {
             this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
@@ -1136,7 +1137,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 () => this.onSaveError(),
             );
-            this.pendingChangesCache = false;
         }
     }
 
@@ -1147,8 +1147,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
+        this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = JSON.parse(JSON.stringify(quizExercise));
+        this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
     }
