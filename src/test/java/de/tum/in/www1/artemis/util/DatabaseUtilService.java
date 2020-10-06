@@ -357,7 +357,7 @@ public class DatabaseUtilService {
         else {
             studentParticipation = storedParticipation.get();
         }
-        return addResultToParticipation(studentParticipation);
+        return addResultToParticipation(null, null, studentParticipation);
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
@@ -561,6 +561,164 @@ public class DatabaseUtilService {
         studentQuestions.add(studentQuestion2);
 
         return studentQuestions;
+    }
+
+    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course);
+
+        // Set assessment due dates
+        if (hasAssessmentDueDatePassed) {
+            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
+            textExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
+            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
+            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
+            quizExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
+        }
+        else {
+            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
+            textExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
+            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
+            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
+            quizExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
+        }
+
+        // Add exercises to course
+        course.addExercises(modelingExercise);
+        course.addExercises(textExercise);
+        course.addExercises(fileUploadExercise);
+        course.addExercises(programmingExercise);
+        course.addExercises(quizExercise);
+
+        // Save course and exercises to database
+        Course courseSaved = courseRepo.save(course);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        textExercise = exerciseRepo.save(textExercise);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        programmingExercise = exerciseRepo.save(programmingExercise);
+        quizExercise = exerciseRepo.save(quizExercise);
+
+        // Get user and setup participations
+        User user = (userRepo.findOneByLogin("student1")).get();
+        StudentParticipation participationModeling = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
+        StudentParticipation participationText = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
+        StudentParticipation participationFileUpload = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
+        StudentParticipation participationQuiz = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, quizExercise, user);
+        StudentParticipation participationProgramming = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
+
+        // Save participations
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Setup results
+        Result resultModeling = ModelFactory.generateResult(true, 10);
+        resultModeling.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling.setCompletionDate(ZonedDateTime.now());
+
+        Result resultText = ModelFactory.generateResult(true, 12);
+        resultText.setAssessmentType(AssessmentType.MANUAL);
+        resultText.setCompletionDate(ZonedDateTime.now());
+
+        Result resultFileUpload = ModelFactory.generateResult(true, 0);
+        resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
+        resultFileUpload.setCompletionDate(ZonedDateTime.now());
+
+        Result resultQuiz = ModelFactory.generateResult(true, 0);
+        resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultQuiz.setCompletionDate(ZonedDateTime.now());
+
+        Result resultProgramming = ModelFactory.generateResult(true, 20);
+        resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultProgramming.setCompletionDate(ZonedDateTime.now());
+
+        // Connect participations to results and vice versa
+        resultModeling.setParticipation(participationModeling);
+        resultText.setParticipation(participationText);
+        resultFileUpload.setParticipation(participationFileUpload);
+        resultQuiz.setParticipation(participationQuiz);
+        resultProgramming.setParticipation(participationProgramming);
+
+        participationModeling.addResult(resultModeling);
+        participationText.addResult(resultText);
+        participationFileUpload.addResult(resultFileUpload);
+        participationQuiz.addResult(resultQuiz);
+        participationProgramming.addResult(resultProgramming);
+
+        // Save results and participations
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
+        participationModeling = studentParticipationRepo.save(participationModeling);
+        participationText = studentParticipationRepo.save(participationText);
+        participationFileUpload = studentParticipationRepo.save(participationFileUpload);
+        participationQuiz = studentParticipationRepo.save(participationQuiz);
+        participationProgramming = studentParticipationRepo.save(participationProgramming);
+
+        // Connect exercises with participations
+        modelingExercise.addParticipation(participationModeling);
+        textExercise.addParticipation(participationText);
+        fileUploadExercise.addParticipation(participationFileUpload);
+        quizExercise.addParticipation(participationQuiz);
+        programmingExercise.addParticipation(participationProgramming);
+
+        // Setup submissions and connect with participations
+        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission("model1", true);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        QuizSubmission quizSubmission = ModelFactory.generateQuizSubmission(true);
+        ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+
+        modelingSubmission.setParticipation(participationModeling);
+        modelingSubmission.setResult(resultModeling);
+        textSubmission.setParticipation(participationText);
+        textSubmission.setResult(resultText);
+        fileUploadSubmission.setParticipation(participationFileUpload);
+        fileUploadSubmission.setResult(resultFileUpload);
+        quizSubmission.setParticipation(participationQuiz);
+        quizSubmission.setResult(resultQuiz);
+        programmingSubmission.setParticipation(participationProgramming);
+        programmingSubmission.setResult(resultProgramming);
+
+        // Save submissions
+        modelingSubmission = submissionRepository.save(modelingSubmission);
+        textSubmission = submissionRepository.save(textSubmission);
+        fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        quizSubmission = submissionRepository.save(quizSubmission);
+        programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        // Save exercises
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        exerciseRepo.save(fileUploadExercise);
+        exerciseRepo.save(programmingExercise);
+        exerciseRepo.save(quizExercise);
+
+        // Connect participations with submissions
+        participationModeling.setSubmissions(Set.of(modelingSubmission));
+        participationText.setSubmissions(Set.of(textSubmission));
+        participationFileUpload.setSubmissions(Set.of(fileUploadSubmission));
+        participationQuiz.setSubmissions(Set.of(quizSubmission));
+        participationProgramming.setSubmissions(Set.of(programmingSubmission));
+
+        // Save participations
+        studentParticipationRepo.save(participationModeling);
+        studentParticipationRepo.save(participationText);
+        studentParticipationRepo.save(participationFileUpload);
+        studentParticipationRepo.save(participationQuiz);
+        studentParticipationRepo.save(participationProgramming);
+
+        return courseSaved;
     }
 
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
@@ -941,8 +1099,9 @@ public class DatabaseUtilService {
         return programmingExerciseRepository.save(exercise);
     }
 
-    public Result addResultToParticipation(Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L);
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
+                .completionDate(completionDate);
         return resultRepo.save(result);
     }
 

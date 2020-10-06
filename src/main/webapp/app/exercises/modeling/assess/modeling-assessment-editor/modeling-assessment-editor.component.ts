@@ -22,6 +22,7 @@ import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/fee
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -52,6 +53,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isLoading = true;
     isTestRun = false;
     hasAutomaticFeedback = false;
+    hasAssessmentDueDatePassed: boolean;
 
     private cancelConfirmationText: string;
 
@@ -146,6 +148,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.result = this.submission.result;
+        this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
         }
