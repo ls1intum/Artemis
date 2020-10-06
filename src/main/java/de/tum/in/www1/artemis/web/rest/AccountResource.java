@@ -58,10 +58,18 @@ public class AccountResource {
     private final MailService mailService;
 
     public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
-
         this.userRepository = userRepository;
         this.userService = userService;
         this.mailService = mailService;
+    }
+
+    /**
+     * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
+     * A non existing entry or false mean that the registration is not enabled
+     * @return whether the registration is enabled or not
+     */
+    private boolean isRegistrationDisabled() {
+        return registrationEnabled.isEmpty() || Boolean.FALSE.equals(registrationEnabled.get());
     }
 
     /**
@@ -75,10 +83,10 @@ public class AccountResource {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
-        if (!isPasswordLengthValid(managedUserVM.getPassword())) {
+        if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
 
@@ -101,7 +109,7 @@ public class AccountResource {
      */
     @GetMapping("/activate")
     public void activateAccount(@RequestParam(value = "key") String key) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         Optional<User> user = userService.activateRegistration(key);
@@ -160,7 +168,7 @@ public class AccountResource {
      */
     @PostMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         final String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new InternalServerErrorException("Current user login not found"));
@@ -183,10 +191,10 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
-        if (!isPasswordLengthValid(passwordChangeDto.getNewPassword())) {
+        if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();
         }
         userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
@@ -222,10 +230,10 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
-        if (!isPasswordLengthValid(keyAndPassword.getNewPassword())) {
+        if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
@@ -235,7 +243,7 @@ public class AccountResource {
         }
     }
 
-    private static boolean isPasswordLengthValid(String password) {
-        return !StringUtils.isEmpty(password) && password.length() >= ManagedUserVM.PASSWORD_MIN_LENGTH && password.length() <= ManagedUserVM.PASSWORD_MAX_LENGTH;
+    private static boolean isPasswordLengthInvalid(String password) {
+        return StringUtils.isEmpty(password) || password.length() < ManagedUserVM.PASSWORD_MIN_LENGTH || password.length() > ManagedUserVM.PASSWORD_MAX_LENGTH;
     }
 }
