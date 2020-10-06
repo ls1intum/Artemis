@@ -17,8 +17,8 @@ export class PasswordComponent implements OnInit {
     user?: User;
     passwordForm = this.fb.group({
         currentPassword: ['', [Validators.required]],
-        newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
+        newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
+        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     });
     isRegistrationEnabled = false;
 

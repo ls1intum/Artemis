@@ -28,9 +28,9 @@ export class RegisterComponent implements OnInit, AfterViewInit {
         firstName: ['', [Validators.required, Validators.minLength(2)]],
         lastName: ['', [Validators.required, Validators.minLength(2)]],
         login: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.defaultEmailPattern)]],
-        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(254), Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(50)]],
+        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
+        confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     });
     isRegistrationEnabled = false;
     allowedEmailPattern?: string;
@@ -48,7 +48,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     // updateAllowedEmailPattern() {
     //     if (this.allowedEmailPattern) {
     //         this.registerForm.get('email')!
-    //         .setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(this.allowedEmailPattern)]);
+    //         .setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(this.allowedEmailPattern)]);
     //     }
     // }
     // TEST CODE END
@@ -61,7 +61,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
                 this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
                 if (this.allowedEmailPattern) {
                     const jsRegexPattern = this.allowedEmailPattern;
-                    this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(50), Validators.pattern(jsRegexPattern)]);
+                    this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(jsRegexPattern)]);
                 }
             }
         });

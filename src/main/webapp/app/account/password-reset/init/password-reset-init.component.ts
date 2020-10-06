@@ -13,7 +13,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
 
     success = false;
     resetRequestForm = this.fb.group({
-        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(254), Validators.email]],
+        email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
     });
     isRegistrationEnabled = false;
 

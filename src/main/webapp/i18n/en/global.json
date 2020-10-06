@@ -136,19 +136,19 @@
                 "newpassword": {
                     "required": "Your password is required.",
                     "minlength": "Your password is required to be at least 8 characters.",
-                    "maxlength": "Your password cannot be longer than 50 characters.",
+                    "maxlength": "Your password cannot be longer than 100 characters.",
                     "strength": "Password strength:"
                 },
                 "confirmpassword": {
                     "required": "Your confirmation password is required.",
                     "minlength": "Your confirmation password is required to be at least 8 characters.",
-                    "maxlength": "Your confirmation password cannot be longer than 50 characters."
+                    "maxlength": "Your confirmation password cannot be longer than 100 characters."
                 },
                 "email": {
                     "required": "Your email is required.",
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
-                    "maxlength": "Your email cannot be longer than 50 characters.",
+                    "maxlength": "Your email cannot be longer than 100 characters.",
                     "pattern": "Your email does not follow the required pattern."
                 }
             }
