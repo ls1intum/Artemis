@@ -353,7 +353,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
 
             // Generate achievements if enabled in course and exercise not part of exam
-            exerciseService.generateAchievementsIfEnabledInCourse(course, newProgrammingExercise);
+            achievementService.generateForExercise(course, newProgrammingExercise);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {

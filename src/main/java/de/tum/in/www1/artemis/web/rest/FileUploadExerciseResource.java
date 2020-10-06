@@ -111,7 +111,7 @@ public class FileUploadExerciseResource {
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
         // Generate achievements if enabled in course and exercise not part of exam
-        exerciseService.generateAchievementsIfEnabledInCourse(course, result);
+        achievementService.generateForExercise(course, result);
 
         // Only notify tutors when the exercise is created for a course
         if (fileUploadExercise.hasCourse()) {
