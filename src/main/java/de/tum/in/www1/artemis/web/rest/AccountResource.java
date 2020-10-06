@@ -207,7 +207,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
-        if (registrationEnabled.isEmpty() || registrationEnabled.get() == Boolean.FALSE) {
+        if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         Optional<User> user = userService.requestPasswordReset(mail);
