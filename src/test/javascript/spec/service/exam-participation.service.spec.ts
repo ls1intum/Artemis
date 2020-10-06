@@ -38,16 +38,6 @@ describe('Exam Participation Service', () => {
         exam = new Exam();
         studentExam = new StudentExam();
         quizSubmission = new QuizSubmission();
-        const store = {};
-
-        spyOn(localStorage, 'getItem').and.callFake(
-            (key: string): String => {
-                return store[key] || null;
-            },
-        );
-        spyOn(localStorage, 'setItem').and.callFake((key: string, value: string): string => {
-            return (store[key] = <string>value);
-        });
     });
 
     describe('Service methods', async () => {
@@ -71,7 +61,23 @@ describe('Exam Participation Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
         it('should load a StudentExam', async () => {
-            const returnedFromService = Object.assign({}, studentExam);
+            const sendExam = Object.assign(
+                {
+                    visibleDate: moment(),
+                    startDate: moment(),
+                    endDate: moment(),
+                    publishResultDate: moment(),
+                    examStudentReviewStart: moment(),
+                    examStudentReviewEnd: moment(),
+                },
+                exam,
+            );
+            const returnedFromService = Object.assign(
+                {
+                    exam: sendExam,
+                },
+                studentExam,
+            );
             service
                 .loadStudentExam(1, 1)
                 .pipe(take(1))
@@ -81,13 +87,17 @@ describe('Exam Participation Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
         it('should load a StudentExam in the version of server', async () => {
-            const returnedFromService = Object.assign({}, studentExam);
-            const mockStudentExam = new StudentExam();
-            mockStudentExam.exercises = [];
+            const returnedFromService = Object.assign(
+                {
+                    exercises: [],
+                },
+                studentExam,
+            );
+            const expected = Object.assign({}, returnedFromService);
             service
-                .submitStudentExam(1, 1, mockStudentExam)
+                .submitStudentExam(1, 1, returnedFromService)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(JSON.stringify(returnedFromService));
@@ -118,6 +128,14 @@ describe('Exam Participation Service', () => {
             service.saveExamSessionTokenToSessionStorage('token1');
             spyOn(sessionStorage, 'setItem').and.callFake(() => {
                 expect(sessionStorage['ExamSessionToken']).toBe('token1');
+            });
+        });
+        it('should save StudentExam to localStorage', async () => {
+            const sendToService = Object.assign({ exercises: [] }, studentExam);
+            const expected = Object.assign({}, sendToService);
+            service.saveStudentExamToLocalStorage(1, 1, sendToService);
+            spyOn(localStorage, 'setItem').and.callFake(() => {
+                expect(localStorage['artemis_student_exam_1_1'].toBe(JSON.stringify(expected)));
             });
         });
     });
