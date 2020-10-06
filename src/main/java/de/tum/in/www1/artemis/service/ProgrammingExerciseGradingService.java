@@ -340,7 +340,8 @@ public class ProgrammingExerciseGradingService {
                 }
 
             }
-            catch (JsonProcessingException ignored) {
+            catch (JsonProcessingException exception) {
+                log.debug("Error occurred parsing feedback " + feedback + " to static code analysis issue: " + exception.getMessage());
             }
 
             if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {
@@ -381,7 +382,8 @@ public class ProgrammingExerciseGradingService {
             }).sum();
 
             // if static code analysis is enabled, reduce the points by the calculated penalty
-            if (programmingExercise.isStaticCodeAnalysisEnabled() && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(0) > 0) {
+            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
+                    && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
                 successfulTestPoints -= calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
 
                 if (successfulTestPoints < 0) {
@@ -436,16 +438,20 @@ public class ProgrammingExerciseGradingService {
             }
 
             // update credits of feedbacks in category
-            double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
-            categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+            if (!categoryFeedback.isEmpty()) {
+                double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
+                categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+            }
 
             codeAnalysisPenaltyPoints += categoryPenaltyPoints;
         }
 
-        // cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent)
-        final var maxExercisePenaltyPoints = (double) programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
-        if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
-            codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
+        // cap at the maximum allowed penalty for this exercise if specified (maxStaticCodeAnalysisPenalty is in percent)
+        if (programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
+            final var maxExercisePenaltyPoints = (double) programmingExercise.getMaxStaticCodeAnalysisPenalty() / 100.0 * programmingExercise.getMaxScore();
+            if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
+                codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
+            }
         }
 
         return codeAnalysisPenaltyPoints;
