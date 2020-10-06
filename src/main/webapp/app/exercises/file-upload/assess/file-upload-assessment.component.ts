@@ -27,6 +27,7 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { now } from 'moment';
 
 @Component({
@@ -102,7 +103,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
