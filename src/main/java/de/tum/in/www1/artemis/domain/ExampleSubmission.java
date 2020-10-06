@@ -41,22 +41,12 @@ public class ExampleSubmission extends DomainObject {
         return usedForTutorial;
     }
 
-    public ExampleSubmission usedForTutorial(Boolean usedForTutorial) {
-        this.usedForTutorial = usedForTutorial;
-        return this;
-    }
-
     public void setUsedForTutorial(Boolean usedForTutorial) {
         this.usedForTutorial = usedForTutorial;
     }
 
     public Exercise getExercise() {
         return exercise;
-    }
-
-    public ExampleSubmission exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
     }
 
     public void setExercise(Exercise exercise) {
@@ -67,22 +57,12 @@ public class ExampleSubmission extends DomainObject {
         return submission;
     }
 
-    public ExampleSubmission submission(Submission submission) {
-        this.submission = submission;
-        return this;
-    }
-
     public void setSubmission(Submission submission) {
         this.submission = submission;
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
         return tutorParticipations;
-    }
-
-    public ExampleSubmission tutorParticipations(Set<TutorParticipation> tutorParticipations) {
-        this.tutorParticipations = tutorParticipations;
-        return this;
     }
 
     public ExampleSubmission addTutorParticipations(TutorParticipation tutorParticipation) {

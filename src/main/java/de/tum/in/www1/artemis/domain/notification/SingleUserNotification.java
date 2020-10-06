@@ -25,11 +25,6 @@ public class SingleUserNotification extends Notification {
         return recipient;
     }
 
-    public SingleUserNotification recipient(User user) {
-        this.recipient = user;
-        return this;
-    }
-
     public void setRecipient(User user) {
         this.recipient = user;
     }
