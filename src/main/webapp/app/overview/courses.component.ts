@@ -87,6 +87,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 this.nextRelevantExams = this.exams.filter(
                     (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
                 );
+                this.nextRelevantExercise = this.findNextRelevantExercise();
             },
             (response: string) => this.onError(response),
         );
