@@ -443,7 +443,7 @@ public class ProgrammingExerciseGradingService {
             double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
 
             // cap at the maximum allowed penalty for this category
-            if (categoryPenaltyPoints > category.getMaxPenalty()) {
+            if (category.getMaxPenalty() != null && categoryPenaltyPoints > category.getMaxPenalty()) {
                 categoryPenaltyPoints = category.getMaxPenalty();
             }
 
