@@ -37,11 +37,12 @@
             <input type="text" class="form-control" value='["require_existing_user=true", "lookup_user_by_email=true"]' readonly />
 
             <p>
-                <code>require_existing_user</code>: If <code>true</code>, launching the exercise requires an existing user on JIRA. If <code>false</code>, a user will be created on
-                first launch.
+                <code>require_existing_user</code>: If <code>true</code>, launching the exercise requires an existing user on Artemis (or the external user management used by
+                Artemis). If <code>false</code>, a user will be created on first launch (in case the user does not exist yet).
 
                 <br />
-                <code>lookup_user_by_email</code>: If <code>true</code>, it will try to find a matching JIRA user by the LTI email address.
+                <code>lookup_user_by_email</code>: If <code>true</code>, Artemis will try to find a matching user by the provided email address in the LTI request, if the user was
+                not found based on the provided <code>user_id</code> in the LTI request.
             </p>
         </div>
 

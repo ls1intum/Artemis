@@ -405,10 +405,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
-        // also test toString()
-        submission.getBuildLogEntries().forEach(entry -> {
-            System.out.println(entry.toString());
-        });
         database.addProgrammingSubmission(programmingExercise, submission, "student1");
 
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
