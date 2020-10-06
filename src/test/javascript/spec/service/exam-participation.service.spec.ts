@@ -103,8 +103,5 @@ describe('Exam Participation Service', () => {
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(JSON.stringify(returnedFromService));
         });
-        it('should save StudentExam to local storage', () => {
-            expect(localStorage.setItem('foo', 'bar')).toBe('bar');
-        });
     });
 });
