@@ -460,22 +460,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         return false;
     }
 
-    toggleCollapse($event: any) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
-        target.blur();
-        const $card = $(target).closest('#instructions');
-
-        if ($card.hasClass('collapsed')) {
-            $card.removeClass('collapsed');
-            this.interactResizable.resizable({ enabled: true });
-            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
-        } else {
-            $card.addClass('collapsed');
-            $card.css({ width: '55px', minWidth: '55px' });
-            this.interactResizable.resizable({ enabled: false });
-        }
-    }
-
     /**
      * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
      * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.

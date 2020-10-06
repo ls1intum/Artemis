@@ -11,6 +11,7 @@ import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
+import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -99,6 +100,15 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.course.detail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/ratings',
+        component: RatingListComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.ratingList.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },

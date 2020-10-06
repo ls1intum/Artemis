@@ -434,7 +434,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @JsonProperty("sequentialTestRuns")
-    public Boolean hasSequentialTestRuns() {
+    public boolean hasSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
         }

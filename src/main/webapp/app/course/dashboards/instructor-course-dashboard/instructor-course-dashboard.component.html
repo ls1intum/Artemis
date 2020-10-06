@@ -47,6 +47,11 @@
                                     <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | translate }}:</b> {{ stats.numberOfAssessmentLocks }}
                                 </a>
                             </li>
+                            <li>
+                                <a [routerLink]="['/course-management', course.id, 'ratings']">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.rating' | translate }}</b>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>

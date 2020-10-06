@@ -244,7 +244,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {
         mockConnectorRequestsForSetup(programmingExercise);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", generatedExercise.getId() + ""), generatedExercise, String.class,
+        String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
                 HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
@@ -260,8 +260,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         // Second time leads to a bad request because the file did not change
         var expectedHeaders = new HashMap<String, String>();
         expectedHeaders.put("X-artemisApp-alert", "Did not update the oracle because there have not been any changes to it.");
-        request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", generatedExercise.getId() + ""), generatedExercise, String.class, HttpStatus.BAD_REQUEST,
-                expectedHeaders);
+        request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
+                HttpStatus.BAD_REQUEST, expectedHeaders);
         assertThat(response).startsWith("Successfully generated the structure oracle");
     }
 
@@ -289,8 +289,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
-        final var path = ParticipationResource.Endpoints.ROOT
-                + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", "" + course.getId()).replace("{exerciseId}", "" + exercise.getId());
+        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
+                .replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
 
         for (final var verification : verifications) {
@@ -317,8 +317,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
 
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
-        final var path = ParticipationResource.Endpoints.ROOT
-                + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", "" + course.getId()).replace("{exerciseId}", "" + exercise.getId());
+        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
+                .replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
 
         for (final var verification : verifications) {
