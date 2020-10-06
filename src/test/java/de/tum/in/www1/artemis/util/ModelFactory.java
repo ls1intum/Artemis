@@ -689,7 +689,7 @@ public class ModelFactory {
         category.setName("Bad practice");
         category.setPenalty(2D);
         category.setMaxPenalty(10D);
-        category.setState(CategoryState.VISIBLE);
+        category.setState(CategoryState.FEEDBACK);
         category.setProgrammingExercise(programmingExercise);
         return category;
     }
