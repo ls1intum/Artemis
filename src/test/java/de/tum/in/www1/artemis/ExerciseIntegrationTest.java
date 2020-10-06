@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.service.ExerciseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,9 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    ExerciseService exerciseService;
 
     @BeforeEach
     public void init() {
@@ -265,13 +269,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails_assessmentDueDate_notPassed() throws Exception {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipations();
+        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
         for (Exercise exercise : course.getExercises()) {
-            exercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1L));
-            exercise = exerciseRepository.save(exercise);
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), exercise.getStudentParticipations().iterator().next());
+                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -295,13 +297,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails_assessmentDueDate_passed() throws Exception {
-        Course course = database.createCourseWithAllExerciseTypesAndParticipations();
+        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
         for (Exercise exercise : course.getExercises()) {
-            exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1L));
-            exercise = exerciseRepository.save(exercise);
             // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), exercise.getStudentParticipations().iterator().next());
+                database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next());
             }
             Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
@@ -315,6 +315,48 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     // All other exercises have only one visible result now
                     assertThat(participation.getResults().size()).isEqualTo(1);
                 }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void filterForCourseDashboard_assessmentDueDate_notPassed() {
+        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
+        for (Exercise exercise : course.getExercises()) {
+            // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
+            if (exercise instanceof ProgrammingExercise) {
+                exercise.getStudentParticipations().iterator().next().setResults(Set.of(database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+            }
+            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            // Programming exercises should only have one automatic result
+            if (exercise instanceof ProgrammingExercise) {
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            } else if (exercise instanceof QuizExercise) {
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+            } else {
+                // All other exercises have only one visible result now
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void filterForCourseDashboard_assessmentDueDate_passed() {
+        Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+        for (Exercise exercise : course.getExercises()) {
+            // For programming exercises we add an manual result, to check whether this is correctly displayed after the assessment due date
+            if (exercise instanceof ProgrammingExercise) {
+                exercise.getStudentParticipations().iterator().next().setResults(Set.of(database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+            }
+            exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
+            // All exercises have one result
+            assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+            // Programming exercises should now have one manual result
+            if (exercise instanceof ProgrammingExercise) {
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
             }
         }
     }
