@@ -1210,7 +1210,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testDeleteTestRunAsTutor() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + 1, HttpStatus.FORBIDDEN);
+        var instructor = database.getUserByLogin("instructor1");
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + testRun.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
