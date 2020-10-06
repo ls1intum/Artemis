@@ -684,12 +684,13 @@ public class ModelFactory {
         return issue;
     }
 
-    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise, String name, CategoryState state, Double penalty,
+            Double maxPenalty) {
         var category = new StaticCodeAnalysisCategory();
-        category.setName("Bad practice");
-        category.setPenalty(2D);
-        category.setMaxPenalty(10D);
-        category.setState(CategoryState.FEEDBACK);
+        category.setName(name);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(maxPenalty);
+        category.setState(state);
         category.setProgrammingExercise(programmingExercise);
         return category;
     }
