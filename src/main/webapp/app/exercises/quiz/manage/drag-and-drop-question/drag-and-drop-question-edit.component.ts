@@ -15,6 +15,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -102,8 +103,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      * Actions when initializing component.
      */
     ngOnInit(): void {
-        /** Create question backup for resets **/
-        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+        // create deepcopy as backup
+        this.backupQuestion = cloneDeep(this.question);
 
         /** Assign status booleans and strings **/
         this.showPreview = false;
@@ -131,7 +132,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue) {
-            this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+            this.backupQuestion = cloneDeep(this.question);
         }
     }
 
@@ -693,9 +694,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        this.question.dropLocations = JSON.parse(JSON.stringify(this.backupQuestion.dropLocations));
-        this.question.dragItems = JSON.parse(JSON.stringify(this.backupQuestion.dragItems));
-        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
+        this.question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
+        this.question.dragItems = cloneDeep(this.backupQuestion.dragItems);
+        this.question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         this.resetQuestionText();
     }
 
