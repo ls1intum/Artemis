@@ -288,8 +288,9 @@ public class ProgrammingExercise extends Exercise {
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
-                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) ||
-                    submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL) && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
+                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
+                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
+                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
