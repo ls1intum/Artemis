@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-sm-12">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="$event.preventDefault()">
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
             </h4>
@@ -173,6 +173,66 @@
                         </div>
                     </div>
                 </div>
+                <!-- Static code analysis is only supported for JAVA at the moment.
+                Also this option can't be changed on edit or import because the build plans and the test repo are already set up-->
+                <div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            class="form-check-input custom-control-input"
+                            id="field_staticCodeAnalysisEnabled"
+                            name="staticCodeAnalysisEnabled"
+                            [disabled]="!!programmingExercise.id"
+                            [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
+                            (change)="onStaticCodeAnalysisChanged()"
+                        />
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="field_staticCodeAnalysisEnabled"
+                            jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title"
+                        >
+                            Enable Static Code Analysis</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | translate }}"
+                        ></fa-icon>
+                    </div>
+                    <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
+                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+                            >Max Static Code Analysis Penalty</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | translate }}"
+                        ></fa-icon>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <input
+                                type="number"
+                                [pattern]="maxPenaltyPattern"
+                                class="form-control"
+                                min="0"
+                                max="100"
+                                name="maxPenalty"
+                                id="field_maxPenalty"
+                                [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                                #maxPenalty="ngModel"
+                            />
+                        </div>
+                        <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
+                            <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
+                                <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+                            </div>
+                        </ng-container>
+                    </ng-container>
+                </div>
                 <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
                 <div class="form-group" id="field_problemStatement" name="problemStatement">
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
@@ -223,24 +283,6 @@
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
-                        </label>
-                    </div>
-                </div>
-                <!-- Static code analysis is only supported for JAVA at the moment.
-                Also this option can't be changed on edit or import because the build plans and the test repo are already set up-->
-                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
-                    <div class="form-check">
-                        <label class="form-check-label" for="field_staticCodeAnalysisEnabled">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                name="staticCodeAnalysisEnabled"
-                                id="field_staticCodeAnalysisEnabled"
-                                [disabled]="!!programmingExercise.id"
-                                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
-                                checked
-                            />
-                            <span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis">Enable Static Code Analysis</span>
                         </label>
                     </div>
                 </div>

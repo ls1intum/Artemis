@@ -1,8 +1,8 @@
 import { group, sleep } from 'k6';
 import { login } from './requests/requests.js';
 import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from './requests/programmingExercise.js';
-import { deleteCourse, newCourse, addUserToStudentsInCourse, addUserToInstructorsInCourse } from './requests/course.js';
-import { newUser, getUser, updateUser, createUsersIfNeeded } from './requests/user.js';
+import { deleteCourse, newCourse } from './requests/course.js';
+import { createUsersIfNeeded } from './requests/user.js';
 import { allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava } from './resource/constants_java.js';
 import { allSuccessfulContentPython, buildErrorContentPython, someSuccessfulErrorContentPython } from './resource/constants_python.js';
 import { allSuccessfulContentC, buildErrorContentC, someSuccessfulErrorContentC } from './resource/constants_c.js';

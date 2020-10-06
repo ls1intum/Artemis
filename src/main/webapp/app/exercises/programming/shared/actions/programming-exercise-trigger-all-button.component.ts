@@ -56,7 +56,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
         modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
         modalRef.result.then(() => {
             this.submissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id)
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
@@ -66,7 +66,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     private subscribeBuildRunUpdates() {
         this.programmingBuildRunService
-            .getBuildRunUpdates(this.exercise.id)
+            .getBuildRunUpdates(this.exercise.id!)
             .pipe(tap((buildRunState) => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
             .subscribe();
     }

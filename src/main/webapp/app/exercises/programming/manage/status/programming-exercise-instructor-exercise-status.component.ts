@@ -5,6 +5,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/overview/participation-utils';
+import { findLatestResult } from 'app/shared/util/utils';
 
 /**
  * Describes programming exercise issues
@@ -26,7 +27,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
 
     templateParticipationSubscription: Subscription;
     solutionParticipationSubscription: Subscription;
-    issues: (ProgrammingExerciseIssues | null)[] = [];
+    issues: (ProgrammingExerciseIssues | undefined)[] = [];
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -41,7 +42,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.templateParticipationSubscription.unsubscribe();
             }
             this.templateParticipationSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.templateParticipation.id, false, this.exercise.id)
+                .subscribeForLatestResultOfParticipation(this.templateParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
                     tap((result) => (this.templateParticipation.results = [result!])),
@@ -55,7 +56,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.solutionParticipationSubscription.unsubscribe();
             }
             this.solutionParticipationSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.solutionParticipation.id, false, this.exercise.id)
+                .subscribeForLatestResultOfParticipation(this.solutionParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
                     tap((result) => (this.solutionParticipation.results = [result!])),
@@ -71,12 +72,12 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
      * Finds issues of the template and the solution participation result
      */
     findIssues() {
-        const newestTemplateParticipationResult = this.templateParticipation.results ? this.templateParticipation.results.reduce((acc, x) => (acc.id > x.id ? acc : x)) : null;
-        const newestSolutionParticipationResult = this.solutionParticipation.results ? this.solutionParticipation.results.reduce((acc, x) => (acc.id > x.id ? acc : x)) : null;
+        const newestTemplateParticipationResult = findLatestResult(this.templateParticipation.results);
+        const newestSolutionParticipationResult = findLatestResult(this.solutionParticipation.results);
 
         this.issues = [
-            newestTemplateParticipationResult && newestTemplateParticipationResult.score > 0 ? ProgrammingExerciseIssues.TEMPLATE_PASSING : null,
-            newestSolutionParticipationResult && !newestSolutionParticipationResult.successful ? ProgrammingExerciseIssues.SOLUTION_FAILING : null,
+            newestTemplateParticipationResult && newestTemplateParticipationResult.score! > 0 ? ProgrammingExerciseIssues.TEMPLATE_PASSING : undefined,
+            newestSolutionParticipationResult && !newestSolutionParticipationResult.successful ? ProgrammingExerciseIssues.SOLUTION_FAILING : undefined,
         ].filter(Boolean);
     }
 }

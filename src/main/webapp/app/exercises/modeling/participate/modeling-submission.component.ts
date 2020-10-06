@@ -26,9 +26,9 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { filter } from 'rxjs/operators';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -46,17 +46,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     participation: StudentParticipation;
     modelingExercise: ModelingExercise;
-    result: Result | null;
+    result?: Result;
 
     selectedEntities: string[];
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
-    assessmentResult: Result | null;
+    assessmentResult?: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
-    generalFeedbackText: String | null;
+    generalFeedbackText?: String;
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
@@ -129,7 +129,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         // reconnect participation <--> result
         if (modelingSubmission.result) {
-            modelingSubmission.participation.results = [modelingSubmission.result];
+            modelingSubmission.participation!.results = [modelingSubmission.result];
         }
         this.participation = modelingSubmission.participation as StudentParticipation;
 
@@ -158,7 +158,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.result = this.submission.result;
         }
         if (this.submission.submitted && this.result && this.result.completionDate) {
-            this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+            this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                 this.assessmentResult = assessmentResult;
                 this.prepareAssessmentData();
             });
@@ -200,7 +200,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
                 if (this.submission.result && this.submission.result.completionDate && this.isAfterAssessmentDueDate) {
-                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                    this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
                     });
@@ -267,20 +267,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
                 (response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation.submissions = [this.submission];
+                    this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.onSaveSuccess();
                 },
-                () => this.onSaveError(),
+                (error: HttpErrorResponse) => this.onSaveError(error),
             );
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
                 (submission) => {
                     this.submission = submission.body!;
                     this.result = this.submission.result;
@@ -288,7 +288,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
-                () => this.onSaveError(),
+                (error: HttpErrorResponse) => this.onSaveError(error),
             );
         }
     }
@@ -306,60 +306,54 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving = true;
         this.autoSaveTimer = 0;
         if (this.submission.id) {
-            this.modelingSubmissionService
-                .update(this.submission, this.modelingExercise.id)
-                .pipe(filter((res) => !!res.body))
-                .subscribe(
-                    (response) => {
-                        this.submission = response.body!;
-                        this.submissionChange.next(this.submission);
-                        this.participation = this.submission.participation as StudentParticipation;
-                        this.participation.exercise = this.modelingExercise;
-                        // reconnect so that the submission status is displayed correctly in the result.component
-                        this.submission.participation.submissions = [this.submission];
-                        this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
-                        this.modelingExercise.studentParticipations = [this.participation];
-                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-                        this.result = this.submission.result;
-                        this.retryStarted = false;
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
+                (response) => {
+                    this.submission = response.body!;
+                    this.submissionChange.next(this.submission);
+                    this.participation = this.submission.participation as StudentParticipation;
+                    this.participation.exercise = this.modelingExercise;
+                    // reconnect so that the submission status is displayed correctly in the result.component
+                    this.submission.participation!.submissions = [this.submission];
+                    this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
+                    this.modelingExercise.studentParticipations = [this.participation];
+                    this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
+                    this.result = this.submission.result;
+                    this.retryStarted = false;
 
-                        if (this.isLate) {
-                            this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
-                        } else {
-                            this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
-                        }
+                    if (this.isLate) {
+                        this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
+                    } else {
+                        this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
+                    }
 
-                        this.subscribeToWebsockets();
-                        if (this.automaticSubmissionWebsocketChannel) {
-                            this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
-                        }
-                        this.onSaveSuccess();
-                    },
-                    () => this.onSaveError(),
-                );
+                    this.subscribeToWebsockets();
+                    if (this.automaticSubmissionWebsocketChannel) {
+                        this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+                    }
+                    this.onSaveSuccess();
+                },
+                (error: HttpErrorResponse) => this.onSaveError(error),
+            );
         } else {
-            this.modelingSubmissionService
-                .create(this.submission, this.modelingExercise.id)
-                .pipe(filter((res) => !!res.body))
-                .subscribe(
-                    (submission) => {
-                        this.submission = submission.body!;
-                        this.submissionChange.next(this.submission);
-                        this.participation = this.submission.participation as StudentParticipation;
-                        this.participation.exercise = this.modelingExercise;
-                        this.modelingExercise.studentParticipations = [this.participation];
-                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-                        this.result = this.submission.result;
-                        if (this.isLate) {
-                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
-                        } else {
-                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                        }
-                        this.subscribeToAutomaticSubmissionWebsocket();
-                        this.onSaveSuccess();
-                    },
-                    () => this.onSaveError(),
-                );
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id!).subscribe(
+                (response) => {
+                    this.submission = response.body!;
+                    this.submissionChange.next(this.submission);
+                    this.participation = this.submission.participation as StudentParticipation;
+                    this.participation.exercise = this.modelingExercise;
+                    this.modelingExercise.studentParticipations = [this.participation];
+                    this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
+                    this.result = this.submission.result;
+                    if (this.isLate) {
+                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    } else {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                    }
+                    this.subscribeToAutomaticSubmissionWebsocket();
+                    this.onSaveSuccess();
+                },
+                (error: HttpErrorResponse) => this.onSaveError(error),
+            );
         }
     }
 
@@ -367,19 +361,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving = false;
     }
 
-    private onSaveError() {
+    private onSaveError(error?: HttpErrorResponse) {
+        if (error) {
+            console.error(error.message);
+        }
         this.jhiAlertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
     }
 
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
-        submission.participation.exercise = this.modelingExercise;
-        submission.participation.submissions = [submission];
+        submission.participation!.exercise = this.modelingExercise;
+        submission.participation!.submissions = [submission];
         this.updateModelingSubmission(submission);
     }
 
-    private isModelEmpty(model: string): boolean {
-        const umlModel: UMLModel = JSON.parse(model);
+    private isModelEmpty(model?: string): boolean {
+        const umlModel: UMLModel = model ? JSON.parse(model) : undefined;
         return !umlModel || !umlModel.elements || umlModel.elements.length === 0;
     }
 
@@ -429,7 +426,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             const feedback = this.assessmentResult.feedbacks;
             const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
             if (generalFeedbackIndex >= 0) {
-                this.generalFeedbackText = feedback[generalFeedbackIndex].detailText;
+                this.generalFeedbackText = feedback[generalFeedbackIndex].detailText!;
                 feedback.splice(generalFeedbackIndex, 1);
             }
         }
@@ -439,11 +436,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Retrieves names for displaying the assessment and calculates the total score
      */
     private initializeAssessmentInfo(): void {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
+        if (this.assessmentResult && this.assessmentResult.feedbacks && this.umlModel) {
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
-                totalScore += feedback.credits;
+                totalScore += feedback.credits!;
             }
             this.totalScore = totalScore;
         }
@@ -520,22 +517,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * NOTE: this is currently not used (it was supposed to allow students to retry the modeling exercise after they have recieved a result)
-     *
-     * starts a retry and resets necessary attributes
-     * the retry is only persisted after saving or submitting the model
-     */
-    retry(): void {
-        this.retryStarted = true;
-        this.umlModel.assessments = [];
-        this.submission = new ModelingSubmission();
-        this.assessmentResult = null;
-        this.result = null; // TODO: think about how we could visualize old results and assessments after retry
-        clearInterval(this.autoSaveInterval);
-        this.setAutoSaveTimer();
-    }
-
-    /**
      * counts the number of model elements
      * is used in the submit() function
      */
@@ -571,12 +552,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Prepare a result that contains a participation which is needed in the rating component
      */
-    get resultForRating(): Result | null {
+    get resultForRating() {
         const ratingResult = cloneDeep(this.result);
         if (ratingResult) {
             // remove circular dependency
             const ratingParticipation = cloneDeep(this.participation);
-            ratingParticipation.exercise.studentParticipations = [];
+            ratingParticipation.exercise!.studentParticipations = [];
 
             ratingResult.participation = ratingParticipation;
         }

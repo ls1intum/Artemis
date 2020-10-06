@@ -1,4 +1,5 @@
 import { omit } from 'lodash';
+import { Result } from 'app/entities/result.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -73,4 +74,12 @@ export const round = (value: any, exp: number) => {
     // Shift back
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
+};
+
+/**
+ * finds the latest result based on the max id
+ * @param results
+ */
+export const findLatestResult = (results?: Result[]) => {
+    return results?.length ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
 };

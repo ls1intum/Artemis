@@ -160,7 +160,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that was selected
      */
     searchTextFromTeam = (team: Team): string => {
-        return team.shortName;
+        return team.shortName!;
     };
 
     /**

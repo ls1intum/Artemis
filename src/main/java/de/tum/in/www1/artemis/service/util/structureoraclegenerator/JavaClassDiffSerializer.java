@@ -28,7 +28,7 @@ class JavaClassDiffSerializer {
      * - Superclass (if any)
      * - Super interfaces (if any)
      * - Annotations (if any)
-     * 
+     *
      * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type defined in the types diff.
      */
     JsonObject serializeClassProperties() {
@@ -71,7 +71,7 @@ class JavaClassDiffSerializer {
     /**
      * This method is used to serialize the attributes of a class into a JSON array containing the following information for each attribute defined in the classes packed into a
      * JSON object: - Name - Modifiers (if any) - Type
-     * 
+     *
      * @return The JSON array consisting of JSON objects representation for each attribute defined in the classes diff.
      */
     JsonArray serializeAttributes() {
@@ -88,7 +88,7 @@ class JavaClassDiffSerializer {
 
     /**
      * This method is used to serialize the enums of a class into a JSON array containing each enum value:
-     * 
+     *
      * @return The JSON array consisting of JSON objects representation for each enum defined in the classes diff.
      */
     JsonArray serializeEnums() {
@@ -104,7 +104,7 @@ class JavaClassDiffSerializer {
     /**
      * This method is used to serialize the constructors of a class into a JSON array containing the following information for each constructor defined in the classes packed into a
      * JSON object: - Modifiers (if any) - Parameter types (if any)
-     * 
+     *
      * @return The JSON array consisting of JSON objects representation for each constructor defined in the classes diff.
      */
     JsonArray serializeConstructors() {
@@ -130,7 +130,7 @@ class JavaClassDiffSerializer {
     /**
      * This method is used to serialize the methods of a type into a JSON array containing the following information for each method defined in the classes packed into a JSON
      * object: - Name - Modifiers (if any) - Parameter types (if any) - Return type
-     * 
+     *
      * @return The JSON array consisting of JSON objects representation for each method defined in the types diff.
      */
     JsonArray serializeMethods() {

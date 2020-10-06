@@ -15,9 +15,9 @@ const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
-    subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
-    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | null>;
+    getParticipationForExercise: (exerciseId: number) => StudentParticipation | undefined;
+    subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
+    subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
 }
 
@@ -25,9 +25,9 @@ export interface IParticipationWebsocketService {
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
     openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
-    openPersonalWebsocketSubscription: string | null; /* url of websocket connection */
-    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
-    participationObservable: BehaviorSubject<Participation | null> | null;
+    openPersonalWebsocketSubscription?: string; /* url of websocket connection */
+    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
+    participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the particiation was subscribed in personal mode */> = new Map<number, boolean>();
 
@@ -39,12 +39,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     public resetLocalCache() {
         const participations = this.getAllParticipations();
         participations.forEach((participation) => {
-            this.cachedParticipations.delete(participation.id);
-            this.removeParticipation(participation.id, participation.exercise.id);
+            this.cachedParticipations.delete(participation.id!);
+            this.removeParticipation(participation.id!, participation.exercise?.id);
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
-        this.participationObservable = null;
+        this.participationObservable = undefined;
         this.subscribedExercises = new Map<number, Set<number>>();
         this.participationSubscriptionTypes = new Map<number, boolean>();
     }
@@ -66,11 +66,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private notifyResultSubscribers = (result: Result) => {
-        const resultObservable = this.resultObservables.get(result.participation!.id);
+        const resultObservable = this.resultObservables.get(result.participation!.id!);
         // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object
         //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
-            this.resultObservables.set(result.participation!.id, new BehaviorSubject(result));
+            this.resultObservables.set(result.participation!.id!, new BehaviorSubject(result));
         } else {
             resultObservable.next(result);
         }
@@ -81,11 +81,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private addResultToParticipation = (result: Result) => {
-        const cachedParticipation = this.cachedParticipations.get(result.participation!.id);
+        const cachedParticipation = this.cachedParticipations.get(result.participation!.id!);
         if (cachedParticipation) {
             // create a clone
-            this.cachedParticipations.set(result.participation!.id, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] } as StudentParticipation);
-            return of(this.cachedParticipations.get(result.participation!.id));
+            this.cachedParticipations.set(result.participation!.id!, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] } as StudentParticipation);
+            return of(this.cachedParticipations.get(result.participation!.id!));
         }
         return of();
     };
@@ -104,7 +104,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }
         participation.exercise = participation.exercise || exercise;
-        this.cachedParticipations.set(participation.id, participation);
+        this.cachedParticipations.set(participation.id!, participation);
         this.notifyParticipationSubscribers(participation);
     };
 
@@ -122,9 +122,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId ID of the exercise that the participations belong to.
      * @return the cached student participation for the exercise or null
      */
-    public getParticipationForExercise(exerciseId: number): StudentParticipation | null {
+    public getParticipationForExercise(exerciseId: number): StudentParticipation | undefined {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
-            return participation.exercise.id === exerciseId;
+            return participation.exercise?.id === exerciseId;
         });
         if (participationsForExercise && participationsForExercise.length === 1) {
             return participationsForExercise[0];
@@ -132,7 +132,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         if (participationsForExercise && participationsForExercise.length > 1) {
             return this.participationService.mergeStudentParticipations(participationsForExercise);
         }
-        return null;
+        return undefined;
     }
 
     /**
@@ -152,7 +152,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
                     this.jhiWebsocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
-                    this.openPersonalWebsocketSubscription = null;
+                    this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
                 // The subscriptions was an non-personal subscriptions, so it should only be removed if it was the last for this exercise
@@ -211,9 +211,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * If no observable exists a new one will be created.
      */
-    public subscribeForParticipationChanges(): BehaviorSubject<Participation | null> {
+    public subscribeForParticipationChanges(): BehaviorSubject<Participation | undefined> {
         if (!this.participationObservable) {
-            this.participationObservable = new BehaviorSubject<Participation | null>(null);
+            this.participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
         }
         return this.participationObservable;
     }
@@ -228,11 +228,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param personal whether the current user is a participant in the participation.
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
-    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | null> {
+    public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
         this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
-            resultObservable = new BehaviorSubject<Result | null>(null);
+            resultObservable = new BehaviorSubject<Result | undefined>(undefined);
             this.resultObservables.set(participationId, resultObservable);
         }
         return resultObservable;

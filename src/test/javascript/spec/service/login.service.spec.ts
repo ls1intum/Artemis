@@ -60,12 +60,12 @@ describe('LoginService', () => {
     });
 
     it('should properly log out when every action is successful', () => {
-        removeAuthTokenFromCachesStub.returns(of(null));
+        removeAuthTokenFromCachesStub.returns(of(undefined));
         navigateByUrlStub.returns(Promise.resolve(true));
         loginService.logout();
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
-        expect(authenticateStub).to.have.been.calledOnceWithExactly(null);
+        expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
         expect(alertServiceClearStub).to.have.been.calledOnceWithExactly();
         expect(notificationServiceCleanUpStub).to.have.been.calledOnceWithExactly();
         expect(navigateByUrlStub).to.have.been.calledOnceWithExactly('/');
@@ -74,12 +74,12 @@ describe('LoginService', () => {
 
     it('should emit an error when an action fails', () => {
         const error = 'fatal error';
-        removeAuthTokenFromCachesStub.returns(of(null));
+        removeAuthTokenFromCachesStub.returns(of(undefined));
         authenticateStub.throws(throwError(error));
         loginService.logout();
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
-        expect(authenticateStub).to.have.been.calledOnceWithExactly(null);
+        expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
         expect(alertServiceClearStub).not.to.have.been.called;
         expect(navigateByUrlStub).not.to.have.been.called;
         expect(alertServiceErrorStub).to.have.been.calledOnce;

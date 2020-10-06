@@ -11,6 +11,7 @@ import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
+import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -22,9 +23,8 @@ export class CourseResolve implements Resolve<Course> {
      * @param route - contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
-        const id = route.params['courseId'] ? route.params['courseId'] : null;
-        if (id) {
-            return this.service.find(id).pipe(
+        if (route.params['courseId']) {
+            return this.service.find(route.params['courseId']).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );
@@ -100,6 +100,15 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.course.detail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/ratings',
+        component: RatingListComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.ratingList.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },

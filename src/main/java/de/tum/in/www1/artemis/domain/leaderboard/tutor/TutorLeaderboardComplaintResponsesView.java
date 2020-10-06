@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.domain.leaderboard.tutor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 

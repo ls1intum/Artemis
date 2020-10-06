@@ -19,7 +19,7 @@ describe('ModelingExercise Management Component', () => {
     let courseExerciseService: CourseExerciseService;
 
     const course: Course = { id: 123 } as Course;
-    const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course);
+    const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
     modelingExercise.id = 456;
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
 
