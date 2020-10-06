@@ -5,6 +5,9 @@
         <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
     </div>
     <jhi-alert></jhi-alert>
+    <ngb-alert *ngIf="hasAssessmentDueDatePassed && !result?.completionDate" [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false">
+        Assessment Due Date is over, the assessment will be published immediately after submitting
+    </ngb-alert>
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
