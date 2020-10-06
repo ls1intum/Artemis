@@ -24,7 +24,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.5.1"
+    id "com.google.cloud.tools.jib" version "2.6.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
