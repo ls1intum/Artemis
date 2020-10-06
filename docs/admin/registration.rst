@@ -10,7 +10,7 @@ Example:
             use-external: false
             registration:
                 enabled: true
-                allowed-email-pattern: ([a-zA-Z0-9_\-\.\+]+)@((tum\.de)|(in\.tum\.de)|(mytum\.de))
+                allowed-email-pattern: ([a-zA-Z0-9_\-\.\+]+)@(tum\.de)|(in\.tum\.de)|(mytum\.de)
                 allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
     spring:
     mail:

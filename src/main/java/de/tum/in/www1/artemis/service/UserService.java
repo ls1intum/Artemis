@@ -218,12 +218,20 @@ public class UserService {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneByActivationKey(key).map(user -> {
             // activate given user for the registration key.
-            user.setActivated(true);
-            user.setActivationKey(null);
-            this.clearUserCaches(user);
-            log.info("Activated user: {}", user);
+            activateUser(user);
             return user;
         });
+    }
+
+    /**
+     * Activate user
+     * @param user the user that should be activated
+     */
+    public void activateUser(User user) {
+        user.setActivated(true);
+        user.setActivationKey(null);
+        this.clearUserCaches(user);
+        log.info("Activated user: {}", user);
     }
 
     /**
