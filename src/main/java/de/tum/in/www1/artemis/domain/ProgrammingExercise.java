@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 
@@ -286,7 +288,9 @@ public class ProgrammingExercise extends Exercise {
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
-                return submission.getResult().isRated();
+                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
+                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
+                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -480,6 +484,44 @@ public class ProgrammingExercise extends Exercise {
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
         super.filterSensitiveInformation();
+    }
+
+    @Override
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return participation.getResults().stream()
+                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    @Nullable
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+        // for most types of exercises => return latest result (all results are relevant)
+        Submission latestSubmission = null;
+        // we get the results over the submissions
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+            return null;
+        }
+        for (var submission : participation.getSubmissions()) {
+            var result = submission.getResult();
+            if (result == null) {
+                continue;
+            }
+            // NOTE: for the dashboard we only use rated results with completion date or automatic result
+            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+                // take the first found result that fulfills the above requirements
+                if (latestSubmission == null) {
+                    latestSubmission = submission;
+                }
+                // take newer results and thus disregard older ones
+                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestSubmission = submission;
+                }
+            }
+        }
+        return latestSubmission;
     }
 
     /**

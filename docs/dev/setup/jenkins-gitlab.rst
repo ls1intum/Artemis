@@ -199,7 +199,7 @@ Gitlab Access Token
 
        artemis:
            version-control:
-               token: your.generated.api.token
+               secret: your.generated.api.token
 
 12. (Optional) Allow outbound requests to local network
 
