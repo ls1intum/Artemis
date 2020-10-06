@@ -579,7 +579,8 @@ public class DatabaseUtilService {
             fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
             programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
             quizExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-        } else {
+        }
+        else {
             modelingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
             textExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
             fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
@@ -673,7 +674,7 @@ public class DatabaseUtilService {
 
         // Setup submissions and connect with participations
         ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission("model1", true);
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text of text submission",Language.ENGLISH,true);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text of text submission", Language.ENGLISH, true);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         QuizSubmission quizSubmission = ModelFactory.generateQuizSubmission(true);
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);

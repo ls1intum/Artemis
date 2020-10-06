@@ -139,7 +139,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
-        addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        addStudentParticipationWithResult(AssessmentType.MANUAL, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
