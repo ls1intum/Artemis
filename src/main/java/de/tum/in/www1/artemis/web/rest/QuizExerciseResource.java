@@ -115,7 +115,7 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.save(quizExercise);
 
         // Generate achievements if enabled in course and exercise not part of exam
-        exerciseService.generateAchievementsIfEnabledInCourse(course, quizExercise);
+        achievementService.generateForExercise(course, quizExercise);
 
         // Only notify students and tutors if the exercise is created for a course
         if (quizExercise.hasCourse()) {

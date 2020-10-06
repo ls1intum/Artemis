@@ -489,17 +489,6 @@ public class ExerciseService {
     }
 
     /**
-     * Generate achievements for an exercise if enabled in course and exercise not part of exam
-     * @param course
-     * @param exercise
-     */
-    public void generateAchievementsIfEnabledInCourse(Course course, Exercise exercise) {
-        if (course.getHasAchievements() && (exercise.getExerciseGroup() == null || exercise.getExerciseGroup().getExam() == null)) {
-            achievementService.generateForExercise(exercise);
-        }
-    }
-
-    /**
      * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
      *
      * @param exercise the exercise for which to set the attribute

@@ -92,12 +92,16 @@ public class AchievementService {
 
     /**
      * Generates achievements for an exercise
-     * Used when exercise is created and achievements are enabled for corresponding course
+     * If achievements are enabled for corresponding course and exercise is not part of exam
+     * Used when exercise is created
+     * @param course
      * @param exercise
      */
-    public void generateForExercise(Exercise exercise) {
-        pointBasedAchievementService.generateAchievements(exercise);
-        timeBasedAchievementService.generateAchievements(exercise);
+    public void generateForExercise(Course course, Exercise exercise) {
+        if (course.getHasAchievements() && (exercise.getExerciseGroup() == null || exercise.getExerciseGroup().getExam() == null)) {
+            pointBasedAchievementService.generateAchievements(exercise);
+            timeBasedAchievementService.generateAchievements(exercise);
+        }
     }
 
     /**

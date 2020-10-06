@@ -122,7 +122,7 @@ public class ModelingExerciseResource {
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
         // Generate achievements if enabled in course and exercise not part of exam
-        exerciseService.generateAchievementsIfEnabledInCourse(result.getCourseViaExerciseGroupOrCourseMember(), result);
+        achievementService.generateForExercise(result.getCourseViaExerciseGroupOrCourseMember(), result);
 
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
