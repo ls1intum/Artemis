@@ -100,7 +100,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
         User user = getOrCreateUser(authentication, false);
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);

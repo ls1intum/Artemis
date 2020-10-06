@@ -23,7 +23,7 @@ artemis:
             password: artemis_admin
         registration:
             enabled: false
-            allowed-email-pattern: ([a-zA-Z0-9_\-\.\+]+)@(tum\.de)|(in\.tum\.de)|(mytum\.de)
+            allowed-email-pattern: ([a-zA-Z0-9_\-\.\+]+)@((tum\.de)|(in\.tum\.de)|(mytum\.de))
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
     version-control:
         url: https://bitbucket.ase.in.tum.de
