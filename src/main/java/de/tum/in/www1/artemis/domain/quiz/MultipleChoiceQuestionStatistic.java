@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,9 +16,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

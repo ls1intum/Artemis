@@ -430,6 +430,7 @@ public class DatabaseUtilService {
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        fileUploadExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
@@ -1458,9 +1459,10 @@ public class DatabaseUtilService {
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -1969,7 +1971,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -1980,7 +1982,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore());
         quizExercise.setGradingInstructions(null);
         return quizExercise;
     }
@@ -2029,8 +2031,8 @@ public class DatabaseUtilService {
         sa.setExplanation("Explanation");
         sa.setRandomizeOrder(true);
         // invoke some util methods
-        System.out.println(sa.toString());
-        System.out.println(sa.hashCode());
+        System.out.println("ShortAnswer: " + sa.toString());
+        System.out.println("ShortAnswer.hashCode: " + sa.hashCode());
         sa.copyQuestionId();
         return sa;
     }
@@ -2075,8 +2077,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         dnd.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(dnd.toString());
-        System.out.println(dnd.hashCode());
+        System.out.println("DnD: " + dnd.toString());
+        System.out.println("DnD.hashCode: " + dnd.hashCode());
         dnd.copyQuestionId();
         return dnd;
     }
@@ -2093,8 +2095,8 @@ public class DatabaseUtilService {
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
-        System.out.println(mc.toString());
-        System.out.println(mc.hashCode());
+        System.out.println("MC: " + mc.toString());
+        System.out.println("MC.hashCode: " + mc.hashCode());
         mc.copyQuestionId();
         return mc;
     }
@@ -2106,7 +2108,7 @@ public class DatabaseUtilService {
      * @param submitted Boolean if it is submitted or not
      * @param submissionDate Submission date
      */
-    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+    public QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
         QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
         QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
@@ -2145,8 +2147,6 @@ public class DatabaseUtilService {
             else {
                 quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
             }
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
-            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
         }
         quizSubmission.submitted(submitted);
         quizSubmission.submissionDate(submissionDate);

@@ -18,8 +18,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @DiscriminatorValue(value = "PESP")
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
-    private static final long serialVersionUID = 1L;
-
     @Column(name = "repository_url")
     @JsonView(QuizView.Before.class)
     private String repositoryUrl;
@@ -32,22 +30,12 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         return repositoryUrl;
     }
 
-    public Participation repositoryUrl(String repositoryUrl) {
-        this.repositoryUrl = repositoryUrl;
-        return this;
-    }
-
     public void setRepositoryUrl(String repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
     }
 
     public String getBuildPlanId() {
         return buildPlanId;
-    }
-
-    public Participation buildPlanId(String buildPlanId) {
-        this.buildPlanId = buildPlanId;
-        return this;
     }
 
     public void setBuildPlanId(String buildPlanId) {

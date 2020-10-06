@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -35,14 +34,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "result")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Result implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class Result extends DomainObject {
 
     @Column(name = "result_string")
     @JsonView(QuizView.After.class)
@@ -114,15 +106,6 @@ public class Result implements Serializable {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getResultString() {
         return resultString;
@@ -396,11 +379,6 @@ public class Result implements Serializable {
         return assessor;
     }
 
-    public Result assessor(User assessor) {
-        this.assessor = assessor;
-        return this;
-    }
-
     public void setAssessor(User assessor) {
         this.assessor = assessor;
     }
@@ -450,11 +428,6 @@ public class Result implements Serializable {
         return exampleResult;
     }
 
-    public Result exampleResult(Boolean exampleResult) {
-        this.exampleResult = exampleResult;
-        return this;
-    }
-
     public void setExampleResult(Boolean exampleResult) {
         this.exampleResult = exampleResult;
     }
@@ -486,28 +459,8 @@ public class Result implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Result result = (Result) o;
-        if (result.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), result.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
-        return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
+        return "Result{" + "id=" + getId() + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
     }
 }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,9 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestion extends QuizQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceQuestion extends QuizQuestion {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
@@ -31,8 +28,6 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
-
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
     public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
