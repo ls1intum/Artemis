@@ -74,7 +74,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         database.resetDatabase();
     }
 
-    private static Stream<Arguments> setArgumentsForGetParticipationWithLatestResult() {
+    private static Stream<Arguments> argumentsForGetParticipationWithLatestResult() {
         ZonedDateTime someDate = ZonedDateTime.now();
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(3);
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(1);
@@ -95,7 +95,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     }
 
     @ParameterizedTest
-    @MethodSource("setArgumentsForGetParticipationWithLatestResult")
+    @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
@@ -109,7 +109,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     }
 
     @ParameterizedTest
-    @MethodSource("setArgumentsForGetParticipationWithLatestResult")
+    @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
             boolean expectLastCreatedResult) throws Exception {
