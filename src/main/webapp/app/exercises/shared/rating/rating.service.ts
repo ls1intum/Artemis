@@ -35,4 +35,12 @@ export class RatingService {
     updateRating(rating: Rating): Observable<Rating> {
         return this.http.put<Rating>(this.ratingResourceUrl + `${rating.result!.id}/rating/${rating.rating}`, null);
     }
+
+    /**
+     * Get all ratings for the "courseId" course
+     * @param courseId - Id of the course
+     */
+    getRatingsForDashboard(courseId: number): Observable<Rating[]> {
+        return this.http.get<Rating[]>(`api/course/${courseId}/rating`);
+    }
 }
