@@ -21,8 +21,7 @@ public class FeatureToggleService {
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
 
-        // The lists will automatically be distributed between all instances by Hazelcast.
-        // If this instance is the first instance to boot up, both instances will be empty, otherwise at least one will have entries.
+        // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
