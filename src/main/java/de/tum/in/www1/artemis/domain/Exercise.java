@@ -591,6 +591,10 @@ public abstract class Exercise extends DomainObject {
      * @return all results of given participation, or null, if none exist
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        if (!isAssessmentOver) {
+            return Set.of();
+        }
         return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 

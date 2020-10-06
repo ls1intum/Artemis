@@ -28,6 +28,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -59,6 +60,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     isLoading = true;
     isTestRun = false;
     courseId: number;
+    hasAssessmentDueDatePassed: boolean;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -171,6 +173,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
         this.result = this.submission.result!;
         if (this.result.hasComplaint) {
             this.getComplaint();
