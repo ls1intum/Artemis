@@ -90,9 +90,25 @@ export class TextExerciseService {
 
     /**
      * Check for plagiarism
+     *
      * @param exerciseId of the text exercise
      */
     checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<SubmissionComparisonDTO>>> {
         return this.http.get<Array<SubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
+    }
+
+    /**
+     * Check plagiarism with JPlag
+     *
+     * @param exerciseId
+     */
+    checkPlagiarismJPlag(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            observe: 'response',
+            responseType: 'blob',
+            params: {
+                strategy: 'JPlag',
+            },
+        });
     }
 }
