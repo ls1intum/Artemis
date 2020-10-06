@@ -18,8 +18,8 @@ export class TestCasePassedBuildsGraphComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
     @Input() totalParticipations: number;
 
-    passedPercent: number;
-    failedPercent: number;
+    passedPercent = 0;
+    failedPercent = 0;
 
     ngOnChanges(): void {
         const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
