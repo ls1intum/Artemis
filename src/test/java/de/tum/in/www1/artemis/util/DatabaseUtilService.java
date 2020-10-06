@@ -1220,10 +1220,14 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise() {
+        return addCourseWithOneProgrammingExercise(false);
+    }
+
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        var programmingExercise = addProgrammingExerciseToCourse(course, false);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis);
 
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -1288,6 +1292,9 @@ public class DatabaseUtilService {
         programmingExercise.setTitle(title);
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setStaticCodeAnalysisEnabled(enableStaticCodeAnalysis);
+        if (enableStaticCodeAnalysis) {
+            programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
+        }
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
@@ -1366,7 +1373,7 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
-        Course course = addCourseWithOneProgrammingExercise();
+        Course course = addCourseWithOneProgrammingExercise(true);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -1378,10 +1385,11 @@ public class DatabaseUtilService {
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
-        var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
-        var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
-        var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise);
-        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3));
+        var category1 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Bad Practice", CategoryState.GRADED, 3D, 10D);
+        var category2 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Code Style", CategoryState.GRADED, 5D, 10D);
+        var category3 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Miscellaneous", CategoryState.INACTIVE, 2D, 10D);
+        var category4 = ModelFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Potential Bugs", CategoryState.FEEDBACK, 5D, 20D);
+        var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3, category4));
         programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
     }
 

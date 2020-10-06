@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,14 +25,18 @@ public class StaticCodeAnalysisService {
     private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     @Qualifier("staticCodeAnalysisConfiguration")
+
     private final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    ProgrammingSubmissionService programmingSubmissionService;
+
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingSubmissionService programmingSubmissionService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -98,6 +103,33 @@ public class StaticCodeAnalysisService {
             originalCategory.setState(matchingCategory.getState());
         }
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
+
+        // At least one category was updated. We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+
         return originalCategories;
+    }
+
+    /**
+     * Links the categories of an exercise with the default category mappings.
+     * @param programmingExercise The programming exercise
+     * @return A list of pairs of categories and their mappings.
+     */
+    public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> getCategoriesWithMappingForExercise(
+            ProgrammingExercise programmingExercise) {
+        var categories = findByExerciseId(programmingExercise.getId());
+        var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
+
+        List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
+
+        for (var category : categories) {
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
+            if (defaultCategoryMatch.isPresent()) {
+                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
+                categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
+            }
+        }
+
+        return categoryPairsWithMapping;
     }
 }
