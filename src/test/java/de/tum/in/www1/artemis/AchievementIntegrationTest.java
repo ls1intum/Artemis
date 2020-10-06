@@ -73,7 +73,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
         achievementService.generateForCourse(firstCourse);
         achievementService.generateForCourse(secondCourse);
-        achievementService.generateForExercise(firstExercise);
+        achievementService.generateForExercise(firstCourse, firstExercise);
     }
 
     @AfterEach
