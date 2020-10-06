@@ -26,7 +26,7 @@ Multiple instances of the application server are used to distribute the load:
 A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests to the different instances.
 
 **Note:** This documentation focuses on the practical setup of this distributed setup.
-More details regarding the theoretical aspects can be found in the Bachelor's Thesis `Securing and Scaling Artemis Websocket Architecture`, which can be found here: :download:`pdf <distributed/thesis_securing_scaling_artemis.pdf>`.
+More details regarding the theoretical aspects can be found in the Bachelor's Thesis `Securing and Scaling Artemis WebSocket Architecture`, which can be found here: :download:`pdf <distributed/thesis_securing_scaling_artemis.pdf>`.
 
 Additional synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -36,7 +36,7 @@ All instances of the application server use the same database, but other parts o
 2. WebSocket messages
 3. File system
 
-Each of these three aspects is sychronized using a different solution
+Each of these three aspects is synchronized using a different solution
 
 Database cache
 ^^^^^^^^^^^^^^
@@ -44,7 +44,7 @@ Artemis uses a cache provider that supports distributed caching: Hazelcast_.
 
 .. _Hazelcast: https://hazelcast.com/
 
-All instances of Artemis form a so called cluster that allows them to synchronize their cache.
+All instances of Artemis form a so-called cluster that allows them to synchronize their cache.
 You can use the configuration argument ``spring.hazelcast.interface`` to configure the interface on which Hazelcast will listen.
 
 
@@ -54,7 +54,7 @@ You can use the configuration argument ``spring.hazelcast.interface`` to configu
 
 One problem that arises with a distributed setup is that all instances have to know each other in order to create this cluster.
 This is problematic if the instances change dynamically.
-Artemis uses a disovery service to solve the issue (named `JHipster Registry
+Artemis uses a discovery service to solve the issue (named `JHipster Registry
 <https://www.jhipster.tech/jhipster-registry/>`_).
 
 Disovery service
@@ -81,7 +81,7 @@ Eureka can be configured like this within Artemis:
         file:
             name: '/opt/artemis/artemis.log'
 
-``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable, ``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and ``{{ artemis_eureka_instance_id }}`` must be an unique identifier for this instance.
+``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable, ``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and ``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
 You also have to setup the value ``jhipster.registry.password`` to the password of the registry (which you will set later).
 
 Setup
@@ -97,7 +97,7 @@ Setup
 
 2. Download the application
 
-Download the latest version of the jhipster-registry from github, e.g by using
+Download the latest version of the jhipster-registry from GitHub, e.g. by using
 
 .. code:: bash
 
@@ -264,7 +264,7 @@ This will apply the config changes and the registry will be reachable.
 WebSockets
 ^^^^^^^^^^
 
-WebSockets should also be synchronized (so that an user connected to one instance can perform an action which causes an update to users on different instances, without having to reload the page - such as quiz starts).
+WebSockets should also be synchronized (so that a user connected to one instance can perform an action which causes an update to users on different instances, without having to reload the page - such as quiz starts).
 We use a so-called broker for this (named `Apache ActiveMQ Artemis
 <https://activemq.apache.org/components/artemis/>`_).
 
@@ -413,7 +413,7 @@ Add the following values to your Artemis config:
                 password: PASSWORD
                 addresses: "localhost:61613"
 
-``USERNAME`` and ``PASSWORD`` are the values used in step 5. Replace localhost if the broker runs on a seperate machine.
+``USERNAME`` and ``PASSWORD`` are the values used in step 5. Replace localhost if the broker runs on a separate machine.
 
 
 File system
@@ -435,7 +435,7 @@ You then have to set the following values in the application config:
 Where ``{{ artemis_repo_basepath }}`` is the path to the shared folder
 
 
-The filesystem stores (as it's names suggests) files, these are e.g. submissions to file upload exercises, repositories that are checked out for the online editor, course icons, etc.
+The file system stores (as its names suggests) files, these are e.g. submissions to file upload exercises, repositories that are checked out for the online editor, course icons, etc.
 
 
 Scheduling
@@ -445,7 +445,9 @@ As we now run multiple instances of Artemis, we have to ensure that the schedule
 Artemis uses to approaches for this:
 
 1. Tasks for quizzes (e.g. evaluation once the quiz is due) are automatically distributed (using Hazelcast)
+
 2. Tasks for other exercises are only scheduled on one instance:
+
 You must add the ``Scheduling`` profile to **exactly one** instance of your cluster. This instance will then perform scheduled tasks whereas the other instances will not.
 
 
@@ -465,9 +467,11 @@ Overview
 ^^^^^^^^
 
 All instances can now communicate with each other on 3 different layers:
+
 - Database cache
 - WebSockets
 - File system
+
 
 You can see the state of all connected instances within the registry:
 
