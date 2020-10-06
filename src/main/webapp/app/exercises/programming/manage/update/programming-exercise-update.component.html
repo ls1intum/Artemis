@@ -145,7 +145,7 @@
                             />
                             <ng-container *ngFor="let e of maxScore.errors! | keyvalue | removekeys: ['required']">
                                 <div *ngIf="maxScore.invalid && (maxScore.dirty || maxScore.touched)" class="alert alert-danger">
-                                    <div [jhiTranslate]="'artemisApp.exercise.form.maxScore' + '.' + e.key"></div>
+                                    <div [jhiTranslate]="'artemisApp.exercise.form.points' + '.' + e.key"></div>
                                 </div>
                             </ng-container>
                         </div>
@@ -163,11 +163,11 @@
                                 name="bonusPoints"
                                 id="field_bonusPoints"
                                 [(ngModel)]="programmingExercise.bonusPoints"
-                                #maxScore="ngModel"
+                                #bonusPoints="ngModel"
                             />
-                            <ng-container *ngFor="let e of maxScore.errors! | keyvalue | removekeys: ['required']">
-                                <div *ngIf="maxScore.invalid && (maxScore.dirty || maxScore.touched)" class="alert alert-danger">
-                                    <div [jhiTranslate]="'artemisApp.exercise.form.points' + '.' + e.key"></div>
+                            <ng-container *ngFor="let e of bonusPoints.errors! | keyvalue | removekeys: ['required']">
+                                <div *ngIf="bonusPoints.invalid && (bonusPoints.dirty || bonusPoints.touched)" class="alert alert-danger">
+                                    <div [jhiTranslate]="'artemisApp.exercise.form.bonusPoints' + '.' + e.key"></div>
                                 </div>
                             </ng-container>
                         </div>
