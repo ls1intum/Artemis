@@ -100,10 +100,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         });
         assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(categories);
-        // also test toString method
-        categories.forEach(category -> {
-            System.out.println(category.toString());
-        });
     }
 
     @Test
