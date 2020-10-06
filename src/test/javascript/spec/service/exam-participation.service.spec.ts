@@ -103,5 +103,22 @@ describe('Exam Participation Service', () => {
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(JSON.stringify(returnedFromService));
         });
+        it('should load testRun with exercises for conduction', async () => {
+            const returnedFromService = Object.assign({}, studentExam);
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .loadTestRunWithExercisesForConduction(1, 1, 1)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(JSON.stringify(returnedFromService));
+        });
+        it('save examSessionToken to sessionStorage', async () => {
+            service.saveExamSessionTokenToSessionStorage('token1');
+            spyOn(sessionStorage, 'setItem').and.callFake(() => {
+                expect(sessionStorage['ExamSessionToken']).toBe('token1');
+            });
+        });
     });
 });
