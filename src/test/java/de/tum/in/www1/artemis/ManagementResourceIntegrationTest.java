@@ -104,7 +104,6 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         features.put(Feature.PROGRAMMING_EXERCISES, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
-        Thread.sleep(10);
         assertThat(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
