@@ -316,6 +316,15 @@ public class ModelFactory {
         return submission;
     }
 
+    public static QuizSubmission generateQuizSubmission(boolean submitted) {
+        QuizSubmission submission = new QuizSubmission();
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
+    }
+
     public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
         ExampleSubmission exampleSubmission = new ExampleSubmission();
         exampleSubmission.setSubmission(submission);

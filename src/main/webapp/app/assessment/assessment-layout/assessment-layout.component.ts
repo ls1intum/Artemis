@@ -36,6 +36,7 @@ export class AssessmentLayoutComponent {
     @Input() assessmentsAreValid: boolean;
     ComplaintType = ComplaintType;
     @Input() complaint: Complaint | null;
+    @Input() hasAssessmentDueDatePassed: boolean;
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();

@@ -27,6 +27,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -61,6 +62,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingParticipation = false;
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
+    hasAssessmentDueDatePassed: boolean;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -117,6 +119,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     // Either submission from latest manual or automatic result
                     this.submission = this.getLatestResult(this.participation.results)?.submission as ProgrammingSubmission;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
                     this.checkPermissions();
                     this.handleFeedback();
