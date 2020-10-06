@@ -61,7 +61,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should propagate isAtLeastInstructor', () => {
         const course = new Course();
         course.isAtLeastInstructor = true;
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course);
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         mockAuth.isAtLeastInstructorInCourse(course);
         component['checkPermissions']();
         fixture.detectChanges();

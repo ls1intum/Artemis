@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.List;
 
-import org.springframework.boot.actuate.health.*;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthContributor;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;

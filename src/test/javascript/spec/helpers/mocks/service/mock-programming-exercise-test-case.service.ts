@@ -3,7 +3,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
 export class MockProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService {
-    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | null>(null);
+    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
 
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.subject as Observable<ProgrammingExerciseTestCase[]>;
@@ -16,7 +16,7 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
         this.subject = new BehaviorSubject(initialValue);
     }
 
-    next(value: ProgrammingExerciseTestCase[]) {
+    next(value: ProgrammingExerciseTestCase[] | undefined) {
         this.subject.next(value);
     }
 

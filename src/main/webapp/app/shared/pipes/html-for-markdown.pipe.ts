@@ -15,7 +15,7 @@ export class HtmlForMarkdownPipe implements PipeTransform {
      * @param {ShowdownExtension[]} extensions to use for markdown parsing
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    transform(markdown: string, extensions: ShowdownExtension[] = []): SafeHtml | null {
+    transform(markdown?: string, extensions: ShowdownExtension[] = []): SafeHtml {
         return this.markdownService.safeHtmlForMarkdown(markdown, extensions);
     }
 }

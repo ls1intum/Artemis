@@ -219,6 +219,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         var currentInstructionsSize = modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size();
         var newInstruction = new GradingInstruction();
         newInstruction.setInstructionDescription("New Instruction");
+
         modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstructions(newInstruction);
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(currentInstructionsSize + 1);

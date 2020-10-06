@@ -60,7 +60,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultIconClass: string[];
     resultString: string;
     templateStatus: ResultTemplateStatus;
-    submission: Submission | null;
+    submission: Submission | undefined;
 
     resultTooltip: string;
 
@@ -149,7 +149,8 @@ export class ResultComponent implements OnInit, OnChanges {
 
     private evaluateTemplateStatus() {
         // Fallback if participation is not set
-        if (!this.participation || !getExercise(this.participation)) {
+        const exercise = getExercise(this.participation);
+        if (!this.participation || !exercise) {
             if (!this.result) {
                 return ResultTemplateStatus.NO_RESULT;
             } else {
@@ -160,9 +161,10 @@ export class ResultComponent implements OnInit, OnChanges {
         // Evaluate status for modeling, text and file-upload exercises
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
-            const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
-            const dueDate = this.dateAsMoment(getExercise(this.participation).dueDate);
-            const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
+
+            const inDueTime = isParticipationInDueTime(this.participation, exercise);
+            const dueDate = this.dateAsMoment(exercise.dueDate);
+            const assessmentDueDate = this.dateAsMoment(exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -250,17 +252,13 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Checks if there is feedback or not for a build result.
      */
-    getHasFeedback() {
+    getHasFeedback(): boolean {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
         } else if (this.result!.hasFeedback === null) {
             return false;
         }
-        return this.result!.hasFeedback;
-    }
-
-    private hasParticipationResults(): boolean {
-        return this.participation && this.participation.results && this.participation.results.length > 0;
+        return this.result!.hasFeedback === true;
     }
 
     /**
@@ -295,16 +293,18 @@ export class ResultComponent implements OnInit, OnChanges {
      * Download the build results of a specific participation.
      * @param participationId The identifier of the participation.
      */
-    downloadBuildResult(participationId: number) {
-        this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-            const fileURL = URL.createObjectURL(artifact);
-            const a = document.createElement('a');
-            a.href = fileURL;
-            a.target = '_blank';
-            a.download = 'artifact';
-            document.body.appendChild(a);
-            a.click();
-        });
+    downloadBuildResult(participationId?: number) {
+        if (participationId) {
+            this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
+                const fileURL = URL.createObjectURL(artifact);
+                const link = document.createElement('a');
+                link.href = fileURL;
+                link.target = '_blank';
+                link.download = 'artifact';
+                document.body.appendChild(link);
+                link.click();
+            });
+        }
     }
 
     /**

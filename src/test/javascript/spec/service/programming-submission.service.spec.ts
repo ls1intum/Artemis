@@ -38,8 +38,8 @@ describe('ProgrammingSubmissionService', () => {
     let wsReceiveStub: SinonStub;
     let participationWsLatestResultStub: SinonStub;
 
-    let wsSubmissionSubject: Subject<Submission | null>;
-    let wsLatestResultSubject: Subject<Result | null>;
+    let wsSubmissionSubject: Subject<Submission | undefined>;
+    let wsLatestResultSubject: Subject<Result | undefined>;
 
     const participationId = 1;
     const submissionTopic = `/user/topic/newSubmissions`;
@@ -57,9 +57,9 @@ describe('ProgrammingSubmissionService', () => {
         httpGetStub = stub(httpService, 'get');
         wsSubscribeStub = stub(websocketService, 'subscribe');
         wsUnsubscribeStub = stub(websocketService, 'unsubscribe');
-        wsSubmissionSubject = new Subject<Submission | null>();
+        wsSubmissionSubject = new Subject<Submission | undefined>();
         wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
-        wsLatestResultSubject = new Subject<Result | null>();
+        wsLatestResultSubject = new Subject<Result | undefined>();
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
 
         // @ts-ignore
@@ -75,7 +75,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
-        const cachedSubject = new BehaviorSubject(null);
+        const cachedSubject = new BehaviorSubject(undefined);
         // @ts-ignore
         const fetchLatestPendingSubmissionSpy = spy(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
         // @ts-ignore
@@ -100,8 +100,8 @@ describe('ProgrammingSubmissionService', () => {
         expect(participationWsLatestResultStub).to.have.been.calledOnceWithExactly(participationId, true, 10);
     });
 
-    it('should emit a null value when a new result comes in for the given participation to signal that the building process is over', () => {
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | null> = [];
+    it('should emit undefined when a new result comes in for the given participation to signal that the building process is over', () => {
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.returns(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
@@ -110,12 +110,12 @@ describe('ProgrammingSubmissionService', () => {
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });
 
-    it('should NOT emit a null value when a new result comes that does not belong to the currentSubmission', () => {
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | null> = [];
+    it('should NOT emit undefined when a new result comes that does not belong to the currentSubmission', () => {
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         httpGetStub.returns(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
         expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId }]);
@@ -126,24 +126,24 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should emit the newest submission when it was received through the websocket connection', () => {
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | null> = [];
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         // No latest pending submission found.
-        httpGetStub.returns(of(null));
+        httpGetStub.returns(of(undefined));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId }]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
         // New submission comes in.
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
         // Result comes in for submission.
         result.submission = currentSubmission2;
         wsLatestResultSubject.next(result);
         expect(returnedSubmissions).to.deep.equal([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });
 
@@ -151,19 +151,19 @@ describe('ProgrammingSubmissionService', () => {
         // Set the timer to 10ms for testing purposes.
         // @ts-ignore
         submissionService.DEFAULT_EXPECTED_RESULT_ETA = 10;
-        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | null> = [];
-        httpGetStub.returns(of(null));
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        httpGetStub.returns(of(undefined));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
-        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId }]);
+        expect(returnedSubmissions).to.deep.equal([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
         wsSubmissionSubject.next(currentSubmission2);
         expect(returnedSubmissions).to.deep.equal([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
         // Wait 10ms.
         await new Promise((resolve) => setTimeout(() => resolve(), 10));
         expect(returnedSubmissions).to.deep.equal([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
         ]);
@@ -171,10 +171,10 @@ describe('ProgrammingSubmissionService', () => {
         // Now the result for the submission in - should be accepted even though technically too late!
         wsLatestResultSubject.next(result2);
         expect(returnedSubmissions).to.deep.equal([
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
             { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission2, participationId },
             { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: currentSubmission2, participationId },
-            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId },
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
         ]);
     });
 
@@ -186,7 +186,7 @@ describe('ProgrammingSubmissionService', () => {
         const participation3 = { id: 4 } as StudentParticipation;
         let submissionState, submission;
 
-        const pendingSubmissions = { [participation1.id]: currentSubmission, [participation2.id]: currentSubmission2 };
+        const pendingSubmissions = { [participation1.id!]: currentSubmission, [participation2.id!]: currentSubmission2 };
 
         // @ts-ignore
         const fetchLatestPendingSubmissionSpy = spy(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
@@ -195,7 +195,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // This load the submissions for participation 1 and 2, but not for 3.
         submissionService.getSubmissionStateOfExercise(exerciseId).toPromise();
-        submissionService.getLatestPendingSubmissionByParticipationId(participation1.id, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
+        submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
             submissionState = state;
             submission = sub;
         });
@@ -207,7 +207,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(submission).to.equal(currentSubmission);
 
         // Fetching the latest pending submission should trigger a rest call if the submission is not cached.
-        await submissionService.getLatestPendingSubmissionByParticipationId(participation3.id, exerciseId, true);
+        await submissionService.getLatestPendingSubmissionByParticipationId(participation3.id!, exerciseId, true);
         expect(fetchLatestPendingSubmissionSpy).to.have.been.calledOnceWithExactly(participation3.id);
     });
 
@@ -226,10 +226,10 @@ describe('ProgrammingSubmissionService', () => {
 
     it('should correctly return the submission state based on the servers response', async () => {
         const exerciseId = 10;
-        const submissionState = { 1: { id: 11, submissionDate: moment().subtract(2, 'hours') } as ProgrammingSubmission, 2: null };
+        const submissionState = { 1: { id: 11, submissionDate: moment().subtract(2, 'hours') } as ProgrammingSubmission, 2: undefined };
         const expectedSubmissionState = {
             1: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: submissionState['1'], participationId: 1 },
-            2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 2 },
+            2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 2 },
         };
         // @ts-ignore
         const fetchLatestPendingSubmissionsByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');

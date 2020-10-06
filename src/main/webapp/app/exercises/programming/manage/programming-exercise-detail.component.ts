@@ -57,28 +57,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
 
-            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(
-                this.programmingExercise.course || this.programmingExercise.exerciseGroup!.exam!.course,
-            );
-            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(
-                this.programmingExercise.course || this.programmingExercise.exerciseGroup!.exam!.course,
-            );
-
-            this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
-            this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
+            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
             if (this.programmingExercise.categories) {
                 this.programmingExercise.categories = this.programmingExercise.categories.map((category) => JSON.parse(category));
             }
 
-            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe((results) => {
-                this.programmingExercise.solutionParticipation.results = results;
-                this.loadingSolutionParticipationResults = false;
-            });
-            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe((results) => {
-                this.programmingExercise.templateParticipation.results = results;
-                this.loadingTemplateParticipationResults = false;
-            });
+            if (this.programmingExercise.templateParticipation) {
+                this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
+                this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
+                    this.programmingExercise.templateParticipation!.results = results;
+                    this.loadingTemplateParticipationResults = false;
+                });
+            }
+
+            if (this.programmingExercise.solutionParticipation) {
+                this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
+
+                this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
+                    this.programmingExercise.solutionParticipation!.results = results;
+                    this.loadingSolutionParticipationResults = false;
+                });
+            }
         });
     }
 
@@ -127,7 +128,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     checkPlagiarism() {
         this.checkPlagiarismInProgress = true;
-        this.programmingExerciseService.checkPlagiarism(this.programmingExercise.id).subscribe(this.handleCheckPlagiarismResponse, () => {
+        this.programmingExerciseService.checkPlagiarism(this.programmingExercise.id!).subscribe(this.handleCheckPlagiarismResponse, () => {
             this.checkPlagiarismInProgress = false;
         });
     }
@@ -139,7 +140,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     };
 
     combineTemplateCommits() {
-        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
             },
@@ -150,7 +151,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     generateStructureOracle() {
-        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe(
             (res) => {
                 const jhiAlert = this.jhiAlertService.success(res);
                 jhiAlert.msg = res;

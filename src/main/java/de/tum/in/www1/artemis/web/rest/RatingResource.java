@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -22,11 +23,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -54,13 +57,16 @@ public class RatingResource {
 
     private final ParticipationService participationService;
 
+    private final CourseService courseService;
+
     public RatingResource(RatingService ratingService, UserService userService, AuthorizationCheckService authCheckService, ResultService resultService,
-            ParticipationService participationService) {
+            ParticipationService participationService, CourseService courseService) {
         this.ratingService = ratingService;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultService = resultService;
         this.participationService = participationService;
+        this.courseService = courseService;
     }
 
     /**
@@ -118,6 +124,27 @@ public class RatingResource {
 
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
         return ResponseEntity.ok(savedRating);
+    }
+
+    /**
+     * Get all ratings for the "courseId" Course
+     *
+     * @param courseId - Id of the course that the ratings are fetched for
+     * @return List of Ratings for the course
+     */
+    @GetMapping("/course/{courseId}/rating")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseService.findOne(courseId);
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
+
+        return ResponseEntity.ok(responseRatings);
     }
 
     /**

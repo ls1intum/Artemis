@@ -69,12 +69,12 @@ describe('Test Run Management Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(examManagementService.find).toHaveBeenCalledWith(course.id, exam.id, false, true);
-            expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id, exam.id);
+            expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
+            expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(accountService.fetch).toHaveBeenCalledWith();
 
             expect(comp.exam).toEqual(exam);
-            expect(comp.isExamStarted).toEqual(exam.started);
+            expect(comp.isExamStarted).toEqual(exam.started!);
             expect(comp.course).toEqual(course);
             expect(comp.testRuns).toEqual(studentExams);
             expect(comp.instructor).toEqual(user);
@@ -90,10 +90,10 @@ describe('Test Run Management Component', () => {
             spyOn(examManagementService, 'deleteTestRun').and.returnValue(of(responseFakeDelete));
 
             // WHEN
-            comp.deleteTestRun(studentExams[0].id);
+            comp.deleteTestRun(studentExams[0].id!);
 
             // THEN
-            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id, exam.id, studentExams[0].id);
+            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
         }));
     });
 

@@ -99,7 +99,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizSubmission quizSubmission;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            quizSubmission = database.generateSubmission(quizExercise, i, false, null);
+            quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // save
@@ -110,7 +110,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // only half of the students submit manually
         for (int i = 1; i <= numberOfParticipants / 2; i++) {
-            quizSubmission = database.generateSubmission(quizExercise, i, true, null);
+            quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // submit
@@ -204,7 +204,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // submit 10 times for 10 different students
         for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, null);
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             database.changeUser("student" + i);
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
@@ -457,7 +457,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         verify(messagingTemplate, never()).send(eq(publishQuizPath), any());
 
         // check that submission fails
-        QuizSubmission quizSubmission = database.generateSubmission(quizExercise, 1, true, null);
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
 
         quizScheduleService.processCachedQuizSubmissions();
@@ -476,7 +476,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // save submissions
         int numberOfParticipants = 10;
         for (int i = 1; i <= numberOfParticipants; i++) {
-            quizSubmission = database.generateSubmission(quizExercise, i, false, null);
+            quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // save

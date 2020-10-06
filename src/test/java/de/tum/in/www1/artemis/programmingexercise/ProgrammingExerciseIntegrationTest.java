@@ -3,9 +3,15 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
@@ -14,6 +20,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,11 +42,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -47,8 +57,8 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.Verifiable;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -66,6 +76,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     GitUtilService gitUtilService;
 
     @Autowired
+    CourseRepository courseRepository;
+
+    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -73,6 +86,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    Course course;
 
     ProgrammingExercise programmingExercise;
 
@@ -103,8 +118,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
 
         participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
@@ -158,6 +173,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         if (localGit != null) {
             localGit.close();
         }
+        bambooRequestMockProvider.reset();
+        bitbucketRequestMockProvider.reset();
     }
 
     @Test
@@ -219,7 +236,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
-        final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile.exists());
@@ -229,8 +246,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        final var path = Endpoints.ROOT
-                + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}", "" + 10L);
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", "10");
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
     }
 
@@ -240,7 +256,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addInstructor("other-instructors", "instructoralt");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
-        final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
     }
@@ -252,8 +268,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var repository2 = gitService.getRepositoryByLocalPath(localRepoFile2.toPath());
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getRepositoryUrlAsUrl()), anyBoolean(), anyString());
-        final var path = Endpoints.ROOT
-                + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participantIdentifiers}", "student1,student2");
+        final var path = ROOT
+                + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", "student1,student2");
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile.exists());
         // TODO: unzip the files and add some checks
@@ -273,7 +289,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     void testProgrammingExerciseDelete() throws Exception {
         final var verifiables = new LinkedList<Verifiable>();
         final var projectKey = programmingExercise.getProjectKey();
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
@@ -298,7 +314,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.delete(path, HttpStatus.NOT_FOUND);
     }
 
@@ -306,14 +322,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.delete(path, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise() throws Exception {
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
         // TODO add more assertions
@@ -323,7 +339,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
@@ -331,7 +347,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "instructor1");
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
         assertThat(programmingExerciseServer.getStudentParticipations()).isNotEmpty();
@@ -344,7 +360,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
@@ -352,14 +368,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
-        final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.NOT_FOUND, ProgrammingExercise.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse() throws Exception {
-        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var path = ROOT + GET_FOR_COURSE.replace("{courseId}", String.valueOf(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()));
         var programmingExercisesServer = request.getList(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExercisesServer).isNotEmpty();
         // TODO add more assertions
@@ -369,7 +385,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var path = Endpoints.ROOT + Endpoints.GET_FOR_COURSE.replace("{courseId}", "" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var path = ROOT + GET_FOR_COURSE.replace("{courseId}", String.valueOf(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()));
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
@@ -378,7 +394,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
-        final var path = Endpoints.ROOT + Endpoints.GENERATE_TESTS.replace("{exerciseId}", "" + programmingExercise.getId());
+        final var path = ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
         request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.BAD_REQUEST);
@@ -409,13 +425,26 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
+    private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateProgrammingExercise_staticCodeAnalysisMustNotChange_badRequest() throws Exception {
-        // false -> true
+    public void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
-        // true -> false
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -470,7 +499,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
@@ -478,7 +507,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
-        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
 
@@ -531,6 +560,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
         programmingExercise.setShortName(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExercise.setShortName("hi");
@@ -539,8 +569,22 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        course.setShortName(null);
+        courseRepository.save(course);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        course.setShortName("Hi");
+        courseRepository.save(course);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseInExam.setId(null);
+        programmingExercise.setTitle("New title");
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -550,6 +594,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -610,9 +655,53 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise.setAllowOnlineEditor(false);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
         programmingExercise.setStaticCodeAnalysisEnabled(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.programmingLanguage(ProgrammingLanguage.C);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(20);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setStaticCodeAnalysisEnabled(true);
+        programmingExercise.setMaxStaticCodeAnalysisPenalty(-20);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -620,6 +709,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockProjectKeyExists(programmingExercise);
@@ -630,6 +720,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -642,6 +733,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
@@ -652,12 +744,42 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
+        programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         bambooRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
+        programmingExercise.setId(-1L);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_maxScoreNull_badRequest() throws Exception {
+        programmingExercise.setMaxScore(null);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise.setAllowOnlineEditor(false);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
+        programmingExercise.setProgrammingLanguage(null);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -705,24 +827,23 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var id = programmingExercise.getId();
         programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(null);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", id + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(id)), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_staticCodeAnalysisMustNotChange_badRequest() throws Exception {
-        var id = programmingExercise.getId();
+        programmingExercise.setTitle("NewTitle");
+        programmingExercise.setShortName("NewShortname");
         // false -> true
-        programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", id + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
         // true -> false
-        programmingExercise.setId(id);
-        programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise.setId(null);
+        programmingExercise.setTitle("NewTitle1");
+        programmingExercise.setShortName("NewShortname1");
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", id + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -787,7 +908,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @NotNull
     private String getDefaultAPIEndpointForExportRepos() {
-        return ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", programmingExercise.getId() + "").replace("{participantIdentifiers}", "1,2,3");
+        return ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", "1,2,3");
     }
 
     @Test
@@ -801,14 +922,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
-        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + 1337 + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337)), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.FORBIDDEN);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -816,41 +937,40 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
         programmingExercise.setPackageName(null);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
 
         programmingExercise.setPackageName("ab");
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
-        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + 1337 + ""), HttpStatus.NOT_FOUND, String.class);
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337)), HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
     @WithMockUser(username = "tutoralt1", roles = "TA")
     public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
         database.addTeachingAssistant("other-tutors", "tutoralt");
-        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getTestCases_asTutor() throws Exception {
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
-        final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
-        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final List<ProgrammingExerciseTestCase> returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
+        final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
-
-        assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
+        assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(testsInDB);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     public void getTestCases_asStudent_forbidden() throws Exception {
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 
@@ -858,7 +978,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "other-teaching-assistant1", roles = "TA")
     public void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         database.addTeachingAssistant("other-teaching-assistants", "other-teaching-assistant");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
@@ -879,14 +999,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
         }).collect(Collectors.toList());
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testCasesInDB);
+        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise").isEqualTo(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
@@ -899,7 +1019,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_nonExistingExercise_notFound() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", (programmingExercise.getId() + 1337) + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337));
         request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
@@ -908,7 +1028,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
         final var update = new ProgrammingExerciseTestCaseDTO();
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
@@ -919,7 +1039,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bambooRequestMockProvider.enableMockingOfRequests();
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseGradingResource.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
             test.setWeight(42.0);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
@@ -931,7 +1051,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testsInDB);
+        assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
@@ -941,7 +1061,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
     public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
-        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var endpoint = ProgrammingExerciseGradingResource.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }

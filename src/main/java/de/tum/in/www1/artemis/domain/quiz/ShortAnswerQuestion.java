@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -18,9 +20,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonTypeName("short-answer")
-public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ShortAnswerQuestion extends QuizQuestion {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn

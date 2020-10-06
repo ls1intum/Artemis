@@ -28,11 +28,7 @@ import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 public class CompassCalculationEngine implements CalculationEngine {
 
@@ -313,7 +309,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 numberOfConflicts++;
             }
             uniqueElement.addProperty("conflicts", hasConflict);
-            uniqueElements.add(umlElement.getSimilarityID() + "", uniqueElement);
+            uniqueElements.add(String.valueOf(umlElement.getSimilarityID()), uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
 

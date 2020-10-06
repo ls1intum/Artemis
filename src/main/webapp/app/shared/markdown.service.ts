@@ -23,7 +23,7 @@ export class ArtemisMarkdownService {
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
-    parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
+    static parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
         if (!markdownText || !targetObject) {
             return;
         }
@@ -40,13 +40,13 @@ export class ArtemisMarkdownService {
             }
         } else if (markdownText.indexOf(HintCommand.identifier) !== -1) {
             targetObject.hint = markdownTextParts[1].trim();
-            targetObject.explanation = null;
+            targetObject.explanation = undefined;
         } else if (markdownText.indexOf(ExplanationCommand.identifier) !== -1) {
-            targetObject.hint = null;
+            targetObject.hint = undefined;
             targetObject.explanation = markdownTextParts[1].trim();
         } else {
-            targetObject.hint = null;
-            targetObject.explanation = null;
+            targetObject.hint = undefined;
+            targetObject.explanation = undefined;
         }
     }
 
@@ -74,11 +74,11 @@ export class ArtemisMarkdownService {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
-     * @param {ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    safeHtmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []): SafeHtml {
-        if (markdownText == null || markdownText === '') {
+    safeHtmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = []): SafeHtml {
+        if (!markdownText || markdownText === '') {
             return '';
         }
         const convertedString = this.htmlForMarkdown(markdownText, extensions);
@@ -90,11 +90,11 @@ export class ArtemisMarkdownService {
      * Note: If possible, please use safeHtmlForMarkdown
      *
      * @param {string} markdownText the original markdown text
-     * @param {ShowdownExtension[]} extensions to use for markdown parsing
+     * @param {showdown.ShowdownExtension[]} extensions to use for markdown parsing
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []): string {
-        if (markdownText == null || markdownText === '') {
+    htmlForMarkdown(markdownText?: string, extensions: showdown.ShowdownExtension[] = []): string {
+        if (!markdownText || markdownText === '') {
             return '';
         }
         const converter = new showdown.Converter({
@@ -118,8 +118,8 @@ export class ArtemisMarkdownService {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForGuidedTourMarkdown(markdownText: string | null): SafeHtml {
-        if (markdownText == null || markdownText === '') {
+    htmlForGuidedTourMarkdown(markdownText?: string): SafeHtml {
+        if (!markdownText || markdownText === '') {
             return '';
         }
         const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'ol', 'li', 'tt', 'span'], ALLOWED_ATTR: ['class', 'href', 'rel', 'target'] });

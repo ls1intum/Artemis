@@ -35,15 +35,15 @@ export class StructuredGradingCriterionService {
                             score += feedback.gradingInstruction.credits;
                         }
                     } else {
-                        score += feedback.credits;
+                        score += feedback.credits!;
                     }
                 } else {
                     // First time encountering the grading instruction
                     gradingInstructions[feedback.gradingInstruction.id] = 1;
-                    score += feedback.credits;
+                    score += feedback.credits!;
                 }
             } else {
-                score += feedback.credits;
+                score += feedback.credits!;
             }
         }
         return score;

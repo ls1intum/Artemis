@@ -28,11 +28,12 @@ import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-featu
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Moment } from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -81,12 +82,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         { id: 3, testName: 'otherTest', active: false, weight: 1, bonusMultiplier: 1, bonusPoints: 0, afterDueDate: false },
     ] as ProgrammingExerciseTestCase[];
 
-    const getExerciseTestCasteStateDTO = (
-        released: boolean,
-        hasStudentResult: boolean,
-        testCasesChanged: boolean,
-        buildAndTestStudentSubmissionsAfterDueDate: moment.Moment | null,
-    ) => ({
+    const getExerciseTestCasteStateDTO = (released: boolean, hasStudentResult: boolean, testCasesChanged: boolean, buildAndTestStudentSubmissionsAfterDueDate?: Moment) => ({
         body: {
             released,
             hasStudentResult,
@@ -246,7 +242,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         weightInput.focus();
 
         // Set new weight.
-        weightInput.value = '20';
+        weightInput.value = 20;
         weightInput.dispatchEvent(new Event('blur'));
 
         const multiplierInput = editingInputs[1].nativeElement;
@@ -254,7 +250,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         multiplierInput.focus();
 
         // Set new multiplier.
-        multiplierInput.value = '2';
+        multiplierInput.value = 2;
         multiplierInput.dispatchEvent(new Event('blur'));
 
         const bonusInput = editingInputs[2].nativeElement;
@@ -262,7 +258,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         bonusInput.focus();
 
         // Set new bonus.
-        bonusInput.value = '1';
+        bonusInput.value = 1;
         bonusInput.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
@@ -283,7 +279,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            { id: testThatWasUpdated.id, afterDueDate: testThatWasUpdated.afterDueDate, weight: 20, bonusMultiplier: 2, bonusPoints: 1 },
+            new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.afterDueDate),
         ]);
         expect(testThatWasUpdated.weight).to.equal(20);
         expect(comp.changedTestCaseIds).to.have.lengthOf(0);
@@ -344,13 +340,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateTestCasesStub).to.have.been.calledOnceWithExactly(exerciseId, [
-            {
-                id: testThatWasUpdated.id,
-                weight: testThatWasUpdated.weight,
-                afterDueDate: testThatWasUpdated.afterDueDate,
-                bonusMultiplier: testThatWasUpdated.bonusMultiplier,
-                bonusPoints: testThatWasUpdated.bonusPoints,
-            },
+            new ProgrammingExerciseTestCaseUpdate(
+                testThatWasUpdated.id,
+                testThatWasUpdated.weight,
+                testThatWasUpdated.bonusPoints,
+                testThatWasUpdated.bonusMultiplier,
+                testThatWasUpdated.afterDueDate,
+            ),
         ]);
 
         await new Promise((resolve) => setTimeout(resolve));
@@ -361,7 +357,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
-        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, null));
+        getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, undefined));
 
         (testCaseService as any).next(testCases1);
 
