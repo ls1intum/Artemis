@@ -174,7 +174,7 @@
         "write-file-webpack-plugin": "4.5.1"
     },
     "engines": {
-        "node": ">=13.12.0",
+        "node": ">=14.0.0",
         "yarn": ">=1.22.4"
     },
     "lint-staged": {
