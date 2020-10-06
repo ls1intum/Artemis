@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
@@ -66,8 +70,6 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     public void testTextBlockProbabilities() {
         ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
-        // also test toString() and getProbabilities
-        System.out.println(textCluster.toString());
         var probabilities = new double[] { 1.0d, 2.0d };
         textCluster.setProbabilities(probabilities);
         assertThat(textCluster.getProbabilities()).isEqualTo(probabilities);

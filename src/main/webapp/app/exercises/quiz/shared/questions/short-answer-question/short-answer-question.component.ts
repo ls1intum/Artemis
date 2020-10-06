@@ -142,10 +142,11 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to return the input field's background color
      */
     getBackgroundColourForInputField(spotTag: string): string {
-        if (this.getSubmittedTextForSpot(spotTag) === undefined) {
+        const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);
+        if (submittedTextForSpot === undefined) {
             return 'red';
         }
-        return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+        return submittedTextForSpot.isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
     }
 
     /**
@@ -158,7 +159,7 @@ export class ShortAnswerQuestionComponent {
             this.question.correctMappings,
             this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
         );
-        const solutions = solutionsForSpot?.filter((solution) => solution.text === this.getSubmittedTextForSpot(spotTag)?.text);
+        const solutions = solutionsForSpot?.filter((solution) => solution.text?.trim() === this.getSubmittedTextForSpot(spotTag)?.text?.trim());
         if (solutions && solutions.length > 0) {
             isTextCorrect = true;
         }
