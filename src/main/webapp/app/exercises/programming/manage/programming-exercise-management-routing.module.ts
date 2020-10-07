@@ -84,16 +84,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [CanDeactivateGuard],
     },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
-        component: ProgrammingExerciseConfigureGradingComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [CanDeactivateGuard],
-    },
 ];
 
 @NgModule({

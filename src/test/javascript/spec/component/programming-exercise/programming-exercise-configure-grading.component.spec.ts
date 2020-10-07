@@ -26,10 +26,6 @@ import { ProgrammingBuildRunService } from 'app/exercises/programming/participat
 import { MockProgrammingBuildRunService } from '../../helpers/mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { EditableField, ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

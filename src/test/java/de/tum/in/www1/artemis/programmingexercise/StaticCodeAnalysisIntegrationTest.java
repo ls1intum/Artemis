@@ -17,14 +17,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;

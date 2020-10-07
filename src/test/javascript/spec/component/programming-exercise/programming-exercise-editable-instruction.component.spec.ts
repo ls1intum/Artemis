@@ -20,7 +20,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExerciseGradingService, IProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

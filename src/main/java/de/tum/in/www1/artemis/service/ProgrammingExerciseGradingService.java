@@ -517,6 +517,11 @@ public class ProgrammingExerciseGradingService {
         return testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()));
     }
 
+    /**
+     * Calculates the statistics for the grading page.
+     * @param exerciseId The current exercise
+     * @return The statistics object
+     */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
 
         var statistics = new ProgrammingExerciseGradingStatisticsDTO();
@@ -527,8 +532,10 @@ public class ProgrammingExerciseGradingService {
         var testCases = testCaseService.findByExerciseId(exerciseId);
         statistics.setNumTestCases(testCases.size());
 
-        testCases.forEach((testCase) -> {
-            int passed = 0, failed = 0;
+        for (var testCase : testCases) {
+            int passed = 0;
+            int failed = 0;
+
             for (var result : results) {
                 for (var feedback : result.getFeedbacks()) {
                     if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.getText().equals(testCase.getTestName())) {
@@ -543,7 +550,7 @@ public class ProgrammingExerciseGradingService {
                 }
             }
             statistics.addTestCaseStats(new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(testCase.getTestName(), passed, failed));
-        });
+        }
 
         var categoryHitMap = results.stream()
                 .map((result) -> result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback)
