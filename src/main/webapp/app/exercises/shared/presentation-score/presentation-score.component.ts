@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',
     template: `
-        <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+        <ng-container *jhiHasAnyAuthority="[Authority.ADMIN, Authority.INSTRUCTOR]">
             <div class="form-group" *ngIf="this.showPresentationScoreCheckbox()">
                 <div class="form-check custom-control custom-checkbox">
                     <input
@@ -31,6 +32,8 @@ import { Exercise } from 'app/entities/exercise.model';
 })
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
+
+    Authority = Authority;
 
     showPresentationScoreCheckbox(): boolean {
         return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);

@@ -20,7 +20,7 @@
         "name": "Name",
         "randomPassword": "Random password",
         "keepPassword": "Keep old password",
-        "passwordConstraints": "The password has to contain 4-100 characters!",
+        "passwordConstraints": "The password has to contain 8-100 characters!",
         "groups": "Groups",
         "addGroup": "+ Group",
         "enterGroup": "Enter a group",

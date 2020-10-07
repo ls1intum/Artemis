@@ -10,10 +10,13 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import {
+    ProgrammingExerciseGradingService,
+    ProgrammingExerciseTestCaseUpdate,
+    StaticCodeAnalysisCategoryUpdate,
+} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
-import { Mapping } from './codeAnalysisMapping';
 
 /**
  * Describes the editableField
@@ -35,6 +38,7 @@ export enum EditableField {
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
+    CategoryState = StaticCodeAnalysisCategoryState;
 
     courseId: number;
     exercise: ProgrammingExercise;
@@ -54,8 +58,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     showInactiveValue = false;
     isSaving = false;
     isLoading = false;
-    // This flag means that the test cases were edited, but no submission run was triggered yet.
-    hasUpdatedTestCases = false;
+    // This flag means that the grading config were edited, but no submission run was triggered yet.
+    hasUpdatedGradingConfig = false;
     activeTab: string;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
@@ -93,7 +97,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     constructor(
-        private testCaseService: ProgrammingExerciseTestCaseService,
+        private gradingService: ProgrammingExerciseGradingService,
         private programmingExerciseService: ProgrammingExerciseService,
         private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
         private route: ActivatedRoute,
@@ -136,21 +140,25 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
                 const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
                     tap((releaseState) => {
-                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                        this.hasUpdatedGradingConfig = releaseState.testCasesChanged;
                         this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
                         this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                     }),
                     catchError(() => of(null)),
                 );
 
-                zip(loadExercise, loadExerciseTestCaseState)
+                const loadCodeAnalysisCategories = this.gradingService.getCodeAnalysisCategories(exerciseId).pipe(
+                    tap((categories) => (this.staticCodeAnalysisCategories = categories)),
+                    catchError(() => of(null)),
+                );
+
+                zip(loadExercise, loadExerciseTestCaseState, loadCodeAnalysisCategories)
                     .pipe(take(1))
                     .subscribe(() => {
                         // This subscription e.g. adds new new tests to the table that were just created.
                         this.subscribeForTestCaseUpdates();
                         // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                         this.subscribeForExerciseTestCasesChangedUpdates();
-                        this.loadCodeAnalysisMapping();
                         this.isLoading = false;
                     });
             } else {
@@ -188,7 +196,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
-        this.testCaseSubscription = this.testCaseService
+        this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
@@ -208,7 +216,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         }
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.exercise.id!)
-            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
+            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))
             .subscribe();
     }
 
@@ -272,39 +280,79 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Save the unsaved (edited) changes of the test cases.
      */
-    saveChanges() {
+    saveTestCases() {
         this.isSaving = true;
 
         const testCasesToUpdate = _intersectionWith(this.testCases, this.changedTestCaseIds, (testCase: ProgrammingExerciseTestCase, id: number) => testCase.id === id);
         const testCaseUpdates = testCasesToUpdate.map((testCase) => ProgrammingExerciseTestCaseUpdate.from(testCase));
 
-        this.testCaseService
-            .updateTestCase(this.exercise.id!, testCaseUpdates)
-            .pipe(
-                tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
-                    // From successfully updated test cases from dirty checking list.
-                    this.changedTestCaseIds = _differenceWith(this.changedTestCaseIds, updatedTestCases, (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id);
+        const saveTestCases = this.gradingService.updateTestCase(this.exercise.id!, testCaseUpdates).pipe(
+            tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
+                // From successfully updated test cases from dirty checking list.
+                this.changedTestCaseIds = _differenceWith(this.changedTestCaseIds, updatedTestCases, (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id);
 
-                    // Generate the new list of test cases with the updated weights and notify the test case service.
-                    const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
-                    this.testCaseService.notifyTestCases(this.exercise.id!, newTestCases);
+                // Generate the new list of test cases with the updated weights and notify the test case service.
+                const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
+                this.gradingService.notifyTestCases(this.exercise.id!, newTestCases);
 
-                    // Find out if there are test cases that were not updated, show an error.
-                    const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
-                    if (notUpdatedTestCases.length) {
-                        this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: notUpdatedTestCases });
-                    } else {
-                        this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
-                    }
-                }),
-                catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
-                    return of(undefined);
-                }),
-            )
-            .subscribe(() => {
-                this.isSaving = false;
-            });
+                // Find out if there are test cases that were not updated, show an error.
+                const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
+                if (notUpdatedTestCases.length) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: notUpdatedTestCases });
+                } else {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.updated`);
+                }
+            }),
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
+                return of(null);
+            }),
+        );
+
+        saveTestCases.subscribe(() => {
+            this.isSaving = false;
+        });
+    }
+
+    saveCategories() {
+        this.isSaving = true;
+
+        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+            category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
+        );
+
+        const categoriesToUpdate = _intersectionWith(
+            this.staticCodeAnalysisCategories,
+            this.changedCategoryIds,
+            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
+        );
+        const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
+
+        const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.exercise.id!, categoryUpdates).pipe(
+            tap((updatedCategories: StaticCodeAnalysisCategory[]) => {
+                // From successfully updated categories from dirty checking list.
+                this.changedCategoryIds = _differenceWith(this.changedCategoryIds, updatedCategories, (id: number, category: StaticCodeAnalysisCategory) => category.id === id);
+
+                // Generate the new list of categories.
+                this.staticCodeAnalysisCategories = _unionBy(updatedCategories, this.staticCodeAnalysisCategories, 'id');
+
+                // Find out if there are test cases that were not updated, show an error.
+                const notUpdatedCategories = _differenceBy(categoriesToUpdate, updatedCategories, 'id');
+                if (notUpdatedCategories.length) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: notUpdatedCategories });
+                } else {
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.updated`);
+                }
+            }),
+            catchError(() => {
+                this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.couldNotBeUpdated`, { categories: categoriesToUpdate });
+                return of(null);
+            }),
+        );
+
+        saveCodeAnalysis.subscribe(() => {
+            this.isSaving = false;
+        });
     }
 
     /**
@@ -320,24 +368,28 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Reset all test cases.
      */
-    resetChanges() {
+    resetTestCases() {
         this.isSaving = true;
-        this.testCaseService
+        this.gradingService
             .reset(this.exercise.id!)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.alertService.success(`artemisApp.programmingExercise.manageTestCases.resetSuccessful`);
-                    this.testCaseService.notifyTestCases(this.exercise.id!, testCases);
+                    this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);
+                    this.gradingService.notifyTestCases(this.exercise.id!, testCases);
                 }),
                 catchError(() => {
-                    this.alertService.error(`artemisApp.programmingExercise.manageTestCases.resetFailed`);
-                    return of(undefined);
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
+                    return of(null);
                 }),
             )
             .subscribe(() => {
                 this.isSaving = false;
                 this.changedTestCaseIds = [];
             });
+    }
+
+    resetCategories() {
+        // TODO
     }
 
     /**
@@ -361,17 +413,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedTestCases)) {
+        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedGradingConfig)) {
             return true;
         }
         const warning = this.changedTestCaseIds.length
             ? this.translateService.instant('pendingChanges')
-            : this.translateService.instant('artemisApp.programmingExercise.manageTestCases.updatedTestCases');
+            : this.translateService.instant('artemisApp.programmingExercise.configureGrading.updatedGradingConfig');
         return confirm(warning);
-    }
-
-    loadCodeAnalysisMapping() {
-        this.staticCodeAnalysisCategories = Mapping;
     }
 
     selectTab(tab: string) {

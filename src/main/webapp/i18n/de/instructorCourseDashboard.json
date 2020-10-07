@@ -22,6 +22,7 @@
             "completedAssessments": "Komplette Assessments",
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
+            "rating": "Ratings",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Kurs Bestenliste",
                 "id": "ID",

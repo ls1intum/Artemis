@@ -15,7 +15,7 @@ export abstract class TourStep {
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;
     /** Permission to view step, if no permission is set then the tour step is visible to ROLE_USER
-     * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA' */
+     * Possible inputs: Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA */
     permission?: string[];
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;

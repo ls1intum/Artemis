@@ -106,7 +106,7 @@ public class AchievementService {
      * @param exercise
      */
     public void generateForExercise(Course course, Exercise exercise) {
-        if (course.getHasAchievements() && (exercise.getExerciseGroup() == null || exercise.getExerciseGroup().getExam() == null)) {
+        if (course.getAchievementsEnabled() && exercise.getExerciseGroup() == null) {
             pointBasedAchievementService.generateAchievements(exercise);
             timeBasedAchievementService.generateAchievements(exercise);
         }

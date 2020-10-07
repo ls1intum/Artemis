@@ -309,7 +309,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 numberOfConflicts++;
             }
             uniqueElement.addProperty("conflicts", hasConflict);
-            uniqueElements.add(umlElement.getSimilarityID() + "", uniqueElement);
+            uniqueElements.add(String.valueOf(umlElement.getSimilarityID()), uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
 

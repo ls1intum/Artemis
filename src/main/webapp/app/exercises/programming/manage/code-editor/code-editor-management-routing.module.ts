@@ -4,13 +4,14 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-orion-container.component';
 import { NgModule } from '@angular/core';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: 'test',
         component: CodeEditorInstructorContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -23,7 +24,7 @@ const routes: Routes = [
         path: 'ide/test',
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -36,7 +37,7 @@ const routes: Routes = [
         path: 'ide/:participationId',
         component: CodeEditorInstructorOrionContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -49,7 +50,7 @@ const routes: Routes = [
         path: ':participationId',
         component: CodeEditorInstructorContainerComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
