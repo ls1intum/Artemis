@@ -26,6 +26,10 @@ artemis:
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
+        course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})'    # example for a TUM identifier, e.g. ab12cde
+        login:
+            account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
     version-control:
         url: https://bitbucket.ase.in.tum.de
         user: <username>    # e.g. ga12abc

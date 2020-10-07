@@ -14,7 +14,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-@Profile("bamboo")
+@Profile("bitbucket")
 @Component
 public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
