@@ -113,7 +113,7 @@ export class CourseUpdateComponent implements OnInit {
             }),
             studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
-            hasAchievements: new FormControl(this.course.hasAchievements),
+            achievementsEnabled: new FormControl(this.course.achievementsEnabled),
             presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                 Validators.min(1),
                 regexValidator(this.presentationScorePattern),
