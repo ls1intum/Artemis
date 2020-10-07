@@ -77,6 +77,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(70L);
         resultRepo.save(result);
@@ -86,6 +87,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(80L);
         resultRepo.save(result);
@@ -105,6 +107,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(60L);
         resultRepo.save(result);
@@ -131,6 +134,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(75L);
         resultRepo.save(result);
@@ -184,6 +188,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(30L);
         resultRepo.save(result);
@@ -231,6 +236,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(90L);
         resultRepo.save(result);
@@ -313,6 +319,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(response.getResult().getId()).as("response result id is old result id").isEqualTo(oldResult.getId());
 
         Result newResult = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         newResult.setRated(true);
         newResult.setScore(15L);
         resultRepo.save(newResult);

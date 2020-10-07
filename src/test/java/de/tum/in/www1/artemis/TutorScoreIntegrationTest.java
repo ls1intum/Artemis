@@ -92,6 +92,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -102,6 +103,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(1);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -123,6 +125,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -154,6 +157,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -207,6 +211,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -306,6 +311,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -340,6 +346,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -373,6 +380,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
@@ -410,6 +418,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation);
+        result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setAssessor(user);
         resultRepo.save(result);
