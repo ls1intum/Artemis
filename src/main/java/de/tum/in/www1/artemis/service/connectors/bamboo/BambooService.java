@@ -42,13 +42,11 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bamboo")
@@ -62,15 +60,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.continuous-integration.empty-commit-necessary}")
     private Boolean isEmptyCommitNecessary;
 
-    @Value("${artemis.continuous-integration.user}")
-    private String bambooUser;
-
-    @Value("${artemis.continuous-integration.password}")
-    private String bambooPassword;
-
     private final GitService gitService;
-
-    private final ResultRepository resultRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -88,12 +78,10 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final ObjectMapper mapper;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService,
-            BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService, @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient,
-            ObjectMapper mapper) {
+    public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
         this.gitService = gitService;
-        this.resultRepository = resultRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
@@ -209,10 +197,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
         var buildPlan = participation.getBuildPlanId();
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Map.class);
         }
         catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
@@ -222,10 +208,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
-        final var headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        final var entity = new HttpEntity<>(null, headers);
-        final var planInfo = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planId, HttpMethod.GET, entity, Map.class, new HashMap<>()).getBody();
+        final var planInfo = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planId, HttpMethod.GET, null, Map.class, new HashMap<>()).getBody();
         return planInfo != null && planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
     }
 
@@ -335,10 +318,9 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void removeAllDefaultProjectPermissions(String projectKey) {
-        final var headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
         // Bamboo always gives read rights
         final var permissionData = List.of(permissionToBambooPermission(CIPermission.READ));
-        final var entity = new HttpEntity<>(permissionData, headers);
+        final var entity = new HttpEntity<>(permissionData, null);
         final var roles = List.of("ANONYMOUS", "LOGGED_IN");
 
         roles.forEach(role -> {
@@ -352,9 +334,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
-        final var headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
         final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
-        final var entity = new HttpEntity<>(permissionData, headers);
+        final var entity = new HttpEntity<>(permissionData, null);
 
         groupNames.forEach(group -> {
             final var url = bambooServerUrl + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
@@ -374,7 +355,6 @@ public class BambooService implements ContinuousIntegrationService {
             case CREATE -> "CREATE";
             case READ -> "READ";
             case ADMIN -> "ADMINISTRATION";
-            default -> throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
         };
     }
 
@@ -526,10 +506,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {
-            final var headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            final var entity = new HttpEntity<>(headers);
-            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, entity, JsonNode.class);
+            final var status = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/server", HttpMethod.GET, null, JsonNode.class);
             health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         }
         catch (Exception emAll) {
@@ -671,14 +648,12 @@ public class BambooService implements ContinuousIntegrationService {
      * - buildCompletedDate:    the completion date of the build
      */
     public @Nullable QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<QueriedBambooBuildResultDTO> response = null;
         try {
             response = restTemplate.exchange(
                     bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
                             + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
-                    HttpMethod.GET, entity, QueriedBambooBuildResultDTO.class);
+                    HttpMethod.GET, null, QueriedBambooBuildResultDTO.class);
         }
         catch (Exception e) {
             log.warn("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
@@ -743,12 +718,10 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the list of retrieved build logs.
      */
     private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
-                    HttpMethod.GET, entity, Map.class);
+                    HttpMethod.GET, null, Map.class);
         }
         catch (Exception e) {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
@@ -835,10 +808,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Map.class);
             log.warn("Bamboo project " + projectKey + " already exists");
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
@@ -846,7 +817,7 @@ public class BambooService implements ContinuousIntegrationService {
             log.debug("Bamboo project " + projectKey + " does not exit");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
-                final var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, entity,
+                final var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
                         BambooProjectSearchDTO.class);
                 if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().map(BambooProjectSearchDTO.SearchResultDTO::getSearchEntity)
@@ -871,12 +842,10 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the build artifact as html.
      */
     private ResponseEntity<byte[]> retrieveArtifactPage(String url) throws BambooException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> response;
 
         try {
-            response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
+            response = restTemplate.exchange(url, HttpMethod.GET, null, byte[].class);
         }
         catch (Exception e) {
             log.error("HttpError while retrieving build artifact", e);
@@ -913,11 +882,9 @@ public class BambooService implements ContinuousIntegrationService {
      * - isBuilding: true if the plan is building
      */
     public Map<String, Boolean> retrieveBuildStatus(String planKey) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
         try {
-            response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json", HttpMethod.GET, entity, Map.class);
+            response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json", HttpMethod.GET, null, Map.class);
         }
         catch (Exception e) {
             log.error("Bamboo HttpError '" + e.getMessage() + "' while retrieving build status for plan " + planKey, e);
@@ -941,11 +908,8 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-        ResponseEntity<Map> response = null;
         try {
-            response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(), HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(), HttpMethod.GET, null, Map.class);
         }
         catch (Exception e) {
             return false;

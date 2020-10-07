@@ -14,7 +14,8 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabHeaderAuthorizationInterceptor;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
 /**
@@ -27,7 +28,7 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("gitlab")
     @Autowired
-    public RestTemplate gitlabRestTemplate(GitLabHeaderAuthorizationInterceptor gitlabInterceptor) {
+    public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor);
     }
 
@@ -54,9 +55,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("bamboo")
-    public RestTemplate bambooRestTemplate() {
-        // TODO: authenticate here
-        return new RestTemplate();
+    public RestTemplate bambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor);
     }
 
     @NotNull

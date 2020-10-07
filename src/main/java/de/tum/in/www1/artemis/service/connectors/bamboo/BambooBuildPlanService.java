@@ -59,6 +59,7 @@ import io.github.jhipster.config.JHipsterConstants;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
+    @Deprecated
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
 
