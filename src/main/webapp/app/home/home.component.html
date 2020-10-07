@@ -38,7 +38,7 @@
                             #usernameForm="ngModel"
                             [ngModelOptions]="{ updateOn: 'blur' }"
                         />
-                        <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMesssageUsername">
+                        <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMessageUsername">
                             <p class="text-primary small">Invalid username</p>
                         </div>
                     </div>

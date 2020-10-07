@@ -254,6 +254,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     changeRegistrationEnabled() {
         this.course.registrationEnabled = !this.course.registrationEnabled;
+        this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
     }
 
     /**
@@ -284,9 +285,9 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
         } else {
             this.customizeGroupNames = false;
-            this.courseForm.controls['studentGroupName'].setValue(null);
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(null);
-            this.courseForm.controls['instructorGroupName'].setValue(null);
+            this.courseForm.controls['studentGroupName'].setValue(undefined);
+            this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
+            this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
 }
