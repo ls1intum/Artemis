@@ -1,33 +1,37 @@
 <div *ngIf="courses">
-    <div class="col-12 col-sm-auto" *ngIf="!showCourseSelection && !addedSuccessful && isTumStudent">
+    <div class="col-12 col-sm-auto" *ngIf="!showCourseSelection && !addedSuccessful && userIsAllowedToRegister">
         <button class="btn btn-primary" [disabled]="loading" (click)="startRegistration()">
             <span *ngIf="!loading">{{ 'artemisApp.studentDashboard.register.signUp' | translate }}</span>
             <fa-icon [icon]="'spinner'" [spin]="true" *ngIf="loading"></fa-icon>
         </button>
     </div>
-    <div class="col-12 col-sm-auto text-success" *ngIf="addedSuccessful && isTumStudent">
+    <div class="col-12 col-sm-auto text-success" *ngIf="addedSuccessful && userIsAllowedToRegister">
         <fa-icon [icon]="'check-circle'"></fa-icon>
         {{ 'artemisApp.studentDashboard.register.registerSuccessful' | translate }}
     </div>
-    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && isTumStudent">
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && userIsAllowedToRegister">
         <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
             <option [ngValue]="undefined" selected disabled>{{ 'artemisApp.studentDashboard.register.pleaseSelectCourse' | translate }}</option>
             <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{ course.title }}</option>
         </select>
     </div>
-    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && isTumStudent">
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && userIsAllowedToRegister">
         <div class="btn-group">
-            <!-- Special case for PGdP where we have to have a confirmation regarding the exam registration before registering to the course -->
             <jhi-confirm-button
-                *ngIf="courseToRegister && courseToRegister.id === 37"
+                *ngIf="courseToRegister && courseToRegister.registrationConfirmationMessage"
                 [disabled]="!courseToRegister"
                 (onConfirm)="registerForCourse()"
                 title="artemisApp.studentDashboard.register.signUpForCourse"
-                confirmationText="artemisApp.studentDashboard.register.examSignupConfirmation"
-                confirmationTitle="artemisApp.studentDashboard.register.examSignupConfirmationTitle"
+                confirmationText="{{ courseToRegister.registrationConfirmationMessage }}"
+                confirmationTitle="artemisApp.studentDashboard.register.courseSignupConfirmationTitle"
             >
             </jhi-confirm-button>
-            <button *ngIf="!courseToRegister || courseToRegister.id !== 37" class="btn btn-primary" [disabled]="!courseToRegister" (click)="registerForCourse()">
+            <button
+                *ngIf="!courseToRegister || !courseToRegister.registrationConfirmationMessage"
+                class="btn btn-primary"
+                [disabled]="!courseToRegister"
+                (click)="registerForCourse()"
+            >
                 {{ 'artemisApp.studentDashboard.register.signUpForCourse' | translate }}
             </button>
             <button class="btn btn-default" (click)="cancelRegistration()">
@@ -35,10 +39,10 @@
             </button>
         </div>
     </div>
-    <div class="col-12 col-sm-auto text-warning" *ngIf="!loading && showCourseSelection && coursesToSelect.length === 0 && isTumStudent">
+    <div class="col-12 col-sm-auto text-warning" *ngIf="!loading && showCourseSelection && coursesToSelect.length === 0 && userIsAllowedToRegister">
         {{ 'artemisApp.studentDashboard.register.noCourse' | translate }}
     </div>
-    <div class="col-12 col-sm-auto text-warning" *ngIf="loading && showCourseSelection && coursesToSelect.length === 0 && isTumStudent">
+    <div class="col-12 col-sm-auto text-warning" *ngIf="loading && showCourseSelection && coursesToSelect.length === 0 && userIsAllowedToRegister">
         {{ 'artemisApp.studentDashboard.register.courseLoading' | translate }}
     </div>
 </div>

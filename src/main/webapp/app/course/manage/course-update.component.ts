@@ -6,7 +6,6 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
-import { filter, tap } from 'rxjs/operators';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -14,7 +13,6 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -59,31 +57,27 @@ export class CourseUpdateComponent implements OnInit {
             this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
         });
 
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    if (info.inProduction) {
-                        // in production mode, the groups should not be customized by default when creating a course
-                        // when editing a course, only admins can customize groups automatically
-                        this.customizeGroupNames = !!this.course.id;
-                    } else {
-                        // developers typically want to customize the groups, therefore this is prefilled
-                        this.customizeGroupNames = true;
-                        if (!this.course.studentGroupName) {
-                            this.course.studentGroupName = 'artemis-dev';
-                        }
-                        if (!this.course.teachingAssistantGroupName) {
-                            this.course.teachingAssistantGroupName = 'artemis-dev';
-                        }
-                        if (!this.course.instructorGroupName) {
-                            this.course.instructorGroupName = 'artemis-dev';
-                        }
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                if (profileInfo.inProduction) {
+                    // in production mode, the groups should not be customized by default when creating a course
+                    // when editing a course, only admins can customize groups automatically
+                    this.customizeGroupNames = !!this.course.id;
+                } else {
+                    // developers typically want to customize the groups, therefore this is prefilled
+                    this.customizeGroupNames = true;
+                    if (!this.course.studentGroupName) {
+                        this.course.studentGroupName = 'artemis-dev';
                     }
-                }),
-            )
-            .subscribe();
+                    if (!this.course.teachingAssistantGroupName) {
+                        this.course.teachingAssistantGroupName = 'artemis-dev';
+                    }
+                    if (!this.course.instructorGroupName) {
+                        this.course.instructorGroupName = 'artemis-dev';
+                    }
+                }
+            }
+        });
 
         this.courseForm = new FormGroup({
             id: new FormControl(this.course.id),
@@ -113,6 +107,7 @@ export class CourseUpdateComponent implements OnInit {
             }),
             studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
+            registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage),
             presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                 Validators.min(1),
                 regexValidator(this.presentationScorePattern),
@@ -252,6 +247,13 @@ export class CourseUpdateComponent implements OnInit {
             presentationScoreControl.reset({ value: 0, disabled: true });
             this.presentationScoreEnabled = false;
         }
+    }
+
+    /**
+     * Enable or disable student course registration
+     */
+    changeRegistrationEnabled() {
+        this.course.registrationEnabled = !this.course.registrationEnabled;
     }
 
     /**
