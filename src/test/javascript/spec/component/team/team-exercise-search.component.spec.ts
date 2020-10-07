@@ -39,7 +39,7 @@ describe('Team Exercise Search Component', () => {
         const releaseDate = moment();
         const dateFormat = 'yyyy-MM-DD';
 
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
         exercise.releaseDate = releaseDate;
 
@@ -52,7 +52,7 @@ describe('Team Exercise Search Component', () => {
     it('formats the search result without release date', () => {
         const title = 'My exercise';
 
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
         const expectedResult = title;
@@ -64,7 +64,7 @@ describe('Team Exercise Search Component', () => {
     it('onAutocompleteSelect', () => {
         const title = 'My exercise';
 
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
         spyOn(comp.selectExercise, 'emit');
@@ -86,7 +86,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise with exact term', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
@@ -95,7 +95,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise with lowercase term', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
@@ -104,7 +104,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise with partial term start', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('my', exercise);
@@ -113,7 +113,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise with partial term end', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
@@ -122,7 +122,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise without whitespace', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
@@ -131,7 +131,7 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('searchMatchesExercise with incorrect searchTerm', () => {
-        const exercise = new TextExercise();
+        const exercise = new TextExercise(undefined, undefined);
         exercise.title = 'My Exercise';
 
         const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);

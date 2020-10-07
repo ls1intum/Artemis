@@ -5,12 +5,12 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 export class MockCourseManagementService {
-    mockExercises: Exercise[] = [new TextExercise()];
+    mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];
 
     find = (courseId: number) => Observable.of([{ id: 456 } as Course]);
 
     findWithExercises = (courseId: number) => {
-        const mockExercise = new TextExercise();
+        const mockExercise = new TextExercise(undefined, undefined);
         mockExercise.id = 1;
         mockExercise.teamMode = true;
 

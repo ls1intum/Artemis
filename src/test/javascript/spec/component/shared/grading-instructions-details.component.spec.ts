@@ -12,9 +12,9 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 describe('Grading Instructions Management Component', () => {
     let comp: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
-    let gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    let gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
-    let exercise = { id: 1 } as Exercise;
+    const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+    const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
+    const exercise = { id: 1 } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -41,22 +41,28 @@ describe('Grading Instructions Management Component', () => {
 
             // THEN
             expect(comp.questionEditorText).toEqual(
-                '[gradingCriterion]' +
-                    'testCriteria' +
+                '[gradingInstruction]\n' +
+                    '\t[credits]  0\n' +
+                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
+                    '\t[maxCountInScore]  0\n' +
                     '\n' +
-                    '\t' +
+                    '[gradingCriterion]This is an Example criterion\n' +
+                    '\t[gradingInstruction]\n' +
+                    '\t[credits]  0\n' +
+                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
+                    '\t[maxCountInScore]  0\n' +
+                    '\n' +
                     '[gradingInstruction]\n' +
-                    '\t' +
-                    '[credits]' +
-                    '  0\n' +
-                    '\t' +
-                    '[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t' +
-                    '[description]  Add grading instruction here (only visible for tutors)\n' +
-                    '\t' +
-                    '[feedback]  Add feedback for students here (visible for students)\n' +
-                    '\t' +
-                    '[maxCountInScore]  0\n\n',
+                    '\t[credits] 0\n' +
+                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
+                    '\t[maxCountInScore] 0\n' +
+                    '\n',
             );
         }));
         it('should set the grading criteria based on the exercise', fakeAsync(() => {

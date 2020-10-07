@@ -51,10 +51,10 @@ describe('ShortAnswerQuestionUtil', () => {
     });
     it('should return correct getter', () => {
         const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctMappings, spot);
-        const spots = service.getAllSpotsForSolution(shortAnswerQuestion.correctMappings, solution);
+        const spots = service.getAllSpotsForSolutions(shortAnswerQuestion.correctMappings, solution);
         const sampleSolutions = service.getSampleSolutions(shortAnswerQuestion);
         const mappingFromGetter = service.getShortAnswerMapping(shortAnswerQuestion.correctMappings, solution, spot);
-        const spotFromGetter = service.getSpot(spot.spotNr, shortAnswerQuestion);
+        const spotFromGetter = service.getSpot(spot.spotNr!, shortAnswerQuestion);
         const spotNr = service.getSpotNr('[-spot 123]');
 
         expect(solutions).to.contain(solution);
@@ -102,25 +102,25 @@ describe('ShortAnswerQuestionUtil', () => {
     });
 
     it('should check whether spots and solutions are setup correctly', () => {
-        let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings);
+        let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!);
         expect(mappedSolutionsHaveSpots).to.be.true;
 
         const wrongMapping = cloneDeep(shortAnswerQuestion.correctMappings);
         // @ts-ignore
         wrongMapping.forEach((m) => (m.spot = undefined));
-        mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping);
+        mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping!);
         expect(mappedSolutionsHaveSpots).to.be.false;
 
-        let spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots);
+        let spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!);
         expect(spotsHaveSolutions).to.be.true;
 
-        spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings, [spotUnmapped]);
+        spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, [spotUnmapped]);
         expect(spotsHaveSolutions).to.be.false;
 
-        let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings);
+        let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!);
         expect(hasDuplicatedMappings).to.be.false;
 
-        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings);
+        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings!);
         duplicatedMapping.push(duplicatedMapping[0]);
         hasDuplicatedMappings = service.hasMappingDuplicateValues(duplicatedMapping);
         expect(hasDuplicatedMappings).to.be.true;

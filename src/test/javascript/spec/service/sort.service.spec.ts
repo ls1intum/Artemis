@@ -2,10 +2,18 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import * as moment from 'moment';
 import { SortService } from 'app/shared/service/sort.service';
 
+type TestObject = {
+    a: number;
+    b: string;
+    c: moment.Moment;
+    d?: number | null;
+    e: Map<string, number>;
+};
+
 describe('Sort Service', () => {
     let injector: TestBed;
     let service: SortService;
-    let e1, e2, e3, e4, e5, e6;
+    let e1: TestObject, e2: TestObject, e3: TestObject, e4: TestObject, e5: TestObject, e6: TestObject;
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
@@ -97,7 +105,7 @@ describe('Sort Service', () => {
         );
     });
 
-    function repeatWithRandomArray(times: number, fn: (arr: []) => {}) {
+    function repeatWithRandomArray(times: number, fn: (arr: TestObject[]) => void) {
         return () => {
             while (times-- > 0) {
                 fn(shuffle([e1, e2, e3, e4, e5, e6]));
@@ -105,7 +113,7 @@ describe('Sort Service', () => {
         };
     }
 
-    function shuffle(array) {
+    function shuffle(array: TestObject[]) {
         return array.sort(() => Math.random() - 0.5);
     }
 });
