@@ -60,7 +60,7 @@
             },
             "registrationEnabled": {
                 "title": "Kurs Registrierung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können. Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
             },
             "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
             "exercises": "Aufgaben",

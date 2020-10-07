@@ -60,7 +60,7 @@
             },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
-                "description": "Activate this checkbox to allow students to register independently in the course. You can optionally enter a message that students have to confirm during registration."
+                "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
             },
             "registrationConfirmationMessage": "Registration Confirmation Message",
             "exercises": "Exercises",
