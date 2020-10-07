@@ -13,7 +13,7 @@ export class HorizontalStackedBarChartPreset implements ChartPreset {
         chart.setType('horizontalBar');
         chart.setLabels(this.labels);
         chart.setYAxe(0, { stacked: true }, false);
-        chart.setXAxe(0, { stacked: true }, false);
+        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, callback: (value) => value + '%' } }, false);
         chart.setHover({ mode: 'dataset' });
         chart.setTooltip(
             {

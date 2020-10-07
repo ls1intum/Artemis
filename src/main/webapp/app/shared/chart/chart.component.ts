@@ -10,14 +10,13 @@ export interface ChartPreset {
     selector: 'jhi-chart',
     template: `
         <div class="chartWrapper" style="position: relative; width: 100%; max-height: 400px;">
-            <canvas baseChart [height]="height" [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
+            <canvas baseChart [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
         </div>
     `,
 })
 export class ChartComponent {
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
-    @Input() height = 400;
     @Input() set preset(preset: ChartPreset) {
         preset.applyTo(this);
     }
