@@ -119,7 +119,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(value = "student1", roles = "USER")
     public void testRewardAchievement() throws Exception {
         var participation = database.addParticipationForExercise(firstExercise, student.getLogin());
-        var result = database.addResultToParticipation(participation);
+        var result = database.addResultToParticipation(participation, null);
         Set<Result> results = new HashSet<>();
         results.add(result);
         participation.setResults(results);
