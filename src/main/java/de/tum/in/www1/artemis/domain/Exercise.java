@@ -154,6 +154,10 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
+    @ManyToMany(mappedBy = "exercises")
+    @JsonIgnoreProperties("exercises")
+    public Set<LearningGoal> learningGoals = new HashSet<>();
+
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -241,6 +245,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
+     *
      * @return true if the assessment due date is in the past, otherwise false
      */
     @JsonIgnore
@@ -396,6 +401,30 @@ public abstract class Exercise extends DomainObject {
         return this.exerciseGroup != null;
     }
 
+    public Set<LearningGoal> getLearningGoals() {
+        return learningGoals;
+    }
+
+    public void setLearningGoals(Set<LearningGoal> learningGoals) {
+        this.learningGoals = learningGoals;
+    }
+
+    public Exercise addLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.add(learningGoal);
+        if (!learningGoal.getExercises().contains(this)) {
+            learningGoal.getExercises().add(this);
+        }
+        return this;
+    }
+
+    public Exercise removeLearningGoal(LearningGoal learningGoal) {
+        this.learningGoals.remove(learningGoal);
+        if (learningGoal.getExercises().contains(this)) {
+            learningGoal.getExercises().remove(this);
+        }
+        return this;
+    }
+
     /**
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member
@@ -523,7 +552,7 @@ public abstract class Exercise extends DomainObject {
      * Get the latest relevant result from the given participation (rated == true or rated == null) (relevancy depends on Exercise type => this should be overridden by subclasses
      * if necessary)
      *
-     * @param participation the participation whose results we are considering
+     * @param participation           the participation whose results we are considering
      * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
@@ -715,6 +744,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * Checks whether the exercise is released
+     *
      * @return boolean
      */
     public boolean isReleased() {

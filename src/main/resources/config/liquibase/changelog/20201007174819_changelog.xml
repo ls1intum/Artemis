@@ -1,0 +1,36 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="stefanwaldhauser" id="20201007174819">
+        <createTable tableName="learning_goals">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="learning_goalsPK"/>
+            </column>
+            <column name="description" type="LONGTEXT"/>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="BIGINT"/>
+        </createTable>
+        <createTable tableName="learning_goal_exercise">
+            <column name="learning_goal_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+        <createTable tableName="learning_goal_lecture">
+            <column name="learning_goal_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="lecture_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="learning_goals" constraintName="FKbhsflvnh2bvgwotjg24sylw8p" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="learning_goal_id" baseTableName="learning_goal_lecture" constraintName="FKccei0gc3x40c03eyaev6jnigg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learning_goals" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="learning_goal_exercise" constraintName="FKdls9xttqemxxt0qljxop5v8rt" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="learning_goal_id" baseTableName="learning_goal_exercise" constraintName="FKnfpeusbe2lmwgx24uatjvlb5u" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learning_goals" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="learning_goal_lecture" constraintName="FKt46q94fc0q76ltvkp7yj52bcc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
