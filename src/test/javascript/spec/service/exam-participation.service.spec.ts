@@ -15,6 +15,8 @@ import { expect } from '../helpers/jasmine.jest.fix';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { Result } from 'app/entities/result.model';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
@@ -93,17 +95,18 @@ describe('Exam Participation Service', () => {
             /*configure exercises of this student Exam*/
             const exercise = new TextExercise(new Course(), undefined);
             const studentParticipation = new StudentParticipation();
-            studentParticipation.results = [];
-            studentParticipation.submissions = [];
+            const participationResult = new Result();
+            participationResult.participation = studentParticipation;
+            studentParticipation.results = [participationResult];
+            const submission = new TextSubmission();
+            submission.result = new Result();
+            submission.participation = studentParticipation;
+            submission.result.participation = studentParticipation;
+            submission.result.submission = submission;
+            studentParticipation.submissions = [submission];
             exercise.studentParticipations = [studentParticipation];
             /*configure the exam of a student exam*/
             const examToSend = new Exam();
-            examToSend.visibleDate = moment();
-            examToSend.startDate = moment();
-            examToSend.endDate = moment();
-            examToSend.publishResultsDate = moment();
-            examToSend.examStudentReviewStart = moment();
-            examToSend.examStudentReviewEnd = moment();
 
             const returnedFromService = Object.assign(
                 {
@@ -115,32 +118,6 @@ describe('Exam Participation Service', () => {
             const expected = Object.assign({}, returnedFromService);
             service
                 .submitStudentExam(2, 2, returnedFromService)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
-
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
-        it('should load a StudentExam with no date specific in exam in the version of server', async () => {
-            /*configure exercises of this student Exam*/
-            const exercise = new TextExercise(new Course(), undefined);
-            const studentParticipation = new StudentParticipation();
-            studentParticipation.results = [];
-            studentParticipation.submissions = [];
-            exercise.studentParticipations = [studentParticipation];
-            /*configure the exam of a student exam*/
-            const examToSend = new Exam();
-
-            const returnedFromService = Object.assign(
-                {
-                    exercises: [exercise],
-                    exam: examToSend,
-                },
-                studentExam,
-            );
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .submitStudentExam(1, 1, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
