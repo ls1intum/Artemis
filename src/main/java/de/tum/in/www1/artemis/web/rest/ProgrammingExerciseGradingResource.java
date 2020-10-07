@@ -27,7 +27,7 @@ public class ProgrammingExerciseGradingResource {
 
     public final static String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
 
-    public final static String STATISTICS = "/programming-exercise/{exercise}/grading/statistics";
+    public final static String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 

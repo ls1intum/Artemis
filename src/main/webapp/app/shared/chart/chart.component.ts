@@ -1,12 +1,16 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ChartDataSets, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
+import { ChartDataSets, ChartHoverOptions, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
+
+export interface ChartPreset {
+    applyTo(chart: ChartComponent): void;
+}
 
 @Component({
     selector: 'jhi-chart',
     template: `
-        <div class="chartWrapper">
-            <canvas baseChart [height]="height" [datasets]="[]" [labels]="[]" [options]="options" [chartType]="type"></canvas>
+        <div class="chartWrapper" style="position: relative; width: 100%; max-height: 400px;">
+            <canvas baseChart [height]="height" [datasets]="chartDatasets" [labels]="chartLabels" [options]="chartOptions" [chartType]="chartType"></canvas>
         </div>
     `,
 })
@@ -14,9 +18,27 @@ export class ChartComponent {
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     @Input() height = 400;
-    @Input() type: ChartType;
+    @Input() set preset(preset: ChartPreset) {
+        preset.applyTo(this);
+    }
 
-    public options: ChartOptions = {
+    @Input() set type(type: ChartType) {
+        this.chartType = type;
+    }
+    @Input() set datasets(datasets: ChartDataSets[]) {
+        this.chartDatasets = datasets;
+    }
+    @Input() set labels(labels: Label[]) {
+        this.chartLabels = labels;
+    }
+    @Input() set options(options: ChartOptions) {
+        this.chartOptions = options;
+    }
+
+    chartDatasets: ChartDataSets[] = [];
+    chartType: ChartType = 'bar';
+    chartLabels: Label[] = [];
+    chartOptions: ChartOptions = {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
@@ -42,58 +64,86 @@ export class ChartComponent {
         },
     };
 
-    setPadding(padding: ChartLayoutPaddingObject) {
-        Object.assign(this.chart.options.layout!.padding, padding);
-        this.chart.update();
+    setType(type: ChartType) {
+        this.chartType = type;
     }
 
-    setLegend(legend: ChartLegendOptions | boolean) {
-        if (typeof legend === 'boolean') {
-            Object.assign(this.chart.options.legend, { display: legend });
+    private applyOptions(fn: (options: ChartOptions) => void, shouldUpdate = true) {
+        if (this.chart) {
+            fn(this.chart.options);
+            if (shouldUpdate) {
+                this.chart.update();
+            }
         } else {
-            Object.assign(this.chart.options.legend, { display: true }, legend);
+            fn(this.chartOptions);
         }
-        this.chart.update();
     }
 
-    setTooltip(tooltip: ChartTooltipOptions | boolean) {
-        if (typeof tooltip === 'boolean') {
-            Object.assign(this.chart.options.tooltips, { enabled: tooltip });
-        } else {
-            Object.assign(this.chart.options.tooltips, { enabled: true }, tooltip);
-        }
-        this.chart.update();
+    setPadding(padding: ChartLayoutPaddingObject, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            Object.assign(options.layout!.padding, padding);
+        }, shouldUpdate);
     }
 
-    setYAxe(index: number, axe: ChartYAxe) {
-        if (!this.chart.options.scales!.yAxes![index]) {
-            this.chart.options.scales!.yAxes![index] = axe;
-        } else {
-            Object.assign(this.chart.options.scales!.yAxes![index], axe);
-        }
-        this.chart.update();
+    setLegend(legend: ChartLegendOptions | boolean, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            if (typeof legend === 'boolean') {
+                Object.assign(options.legend, { display: legend });
+            } else {
+                Object.assign(options.legend, { display: true }, legend);
+            }
+        }, shouldUpdate);
     }
 
-    setXAxe(index: number, axe: ChartXAxe) {
-        if (!this.chart.options.scales!.xAxes![index]) {
-            this.chart.options.scales!.xAxes![index] = axe;
-        } else {
-            Object.assign(this.chart.options.scales!.xAxes![index], axe);
-        }
-        this.chart.update();
+    setTooltip(tooltip: ChartTooltipOptions | boolean, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            if (typeof tooltip === 'boolean') {
+                Object.assign(options.tooltips, { enabled: tooltip });
+            } else {
+                Object.assign(options.tooltips, { enabled: true }, tooltip);
+            }
+        }, shouldUpdate);
+    }
+
+    setHover(hover: ChartHoverOptions, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            if (!options.hover) {
+                options.hover = hover;
+            } else {
+                Object.assign(options.hover, hover);
+            }
+        }, shouldUpdate);
+    }
+
+    setYAxe(index: number, axe: ChartYAxe, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            if (!options.scales!.yAxes![index]) {
+                options.scales!.yAxes![index] = axe;
+            } else {
+                Object.assign(options.scales!.yAxes![index], axe);
+            }
+        }, shouldUpdate);
+    }
+
+    setXAxe(index: number, axe: ChartXAxe, shouldUpdate = true) {
+        this.applyOptions((options) => {
+            if (!options.scales!.xAxes![index]) {
+                options.scales!.xAxes![index] = axe;
+            } else {
+                Object.assign(options.scales!.xAxes![index], axe);
+            }
+        }, shouldUpdate);
     }
 
     updateDataset(index: number, dataset: ChartDataSets) {
-        if (!this.chart.datasets[index]) {
-            this.chart.datasets[index] = dataset;
+        if (!this.chartDatasets[index]) {
+            this.chartDatasets[index] = dataset;
         } else {
-            Object.assign(this.chart.datasets[index], dataset);
+            Object.assign(this.chartDatasets[index], dataset);
         }
-        this.chart.update();
     }
 
     setLabels(labels: Label[]) {
-        this.chart.labels = labels;
-        this.chart.update();
+        this.chartLabels = labels;
     }
 }
