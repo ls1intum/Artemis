@@ -593,7 +593,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @param result the result for which the feedback should be added
      * @param jobs   the jobs list of the requestBody
      * @param isStaticCodeAnalysisEnabled flag determining whether static code analysis was enabled
-     * @return a list of feedback items stored in a result
      */
     private void addFeedbackToResult(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs, Boolean isStaticCodeAnalysisEnabled) {
         if (jobs == null) {
