@@ -46,7 +46,6 @@ describe('ProgrammingExerciseGradingService', () => {
     beforeEach(async(() => {
         websocketService = new MockWebsocketService();
         httpService = new MockHttpService();
-
         gradingService = new ProgrammingExerciseGradingService(websocketService as any, httpService as any);
 
         subscribeSpy = spy(websocketService, 'subscribe');
@@ -58,7 +57,6 @@ describe('ProgrammingExerciseGradingService', () => {
         exercise2TestCaseSubject = new Subject();
         receiveStub.withArgs(exercise1Topic).returns(exercise1TestCaseSubject);
         receiveStub.withArgs(exercise2Topic).returns(exercise2TestCaseSubject);
-
         getStub.withArgs(`${gradingService.resourceUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));
         getStub.withArgs(`${gradingService.resourceUrl}/${exercise2.id}/test-cases`).returns(of(testCases2));
     }));

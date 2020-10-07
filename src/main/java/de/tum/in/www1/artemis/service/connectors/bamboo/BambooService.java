@@ -37,10 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -837,13 +833,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Queries Bamboo to find out if the project already exists using the project key and the project name
-     *
-     * @param projectKey to check if a project with this unique key already exists.
-     * @param projectName to check if a project with the same name already exists.
-     * @return true if the project is already existing on Bamboo.
-     */
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);
