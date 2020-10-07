@@ -12,6 +12,9 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../test.module';
 import { expect } from '../helpers/jasmine.jest.fix';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('Exam Participation Service', () => {
     let injector: TestBed;
@@ -87,9 +90,14 @@ describe('Exam Participation Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
         it('should load a StudentExam in the version of server', async () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.results = [];
+            studentParticipation.submissions = [];
+            exercise.studentParticipations = [studentParticipation];
             const returnedFromService = Object.assign(
                 {
-                    exercises: [],
+                    exercises: [exercise],
                 },
                 studentExam,
             );
