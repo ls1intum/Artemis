@@ -530,7 +530,7 @@ public class BitbucketService extends AbstractVersionControlService {
     /**
      * Create a new project
      *
-     * @param programmingExercise
+     * @param programmingExercise the programming exercise for which the Bitbucket Project should be created
      * @throws BitbucketException if the project could not be created
      */
     @Override
@@ -540,7 +540,6 @@ public class BitbucketService extends AbstractVersionControlService {
         Map<String, Object> body = new HashMap<>();
         body.put("key", projectKey);
         body.put("name", projectName);
-        // TODO: add a description
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
