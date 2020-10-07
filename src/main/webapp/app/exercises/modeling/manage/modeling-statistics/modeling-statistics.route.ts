@@ -2,13 +2,14 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingStatisticsComponent } from './modeling-statistics.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/:exerciseId/statistics',
         component: ModelingStatisticsComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'assessmentDashboard.title',
         },
         canActivate: [UserRouteAccessService],

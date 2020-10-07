@@ -23,6 +23,7 @@ import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -84,8 +85,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
-        /** Create question backup for resets. We convert it first to JSON and then back to make sure we get a real copy of the object **/
-        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+        // create deepcopy
+        this.backupQuestion = cloneDeep(this.question);
 
         /** We create now the structure on how to display the text of the question
          * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
@@ -608,7 +609,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resetQuestionText() {
         this.question.text = this.backupQuestion.text;
-        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.question.spots = cloneDeep(this.backupQuestion.spots);
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
         this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
@@ -625,9 +626,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
-        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
-        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.question.solutions = cloneDeep(this.backupQuestion.solutions);
+        this.question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.question.spots = cloneDeep(this.backupQuestion.spots);
         this.resetQuestionText();
     }
 

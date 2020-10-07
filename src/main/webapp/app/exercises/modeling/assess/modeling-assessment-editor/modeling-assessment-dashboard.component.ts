@@ -19,6 +19,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -74,7 +75,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.filteredSubmissions = [];
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
-        this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
