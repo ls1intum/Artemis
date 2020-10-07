@@ -833,13 +833,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Queries Bamboo to find out if the project already exists using the project key and the project name
-     *
-     * @param projectKey to check if a project with this unique key already exists.
-     * @param projectName to check if a project with the same name already exists.
-     * @return true if the project is already existing on Bamboo.
-     */
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(bambooUser, bambooPassword);

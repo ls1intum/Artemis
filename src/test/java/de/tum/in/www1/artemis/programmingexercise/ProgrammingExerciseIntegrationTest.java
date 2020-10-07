@@ -837,7 +837,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setShortName("NewShortname");
         // false -> true
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
         // true -> false
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise.setTitle("NewTitle1");
