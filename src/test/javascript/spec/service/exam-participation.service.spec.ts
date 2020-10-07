@@ -90,14 +90,51 @@ describe('Exam Participation Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
         it('should load a StudentExam in the version of server', async () => {
+            /*configure exercises of this student Exam*/
             const exercise = new TextExercise(new Course(), undefined);
             const studentParticipation = new StudentParticipation();
             studentParticipation.results = [];
             studentParticipation.submissions = [];
             exercise.studentParticipations = [studentParticipation];
+            /*configure the exam of a student exam*/
+            const examToSend = new Exam();
+            examToSend.visibleDate = moment();
+            examToSend.startDate = moment();
+            examToSend.endDate = moment();
+            examToSend.publishResultsDate = moment();
+            examToSend.examStudentReviewStart = moment();
+            examToSend.examStudentReviewEnd = moment();
+
             const returnedFromService = Object.assign(
                 {
                     exercises: [exercise],
+                    exam: examToSend,
+                },
+                studentExam,
+            );
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .submitStudentExam(2, 2, returnedFromService)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(JSON.stringify(returnedFromService));
+        });
+        it('should load a StudentExam with no date specific in exam in the version of server', async () => {
+            /*configure exercises of this student Exam*/
+            const exercise = new TextExercise(new Course(), undefined);
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.results = [];
+            studentParticipation.submissions = [];
+            exercise.studentParticipations = [studentParticipation];
+            /*configure the exam of a student exam*/
+            const examToSend = new Exam();
+
+            const returnedFromService = Object.assign(
+                {
+                    exercises: [exercise],
+                    exam: examToSend,
                 },
                 studentExam,
             );
