@@ -66,7 +66,7 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         instructor = users.get(1);
         instructor.setGroups(new HashSet<>(Arrays.asList("instructor")));
         firstCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        firstCourse.setHasAchievements(true);
+        firstCourse.setAchievementsEnabled(true);
         courseRepository.save(firstCourse);
         secondCourse = database.addCourseWithModelingAndTextAndFileUploadExercise();
         firstExercise = firstCourse.getExercises().stream().findFirst().get();
