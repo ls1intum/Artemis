@@ -204,7 +204,7 @@ public class CourseResource {
         Course result = courseService.save(course);
 
         // Add achievements if enabled
-        if (result.getHasAchievements()) {
+        if (result.getAchievementsEnabled()) {
             achievementService.generateForCourse(result);
         }
 
@@ -289,10 +289,10 @@ public class CourseResource {
         Course result = courseService.save(updatedCourse);
 
         // Add or remove achievements
-        if (result.getHasAchievements() && !existingCourse.get().getHasAchievements()) {
+        if (result.getAchievementsEnabled() && !existingCourse.get().getAchievementsEnabled()) {
             achievementService.generateForCourse(result);
         }
-        else if (!result.getHasAchievements() && existingCourse.get().getHasAchievements()) {
+        else if (!result.getAchievementsEnabled() && existingCourse.get().getAchievementsEnabled()) {
             achievementService.deleteByCourseId(result.getId());
         }
 

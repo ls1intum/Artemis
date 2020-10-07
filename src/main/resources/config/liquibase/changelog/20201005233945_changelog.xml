@@ -22,7 +22,7 @@
             </column>
         </createTable>
         <addColumn tableName="course">
-            <column defaultValueBoolean="false" name="has_achievements" type="boolean"/>
+            <column defaultValueBoolean="false" name="achievements_enabled" type="boolean"/>
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement" validate="true"/>

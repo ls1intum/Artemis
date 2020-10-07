@@ -106,7 +106,7 @@ public class AchievementService {
      * @param exercise
      */
     public void generateForExercise(Course course, Exercise exercise) {
-        if (course.getHasAchievements() && (exercise.getExerciseGroup() == null || exercise.getExerciseGroup().getExam() == null)) {
+        if (course.getAchievementsEnabled() && exercise.getExerciseGroup() == null) {
             pointBasedAchievementService.generateAchievements(exercise);
             timeBasedAchievementService.generateAchievements(exercise);
         }
@@ -127,11 +127,11 @@ public class AchievementService {
             return;
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course == null || course.getHasAchievements() == null || !course.getHasAchievements()) {
+        if (course == null || course.getAchievementsEnabled() == null || !course.getAchievementsEnabled()) {
             return;
         }
 
-        var optionalUser = participationService.findOneStudentParticipation(result.getParticipation().getId()).getStudent();
+        var optionalUser = participationService.findOneStudentParticipation(participation.getId()).getStudent();
         if (!optionalUser.isPresent()) {
             return;
         }

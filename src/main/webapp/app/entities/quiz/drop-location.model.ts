@@ -2,7 +2,11 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { generate } from 'app/exercises/quiz/manage/temp-id';
 
-export class DropLocation implements BaseEntity {
+export interface CanBecomeInvalid {
+    invalid?: boolean;
+}
+
+export class DropLocation implements BaseEntity, CanBecomeInvalid {
     public id?: number;
     public tempID?: number;
     public posX?: number;
