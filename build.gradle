@@ -13,8 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.29.0"
-        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.33.0"
     }
 }
 
@@ -25,17 +24,16 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.5.0"
+    id "com.google.cloud.tools.jib" version "2.6.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
-    //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.spotless" version "5.2.0"
+    id "com.diffplug.spotless" version "5.6.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.5.0"
+version = "4.6.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -80,8 +78,7 @@ spotless {
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
 
-        // the following command is not compatible with Java switch expressions
-//        removeUnusedImports()
+        removeUnusedImports()
     }
 }
 
@@ -147,7 +144,7 @@ jacocoTestCoverageVerification {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
                 // TODO: in the future the following value should become at least 0.80
-                minimum = 0.76
+                minimum = 0.78
             }
         }
     }
@@ -166,12 +163,11 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
-    //jhipster-needle-gradle-repositories - JHipster will add additional repositories
 }
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.15.6'
+    implementation 'org.gitlab4j:gitlab4j-api:4.15.7'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -180,7 +176,7 @@ dependencies {
     implementation files('libs/jplag-2.12.1.jar')
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.8.1.202007141445-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -188,15 +184,15 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.30"
-    implementation "io.sentry:sentry-logback:1.7.30"
+    implementation 'io.sentry:sentry-spring-boot-starter:3.0.0'
+    implementation 'io.sentry:sentry-logback:3.0.0'
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.5.4"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.5.5"
     implementation "net.logstash.logback:logstash-logback-encoder:6.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -230,17 +226,17 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.3.3.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.3.4.RELEASE"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.2.5.RELEASE"
     implementation "org.springframework.cloud:spring-cloud-starter-config:2.2.5.RELEASE"
-    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.9.RELEASE"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.10.RELEASE"
 
     // https://docs.spring.io/spring/docs/4.3.15.RELEASE/spring-framework-reference/html/websocket.html#websocket-stomp-handle-broker-relay
     implementation "io.netty:netty-all:4.1.49.Final"
-    implementation "io.projectreactor.netty:reactor-netty:0.9.11.RELEASE"
-    implementation "org.springframework:spring-messaging:5.2.8.RELEASE"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.8.RELEASE_1"
+    implementation "io.projectreactor.netty:reactor-netty:0.9.12.RELEASE"
+    implementation "org.springframework:spring-messaging:5.2.9.RELEASE"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.9.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -256,14 +252,12 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.21"
-    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
-    implementation "org.zalando:problem-spring-web:0.25.2"
+    implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:67.1"
-    implementation 'com.github.seancfoley:ipaddress:5.3.1'
+    implementation 'com.github.seancfoley:ipaddress:5.3.3'
     implementation 'info.debatty:java-string-similarity:2.0.0'
 
-    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
@@ -276,7 +270,7 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.assertj:assertj-core:3.17.0"
+    testImplementation "org.assertj:assertj-core:3.17.2"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.14.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.14.1'
@@ -289,8 +283,7 @@ dependencies {
     testImplementation 'org.apache.maven.surefire:surefire-report-parser:2.22.2'
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation group: 'org.json', name: 'json', version: '20200518'
-    //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+    testImplementation 'org.json:json:20200518'
 }
 
 task cleanResources(type: Delete) {
@@ -355,7 +348,7 @@ if (project.hasProperty("nodeInstall")) {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.36"
+    toolVersion "8.36.2"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
@@ -372,7 +365,8 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
+// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
+// 2a) Execute tests without coverage report:       ./gradlew executeTests -x yarn_install -x webpack
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack

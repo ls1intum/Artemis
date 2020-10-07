@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.EntityListeners;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -20,9 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class AbstractAuditingEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public abstract class AbstractAuditingEntity extends DomainObject {
 
     @CreatedBy
     @Column(name = "created_by", nullable = false, length = 50, updatable = false)

@@ -2,15 +2,15 @@ import { Account } from 'app/core/user/account.model';
 import { Moment } from 'moment';
 
 export class User extends Account {
-    public id: number | null;
-    public groups: string[] | null;
-    public createdBy: string | null;
-    public createdDate: Date | null;
-    public lastModifiedBy: string | null;
-    public lastModifiedDate: Date | null;
-    public lastNotificationRead: Moment | null;
-    public visibleRegistrationNumber: string | null;
-    public password: string | null;
+    public id?: number;
+    public groups?: string[];
+    public createdBy?: string;
+    public createdDate?: Date;
+    public lastModifiedBy?: string;
+    public lastModifiedDate?: Date;
+    public lastNotificationRead?: Moment;
+    public visibleRegistrationNumber?: string;
+    public password?: string;
 
     constructor(
         id?: number,
@@ -30,23 +30,14 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
     ) {
-        super(
-            activated || undefined,
-            authorities || undefined,
-            email || undefined,
-            firstName || undefined,
-            langKey || undefined,
-            lastName || undefined,
-            login || undefined,
-            imageUrl || undefined,
-        );
-        this.id = id ? id : null;
-        this.groups = groups ? groups : null;
-        this.createdBy = createdBy ? createdBy : null;
-        this.createdDate = createdDate ? createdDate : null;
-        this.lastModifiedBy = lastModifiedBy ? lastModifiedBy : null;
-        this.lastModifiedDate = lastModifiedDate ? lastModifiedDate : null;
-        this.lastNotificationRead = lastNotificationRead ? lastNotificationRead : null;
-        this.password = password ? password : null;
+        super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
+        this.id = id;
+        this.groups = groups;
+        this.createdBy = createdBy;
+        this.createdDate = createdDate;
+        this.lastModifiedBy = lastModifiedBy;
+        this.lastModifiedDate = lastModifiedDate;
+        this.lastNotificationRead = lastNotificationRead;
+        this.password = password;
     }
 }

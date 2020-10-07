@@ -316,6 +316,15 @@ public class ModelFactory {
         return submission;
     }
 
+    public static QuizSubmission generateQuizSubmission(boolean submitted) {
+        QuizSubmission submission = new QuizSubmission();
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
+    }
+
     public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
         ExampleSubmission exampleSubmission = new ExampleSubmission();
         exampleSubmission.setSubmission(submission);
@@ -485,6 +494,16 @@ public class ModelFactory {
         return feedbacks; // total score should be 3P
     }
 
+    public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
+        FeedbackConflict feedbackConflict = new FeedbackConflict();
+        feedbackConflict.setConflict(true);
+        feedbackConflict.setCreatedAt(ZonedDateTime.now());
+        feedbackConflict.setFirstFeedback(firstFeedback);
+        feedbackConflict.setSecondFeedback(secondFeedback);
+        feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
+        return feedbackConflict;
+    }
+
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
         toBeImported.setCourse(targetCourse);
@@ -613,6 +632,7 @@ public class ModelFactory {
         job.setId(42);
         job.setFailedTests(failedTests);
         job.setSuccessfulTests(successfulTests);
+        job.setLogs(List.of());
 
         summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
         summary.setSuccessfulCount(successfulTestNames.size());
@@ -659,16 +679,6 @@ public class ModelFactory {
         return report;
     }
 
-    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
-        var category = new StaticCodeAnalysisCategory();
-        category.setName("Bad practice");
-        category.setPenalty(2D);
-        category.setMaxPenalty(10D);
-        category.setState(CategoryState.VISIBLE);
-        category.setProgrammingExercise(programmingExercise);
-        return category;
-    }
-
     private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
         var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
         issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
@@ -681,6 +691,17 @@ public class ModelFactory {
         issue.setMessage("Message");
         issue.setPriority("Priority");
         return issue;
+    }
+
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise, String name, CategoryState state, Double penalty,
+            Double maxPenalty) {
+        var category = new StaticCodeAnalysisCategory();
+        category.setName(name);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(maxPenalty);
+        category.setState(state);
+        category.setProgrammingExercise(programmingExercise);
+        return category;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,9 +19,9 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
+import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import * as Chart from 'chart.js';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
@@ -123,7 +123,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
-        const labels = [];
+        const labels: string[] = [];
         let i;
         for (i = 0; i < this.histogramData.length; i++) {
             labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
@@ -252,8 +252,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
 
         if (this.chart) {
-            this.chart!.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
-            this.chart.update();
+            this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.chart.update(0);
         }
     }
 
@@ -409,7 +409,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(points);
     }
 
-    roundAndPerformLocalConversion(points: number, exp: number, fractions = 1) {
+    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
         return this.localeConversionService.toLocaleString(round(points, exp), fractions);
     }
 }

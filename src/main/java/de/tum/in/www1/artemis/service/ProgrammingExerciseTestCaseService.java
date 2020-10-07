@@ -1,17 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,34 +21,31 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ParticipationService participationService;
-
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionService programmingSubmissionService, ParticipationService participationService) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.participationService = participationService;
     }
 
     /**
      * Returns all test cases for a programming exercise.
      *
-     * @param id of a programming exercise.
+     * @param exerciseId of a programming exercise.
      * @return test cases of a programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseId(id);
+    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long exerciseId) {
+        return this.testCaseRepository.findByExerciseId(exerciseId);
     }
 
     /**
      * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
      *
-     * @param id of a programming exercise.
+     * @param exerciseId of a programming exercise.
      * @return active test cases of a programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long exerciseId) {
+        return this.testCaseRepository.findByExerciseIdAndActive(exerciseId, true);
     }
 
     /**
@@ -124,11 +117,11 @@ public class ProgrammingExerciseTestCaseService {
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true))
                 .collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
-        Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::equals))
+        Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases which activate state flag changed.
         Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = existingTestCases.stream().filter(existing -> {
-            Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::equals).findFirst();
+            Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
             // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
             return matchingText.isEmpty() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());

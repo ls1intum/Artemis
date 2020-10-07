@@ -183,7 +183,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Prepares the task hints using exerciseHints
      */
     private prepareTaskHints() {
-        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id.toString(10), value: title })));
+        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
     }
 
     /** Save the problem statement on the server.
@@ -193,7 +193,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         $event.stopPropagation();
         this.savingInstructions = true;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement!)
+            .updateProblemStatement(this.exercise.id!, this.exercise.problemStatement!)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
@@ -201,7 +201,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 catchError(() => {
                     // TODO: move to programming exercise translations
                     this.jhiAlertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -231,9 +231,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         // Only set up a subscription for test cases if the exercise already exists.
         if (this.editMode) {
             this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exercise.id)
+                .subscribeForTestCases(this.exercise.id!)
                 .pipe(
-                    switchMap((testCases: ProgrammingExerciseTestCase[] | null) => {
+                    switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
                         if (testCases) {
                             const sortedTestCaseNames = compose(
@@ -244,7 +244,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
-                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation.id);
+                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation!.id!);
                         }
                         return of();
                     }),
@@ -266,7 +266,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result: Result | null) => (!result || !result.feedbacks ? throwError('no result available') : result)),
+            rxMap((result) => (!result || !result.feedbacks ? throwError('no result available') : result)),
             rxMap(({ feedbacks }: Result) =>
                 compose(
                     map(({ text }) => text),

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -11,6 +8,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyFactory;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -29,14 +27,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"), @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public abstract class QuizQuestion extends DomainObject {
 
     @Column(name = "title")
     @JsonView(QuizView.Before.class)
@@ -78,14 +69,6 @@ public abstract class QuizQuestion implements Serializable {
     @ManyToOne
     @JsonIgnore
     private QuizExercise exercise;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -226,26 +209,6 @@ public abstract class QuizQuestion implements Serializable {
     public Boolean isValid() {
         // check title and score
         return getTitle() != null && !getTitle().equals("") && getScore() >= 0;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizQuestion quizQuestion = (QuizQuestion) o;
-        if (quizQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     /**

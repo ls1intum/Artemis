@@ -58,7 +58,8 @@
             "assessmentDueDate": "Assessment Due Date",
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "dateNotSet": "No date set",
-            "maxScore": "Max Score",
+            "points": "Points",
+            "bonusPoints": "Bonus Points",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",
@@ -138,11 +139,14 @@
                 "packageName": {
                     "pattern": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!"
                 },
-                "maxScore": {
-                    "pattern": "The maximum score must be between 1 and 9999!"
+                "points": {
+                    "pattern": "The points must be between 1 and 9999!"
+                },
+                "bonusPoints": {
+                    "pattern": "The bonus points must be between 1 and 9999!"
                 },
                 "maxPenalty": {
-                    "pattern": "The maximum penalty must be between 0 and 100!"
+                    "pattern": "The maximum penalty must be between 0 and 100 percent!"
                 }
             },
             "exam": "Exam"

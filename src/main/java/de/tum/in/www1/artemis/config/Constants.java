@@ -67,7 +67,7 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
     // Used to cut off CI specific path segments when receiving static code analysis reports
-    public static final String ASSIGNMENT_DIRECTORY = "/assignment/";
+    public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
@@ -134,6 +134,12 @@ public final class Constants {
     public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
+
+    public static final String REGISTRATION_ENABLED = "registrationEnabled";
+
+    public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
+
+    public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
 

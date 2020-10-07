@@ -61,7 +61,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     }
 
     // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-    if ([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasStudentParticipations(exercise)) {
+    if (exercise.type && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasStudentParticipations(exercise)) {
         return participationStatusForModelingTextFileUploadExercise(exercise);
     }
 
@@ -74,13 +74,13 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     ];
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-    if (!hasStudentParticipations(exercise) || programmingExerciseStates.includes(exercise.studentParticipations[0].initializationState)) {
+    if (!hasStudentParticipations(exercise) || programmingExerciseStates.includes(exercise.studentParticipations![0].initializationState!)) {
         if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise)) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
         }
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }
     return ParticipationStatus.INACTIVE;
@@ -114,12 +114,12 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
         return ParticipationStatus.QUIZ_UNINITIALIZED;
     } else if (!hasStudentParticipations(exercise)) {
         return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
         return ParticipationStatus.QUIZ_ACTIVE;
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
         return ParticipationStatus.QUIZ_SUBMITTED;
     } else {
-        return !hasResults(exercise.studentParticipations[0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
+        return !hasResults(exercise.studentParticipations![0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
     }
 };
 
@@ -130,7 +130,7 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
  * @return {ParticipationStatus}
  */
 const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise): ParticipationStatus => {
-    const participation = exercise.studentParticipations[0];
+    const participation = exercise.studentParticipations![0];
 
     // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date.
     // A more detailed evaluation of active exercises takes place in the result component.
@@ -157,7 +157,12 @@ export const areManualResultsAllowed = (exercise: Exercise) => {
         return false;
     }
     // Only allow new results if manual reviews are activated and the due date/after due date has passed
-    const exc = exercise as ProgrammingExercise;
-    const relevantDueDate = exc.buildAndTestStudentSubmissionsAfterDueDate ? exc.buildAndTestStudentSubmissionsAfterDueDate : exc.dueDate;
-    return exc.isAtLeastTutor && exc.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
+    const progEx = exercise as ProgrammingExercise;
+    const relevantDueDate = progEx.buildAndTestStudentSubmissionsAfterDueDate ?? progEx.dueDate;
+    return (
+        progEx.isAtLeastTutor === true &&
+        progEx.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
+        (!relevantDueDate || moment(relevantDueDate).isBefore(now())) &&
+        (!progEx.assessmentDueDate || progEx.assessmentDueDate.isAfter(now()))
+    );
 };

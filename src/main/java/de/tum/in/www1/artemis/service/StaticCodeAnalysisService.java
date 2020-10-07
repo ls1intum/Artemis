@@ -6,20 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.internal.metrics.managementcenter.ConcurrentArrayRingbuffer;
-
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisConfiguration;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 
@@ -29,14 +25,18 @@ public class StaticCodeAnalysisService {
     private final Logger log = LoggerFactory.getLogger(StaticCodeAnalysisService.class);
 
     @Qualifier("staticCodeAnalysisConfiguration")
-    private final Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations;
+
+    private final Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    ProgrammingSubmissionService programmingSubmissionService;
+
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, StaticCodeAnalysisConfiguration> staticCodeAnalysisDefaultConfigurations) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingSubmissionService programmingSubmissionService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -57,7 +57,7 @@ public class StaticCodeAnalysisService {
      */
     public void createDefaultCategories(ProgrammingExercise programmingExercise) {
         // Retrieve the default configuration for a specific programming language
-        StaticCodeAnalysisConfiguration defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
+        List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
         if (defaultConfiguration == null) {
             log.debug("Could not create default static code analysis categories for exercise " + programmingExercise.getId() + ". Default configuration not available.");
             return;
@@ -65,7 +65,7 @@ public class StaticCodeAnalysisService {
 
         // Create new static code analysis using the default configuration as a template
         List<StaticCodeAnalysisCategory> newCategories = new ArrayList<>();
-        for (var defaultCategory : defaultConfiguration.getDefaultCategories()) {
+        for (var defaultCategory : defaultConfiguration) {
             StaticCodeAnalysisCategory newCategory = new StaticCodeAnalysisCategory();
             newCategory.setName(defaultCategory.getName());
             newCategory.setPenalty(defaultCategory.getPenalty());
@@ -103,17 +103,33 @@ public class StaticCodeAnalysisService {
             originalCategory.setState(matchingCategory.getState());
         }
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
+
+        // At least one category was updated. We use this flag to inform the instructor about outdated student results.
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+
         return originalCategories;
     }
 
-    public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisConfiguration.CategoryMapping>>> getCategoriesWithMappingForExercise(
+    /**
+     * Links the categories of an exercise with the default category mappings.
+     * @param programmingExercise The programming exercise
+     * @return A list of pairs of categories and their mappings.
+     */
+    public List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> getCategoriesWithMappingForExercise(
             ProgrammingExercise programmingExercise) {
         var categories = findByExerciseId(programmingExercise.getId());
-        var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage()).getDefaultCategories();
+        var defaultCategories = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
 
-        return categories.stream()
-                .map(category -> defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst()
-                        .map(StaticCodeAnalysisConfiguration.DefaultCategory::getCategoryMappings).map(mappings -> new ImmutablePair<>(category, mappings)))
-                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<ImmutablePair<StaticCodeAnalysisCategory, List<StaticCodeAnalysisDefaultCategory.CategoryMapping>>> categoryPairsWithMapping = new ArrayList<>();
+
+        for (var category : categories) {
+            var defaultCategoryMatch = defaultCategories.stream().filter(defaultCategory -> defaultCategory.getName().equals(category.getName())).findFirst();
+            if (defaultCategoryMatch.isPresent()) {
+                var categoryMappings = defaultCategoryMatch.get().getCategoryMappings();
+                categoryPairsWithMapping.add(new ImmutablePair<>(category, categoryMappings));
+            }
+        }
+
+        return categoryPairsWithMapping;
     }
 }

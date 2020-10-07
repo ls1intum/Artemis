@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.MalformedURLException;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,22 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -155,44 +146,44 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
-        final var search = databse.configureSearch("");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        final var search = database.configureSearch("");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        final var search = databse.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
-        databse.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
-        final var searchPython = databse.configureSearch("Python");
-        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchPython));
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var searchPython = database.configureSearch("Python");
+        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
 
-        final var searchJava = databse.configureSearch("Java");
-        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchJava));
+        final var searchJava = database.configureSearch("Java");
+        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
 
-        final var searchSwift = databse.configureSearch("Swift");
-        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(searchSwift));
+        final var searchSwift = database.configureSearch("Swift");
+        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isEmpty();
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testAdminGetsResultsFromAllCourses() throws Exception {
-        databse.addCourseInOtherInstructionGroupAndExercise("Programming");
-        final var search = databse.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, databse.exerciseSearchMapping(search));
+        database.addCourseInOtherInstructionGroupAndExercise("Programming");
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(2);
     }
 

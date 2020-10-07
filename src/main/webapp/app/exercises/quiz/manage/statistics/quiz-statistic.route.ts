@@ -5,13 +5,14 @@ import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-s
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const quizStatisticRoute: Routes = [
     {
         path: ':courseId/quiz-exercises/:exerciseId/quiz-statistic',
         component: QuizStatisticComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -20,7 +21,7 @@ export const quizStatisticRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/quiz-point-statistic',
         component: QuizPointStatisticComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -29,7 +30,7 @@ export const quizStatisticRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/mc-question-statistic/:questionId',
         component: MultipleChoiceQuestionStatisticComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -38,7 +39,7 @@ export const quizStatisticRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/dnd-question-statistic/:questionId',
         component: DragAndDropQuestionStatisticComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -47,7 +48,7 @@ export const quizStatisticRoute: Routes = [
         path: ':courseId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
         component: ShortAnswerQuestionStatisticComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],

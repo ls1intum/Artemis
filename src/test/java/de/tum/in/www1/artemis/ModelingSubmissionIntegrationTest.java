@@ -255,6 +255,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getCreatedDate()).isNotNull();
+        assertThat(version.get().getLastModifiedDate()).isNotNull();
 
         database.changeUser("student2");
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -21,7 +22,6 @@ import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.UserService;
 
 /**
  * REST controller for managing static code analysis.
@@ -98,40 +98,54 @@ public class StaticCodeAnalysisResource {
             return forbidden();
         }
 
-        // Validate the category updates
-        for (var category : categories) {
-            // Each categories must have an id
-            if (category.getId() == null) {
-                return badRequest(ENTITY_NAME, "scaCategoryIdError", "Static code analysis category id is missing.");
-            }
-
-            // Penalty must not be null or negative
-            if (category.getPenalty() == null || category.getPenalty() < 0) {
-                return badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryPenaltyError",
-                        "Penalty for static code analysis category " + category.getId() + " must be a non-negative integer.");
-            }
-
-            // MaxPenalty must not be smaller than penalty
-            if (category.getMaxPenalty() != null && category.getPenalty() > category.getMaxPenalty()) {
-                return badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryMaxPenaltyError",
-                        "Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty.");
-            }
-
-            // Category state must not be null
-            if (category.getState() == null) {
-                return badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryStateError",
-                        "Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty.");
-            }
-
-            // Exercise id of the request path must match the exerciseId in the request body if present
-            if (category.getExercise() != null && !Objects.equals(category.getExercise().getId(), exerciseId)) {
-                return conflict(ENTITY_NAME + " " + category.getId(), "scaCategoryExerciseIdError",
-                        "Exercise id path variable does not match exercise id of static code analysis category " + category.getId());
-            }
+        var optionalError = validateCategories(categories, exerciseId);
+        if (optionalError.isPresent()) {
+            return optionalError.get();
         }
 
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.updateCategories(exerciseId, categories);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
+    }
+
+    /**
+     * Validates static code analysis categories
+     *
+     * @param categories to be validated
+     * @param exerciseId path variable
+     * @return empty optional if no error was found otherwise optional with an error response
+     */
+    private Optional<ResponseEntity<Set<StaticCodeAnalysisCategory>>> validateCategories(Set<StaticCodeAnalysisCategory> categories, Long exerciseId) {
+        for (var category : categories) {
+            // Each categories must have an id
+            if (category.getId() == null) {
+                return Optional.of(badRequest(ENTITY_NAME, "scaCategoryIdError", "Static code analysis category id is missing."));
+            }
+
+            // Penalty must not be null or negative
+            if (category.getPenalty() == null || category.getPenalty() < 0) {
+                return Optional.of(badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryPenaltyError",
+                        "Penalty for static code analysis category " + category.getId() + " must be a non-negative integer."));
+            }
+
+            // MaxPenalty must not be smaller than penalty
+            if (category.getMaxPenalty() != null && category.getPenalty() > category.getMaxPenalty()) {
+                return Optional.of(badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryMaxPenaltyError",
+                        "Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty."));
+            }
+
+            // Category state must not be null
+            if (category.getState() == null) {
+                return Optional.of(badRequest(ENTITY_NAME + " " + category.getId(), "scaCategoryStateError",
+                        "Max Penalty for static code analysis category " + category.getId() + " must not be smaller than the penalty."));
+            }
+
+            // Exercise id of the request path must match the exerciseId in the request body if present
+            if (category.getExercise() != null && !Objects.equals(category.getExercise().getId(), exerciseId)) {
+                return Optional.of(conflict(ENTITY_NAME + " " + category.getId(), "scaCategoryExerciseIdError",
+                        "Exercise id path variable does not match exercise id of static code analysis category " + category.getId()));
+            }
+        }
+        return Optional.empty();
     }
 
     public static final class Endpoints {

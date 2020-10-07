@@ -7,8 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 
 @Repository
@@ -104,7 +108,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
             newSubmission.setExampleSubmission(true);
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
-            newSubmission.setLanguage(originalSubmission.getLanguage());
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());

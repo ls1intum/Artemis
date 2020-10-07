@@ -5,14 +5,10 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.ServletContextInitializer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import io.sentry.Sentry;
-import io.sentry.SentryClient;
 
 @Configuration
 @Profile("prod")
@@ -30,7 +26,7 @@ public class SentryConfiguration {
     private String SENTRY_DSN;
 
     /**
-     * init sentry with the correct pacakge name and Artemis version
+     * init sentry with the correct package name and Artemis version
      */
     @PostConstruct
     public void init() {
@@ -41,19 +37,11 @@ public class SentryConfiguration {
             return;
         }
 
-        final SentryClient client = Sentry.init(dsn);
-        client.setRelease(VERSION);
-        client.setEnvironment(getEnvironment());
-    }
-
-    @Bean
-    public HandlerExceptionResolver sentryExceptionResolver() {
-        return new io.sentry.spring.SentryExceptionResolver();
-    }
-
-    @Bean
-    public ServletContextInitializer sentryServletContextInitializer() {
-        return new io.sentry.spring.SentryServletContextInitializer();
+        Sentry.init(options -> {
+            options.setDsn(dsn);
+            options.setEnvironment(getEnvironment());
+            options.setRelease(VERSION);
+        });
     }
 
     private String getEnvironment() {

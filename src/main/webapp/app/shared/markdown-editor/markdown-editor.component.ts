@@ -388,7 +388,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         $event.preventDefault();
         if ($event.dataTransfer?.items) {
             // Use DataTransferItemList interface to access the file(s)
-            const files = [];
+            const files = new Array<File>();
             for (let i = 0; i < $event.dataTransfer.items.length; i++) {
                 // If dropped items aren't files, reject them
                 if ($event.dataTransfer.items[i].kind === 'file') {
@@ -412,7 +412,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     onFilePaste($event: ClipboardEvent): void {
         if ($event.clipboardData?.items) {
-            const images = [];
+            const images = new Array<File>();
             for (let i = 0; i < $event.clipboardData.items.length; i++) {
                 if ($event.clipboardData.items[i].kind === 'file') {
                     const file = $event.clipboardData.items[i].getAsFile();

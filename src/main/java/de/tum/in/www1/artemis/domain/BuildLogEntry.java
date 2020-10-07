@@ -1,20 +1,47 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Created by Josias Montag on 11.11.16.
  */
-public class BuildLogEntry {
+@Entity
+@Table(name = "build_log_entry")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class BuildLogEntry extends DomainObject {
 
+    @Column(name = "time")
     private ZonedDateTime time;
 
+    @Column(name = "log")
     private String log;
+
+    @ManyToOne
+    @JsonIgnore
+    private ProgrammingSubmission programmingSubmission;
+
+    public BuildLogEntry() {
+        // Required for Hibernate
+    }
 
     public BuildLogEntry(ZonedDateTime time, String log) {
         this.time = time;
         this.log = log;
+    }
+
+    public BuildLogEntry(ZonedDateTime time, String log, ProgrammingSubmission programmingSubmission) {
+        this.time = time;
+        this.log = log;
+        this.programmingSubmission = programmingSubmission;
     }
 
     public ZonedDateTime getTime() {
@@ -33,28 +60,16 @@ public class BuildLogEntry {
         this.log = log;
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
-            return false;
-        }
-        BuildLogEntry that = (BuildLogEntry) object;
-        if (time != null && that.time != null) {
-            return Objects.equals(time.toInstant(), that.time.toInstant()) && Objects.equals(log, that.log);
-        }
-        else if (time == null && that.time == null) {
-            return Objects.equals(log, that.log);
-        }
-        else {
-            return false;
-        }
+    public ProgrammingSubmission getProgrammingSubmission() {
+        return programmingSubmission;
+    }
+
+    public void setProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        this.programmingSubmission = programmingSubmission;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(time, log);
+    public String toString() {
+        return "BuildLogEntry{" + "time=" + time + ", log='" + log + '\'' + '}';
     }
 }

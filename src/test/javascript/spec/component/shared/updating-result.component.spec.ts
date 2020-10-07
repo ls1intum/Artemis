@@ -36,7 +36,7 @@ describe('UpdatingResultComponent', () => {
     let programmingSubmissionService: ProgrammingSubmissionService;
 
     let subscribeForLatestResultOfParticipationStub: SinonStub;
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
 
     let getLatestPendingSubmissionStub: SinonStub;
 
@@ -78,20 +78,19 @@ describe('UpdatingResultComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(
                     subscribeForLatestResultOfParticipationSubject,
                 );
 
-                getLatestPendingSubmissionStub = stub(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').returns(
-                    of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]),
-                );
+                const programmingSubmissionStateObj = { participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
+                getLatestPendingSubmissionStub = stub(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').returns(of(programmingSubmissionStateObj));
             });
     });
 
     afterEach(() => {
         subscribeForLatestResultOfParticipationStub.restore();
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
     });
 
@@ -178,7 +177,7 @@ describe('UpdatingResultComponent', () => {
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         comp.isBuilding = true;
-        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]));
+        getLatestPendingSubmissionStub.returns(of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, undefined]));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).to.have.been.calledOnceWithExactly(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).to.equal(false);

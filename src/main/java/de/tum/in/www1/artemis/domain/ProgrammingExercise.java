@@ -5,10 +5,10 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 
@@ -37,8 +38,6 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
-
-    private static final long serialVersionUID = 1L;
 
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
@@ -178,17 +177,12 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
 
-        Pattern p = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
-        Matcher m = p.matcher(repoUrl);
-        if (!m.matches() || m.groupCount() != 1)
+        Pattern pattern = Pattern.compile(".*/(.*-" + repoType.getName() + ")\\.git");
+        Matcher matcher = pattern.matcher(repoUrl);
+        if (!matcher.matches() || matcher.groupCount() != 1)
             return null;
 
-        return m.group(1);
-    }
-
-    public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {
-        this.testRepositoryUrl = testRepositoryUrl;
-        return this;
+        return matcher.group(1);
     }
 
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
@@ -223,11 +217,6 @@ public class ProgrammingExercise extends Exercise {
         return publishBuildPlanUrl;
     }
 
-    public ProgrammingExercise publishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-        return this;
-    }
-
     public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
         this.publishBuildPlanUrl = publishBuildPlanUrl;
     }
@@ -236,22 +225,12 @@ public class ProgrammingExercise extends Exercise {
         return allowOnlineEditor;
     }
 
-    public ProgrammingExercise allowOnlineEditor(Boolean allowOnlineEditor) {
-        this.allowOnlineEditor = allowOnlineEditor;
-        return this;
-    }
-
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
     }
 
     public Boolean isAllowOfflineIde() {
         return allowOfflineIde;
-    }
-
-    public ProgrammingExercise allowOfflineIde(Boolean allowOfflineIde) {
-        this.allowOfflineIde = allowOfflineIde;
-        return this;
     }
 
     public void setAllowOfflineIde(Boolean allowOfflineIde) {
@@ -309,7 +288,9 @@ public class ProgrammingExercise extends Exercise {
     public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
-                return submission.getResult().isRated();
+                return (submission.getResult().isRated() && !submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL))
+                        || submission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)
+                                && (this.getAssessmentDueDate() == null || this.getAssessmentDueDate().isBefore(ZonedDateTime.now()));
             }
             return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
                     || submission.getSubmissionDate().isBefore(this.getDueDate());
@@ -331,11 +312,6 @@ public class ProgrammingExercise extends Exercise {
 
     public String getPackageName() {
         return packageName;
-    }
-
-    public ProgrammingExercise packageName(String packageName) {
-        this.packageName = packageName;
-        return this;
     }
 
     public void setPackageName(String packageName) {
@@ -458,7 +434,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @JsonProperty("sequentialTestRuns")
-    public Boolean hasSequentialTestRuns() {
+    public boolean hasSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
         }
@@ -510,6 +486,44 @@ public class ProgrammingExercise extends Exercise {
         super.filterSensitiveInformation();
     }
 
+    @Override
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return participation.getResults().stream()
+                .filter(result -> (result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    @Nullable
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+        // for most types of exercises => return latest result (all results are relevant)
+        Submission latestSubmission = null;
+        // we get the results over the submissions
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+            return null;
+        }
+        for (var submission : participation.getSubmissions()) {
+            var result = submission.getResult();
+            if (result == null) {
+                continue;
+            }
+            // NOTE: for the dashboard we only use rated results with completion date or automatic result
+            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            if ((result.getAssessmentType().equals(AssessmentType.MANUAL) && isAssessmentOver) || result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+                // take the first found result that fulfills the above requirements
+                if (latestSubmission == null) {
+                    latestSubmission = submission;
+                }
+                // take newer results and thus disregard older ones
+                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestSubmission = submission;
+                }
+            }
+        }
+        return latestSubmission;
+    }
+
     /**
      * Check if manual results are allowed for the exercise
      * @return true if manual results are allowed, false otherwise
@@ -518,26 +532,6 @@ public class ProgrammingExercise extends Exercise {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) o;
-        if (programmingExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), programmingExercise.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
