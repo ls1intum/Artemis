@@ -350,6 +350,9 @@ public class Course extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
+    /**
+     * Adds a learning goal to a course and updates the other side of the relationship
+     */
     public Course addLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.add(learningGoal);
         if (learningGoal.getCourse() != this) {
@@ -359,6 +362,9 @@ public class Course extends DomainObject {
         return this;
     }
 
+    /**
+     * Removes a learning goal and updates the other side of the relationship
+     */
     public Course removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
         learningGoal.setCourse(null);
