@@ -200,7 +200,7 @@ public class BitbucketService extends AbstractVersionControlService {
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-
+        HttpEntity<?> entity = new HttpEntity<>(body, null);
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = bitbucketServerUrl + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
 
@@ -213,7 +213,7 @@ public class BitbucketService extends AbstractVersionControlService {
              */
             for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
-                    final var response = restTemplate.postForEntity(new URI(repoUrl), null, Map.class);
+                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }

@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
@@ -48,9 +49,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("bitbucket")
-    public RestTemplate bitbucketRestTemplate() {
-        // TODO: authenticate here
-        return new RestTemplate();
+    public RestTemplate bitbucketRestTemplate(BitbucketAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor);
     }
 
     @Bean
