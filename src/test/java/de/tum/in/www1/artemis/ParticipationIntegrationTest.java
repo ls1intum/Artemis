@@ -241,7 +241,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteResultWithoutSubmission() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
-        database.addResultToParticipation(studentParticipation);
+        database.addResultToParticipation(null, null, studentParticipation);
         Long participationId = studentParticipation.getId();
 
         // Participation should now exist.
@@ -323,7 +323,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getAllParticipationsForExercise_withLatestResult() throws Exception {
         database.addParticipationForExercise(textExercise, "student1");
         var participation = database.addParticipationForExercise(textExercise, "student2");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70).participation(participation);
         resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
@@ -442,7 +442,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResult() throws Exception {
         var participation = database.addParticipationForExercise(textExercise, "student1");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);

@@ -11,8 +11,8 @@ export class ActivateService {
      * Sends request to the server to activate the user
      * @param key the activation key
      */
-    get(key: string): Observable<void> {
-        return this.http.get<void>(SERVER_API_URL + 'api/activate', {
+    get(key: string): Observable<{}> {
+        return this.http.get(SERVER_API_URL + 'api/activate', {
             params: new HttpParams().set('key', key),
         });
     }

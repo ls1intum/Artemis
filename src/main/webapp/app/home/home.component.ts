@@ -33,6 +33,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     username: string;
     captchaRequired = false;
     credentials: Credentials;
+    isRegistrationEnabled = false;
 
     usernameRegexPattern = TUM_USERNAME_REGEX; // default, might be overridden in ngOnInit
     signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
@@ -74,6 +75,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                         this.externalUserManagementUrl = info.externalUserManagementURL;
                         this.externalUserManagementName = info.externalUserManagementName;
                     }
+
+                    this.isRegistrationEnabled = info.registrationEnabled || false;
                 }),
             )
             .subscribe();
@@ -139,6 +142,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
+                // TODO: if registration is enabled, handle the case "User was not activated"
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
@@ -157,13 +161,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
         return this.accountService.isAuthenticated();
     }
 
-    register() {
-        this.router.navigate(['/register']);
-    }
-
-    requestResetPassword() {
-        this.router.navigate(['/reset', 'request']);
-    }
     inputChange($event: any) {
         if ($event.target && $event.target.name === 'username') {
             this.username = $event.target.value;

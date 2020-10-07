@@ -3,6 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/of';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export class MockUserService {
     query(req?: any): Observable<HttpResponse<User[]>> {
@@ -16,7 +17,7 @@ export class MockUserService {
                     'alexandros.tsakpinis@tum.de',
                     false,
                     'en',
-                    ['ROLE_USER', 'ROLE_ADMIN'],
+                    [Authority.USER, Authority.ADMIN],
                     ['jira-users', 'tumuser', 'eist2019students'],
                     'anonymousUser',
                     new Date('2020-03-03T09:01:43Z'),

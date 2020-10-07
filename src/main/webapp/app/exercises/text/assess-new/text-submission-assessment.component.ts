@@ -23,6 +23,8 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { Course } from 'app/entities/course.model';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -56,6 +58,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     isAtLeastInstructor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    hasAssessmentDueDatePassed: boolean;
 
     /*
      * Non-resetted properties:
@@ -142,7 +145,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
 
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
@@ -160,6 +163,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
+
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();

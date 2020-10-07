@@ -78,14 +78,14 @@
                         name="password"
                         id="password"
                         placeholder="{{ 'global.menu.account.password' | translate }}"
-                        minlength="4"
+                        minlength="8"
                         maxlength="100"
                         #password="ngModel"
                         [(ngModel)]="user.password"
                     />
                     <div *ngIf="password.dirty && password.invalid">
-                        <small class="form-text text-danger" *ngIf="password.errors?.maxlength" [translateValues]="{ max: 50 }" jhiTranslate="userManagement.passwordConstraints">
-                            The password has to contain 4-100 characters!
+                        <small class="form-text text-danger" *ngIf="password.errors?.maxlength" [translateValues]="{ max: 100 }" jhiTranslate="userManagement.passwordConstraints">
+                            The password has to contain 8-100 characters!
                         </small>
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>
-                    <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="254" email />
+                    <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="100" email />
 
                     <div *ngIf="emailInput.dirty && emailInput.invalid">
                         <small class="form-text text-danger" *ngIf="emailInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
