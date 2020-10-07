@@ -409,19 +409,25 @@ public abstract class Exercise extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
+    /**
+     * Adds a learning goal to the exercise. Also handles the other side of the relationship.
+     * @param learningGoal the learning goal to add
+     * @return the exercise with the learning goal added
+     */
     public Exercise addLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.add(learningGoal);
-        if (!learningGoal.getExercises().contains(this)) {
-            learningGoal.getExercises().add(this);
-        }
+        learningGoal.getExercises().add(this);
         return this;
     }
 
+    /**
+     * Removes an learning goal from the exercise. Also handles the other side of the relationship
+     * @param learningGoal the learning goal to remove
+     * @return the exercise with the learning goal removed
+     */
     public Exercise removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
-        if (learningGoal.getExercises().contains(this)) {
-            learningGoal.getExercises().remove(this);
-        }
+        learningGoal.getExercises().remove(this);
         return this;
     }
 

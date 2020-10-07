@@ -41,9 +41,6 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties("learningGoals")
     private Set<Lecture> lectures = new HashSet<>();
 
-    public LearningGoal() {
-    }
-
     public String getTitle() {
         return title;
     }
@@ -73,7 +70,7 @@ public class LearningGoal extends DomainObject {
             this.course.removeLearningGoal(this);
         }
         this.course = course;
-        if (course != null && !course.getLearningGoals().contains(this)) {
+        if (course != null) {
             course.getLearningGoals().add(this);
         }
     }
@@ -86,6 +83,11 @@ public class LearningGoal extends DomainObject {
         this.lectures = lectures;
     }
 
+    /**
+     * Adds an lecture to the learning goal. Also handles the other side of the relationship
+     * @param lecture the lecture to add
+     * @return learning goal with lecture added
+     */
     public LearningGoal addLecture(Lecture lecture) {
         this.lectures.add(lecture);
         if (!lecture.getLearningGoals().contains(this)) {
@@ -94,6 +96,11 @@ public class LearningGoal extends DomainObject {
         return this;
     }
 
+    /**
+     * Removes a lecture from the learning goal. Also handles the other side of the relationship.
+     * @param lecture the lecture to remove
+     * @return learning goal with lecture removed
+     */
     public LearningGoal removeLecture(Lecture lecture) {
         this.lectures.remove(lecture);
         if (lecture.getLearningGoals().contains(this)) {
@@ -110,6 +117,11 @@ public class LearningGoal extends DomainObject {
         this.exercises = exercises;
     }
 
+    /**
+     * Adds an exercise to the learning goal. Also handles the other side of the relationship
+     * @param exercise the exercise to add
+     * @return learning goal with exercise added
+     */
     public LearningGoal addExercise(Exercise exercise) {
         this.exercises.add(exercise);
         if (!exercise.getLearningGoals().contains(this)) {
@@ -118,6 +130,11 @@ public class LearningGoal extends DomainObject {
         return this;
     }
 
+    /**
+     * Removes an exercise from the learning goal. Also handles the other side of the relationship.
+     * @param exercise the exercise to remove
+     * @return learning goal with exercise removed
+     */
     public LearningGoal removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
         if (exercise.getLearningGoals().contains(this)) {

@@ -136,19 +136,25 @@ public class Lecture extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
+    /**
+     * Adds a learning goal to the lecture. Also handles the other side of the relationship.
+     * @param learningGoal the learning goal to add
+     * @return the lecture with the learning goal added
+     */
     public Lecture addLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.add(learningGoal);
-        if (!learningGoal.getLectures().contains(this)) {
-            learningGoal.getLectures().add(this);
-        }
+        learningGoal.getLectures().add(this);
         return this;
     }
 
+    /**
+     * Removes an learning goal from the lecture. Also handles the other side of the relationship
+     * @param learningGoal the learning goal to remove
+     * @return the lecture with the learning goal removed
+     */
     public Lecture removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
-        if (learningGoal.getLectures().contains(this)) {
-            learningGoal.getLectures().remove(this);
-        }
+        learningGoal.getLectures().remove(this);
         return this;
     }
 

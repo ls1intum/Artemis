@@ -351,7 +351,9 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Adds a learning goal to a course and updates the other side of the relationship
+     * Adds a learning goal to the course. Also handles the other side of the relationship.
+     * @param learningGoal the learning goal to add
+     * @return course with learning goal added
      */
     public Course addLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.add(learningGoal);
@@ -363,7 +365,9 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Removes a learning goal and updates the other side of the relationship
+     * Removes a learning goal from the course. Also handles the other side of the relationship.
+     * @param learningGoal the learning goal to remove
+     * @return course with learning goal removed
      */
     public Course removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
