@@ -13,6 +13,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
@@ -34,7 +35,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
-                        const fileUploadExercise = new FileUploadExercise(null, exerciseGroup.body!);
+                        const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),
@@ -43,14 +44,14 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => {
-                        const fileUploadExercise = new FileUploadExercise(course.body!, null);
+                        const fileUploadExercise = new FileUploadExercise(course.body!, undefined);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),
                 );
             }
         }
-        return Observable.of(new FileUploadExercise());
+        return Observable.of(new FileUploadExercise(undefined, undefined));
     }
 }
 
@@ -62,7 +63,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +75,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -83,7 +84,7 @@ const routes: Routes = [
         path: ':courseId/file-upload-exercises/:exerciseId',
         component: FileUploadExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -92,7 +93,7 @@ const routes: Routes = [
         path: ':courseId/file-upload-exercises',
         component: FileUploadExerciseComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

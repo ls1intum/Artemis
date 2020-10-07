@@ -14,6 +14,7 @@ import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
@@ -33,16 +34,16 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
             if (route.params['examId'] && route.params['groupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
                     filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(null, exerciseGroup.body!)),
+                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(undefined, exerciseGroup.body || undefined)),
                 );
             } else {
                 return this.courseService.find(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new TextExercise(course.body!, null)),
+                    map((course: HttpResponse<Course>) => new TextExercise(course.body || undefined, undefined)),
                 );
             }
         }
-        return Observable.of(new TextExercise());
+        return Observable.of(new TextExercise(undefined, undefined));
     }
 }
 
@@ -55,7 +56,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -65,7 +66,7 @@ export const textExerciseRoute: Routes = [
         path: ':courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -78,7 +79,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -90,7 +91,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -100,7 +101,7 @@ export const textExerciseRoute: Routes = [
         path: ':courseId/text-exercises',
         component: TextExerciseComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

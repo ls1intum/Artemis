@@ -3,24 +3,43 @@ package de.tum.in.www1.artemis.service.plagiarism.text;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.*;
+
+import jplag.ExitException;
+import jplag.Program;
+import jplag.options.CommandLineOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.TextSubmissionExportService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
 public class TextPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
+
+    private final FileService fileService;
+
+    private final TextSubmissionExportService textSubmissionExportService;
+
+    private final ZipFileService zipFileService;
+
+    public TextPlagiarismDetectionService(FileService fileService, TextSubmissionExportService textSubmissionExportService, ZipFileService zipFileService) {
+        this.fileService = fileService;
+        this.textSubmissionExportService = textSubmissionExportService;
+        this.zipFileService = zipFileService;
+    }
 
     /**
      * Convenience method to extract all latest submissions from a TextExercise and compute pair-wise distances.
@@ -81,6 +100,83 @@ public class TextPlagiarismDetectionService {
                 .collect(toList());
         log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
         return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
+    }
+
+    /**
+     * Download all submissions of the exercise, run JPlag, and return the result
+     *
+     * @param textExercise to detect plagiarism for
+     * @return a zip file that can be returned to the client
+     * @throws ExitException is thrown if JPlag exits unexpectedly
+     * @throws IOException   is thrown for file handling errors
+     */
+    public File checkPlagiarism(TextExercise textExercise) throws ExitException, IOException {
+        // TODO: offer the following options in the client
+        // 1) filter empty submissions, i.e. repositories with no student commits
+        // 2) filter submissions with a result score of 0%
+
+        final var jplagResultFolderName = "./tmp/jplag-result";
+        final var submissionsFolderName = "./tmp/submissions";
+        final var zipFilePath = Paths.get(String.format("./tmp/%s-%s-%s-JPlag-Output.zip", textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
+                textExercise.getShortName(), System.currentTimeMillis()));
+
+        final var submissionFolderFile = new File(submissionsFolderName);
+        submissionFolderFile.mkdirs();
+
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise);
+
+        textSubmissions.forEach(submission -> {
+            submission.getParticipation().setExercise(null);
+            submission.setResult(null);
+            submission.getParticipation().setSubmissions(null);
+
+            try {
+                textSubmissionExportService.saveSubmissionToFile(textExercise, submission, submissionsFolderName);
+            }
+            catch (IOException e) {
+                log.error(e.getMessage());
+            }
+        });
+
+        final var jplagResultFolderFile = new File(jplagResultFolderName);
+        jplagResultFolderFile.mkdirs();
+
+        final var jplagArgs = new String[] {
+                // Language: text
+                "-l", "text",
+
+                // Name of directory in which the resulting web pages will be stored
+                "-r", jplagResultFolderName,
+
+                // Option to look at sub-directories too
+                "-s",
+
+                // Name of the directory which contains the base code
+                // "-bc", templateRepoName,
+
+                // Specify verbosity
+                "-vq",
+
+                // The root-directory that contains all submissions
+                submissionsFolderName };
+
+        final CommandLineOptions options = new CommandLineOptions(jplagArgs, null);
+        final Program program = new Program(options);
+        program.run();
+
+        zipFileService.createZipFileWithFolderContent(zipFilePath, jplagResultFolderFile.toPath());
+        fileService.scheduleForDeletion(zipFilePath, 5);
+
+        // cleanup
+        if (jplagResultFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(jplagResultFolderFile);
+        }
+
+        if (submissionFolderFile.exists()) {
+            FileSystemUtils.deleteRecursively(submissionFolderFile);
+        }
+
+        return new File(zipFilePath.toString());
     }
 
 }

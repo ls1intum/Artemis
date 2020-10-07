@@ -3,19 +3,19 @@ import { ArtemisTestModule } from '../../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import moment = require('moment');
+import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
-    let artemisDurationPipe: ArtemisDurationFromSecondsPipe;
 
     const course = { id: 1 } as Course;
-    const exerciseGroup1 = { id: 1 } as ExerciseGroup;
+    const exercise = { id: 1 } as Exercise;
+    const exerciseGroup1 = { id: 1, exercises: [exercise] } as ExerciseGroup;
     const exam = { id: 1, course, started: true, startDate: moment(), endDate: moment().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
+    const exerciseGroup2 = { id: 2 } as ExerciseGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,7 +28,6 @@ describe('Create Test Run Modal Component', () => {
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
         comp = fixture.componentInstance;
-        artemisDurationPipe = fixture.debugElement.injector.get(ArtemisDurationFromSecondsPipe);
     });
 
     describe('OnInit', () => {
@@ -40,10 +39,19 @@ describe('Create Test Run Modal Component', () => {
             expect(!!comp.workingTimeForm).toBeTruthy();
         }));
     });
+
+    describe('Ignore Exercise groups', () => {
+        it('should ignore exercise groups with no exercises', function () {
+            comp.exam = exam;
+            comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
+            fixture.detectChanges();
+            expect(comp.exam.exerciseGroups!.length).toBe(1);
+        });
+    });
+
     describe('Exercise Selection', () => {
         it('should highlight the exercise when pressed', fakeAsync(() => {
             comp.exam = exam;
-            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);
@@ -52,7 +60,6 @@ describe('Create Test Run Modal Component', () => {
         }));
         it('should allow submit when an exercise has been selected for every exercise group', fakeAsync(() => {
             comp.exam = exam;
-            const exercise = { id: 1 } as Exercise;
             // WHEN
             // @ts-ignore
             comp.onSelectExercise(exercise, exam.exerciseGroups[0]!);

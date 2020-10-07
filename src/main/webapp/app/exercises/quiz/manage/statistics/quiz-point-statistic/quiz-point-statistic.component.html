@@ -11,13 +11,13 @@
                 <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
             </p>
             <div class="row">
-                <div class="col-md-8 text-left">
+                <div class="col-md-7 text-left">
                     <p style="font-size: large">
                         <span *ngIf="rated" jhiTranslate="showStatistic.quizPointStatistic.titleRated"></span>
                         <span *ngIf="!rated" jhiTranslate="showStatistic.quizPointStatistic.titleUnrated"></span>
                     </p>
                 </div>
-                <div class="col-md-3 text-right">
+                <div class="col-md-5 text-right">
                     <p style="font-size: large">
                         <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                     </p>

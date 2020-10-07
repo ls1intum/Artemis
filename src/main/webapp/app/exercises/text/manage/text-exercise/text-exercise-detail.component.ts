@@ -9,7 +9,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { SubmissionComparisonDTO, TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { downloadFile } from 'app/shared/util/download.util';
+import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ExportToCsv } from 'export-to-csv';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
@@ -109,7 +109,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes of the text exercise.
      */
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id));
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id!));
     }
 
     checkPlagiarismJson() {
@@ -118,6 +118,17 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             const blob = new Blob([json], { type: 'application/json' });
             downloadFile(blob, `check-plagiarism-text-exercise_${this.textExercise.id}.json`);
         });
+    }
+
+    checkPlagiarismJPlag() {
+        this.checkPlagiarismInProgress = true;
+        this.textExerciseService.checkPlagiarismJPlag(this.textExercise.id!).subscribe(
+            (response: HttpResponse<Blob>) => {
+                this.checkPlagiarismInProgress = false;
+                downloadZipFileFromResponse(response);
+            },
+            () => (this.checkPlagiarismInProgress = false),
+        );
     }
 
     checkPlagiarismCsv() {
@@ -139,8 +150,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 const csvData = data.map((dto) => {
                     const submissionA = dto.submissions[0];
                     const submissionB = dto.submissions[1];
-                    const studentA = (submissionA.participation as StudentParticipation).student;
-                    const studentB = (submissionB.participation as StudentParticipation).student;
+                    const studentA = (submissionA.participation as StudentParticipation).student!;
+                    const studentB = (submissionB.participation as StudentParticipation).student!;
                     return Object.assign(
                         {
                             'Student A': fullname(studentA),
@@ -159,7 +170,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     private checkPlagiarism(completionHandler: (data: Array<SubmissionComparisonDTO>) => void) {
         this.checkPlagiarismInProgress = true;
-        this.textExerciseService.checkPlagiarism(this.textExercise.id).subscribe(
+        this.textExerciseService.checkPlagiarism(this.textExercise.id!).subscribe(
             (response: HttpResponse<Array<SubmissionComparisonDTO>>) => {
                 this.checkPlagiarismInProgress = false;
                 completionHandler(response.body!);

@@ -29,7 +29,7 @@ describe('AccountService', () => {
         accountService = new AccountService(new MockLanguageService(), new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = stub(httpService, 'get');
 
-        expect(accountService.userIdentity).to.deep.equal(null);
+        expect(accountService.userIdentity).to.deep.equal(undefined);
         expect(accountService.isAuthenticated()).to.be.false;
     }));
 

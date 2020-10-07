@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -255,7 +254,7 @@ public class LtiService {
 
         // Make sure the user is activated
         if (!user.getActivated()) {
-            userService.activateRegistration(user.getActivationKey());
+            userService.activateUser(user);
         }
 
         log.info("Signing in as {}", username);
@@ -443,37 +442,32 @@ public class LtiService {
     public void onNewResult(ProgrammingExerciseStudentParticipation participation) {
         if (this.OAUTH_KEY.isPresent() && this.OAUTH_SECRET.isPresent()) {
             // Get the LTI outcome URL
-            participation.getStudents().forEach(student -> {
-                ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
+            participation.getStudents().forEach(student -> ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
-                    String score = "0.00";
+                String score = "0.00";
 
-                    // Get the latest result
-                    Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                // Get the latest result
+                Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-                    if (latestResult.isPresent() && latestResult.get().getScore() != null) {
-                        // LTI scores needs to be formatted as String between "0.00" and "1.00"
-                        score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
-                    }
+                if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                    // LTI scores needs to be formatted as String between "0.00" and "1.00"
+                    score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
+                }
 
-                    try {
-                        log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
-                                ltiOutcomeUrl.getSourcedId());
-                        HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY.get(), OAUTH_SECRET.get(), ltiOutcomeUrl.getSourcedId(), score, null,
-                                false);
-                        HttpClient client = HttpClientBuilder.create().build();
-                        HttpResponse response = client.execute(request);
-                        String responseString = new BasicResponseHandler().handleResponse(response);
-                        log.info("Response from LTI consumer: {}", responseString);
-                        if (response.getStatusLine().getStatusCode() >= 400) {
-                            throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
-                        }
-                    }
-                    catch (Exception e) {
-                        log.error("Reporting to LTI consumer failed: {}", e, e);
-                    }
-                });
-            });
+                try {
+                    log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
+                            ltiOutcomeUrl.getSourcedId());
+                    HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY.get(), OAUTH_SECRET.get(), ltiOutcomeUrl.getSourcedId(), score, null,
+                            false);
+                    HttpClient client = HttpClientBuilder.create().build();
+                    HttpResponse response = client.execute(request);
+                    String responseString = new BasicResponseHandler().handleResponse(response);
+                    log.info("Response from LTI consumer: {}", responseString);
+                }
+                catch (Exception ex) {
+                    log.error("Reporting to LTI consumer failed: " + ex.getMessage(), ex);
+                }
+            }));
         }
     }
 

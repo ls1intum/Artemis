@@ -100,7 +100,11 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerButton).not.to.exist;
 
         // After a failed submission is sent, the button should be displayed.
-        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+            submission: undefined,
+            participationId: comp.participation.id!,
+        });
 
         fixture.detectChanges();
         triggerButton = getTriggerButton();
@@ -112,7 +116,11 @@ describe('TriggerBuildButtonSpec', () => {
         comp.exercise = { id: 5 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
-        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+            submission: undefined,
+            participationId: comp.participation.id!,
+        });
         fixture.detectChanges();
 
         let triggerButton = getTriggerButton();
@@ -124,13 +132,21 @@ describe('TriggerBuildButtonSpec', () => {
         expect(triggerBuildStub).to.not.have.been.calledOnce;
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
-        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: comp.participation.id });
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+            submission,
+            participationId: comp.participation.id!,
+        });
         expect(comp.isBuilding).to.be.true;
         fixture.detectChanges();
         expect(triggerButton.disabled).to.be.true;
 
         // Now the server signals that the build is done, the button should now be removed.
-        getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: comp.participation.id });
+        getLatestPendingSubmissionSubject.next({
+            submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            submission: undefined,
+            participationId: comp.participation.id!,
+        });
         expect(comp.isBuilding).to.be.false;
         fixture.detectChanges();
         triggerButton = getTriggerButton();

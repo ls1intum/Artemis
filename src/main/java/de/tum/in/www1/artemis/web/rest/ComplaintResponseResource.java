@@ -77,7 +77,7 @@ public class ComplaintResponseResource {
         // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
         String entityName = complaintResponse.getComplaint().getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_RESPONSE_ENITY_NAME : ENTITY_NAME;
 
-        // always remove the student from the complaint as we don't need it in the corresponding frontend use case
+        // always remove the student from the complaint as we don't need it in the corresponding client use case
         complaintResponse.getComplaint().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))

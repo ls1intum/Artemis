@@ -8,8 +8,8 @@ export const enum GroupNotificationType {
 }
 
 export class GroupNotification extends Notification {
-    type: GroupNotificationType;
-    course: Course;
+    type?: GroupNotificationType;
+    course?: Course;
 
     constructor() {
         super(NotificationType.GROUP);

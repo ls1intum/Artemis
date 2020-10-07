@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,9 +18,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")

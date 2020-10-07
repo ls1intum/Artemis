@@ -16,12 +16,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -43,6 +48,21 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @Autowired
+    ProgrammingExerciseGradingService gradingService;
+
+    @Autowired
+    ProgrammingExerciseTestCaseService testCaseService;
+
+    @Autowired
+    ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
@@ -51,16 +71,18 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(2, 1, 1);
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         var tempProgrammingEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
         programmingExercise = programmingExerciseRepository.save(tempProgrammingEx);
+        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     private String parameterizeEndpoint(String endpoint, ProgrammingExercise exercise) {
@@ -111,6 +133,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories() throws Exception {
+        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
+                .findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseSCAEnabled.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(exerciseWithSolutionParticipation.getSolutionParticipation());
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories().iterator();

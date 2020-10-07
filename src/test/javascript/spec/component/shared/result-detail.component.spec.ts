@@ -5,8 +5,8 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SinonStub, stub } from 'sinon';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -156,6 +156,30 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).to.not.have.been.called;
         expect(comp.buildLogs).to.be.undefined;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('fetchBuildLogs should suppress 403 error', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        const response = new HttpErrorResponse({ status: 403 });
+        buildlogsStub.returns(throwError(response));
+
+        comp.ngOnInit();
+
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(comp.loadingFailed).to.be.false;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('fetchBuildLogs should not suppress errors with status other than 403', () => {
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        const response = new HttpErrorResponse({ status: 500 });
+        buildlogsStub.returns(throwError(response));
+
+        comp.ngOnInit();
+
+        expect(buildlogsStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id);
+        expect(comp.loadingFailed).to.be.true;
         expect(comp.isLoading).to.be.false;
     });
 });

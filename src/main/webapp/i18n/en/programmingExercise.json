@@ -51,9 +51,12 @@
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
-                "description": "This option enables the execution of static code analysis. On activation, the maximum score penalty for found issues can be defined. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
+                "description": "This option enables the execution of static code analysis. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."
             },
-            "maxStaticCodeAnalysisPenalty": "Max Static Code Analysis Penalty",
+            "maxStaticCodeAnalysisPenalty": {
+                "title": "Max Static Code Analysis Penalty",
+                "description": "You can choose a value between 0 and 100 percent or leave the field empty. If the maximum penalty is 20% for a 10 point exercise, a maximum of two points can be deducted because of issues found by static code analysis. If the field is left empty, no penalty limit will be enforced."
+            },
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
@@ -97,12 +100,6 @@
                 "ok": "Hints ok.",
                 "invalidHint": "The hint with id '{{id}}' could not be found in the database for this programming exercise."
             },
-            "manageTestCases": {
-                "showInactive": "Show inactivate test cases",
-                "testCasesUpdated": "The test cases were updated successfully.",
-                "testCasesCouldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
-                "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page."
-            },
             "configureGrading": {
                 "title": "Configure Grading",
                 "save": "Save",
@@ -115,11 +112,17 @@
                 },
                 "testCases": {
                     "resetSuccessful": "The tests were reset successfully.",
-                    "resetFailed": "The tests could not be reset."
+                    "resetFailed": "The tests could not be reset.",
+                    "updated": "The test cases were updated successfully.",
+                    "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
+                    "runAfterDueDateDisabled": "You can't set a test case to be run after the due date, because no build and test date is defined for this exercise. Click on the button to set this date in the edit page.",
+                    "showInactive": "Show inactivate test cases"
                 },
                 "categories": {
                     "notGraded": "Not graded.",
-                    "noFeedback": "No visible feedback."
+                    "noFeedback": "No visible feedback.",
+                    "updated": "The categories were updated successfully.",
+                    "couldNotBeUpdated": "The following categories could not be updated: {{categories}}."
                 },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",

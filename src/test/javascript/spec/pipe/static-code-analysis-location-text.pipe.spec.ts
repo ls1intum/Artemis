@@ -1,13 +1,12 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StaticCodeAnalysisLocationTextPipe } from 'app/shared/pipes/static-code-analysis-location-text.pipe';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ArtemisDatePipe', () => {
+describe('StaticCodeAnalysisLocationTextPipe', () => {
     const pipe = new StaticCodeAnalysisLocationTextPipe();
     let issue: StaticCodeAnalysisIssue;
 

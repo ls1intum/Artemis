@@ -125,6 +125,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         this.isSaving = false;
     }
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, undefined);
+        this.jhiAlertService.error(errorMessage);
     }
 }

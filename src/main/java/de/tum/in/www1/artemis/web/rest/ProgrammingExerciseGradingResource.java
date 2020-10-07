@@ -23,6 +23,12 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
+    public final static String RESET = "/programming-exercise/{exerciseId}/grading/reset";
+
+    public final static String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+
+    public final static String STATISTICS = "/programming-exercise/{exercise}/grading/statistics";
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -54,7 +60,7 @@ public class ProgrammingExerciseGradingResource {
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
      */
-    @PatchMapping(Endpoints.RESET)
+    @PatchMapping(RESET)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ProgrammingExerciseTestCase>> resetGradingConfiguration(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
@@ -75,7 +81,7 @@ public class ProgrammingExerciseGradingResource {
      * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
      * @return the number of results that were updated.
      */
-    @PutMapping(Endpoints.RE_EVALUATE)
+    @PutMapping(RE_EVALUATE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
@@ -98,7 +104,7 @@ public class ProgrammingExerciseGradingResource {
      * @param exerciseId of the the exercise.
      * @return the test case statistics for the exercise.
      */
-    @GetMapping(Endpoints.STATISTICS)
+    @GetMapping(STATISTICS)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
@@ -115,17 +121,4 @@ public class ProgrammingExerciseGradingResource {
         return ResponseEntity.ok(statistics);
     }
 
-    public static final class Endpoints {
-
-        private static final String GRADING = "/programming-exercise/{exerciseId}/grading";
-
-        public static final String RESET = GRADING + "/reset";
-
-        public static final String RE_EVALUATE = GRADING + "/re-evaluate";
-
-        public static final String STATISTICS = GRADING + "/statistics";
-
-        private Endpoints() {
-        }
-    }
 }

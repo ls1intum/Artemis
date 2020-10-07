@@ -3,7 +3,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-registration-selector',
@@ -28,7 +28,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 
     trackCourseById(index: number, item: Course) {
@@ -78,7 +78,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         if (this.courseToRegister) {
             this.showCourseSelection = false;
             this.loading = true;
-            this.courseService.registerForCourse(this.courseToRegister.id).subscribe(
+            this.courseService.registerForCourse(this.courseToRegister.id!).subscribe(
                 () => {
                     this.addedSuccessful = true;
                     this.loading = false;

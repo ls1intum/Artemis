@@ -37,10 +37,14 @@
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
+        [feedbacks]="participation?.results?.length > 0 ? participation.results![0].feedbacks : undefined"
+        [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"
+        (onUpdateFeedback)="updateFeedback($event)"
         (onError)="onError($event)"
-    ></jhi-code-editor-ace>
+    >
+    </jhi-code-editor-ace>
     <jhi-code-editor-instructions *ngIf="showEditorInstructions" editorSidebarRight (onToggleCollapse)="onToggleCollapse($event)" (onError)="onError($event)">
         <ng-content select="[editorSidebar]"></ng-content>
     </jhi-code-editor-instructions>

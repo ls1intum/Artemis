@@ -181,7 +181,7 @@ export class ExamManagementService {
      * @returns the created test run
      */
     createTestRun(courseId: number, examId: number, testRunConfiguration: StudentExam): Observable<HttpResponse<StudentExam>> {
-        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/create-test-run`, testRunConfiguration, { observe: 'response' });
+        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run`, testRunConfiguration, { observe: 'response' });
     }
 
     /**
@@ -191,7 +191,7 @@ export class ExamManagementService {
      * @param testRunId the id of the test run
      */
     deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<StudentExam>> {
-        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/delete-test-run/${testRunId}`, { observe: 'response' });
+        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
     }
 
     /**
@@ -265,23 +265,23 @@ export class ExamManagementService {
 
     private static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
-            startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : null,
-            endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : null,
-            visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : null,
-            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : null,
-            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : null,
-            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : null,
+            startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
+            endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
+            visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
+            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
+            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
+            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
         });
     }
 
     private static convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
-            res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : null;
-            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : null;
-            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : null;
-            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
+            res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : undefined;
+            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : undefined;
+            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : undefined;
+            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : undefined;
         }
         return res;
     }
@@ -289,12 +289,12 @@ export class ExamManagementService {
     private static convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exam: Exam) => {
-                exam.startDate = exam.startDate ? moment(exam.startDate) : null;
-                exam.endDate = exam.endDate ? moment(exam.endDate) : null;
-                exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : null;
-                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : null;
-                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : null;
-                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : null;
+                exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
+                exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
+                exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
+                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
+                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
+                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
             });
         }
         return res;

@@ -43,7 +43,7 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
-                        <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
                     <th jhiOrionFilter [showInOrionWindow]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
@@ -94,11 +94,7 @@
                             >
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
-                                *ngIf="
-                                    programmingExercise.templateParticipation &&
-                                    programmingExercise.templateParticipation.results &&
-                                    programmingExercise.templateParticipation.results.length
-                                "
+                                *ngIf="programmingExercise.templateParticipation?.results?.length"
                                 [participationType]="'TEMPLATE'"
                                 [participation]="programmingExercise.templateParticipation"
                                 [exercise]="programmingExercise"
@@ -118,11 +114,7 @@
                             >
                             <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
-                                *ngIf="
-                                    programmingExercise.solutionParticipation &&
-                                    programmingExercise.solutionParticipation.results &&
-                                    programmingExercise.solutionParticipation.results.length
-                                "
+                                *ngIf="programmingExercise.solutionParticipation?.results?.length"
                                 [participationType]="'SOLUTION'"
                                 [participation]="programmingExercise.solutionParticipation"
                                 [exercise]="programmingExercise"

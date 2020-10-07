@@ -10,17 +10,18 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['id'] ? route.params['id'] : undefined;
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return Observable.of(new ProgrammingExercise());
+        return Observable.of(new ProgrammingExercise(undefined, undefined));
     }
 }
 
@@ -32,7 +33,7 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -44,7 +45,7 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -56,7 +57,7 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -68,10 +69,20 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
+        component: ProgrammingExerciseConfigureGradingComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [CanDeactivateGuard],
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/grading/:tab',

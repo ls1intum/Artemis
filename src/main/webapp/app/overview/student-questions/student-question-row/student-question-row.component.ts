@@ -35,7 +35,7 @@ export class StudentQuestionRowComponent implements OnInit {
     isExpanded = true;
     isAnswerMode: boolean;
     showOtherAnswers = false;
-    questionAnswerText: string | null;
+    questionAnswerText?: string;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
     EditorMode = EditorMode;
@@ -123,7 +123,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
+        this.studentQuestionService.delete(this.studentQuestion.id!).subscribe(() => {
             this.localStorage.clear(`q${this.studentQuestion.id}u${this.user.id}`);
             this.interactQuestionRow.emit({
                 name: QuestionRowActionName.DELETE,
@@ -149,7 +149,7 @@ export class StudentQuestionRowComponent implements OnInit {
             }
             this.studentQuestion.answers.push(studentQuestionResponse.body!);
             this.sortQuestionAnswers();
-            this.questionAnswerText = null;
+            this.questionAnswerText = undefined;
             this.isAnswerMode = false;
         });
     }
@@ -159,7 +159,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * @param   {studentQuestionAnswer} studentQuestionAnswer
      */
     deleteAnswerFromList(studentQuestionAnswer: StudentQuestionAnswer): void {
-        this.studentQuestion.answers = this.studentQuestion.answers.filter((el: StudentQuestionAnswer) => el.id !== studentQuestionAnswer.id);
+        this.studentQuestion.answers = this.studentQuestion.answers?.filter((el: StudentQuestionAnswer) => el.id !== studentQuestionAnswer.id);
         this.sortQuestionAnswers();
     }
 
@@ -168,7 +168,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * @param   {StudentQuestionAnswer} studentQuestionAnswer
      */
     addAnswerToList(studentQuestionAnswer: StudentQuestionAnswer): void {
-        this.studentQuestion.answers.push(studentQuestionAnswer);
+        this.studentQuestion.answers!.push(studentQuestionAnswer);
         this.sortQuestionAnswers();
     }
 }

@@ -32,12 +32,12 @@ export class ExerciseGroupsComponent implements OnInit {
     course: Course;
     examId: number;
     exam: Exam;
-    exerciseGroups: ExerciseGroup[] | null;
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    exerciseGroups?: ExerciseGroup[];
+    dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
-    latestIndividualEndDate: Moment | null;
-    exerciseGroupToExerciseTypesDict: { [id: number]: ExerciseType[] } = {};
+    latestIndividualEndDate?: Moment;
+    exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
     constructor(
         private route: ActivatedRoute,
@@ -62,10 +62,10 @@ export class ExerciseGroupsComponent implements OnInit {
         forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
             ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
-                this.exerciseGroups = examRes.body!.exerciseGroups;
-                this.course = examRes.body!.course;
+                this.exerciseGroups = this.exam.exerciseGroups;
+                this.course = this.exam.course!;
                 this.courseManagementService.checkAndSetCourseRights(this.course);
-                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : null;
+                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
                 this.setupExerciseGroupToExerciseTypesDict();
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -224,7 +224,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
-            (res) => (this.exerciseGroups = res.body),
+            (res) => (this.exerciseGroups = res.body!),
             () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
     }
@@ -235,15 +235,15 @@ export class ExerciseGroupsComponent implements OnInit {
      * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
      */
     setupExerciseGroupToExerciseTypesDict() {
-        this.exerciseGroupToExerciseTypesDict = {};
+        this.exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
         if (!this.exerciseGroups) {
             return;
         } else {
             for (const exerciseGroup of this.exerciseGroups) {
-                this.exerciseGroupToExerciseTypesDict[exerciseGroup.id] = [];
+                this.exerciseGroupToExerciseTypesDict.set(exerciseGroup.id!, []);
                 if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
-                        this.exerciseGroupToExerciseTypesDict[exerciseGroup.id].push(exercise.type);
+                        this.exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)!.push(exercise.type!);
                     }
                 }
             }

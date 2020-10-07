@@ -8,11 +8,23 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
-export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean; bonusMultiplier: number; bonusPoints: number };
-export type StaticCodeAnalysisCategoryUpdate = { id: number; penalty: number; maxPenalty: number; state: string };
+export class ProgrammingExerciseTestCaseUpdate {
+    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public afterDueDate?: boolean) {}
+
+    static from(testCase: ProgrammingExerciseTestCase) {
+        return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.afterDueDate);
+    }
+}
+export class StaticCodeAnalysisCategoryUpdate {
+    constructor(public id?: number, public penalty?: number, public maxPenalty?: number, public state?: string) {}
+
+    static from(category: StaticCodeAnalysisCategory) {
+        return new StaticCodeAnalysisCategoryUpdate(category.id, category.penalty, category.maxPenalty, category.state);
+    }
+}
 
 export interface IProgrammingExerciseGradingService {
-    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     reset(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
@@ -25,7 +37,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
     public resourceUrl = `${SERVER_API_URL}api/programming-exercise`;
 
     private connections: { [exerciseId: string]: string } = {};
-    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
+    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
@@ -45,14 +57,14 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      *
      * @param exerciseId
      */
-    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null> {
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
         if (this.subjects[exerciseId]) {
-            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
+            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | undefined>;
         } else {
             return this.getTestCases(exerciseId).pipe(
-                map((testCases) => (testCases.length ? testCases : null)),
-                catchError(() => of(null)),
-                switchMap((testCases: ProgrammingExerciseTestCase[] | null) => this.initTestCaseSubscription(exerciseId, testCases)),
+                map((testCases) => (testCases.length ? testCases : undefined)),
+                catchError(() => of(undefined)),
+                switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => this.initTestCaseSubscription(exerciseId, testCases)),
             );
         }
     }
@@ -114,7 +126,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      * @param initialValue
      */
-    private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | null) {
+    private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | undefined) {
         const testCaseTopic = `/topic/programming-exercise/${exerciseId}/test-cases`;
         this.jhiWebsocketService.subscribe(testCaseTopic);
         this.connections[exerciseId] = testCaseTopic;
@@ -122,7 +134,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
         this.jhiWebsocketService
             .receive(testCaseTopic)
             .pipe(
-                map((testCases) => (testCases.length ? testCases : null)),
+                map((testCases) => (testCases.length ? testCases : undefined)),
                 tap((testCases) => this.notifySubscribers(exerciseId, testCases)),
             )
             .subscribe();
@@ -134,7 +146,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      * @param testCases
      */
-    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | null) {
+    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | undefined) {
         this.subjects[exerciseId].next(testCases);
     }
 
@@ -153,7 +165,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param exerciseId
      * @param updates dto for updating sca categories to avoid setting automatic parameters
      */
-    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]> {
-        return this.http.patch<StaticCodeAnalysisCategoryUpdate[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
+    public updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategory[]> {
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories`, updates);
     }
 }

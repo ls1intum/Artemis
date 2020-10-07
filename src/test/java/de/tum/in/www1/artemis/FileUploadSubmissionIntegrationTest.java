@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -392,5 +394,30 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.FORBIDDEN, FileUploadSubmission.class);
 
         assertThat(receivedSubmission).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteSubmission() {
+        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
+        fileUploadSubmissionRepository.delete(submittedFileUploadSubmission);
+        assertThat(fileUploadSubmissionRepository.findAll()).doesNotContain(submittedFileUploadSubmission);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testOnDeleteSubmission() {
+        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
+        Assertions.assertDoesNotThrow(() -> submittedFileUploadSubmission.onDelete());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testOnDeleteSubmissionWithException() {
+        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises");
+        fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
+        Assertions.assertThrows(FilePathParsingException.class, () -> submittedFileUploadSubmission.onDelete());
     }
 }

@@ -17,36 +17,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExamService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -80,12 +60,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
 
+    private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
+
     private final GradingCriterionService gradingCriterionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockRepository textBlockRepository,
             TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
             WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
-            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService) {
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
+            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
 
         this.textAssessmentService = textAssessmentService;
@@ -96,6 +79,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.messagingService = messagingService;
         this.gradingCriterionService = gradingCriterionService;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
+        this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
     }
 
     /**
@@ -173,6 +157,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             studentParticipation.filterSensitiveInformation();
+        }
+
+        // call feedback conflict service
+        if (textExercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
+            this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), result.getFeedbacks(), exerciseId);
         }
 
         return ResponseEntity.ok(result);
