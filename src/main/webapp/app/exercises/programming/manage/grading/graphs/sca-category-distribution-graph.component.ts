@@ -102,8 +102,8 @@ export class ScaCategoryDistributionGraphComponent implements OnChanges {
         const categoryPenalties = this.categories
             .map((category) => ({
                 ...category,
-                penalty: category.state === StaticCodeAnalysisCategoryState.GRADED ? category.penalty : 0,
-                maxPenalty: category.state === StaticCodeAnalysisCategoryState.GRADED ? category.maxPenalty : 0,
+                penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
+                maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
             }))
             .map((category) => {
                 const issuesSum = this.categoryHitMap?.reduce((sum, issues) => sum + (issues[category.name] || 0), 0);
@@ -111,7 +111,7 @@ export class ScaCategoryDistributionGraphComponent implements OnChanges {
                 penaltySum = Math.min(penaltySum || 0, this.exercise.maxStaticCodeAnalysisPenalty || penaltySum || 0);
                 return { category, issues: issuesSum || 0, penalty: penaltySum };
             })
-            .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.INACTIVE && (category.penalty !== 0 || issues !== 0));
+            .filter(({ category, issues }) => category.state !== StaticCodeAnalysisCategoryState.Inactive && (category.penalty !== 0 || issues !== 0));
 
         const totalPenalty = categoryPenalties.reduce((sum, { category }) => sum + Math.min(category.penalty, category.maxPenalty), 0);
         const totalIssues = categoryPenalties.reduce((sum, { issues }) => sum + issues, 0);

@@ -183,29 +183,29 @@
                             <ngx-datatable-column name="Penalty" prop="penalty">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
-                                        *ngIf="row.state === CategoryState.GRADED"
+                                        *ngIf="row.state === CategoryState.Graded"
                                         [value]="value"
                                         (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.PENALTY)"
                                     ></jhi-table-editable-field>
-                                    <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                                    <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
-                                        *ngIf="row.state === CategoryState.GRADED"
+                                        *ngIf="row.state === CategoryState.Graded"
                                         [value]="value"
                                         (onValueUpdate)="updateEditedCategoryField($event, row, EditableField.MAX_PENALTY)"
                                     ></jhi-table-editable-field>
-                                    <span *ngIf="row.state === CategoryState.VISIBLE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
-                                    <span *ngIf="row.state === CategoryState.INACTIVE" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+                                    <span *ngIf="row.state === CategoryState.Feedback" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.notGraded"></span>
+                                    <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Issues by students">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-graph
-                                        *ngIf="row.state !== CategoryState.INACTIVE"
+                                        *ngIf="row.state !== CategoryState.Inactive"
                                         [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
                                         [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"

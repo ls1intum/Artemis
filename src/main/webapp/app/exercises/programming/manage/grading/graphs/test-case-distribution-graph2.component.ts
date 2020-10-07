@@ -56,6 +56,7 @@ export class TestCaseDistributionGraph2Component implements AfterViewInit, OnCha
     ngAfterViewInit(): void {
         this.chart.setPadding({ bottom: 30 });
         this.chart.setLegend({ position: 'bottom' });
+        this.chart.setTooltip({ mode: 'dataset' });
 
         this.chart.setYAxe(0, { stacked: true });
         this.chart.setXAxe(0, { stacked: true });
@@ -68,15 +69,15 @@ export class TestCaseDistributionGraph2Component implements AfterViewInit, OnCha
             return;
         }
 
-        const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight, 0);
-        const maxScore = (this.exercise.maxScore + this.exercise.bonusPoints) / this.exercise.maxScore;
+        const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        const maxScore = (this.exercise.maxScore! + (this.exercise.bonusPoints || 0)) / this.exercise.maxScore!;
 
         const testCaseScores = this.testCases.map((testCase) => {
-            const testCaseScore = (totalWeight > 0 ? (testCase.weight * testCase.bonusMultiplier) / totalWeight : 0) + testCase.bonusPoints / this.exercise.maxScore;
+            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + testCase.bonusPoints! / this.exercise.maxScore!;
             return { testCase, score: Math.min(testCaseScore, maxScore), stats: this.testCaseStats?.find((stats) => stats.testName === testCase.testName) };
         });
 
-        const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats!.numPassed : 0)).reduce((sum, points) => sum + points, 0);
+        const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats.numPassed! : 0)).reduce((sum, points) => sum + points, 0);
 
         const makeColumn = (width: number, prevSection?: GraphColumn) => ({
             x: (prevSection?.x || 0) + (prevSection?.width || 0),
@@ -88,11 +89,11 @@ export class TestCaseDistributionGraph2Component implements AfterViewInit, OnCha
             return [
                 ...list,
                 {
-                    label: element.testCase.testName,
+                    label: element.testCase.testName!,
                     color: this.getColor(i / this.testCases.length),
-                    c1: makeColumn((totalWeight > 0 ? element.testCase.weight / totalWeight : 0) * 100, prevSection?.c1),
+                    c1: makeColumn((totalWeight > 0 ? element.testCase.weight! / totalWeight : 0) * 100, prevSection?.c1),
                     c2: makeColumn(element.score * 100, prevSection?.c2),
-                    c3: makeColumn(element.stats && totalScore > 0 ? ((element.stats!.numPassed * element.score) / totalScore) * 100 : 0, prevSection?.c3),
+                    c3: makeColumn(element.stats && totalScore > 0 ? ((element.stats.numPassed! * element.score) / totalScore) * 100 : 0, prevSection?.c3),
                 },
             ];
         }, []);

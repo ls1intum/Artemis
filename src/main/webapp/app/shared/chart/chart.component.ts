@@ -1,5 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ChartDataSets, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
+import { ChartDataSets, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 
 @Component({
@@ -43,10 +43,6 @@ export class ChartComponent {
     };
 
     setPadding(padding: ChartLayoutPaddingObject) {
-        if (!this.chart) {
-            setTimeout(() => this.setPadding(padding));
-            return;
-        }
         Object.assign(this.chart.options.layout!.padding, padding);
         this.chart.update();
     }
@@ -56,6 +52,15 @@ export class ChartComponent {
             Object.assign(this.chart.options.legend, { display: legend });
         } else {
             Object.assign(this.chart.options.legend, { display: true }, legend);
+        }
+        this.chart.update();
+    }
+
+    setTooltip(tooltip: ChartTooltipOptions | boolean) {
+        if (typeof tooltip === 'boolean') {
+            Object.assign(this.chart.options.tooltips, { enabled: tooltip });
+        } else {
+            Object.assign(this.chart.options.tooltips, { enabled: true }, tooltip);
         }
         this.chart.update();
     }
