@@ -64,12 +64,16 @@ public class LearningGoal extends DomainObject {
         return course;
     }
 
+    /**
+     * Sets the course properties and updates the other side of the relationship
+     * @param course course to set the property to
+     */
     public void setCourse(Course course) {
         if (this.course != null) {
             this.course.removeLearningGoal(this);
         }
         this.course = course;
-        if (!course.getLearningGoals().contains(this)) {
+        if (course != null && !course.getLearningGoals().contains(this)) {
             course.getLearningGoals().add(this);
         }
     }
