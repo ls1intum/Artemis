@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&display=swap');
+
 body {
     margin: 0;
     padding: 0;
@@ -26,7 +27,7 @@ body {
     margin: 0;
     padding: 1em 2em;
     font-size: 5em;
-    text-shadow: 1px 1px 40px #333333;
+    text-shadow: 1px 1px 40px #333;
     box-sizing: border-box;
 }
 
@@ -50,6 +51,7 @@ body {
     text-align: center;
     color: #3070b3;
 }
+
 .content h2 {
     margin: 0;
     padding-left: 20%;
@@ -74,6 +76,36 @@ body {
     box-sizing: border-box;
     cursor: pointer;
 }
+
+.feature-content {
+    margin: 0;
+    box-sizing: border-box;
+    padding-left: 35px;
+    padding-right: 35px;
+}
+
+.feature-content h3 {
+    margin: 0;
+    text-align: center;
+    color: #3070b3;
+    font-size: 2em;
+    padding: 1em 20% 0.5em;
+    box-sizing: border-box;
+}
+
+.feature-full-description {
+    overflow: auto;
+    padding: 35px;
+}
+
+.feature-full-description p {
+    font-size: 16px;
+    line-height: 26px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
 .container .box {
     position: relative;
     height: 250px;
@@ -127,6 +159,7 @@ body {
     transition: 0.5s;
     color: #3070b3;
 }
+
 .container .box:hover .icon .fa {
     top: 50%;
     font-size: 40px;
@@ -135,6 +168,7 @@ body {
 .container .box:hover .icon .title {
     opacity: 0;
 }
+
 .container .box .feature-short-description {
     position: absolute;
     top: 100%;
@@ -145,11 +179,13 @@ body {
     transition: 0.5s;
     opacity: 0;
 }
+
 .container .box:hover .feature-short-description {
     top: 100px;
     opacity: 1;
     text-align: center;
 }
+
 .container .box .feature-short-description h3 {
     margin: 0;
     padding: 0;
@@ -157,6 +193,7 @@ body {
     font-size: 24px;
     text-align: center;
 }
+
 .container .box .feature-short-description p {
     margin: 0;
     padding: 0;
@@ -171,7 +208,7 @@ hr.hr-gradient {
     background: radial-gradient(ellipse farthest-side at top center, rgba(0, 0, 0, 0.06), transparent);
 }
 
-hr.hr-gradient:before {
+hr.hr-gradient::before {
     content: '';
     display: block;
     position: absolute;
@@ -179,7 +216,7 @@ hr.hr-gradient:before {
     right: 0;
     left: 0;
     height: 3px;
-    background: linear-gradient(left, transparent, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02), transparent);
+    background: linear-gradient(to left, transparent, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02), transparent);
 }
 
 hr.hr-text {
@@ -204,34 +241,6 @@ hr.hr-text::before {
     transform: translate(-50%, -50%);
 }
 
-.feature-content {
-    margin: 0;
-    box-sizing: border-box;
-    padding-left: 35px;
-    padding-right: 35px;
-}
-
-.feature-content h3 {
-    margin: 0;
-    text-align: center;
-    color: #3070b3;
-    font-size: 2em;
-    padding: 1em 20% 0.5em;
-    box-sizing: border-box;
-}
-
-.feature-full-description {
-    overflow: auto;
-    padding: 35px;
-}
-
-.feature-full-description p {
-    font-size: 16px;
-    line-height: 26px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-}
 .text-wrap-right {
     float: right;
     margin-left: 15px;
