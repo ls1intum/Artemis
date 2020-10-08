@@ -11,8 +11,6 @@ class TestOutput(AbstractProgramTest):
             name, makefileLocation, requirements, timeoutSec=10)
         self.rot = rot
         self.input = input
-        self.executable: str = executable
-        self.pWrap = None
 
     def _run(self):
         # Start the program:
