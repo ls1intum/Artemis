@@ -47,7 +47,7 @@ will be explained below in the corresponding sections.
            url: <https://gitlab-url>
            user: <gitlab-admin-user>
            password: <gitlab-admin-password>
-           secret: <secret>
+           token: <token>
            ci-token: <ci-token>
        continuous-integration:
            url: <https://jenkins-url>
@@ -199,7 +199,7 @@ Gitlab Access Token
 
        artemis:
            version-control:
-               secret: your.generated.api.token
+               token: your.generated.api.token
 
 12. (Optional) Allow outbound requests to local network
 

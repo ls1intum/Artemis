@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,9 @@ public class CourseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
     private final UserService userService;
 
@@ -336,6 +340,10 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
+        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
+                    "Registration with this username is not allowed. Cannot register user")).body(null);
+        }
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
@@ -407,7 +415,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
+        return courseService.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
     }
 
     /**
