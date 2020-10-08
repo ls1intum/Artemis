@@ -35,6 +35,14 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectLink;
+import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNet;
+import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetArc;
+import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetPlace;
+import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetTransition;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTree;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeLink;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeNonterminal;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeTerminal;
 import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class UMLModelParser {
@@ -48,33 +56,26 @@ public class UMLModelParser {
      * @throws IOException on unexpected JSON formats
      */
     public static UMLDiagram buildModelFromJSON(JsonObject root, long modelSubmissionId) throws IOException {
-        String diagramType = root.get(DIAGRAM_TYPE).getAsString();
+        String diagramTypeString = root.get(DIAGRAM_TYPE).getAsString();
         JsonArray modelElements = root.getAsJsonArray(ELEMENTS);
         JsonArray relationships = root.getAsJsonArray(RELATIONSHIPS);
 
-        if (DiagramType.ClassDiagram.name().equals(diagramType)) {
-            return buildClassDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.ActivityDiagram.name().equals(diagramType)) {
-            return buildActivityDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.UseCaseDiagram.name().equals(diagramType)) {
-            return buildUseCaseDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.CommunicationDiagram.name().equals(diagramType)) {
-            return buildCommunicationDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.ComponentDiagram.name().equals(diagramType)) {
-            return buildComponentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.DeploymentDiagram.name().equals(diagramType)) {
-            return buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
-        }
-        else if (DiagramType.ObjectDiagram.name().equals(diagramType)) {
-            return buildObjectDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+        if (!EnumUtils.isValidEnum(DiagramType.class, diagramTypeString)) {
+            throw new IllegalArgumentException("Diagram type " + diagramTypeString + " of passed JSON not supported or not recognized by JSON Parser.");
         }
 
-        throw new IllegalArgumentException("Diagram type of passed JSON not supported or not recognized by JSON Parser.");
+        DiagramType diagramType = DiagramType.valueOf(diagramTypeString);
+        return switch (diagramType) {
+            case ClassDiagram -> buildClassDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case ActivityDiagram -> buildActivityDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case UseCaseDiagram -> buildUseCaseDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case CommunicationDiagram -> buildCommunicationDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case ComponentDiagram -> buildComponentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case DeploymentDiagram -> buildDeploymentDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case ObjectDiagram -> buildObjectDiagramFromJSON(modelElements, relationships, modelSubmissionId);
+            case PetriNet -> buildPetriNetFromJSON(modelElements, relationships, modelSubmissionId);
+            case SyntaxTree -> buildSyntaxTreeFromJSON(modelElements, relationships, modelSubmissionId);
+        };
     }
 
     /**
@@ -811,6 +812,161 @@ public class UMLModelParser {
         else {
             throw new IOException("Control flow source or target not part of model!");
         }
+    }
+
+    /**
+     * Create a petri net from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * petri net containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a petri net containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static PetriNet buildPetriNetFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        List<PetriNetArc> arcs = new ArrayList<>();
+        Map<String, PetriNetPlace> places = new HashMap<>();
+        Map<String, PetriNetTransition> transitions = new HashMap<>();
+        Map<String, UMLElement> allElementsMap = new HashMap<>();
+
+        // loop over all JSON elements and create the UML objects
+        for (JsonElement jsonElement : modelElements) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
+            // elementType is never null
+            switch (elementType) {
+                case PetriNetPlace.PETRI_NET_PLACE_TYPE -> {
+                    PetriNetPlace place = parsePetriNetPlace(jsonObject);
+                    places.put(place.getJSONElementID(), place);
+                    allElementsMap.put(place.getJSONElementID(), place);
+                }
+                case PetriNetTransition.PETRI_NET_TRANSITION_TYPE -> {
+                    PetriNetTransition transition = parsePetriNetTransition(jsonObject);
+                    transitions.put(transition.getJSONElementID(), transition);
+                    allElementsMap.put(transition.getJSONElementID(), transition);
+                }
+                default -> {
+                    // ignore unknown elements
+                }
+            }
+        }
+
+        // loop over all JSON control flow elements and create syntax tree links
+        for (JsonElement rel : relationships) {
+            Optional<PetriNetArc> useCaseAssociation = parsePetriNetArc(rel.getAsJsonObject(), allElementsMap);
+            useCaseAssociation.ifPresent(arcs::add);
+        }
+
+        return new PetriNet(modelSubmissionId, List.copyOf(places.values()), List.copyOf(transitions.values()), arcs);
+    }
+
+    private static PetriNetPlace parsePetriNetPlace(JsonObject componentJson) {
+        String name = componentJson.get(ELEMENT_NAME).getAsString();
+        String amountOfTokens = componentJson.get("amountOfTokens").getAsString();
+        String capacity = componentJson.get("capacity").getAsString();
+        return new PetriNetPlace(name, amountOfTokens, capacity, componentJson.get(ELEMENT_ID).getAsString());
+    }
+
+    private static PetriNetTransition parsePetriNetTransition(JsonObject componentJson) {
+        String name = componentJson.get(ELEMENT_NAME).getAsString();
+        return new PetriNetTransition(name, componentJson.get(ELEMENT_ID).getAsString());
+    }
+
+    /**
+     * Parses the given JSON representation of a UML relationship to a PetriNetArc Java object.
+     *
+     * @param relationshipJson the JSON object containing the relationship
+     * @param objectMap a map containing all objects of the corresponding syntax tree, necessary for assigning source and target element of the relationships
+     * @return the PetriNetArc object parsed from the JSON object
+     * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
+     */
+    private static Optional<PetriNetArc> parsePetriNetArc(JsonObject relationshipJson, Map<String, UMLElement> allSyntaxTreeElements) throws IOException {
+        String multiplicity = relationshipJson.get(ELEMENT_NAME).getAsString();
+        UMLElement source = findElement(relationshipJson, allSyntaxTreeElements, RELATIONSHIP_SOURCE);
+        UMLElement target = findElement(relationshipJson, allSyntaxTreeElements, RELATIONSHIP_TARGET);
+
+        if (source == null || target == null) {
+            throw new IOException("Relationship source or target not part of model!");
+        }
+        PetriNetArc newSPetriNetArc = new PetriNetArc(multiplicity, source, target, relationshipJson.get(ELEMENT_ID).getAsString());
+        return Optional.of(newSPetriNetArc);
+    }
+
+    /**
+     * Create a syntax tree from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * syntax tree containing these UML model elements.
+     *
+     * @param modelElements the model elements as JSON array
+     * @param relationships the relationship elements as JSON array
+     * @param modelSubmissionId the ID of the corresponding modeling submission
+     * @return a syntax tree containing the parsed model elements and relationships
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
+     */
+    private static SyntaxTree buildSyntaxTreeFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+        List<SyntaxTreeLink> syntaxTreeLinkList = new ArrayList<>();
+        Map<String, SyntaxTreeTerminal> terminalMap = new HashMap<>();
+        Map<String, SyntaxTreeNonterminal> nonterminalMap = new HashMap<>();
+        Map<String, UMLElement> allElementsMap = new HashMap<>();
+
+        // loop over all JSON elements and create the UML objects
+        for (JsonElement jsonElement : modelElements) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
+            // elementType is never null
+            switch (elementType) {
+                case SyntaxTreeTerminal.SYNTAX_TREE_TERMINAL_TYPE -> {
+                    SyntaxTreeTerminal terminal = parseTerminal(jsonObject);
+                    terminalMap.put(terminal.getJSONElementID(), terminal);
+                    allElementsMap.put(terminal.getJSONElementID(), terminal);
+                }
+                case SyntaxTreeNonterminal.SYNTAX_TREE_NONTERMINAL_TYPE -> {
+                    SyntaxTreeNonterminal nonterminal = parseNonterminal(jsonObject);
+                    nonterminalMap.put(nonterminal.getJSONElementID(), nonterminal);
+                    allElementsMap.put(nonterminal.getJSONElementID(), nonterminal);
+                }
+                default -> {
+                    // ignore unknown elements
+                }
+            }
+        }
+
+        // loop over all JSON control flow elements and create syntax tree links
+        for (JsonElement rel : relationships) {
+            Optional<SyntaxTreeLink> useCaseAssociation = parseSyntaxTreeLink(rel.getAsJsonObject(), allElementsMap);
+            useCaseAssociation.ifPresent(syntaxTreeLinkList::add);
+        }
+
+        return new SyntaxTree(modelSubmissionId, List.copyOf(nonterminalMap.values()), List.copyOf(terminalMap.values()), syntaxTreeLinkList);
+    }
+
+    private static SyntaxTreeTerminal parseTerminal(JsonObject componentJson) {
+        String name = componentJson.get(ELEMENT_NAME).getAsString();
+        return new SyntaxTreeTerminal(name, componentJson.get(ELEMENT_ID).getAsString());
+    }
+
+    private static SyntaxTreeNonterminal parseNonterminal(JsonObject componentJson) {
+        String name = componentJson.get(ELEMENT_NAME).getAsString();
+        return new SyntaxTreeNonterminal(name, componentJson.get(ELEMENT_ID).getAsString());
+    }
+
+    /**
+     * Parses the given JSON representation of a UML relationship to a SyntaxTreeLink Java object.
+     *
+     * @param relationshipJson the JSON object containing the relationship
+     * @param objectMap a map containing all objects of the corresponding syntax tree, necessary for assigning source and target element of the relationships
+     * @return the SyntaxTreeLink object parsed from the JSON object
+     * @throws IOException when no class could be found in the classMap for the source and target ID in the JSON object
+     */
+    private static Optional<SyntaxTreeLink> parseSyntaxTreeLink(JsonObject relationshipJson, Map<String, UMLElement> allSyntaxTreeElements) throws IOException {
+        UMLElement source = findElement(relationshipJson, allSyntaxTreeElements, RELATIONSHIP_SOURCE);
+        UMLElement target = findElement(relationshipJson, allSyntaxTreeElements, RELATIONSHIP_TARGET);
+
+        if (source == null || target == null) {
+            throw new IOException("Relationship source or target not part of model!");
+        }
+        SyntaxTreeLink newSyntaxTreeLink = new SyntaxTreeLink(source, target, relationshipJson.get(ELEMENT_ID).getAsString());
+        return Optional.of(newSyntaxTreeLink);
     }
 
     /**
