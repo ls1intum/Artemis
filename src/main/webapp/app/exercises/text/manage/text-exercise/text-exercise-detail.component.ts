@@ -9,7 +9,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { SubmissionComparisonDTO, TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { downloadFile } from 'app/shared/util/download.util';
+import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ExportToCsv } from 'export-to-csv';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
@@ -118,6 +118,17 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             const blob = new Blob([json], { type: 'application/json' });
             downloadFile(blob, `check-plagiarism-text-exercise_${this.textExercise.id}.json`);
         });
+    }
+
+    checkPlagiarismJPlag() {
+        this.checkPlagiarismInProgress = true;
+        this.textExerciseService.checkPlagiarismJPlag(this.textExercise.id!).subscribe(
+            (response: HttpResponse<Blob>) => {
+                this.checkPlagiarismInProgress = false;
+                downloadZipFileFromResponse(response);
+            },
+            () => (this.checkPlagiarismInProgress = false),
+        );
     }
 
     checkPlagiarismCsv() {

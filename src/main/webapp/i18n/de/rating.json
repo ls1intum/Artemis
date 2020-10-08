@@ -2,6 +2,19 @@
     "artemisApp": {
         "rating": {
             "label": "Wie hilfreich ist das Feedback für dich?"
+        },
+        "ratingList": {
+            "exercise": "Übung",
+            "exerciseType": "Aufgabentyp",
+            "assessorLogin": "BewerterIn Login",
+            "assessorName": "BewerterIn Name",
+            "rating": "Rating",
+            "actions": "Aktionen",
+            "assessmentType": "Bewertungstyp",
+            "openSubmission": "Abgabe anzeigen",
+            "title": "Liste von Ratings",
+            "pageTitle": "Ratings",
+            "noRatingToShow": "Es gibt noch keine Ratings."
         }
     }
 }

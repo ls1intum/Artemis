@@ -13,6 +13,7 @@ export class AlertService extends JhiAlertService {
     mySanitizer: DomSanitizer;
 
     constructor(sanitizer: DomSanitizer, configService: JhiConfigService, ngZone: NgZone, @Optional() translateService: TranslateService) {
+        // @ts-ignore
         super(sanitizer, configService, ngZone, translateService);
         this.mySanitizer = sanitizer;
     }

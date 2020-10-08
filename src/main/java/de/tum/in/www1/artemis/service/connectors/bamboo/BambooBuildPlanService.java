@@ -123,7 +123,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
@@ -169,7 +169,7 @@ public class BambooBuildPlanService {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
                 }
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
@@ -189,7 +189,7 @@ public class BambooBuildPlanService {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("tumfpv/fpv-stack:8.4.4"));
                 }
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-reports/*.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
