@@ -2,6 +2,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { AssessmentTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { AssessmentObject, GuidedTourAssessmentTask } from 'app/guided-tour/guided-tour-task.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const tutorAssessmentTour: GuidedTour = {
     settingsKey: 'tutor_assessment_tour',
@@ -13,7 +14,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.courseAdministration.tutorCourseDashboardButton.content',
             highlightPadding: 10,
             orientation: Orientation.LEFT,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: '/course-management',
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
@@ -24,7 +25,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorCourseDashboard.overview.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: '/course-management/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
@@ -33,7 +34,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorCourseDashboard.showFinished.content',
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-exercise-table',
@@ -41,7 +42,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorCourseDashboard.exerciseTable.content',
             highlightPadding: 25,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         new TextTourStep({
             highlightSelector: 'jhi-tutor-participation-graph.guided-tour',
@@ -49,7 +50,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorCourseDashboard.gradingProcess.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         new UserInterActionTourStep({
             highlightSelector: '.btn.guided-tour',
@@ -57,7 +58,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorCourseDashboard.exerciseDashboardButton.content',
             highlightPadding: 10,
             orientation: Orientation.TOPRIGHT,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         // new page
@@ -67,7 +68,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorExerciseDashboard.instructions.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new UserInterActionTourStep({
@@ -76,7 +77,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorExerciseDashboard.instructionsButton.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
         }),
@@ -87,7 +88,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         // new page
         new TextTourStep({
@@ -95,7 +96,7 @@ export const tutorAssessmentTour: GuidedTour = {
             headlineTranslateKey: 'tour.exampleReview.reviewSubmission.headline',
             contentTranslateKey: 'tour.exampleReview.reviewSubmission.content',
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?readOnly=true',
         }),
         new TextTourStep({
@@ -103,7 +104,7 @@ export const tutorAssessmentTour: GuidedTour = {
             headlineTranslateKey: 'tour.exampleReview.reviewAssessment.headline',
             contentTranslateKey: 'tour.exampleReview.reviewAssessment.content',
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         new UserInterActionTourStep({
             highlightSelector: 'jhi-example-text-submission .guided-tour-read',
@@ -112,7 +113,7 @@ export const tutorAssessmentTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.CLICK,
             orientation: Orientation.TOPRIGHT,
             highlightPadding: 10,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         // new page
         new UserInterActionTourStep({
@@ -122,7 +123,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         // new page
@@ -132,7 +133,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.exampleAssessment.addAssessment.content',
             orientation: Orientation.TOP,
             highlightPadding: 10,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             userInteractionEvent: UserInteractionEvent.ASSESS_SUBMISSION,
             assessmentTask: new GuidedTourAssessmentTask('tour.exampleAssessment.addAssessment.task', new AssessmentObject(3, 0)),
             pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?toComplete=true',
@@ -144,7 +145,7 @@ export const tutorAssessmentTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.ASSESS_SUBMISSION,
             orientation: Orientation.TOP,
             highlightPadding: 10,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             assessmentTask: new GuidedTourAssessmentTask('tour.exampleAssessment.addScore.task', new AssessmentObject(3, 3)),
         }),
         new UserInterActionTourStep({
@@ -154,7 +155,7 @@ export const tutorAssessmentTour: GuidedTour = {
             orientation: Orientation.TOPRIGHT,
             highlightPadding: 10,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         new UserInterActionTourStep({
             highlightSelector: 'jhi-example-text-submission .guided-tour-back',
@@ -163,7 +164,7 @@ export const tutorAssessmentTour: GuidedTour = {
             orientation: Orientation.RIGHT,
             highlightPadding: 10,
             userInteractionEvent: UserInteractionEvent.CLICK,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
         // new page
         new TextTourStep({
@@ -172,7 +173,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorExerciseDashboard.submissionsAndComplaints.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
             pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
@@ -181,7 +182,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.tutorExerciseDashboard.assessSubmissions.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            permission: ['ROLE_TA'],
+            permission: [Authority.TA],
         }),
     ],
 };

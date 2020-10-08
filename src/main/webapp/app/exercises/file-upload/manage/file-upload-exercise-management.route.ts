@@ -13,6 +13,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
@@ -62,7 +63,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +75,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -83,7 +84,7 @@ const routes: Routes = [
         path: ':courseId/file-upload-exercises/:exerciseId',
         component: FileUploadExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -92,7 +93,7 @@ const routes: Routes = [
         path: ':courseId/file-upload-exercises',
         component: FileUploadExerciseComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
