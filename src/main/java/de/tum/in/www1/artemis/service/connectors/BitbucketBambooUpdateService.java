@@ -64,7 +64,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
             bambooBuildPlanUpdateProvider.updateRepository(bambooRemoteRepository, bitbucketRepository, bitbucketProject, planKey);
 
-            // Overwrite triggers if needed, incl workaround for different repo names
+            // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
+            // previous exercise
             if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
                 triggeredBy = Optional
                         .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
@@ -170,6 +171,17 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         return list;
     }
 
+    /**
+     * What we basically want to achieve is the following.
+     * Tests should NOT trigger the BASE build plan any more.
+     * In old exercises this was the case, but in new exercises, this behavior is not wanted. Therefore, all triggers are removed and the assignment trigger is added again for the
+     * BASE build plan
+     *
+     * This only affects imported exercises and might even not be necessary in case the old BASE build plan was created after December 2019 or was already adapted.
+     *
+     * @param planKey the bamboo plan key (this is currently only used for BASE build plans
+     * @param triggeredBy a list of triggers (i.e. names of repositories) that should be used to trigger builds in the build plan
+     */
     private void overwriteTriggers(final String planKey, final List<String> triggeredBy) {
         try {
             // TODO: it should be simpler to get the ids
