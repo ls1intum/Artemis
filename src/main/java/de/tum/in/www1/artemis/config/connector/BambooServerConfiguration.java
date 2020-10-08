@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.bitbucket.cli.BitbucketClient;
 import com.appfire.common.cli.Base;
 import com.appfire.common.cli.Settings;
 import com.atlassian.bamboo.specs.util.*;
@@ -38,7 +39,7 @@ public class BambooServerConfiguration {
     private String bitbucketPassword;
 
     @Value("${artemis.version-control.url}")
-    private URL bitbucketServer;
+    private URL bitbucketServerUrl;
 
     /**
      * initializes the bamboo server with the provided token (if available) or with username and password (fallback that will be removed soon)
@@ -64,15 +65,23 @@ public class BambooServerConfiguration {
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
     @Bean
-    // TODO: can we use a token here as well?
+    // TODO: as soon as available, we should also use a token here
     public BambooClient bambooClient() {
         final var bambooClient = new BambooClient(createBase());
         // setup the Bamboo Client to use the correct username and password
-        final var args = new String[] { "-s", bambooServerUrl.toString(), "--user", bambooUser, "--password", bambooPassword, "--targetServer", bitbucketServer.toString(),
+        final var args = new String[] { "-s", bambooServerUrl.toString(), "--user", bambooUser, "--password", bambooPassword, "--targetServer", bitbucketServerUrl.toString(),
                 "--targetUser", bitbucketUser, "--targetPassword", bitbucketPassword };
 
         bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
         return bambooClient;
+    }
+
+    @Bean
+    public BitbucketClient bitbucketClient() {
+        final var bitbucketClient = new BitbucketClient(createBase());
+        final var args = new String[] { "-s", bitbucketServerUrl.toString(), "--user", bitbucketUser, "--password", bitbucketPassword };
+        bitbucketClient.doWork(args);
+        return bitbucketClient;
     }
 
     private Base createBase() {
