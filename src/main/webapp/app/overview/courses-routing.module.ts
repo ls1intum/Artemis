@@ -10,13 +10,14 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: 'courses',
         component: CoursesComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'overview.title',
         },
         canActivate: [UserRouteAccessService],
@@ -25,7 +26,7 @@ const routes: Routes = [
         path: 'courses/:courseId',
         component: CourseOverviewComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'overview.course',
         },
         canActivate: [UserRouteAccessService],
@@ -34,7 +35,7 @@ const routes: Routes = [
                 path: 'exercises',
                 component: CourseExercisesComponent,
                 data: {
-                    authorities: ['ROLE_USER'],
+                    authorities: [Authority.USER],
                     pageTitle: 'overview.course',
                 },
                 canActivate: [UserRouteAccessService],
@@ -43,7 +44,7 @@ const routes: Routes = [
                 path: 'lectures',
                 component: CourseLecturesComponent,
                 data: {
-                    authorities: ['ROLE_USER'],
+                    authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
                 },
                 canActivate: [UserRouteAccessService],
@@ -52,7 +53,7 @@ const routes: Routes = [
                 path: 'statistics',
                 component: CourseStatisticsComponent,
                 data: {
-                    authorities: ['ROLE_USER'],
+                    authorities: [Authority.USER],
                     pageTitle: 'overview.statistics',
                 },
                 canActivate: [UserRouteAccessService],
@@ -61,7 +62,7 @@ const routes: Routes = [
                 path: 'exams',
                 component: CourseExamsComponent,
                 data: {
-                    authorities: ['ROLE_USER'],
+                    authorities: [Authority.USER],
                     pageTitle: 'overview.exams',
                 },
                 canActivate: [UserRouteAccessService],
@@ -77,7 +78,7 @@ const routes: Routes = [
         path: 'courses/:courseId/exercises/:exerciseId',
         component: CourseExerciseDetailsComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
         },
         canActivate: [UserRouteAccessService],
@@ -86,7 +87,7 @@ const routes: Routes = [
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
         component: TeamComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
@@ -95,7 +96,7 @@ const routes: Routes = [
         path: 'courses/:courseId/lectures/:lectureId',
         component: CourseLectureDetailsComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'overview.lectures',
         },
         canActivate: [UserRouteAccessService],

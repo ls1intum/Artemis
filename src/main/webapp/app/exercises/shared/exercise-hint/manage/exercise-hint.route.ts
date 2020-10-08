@@ -9,6 +9,7 @@ import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
@@ -38,7 +39,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -50,7 +51,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -62,7 +63,7 @@ export const exerciseHintRoute: Routes = [
             exerciseHint: ExerciseHintResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -71,7 +72,7 @@ export const exerciseHintRoute: Routes = [
         path: ':courseId/exercises/:exerciseId/hints',
         component: ExerciseHintComponent,
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.exerciseHint.home.title',
         },
         canActivate: [UserRouteAccessService],

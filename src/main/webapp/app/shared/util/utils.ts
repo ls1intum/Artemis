@@ -81,5 +81,5 @@ export const round = (value: any, exp: number) => {
  * @param results
  */
 export const findLatestResult = (results?: Result[]) => {
-    return results?.length ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
+    return results && results.length > 0 ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
 };

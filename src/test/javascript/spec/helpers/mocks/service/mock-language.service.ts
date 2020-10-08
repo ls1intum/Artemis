@@ -5,28 +5,13 @@ import { of } from 'rxjs';
 import Spy = jasmine.Spy;
 
 export class MockLanguageService extends SpyObject {
-    getCurrentSpy: Spy;
-    fakeResponse: any;
+    getCurrentLanguageSpy: Spy;
 
     constructor() {
         super(JhiLanguageService);
 
-        this.fakeResponse = 'en';
-        this.getCurrentSpy = this.spy('getCurrent').andReturn(Promise.resolve(this.fakeResponse));
+        this.getCurrentLanguageSpy = this.spy('getCurrentLanguage').andReturn('en');
     }
-
-    init() {}
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    changeLanguage(languageKey: string) {}
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    setLocations(locations: string[]) {}
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addLocation(location: string) {}
-
-    reload() {}
 }
 
 export class MockLanguageHelper extends SpyObject {
