@@ -290,6 +290,9 @@ public class BambooService implements ContinuousIntegrationService {
 
         var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
 
+        // Truncate the logs so that they fit into the database
+        buildLogEntries.forEach(BuildLogEntry::truncateLogToMaxLength);
+
         // Add reference to ProgrammingSubmission
         buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
 
@@ -505,8 +508,12 @@ public class BambooService implements ContinuousIntegrationService {
                 }
             }
 
+            // Filter unwanted logs
+            var filteredLogs = filterBuildLogs(buildLogEntries);
+            // Truncate the logs so that they fit into the database
+            filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
+            programmingSubmission.setBuildLogEntries(filteredLogs);
 
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
