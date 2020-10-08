@@ -150,15 +150,15 @@ under ``localhost:7990``.
        :align: center
 
 6. In Bamboo create a global variable named
-SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
-as the secret. The value of this variable should be then stored in
-``src/main/resources/config/application-artemis.yml`` as the value of
-``artemis-authentication-token-value``.
+   SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
+   as the secret. The value of this variable should be then stored in
+   ``src/main/resources/config/application-artemis.yml`` as the value of
+   ``artemis-authentication-token-value``.
 
 7. Download the
-`bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
-and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
-the downloaded .jar file → Upload
+   `bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
+   and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
+   the downloaded .jar file → Upload
 
 8. Add Maven and JDK:
 
