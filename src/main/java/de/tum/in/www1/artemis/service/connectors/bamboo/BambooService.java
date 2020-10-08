@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,6 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.RemotePlanDTO;
 
 @Service
 @Profile("bamboo")
@@ -284,12 +286,31 @@ public class BambooService implements ContinuousIntegrationService {
         return buildLogEntries;
     }
 
+    // TODO: this is duplicated code with BitbucketBambooUpdateService
+    private RemotePlanDTO getRemotePlan(String planName) {
+        try {
+            String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planName;
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
+            return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, RemotePlanDTO.class).getBody();
+        }
+        catch (Exception ex) {
+            log.info(ex.getMessage());
+            return null;
+        }
+    }
+
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
         final var cleanPlanName = getCleanPlanName(targetPlanName);
         final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
+            var remotePlan = getRemotePlan(targetPlanKey);
+            if (remotePlan != null) {
+                log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
+                return targetPlanKey;
+            }
+            // TODO: execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
             log.info("Clone build plan " + sourcePlanKey + " was successful");
