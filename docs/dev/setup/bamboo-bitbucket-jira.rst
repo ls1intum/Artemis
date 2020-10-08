@@ -169,7 +169,9 @@ under ``localhost:7990``.
 -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
    as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
-9. Generate a personal access token for Bamboo
+9. Generate a personal access token for Bamboo.
+   While username and password can still be used as a fallback, this option is already marked as deprecated and
+   will be removed in the future.
 
 - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
