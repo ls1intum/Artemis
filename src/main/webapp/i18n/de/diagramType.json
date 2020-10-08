@@ -9,7 +9,9 @@
             "UseCaseDiagram": "Anwendungsfalldiagramm",
             "CommunicationDiagram": "Kommunikationsdiagramm",
             "ComponentDiagram": "Komponentendiagram",
-            "DeploymentDiagram": "Verteilungsdiagram"
+            "DeploymentDiagram": "Verteilungsdiagram",
+            "PetriNet": "Petri-Netz",
+            "SyntaxTree": "Syntaxbaum"
         }
     }
 }
