@@ -8,7 +8,7 @@ import { StudentQuestionAnswer } from 'app/entities/student-question-answer.mode
 
 const expect = chai.expect;
 
-describe('ExerciseHint Service', () => {
+describe('StudentQuestionAnswer Service', () => {
     let injector: TestBed;
     let service: StudentQuestionAnswerService;
     let httpMock: HttpTestingController;
@@ -34,7 +34,7 @@ describe('ExerciseHint Service', () => {
         it('should find a StudentQuestionAnswer', async () => {
             const returnedFromService = { ...elemDefault };
             service
-                .find(123)
+                .find(1, 123)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
 
@@ -59,7 +59,7 @@ describe('ExerciseHint Service', () => {
             const returnedFromService = { ...elemDefault, answerText: 'This is another test answer' };
             const expected = { ...returnedFromService };
             service
-                .update(expected)
+                .update(1, expected)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -71,7 +71,7 @@ describe('ExerciseHint Service', () => {
             const returnedFromService = { ...elemDefault, tutorApproved: true };
             const expected = { ...returnedFromService };
             service
-                .update(expected)
+                .update(1, expected)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -80,7 +80,7 @@ describe('ExerciseHint Service', () => {
         });
 
         it('should delete a StudentQuestionAnswer', async () => {
-            service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
+            service.delete(1, 123).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });

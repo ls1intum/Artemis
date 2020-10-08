@@ -8,7 +8,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 
 const expect = chai.expect;
 
-describe('ExerciseHint Service', () => {
+describe('StudentQuestion Service', () => {
     let injector: TestBed;
     let service: StudentQuestionService;
     let httpMock: HttpTestingController;

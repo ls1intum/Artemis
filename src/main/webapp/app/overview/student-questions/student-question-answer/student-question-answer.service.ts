@@ -13,7 +13,7 @@ type EntityArrayResponseType = HttpResponse<StudentQuestionAnswer[]>;
 
 @Injectable({ providedIn: 'root' })
 export class StudentQuestionAnswerService {
-    public resourceUrl = SERVER_API_URL + 'api/student-question-answers';
+    public resourceUrl = SERVER_API_URL + 'api/courses/';
 
     constructor(protected http: HttpClient) {}
 
@@ -25,7 +25,7 @@ export class StudentQuestionAnswerService {
     create(courseId: number, studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestionAnswer);
         return this.http
-            .post<StudentQuestionAnswer>('api/courses/' + courseId + '/student-question-answers', copy, { observe: 'response' })
+            .post<StudentQuestionAnswer>(`${this.resourceUrl}${courseId}/student-question-answers`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -34,10 +34,10 @@ export class StudentQuestionAnswerService {
      * @param {StudentQuestionAnswer} studentQuestionAnswer
      * @return {Observable<EntityResponseType>}
      */
-    update(studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
+    update(courseId: number, studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestionAnswer);
         return this.http
-            .put<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' })
+            .put<StudentQuestionAnswer>(`${this.resourceUrl}${courseId}/student-question-answers`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -46,22 +46,10 @@ export class StudentQuestionAnswerService {
      * @param {number} id
      * @return {Observable<EntityResponseType>}
      */
-    find(id: number): Observable<EntityResponseType> {
+    find(courseId: number, id: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentQuestionAnswer>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<StudentQuestionAnswer>(`${this.resourceUrl}${courseId}/student-question-answers/${id}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    /**
-     * get studentQuestionAnswers for query
-     * @param {any} req?
-     * @return Observable<EntityArrayResponseType>
-     */
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<StudentQuestionAnswer[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     /**
@@ -69,8 +57,8 @@ export class StudentQuestionAnswerService {
      * @param {number} id
      * @return {Observable<HttpResponse<any>>}
      */
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(courseId: number, id: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}${courseId}/student-question-answers/${id}`, { observe: 'response' });
     }
 
     /**
