@@ -496,25 +496,9 @@ public class BambooService implements ContinuousIntegrationService {
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
 
-            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-
-            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-            // Store logs into database. Append logs of multiple jobs.
-            for (var job : buildResult.getBuild().getJobs()) {
-                for (var bambooLog : job.getLogs()) {
-                    // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                    buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
-                }
-            }
-
-            // Filter unwanted logs
-            var filteredLogs = filterBuildLogs(buildLogEntries);
-            // Truncate the logs so that they fit into the database
-            filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
+            var buildLogs = extractAndPrepareBuildLogs(buildResult);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(filteredLogs);
-
+            programmingSubmission.setBuildLogEntries(buildLogs);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
             result.setSubmission(programmingSubmission);
@@ -527,6 +511,25 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
+    }
+
+    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult) {
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+        // Store logs into database. Append logs of multiple jobs.
+        for (var job : buildResult.getBuild().getJobs()) {
+            for (var bambooLog : job.getLogs()) {
+                // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
+            }
+        }
+
+        // Filter unwanted logs
+        var filteredLogs = filterBuildLogs(buildLogEntries);
+        // Truncate the logs so that they fit into the database
+        filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
+
+        return filteredLogs;
     }
 
     @Override
