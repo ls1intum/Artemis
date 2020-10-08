@@ -10,8 +10,10 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.bitbucket.cli.BitbucketClient;
@@ -34,9 +36,12 @@ public class BambooBuildPlanUpdateProvider {
 
     private final BitbucketClient bitbucketClient;
 
-    public BambooBuildPlanUpdateProvider(BambooClient bambooClient, BitbucketClient bitbucketClient) {
+    private final RestTemplate restTemplate;
+
+    public BambooBuildPlanUpdateProvider(BambooClient bambooClient, BitbucketClient bitbucketClient, @Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
         this.bambooClient = bambooClient;
         this.bitbucketClient = bitbucketClient;
+        this.restTemplate = restTemplate;
     }
 
     /**

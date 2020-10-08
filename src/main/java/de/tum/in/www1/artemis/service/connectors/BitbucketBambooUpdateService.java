@@ -13,8 +13,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.bamboo.cli.helpers.TriggerHelper;
@@ -42,9 +44,13 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private final BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
 
-    public BitbucketBambooUpdateService(BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider) {
+    private final RestTemplate restTemplate;
+
+    public BitbucketBambooUpdateService(BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider,
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
         this.bambooClient = bambooClient;
         this.bambooBuildPlanUpdateProvider = bambooBuildPlanUpdateProvider;
+        this.restTemplate = restTemplate;
     }
 
     @Override
@@ -103,7 +109,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     }
 
     private List<RemoteRepository> getRemoteRepositoryList(String plan) throws CliClient.ClientException, CliClient.RemoteRestException {
-        RemotePlan remotePlan = StringUtils.isBlank(plan) ? null : this.getRemotePlan(plan);
+        RemotePlan remotePlan = this.getRemotePlan(plan);
         return this.getRemoteRepositoryList(remotePlan);
     }
 
@@ -125,26 +131,19 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private List<RemoteRepository> getRemoteRepositoryList(RemotePlan plan) throws CliClient.ClientException, CliClient.RemoteRestException {
         List<RemoteRepository> list = new ArrayList<>();
-        boolean isPlan = plan != null;
-        String request;
-        if (isPlan) {
-            request = "/chain/admin/config/editChainRepository.action";
-        }
-        else {
-            String actionName = "default.action";
-            String qualifier = "Global";
-            request = "/admin/configure" + qualifier + "Repositories!" + actionName;
-        }
+        String request = "/chain/admin/config/editChainRepository.action";
 
         Map<String, String> parameters = new HashMap<>();
-        if (isPlan) {
-            parameters.put("buildKey", plan.getKey());
-        }
+        parameters.put("buildKey", plan.getKey());
+
+        // TODO: GET with text/html to bambooUrl + request + parameters
+        String data = restTemplate.getForObject(request, String.class, parameters);
 
         DefaultRequestHelper helper = new PseudoRequestHelper(bambooClient);
         helper.setParameters(parameters);
         helper.makeRequest(request);
         String data = helper.getResponseData();
+
         if (data != null) {
             int count = 0;
             Pattern findPattern = Pattern.compile("data-item-id=\"(\\d+)\".*\"item-title\">([^<]+)<", 32);
