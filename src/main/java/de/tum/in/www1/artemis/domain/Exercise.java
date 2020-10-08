@@ -154,10 +154,6 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @ManyToMany(mappedBy = "exercises")
-    @JsonIgnoreProperties("exercises")
-    public Set<LearningGoal> learningGoals = new HashSet<>();
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -399,36 +395,6 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     public boolean hasExerciseGroup() {
         return this.exerciseGroup != null;
-    }
-
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
-    }
-
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
-    }
-
-    /**
-     * Adds a learning goal to the exercise. Also handles the other side of the relationship.
-     * @param learningGoal the learning goal to add
-     * @return the exercise with the learning goal added
-     */
-    public Exercise addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getExercises().add(this);
-        return this;
-    }
-
-    /**
-     * Removes an learning goal from the exercise. Also handles the other side of the relationship
-     * @param learningGoal the learning goal to remove
-     * @return the exercise with the learning goal removed
-     */
-    public Exercise removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getExercises().remove(this);
-        return this;
     }
 
     /**

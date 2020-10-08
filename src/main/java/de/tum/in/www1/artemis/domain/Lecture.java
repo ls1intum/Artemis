@@ -47,10 +47,6 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties("lectures")
     private Course course;
 
-    @ManyToMany(mappedBy = "lectures")
-    @JsonIgnoreProperties("lectures")
-    public Set<LearningGoal> learningGoals = new HashSet<>();
-
     public String getTitle() {
         return title;
     }
@@ -126,36 +122,6 @@ public class Lecture extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
-    }
-
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
-    }
-
-    /**
-     * Adds a learning goal to the lecture. Also handles the other side of the relationship.
-     * @param learningGoal the learning goal to add
-     * @return the lecture with the learning goal added
-     */
-    public Lecture addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getLectures().add(this);
-        return this;
-    }
-
-    /**
-     * Removes an learning goal from the lecture. Also handles the other side of the relationship
-     * @param learningGoal the learning goal to remove
-     * @return the lecture with the learning goal removed
-     */
-    public Lecture removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getLectures().remove(this);
-        return this;
     }
 
     @Override

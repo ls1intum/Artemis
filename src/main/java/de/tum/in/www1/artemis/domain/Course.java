@@ -121,11 +121,6 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
-    private Set<LearningGoal> learningGoals = new HashSet<>();
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private Long numberOfInstructorsTransient;
@@ -341,40 +336,6 @@ public class Course extends DomainObject {
             exam.setCourse(this);
         }
     }
-
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
-    }
-
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
-    }
-
-    /**
-     * Adds a learning goal to the course. Also handles the other side of the relationship.
-     * @param learningGoal the learning goal to add
-     * @return course with learning goal added
-     */
-    public Course addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        if (learningGoal.getCourse() != this) {
-            learningGoal.getCourse().removeLearningGoal(learningGoal);
-            learningGoal.setCourse(this);
-        }
-        return this;
-    }
-
-    /**
-     * Removes a learning goal from the course. Also handles the other side of the relationship.
-     * @param learningGoal the learning goal to remove
-     * @return course with learning goal removed
-     */
-    public Course removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.setCourse(null);
-        return this;
-    }
-
     /*
      * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
      * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user

@@ -8,7 +8,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -33,12 +32,10 @@ public class LearningGoal extends DomainObject {
 
     @ManyToMany
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("learningGoals")
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "learning_goal_lecture", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("learningGoals")
     private Set<Lecture> lectures = new HashSet<>();
 
     public String getTitle() {
@@ -62,17 +59,12 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Sets the course properties and updates the other side of the relationship
-     * @param course course to set the property to
+     * Sets the course property
+     *
+     * @param course entity to set the property to
      */
     public void setCourse(Course course) {
-        if (this.course != null) {
-            this.course.removeLearningGoal(this);
-        }
         this.course = course;
-        if (course != null) {
-            course.getLearningGoals().add(this);
-        }
     }
 
     public Set<Lecture> getLectures() {
@@ -84,28 +76,24 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Adds an lecture to the learning goal. Also handles the other side of the relationship
-     * @param lecture the lecture to add
+     * Adds a lecture to the learning goal
+     *
+     * @param lecture the entity to add
      * @return learning goal with lecture added
      */
     public LearningGoal addLecture(Lecture lecture) {
         this.lectures.add(lecture);
-        if (!lecture.getLearningGoals().contains(this)) {
-            lecture.getLearningGoals().add(this);
-        }
         return this;
     }
 
     /**
-     * Removes a lecture from the learning goal. Also handles the other side of the relationship.
-     * @param lecture the lecture to remove
+     * Removes a lecture from the learning goal
+     *
+     * @param lecture the entity to remove
      * @return learning goal with lecture removed
      */
     public LearningGoal removeLecture(Lecture lecture) {
         this.lectures.remove(lecture);
-        if (lecture.getLearningGoals().contains(this)) {
-            lecture.getLearningGoals().remove(this);
-        }
         return this;
     }
 
@@ -118,28 +106,24 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Adds an exercise to the learning goal. Also handles the other side of the relationship
-     * @param exercise the exercise to add
+     * Adds an exercise to the learning goal
+     *
+     * @param exercise the entity to add
      * @return learning goal with exercise added
      */
     public LearningGoal addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        if (!exercise.getLearningGoals().contains(this)) {
-            exercise.getLearningGoals().add(this);
-        }
         return this;
     }
 
     /**
-     * Removes an exercise from the learning goal. Also handles the other side of the relationship.
-     * @param exercise the exercise to remove
+     * Removes an exercise from the learning goal
+     *
+     * @param exercise the entity to remove
      * @return learning goal with exercise removed
      */
     public LearningGoal removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        if (exercise.getLearningGoals().contains(this)) {
-            exercise.getLearningGoals().remove(this);
-        }
         return this;
     }
 
