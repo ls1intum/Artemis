@@ -20,13 +20,13 @@ export class InformativeMarketingComponent implements OnInit {
         if (this.route.snapshot.url[1]?.toString() === 'students') {
             this.targetAudience = targetAudience.STUDENTS;
         }
-        const featureUnifiedProcess = new Feature(
-            'informativeMarketing.instructor.feature.unifiedProcess.title',
-            'informativeMarketing.instructor.feature.unifiedProcess.shortDescription',
-            'informativeMarketing.instructor.feature.unifiedProcess.descriptionTextOne',
-            'informativeMarketing.instructor.feature.unifiedProcess.icon',
+        const featureIntegratedProcess = new Feature(
+            'informativeMarketing.instructor.feature.integratedProcess.title',
+            'informativeMarketing.instructor.feature.integratedProcess.shortDescription',
+            'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
+            'informativeMarketing.instructor.feature.integratedProcess.icon',
         );
-        featureUnifiedProcess.centerTextAndImageOne();
+        featureIntegratedProcess.centerTextAndImageOne();
 
         if (this.targetAudience === targetAudience.INSTRUCTORS) {
             // Set up instructor features
@@ -129,7 +129,7 @@ export class InformativeMarketingComponent implements OnInit {
             );
 
             this.features = [
-                featureUnifiedProcess,
+                featureIntegratedProcess,
                 featureConfiguration,
                 featureExerciseTypes,
                 featureExerciseVariants,
