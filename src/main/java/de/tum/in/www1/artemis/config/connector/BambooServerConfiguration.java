@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config.connector;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.URL;
 import java.util.Optional;
 
@@ -10,10 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.bitbucket.cli.BitbucketClient;
-import com.appfire.common.cli.Base;
-import com.appfire.common.cli.Settings;
 import com.atlassian.bamboo.specs.util.*;
 
 @Configuration
@@ -60,43 +54,5 @@ public class BambooServerConfiguration {
             UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(bambooUser, bambooPassword);
             return new BambooServer(bambooServerUrl.toString(), userPasswordCredentials);
         }
-    }
-
-    /**
-     * Creates a Bamboo client for communication with the Bamboo instance over the non-REST API. This beans is also connected to the Bitbucket server
-     * if the bitbucket profile is activated (incl. authentication).
-     *
-     * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
-     */
-    @Bean
-    // TODO: as soon as available, we should also use a token here
-    public BambooClient bambooClient() {
-        final var bambooClient = new BambooClient(createBase());
-        // setup the Bamboo Client to use the correct username and password
-        final var args = new String[] { "-s", bambooServerUrl.toString(), "--user", bambooUser, "--password", bambooPassword, "--targetServer", bitbucketServerUrl.toString(),
-                "--targetUser", bitbucketUser, "--targetPassword", bitbucketPassword };
-
-        bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
-        return bambooClient;
-    }
-
-    @Bean
-    public BitbucketClient bitbucketClient() {
-        final var bitbucketClient = new BitbucketClient(createBase());
-        final var args = new String[] { "-s", bitbucketServerUrl.toString(), "--user", bitbucketUser, "--password", bitbucketPassword };
-        bitbucketClient.doWork(args);
-        return bitbucketClient;
-    }
-
-    private Base createBase() {
-        // we override the out stream to prevent unnecessary log statements in our log files
-        final var outputStream = new ByteArrayOutputStream();
-        final var printStream = new PrintStream(outputStream);
-        final var settings = new Settings();
-        settings.setOut(printStream);
-        settings.setOverrideOut(printStream);
-        settings.setDebugOut(printStream);
-        settings.setErr(printStream);
-        return new Base(settings);
     }
 }

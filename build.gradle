@@ -169,7 +169,6 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:4.15.7"
 
-    implementation files("libs/acli-9.0.0.jar")
     implementation files("libs/jplag-2.12.1.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
@@ -183,6 +182,7 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
     implementation "io.sentry:sentry-spring-boot-starter:3.0.0"
     implementation "io.sentry:sentry-logback:3.0.0"
+    implementation "org.jsoup:jsoup:1.13.1"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )

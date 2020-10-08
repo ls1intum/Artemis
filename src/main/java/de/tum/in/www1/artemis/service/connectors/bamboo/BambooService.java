@@ -30,8 +30,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -74,13 +72,11 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
-    private final BambooClient bambooClient;
-
     private final ObjectMapper mapper;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackService feedbackService,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient, ObjectMapper mapper) {
+            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, ObjectMapper mapper) {
         this.gitService = gitService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
@@ -88,7 +84,6 @@ public class BambooService implements ContinuousIntegrationService {
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.feedbackService = feedbackService;
         this.restTemplate = restTemplate;
-        this.bambooClient = bambooClient;
         this.mapper = mapper;
     }
 
@@ -214,7 +209,14 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        deletePlan(buildPlanId);
+        try {
+            log.info("Delete build plan " + buildPlanId);
+            restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId);
+            log.info("Delete build plan was successful");
+        }
+        catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
 
     /**
@@ -226,11 +228,10 @@ public class BambooService implements ContinuousIntegrationService {
     public void deleteProject(String projectKey) {
         try {
             log.info("Delete project " + projectKey);
-            // TODO: use Bamboo REST API: DELETE "/rest/api/latest/project/{projectKey}"
-            String message = bambooClient.getProjectHelper().deleteProject(projectKey);
-            log.info("Delete project was successful. " + message);
+            restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey);
+            log.info("Delete project was successful.");
         }
-        catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+        catch (Exception e) {
             log.error(e.getMessage());
         }
     }
@@ -290,11 +291,10 @@ public class BambooService implements ContinuousIntegrationService {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
-            // TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = bambooClient.getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
-            log.info("Clone build plan " + sourcePlanKey + " was successful: " + message);
+            restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
+            log.info("Clone build plan " + sourcePlanKey + " was successful");
         }
-        catch (CliClient.ClientException clientException) {
+        catch (RestClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
@@ -304,8 +304,8 @@ public class BambooService implements ContinuousIntegrationService {
                         clientException);
             }
         }
-        catch (CliClient.RemoteRestException e) {
-            throw new BambooException("Something went wrong while cloning build plan: " + e.getMessage(), e);
+        catch (Exception serverException) {
+            throw new BambooException("Something went wrong while cloning build plan: " + serverException.getMessage(), serverException);
         }
 
         return targetPlanKey;
@@ -362,11 +362,10 @@ public class BambooService implements ContinuousIntegrationService {
     public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
-            // TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = bambooClient.getPlanHelper().enablePlan(planKey, true);
-            log.info("Enable build plan " + planKey + " was successful. " + message);
+            restTemplate.postForObject(bambooServerUrl + "/rest/api/latest/plan/" + planKey + "/enable", null, Void.class);
+            log.info("Enable build plan " + planKey + " was successful.");
         }
-        catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+        catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);
         }
@@ -381,23 +380,6 @@ public class BambooService implements ContinuousIntegrationService {
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Deletes the given plan.
-     *
-     * @param planKey to identify the Bamboo plan to delete
-     */
-    private void deletePlan(String planKey) {
-        try {
-            log.info("Delete build plan " + planKey);
-            // TODO use REST API DELETE "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = bambooClient.getPlanHelper().deletePlan(planKey);
-            log.info("Delete build plan was successful. " + message);
-        }
-        catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage());
         }
     }
 

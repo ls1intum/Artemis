@@ -14,9 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,13 +28,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.bamboo.cli.helpers.PlanHelper;
-import com.appfire.bamboo.cli.helpers.ProjectHelper;
-import com.appfire.bamboo.cli.helpers.RepositoryHelper;
-import com.appfire.bamboo.cli.helpers.TriggerHelper;
-import com.appfire.bamboo.cli.objects.RemoteRepository;
-import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -54,24 +44,8 @@ import de.tum.in.www1.artemis.util.Verifiable;
 @Profile("bamboo")
 public class BambooRequestMockProvider {
 
-    @Mock
-    private PlanHelper planHelper;
-
-    @Mock
-    private RepositoryHelper repositoryHelper;
-
-    @Mock
-    private TriggerHelper triggerHelper;
-
-    @Mock
-    private ProjectHelper projectHelper;
-
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
-
-    @SpyBean
-    @InjectMocks
-    private BambooClient bambooClient;
 
     @SpyBean
     private BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
@@ -95,9 +69,6 @@ public class BambooRequestMockProvider {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
         mockServer = builder.build();
-
-        // necessary for injecting bambooClient above
-        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {
@@ -174,7 +145,7 @@ public class BambooRequestMockProvider {
                 .build().toUri();
     }
 
-    public List<Verifiable> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws CliClient.RemoteRestException, CliClient.ClientException {
+    public List<Verifiable> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) {
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
@@ -188,8 +159,7 @@ public class BambooRequestMockProvider {
         return verifications;
     }
 
-    public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+    public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
@@ -197,12 +167,11 @@ public class BambooRequestMockProvider {
         return mockUpdatePlanRepository(exercise, username, bambooRepoName, bitbucketRepoName, List.of());
     }
 
-    public List<Verifiable> mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+    public List<Verifiable> mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy) {
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
-        final var repositoryResponse = new RemoteRepository(null, 12345678L, "testName");
+        final var repositoryResponse = new RemoteBambooRepositoryDTO(null, 12345678L, "testName");
 
         doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
         verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
@@ -331,8 +300,7 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
     }
 
-    public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+    public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
         final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         doReturn(targetPlanKey).when(planHelper).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
@@ -340,19 +308,19 @@ public class BambooRequestMockProvider {
         return () -> verify(planHelper, times(1)).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
     }
 
-    public Verifiable mockEnablePlan(String projectKey, String planName) throws CliClient.RemoteRestException, CliClient.ClientException {
+    public Verifiable mockEnablePlan(String projectKey, String planName) {
         final var planKey = projectKey + "-" + planName;
         doReturn("foobar").when(planHelper).enablePlan(planKey, true);
 
         return () -> verify(planHelper, times(1)).enablePlan(eq(planKey), eq(true));
     }
 
-    public Verifiable mockDeleteProject(String projectKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+    public Verifiable mockDeleteProject(String projectKey) {
         doReturn("foobar").when(projectHelper).deleteProject(projectKey);
         return () -> verify(projectHelper).deleteProject(projectKey);
     }
 
-    public Verifiable mockDeletePlan(String planKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+    public Verifiable mockDeletePlan(String planKey) {
         doReturn("foobar").when(planHelper).deletePlan(planKey);
         return () -> verify(planHelper).deletePlan(planKey);
     }

@@ -24,7 +24,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.appfire.common.cli.CliClient;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
@@ -145,8 +144,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         doReturn(null).when(bambooServer).publish(any());
     }
 
-    protected List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported)
-            throws IOException, URISyntaxException, CliClient.RemoteRestException, CliClient.ClientException {
+    protected List<Verifiable> mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws IOException, URISyntaxException {
         final var verifications = new ArrayList<Verifiable>();
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var sourceProjectKey = sourceExercise.getProjectKey();
