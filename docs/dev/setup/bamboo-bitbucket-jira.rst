@@ -169,6 +169,23 @@ the downloaded .jar file → Upload
 -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 15``
    as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
+9. Generate a personal access token for Bamboo
+
+- Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+
+    .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+       :align: center
+
+- Copy the generated token to your application-local.yml:
+
+.. code:: yaml
+
+    artemis:
+        continuous-integration:
+            user: <username>
+            password: <password>
+            token: #insert the token here
+
 Configure Artemis
 -----------------
 
@@ -209,7 +226,7 @@ Configure Artemis
        port: 8080                                         # The port of artemis
        url: http://172.20.0.1:8080                        # needs to be an ip
        // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one  
+       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,
