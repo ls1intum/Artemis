@@ -33,7 +33,7 @@ export class ResultGraphComponent implements AfterViewInit {
     constructor() {}
 
     ngAfterViewInit(): void {
-        const maxPoints = this.exercise.maxScore + (this.exercise.bonusPoints || 0);
+        const maxPoints = this.exercise.maxScore! + (this.exercise.bonusPoints || 0);
         const maxStaticCodeAnalysisPenalty = (this.exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty || 0;
 
         const groups = _.groupBy(this.feedbackList, 'category');

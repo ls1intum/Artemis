@@ -275,7 +275,7 @@ export class ResultComponent implements OnInit, OnChanges {
         const exercise = getExercise(this.participation);
         if (exercise) {
             modalRef.componentInstance.exerciseType = exercise.type;
-            modalRef.componentInstance.maxPoints = exercise.maxScore + (exercise.bonusPoints || 0);
+            modalRef.componentInstance.maxPoints = exercise.maxScore! + (exercise.bonusPoints || 0);
             modalRef.componentInstance.showFeedbackCredits = true;
         }
     }

@@ -109,7 +109,7 @@ export class ResultDetailComponent implements OnInit {
                         title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
                         text: `${scaIssue.rule}: ${scaIssue.message}`,
                         positive: false,
-                        credits: feedback.credits,
+                        credits: feedback.credits!,
                     };
                 } else if (feedback.type === 'AUTOMATIC') {
                     return {
@@ -119,27 +119,27 @@ export class ResultDetailComponent implements OnInit {
                             : feedback.positive === undefined
                             ? `No result information for ${feedback.text}`
                             : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
-                        text: feedback.detailText,
-                        positive: feedback.positive,
-                        credits: feedback.credits,
+                        text: feedback.detailText!,
+                        positive: feedback.positive!,
+                        credits: feedback.credits!,
                     };
                 } else {
                     return {
                         category: 'Tutor',
-                        title: feedback.text,
-                        text: feedback.detailText,
-                        positive: feedback.positive,
-                        credits: feedback.credits,
+                        title: feedback.text!,
+                        text: feedback.detailText!,
+                        positive: feedback.positive!,
+                        credits: feedback.credits!,
                     };
                 }
             });
         } else {
             return feedbacks.map((feedback) => ({
                 category: feedback.type === 'AUTOMATIC' ? 'System' : 'Tutor',
-                title: feedback.text,
-                text: feedback.detailText,
-                positive: feedback.positive,
-                credits: feedback.credits,
+                title: feedback.text!,
+                text: feedback.detailText!,
+                positive: feedback.positive!,
+                credits: feedback.credits!,
             }));
         }
     }
