@@ -62,13 +62,13 @@ public class UserService {
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Value("${artemis.user-management.external.admin-group-name:#{null}}")
-    private Optional<String> ADMIN_GROUP_NAME;
+    private Optional<String> adminGroupName;
 
     @Value("${artemis.user-management.use-external}")
     private Boolean useExternalUserManagement;
 
     @Value("${artemis.encryption-password}")
-    private String ENCRYPTION_PASSWORD;
+    private String encryptionPassword;
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -205,7 +205,7 @@ public class UserService {
         }
         encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithMD5AndDES");
-        encryptor.setPassword(ENCRYPTION_PASSWORD);
+        encryptor.setPassword(encryptionPassword);
         return encryptor;
     }
 
@@ -218,12 +218,20 @@ public class UserService {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneByActivationKey(key).map(user -> {
             // activate given user for the registration key.
-            user.setActivated(true);
-            user.setActivationKey(null);
-            this.clearUserCaches(user);
-            log.debug("Activated user: {}", user);
+            activateUser(user);
             return user;
         });
+    }
+
+    /**
+     * Activate user
+     * @param user the user that should be activated
+     */
+    public void activateUser(User user) {
+        user.setActivated(true);
+        user.setActivationKey(null);
+        this.clearUserCaches(user);
+        log.info("Activated user: {}", user);
     }
 
     /**
@@ -238,7 +246,9 @@ public class UserService {
             user.setPassword(passwordEncoder().encode(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
+            userRepository.save(user);
             this.clearUserCaches(user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             return user;
         });
     }
@@ -293,7 +303,9 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
-        userRepository.save(newUser);
+        newUser = userRepository.save(newUser);
+        // we need to save first so that the user can be found in the database in the subsequent method
+        createUserInExternalSystems(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
@@ -310,6 +322,7 @@ public class UserService {
         }
         userRepository.delete(existingUser);
         userRepository.flush();
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteUser(existingUser.getLogin()));
         this.clearUserCaches(existingUser);
         return true;
     }
@@ -465,13 +478,20 @@ public class UserService {
         user.setActivated(true);
         userRepository.save(user);
 
-        // If user management is done by Artemis, we also have to create the user in the version control system
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(user));
-
+        createUserInExternalSystems(user);
         artemisAuthenticationProvider.addUserToGroups(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
+    }
+
+    /**
+     * tries to create the user in the external system, in case this is available
+     * @param user the user, that should be created in the external system
+     */
+    private void createUserInExternalSystems(User user) {
+        // If user management is done by Artemis, we also have to create the user in the version control system
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(user));
     }
 
     /**
@@ -491,7 +511,8 @@ public class UserService {
             user.setLangKey(langKey);
             user.setImageUrl(imageUrl);
             this.clearUserCaches(user);
-            log.debug("Changed Information for User: {}", user);
+            log.info("Changed Information for User: {}", user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
         });
     }
 
@@ -573,6 +594,8 @@ public class UserService {
             }
             String encryptedPassword = passwordEncoder().encode(newPassword);
             user.setPassword(encryptedPassword);
+            userRepository.save(user);
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, null, null, true));
             this.clearUserCaches(user);
             log.debug("Changed password for User: {}", user);
         });
@@ -582,7 +605,7 @@ public class UserService {
      * Get decrypted password for the current user
      * @return decrypted password or empty string
      */
-    public String decryptPassword() {
+    public String decryptPasswordOfCurrentUser() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
         try {
             return encryptor().decrypt(user.getPassword());
@@ -590,6 +613,15 @@ public class UserService {
         catch (Exception e) {
             return "";
         }
+    }
+
+    /**
+     * Get decrypted password for given user
+     * @param user the user
+     * @return decrypted password or empty string
+     */
+    public String decryptPassword(User user) {
+        return encryptor().decrypt(user.getPassword());
     }
 
     /**
@@ -915,7 +947,7 @@ public class UserService {
         }
 
         // Check if the user is admin in case the admin group is defined
-        if (ADMIN_GROUP_NAME.isPresent() && groups.contains(ADMIN_GROUP_NAME.get())) {
+        if (adminGroupName.isPresent() && groups.contains(adminGroupName.get())) {
             authorities.add(ADMIN_AUTHORITY);
         }
 

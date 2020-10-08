@@ -14,6 +14,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -66,8 +67,8 @@ export class AccountService implements IAccountService {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
-    save(account: any): Observable<HttpResponse<any>> {
-        return this.http.post(SERVER_API_URL + 'api/account', account, { observe: 'response' });
+    save(user: User): Observable<HttpResponse<{}>> {
+        return this.http.post(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
@@ -168,7 +169,7 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
     /**
@@ -176,7 +177,7 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course) {
-        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
     /**
@@ -196,7 +197,7 @@ export class AccountService implements IAccountService {
     }
 
     isAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+        return this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
     isAuthenticated(): boolean {
