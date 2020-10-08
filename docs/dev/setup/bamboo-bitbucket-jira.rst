@@ -176,7 +176,7 @@ the downloaded .jar file → Upload
     .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
        :align: center
 
-- Copy the generated token to your application-local.yml:
+- Copy the generated token to your ``application-local.yml``:
 
 .. code:: yaml
 
