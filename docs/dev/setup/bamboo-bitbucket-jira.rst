@@ -166,7 +166,7 @@ under ``localhost:7990``.
    Capability type ``Executable`` → select type ``Maven 3.x`` → insert
    ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
--  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 15``
+-  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
    as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
 9. Generate a personal access token for Bamboo
