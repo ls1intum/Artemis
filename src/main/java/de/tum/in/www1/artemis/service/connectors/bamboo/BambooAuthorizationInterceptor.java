@@ -18,11 +18,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class BambooAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Deprecated
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
 
-    @Deprecated
     @Value("${artemis.continuous-integration.password}")
     private String bambooPassword;
 
