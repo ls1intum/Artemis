@@ -98,9 +98,11 @@ public class StudentScoreService {
             return;
         }
 
+        log.info("StudentParticipation: " + updatedResult.getParticipation());
         var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
+            log.info("Keine StudentParticipation");
             return;
         }
 

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
 public class TutorScoreService {
+
+    private final Logger log = LoggerFactory.getLogger(TutorScoreService.class);
 
     private final TutorScoreRepository tutorScoreRepository;
 
@@ -157,9 +161,11 @@ public class TutorScoreService {
             return;
         }
 
+        log.info("StudentParticipation: " + updatedResult.getParticipation());
         var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
+            log.info("Keine StudentParticipation");
             return;
         }
 
@@ -256,9 +262,11 @@ public class TutorScoreService {
             return;
         }
 
+        log.info("StudentParticipation: " + deletedResult.getParticipation());
         var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
+            log.info("Keine StudentParticipation");
             return;
         }
 
