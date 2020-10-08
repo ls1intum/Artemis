@@ -179,7 +179,7 @@ public class BambooBuildPlanService {
                     defaultJob.dockerConfiguration(new DockerConfiguration().image("com8/artemis-gbs:latest"));
                 }
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
