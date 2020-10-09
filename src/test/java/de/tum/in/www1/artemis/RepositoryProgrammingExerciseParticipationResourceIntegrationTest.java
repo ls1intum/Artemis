@@ -393,7 +393,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs).hasSize(1);
+        assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
         assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
