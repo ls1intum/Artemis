@@ -182,9 +182,10 @@ public class TutorScoreService {
             return;
         }
 
+        log.info("Exercise: " + participation.getExercise());
         var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
         if (exerciseOp.isEmpty()) {
-            log.info("Keine Exercise");
+            log.info("Keine Exercise Optional");
             return;
         }
         var exercise = exerciseOp.get();
@@ -302,9 +303,10 @@ public class TutorScoreService {
             return;
         }
 
+        log.info("Exercise: " + participation.getExercise());
         var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
         if (exerciseOp.isEmpty()) {
-            log.info("Keine Exercise");
+            log.info("Keine Exercise Optional");
             return;
         }
         var exercise = exerciseOp.get();
