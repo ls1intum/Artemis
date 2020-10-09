@@ -1225,7 +1225,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var instructor = database.getUserByLogin("instructor1");
         StudentExam testRunConfiguration = new StudentExam();
         testRunConfiguration.setExercises(new ArrayList<>());
-        var exam = database.addExerciseGroupsAndExercisesToExam(exam1, false);
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
         exam.getExerciseGroups().forEach(exerciseGroup -> testRunConfiguration.getExercises().add(exerciseGroup.getExercises().iterator().next()));
         testRunConfiguration.setExam(exam);
         testRunConfiguration.setWorkingTime(6000);
