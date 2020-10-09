@@ -26,7 +26,7 @@ export class InformativeMarketingComponent implements OnInit {
             'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
             'informativeMarketing.instructor.feature.integratedProcess.icon',
         );
-        featureIntegratedProcess.centerTextAndImageOne();
+        // featureIntegratedProcess.centerTextAndImageOne();
 
         if (this.targetAudience === targetAudience.INSTRUCTORS) {
             // Set up instructor features
@@ -82,7 +82,7 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.assessment.shortDescription',
                 'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
                 'informativeMarketing.instructor.feature.assessment.icon',
-                'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
+                'informativeMarketing.instructor.feature.assessment.descriptionTextTwo',
                 'informativeMarketing.instructor.feature.assessment.imageOne',
                 'informativeMarketing.instructor.feature.assessment.imageTwo',
             );
@@ -92,9 +92,8 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.assessmentMonitoring.shortDescription',
                 'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
                 'informativeMarketing.instructor.feature.assessmentMonitoring.icon',
-                'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
+                undefined,
                 'informativeMarketing.instructor.feature.assessmentMonitoring.imageOne',
-                'informativeMarketing.instructor.feature.assessmentMonitoring.imageTwo',
             );
             featureAssessmentMonitoring.alignFirstImageLeft();
 
@@ -113,7 +112,7 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.complaints.shortDescription',
                 'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
                 'informativeMarketing.instructor.feature.complaints.icon',
-                'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
+                undefined,
                 'informativeMarketing.instructor.feature.complaints.imageOne',
                 'informativeMarketing.instructor.feature.complaints.imageTwo',
             );
@@ -123,11 +122,10 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.statistics.shortDescription',
                 'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
                 'informativeMarketing.instructor.feature.statistics.icon',
-                'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
+                undefined,
                 'informativeMarketing.instructor.feature.statistics.imageOne',
-                'informativeMarketing.instructor.feature.statistics.imageTwo',
             );
-
+            featureStatistics.alignFirstImageLeft();
             this.features = [
                 featureIntegratedProcess,
                 featureConfiguration,
@@ -137,7 +135,6 @@ export class InformativeMarketingComponent implements OnInit {
                 featurePlagiarismDetection,
                 featureAssessment,
                 featureAssessmentMonitoring,
-                featureGamification,
                 featureComplaints,
                 featureStatistics,
             ];

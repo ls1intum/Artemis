@@ -99,10 +99,12 @@ body {
 }
 
 .feature-full-description p {
-    font-size: 16px;
+    width: 100%;
+    font-size: 18px;
     line-height: 26px;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    white-space: pre-wrap;
     hyphens: auto;
 }
 
