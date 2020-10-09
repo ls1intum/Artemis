@@ -75,25 +75,19 @@ describe('StudentQuestionRowComponent', () => {
 
     it('should set student questions correctly', () => {
         component.lecture = lectureDefault;
-        componentFixture.detectChanges();
         component.ngOnInit();
-        componentFixture.detectChanges();
         expect(component.studentQuestions).to.deep.equal([studentQuestion1, studentQuestion2]);
     });
 
     it('should delete studentQuestion from list', () => {
         component.lecture = lectureDefault;
-        componentFixture.detectChanges();
         component.ngOnInit();
-        componentFixture.detectChanges();
         component.deleteQuestionFromList(studentQuestion1);
-        componentFixture.detectChanges();
         expect(component.studentQuestions).to.deep.equal([studentQuestion2]);
     });
 
     it('should at least be instructor', () => {
         component.lecture = lectureDefault;
-        componentFixture.detectChanges();
         expect(component.isAtLeastTutorInCourse).to.be.true;
     });
 });

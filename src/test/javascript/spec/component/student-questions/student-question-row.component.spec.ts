@@ -78,23 +78,16 @@ describe('StudentQuestionRowComponent', () => {
 
     it('should delete studentQuestionAnswer from list', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.ngOnInit();
-        componentFixture.detectChanges();
         component.deleteAnswerFromList(unApprovedStudentQuestionAnswer);
-        componentFixture.detectChanges();
         expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer]);
     });
 
     it('should add studentQuestionAnswer to list', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.ngOnInit();
-        componentFixture.detectChanges();
         component.studentQuestion.answers = [approvedStudentQuestionAnswer];
-        componentFixture.detectChanges();
         component.addAnswerToList(unApprovedStudentQuestionAnswer);
-        componentFixture.detectChanges();
         expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer, unApprovedStudentQuestionAnswer]);
     });
 });
