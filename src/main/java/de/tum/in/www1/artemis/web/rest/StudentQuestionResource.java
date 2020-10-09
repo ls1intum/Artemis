@@ -207,9 +207,9 @@ public class StudentQuestionResource {
 
     /**
      *
-     * GET /courses/{courseId}/student-questions : get all student questions for course.
+     * GET /courses/{courseId}/student-questions : get all student questions for course
      * @param courseId the course that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for course
      */
     @GetMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
