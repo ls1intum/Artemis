@@ -69,9 +69,7 @@ describe('StudentQuestionRowComponent', () => {
 
     it('should sort in approved and not approved answers', () => {
         component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
         component.ngOnInit();
-        componentFixture.detectChanges();
         expect(component.approvedQuestionAnswers).to.deep.equal([approvedStudentQuestionAnswer]);
         expect(component.sortedQuestionAnswers).to.deep.equal([unApprovedStudentQuestionAnswer]);
     });
