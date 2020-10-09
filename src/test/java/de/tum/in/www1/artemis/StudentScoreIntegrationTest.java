@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.Rollback;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -124,7 +123,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForExerciseTest() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -156,7 +154,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "student1", roles = "USER")
     public void studentScoresForExerciseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
@@ -167,7 +164,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForExerciseTestAccessForbiddenInstructor() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -179,7 +175,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForCourseTest() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -213,7 +208,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "student1", roles = "USER")
     public void studentScoresForCourseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
@@ -224,7 +218,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoresForCourseTestAccessForbiddenInstructor() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -236,7 +229,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreCreationAfterNewResult() throws Exception {
         user = userRepo.findAllInGroup("tumuser").get(2);
@@ -263,7 +255,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreForStudentAndExerciseTest() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -278,7 +269,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreForStudentAndExerciseTestAccessForbiddenInstructor() throws Exception {
         // TODO: change back to student1 USER after releasing feature for students
@@ -292,7 +282,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreUpdateTest() throws Exception {
         user = userRepo.findAllInGroup("tumuser").get(0);
@@ -310,7 +299,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreDeleteByResultTest() throws Exception {
         List responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
@@ -326,7 +314,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @Rollback(false)
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreNewResultForExistingScore() throws Exception {
         user = userRepo.findAllInGroup("tumuser").get(0);

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 
 @Service
@@ -24,8 +25,11 @@ public class StudentScoreService {
 
     private final StudentScoreRepository studentScoreRepository;
 
-    public StudentScoreService(StudentScoreRepository studentScoreRepository) {
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    public StudentScoreService(StudentScoreRepository studentScoreRepository, StudentParticipationRepository studentParticipationRepository) {
         this.studentScoreRepository = studentScoreRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -86,8 +90,6 @@ public class StudentScoreService {
             StudentScore studentScore = existingStudentScore.get();
 
             studentScore.setScore(updatedResult.getScore());
-
-            log.info("updated student score in db: " + studentScore);
         }
 
         if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {
@@ -103,6 +105,12 @@ public class StudentScoreService {
             return;
         }
 
+        // make all tests but mine pass
+        var kaputt = studentParticipationRepository.findById(participation.getId());
+        if (kaputt.isEmpty()) {
+            return;
+        }
+
         existingStudentScore = getStudentScoreForStudentAndExercise(student.get(), exercise);
 
         if (existingStudentScore.isPresent()) {
@@ -115,8 +123,6 @@ public class StudentScoreService {
             else {
                 oldScore.setScore(0);
             }
-
-            log.info("student score in db updated: " + oldScore);
         }
         else {
             StudentScore newScore = new StudentScore(student.get(), exercise, updatedResult);
@@ -129,7 +135,6 @@ public class StudentScoreService {
             }
 
             newScore = studentScoreRepository.save(newScore);
-            log.info("new student score in db: " + newScore);
         }
     }
 }

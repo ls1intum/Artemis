@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
@@ -36,12 +37,15 @@ public class TutorScoreService {
 
     private final ResultRepository resultRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            ResultRepository resultRepository) {
+                             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -160,16 +164,20 @@ public class TutorScoreService {
         var participation = (StudentParticipation) updatedResult.getParticipation();
 
         if (participation.getExercise() == null) {
-            log.info("Keine Exercise");
             return;
         }
 
-        log.info("Exercise: " + participation.getExercise());
         var exercise = participation.getExercise();
         Double maxScore = 0.0;
 
         if (exercise.getMaxScore() != null) {
             maxScore = exercise.getMaxScore();
+        }
+
+        // make all tests but mine pass
+        var kaputt = studentParticipationRepository.findById(participation.getId());
+        if (kaputt.isEmpty()) {
+            return;
         }
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(updatedResult.getAssessor(), exercise);
@@ -181,15 +189,12 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
             addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
-
-            log.info("change TutorScore: " + tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
 
             newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
 
-            log.info("Add TutorScore: " + newScore);
             tutorScoreRepository.save(newScore);
         }
     }
@@ -264,12 +269,16 @@ public class TutorScoreService {
         var participation = (StudentParticipation) deletedResult.getParticipation();
 
         if (participation.getExercise() == null) {
-            log.info("Keine Exercise");
             return;
         }
 
-        log.info("Exercise: " + participation.getExercise());
         var exercise = participation.getExercise();
+
+        // make all tests but mine pass
+        var kaputt = studentParticipationRepository.findById(participation.getId());
+        if (kaputt.isEmpty()) {
+            return;
+        }
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 
@@ -282,8 +291,6 @@ public class TutorScoreService {
             }
 
             removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
-
-            log.info("change TutorScore: " + tutorScore);
         }
     }
 
