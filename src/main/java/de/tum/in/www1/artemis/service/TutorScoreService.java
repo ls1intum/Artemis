@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
 
 @Service
@@ -38,8 +36,8 @@ public class TutorScoreService {
 
     private final ResultRepository resultRepository;
 
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository,
-                             ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            ResultRepository resultRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;

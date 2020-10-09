@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 
 @Service
@@ -25,11 +24,8 @@ public class StudentScoreService {
 
     private final StudentScoreRepository studentScoreRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    public StudentScoreService(StudentScoreRepository studentScoreRepository, StudentParticipationRepository studentParticipationRepository) {
+    public StudentScoreService(StudentScoreRepository studentScoreRepository) {
         this.studentScoreRepository = studentScoreRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**

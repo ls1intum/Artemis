@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.Rollback;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -141,6 +142,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForExerciseTest() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
@@ -179,6 +181,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "student1", roles = "USER")
     public void tutorScoresForExerciseTestAccessForbiddenStudent() throws Exception {
         request.get("/api/tutor-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
@@ -186,6 +189,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForExerciseTestAccessForbiddenTutor() throws Exception {
         course = courseRepo.findAll().get(0);
@@ -196,6 +200,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForCourseTest() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
@@ -231,6 +236,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "student1", roles = "USER")
     public void tutorScoresForCourseTestAccessForbiddenStudent() throws Exception {
         request.get("/api/tutor-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
@@ -238,6 +244,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoresForCourseTestAccessForbiddenTutor() throws Exception {
         course = courseRepo.findAll().get(0);
@@ -248,6 +255,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoreForExerciseAndTutor() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
@@ -261,6 +269,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoreForExerciseAndTutorAccessForbiddenTutor() throws Exception {
         user = userRepo.findOneByLogin("tutor1").get();
@@ -273,6 +282,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void tutorScoreDifferentAssessor() throws Exception {
         user = userRepo.findOneByLogin("tutor1").get();
@@ -294,6 +304,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void removeTutorScore() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
@@ -310,6 +321,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor3", roles = "TA")
     public void updateTutorScoreWithComplaint() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(2);
@@ -346,6 +358,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor3", roles = "TA")
     public void updateTutorScoreWithFeedbackRequest() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(2);
@@ -381,6 +394,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor3", roles = "TA")
     public void removeTutorScoreWithComplaint() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(2);
@@ -420,6 +434,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor3", roles = "TA")
     public void removeTutorScoreWithFeedbackRequest() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(2);
@@ -459,6 +474,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void deleteTutorScoresForExercise() throws Exception {
         exercise = exerciseRepo.findAll().get(0);
@@ -470,6 +486,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void deleteTutorScoresForExerciseAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
@@ -481,6 +498,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @Rollback(false)
     @WithMockUser(value = "tutor1", roles = "TA")
     public void removeNotAnsweredFeedbackRequestTest() throws Exception {
         user = userRepo.findAllInGroup("tutor").get(0);
