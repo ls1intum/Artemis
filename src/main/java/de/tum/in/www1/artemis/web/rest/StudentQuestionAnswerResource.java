@@ -64,7 +64,7 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * POST /question-answers : Create a new studentQuestionAnswer.
+     * POST /courses/{courseId}/question-answers : Create a new studentQuestionAnswer.
      *
      * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to create
@@ -99,12 +99,12 @@ public class StudentQuestionAnswerResource {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
         }
-        return ResponseEntity.created(new URI("/api/question-answers/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/courses"  + courseId + "/student-question-answers/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT /question-answers : Updates an existing studentQuestionAnswer.
+     * PUT /courses/{courseId}/question-answers : Updates an existing studentQuestionAnswer.
      *
      * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to update
@@ -138,7 +138,7 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * GET /question-answers/:id : get the "id" questionAnswer.
+     * GET /courses/{courseId}/question-answers/:id : get the "id" questionAnswer.
      *
      * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to retrieve
@@ -161,7 +161,7 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * DELETE /question-answers/:id : delete the "id" questionAnswer.
+     * DELETE /courses/{courseId}/question-answers/:id : delete the "id" questionAnswer.
      *
      * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to delete

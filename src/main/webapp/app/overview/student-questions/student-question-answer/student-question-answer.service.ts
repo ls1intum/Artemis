@@ -5,7 +5,6 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 
 type EntityResponseType = HttpResponse<StudentQuestionAnswer>;
@@ -19,6 +18,7 @@ export class StudentQuestionAnswerService {
 
     /**
      * create studentQuestionAnswer
+     * @param {number} courseId
      * @param {StudentQuestionAnswer} studentQuestionAnswer
      * @return {Observable<EntityResponseType>}
      */
@@ -31,6 +31,7 @@ export class StudentQuestionAnswerService {
 
     /**
      * update studentQuestionAnswer
+     * @param {number} courseId
      * @param {StudentQuestionAnswer} studentQuestionAnswer
      * @return {Observable<EntityResponseType>}
      */
@@ -43,6 +44,7 @@ export class StudentQuestionAnswerService {
 
     /**
      * find studentQuestionAnswer by id
+     * @param {number} courseId
      * @param {number} id
      * @return {Observable<EntityResponseType>}
      */
@@ -54,6 +56,7 @@ export class StudentQuestionAnswerService {
 
     /**
      * delete studentQuestionAnswer by id
+     * @param {number} courseId
      * @param {number} id
      * @return {Observable<HttpResponse<any>>}
      */
@@ -67,15 +70,14 @@ export class StudentQuestionAnswerService {
      * @return  {StudentQuestionAnswer}
      */
     protected convertDateFromClient(studentQuestionAnswer: StudentQuestionAnswer): StudentQuestionAnswer {
-        const copy: StudentQuestionAnswer = Object.assign({}, studentQuestionAnswer, {
+        return Object.assign({}, studentQuestionAnswer, {
             answerDate: studentQuestionAnswer.answerDate && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : undefined,
         });
-        return copy;
     }
 
     /**
      * Takes a studentQuestionAnswer and converts the date from the server
-     * @param   {StudentQuestionAnswer} studentQuestionAnswer
+     * @param   {EntityResponseType} res
      * @return  {StudentQuestionAnswer}
      */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {

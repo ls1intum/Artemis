@@ -127,7 +127,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id!).subscribe(() => {
+        this.studentQuestionService.delete(this.courseId, this.studentQuestion.id!).subscribe(() => {
             this.localStorage.clear(`q${this.studentQuestion.id}u${this.user.id}`);
             this.interactQuestionRow.emit({
                 name: QuestionRowActionName.DELETE,

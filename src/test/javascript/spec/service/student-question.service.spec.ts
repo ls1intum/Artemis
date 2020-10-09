@@ -35,7 +35,7 @@ describe('StudentQuestion Service', () => {
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
             service
-                .create(new StudentQuestion())
+                .create(1, new StudentQuestion())
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -48,7 +48,7 @@ describe('StudentQuestion Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .update(expected)
+                .update(1, expected)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -57,7 +57,7 @@ describe('StudentQuestion Service', () => {
         });
 
         it('should delete a StudentQuestion', async () => {
-            service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
+            service.delete(1, 123).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
@@ -69,7 +69,7 @@ describe('StudentQuestion Service', () => {
 
             const expected = { ...returnedFromService };
             service
-                .updateVotes(expected.id!, 0)
+                .updateVotes(1, expected.id!, 0)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
