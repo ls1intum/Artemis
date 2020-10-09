@@ -662,6 +662,33 @@ public class ModelFactory {
         return notification;
     }
 
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+
+        String logWith254Chars = "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle (default-cli)"
+                + "on project testPluginSCA-Tests: An error has occurred in Checkstyle report generation. Failed during checkstyle" + "configuration: Exception was throw";
+
+        var buildLogDTO254Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO254Chars.setDate(ZonedDateTime.now());
+        buildLogDTO254Chars.setLog(logWith254Chars);
+
+        var buildLogDTO255Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO255Chars.setDate(ZonedDateTime.now());
+        buildLogDTO255Chars.setLog(logWith254Chars + "a");
+
+        var buildLogDTO256Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO256Chars.setDate(ZonedDateTime.now());
+        buildLogDTO256Chars.setLog(logWith254Chars + "aa");
+
+        var largeBuildLogDTO = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        largeBuildLogDTO.setDate(ZonedDateTime.now());
+        largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
+
+        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO));
+
+        return notification;
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
