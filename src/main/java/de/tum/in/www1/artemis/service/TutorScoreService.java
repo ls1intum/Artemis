@@ -40,7 +40,7 @@ public class TutorScoreService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-                             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;

@@ -134,7 +134,7 @@ public class StudentScoreService {
                 newScore.setScore(0);
             }
 
-            newScore = studentScoreRepository.save(newScore);
+            studentScoreRepository.save(newScore);
         }
     }
 }
