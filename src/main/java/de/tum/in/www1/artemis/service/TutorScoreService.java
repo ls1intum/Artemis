@@ -183,14 +183,7 @@ public class TutorScoreService {
         }
 
         log.info("Exercise: " + participation.getExercise());
-        var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
-        if (exerciseOp.isEmpty()) {
-            log.info("Keine Exercise Optional");
-            return;
-        }
-        var exercise = exerciseOp.get();
-
-        // var exercise = participation.getExercise();
+        var exercise = participation.getExercise();
         Double maxScore = 0.0;
 
         if (exercise.getMaxScore() != null) {
@@ -304,14 +297,7 @@ public class TutorScoreService {
         }
 
         log.info("Exercise: " + participation.getExercise());
-        var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
-        if (exerciseOp.isEmpty()) {
-            log.info("Keine Exercise Optional");
-            return;
-        }
-        var exercise = exerciseOp.get();
-
-        // var exercise = participation.getExercise();
+        var exercise = participation.getExercise();
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 
