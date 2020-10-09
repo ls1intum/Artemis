@@ -162,14 +162,24 @@ public class TutorScoreService {
         }
 
         log.info("StudentParticipation: " + updatedResult.getParticipation());
-        var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
+        /*var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;
         }
 
-        Exercise exercise = participation.get().getExercise();
+        Exercise exercise = participation.get().getExercise();*/
+
+        var participation = (StudentParticipation) updatedResult.getParticipation();
+
+        if (participation.getExercise() == null) {
+            log.info("Keine Exercise");
+            return;
+        }
+
+        var exercise = participation.getExercise();
+
         Double maxScore = 0.0;
 
         if (exercise.getMaxScore() != null) {
@@ -189,7 +199,7 @@ public class TutorScoreService {
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
 
-            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
+            //newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
 
             tutorScoreRepository.save(newScore);
         }
@@ -263,14 +273,22 @@ public class TutorScoreService {
         }
 
         log.info("StudentParticipation: " + deletedResult.getParticipation());
-        var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
+        /*var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;
         }
 
-        Exercise exercise = participation.get().getExercise();
+        Exercise exercise = participation.get().getExercise();*/
+
+        var participation = (StudentParticipation) deletedResult.getParticipation();
+
+        if (participation.getExercise() == null) {
+            return;
+        }
+
+        var exercise = participation.getExercise();
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 
