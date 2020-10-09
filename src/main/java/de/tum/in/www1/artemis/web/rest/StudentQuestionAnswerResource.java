@@ -99,7 +99,7 @@ public class StudentQuestionAnswerResource {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
         }
-        return ResponseEntity.created(new URI("/api/courses"  + courseId + "/student-question-answers/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/courses" + courseId + "/student-question-answers/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -114,7 +114,8 @@ public class StudentQuestionAnswerResource {
      */
     @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
+            throws URISyntaxException {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
