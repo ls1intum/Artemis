@@ -123,6 +123,8 @@ public class StudentScoreService {
             else {
                 oldScore.setScore(0);
             }
+
+            log.info("Updated existing StudentScore: " + oldScore);
         }
         else {
             StudentScore newScore = new StudentScore(student.get(), exercise, updatedResult);
@@ -135,6 +137,7 @@ public class StudentScoreService {
             }
 
             studentScoreRepository.save(newScore);
+            log.info("Added new StudentScore: " + newScore);
         }
     }
 }

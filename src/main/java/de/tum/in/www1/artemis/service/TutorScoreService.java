@@ -189,6 +189,7 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
             addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
+            log.info("Updated existing TutorScore: " + tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
@@ -196,6 +197,7 @@ public class TutorScoreService {
             newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
 
             tutorScoreRepository.save(newScore);
+            log.info("Added new TutorScore: " + newScore);
         }
     }
 
@@ -291,6 +293,7 @@ public class TutorScoreService {
             }
 
             removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
+            log.info("Updated existing TutorScore: " + tutorScore);
         }
     }
 
