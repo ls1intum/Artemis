@@ -32,24 +32,18 @@ public class TutorScoreService {
 
     private final TutorScoreRepository tutorScoreRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final ResultRepository resultRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
-    public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-                             ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
+    public TutorScoreService(TutorScoreRepository tutorScoreRepository, ComplaintRepository complaintRepository,
+                             ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -165,16 +159,6 @@ public class TutorScoreService {
             return;
         }
 
-        log.info("StudentParticipation: " + updatedResult.getParticipation());
-        /*var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
-
-        if (participation.isEmpty()) {
-            log.info("Keine StudentParticipation");
-            return;
-        }
-
-        Exercise exercise = participation.get().getExercise();*/
-
         var participation = (StudentParticipation) updatedResult.getParticipation();
 
         if (participation.getExercise() == null) {
@@ -278,16 +262,6 @@ public class TutorScoreService {
         if (deletedResult.getParticipation().getClass() != StudentParticipation.class) {
             return;
         }
-
-        log.info("StudentParticipation: " + deletedResult.getParticipation());
-        /*var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
-
-        if (participation.isEmpty()) {
-            log.info("Keine StudentParticipation");
-            return;
-        }
-
-        Exercise exercise = participation.get().getExercise();*/
 
         var participation = (StudentParticipation) deletedResult.getParticipation();
 
