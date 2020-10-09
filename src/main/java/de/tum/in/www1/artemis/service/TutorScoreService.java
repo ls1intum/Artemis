@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.TutorScore;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TutorScoreRepository;
@@ -39,13 +40,16 @@ public class TutorScoreService {
 
     private final ResultRepository resultRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     public TutorScoreService(TutorScoreRepository tutorScoreRepository, StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository) {
+                             ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository, ExerciseRepository exerciseRepository) {
         this.tutorScoreRepository = tutorScoreRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -178,8 +182,14 @@ public class TutorScoreService {
             return;
         }
 
-        var exercise = participation.getExercise();
+        var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
+        if (exerciseOp.isEmpty()) {
+            log.info("Keine Exercise");
+            return;
+        }
+        var exercise = exerciseOp.get();
 
+        // var exercise = participation.getExercise();
         Double maxScore = 0.0;
 
         if (exercise.getMaxScore() != null) {
@@ -292,7 +302,14 @@ public class TutorScoreService {
             return;
         }
 
-        var exercise = participation.getExercise();
+        var exerciseOp = exerciseRepository.findById(participation.getExercise().getId());
+        if (exerciseOp.isEmpty()) {
+            log.info("Keine Exercise");
+            return;
+        }
+        var exercise = exerciseOp.get();
+
+        // var exercise = participation.getExercise();
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 
