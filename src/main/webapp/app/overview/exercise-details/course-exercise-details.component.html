@@ -51,6 +51,23 @@
                 >
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
                 </div>
+                <div
+                    *ngIf="exercise.type === PROGRAMMING"
+                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
+                    class="btn btn-outline-primary"
+                >
+                    {{ 'artemisApp.exercise.participations' | translate }}
+                </div>
+                <div
+                    *ngIf="exercise.type === PROGRAMMING"
+                    [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+                    class="btn btn-outline-primary"
+                >
+                    {{ 'artemisApp.programmingExercise.configureGrading.title' | translate }}
+                </div>
+                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/{{ exercise.type }}-exercises/{{ exercise.id }}/edit">
+                    {{ 'entity.action.edit' | translate }}
+                </div>
             </div>
         </div>
     </div>
