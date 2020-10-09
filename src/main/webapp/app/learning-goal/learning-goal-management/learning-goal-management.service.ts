@@ -20,4 +20,24 @@ export class LearningGoalManagementService {
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<LearningGoal[]>(`api/courses/${courseId}/goals`, { observe: 'response' });
     }
+
+    /**
+     * Create a learning goal
+     * @param learningGoal - the learning goal to create
+     */
+    createLearningGoal(learningGoal: LearningGoal): Observable<EntityResponseType> {
+        return this.httpClient.post<LearningGoal>(`api/goals`, learningGoal, { observe: 'response' });
+    }
+
+    /**
+     * Update a learning goal
+     * @param learningGoal - the learning goal to update
+     */
+    updateLearningGoal(learningGoal: LearningGoal): Observable<EntityResponseType> {
+        return this.httpClient.put<LearningGoal>(`api/goals`, learningGoal, { observe: 'response' });
+    }
+
+    findById(learningGoalId: number): Observable<EntityResponseType> {
+        return this.httpClient.get<LearningGoal>(`api/goals/${learningGoalId}`, { observe: 'response' });
+    }
 }

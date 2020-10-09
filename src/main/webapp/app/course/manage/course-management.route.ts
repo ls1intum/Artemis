@@ -14,6 +14,8 @@ import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { LearningGoalManagementComponent } from 'app/learning-goal/learning-goal-management/learning-goal-management.component';
+import { LearningGoalCreateComponent } from 'app/learning-goal/learning-goal-management/learning-goal-create/learning-goal-create.component';
+import { LearningGoalEditComponent } from 'app/learning-goal/learning-goal-management/learning-goal-edit/learning-goal-edit.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -117,6 +119,24 @@ export const courseManagementRoute: Routes = [
     {
         path: ':courseId/goals',
         component: LearningGoalManagementComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.learningGoalManagement.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/goals/create',
+        component: LearningGoalCreateComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.learningGoalManagement.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/goals/edit/:goalid',
+        component: LearningGoalEditComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.learningGoalManagement.pageTitle',

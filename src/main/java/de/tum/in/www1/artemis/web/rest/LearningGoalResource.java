@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.Valid;
@@ -57,9 +58,19 @@ public class LearningGoalResource {
         return ResponseEntity.ok().body(learningGoalService.findAllByCourseId(courseId));
     }
 
-    @PostMapping("/courses/{courseId}/goals")
+    @GetMapping("/goals/{goalId}")
+    public ResponseEntity<LearningGoal> getLearningGoalById(@PathVariable Long goalId) {
+        log.debug("REST request to get the learning goal with the id : {}", goalId);
+        Optional<LearningGoal> learningGoal = learningGoalService.findById(goalId);
+        if (learningGoal.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().body(learningGoal.get());
+    }
+
+    @PostMapping("/goals")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<LearningGoal> createLearningGoal(@PathVariable Long courseId, @Valid @RequestBody LearningGoal learningGoal) throws URISyntaxException {
+    public ResponseEntity<LearningGoal> createLearningGoal(@Valid @RequestBody LearningGoal learningGoal) throws URISyntaxException {
         log.debug("REST request to create a learning goal: {}", learningGoal);
         if (learningGoal.getId() != null) {
             throw new BadRequestAlertException("A new exam can not already have an ID", ENTITY_NAME, "idexists");
@@ -69,7 +80,24 @@ public class LearningGoalResource {
             return conflict();
         }
 
-        if (!learningGoal.getCourse().getId().equals(courseId)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), user)) {
+            return forbidden();
+        }
+
+        LearningGoal persistedLearningGoal = learningGoalService.save(learningGoal);
+        return ResponseEntity.created(new URI("/api/goals/" + persistedLearningGoal.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, persistedLearningGoal.getTitle())).body(persistedLearningGoal);
+    }
+
+    @PutMapping("/goals")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<LearningGoal> updateLearningGoal(@Valid @RequestBody LearningGoal learningGoal) {
+        log.debug("REST request to update learning goal: {}", learningGoal);
+        if (learningGoal.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (learningGoal.getCourse() == null) {
             return conflict();
         }
 
@@ -77,9 +105,10 @@ public class LearningGoalResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(learningGoal.getCourse(), user)) {
             return forbidden();
         }
+        LearningGoal updatedLearningGoal = learningGoalService.save(learningGoal);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedLearningGoal.getId().toString()))
+                .body(updatedLearningGoal);
 
-        LearningGoal persistedLearningGoal = learningGoalService.save(learningGoal);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, persistedLearningGoal.getTitle())).body(persistedLearningGoal);
     }
+
 }

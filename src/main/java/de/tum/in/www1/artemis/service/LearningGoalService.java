@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ public class LearningGoalService {
      * @return set of learning goals associated with a course
      */
     public Set<LearningGoal> findAllByCourseId(Long courseId) {
-        return learningGoalRepository.findAllByCourseId(courseId);
+        return learningGoalRepository.findAllByCourseIdEager(courseId);
     }
 
     /**
@@ -44,4 +45,13 @@ public class LearningGoalService {
         return learningGoalRepository.save(learningGoal);
     }
 
+    /**
+     * Get a learning goal by its id
+     *
+     * @param goalId the id of the learning goal
+     * @return learning goal optional
+     */
+    public Optional<LearningGoal> findById(Long goalId) {
+        return learningGoalRepository.findByIdEager(goalId);
+    }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalManagementService } from 'app/learning-goal/learning-goal-management/learning-goal-management.service';
 import { LearningGoal } from 'app/entities/learning-goal.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,14 +11,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class LearningGoalManagementComponent implements OnInit {
     learningGoals: LearningGoal[] = [];
+    courseId: number;
 
-    constructor(private learningGoalManagementService: LearningGoalManagementService, private activatedRoute: ActivatedRoute) {}
+    constructor(private learningGoalManagementService: LearningGoalManagementService, private activatedRoute: ActivatedRoute, private router: Router) {}
 
     ngOnInit(): void {
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             const courseId = paramMap.get('courseId');
 
             if (courseId) {
+                this.courseId = +courseId;
                 this.learningGoalManagementService.findAllByCourseId(+courseId).subscribe(
                     (res) => {
                         if (res.body) {
@@ -31,5 +33,13 @@ export class LearningGoalManagementComponent implements OnInit {
                 );
             }
         });
+    }
+
+    navigateToCreate(): void {
+        this.router.navigate(['/course-management', this.courseId, 'goals', 'create']);
+    }
+
+    navigateToEdit(learningGoalId: number): void {
+        this.router.navigate(['/course-management', this.courseId, 'goals', 'edit', learningGoalId]);
     }
 }

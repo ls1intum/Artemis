@@ -1,3 +1,10 @@
-<div class="card-deck">
-    <jhi-learning-goal-card *ngFor="let learningGoal of learningGoals" [learningGoal]="learningGoal"> </jhi-learning-goal-card>
+<div class="container">
+    <div class="row">
+        <div class="editable col-sm-6" *ngFor="let learningGoal of learningGoals">
+            <jhi-learning-goal-card [learningGoal]="learningGoal" (click)="navigateToEdit(learningGoal.id)"></jhi-learning-goal-card>
+        </div>
+        <div class="col">
+            <button (click)="navigateToCreate()" type="button" class="btn btn-primary btn-lg btn-block">Create New Learning Goal</button>
+        </div>
+    </div>
 </div>
