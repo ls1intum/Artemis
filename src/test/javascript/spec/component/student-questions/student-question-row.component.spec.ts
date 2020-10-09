@@ -69,21 +69,21 @@ describe('StudentQuestionRowComponent', () => {
 
     it('should sort in approved and not approved answers', () => {
         component.studentQuestion = studentQuestion;
-        component.ngOnInit();
+        component.sortQuestionAnswers();
         expect(component.approvedQuestionAnswers).to.deep.equal([approvedStudentQuestionAnswer]);
         expect(component.sortedQuestionAnswers).to.deep.equal([unApprovedStudentQuestionAnswer]);
     });
 
     it('should delete studentQuestionAnswer from list', () => {
         component.studentQuestion = studentQuestion;
-        component.ngOnInit();
+        component.sortQuestionAnswers();
         component.deleteAnswerFromList(unApprovedStudentQuestionAnswer);
         expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer]);
     });
 
     it('should add studentQuestionAnswer to list', () => {
         component.studentQuestion = studentQuestion;
-        component.ngOnInit();
+        component.sortQuestionAnswers();
         component.studentQuestion.answers = [approvedStudentQuestionAnswer];
         component.addAnswerToList(unApprovedStudentQuestionAnswer);
         expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer, unApprovedStudentQuestionAnswer]);

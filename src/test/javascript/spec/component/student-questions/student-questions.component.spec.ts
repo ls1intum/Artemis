@@ -12,6 +12,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -19,6 +20,10 @@ const expect = chai.expect;
 describe('StudentQuestionRowComponent', () => {
     let component: StudentQuestionsComponent;
     let componentFixture: ComponentFixture<StudentQuestionsComponent>;
+
+    const course = {
+        id: 1,
+    } as Course;
 
     const unApprovedStudentQuestionAnswer = {
         id: 1,
@@ -54,6 +59,7 @@ describe('StudentQuestionRowComponent', () => {
         endDate: undefined,
         studentQuestions: [studentQuestion1, studentQuestion2],
         isAtLeastInstructor: true,
+        course,
     } as Lecture;
 
     beforeEach(async () => {
@@ -84,10 +90,5 @@ describe('StudentQuestionRowComponent', () => {
         component.ngOnInit();
         component.deleteQuestionFromList(studentQuestion1);
         expect(component.studentQuestions).to.deep.equal([studentQuestion2]);
-    });
-
-    it('should at least be instructor', () => {
-        component.lecture = lectureDefault;
-        expect(component.isAtLeastTutorInCourse).to.be.true;
     });
 });
