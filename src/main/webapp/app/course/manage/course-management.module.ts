@@ -37,6 +37,7 @@ import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exerci
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisLearningGoalManagementModule } from 'app/learning-goal/learning-goal-management/learning-goal-management.module';
 
 @NgModule({
     imports: [
@@ -68,6 +69,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
         ArtemisTextExerciseAssessmentModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
+        ArtemisLearningGoalManagementModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,

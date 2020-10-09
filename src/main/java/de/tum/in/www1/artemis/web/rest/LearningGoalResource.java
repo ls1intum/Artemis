@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -47,6 +48,13 @@ public class LearningGoalResource {
         this.learningGoalService = learningGoalService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
+    }
+
+    @GetMapping("/courses/{courseId}/goals")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<LearningGoal>> getLearningGoalsByCourseId(@PathVariable Long courseId) {
+        log.debug("REST request to get all learning goals for the course with id : {}", courseId);
+        return ResponseEntity.ok().body(learningGoalService.findAllByCourseId(courseId));
     }
 
     @PostMapping("/courses/{courseId}/goals")

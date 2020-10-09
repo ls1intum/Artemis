@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,11 +24,21 @@ public class LearningGoalService {
     }
 
     /**
-    * Saves a learning goal
-    *
-    * @param learningGoal the entity to save
-    * @return the persisted entity
-    */
+     * Finds all learning goals associated with a course
+     *
+     * @param courseId id of the course
+     * @return set of learning goals associated with a course
+     */
+    public Set<LearningGoal> findAllByCourseId(Long courseId) {
+        return learningGoalRepository.findAllByCourseId(courseId);
+    }
+
+    /**
+     * Saves a learning goal
+     *
+     * @param learningGoal the entity to save
+     * @return the persisted entity
+     */
     public LearningGoal save(LearningGoal learningGoal) {
         log.debug("Request to save learning goal: {}", learningGoal);
         return learningGoalRepository.save(learningGoal);

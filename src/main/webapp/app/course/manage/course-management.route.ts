@@ -13,6 +13,7 @@ import { CourseManagementExercisesComponent } from './course-management-exercise
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
+import { LearningGoalManagementComponent } from 'app/learning-goal/learning-goal-management/learning-goal-management.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -110,6 +111,15 @@ export const courseManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.ratingList.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/goals',
+        component: LearningGoalManagementComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.learningGoalManagement.pageTitle',
         },
         canActivate: [UserRouteAccessService],
     },

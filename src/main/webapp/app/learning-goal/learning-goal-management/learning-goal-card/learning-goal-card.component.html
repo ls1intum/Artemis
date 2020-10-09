@@ -1,0 +1,23 @@
+<div class="card text-center">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a class="nav-link" [ngClass]="{ active: selectedTab === 'GOAL' }" (click)="selectedTab = 'GOAL'">Goal</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [ngClass]="{ active: selectedTab === 'EXERCISES' }" (click)="selectedTab = 'EXERCISES'">Exercises</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [ngClass]="{ active: selectedTab === 'LECTURES' }" (click)="selectedTab = 'LECTURES'">Lectures</a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body" [ngSwitch]="selectedTab">
+        <ng-container *ngSwitchCase="'GOAL'">
+            <h5 class="card-title">{{ learningGoal.title }}</h5>
+            <p class="card-text">{{ learningGoal.description }}</p>
+        </ng-container>
+        <ng-container *ngSwitchCase="'EXERCISES'"> Make Exercises Show here </ng-container>
+        <ng-container *ngSwitchCase="'LECTURES'"> Make Lectures Show Here </ng-container>
+    </div>
+</div>
