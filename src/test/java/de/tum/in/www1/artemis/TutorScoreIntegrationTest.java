@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -89,6 +90,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(studentParticipation, null);
@@ -100,6 +102,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(1);
         result = database.addResultToParticipation(studentParticipation, null);
@@ -122,6 +125,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         // score for tutor1 in exercise2 in course2
         user = userRepo.findAllInGroup("tumuser").get(0);
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         user = userRepo.findAllInGroup("tutor").get(0);
         result = database.addResultToParticipation(studentParticipation, null);
@@ -155,6 +159,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor0 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
@@ -209,6 +214,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         exerciseRepo.save(exercise);
         // score for tutor1 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
@@ -309,6 +315,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
@@ -344,6 +351,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
@@ -378,6 +386,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
@@ -416,6 +425,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
         user = userRepo.findAllInGroup("tutor").get(2);
         exercise = exerciseRepo.findAll().get(0);
         studentParticipation = database.addParticipationForExercise(exercise, "student3");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
         studentParticipationRepo.save(studentParticipation);
         result = database.addResultToParticipation(studentParticipation, null);
         result.setParticipation(studentParticipation);
