@@ -162,14 +162,15 @@ public class TutorScoreService {
         }
 
         log.info("StudentParticipation: " + updatedResult.getParticipation());
-        var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
+        /*var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;
-        }
+        }*/
+        var participation = updatedResult.getParticipation();
 
-        Exercise exercise = participation.get().getExercise();
+        Exercise exercise = participation.getExercise();
         Double maxScore = 0.0;
 
         if (exercise.getMaxScore() != null) {
@@ -263,14 +264,15 @@ public class TutorScoreService {
         }
 
         log.info("StudentParticipation: " + deletedResult.getParticipation());
-        var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
+        /*var participation = studentParticipationRepository.findById(deletedResult.getParticipation().getId());
 
         if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;
-        }
+        }*/
+        var participation = deletedResult.getParticipation();
 
-        Exercise exercise = participation.get().getExercise();
+        Exercise exercise = participation.getExercise();
 
         var existingTutorScore = tutorScoreRepository.findByTutorAndExercise(deletedResult.getAssessor(), exercise);
 

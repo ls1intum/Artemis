@@ -99,15 +99,16 @@ public class StudentScoreService {
         }
 
         log.info("StudentParticipation: " + updatedResult.getParticipation());
-        var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
+        //var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
+        var participation = (StudentParticipation) updatedResult.getParticipation();
 
-        if (participation.isEmpty()) {
+        /*if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;
-        }
+        }*/
 
-        var student = participation.get().getStudent();
-        var exercise = participation.get().getExercise();
+        var student = participation.getStudent();
+        var exercise = participation.getExercise();
 
         if (student.isEmpty()) {
             return;
