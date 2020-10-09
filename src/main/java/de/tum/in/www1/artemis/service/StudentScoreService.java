@@ -102,6 +102,10 @@ public class StudentScoreService {
         //var participation = studentParticipationRepository.findById(updatedResult.getParticipation().getId());
         var participation = (StudentParticipation) updatedResult.getParticipation();
 
+        if (participation.getExercise() == null) {
+            return;
+        }
+
         /*if (participation.isEmpty()) {
             log.info("Keine StudentParticipation");
             return;

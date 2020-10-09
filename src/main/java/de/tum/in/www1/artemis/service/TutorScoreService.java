@@ -170,6 +170,10 @@ public class TutorScoreService {
         }*/
         var participation = updatedResult.getParticipation();
 
+        if (participation.getExercise() == null) {
+            return;
+        }
+
         Exercise exercise = participation.getExercise();
         Double maxScore = 0.0;
 
@@ -271,6 +275,10 @@ public class TutorScoreService {
             return;
         }*/
         var participation = deletedResult.getParticipation();
+
+        if (participation.getExercise() == null) {
+            return;
+        }
 
         Exercise exercise = participation.getExercise();
 
