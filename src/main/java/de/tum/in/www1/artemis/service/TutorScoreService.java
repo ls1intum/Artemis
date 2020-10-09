@@ -195,12 +195,15 @@ public class TutorScoreService {
             tutorScore.setAssessmentsPoints(tutorScore.getAssessmentsPoints() + maxScore);
 
             addComplaintsAndFeedbackRequests(updatedResult, tutorScore, exercise);
+
+            log.info("change TutorScore: " + tutorScore);
         }
         else {
             TutorScore newScore = new TutorScore(updatedResult.getAssessor(), exercise, 1, maxScore);
 
-            //newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
+            newScore = addComplaintsAndFeedbackRequests(updatedResult, newScore, exercise);
 
+            log.info("Add TutorScore: " + newScore);
             tutorScoreRepository.save(newScore);
         }
     }
@@ -285,6 +288,7 @@ public class TutorScoreService {
         var participation = (StudentParticipation) deletedResult.getParticipation();
 
         if (participation.getExercise() == null) {
+            log.info("Keine Exercise");
             return;
         }
 
@@ -301,6 +305,8 @@ public class TutorScoreService {
             }
 
             removeComplaintsAndFeedbackRequests(tutorScore, deletedResult, exercise);
+
+            log.info("change TutorScore: " + tutorScore);
         }
     }
 
