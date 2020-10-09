@@ -496,7 +496,7 @@ public class BambooService implements ContinuousIntegrationService {
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
 
-            var buildLogs = extractAndPrepareBuildLogs(buildResult);
+            var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
             programmingSubmission.setBuildLogEntries(buildLogs);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
@@ -513,14 +513,14 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult) {
+    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingSubmission submission) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.
         for (var job : buildResult.getBuild().getJobs()) {
             for (var bambooLog : job.getLogs()) {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), submission));
             }
         }
 
