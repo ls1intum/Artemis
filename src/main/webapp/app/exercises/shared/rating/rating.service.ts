@@ -17,7 +17,7 @@ export class RatingService {
      * @param rating - Rating for the result
      */
     createRating(rating: Rating): Observable<Rating> {
-        return this.http.post<Rating>(this.ratingResourceUrl + `${rating.result.id}/rating/${rating.rating}`, rating);
+        return this.http.post<Rating>(this.ratingResourceUrl + `${rating.result!.id}/rating/${rating.rating}`, rating);
     }
 
     /**
@@ -33,6 +33,14 @@ export class RatingService {
      * @param rating - Rating for the result
      */
     updateRating(rating: Rating): Observable<Rating> {
-        return this.http.put<Rating>(this.ratingResourceUrl + `${rating.result.id}/rating/${rating.rating}`, null);
+        return this.http.put<Rating>(this.ratingResourceUrl + `${rating.result!.id}/rating/${rating.rating}`, null);
+    }
+
+    /**
+     * Get all ratings for the "courseId" course
+     * @param courseId - Id of the course
+     */
+    getRatingsForDashboard(courseId: number): Observable<Rating[]> {
+        return this.http.get<Rating[]>(`api/course/${courseId}/rating`);
     }
 }

@@ -24,7 +24,7 @@
                     [actionType]="ActionType.Cleanup"
                     [entityTitle]="programmingExercise.title"
                     deleteQuestion="instructorDashboard.cleanup.question"
-                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                    (delete)="cleanupProgrammingExercise(programmingExercise.id!, $event)"
                     [dialogError]="dialogError$"
                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                     [additionalChecks]="{
@@ -42,7 +42,7 @@
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
                     </dd>
                 </ng-container>
-                <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
                 </dd>
@@ -119,10 +119,16 @@
                 <dd>
                     <span>{{ programmingExercise.allowOnlineEditor }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis">Enable Static Code Analysis</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
                 <dd>
                     <span>{{ programmingExercise.staticCodeAnalysisEnabled }}</span>
                 </dd>
+                <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty">Max Static Code Analysis Penalty</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>
                     <span jhiTranslate="{{ 'artemisApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
@@ -150,14 +156,14 @@
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.templateParticipation.results?.length"
+                            *ngIf="programmingExercise.templateParticipation?.results?.length"
                             class="repository-status-icon mr-2"
                             [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
                             [participation]="programmingExercise.templateParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
-                            *ngIf="programmingExercise.templateParticipation.results"
+                            *ngIf="programmingExercise.templateParticipation?.results"
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.templateParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
@@ -176,14 +182,14 @@
                             class="mr-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.solutionParticipation.results?.length"
+                            *ngIf="programmingExercise.solutionParticipation?.results?.length"
                             class="repository-status-icon mr-2"
                             [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
                             [participation]="programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
-                            *ngIf="programmingExercise.solutionParticipation.results"
+                            *ngIf="programmingExercise.solutionParticipation?.results"
                             [exercise]="programmingExercise"
                             [participation]="programmingExercise.solutionParticipation"
                         ></jhi-programming-exercise-instructor-trigger-build-button>

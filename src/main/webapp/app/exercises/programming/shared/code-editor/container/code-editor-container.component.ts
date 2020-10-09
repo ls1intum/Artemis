@@ -25,6 +25,7 @@ import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared
 import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-code-editor-container',
@@ -47,12 +48,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     showEditorInstructions = true;
     @Input()
     isTutorAssessment = false;
+    @Input()
+    readOnlyManualFeedback = false;
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()
     onFileChanged = new EventEmitter<void>();
+    @Output()
+    onUpdateFeedback = new EventEmitter<Feedback[]>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -147,12 +152,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: { [fileName: string]: string | null }) {
+    onSavedFiles(files: { [fileName: string]: string | undefined }) {
         const savedFiles = Object.entries(files)
-            .filter(([, error]: [string, string | null]) => !error)
+            .filter(([, error]: [string, string | undefined]) => !error)
             .map(([fileName]) => fileName);
         const errorFiles = Object.entries(files)
-            .filter(([, error]: [string, string | null]) => error)
+            .filter(([, error]: [string, string | undefined]) => error)
             .map(([fileName]) => fileName);
 
         this.unsavedFiles = fromPairs(toPairs(this.unsavedFiles).filter(([fileName]) => !savedFiles.includes(fileName)));
@@ -176,6 +181,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
         this.onFileChanged.emit();
+    }
+
+    updateFeedback(feedbacks: Feedback[]) {
+        this.onUpdateFeedback.emit(feedbacks);
     }
 
     /**

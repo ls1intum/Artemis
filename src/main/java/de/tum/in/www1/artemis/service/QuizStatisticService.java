@@ -10,10 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.QuizPointStatisticRepository;
+import de.tum.in.www1.artemis.repository.QuizQuestionStatisticRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 
 @Service
 public class QuizStatisticService {
@@ -167,7 +170,7 @@ public class QuizStatisticService {
 
         // update QuizPointStatistic with the result
         if (result != null) {
-            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {

@@ -33,6 +33,7 @@ import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-cours
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -44,8 +45,8 @@ export class ExamResolve implements Resolve<Exam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
+        const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
+        const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents).pipe(
@@ -67,9 +68,9 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
-        const exerciseGroupId = route.params['exerciseGroupId'] ? route.params['exerciseGroupId'] : null;
+        const courseId = route.params['courseId'] || undefined;
+        const examId = route.params['examId'] || undefined;
+        const exerciseGroupId = route.params['exerciseGroupId'] || undefined;
         if (courseId && examId && exerciseGroupId) {
             return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
                 filter((response: HttpResponse<ExerciseGroup>) => response.ok),
@@ -90,8 +91,8 @@ export class StudentExamResolve implements Resolve<StudentExam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
-        const courseId = route.params['courseId'] ? route.params['courseId'] : null;
-        const examId = route.params['examId'] ? route.params['examId'] : null;
+        const courseId = route.params['courseId'] || undefined;
+        const examId = route.params['examId'] || undefined;
         const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
@@ -108,7 +109,7 @@ export const examManagementRoute: Routes = [
         path: '',
         component: ExamManagementComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -120,7 +121,7 @@ export const examManagementRoute: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -132,7 +133,7 @@ export const examManagementRoute: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -144,7 +145,7 @@ export const examManagementRoute: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 withStudents: true,
@@ -156,7 +157,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups',
         component: ExerciseGroupsComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -169,7 +170,7 @@ export const examManagementRoute: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -182,7 +183,7 @@ export const examManagementRoute: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -194,7 +195,7 @@ export const examManagementRoute: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -206,7 +207,7 @@ export const examManagementRoute: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 withStudents: true,
@@ -218,7 +219,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/student-exams',
         component: StudentExamsComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -230,7 +231,7 @@ export const examManagementRoute: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -239,7 +240,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/test-runs/assess',
         component: TutorCourseDashboardComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],
@@ -251,7 +252,7 @@ export const examManagementRoute: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -263,7 +264,7 @@ export const examManagementRoute: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -275,7 +276,7 @@ export const examManagementRoute: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -284,7 +285,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/test-runs/:testRunId/conduction',
         component: ExamParticipationComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
@@ -297,7 +298,7 @@ export const examManagementRoute: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -310,7 +311,7 @@ export const examManagementRoute: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -323,7 +324,7 @@ export const examManagementRoute: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -336,7 +337,7 @@ export const examManagementRoute: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -349,7 +350,7 @@ export const examManagementRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -362,7 +363,7 @@ export const examManagementRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -375,7 +376,7 @@ export const examManagementRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -388,7 +389,7 @@ export const examManagementRoute: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -401,7 +402,7 @@ export const examManagementRoute: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -411,7 +412,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -421,7 +422,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -434,7 +435,7 @@ export const examManagementRoute: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -447,7 +448,7 @@ export const examManagementRoute: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -460,7 +461,7 @@ export const examManagementRoute: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -469,7 +470,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/tutor-exam-dashboard',
         component: TutorCourseDashboardComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.tutorDashboard',
         },
         canActivate: [UserRouteAccessService],

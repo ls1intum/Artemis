@@ -8,6 +8,7 @@ import { UserManagementUpdateComponent } from 'app/admin/user-management/user-ma
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { UserService } from 'app/core/user/user.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
@@ -15,7 +16,7 @@ describe('User Management Update Component', () => {
     let service: UserService;
     let mockLanguageHelper: any;
     const route = ({
-        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
+        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin'], undefined, undefined, undefined) }),
     } as any) as ActivatedRoute;
 
     beforeEach(async(() => {

@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router, Data, ParamMap } from '@angular/router';
+import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, combineLatest } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { FormControl, AbstractControl, FormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 
 @Component({
     selector: 'jhi-user-management',
@@ -21,8 +21,8 @@ import { FormControl, AbstractControl, FormGroup } from '@angular/forms';
 export class UserManagementComponent implements OnInit, OnDestroy {
     search = new Subject<string>();
     loadingSearchResult = false;
-    currentAccount: User | null = null;
-    users: User[] | null = null;
+    currentAccount?: User;
+    users: User[];
     userListSubscription?: Subscription;
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -61,7 +61,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe(
                 (res: HttpResponse<User[]>) => {
                     this.loadingSearchResult = false;
-                    this.onSuccess(res.body, res.headers);
+                    this.onSuccess(res.body || [], res.headers);
                 },
                 (res: HttpErrorResponse) => {
                     this.loadingSearchResult = false;
@@ -165,7 +165,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         );
     }
 
-    private onSuccess(users: User[] | null, headers: HttpHeaders) {
+    private onSuccess(users: User[], headers: HttpHeaders) {
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.users = users;
     }

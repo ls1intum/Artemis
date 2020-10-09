@@ -7,9 +7,10 @@ import { TextSubmissionAssessmentComponent } from './text-submission-assessment.
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
-export class StudentParticipationResolver implements Resolve<StudentParticipation | null> {
+export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
     constructor(private textAssessmentsService: TextAssessmentsService) {}
 
     /**
@@ -20,14 +21,14 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
         const submissionId = Number(route.paramMap.get('submissionId'));
 
         if (submissionId) {
-            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(null));
+            return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(undefined));
         }
-        return Observable.of(null);
+        return Observable.of(undefined);
     }
 }
 
 @Injectable({ providedIn: 'root' })
-export class NewStudentParticipationResolver implements Resolve<StudentParticipation | null> {
+export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
     constructor(private textSubmissionService: TextSubmissionService) {}
 
     /**
@@ -41,9 +42,9 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
             return this.textSubmissionService
                 .getTextSubmissionForExerciseWithoutAssessment(exerciseId, 'lock')
                 .map((submission) => <StudentParticipation>submission.participation)
-                .catch(() => Observable.of(null));
+                .catch(() => Observable.of(undefined));
         }
-        return Observable.of(null);
+        return Observable.of(undefined);
     }
 }
 
@@ -53,7 +54,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -66,7 +67,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: ':submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

@@ -70,7 +70,7 @@ export class LoginService {
                 }),
                 // 3: Set the user's auth object to null as components might have to act on the user being logged out.
                 tap(() => {
-                    return this.accountService.authenticate(null);
+                    return this.accountService.authenticate(undefined);
                 }),
                 // 4: Clear all existing alerts of the user.
                 tap(() => {

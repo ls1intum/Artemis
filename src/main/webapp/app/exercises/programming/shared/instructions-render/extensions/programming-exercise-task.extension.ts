@@ -14,7 +14,7 @@ import { Exercise } from 'app/entities/exercise.model';
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     public exerciseHints: ExerciseHint[] = [];
-    private latestResult: Result | null = null;
+    private latestResult?: Result;
     private exercise: Exercise;
 
     private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
@@ -32,9 +32,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     /**
      * Sets latest result according to parameter.
-     * @param result - either a result or null.
+     * @param result - either a result or undefined.
      */
-    public setLatestResult(result: Result | null) {
+    public setLatestResult(result: Result | undefined) {
         this.latestResult = result;
     }
 
@@ -72,7 +72,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id.toString(10)));
+                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
@@ -119,7 +119,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                         };
                     });
                 const tasksWithParticipationId: TaskArrayWithExercise = {
-                    exerciseId: this.exercise.id,
+                    exerciseId: this.exercise.id!,
                     tasks: testsForTask,
                 };
                 this.testsForTaskSubject.next(tasksWithParticipationId);

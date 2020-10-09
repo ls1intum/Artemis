@@ -76,19 +76,19 @@ jobs:
   server-tests:
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
-    services:
-      athene-segmentation:
-        image: ls1intum/athene-segmentation
-        ports:
-          - 8000:8000
-      athene-embedding:
-        image: ls1intum/athene-embedding
-        ports:
-          - 8001:8000
-      athene-clustering:
-        image: ls1intum/athene-clustering
-        ports:
-          - 8002:8000
+#    services:
+#      athene-segmentation:
+#        image: ls1intum/athene-segmentation
+#        ports:
+#          - 8000:8000
+#      athene-embedding:
+#        image: ls1intum/athene-embedding
+#        ports:
+#          - 8001:8000
+#      athene-clustering:
+#        image: ls1intum/athene-clustering
+#        ports:
+#          - 8002:8000
     steps:
     - name: Setup Java
       uses: actions/setup-java@v1

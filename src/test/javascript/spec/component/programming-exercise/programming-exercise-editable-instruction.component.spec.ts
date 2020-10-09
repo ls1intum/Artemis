@@ -13,14 +13,14 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { MockProgrammingExerciseTestCaseService } from '../../helpers/mocks/service/mock-programming-exercise-test-case.service';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseGradingService, IProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -33,7 +33,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
-    let testCaseService: ProgrammingExerciseTestCaseService;
+    let gradingService: IProgrammingExerciseGradingService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
     let subscribeForTestCaseSpy: SinonSpy;
@@ -57,7 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             declarations: [MockComponent(ProgrammingExerciseInstructionAnalysisComponent), MockComponent(MarkdownEditorComponent)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
-                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
@@ -67,17 +67,17 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
-                (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
+                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
+                (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-                subscribeForTestCaseSpy = spy(testCaseService, 'subscribeForTestCases');
+                subscribeForTestCaseSpy = spy(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = stub(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = stub(comp.generateHtmlSubject, 'next');
             });
     });
 
     afterEach(() => {
-        (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
+        (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
         subscribeForTestCaseSpy.restore();
         getLatestResultWithFeedbacksStub.restore();
         generateHtmlSubjectStub.restore();
@@ -104,7 +104,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases);
 
         fixture.detectChanges();
         tick();
@@ -123,7 +123,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
+        (gradingService as MockProgrammingExerciseGradingService).next(testCases);
 
         fixture.detectChanges();
         tick();
@@ -131,7 +131,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
 
-        (testCaseService as MockProgrammingExerciseTestCaseService).next([{ testName: 'testX' }]);
+        (gradingService as MockProgrammingExerciseGradingService).next([{ testName: 'testX' }]);
         fixture.detectChanges();
         tick();
 
@@ -143,7 +143,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         flush();
     }));
 
-    it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
+    it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
         const subject = new Subject<Result>();
@@ -152,12 +152,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         // No test cases available, might be that the solution build never ran to create tests...
-        (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
+        (gradingService as MockProgrammingExerciseGradingService).next(undefined);
 
         fixture.detectChanges();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation!.id!);
 
         subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
         tick();

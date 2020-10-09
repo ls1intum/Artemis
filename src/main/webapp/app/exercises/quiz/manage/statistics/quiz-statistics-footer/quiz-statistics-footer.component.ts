@@ -15,6 +15,7 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choi
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -56,7 +57,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
-            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });
@@ -122,11 +123,11 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
@@ -140,7 +141,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         if (this.isQuizStatistic) {
             this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic) {
-            if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
+            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
             } else {
                 // go to previous question-statistic
@@ -160,7 +161,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
         } else if (this.isQuizStatistic) {
             // go to quiz-statistic if the position = last position
-            if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
+            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(`/course-management/${getCourseId(this.quizExercise)}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
             } else {
                 // go to next question-statistic

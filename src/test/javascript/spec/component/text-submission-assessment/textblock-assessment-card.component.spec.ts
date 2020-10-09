@@ -42,7 +42,7 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should show text block', () => {
         const loremIpsum = 'Lorem Ipsum';
-        component.textBlockRef.block.text = loremIpsum;
+        component.textBlockRef.block!.text = loremIpsum;
         fixture.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;

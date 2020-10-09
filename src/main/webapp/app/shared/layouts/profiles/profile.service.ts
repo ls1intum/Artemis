@@ -11,13 +11,13 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
-    private profileInfo: BehaviorSubject<ProfileInfo | null>;
+    private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
-    getProfileInfo(): BehaviorSubject<ProfileInfo | null> {
+    getProfileInfo(): BehaviorSubject<ProfileInfo | undefined> {
         if (!this.profileInfo) {
-            this.profileInfo = new BehaviorSubject(null);
+            this.profileInfo = new BehaviorSubject(undefined);
             this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
@@ -47,6 +47,9 @@ export class ProfileService {
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL;
                         profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
+                        profileInfo.registrationEnabled = data.registrationEnabled;
+                        profileInfo.allowedEmailPattern = data.allowedEmailPattern;
+                        profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
 
                         return profileInfo;
                     }),

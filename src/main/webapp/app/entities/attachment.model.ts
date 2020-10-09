@@ -9,15 +9,15 @@ export const enum AttachmentType {
 }
 
 export class Attachment implements BaseEntity {
-    id: number;
-    name: string;
-    link: string | null;
-    releaseDate: Moment | null;
-    version: number;
-    uploadDate: Moment | null;
-    attachmentType: AttachmentType;
-    lecture: Lecture;
-    exercise: Exercise;
+    id?: number;
+    name?: string;
+    link?: string;
+    releaseDate?: Moment;
+    version?: number;
+    uploadDate?: Moment;
+    attachmentType?: AttachmentType;
+    lecture?: Lecture;
+    exercise?: Exercise;
 
     constructor() {}
 }

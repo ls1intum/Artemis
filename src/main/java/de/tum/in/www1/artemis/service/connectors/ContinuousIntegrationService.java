@@ -8,9 +8,13 @@ import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -98,9 +102,9 @@ public interface ContinuousIntegrationService {
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
      * @return the result of the build
-     * @throws Exception if the Body could not be parsed
+     * @throws ContinousIntegrationException if the Body could not be parsed
      */
-    Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
+    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinousIntegrationException;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -134,14 +138,6 @@ public interface ContinuousIntegrationService {
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
-
-    /**
-     * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission and save it into the database.
-     * @param participation to identify the build artifact with.
-     * @param submission    for commitHash comparison.
-     * @return the saved Result instance if a build result could be retrieved from the CIS.
-     */
-    Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
 
     /**
      * Checks if the project with the given projectKey already exists

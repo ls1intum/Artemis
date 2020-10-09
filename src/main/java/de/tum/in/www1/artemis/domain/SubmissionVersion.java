@@ -14,11 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "submission_version")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @EntityListeners(AuditingEntityListener.class)
-public class SubmissionVersion {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class SubmissionVersion extends DomainObject {
 
     @ManyToOne
     private Submission submission;
@@ -39,26 +35,8 @@ public class SubmissionVersion {
     @Column(name = "last_modified_date")
     private Instant lastModifiedDate = Instant.now();
 
-    public Long getId() {
-        return id;
-    }
-
-    public SubmissionVersion id(Long id) {
-        this.id = id;
-        return this;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Submission getSubmission() {
         return submission;
-    }
-
-    public SubmissionVersion submission(Submission submission) {
-        this.submission = submission;
-        return this;
     }
 
     public void setSubmission(Submission submission) {
@@ -69,22 +47,12 @@ public class SubmissionVersion {
         return author;
     }
 
-    public SubmissionVersion author(User author) {
-        this.author = author;
-        return this;
-    }
-
     public void setAuthor(User author) {
         this.author = author;
     }
 
     public String getContent() {
         return content;
-    }
-
-    public SubmissionVersion content(String content) {
-        this.content = content;
-        return this;
     }
 
     public void setContent(String content) {
@@ -95,22 +63,12 @@ public class SubmissionVersion {
         return createdDate;
     }
 
-    public SubmissionVersion createdDate(Instant createdDate) {
-        this.createdDate = createdDate;
-        return this;
-    }
-
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
     }
 
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    public SubmissionVersion lastModifiedDate(Instant lastModifiedDate) {
-        this.lastModifiedDate = lastModifiedDate;
-        return this;
     }
 
     public void setLastModifiedDate(Instant lastModifiedDate) {

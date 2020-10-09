@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -21,24 +20,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository,
                 examService);
         this.userService = userService;
-    }
-
-    /**
-     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
-     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
-     * complaint.
-     *
-     * @param originalResult   the original assessment that was complained about
-     * @param exercise programming exercise
-     * @param assessmentUpdate the assessment update
-     * @return the updated Result
-     */
-    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
-    @Transactional
-    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, ProgrammingAssessmentUpdate assessmentUpdate) {
-        originalResult.setResultString(assessmentUpdate.getResultString());
-        originalResult.setScore(assessmentUpdate.getScore());
-        return super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
     }
 
     /**
@@ -79,13 +60,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public Result submitManualAssessment(long resultId) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        // Every manual assessed programming submission is rated
-        result.setRated(true);
-        result.setCompletionDate(ZonedDateTime.now());
-        // TODO: Make it possible to give scores/points for manual results
-        // Double calculatedScore = calculateTotalScore(result.getFeedbacks());
-        // return submitResult(result, exercise, calculatedScore);
 
-        return resultRepository.save(result);
+        Double calculatedScore = calculateTotalScore(result.getFeedbacks());
+        return submitResult(result, result.getParticipation().getExercise(), calculatedScore);
     }
 }

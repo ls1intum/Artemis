@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -35,14 +35,14 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
 
     isReEvaluationRunning = false;
 
-    constructor(private testCaseService: ProgrammingExerciseTestCaseService, private alertService: AlertService) {}
+    constructor(private testCaseService: ProgrammingExerciseGradingService, private alertService: AlertService) {}
 
     /**
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.
      */
     triggerReEvaluate() {
         this.isReEvaluationRunning = true;
-        this.testCaseService.reEvaluate(this.exercise.id).subscribe(
+        this.testCaseService.reEvaluate(this.exercise.id!).subscribe(
             (updatedResultsCount: number) => {
                 this.isReEvaluationRunning = false;
                 this.alertService.success(`artemisApp.programmingExercise.reEvaluateSuccessful`, { number: updatedResultsCount });

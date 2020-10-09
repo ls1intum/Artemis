@@ -40,7 +40,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
-    invalidError: string | null;
+    invalidError?: string;
     exercise: TextExercise;
     isAtLeastInstructor = false;
     readOnly: boolean;
@@ -188,11 +188,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            if (this.exercise.course == null) {
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup?.exam?.course!);
-            } else {
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-            }
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
@@ -210,7 +206,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id).subscribe((result) => {
+            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id!).subscribe((result) => {
                 this.result = result;
                 this.assessments = this.result.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
@@ -274,7 +270,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.exampleSubmission.exercise = this.exercise;
-            this.exampleSubmissionId = this.exampleSubmission.id;
+            this.exampleSubmissionId = this.exampleSubmission.id!;
             this.textSubmission = this.exampleSubmission.submission as TextSubmission;
             this.isNewSubmission = false;
 
@@ -282,7 +278,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
             this.location.go(newUrl);
 
-            this.resultService.createNewExampleResult(this.textSubmission.id).subscribe((response: HttpResponse<Result>) => {
+            this.resultService.createNewExampleResult(this.textSubmission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
             }, this.onError);
@@ -331,7 +327,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         const credits = this.assessments.map((assessment) => assessment.credits);
 
-        if (!credits.every((credit) => credit !== null && !isNaN(credit))) {
+        if (!credits.every((credit) => credit && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
@@ -339,7 +335,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
-        this.invalidError = null;
+        this.invalidError = undefined;
         if (this.guidedTourService.currentTour && this.toComplete) {
             this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
         }
@@ -355,7 +351,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.assessmentsService.save(this.exercise.id, this.result.id, this.assessments, []).subscribe((response) => {
+        this.assessmentsService.save(this.exercise.id!, this.result.id!, this.assessments, []).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -368,8 +364,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
      */
     async back() {
         // check if exam exercise
-        if (this.exercise.course == null || !this.exercise.course) {
-            const courseId = this.exercise.exerciseGroup?.exam?.course.id;
+        if (!this.exercise.course) {
+            const courseId = this.exercise.exerciseGroup?.exam?.course?.id;
             const examId = this.exercise.exerciseGroup?.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup?.id;
             if (this.readOnly || this.toComplete) {
@@ -401,9 +397,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission.result = new Result();
-        exampleSubmission.submission.result.feedbacks = this.assessments;
-
+        if (exampleSubmission.submission) {
+            exampleSubmission.submission.result = new Result();
+            exampleSubmission.submission.result.feedbacks = this.assessments;
+        }
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
@@ -434,7 +431,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 }

@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
-import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.cosine;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.conflict;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.File;
@@ -19,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import jplag.ExitException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,44 +26,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseGroupService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingCriterionService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionExportService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -597,9 +567,11 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
         Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+
         if (optionalTextExercise.isEmpty()) {
             return notFound();
         }
+
         TextExercise textExercise = optionalTextExercise.get();
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
@@ -615,15 +587,50 @@ public class TextExerciseResource {
 
         log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
 
-        // TODO: allow one more alternative using JPlag with text compare, see ProgrammingExerciseResource:961 --> checkPlagiarism()
-        // TODO: let the user specify the minimum similarity in the client
-        return ResponseEntity.ok(Stream
+        Stream<SubmissionComparisonDTO> submissionComparisonDTOStream = Stream
                 .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
                         new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
                 .parallel()
-                .flatMap(strategy -> textPlagiarismDetectionService.compareSubmissionsForExerciseWithStrategy(textSubmissions, strategy.getX(), strategy.getY(), 0.8).entrySet()
-                        .stream().map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(strategy.getY(), entry.getValue())))
-                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted());
+                .flatMap(comparisonStrategy -> textPlagiarismDetectionService
+                        .compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy.getX(), comparisonStrategy.getY(), 0.8).entrySet().stream()
+                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(comparisonStrategy.getY(), entry.getValue())))
+                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted();
+
+        // TODO: Let the user specify the minimum similarity in the client
+        return ResponseEntity.ok(submissionComparisonDTOStream);
+    }
+
+    /**
+     * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
+     *
+     * @param exerciseId for which all submission should be checked
+     * @return the JPlag result directory as zip file
+     */
+    @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        File zipFile = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
 }
