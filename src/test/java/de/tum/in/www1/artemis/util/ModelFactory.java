@@ -662,6 +662,14 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Generate a Bamboo notification with build logs of various sizes
+     *
+     * @param repoName repository name
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return notification with build logs
+     */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
 
