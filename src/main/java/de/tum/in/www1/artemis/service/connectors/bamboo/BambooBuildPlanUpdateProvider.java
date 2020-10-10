@@ -122,7 +122,7 @@ public class BambooBuildPlanUpdateProvider {
         return bitbucketRestTemplate.exchange(requestUrl, HttpMethod.GET, null, RemoteBitbucketRepositoryDTO.class).getBody();
     }
 
-    // TODO: move/update the corresponding method in BitbucketService
+    // this method is currently not needed but might be useful in the future
     private RemoteBitbucketProjectDTO getRemoteBitbucketProject(String project) {
         return bitbucketRestTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + project, HttpMethod.GET, null, RemoteBitbucketProjectDTO.class).getBody();
     }
