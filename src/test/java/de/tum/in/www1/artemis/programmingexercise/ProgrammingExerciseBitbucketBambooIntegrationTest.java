@@ -342,8 +342,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
         final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}", String.valueOf(exercise.getId()));
-        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
-        return participation;
+        return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
     @Test
