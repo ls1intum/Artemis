@@ -19,7 +19,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+ import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { tap } from 'rxjs/operators';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
