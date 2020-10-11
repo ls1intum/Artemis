@@ -64,7 +64,7 @@ public class LearningGoalResourceIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateLearningGoal_validRequest_CREATED() throws Exception {
         learningGoal.setCourse(course1);
-        LearningGoal response = requestUtilService.postWithResponseBody("/api/courses/" + course1.getId() + "/goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
+        LearningGoal response = requestUtilService.postWithResponseBody("/api/goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
         assertThat(response.getTitle()).as("title is the same").isEqualTo(learningGoal.getTitle());
     }
 
@@ -73,34 +73,27 @@ public class LearningGoalResourceIntegrationTest extends AbstractSpringIntegrati
     public void testCreateLearningGoal_idAlreadySet_BAD_REQUEST() throws Exception {
         learningGoal.setCourse(course1);
         learningGoal.setId(1L);
-        requestUtilService.post("/api/courses/" + course1.getId() + "/goals", learningGoal, HttpStatus.BAD_REQUEST);
+        requestUtilService.post("/api/goals", learningGoal, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateLearningGoal_courseNull_CONFLICT() throws Exception {
-        requestUtilService.post("/api/courses/" + course1.getId() + "/goals", learningGoal, HttpStatus.CONFLICT);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateLearningGoal_wrongCourseId_CONFLICT() throws Exception {
-        learningGoal.setCourse(course1);
-        requestUtilService.post("/api/courses/" + 99 + "/goals", learningGoal, HttpStatus.CONFLICT);
+        requestUtilService.post("/api/goals", learningGoal, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateLearningGoal_student_FORBIDDEN() throws Exception {
         learningGoal.setCourse(course1);
-        requestUtilService.post("/api/courses/" + course1.getId() + "/goals", learningGoal, HttpStatus.FORBIDDEN);
+        requestUtilService.post("/api/goals", learningGoal, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testCreateLearningGoal_tutor_FORBIDDEN() throws Exception {
         learningGoal.setCourse(course1);
-        requestUtilService.post("/api/courses/" + course1.getId() + "/goals", learningGoal, HttpStatus.FORBIDDEN);
+        requestUtilService.post("/api/goals", learningGoal, HttpStatus.FORBIDDEN);
     }
 
 }

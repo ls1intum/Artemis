@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -66,6 +67,30 @@ public class LearningGoalResource {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok().body(learningGoal.get());
+    }
+
+    @DeleteMapping("/goals/{goalId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long goalId) {
+        log.debug("REST request to delete the learning goal with the id : {}", goalId);
+        Optional<LearningGoal> learningGoalOptional = learningGoalService.findById(goalId);
+        if (learningGoalOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        LearningGoal learningGoal = learningGoalOptional.get();
+
+        Course course = learningGoal.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+        learningGoalService.delete(learningGoal);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, goalId.toString())).build();
+
     }
 
     @PostMapping("/goals")

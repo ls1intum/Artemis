@@ -54,4 +54,8 @@ public class LearningGoalService {
     public Optional<LearningGoal> findById(Long goalId) {
         return learningGoalRepository.findByIdEager(goalId);
     }
+
+    public void delete(LearningGoal learningGoal) {
+        learningGoalRepository.delete(learningGoal);
+    }
 }
