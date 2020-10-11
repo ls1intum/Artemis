@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -248,13 +249,34 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException{
+        var noArtifactsResponse = "";
+        URL url = new URL("https://bamboo.ase.in.tum.de/download/");
+        final var uri = UriComponentsBuilder.fromUri(url.toURI()).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
+    }
+
+    public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
+        var newDate = (new Date()).getTime();
+        Map firstLogEntry = Map.of( "log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
+        Map response = Map.of("logEntries", Map.of("logEntry", List.of(firstLogEntry)));
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
+            .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
     private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
         final var buildResult = new QueriedBambooBuildResultDTO();
         final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
         final var failedTests = new QueriedBambooBuildResultDTO.BambooFailedTestsDTO();
         final var changes = new BambooChangesDTO();
         final var artifacts = new BambooArtifactsDTO();
-        final var buildArtifact = new BambooArtifactsDTO.BambooArtifactDTO();
+        final var buildArtifact1 = new BambooArtifactsDTO.BambooArtifactDTO();
+        final var buildArtifact2 = new BambooArtifactsDTO.BambooArtifactDTO();
         final var buildLink = new BambooArtifactsDTO.BambooArtifactLinkDTO();
 
         failedTests.setExpand("testResult");
@@ -285,12 +307,16 @@ public class BambooRequestMockProvider {
 
         buildLink.setLinkToArtifact(new URL("https://bamboo.ase.in.tum.de/download/"));
         buildLink.setRel("self");
-        buildArtifact.setLink(buildLink);
-        buildArtifact.setName("Build log");
-        buildArtifact.setProducerJobKey(planKey + "-JOB-1");
-        buildArtifact.setShared(false);
-        artifacts.setArtifacts(List.of(buildArtifact));
-        artifacts.setSize(1);
+        buildArtifact1.setLink(buildLink);
+        buildArtifact1.setName("Build log");
+        buildArtifact1.setProducerJobKey(planKey + "-JOB-1");
+        buildArtifact1.setShared(false);
+        buildArtifact2.setLink(buildLink);
+        buildArtifact2.setName("Mock Build log");
+        buildArtifact2.setProducerJobKey(planKey + "-JOB-1");
+        buildArtifact2.setShared(false);
+        artifacts.setArtifacts(List.of(buildArtifact1,buildArtifact2));
+        artifacts.setSize(2);
         buildResult.setArtifacts(artifacts);
 
         return buildResult;
