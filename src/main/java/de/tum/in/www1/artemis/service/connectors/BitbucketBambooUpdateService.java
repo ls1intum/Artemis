@@ -177,9 +177,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         List<BambooRepositoryDTO> list = this.getBuildPlanRepositoryList(buildPlanKey);
         var bambooRepository = this.lookupRepository(firstRepositoryName, list);
         if (bambooRepository == null && secondRepositoryName != null) {
-            return this.lookupRepository(secondRepositoryName, list);
+            bambooRepository = this.lookupRepository(secondRepositoryName, list);
         }
-        return null;
+        return bambooRepository;
     }
 
     private BambooRepositoryDTO lookupRepository(String name, List<BambooRepositoryDTO> list) {
@@ -210,29 +210,29 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         String data = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
 
         // the following code finds the required information in the html response
+        // it iterates over all data-item-ids in the html code and tries to find the required repository information inside
+        // please note: while this approach is not ideal, it works reliably, and there is currently no other API to get the repository id which is needed for other calls to Bamboo
         if (data != null) {
-            int count = 0;
             Pattern findPattern = Pattern.compile("data-item-id=\"(\\d+)\".*\"item-title\">([^<]+)<", Pattern.DOTALL);
             int endIndex = 0;
-
-            do {
+            int count = 0;
+            // use startIndex and endIndex to navigate through the document, try at most 100 times
+            while (count < 100) {
                 int startIndex = data.indexOf("data-item-id", endIndex);
-                if (startIndex < 0) {
+                endIndex = data.indexOf("</li>", startIndex);
+                if (startIndex < 0 || endIndex < 0) {
                     // not found
                     break;
                 }
-
-                endIndex = data.indexOf("</li>", startIndex);
                 Matcher matcher = findPattern.matcher(data.substring(startIndex, endIndex));
                 if (matcher.find()) {
                     String repositoryId = matcher.group(1).trim();
                     String repositoryName = matcher.group(2).trim();
                     var bambooRepository = new BambooRepositoryDTO(Long.parseLong(repositoryId), repositoryName);
                     list.add(bambooRepository);
-                    count++;
                 }
+                count++;
             }
-            while (count < 2147483647);
         }
 
         return list;

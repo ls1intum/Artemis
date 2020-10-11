@@ -292,6 +292,14 @@ public class BambooService implements ContinuousIntegrationService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
             return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BuildPlanDTO.class).getBody();
         }
+        catch (HttpClientErrorException ex) {
+            if (HttpStatus.NOT_FOUND.equals(ex.getStatusCode())) {
+                // this is assumed
+                return null;
+            }
+            log.info(ex.getMessage());
+            return null;
+        }
         catch (Exception ex) {
             log.info(ex.getMessage());
             return null;
@@ -304,25 +312,27 @@ public class BambooService implements ContinuousIntegrationService {
         final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
-            var remotePlan = getBuildPlan(targetPlanKey);
-            if (remotePlan != null) {
+            // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
+            var targetBuildPlan = getBuildPlan(targetPlanKey);
+            if (targetBuildPlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
             }
-            // TODO: execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
             log.info("Clone build plan " + sourcePlanKey + " was successful");
         }
         catch (RestClientException clientException) {
-            if (clientException.getMessage().contains("already exists")) {
-                log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
-                return targetPlanKey;
+            if (clientException.getMessage() != null && clientException.getMessage().contains("already exists")) {
+                // NOTE: this case cannot happen any more, because we get the build plan above. It might still be reported by Bamboo, then we still throw an exception,
+                // because the build plan cannot exist (this might be a caching issue shortly after the participation / build plan was deleted).
+                // It is important that we do not allow this here, because otherwise the subsequent actions won't succeed and the user might be in a wrong state that cannot be
+                // solved any more
+                log.warn("Edge case: Bamboo reports that the build Plan " + targetPlanKey
+                        + " already exists. However the build plan was not found. The user should try again in a few minutes");
             }
-            else {
-                throw new BambooException("Something went wrong while cloning build plan " + sourcePlanKey + " to " + targetPlanKey + ":" + clientException.getMessage(),
-                        clientException);
-            }
+            throw new BambooException("Something went wrong while cloning build plan " + sourcePlanKey + " to " + targetPlanKey + ":" + clientException.getMessage(),
+                    clientException);
         }
         catch (Exception serverException) {
             throw new BambooException("Something went wrong while cloning build plan: " + serverException.getMessage(), serverException);
