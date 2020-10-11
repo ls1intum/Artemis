@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LearningGoal } from 'app/entities/learning-goal.model';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-learning-goal-form',
@@ -9,10 +10,19 @@ import { LearningGoal } from 'app/entities/learning-goal.model';
 })
 export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
+    dialogError: Observable<string>;
+
+    @Input()
     learningGoal: LearningGoal;
+
+    @Input()
+    editMode = false;
 
     @Output()
     submitLearningGoal: EventEmitter<LearningGoal> = new EventEmitter<LearningGoal>();
+
+    @Output()
+    deleteLearningGoal: EventEmitter<LearningGoal> = new EventEmitter<LearningGoal>();
 
     learningGoalForm: FormGroup;
 
@@ -49,6 +59,11 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         };
 
         this.submitLearningGoal.emit(newLearningGoal);
+        this.learningGoalForm.reset();
+    }
+
+    submitDelete(): void {
+        this.deleteLearningGoal.emit(this.learningGoal);
         this.learningGoalForm.reset();
     }
 }

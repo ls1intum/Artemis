@@ -1,2 +1,11 @@
-<h1>Edit Learning Goal</h1>
-<jhi-learning-goal-form *ngIf="learningGoal" [learningGoal]="learningGoal" (submitLearningGoal)="updateBook($event)"> </jhi-learning-goal-form>
+<jhi-alert></jhi-alert>
+<h1>{{ 'artemisApp.learningGoal.edit.headline' | translate }}</h1>
+<jhi-learning-goal-form
+    *ngIf="learningGoal"
+    [learningGoal]="learningGoal"
+    [dialogError]="dialogError$"
+    (submitLearningGoal)="updateLearningGoal($event)"
+    (deleteLearningGoal)="deleteLearningGoal($event)"
+    [editMode]="true"
+>
+</jhi-learning-goal-form>

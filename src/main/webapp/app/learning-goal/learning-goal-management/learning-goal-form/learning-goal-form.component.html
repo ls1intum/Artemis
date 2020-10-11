@@ -1,11 +1,25 @@
 <form [formGroup]="learningGoalForm" (ngSubmit)="submitForm()">
     <div class="form-group">
-        <label for="inputTitle">Title</label>
-        <input class="form-control" id="inputTitle" formControlName="title" placeholder="Enter learning goal title" />
+        <label for="inputTitle">{{ 'artemisApp.learningGoal.title' | translate }}</label>
+        <input class="form-control" id="inputTitle" formControlName="title" />
     </div>
     <div class="form-group">
-        <label for="inputDescription">Description</label>
-        <textarea class="form-control" formControlName="description" id="inputDescription" rows="3" placeholder="Enter a learning goal description"></textarea>
+        <label for="inputDescription">{{ 'artemisApp.learningGoal.description' | translate }}</label>
+        <textarea class="form-control" formControlName="description" id="inputDescription" rows="3"></textarea>
     </div>
-    <button type="submit" class="btn btn-primary" [disabled]="learningGoalForm.invalid">Submit</button>
+    <div class="form-row">
+        <button type="submit" class="btn btn-primary" [disabled]="learningGoalForm.invalid">{{ 'entity.action.confirm' | translate }}</button>
+        <button
+            *ngIf="editMode"
+            class="ml-3"
+            jhiDeleteButton
+            [entityTitle]="learningGoal.title"
+            [dialogError]="dialogError"
+            deleteQuestion="artemisApp.learningGoal.delete.question"
+            deleteConfirmationText="artemisApp.learningGoal.delete.typeNameToConfirm"
+            (delete)="submitDelete()"
+        >
+            <fa-icon [icon]="'times'"></fa-icon>
+        </button>
+    </div>
 </form>

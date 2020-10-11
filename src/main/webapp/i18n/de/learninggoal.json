@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "learningGoal": {
+            "shortName": "Ziele",
+            "title": "Titel",
+            "description": "Beschreibung",
+            "delete": {
+                "question": "Soll das Lernziel <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen des Lernziels zur Bestätigung ein."
+            },
+            "edit": {
+                "headline": "Änderung eines Lernziels"
+            },
+            "create": {
+                "headline": "Erstellung eines neuen Lernziels"
+            }
+        }
+    }
+}

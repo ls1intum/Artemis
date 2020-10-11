@@ -38,8 +38,4 @@ export class LearningGoalManagementComponent implements OnInit {
     navigateToCreate(): void {
         this.router.navigate(['/course-management', this.courseId, 'goals', 'create']);
     }
-
-    navigateToEdit(learningGoalId: number): void {
-        this.router.navigate(['/course-management', this.courseId, 'goals', 'edit', learningGoalId]);
-    }
 }

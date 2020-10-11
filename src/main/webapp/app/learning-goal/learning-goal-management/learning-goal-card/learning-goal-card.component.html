@@ -1,6 +1,8 @@
 <div class="card border-primary mb-3">
-    <div class="card-body" [ngSwitch]="selectedTab">
+    <div class="card-body">
         <h5 class="card-title">{{ learningGoal.title }}</h5>
         <p class="card-text">{{ learningGoal.description }}</p>
+        <button [routerLink]="['/course-management', learningGoal?.course?.id, 'goals', learningGoal?.id, 'edit']" class="btn btn-primary">Edit</button>
+        <button [routerLink]="['/course-management', learningGoal?.course?.id, 'goals', learningGoal?.id, 'connect']" class="btn btn-primary">Connect</button>
     </div>
 </div>

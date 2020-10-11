@@ -1,6 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { LearningGoal } from 'app/entities/learning-goal.model';
 
@@ -9,8 +8,6 @@ type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LearningGoalManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/learning-goals';
-
     constructor(private httpClient: HttpClient) {}
 
     /**
@@ -39,5 +36,9 @@ export class LearningGoalManagementService {
 
     findById(learningGoalId: number): Observable<EntityResponseType> {
         return this.httpClient.get<LearningGoal>(`api/goals/${learningGoalId}`, { observe: 'response' });
+    }
+
+    deleteLearningGoal(learningGoal: LearningGoal): Observable<HttpResponse<any>> {
+        return this.httpClient.delete(`api/goals/${learningGoal.id}`, { observe: 'response' });
     }
 }

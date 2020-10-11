@@ -9,9 +9,18 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { LearningGoalConnectComponent } from './learning-goal-connect/learning-goal-connect.component';
 
 @NgModule({
-    declarations: [LearningGoalManagementComponent, LearningGoalCardComponent, LearningGoalCreateComponent, LearningGoalEditComponent, LearningGoalFormComponent],
-    imports: [CommonModule, ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisSharedModule],
+    declarations: [
+        LearningGoalManagementComponent,
+        LearningGoalCardComponent,
+        LearningGoalCreateComponent,
+        LearningGoalEditComponent,
+        LearningGoalFormComponent,
+        LearningGoalConnectComponent,
+    ],
+    imports: [CommonModule, ArtemisSharedLibsModule, RouterModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisSharedModule],
 })
 export class ArtemisLearningGoalManagementModule {}
