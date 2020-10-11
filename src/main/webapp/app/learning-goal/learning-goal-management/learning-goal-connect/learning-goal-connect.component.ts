@@ -21,7 +21,7 @@ export class LearningGoalConnectComponent implements OnInit {
     /**
      * boolean symbolises if the exercise is connected to the learning goal
      */
-    private exercises: [Exercise, boolean][] = [];
+    exercises: [Exercise, boolean][] = [];
 
     private exercisesOfLearningGoal: Exercise[] = [];
     private exercisesOfCourse: Exercise[] = [];
