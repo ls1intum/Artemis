@@ -332,7 +332,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
-    private Course getCourseForExercise () {
+    private Course getCourseForExercise() {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -341,7 +341,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
-        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
