@@ -332,18 +332,27 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
-    @Test
-    @WithMockUser(username = studentLogin, roles = "USER")
-    public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
+    private Course getCourseForExercise () {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
+        return course;
+    }
 
-        User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
-        final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
+    private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
         final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+        return participation;
+    }
+
+    @Test
+    @WithMockUser(username = studentLogin, roles = "USER")
+    public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
+        final var course = getCourseForExercise();
+        User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
+        final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
+        final var participation = createUserParticipation(course);
 
         // create a submission which fails
         database.createProgrammingSubmission(participation, true);
@@ -362,15 +371,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
+        final var course = getCourseForExercise();
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
-        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}", String.valueOf(exercise.getId()));
-        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+        final var participation = createUserParticipation(course);
 
         // create a submission
         database.createProgrammingSubmission(participation, false);
