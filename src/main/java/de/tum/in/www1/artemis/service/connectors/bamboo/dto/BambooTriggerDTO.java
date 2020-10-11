@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
-public class RemoteTriggerDTO {
+public class BambooTriggerDTO {
 
     private Long id;
 
@@ -8,15 +8,12 @@ public class RemoteTriggerDTO {
 
     private String description;
 
-    private RemotePlanDTO plan;
-
     private boolean enabled = true;
 
-    public RemoteTriggerDTO() {
+    public BambooTriggerDTO() {
     }
 
-    public RemoteTriggerDTO(RemotePlanDTO plan, Long id, String name, String description) {
-        this.plan = plan;
+    public BambooTriggerDTO(Long id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -44,14 +41,6 @@ public class RemoteTriggerDTO {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public RemotePlanDTO getPlan() {
-        return plan;
-    }
-
-    public void setPlan(RemotePlanDTO plan) {
-        this.plan = plan;
     }
 
     public boolean isEnabled() {

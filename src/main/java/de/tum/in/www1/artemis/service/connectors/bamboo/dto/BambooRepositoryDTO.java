@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 import java.util.Map;
 import java.util.Optional;
 
-public class RemoteBambooRepositoryDTO {
+public class BambooRepositoryDTO {
 
     private Long id;
 
@@ -31,17 +31,14 @@ public class RemoteBambooRepositoryDTO {
 
     private String cloneSshUrl;
 
-    private RemotePlanDTO plan;
-
     protected String scmType;
 
     private Map<String, String> fields;
 
-    public RemoteBambooRepositoryDTO() {
+    public BambooRepositoryDTO() {
     }
 
-    public RemoteBambooRepositoryDTO(RemotePlanDTO plan, Long id, String name) {
-        this.plan = plan;
+    public BambooRepositoryDTO(Long id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -152,14 +149,6 @@ public class RemoteBambooRepositoryDTO {
 
     public void setCloneSshUrl(String cloneSshUrl) {
         this.cloneSshUrl = cloneSshUrl;
-    }
-
-    public RemotePlanDTO getPlan() {
-        return plan;
-    }
-
-    public void setPlan(RemotePlanDTO plan) {
-        this.plan = plan;
     }
 
     public String getScmType() {

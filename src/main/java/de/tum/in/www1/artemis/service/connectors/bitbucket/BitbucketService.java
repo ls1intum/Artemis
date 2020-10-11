@@ -270,6 +270,10 @@ public class BitbucketService extends AbstractVersionControlService {
         throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
     }
 
+    private BitbucketProjectDTO getBitbucketProject(String projectKey) {
+        return restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey, HttpMethod.GET, null, BitbucketProjectDTO.class).getBody();
+    }
+
     /**
      * Gets the project key from the given URL
      *
@@ -500,7 +504,7 @@ public class BitbucketService extends AbstractVersionControlService {
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
             // first check that the project key is unique
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey, HttpMethod.GET, null, Map.class);
+            getBitbucketProject(projectKey);
             log.warn("Bitbucket project with key " + projectKey + " already exists");
             return true;
         }

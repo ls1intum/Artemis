@@ -45,8 +45,8 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.RemotePlanDTO;
 
 @Service
 @Profile("bamboo")
@@ -286,12 +286,11 @@ public class BambooService implements ContinuousIntegrationService {
         return buildLogEntries;
     }
 
-    // TODO: this is duplicated code with BitbucketBambooUpdateService
-    private RemotePlanDTO getRemotePlan(String planName) {
+    private BuildPlanDTO getBuildPlan(String planName) {
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planName;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
-            return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, RemotePlanDTO.class).getBody();
+            return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BuildPlanDTO.class).getBody();
         }
         catch (Exception ex) {
             log.info(ex.getMessage());
@@ -305,7 +304,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
-            var remotePlan = getRemotePlan(targetPlanKey);
+            var remotePlan = getBuildPlan(targetPlanKey);
             if (remotePlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
@@ -393,11 +392,12 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl,
-            Optional<List<String>> triggeredBy) throws BambooException {
+    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String repoProjectName, String repoUrl,
+            Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repositoryName, triggeredBy);
+            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, buildPlanKey, bambooRepositoryName, repoProjectName, repositoryName,
+                    optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
@@ -669,7 +669,6 @@ public class BambooService implements ContinuousIntegrationService {
                 artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts().setArtifacts(
                         buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).collect(Collectors.toList()));
-                buildResult.getArtifacts().setSize(buildResult.getArtifacts().getArtifacts().size());
             }
 
             // search for version control information

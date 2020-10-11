@@ -2,22 +2,22 @@ package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.util.List;
 
-public class RemoteApplicationLinksDTO {
+public class ApplicationLinksDTO {
 
-    private List<RemoteApplicationLinkDTO> applicationLinks;
+    private List<ApplicationLinkDTO> applicationLinks;
 
-    public List<RemoteApplicationLinkDTO> getApplicationLinks() {
+    public List<ApplicationLinkDTO> getApplicationLinks() {
         return applicationLinks;
     }
 
-    public void setApplicationLinks(List<RemoteApplicationLinkDTO> applicationLinks) {
+    public void setApplicationLinks(List<ApplicationLinkDTO> applicationLinks) {
         this.applicationLinks = applicationLinks;
     }
 
-    public RemoteApplicationLinksDTO() {
+    public ApplicationLinksDTO() {
     }
 
-    public static class RemoteApplicationLinkDTO {
+    public static class ApplicationLinkDTO {
 
         private String id;
 

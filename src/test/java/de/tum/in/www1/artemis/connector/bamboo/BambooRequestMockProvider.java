@@ -18,7 +18,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -36,7 +35,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.Verifiable;
@@ -47,9 +45,6 @@ public class BambooRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
-
-    @SpyBean
-    private BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
 
     @Autowired
     private ObjectMapper mapper;
@@ -172,7 +167,7 @@ public class BambooRequestMockProvider {
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
-        final var repositoryResponse = new RemoteBambooRepositoryDTO(null, 12345678L, "testName");
+        final var repositoryResponse = new BambooRepositoryDTO(null, 12345678L, "testName");
 
         doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
         verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
@@ -295,7 +290,6 @@ public class BambooRequestMockProvider {
         buildArtifact2.setProducerJobKey(planKey + "-JOB-1");
         buildArtifact2.setShared(false);
         artifacts.setArtifacts(List.of(buildArtifact1, buildArtifact2));
-        artifacts.setSize(2);
         buildResult.setArtifacts(artifacts);
 
         return buildResult;

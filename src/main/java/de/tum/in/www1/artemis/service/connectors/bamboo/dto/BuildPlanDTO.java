@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
-public class RemotePlanDTO {
+import java.util.HashMap;
+import java.util.Map;
+
+public class BuildPlanDTO {
 
     private String name;
 
@@ -18,7 +21,9 @@ public class RemotePlanDTO {
 
     private boolean enabled;
 
-    public RemotePlanDTO() {
+    private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
+
+    public BuildPlanDTO() {
     }
 
     public String getName() {
@@ -83,5 +88,13 @@ public class RemotePlanDTO {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public BambooRepositoryDTO getRepository(String name) {
+        return repositories.get(name);
+    }
+
+    public void addRepository(String name, BambooRepositoryDTO repository) {
+        repositories.put(name, repository);
     }
 }

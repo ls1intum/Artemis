@@ -6,6 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.Jsoup;
@@ -25,10 +28,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.RemoteBambooRepositoryDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.RemotePlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.RemoteTriggerDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 
 @Service
 // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
@@ -39,114 +42,194 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
 
+    @Value("${artemis.version-control.url}")
+    private URL bitbucketServerUrl;
+
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
 
-    private final BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
+    private final RestTemplate bambooRestTemplate;
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate bitbucketRestTemplate;
 
-    public BitbucketBambooUpdateService(BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider, @Qualifier("bambooRestTemplate") RestTemplate restTemplate) {
-        this.bambooBuildPlanUpdateProvider = bambooBuildPlanUpdateProvider;
-        this.restTemplate = restTemplate;
+    private List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
+
+    public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate) {
+        this.bambooRestTemplate = bambooRestTemplate;
+        this.bitbucketRestTemplate = bitbucketRestTemplate;
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository,
-            Optional<List<String>> triggeredBy) {
+    public void updatePlanRepository(String bambooProject, String buildPlanKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository,
+            Optional<List<String>> optionalTriggeredByRepositories) {
         try {
-            log.debug("Update plan repository for build plan " + planKey);
-            RemoteBambooRepositoryDTO bambooRemoteRepository = getRemoteRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, planKey);
-            if (bambooRemoteRepository == null) {
-                throw new BambooException("Something went wrong while updating the template repository of the build plan " + planKey
+            log.debug("Update plan repository for build plan " + buildPlanKey);
+            BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
+            if (bambooRepository == null) {
+                throw new BambooException("Something went wrong while updating the template repository of the build plan " + buildPlanKey
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            bambooBuildPlanUpdateProvider.updateRepository(bambooRemoteRepository, bitbucketRepository, bitbucketProject, planKey);
+            updateRepository(bambooRepository, bitbucketRepository, bitbucketProject, buildPlanKey);
 
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise
-            if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
-                triggeredBy = Optional
-                        .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
+            if (optionalTriggeredByRepositories.isPresent() && bambooRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
+                optionalTriggeredByRepositories = Optional.of(optionalTriggeredByRepositories.get().stream()
+                        .map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
             }
-            triggeredBy.ifPresent(repoTriggers -> overwriteTriggers(planKey, repoTriggers));
+            optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 
-            log.info("Update plan repository for build plan " + planKey + " was successful");
+            log.info("Update plan repository for build plan " + buildPlanKey + " was successful");
         }
         catch (Exception e) {
-            throw new BambooException("Something went wrong while updating the template repository of the build plan " + planKey + " to the student repository : " + e.getMessage(),
-                    e);
+            throw new BambooException(
+                    "Something went wrong while updating the template repository of the build plan " + buildPlanKey + " to the student repository : " + e.getMessage(), e);
         }
     }
 
-    private RemoteBambooRepositoryDTO getRemoteRepository(String repositoryName, String oldRepositoryName, String plan) {
-        List<RemoteBambooRepositoryDTO> list = this.getRemoteRepositoryList(plan);
-        var bambooRepository = this.lookupRepository(repositoryName, list);
-        if (bambooRepository == null && oldRepositoryName != null) {
-            return this.lookupRepository(oldRepositoryName, list);
+    /**
+     * Update the build plan repository using the cli plugin. This is e.g. invoked, when a student starts a programming exercise.
+     * Then the build plan (which was cloned before) needs to be updated to work with the student repository
+     *
+     * @param bambooRepository the bamboo repository which was obtained before
+     * @param bitbucketRepositoryName the name of the new bitbucket repository
+     * @param bitbucketProjectKey the key of the corresponding bitbucket project
+     * @param completePlanName the complete name of the plan
+     */
+    private void updateRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String completePlanName) {
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("planKey", completePlanName);
+        parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
+        // IMPORTANT: Don't change the name of the repo! We depend on the naming (assignment, tests) in some other parts of the application
+        parameters.add("repositoryName", bambooRepository.getName());
+        parameters.add("repositoryId", Long.toString(bambooRepository.getId()));
+        parameters.add("confirm", "true");
+        parameters.add("save", "Save repository");
+        parameters.add("bamboo.successReturnMode", "json");
+        parameters.add("repository.stash.branch", "master");
+
+        BitbucketRepositoryDTO bitbucketRepository = getBitbucketRepository(bitbucketProjectKey, bitbucketRepositoryName);
+        parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
+        parameters.add("repository.stash.repositorySlug", bitbucketRepository.getSlug());
+        parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
+        parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
+
+        Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(bitbucketServerUrl.toString());
+        applicationLink.ifPresent(link -> parameters.add("repository.stash.server", link.getId()));
+
+        try {
+            String requestUrl = bambooServerUrl + "/chain/admin/config/updateRepository.action";
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+            bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
+        }
+        catch (Exception ex) {
+            // TODO: improve error handling
+            String message = "Request failed on the server with response code 500. Make sure all required fields have been provided using the various field and value parameters. "
+                    + "The server log may provide insight into missing fields: " + ex.getMessage();
+            throw new BambooException(message);
+        }
+    }
+
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String url) {
+        // first try to find the application link from the local cache
+        var cachedLink = findCachedLinkForUrl(url);
+        if (cachedLink.isPresent()) {
+            return cachedLink;
+        }
+        // if there is no local application link available, load them Bamboo server
+        cachedApplicationLinks = loadApplicationLinkList();
+        return findCachedLinkForUrl(url);
+    }
+
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
+        return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
+    }
+
+    private List<ApplicationLinksDTO.ApplicationLinkDTO> loadApplicationLinkList() {
+        String requestUrl = bambooServerUrl + "/rest/applinks/latest/applicationlink";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
+        ApplicationLinksDTO links = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, ApplicationLinksDTO.class).getBody();
+        if (links != null) {
+            return links.getApplicationLinks();
+        }
+        else {
+            return List.of();
+        }
+    }
+
+    private BitbucketRepositoryDTO getBitbucketRepository(String projectKey, String repositorySlug) {
+        String requestUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug;
+        return bitbucketRestTemplate.exchange(requestUrl, HttpMethod.GET, null, BitbucketRepositoryDTO.class).getBody();
+    }
+
+    /**
+     * Fetches the list of repositories in the given build plan, then tries to find the repository in the bamboo build plan, first using the firstRepositoryName,
+     * second using the secondRepositoryName
+     * @param firstRepositoryName the repository name that should be found first
+     * @param secondRepositoryName in case firstRepositoryName is not found, the repository name that should be found second
+     * @param buildPlanKey the bamboo build plan key in which the repository with the specified name should be found
+     * @return the found bamboo repository in the build plan or null in case the repository with the specified name could not be found
+     */
+    private BambooRepositoryDTO findBambooRepository(String firstRepositoryName, @Nullable String secondRepositoryName, String buildPlanKey) {
+        List<BambooRepositoryDTO> list = this.getBuildPlanRepositoryList(buildPlanKey);
+        var bambooRepository = this.lookupRepository(firstRepositoryName, list);
+        if (bambooRepository == null && secondRepositoryName != null) {
+            return this.lookupRepository(secondRepositoryName, list);
         }
         return null;
     }
 
-    protected RemoteBambooRepositoryDTO lookupRepository(String name, List<RemoteBambooRepositoryDTO> list) {
-        var remoteRepository = list.stream().filter(repository -> name.equals(repository.getName())).findFirst();
-        if (remoteRepository.isPresent()) {
-            return remoteRepository.get();
+    private BambooRepositoryDTO lookupRepository(String name, List<BambooRepositoryDTO> list) {
+        var repository = list.stream().filter(repo -> name.equals(repo.getName())).findFirst();
+        if (repository.isPresent()) {
+            return repository.get();
         }
 
         if (StringUtils.isNumeric(name)) {
             Long id = Long.valueOf(name);
-            remoteRepository = list.stream().filter(repository -> id.equals(repository.getId())).findFirst();
-            if (remoteRepository.isPresent()) {
-                return remoteRepository.get();
+            repository = list.stream().filter(repo -> id.equals(repo.getId())).findFirst();
+            if (repository.isPresent()) {
+                return repository.get();
             }
         }
 
         return null;
     }
 
-    private List<RemoteBambooRepositoryDTO> getRemoteRepositoryList(String plan) {
-        RemotePlanDTO remotePlan = this.getRemotePlan(plan);
-        return this.getRemoteRepositoryList(remotePlan);
-    }
-
-    private RemotePlanDTO getRemotePlan(String planName) {
-        String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planName;
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
-        return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, RemotePlanDTO.class).getBody();
-    }
-
-    private List<RemoteBambooRepositoryDTO> getRemoteRepositoryList(RemotePlanDTO plan) {
-        List<RemoteBambooRepositoryDTO> list = new ArrayList<>();
+    private List<BambooRepositoryDTO> getBuildPlanRepositoryList(String buildPlanKey) {
+        List<BambooRepositoryDTO> list = new ArrayList<>();
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainRepository.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("buildKey", plan.getKey());
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("buildKey", buildPlanKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.TEXT_HTML));
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
-        String data = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
+        String data = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
 
         // the following code finds the required information in the html response
         if (data != null) {
             int count = 0;
-            Pattern findPattern = Pattern.compile("data-item-id=\"(\\d+)\".*\"item-title\">([^<]+)<", 32);
+            Pattern findPattern = Pattern.compile("data-item-id=\"(\\d+)\".*\"item-title\">([^<]+)<", Pattern.DOTALL);
             int endIndex = 0;
 
             do {
                 int startIndex = data.indexOf("data-item-id", endIndex);
                 if (startIndex < 0) {
+                    // not found
                     break;
                 }
 
                 endIndex = data.indexOf("</li>", startIndex);
                 Matcher matcher = findPattern.matcher(data.substring(startIndex, endIndex));
                 if (matcher.find()) {
-                    String id = matcher.group(1).trim();
-                    String name = matcher.group(2).trim();
-                    ++count;
-                    list.add(new RemoteBambooRepositoryDTO(plan, Long.parseLong(id), name));
+                    String repositoryId = matcher.group(1).trim();
+                    String repositoryName = matcher.group(2).trim();
+                    var bambooRepository = new BambooRepositoryDTO(Long.parseLong(repositoryId), repositoryName);
+                    list.add(bambooRepository);
+                    count++;
                 }
             }
             while (count < 2147483647);
@@ -163,51 +246,45 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      *
      * This only affects imported exercises and might even not be necessary in case the old BASE build plan was created after December 2019 or was already adapted.
      *
-     * @param planKey the bamboo plan key (this is currently only used for BASE build plans
-     * @param triggeredBy a list of triggers (i.e. names of repositories) that should be used to trigger builds in the build plan
+     * @param buildPlanKey the bamboo build plan key (this method is currently only used when importing the BASE build plans)
+     * @param triggeredByRepositories a list of triggers (i.e. names of repositories) that should be used to trigger builds in the build plan
      */
-    private void overwriteTriggers(final String planKey, final List<String> triggeredBy) {
+    private void overwriteTriggers(String buildPlanKey, final List<String> triggeredByRepositories) {
         try {
-            List<RemoteTriggerDTO> remoteTriggers = getTriggerList(planKey);
+            List<BambooTriggerDTO> triggers = getTriggerList(buildPlanKey);
             // Remove all old triggers
-            for (final var trigger : remoteTriggers) {
-                removeTrigger(planKey, trigger.getId());
+            for (final var trigger : triggers) {
+                removeTrigger(buildPlanKey, trigger.getId());
             }
 
             // Add new triggers
-            for (final var repo : triggeredBy) {
-                addTrigger(planKey, repo);
+            for (final var repositoryName : triggeredByRepositories) {
+                addTrigger(buildPlanKey, repositoryName);
             }
         }
         catch (Exception e) {
-            throw new BambooException("Unable to overwrite triggers for " + planKey + "\n" + e.getMessage(), e);
+            throw new BambooException("Unable to overwrite triggers for " + buildPlanKey + "\n" + e.getMessage(), e);
         }
     }
 
-    private List<RemoteTriggerDTO> getTriggerList(String plan) {
-        RemotePlanDTO remotePlan = getRemotePlan(plan);
-        return this.getRemoteTriggerList(remotePlan);
-    }
-
-    private void removeTrigger(String plan, Long id) {
-        RemotePlanDTO remotePlan = getRemotePlan(plan);
+    private void removeTrigger(String buildPlanKey, Long id) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("triggerId", Long.toString(id));
         parameters.add("confirm", "true");
         parameters.add("decorator", "nothing");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("planKey", remotePlan.getKey());
+        parameters.add("planKey", buildPlanKey);
 
         String requestUrl = bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
+        bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
     }
 
-    private List<RemoteTriggerDTO> getRemoteTriggerList(RemotePlanDTO remotePlan) {
-        List<RemoteTriggerDTO> list = new ArrayList<>();
+    private List<BambooTriggerDTO> getTriggerList(String buildPlanKey) {
+        List<BambooTriggerDTO> list = new ArrayList<>();
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("buildKey", remotePlan.getKey());
+        parameters.add("buildKey", buildPlanKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.TEXT_HTML));
@@ -216,7 +293,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainTriggers.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        String response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
+        String response = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, entity, String.class).getBody();
 
         Document document = Jsoup.parse(response);
 
@@ -224,7 +301,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             Long id = NumberUtils.isCreatable(element.attr("data-item-id")) ? Long.parseLong(element.attr("data-item-id")) : 0L;
             String name = getText(element.getElementsByClass("item-title").first());
             String description = getText(element.getElementsByClass("item-description").first());
-            RemoteTriggerDTO entry = new RemoteTriggerDTO(remotePlan, id, name, description);
+            BambooTriggerDTO entry = new BambooTriggerDTO(id, name, description);
             if ("Disabled".equalsIgnoreCase(getText(element.getElementsByClass("lozenge").first()))) {
                 entry.setEnabled(false);
             }
@@ -238,12 +315,14 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         return element == null ? "" : element.text();
     }
 
-    private void addTrigger(String plan, String repository) {
-        RemotePlanDTO remotePlan = getRemotePlan(plan);
+    private void addTrigger(String buildPlanKey, String repository) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("repositoryTrigger", getRemoteRepository(repository, null, remotePlan.getKey()).getIdString());
-        parameters.add("planKey", remotePlan.getKey());
+        BambooRepositoryDTO bambooRepository = findBambooRepository(repository, null, buildPlanKey);
+        if (bambooRepository != null) {
+            parameters.add("repositoryTrigger", bambooRepository.getIdString());
+        }
+        parameters.add("planKey", buildPlanKey);
         parameters.add("triggerId", "-1");
         parameters.add("createTriggerKey", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stashTrigger");
         parameters.add("userDescription", null);
@@ -254,11 +333,11 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         try {
             String requestUrl = bambooServerUrl + "/chain/admin/config/createChainTrigger.action";
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-            restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
+            bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
         }
         catch (Exception ex) {
-            throw new BambooException(ex.getMessage() + ". "
-                    + "Missing or invalid parameters for a custom trigger. Most likely cause is an invalid trigger key specified in the type parameter. Specify -v on the action and look in the detailed information for problem determination information.");
+            throw new BambooException(
+                    ex.getMessage() + ". " + "Missing or invalid parameters for a custom trigger. Most likely cause is an invalid trigger key specified in the type parameter.");
         }
     }
 }

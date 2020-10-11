@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
 import java.util.List;
 
-public class RemoteBitbucketRepositoryDTO {
+public class BitbucketRepositoryDTO {
 
     private String id;
 
@@ -10,7 +10,7 @@ public class RemoteBitbucketRepositoryDTO {
 
     private String slug;
 
-    private RemoteBitbucketProjectDTO project;
+    private BitbucketProjectDTO project;
 
     private String scmId;
 
@@ -46,11 +46,11 @@ public class RemoteBitbucketRepositoryDTO {
         this.slug = slug;
     }
 
-    public RemoteBitbucketProjectDTO getProject() {
+    public BitbucketProjectDTO getProject() {
         return project;
     }
 
-    public void setProject(RemoteBitbucketProjectDTO project) {
+    public void setProject(BitbucketProjectDTO project) {
         this.project = project;
     }
 
