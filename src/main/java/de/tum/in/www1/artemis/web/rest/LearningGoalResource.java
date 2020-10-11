@@ -52,6 +52,12 @@ public class LearningGoalResource {
         this.userService = userService;
     }
 
+    /**
+     * GET /courses/:courseId/goals : get all the learning goals associated with a course
+     *
+     * @param courseId the courseId of the course for which all learning goals should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of learning goals in body
+     */
     @GetMapping("/courses/{courseId}/goals")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<LearningGoal>> getLearningGoalsByCourseId(@PathVariable Long courseId) {
@@ -59,6 +65,12 @@ public class LearningGoalResource {
         return ResponseEntity.ok().body(learningGoalService.findAllByCourseId(courseId));
     }
 
+    /**
+     * GET /goals/:goalId : gets the learning goal with the id of :goalId.
+     *
+     * @param goalId the id of the learning goal to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
+     */
     @GetMapping("/goals/{goalId}")
     public ResponseEntity<LearningGoal> getLearningGoalById(@PathVariable Long goalId) {
         log.debug("REST request to get the learning goal with the id : {}", goalId);
@@ -69,9 +81,18 @@ public class LearningGoalResource {
         return ResponseEntity.ok().body(learningGoal.get());
     }
 
+    /**
+     * DELETE /goals/:goalid : deletes the learning goal with the id of :goalId.
+     *
+     * @param goalId the id of the learning goal to delete
+     * @return the ResponseEntity with status 200 (OK)
+     * or with status 403 (Forbidden) if the user is not an administrator or instructor
+     * or with status 404 (Not Found) if the learning goal with the id can not be found
+     * or with status 400 (Bad Request) if the learning goal is not associated with a course
+     */
     @DeleteMapping("/goals/{goalId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long goalId) {
+    public ResponseEntity<Void> deleteLearningGoal(@PathVariable Long goalId) {
         log.debug("REST request to delete the learning goal with the id : {}", goalId);
         Optional<LearningGoal> learningGoalOptional = learningGoalService.findById(goalId);
         if (learningGoalOptional.isEmpty()) {
@@ -93,6 +114,16 @@ public class LearningGoalResource {
 
     }
 
+    /**
+     * POST /goals : Create a new learning goal.
+     *
+     * @param learningGoal the learning goal to create
+     * @return the ResponseEntity with status 201 (Created) and with body the new learning goal
+     * or with status 400 (Bad Request) if the learning goal has already an ID
+     * or with status 409 (Conflict) if the learning goal is not associated with a course
+     * or with status 403 (Forbidden) if the user is not an administrator or instructor
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
     @PostMapping("/goals")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<LearningGoal> createLearningGoal(@Valid @RequestBody LearningGoal learningGoal) throws URISyntaxException {
@@ -115,6 +146,15 @@ public class LearningGoalResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, persistedLearningGoal.getTitle())).body(persistedLearningGoal);
     }
 
+    /**
+     * PUT /goals : Updates an existing learning goal
+     *
+     * @param learningGoal the learning to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated learning goal,
+     * or with status 400 (Bad Request) if the learning goal has no ID
+     * or with status 409 (Conflict) if the learning goal is not associated with a course
+     * or with status 403 (Forbidden) if the user is not an administrator or instructor
+     */
     @PutMapping("/goals")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<LearningGoal> updateLearningGoal(@Valid @RequestBody LearningGoal learningGoal) {

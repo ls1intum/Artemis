@@ -127,6 +127,7 @@ public class LearningGoal extends DomainObject {
     /**
      * Removes an exercise from the learning goal. Also handles the other side of the relationship.
      *
+     * @param exercise the exercise to remove from the learning goal
      * @return learning goal with exercise removed
      */
     public LearningGoal removeExercise(Exercise exercise) {
