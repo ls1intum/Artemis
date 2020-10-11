@@ -5,7 +5,7 @@
             'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ
         }"
     >
-        <!-- Scores -->
+        <!-- Scores: Needed for every exercise -->
         <button
             *ngIf="exercise.isAtLeastTutor"
             type="submit"
@@ -15,7 +15,7 @@
             <fa-icon [icon]="'eye'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
         </button>
-        <!-- Submissions -->
+        <!-- Submissions: Exception for ProgrammingExercise & QuizExercise -->
         <button
             type="submit"
             *ngIf="exercise.isAtLeastInstructor && exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ"
@@ -25,17 +25,7 @@
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
         </button>
-        <!-- Participations -->
-        <button
-            *ngIf="exercise.isAtLeastTutor && exercise.type != exerciseType.QUIZ"
-            type="submit"
-            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
-            class="btn btn-primary btn-sm mr-1 mb-1"
-        >
-            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-        </button>
-        <!--  Statistic  -->
+        <!--  Statistic: QuizExercise Only  -->
         <button
             *ngIf="exercise.isAtLeastTutor && exercise.type == exerciseType.QUIZ"
             type="submit"
@@ -45,10 +35,7 @@
             <fa-icon [icon]="'signal'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
         </button>
-    </div>
-
-    <div [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING, 'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING }">
-        <!-- View -->
+        <!-- View: Exception for QuizExercise-->
         <button
             *ngIf="exercise.isAtLeastTutor && exercise.type != exerciseType.QUIZ"
             type="submit"
@@ -58,16 +45,44 @@
             <fa-icon [icon]="'eye'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
         </button>
-        <!-- Edit -->
+    </div>
+    <!--This row of buttons is needed for all exercise besides QuizExercise for all modes and only in exam mode for QuizExercise -->
+    <div
+        *ngIf="exercise.type != exerciseType.QUIZ || (exercise.type == exerciseType.QUIZ && isInExerciseGroup)"
+        [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING, 'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING }"
+    >
+        <!-- Participations needed in all possible situation -->
         <button
-            *ngIf="exercise.isAtLeastInstructor && exercise.type != exerciseType.QUIZ && !isExamOver()"
+            *ngIf="exercise.isAtLeastTutor"
+            type="submit"
+            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']"
+            class="btn btn-primary btn-sm mr-1 mb-1"
+        >
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+        </button>
+        <!-- Edit: Hidden for QuizExercise If exam is over-->
+        <button
+            *ngIf="exercise.isAtLeastInstructor"
             type="submit"
             [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
-            [disabled]="hasExamStarted()"
+            [disabled]="hasExamStarted() && !isExamOver()"
+            [hidden]="exercise.type == exerciseType.QUIZ && isExamOver()"
             class="btn btn-primary btn-sm mr-1 mb-1"
         >
             <fa-icon [icon]="'pencil-alt'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        </button>
+        <!-- Re-evaluate: QuizExercise (in exam mode) & the exam is over-->
+        <button
+            *ngIf="exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
+            type="submit"
+            [hidden]="!isExamOver()"
+            [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
+            class="btn btn-primary btn-sm mr-1 mb-1"
+        >
+            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </button>
     </div>
     <!-- Teams -->
@@ -88,23 +103,8 @@
         }"
     >
         <!-- Reset -->
-        <!--        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"-->
         <button
-            *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.PROGRAMMING"
-            jhiDeleteButton
-            [actionType]="ActionType.Reset"
-            [entityTitle]="exercise.title"
-            deleteQuestion="artemisApp.programmingExercise.reset.question"
-            (delete)="resetExercise()"
-            [dialogError]="dialogError$"
-            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            class="mr-1 mb-1"
-        >
-            <fa-icon [icon]="'times'"></fa-icon>
-        </button>
-
-        <button
-            *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
+            *ngIf="!isInExerciseGroup && exercise.isAtLeastInstructor && (exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ)"
             jhiDeleteButton
             [actionType]="ActionType.Reset"
             [entityTitle]="exercise.title"
