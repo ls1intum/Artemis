@@ -38,6 +38,9 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     ProgrammingExerciseStudentParticipation participation;
 
+    /**
+     * This method initializes the test case by setting up a local repo
+     */
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 0, 0);
@@ -75,6 +78,9 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         localRepo.resetLocalRepo();
     }
 
+    /**
+     * This method tests if the local repo is deleted if the exercise cannot be accessed
+     */
     @Test
     @WithMockUser(username = "student1")
     public void performEmptySetupCommitWithNullExercise() {
@@ -89,6 +95,9 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(originRepo).as("origin repository has not been deleted").isNotNull();
     }
 
+    /**
+     * This method tests if the a build status is correctly
+     */
     @Test
     @WithMockUser(username = "student1")
     public void testGetBuildStatus() {
