@@ -63,7 +63,7 @@
                     <td *ngIf="!isInExerciseGroup ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="isInExerciseGroup" class="align-middle" style="font-size: 1.35rem">
+                    <td *ngIf="isInExerciseGroup" class="align-top" style="font-size: 1.35rem">
                         <fa-icon [icon]="'check-double'"></fa-icon>
                     </td>
                     <td>{{ quizExercise.title }}</td>
