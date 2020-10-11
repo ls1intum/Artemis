@@ -35,39 +35,61 @@
         </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
         </jhi-submission-result-status>
-        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
+        <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
-            <div class="btn-group">
-                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/exercises/{{ exercise.id }}/scores">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.scores' | translate }}
-                </div>
-                <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate }}
-                </div>
-                <div
+            <div class="btn-group flex-btn-group-container">
+                <button
+                    type="submit"
+                    [routerLink]="['/course-management', courseId , 'exercises', exercise.id, 'scores']"
+                    class="btn btn-info btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'eye'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="exerciseRouterLink"
+                    [routerLink]="[ exerciseRouterLink ]"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                </button>
+                <button
+                    type="submit"
                     *ngIf="exercise.type === MODELING"
                     [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
-                    class="btn btn-outline-primary"
+                    class="btn btn-info btn-sm mr-1"
                 >
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
-                </div>
-                <div
+                    <fa-icon [icon]="'signal'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
+                </button>
+                <button
+                    type="submit"
                     *ngIf="exercise.type === PROGRAMMING"
                     [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
-                    class="btn btn-outline-primary"
+                    class="btn btn-primary btn-sm mr-1"
                 >
-                    {{ 'artemisApp.exercise.participations' | translate }}
-                </div>
-                <div
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </button>
+                <button
+                    type="submit"
                     *ngIf="exercise.type === PROGRAMMING"
                     [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
-                    class="btn btn-outline-primary"
+                    class="btn btn-info btn-sm mr-1"
                 >
-                    {{ 'artemisApp.programmingExercise.configureGrading.title' | translate }}
-                </div>
-                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/{{ exercise.type }}-exercises/{{ exercise.id }}/edit">
-                    {{ 'entity.action.edit' | translate }}
-                </div>
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Grading</span>
+                </button>
+                <button
+                    type="submit"
+                    [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                </button>
             </div>
         </div>
     </div>
