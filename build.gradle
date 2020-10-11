@@ -24,7 +24,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.5.0"
+    id "com.google.cloud.tools.jib" version "2.6.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.5.2"
+version = "4.6.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -236,7 +236,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.49.Final"
     implementation "io.projectreactor.netty:reactor-netty:0.9.12.RELEASE"
     implementation "org.springframework:spring-messaging:5.2.9.RELEASE"
-    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.8.RELEASE_1"
+    implementation "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-messaging:5.2.9.RELEASE_1"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -365,7 +365,8 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
+// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
+// 2a) Execute tests without coverage report:       ./gradlew executeTests -x yarn_install -x webpack
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest or ./gradlew test --tests ExamIntegrationTest.testGetExamScore
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack

@@ -35,7 +35,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
-@Order(1)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -70,8 +69,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @PostConstruct
     public void init() {
         try {
+            // here we configure 2 authentication provider: 1) the user details service for internal authentication using the Artemis database...
             authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            // ... and 2), if specified a remote (or external) user authentication provider (e.g. JIRA)
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
+            // When users try to authenticate, Spring will always first ask the remote user authentication provider (e.g. JIRA) if available, and only if this one fails,
+            // it will ask the user details service (internal DB) for authentication.
         }
         catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
