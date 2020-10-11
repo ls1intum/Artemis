@@ -27,6 +27,8 @@ export class ExerciseRowButtonComponent {
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() isInExerciseGroup = false;
+    @Input() isExamOver = false;
+    @Input() hasExamStarted = false;
     @Output() onDeleteExercise = new EventEmitter<{ exerciseId: number; groupId: number }>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -176,17 +178,17 @@ export class ExerciseRowButtonComponent {
         );
     }
 
-    /**
-     * Checks whether the exam is over using the endDate
-     */
-    isExamOver() {
-        return this.exercise.exerciseGroup?.exam?.endDate ? this.exercise.exerciseGroup.exam.endDate.isBefore(moment()) : false;
-    }
-
-    /**
-     * Checks whether the exam has started
-     */
-    hasExamStarted() {
-        return this.exercise.exerciseGroup?.exam?.startDate ? this.exercise.exerciseGroup.exam.startDate.isBefore(moment()) : false;
-    }
+    // /**
+    //  * Checks whether the exam is over using the endDate
+    //  */
+    // isExamOver() {
+    //     return this.exercise.exerciseGroup?.exam?.endDate ? this.exercise.exerciseGroup.exam.endDate.isBefore(moment()) : false;
+    // }
+    //
+    // /**
+    //  * Checks whether the exam has started
+    //  */
+    // hasExamStarted() {
+    //     return this.exercise.exerciseGroup?.exam?.startDate ? this.exercise.exerciseGroup.exam.startDate.isBefore(moment()) : false;
+    // }
 }

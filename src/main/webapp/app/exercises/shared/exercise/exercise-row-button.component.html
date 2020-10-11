@@ -67,8 +67,8 @@
             *ngIf="exercise.isAtLeastInstructor"
             type="submit"
             [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
-            [disabled]="hasExamStarted() && !isExamOver()"
-            [hidden]="exercise.type == exerciseType.QUIZ && isExamOver()"
+            [disabled]="hasExamStarted && !isExamOver"
+            [hidden]="exercise.type == exerciseType.QUIZ && isExamOver"
             class="btn btn-primary btn-sm mr-1 mb-1"
         >
             <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -78,7 +78,7 @@
         <button
             *ngIf="exercise.isAtLeastInstructor && exercise.type == exerciseType.QUIZ"
             type="submit"
-            [hidden]="!isExamOver()"
+            [hidden]="!isExamOver"
             [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
             class="btn btn-primary btn-sm mr-1 mb-1"
         >

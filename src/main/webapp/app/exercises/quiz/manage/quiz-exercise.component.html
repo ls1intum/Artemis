@@ -175,6 +175,8 @@
                             <!-- using generic button solution -->
                             <jhi-exercise-row-button
                                 [isInExerciseGroup]="isInExerciseGroup"
+                                [isExamOver]="isExamOver()"
+                                [hasExamStarted]="hasExamStarted()"
                                 [exercise]="quizExercise"
                                 [course]="this.course"
                                 (onDeleteExercise)="emitDeleteEvent($event.exerciseId, $event.groupId)"
