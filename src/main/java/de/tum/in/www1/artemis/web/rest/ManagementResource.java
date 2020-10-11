@@ -40,6 +40,6 @@ public class ManagementResource {
     public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
         featureToggleService.updateFeatureToggles(features);
 
-        return new ResponseEntity<>(Feature.enabledFeatures(), HttpStatus.OK);
+        return new ResponseEntity<>(featureToggleService.enabledFeatures(), HttpStatus.OK);
     }
 }

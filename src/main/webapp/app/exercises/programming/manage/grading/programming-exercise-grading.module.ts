@@ -9,6 +9,7 @@ import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/prog
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-dirty-warning.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/p
         ProgrammingExerciseConfigureGradingStatusComponent,
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingDirtyWarningComponent,
+        ProgrammingExerciseGradingTableActionsComponent,
     ],
     exports: [ProgrammingExerciseConfigureGradingComponent, ProgrammingExerciseGradingDirtyWarningComponent],
 })

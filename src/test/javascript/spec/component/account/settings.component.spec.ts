@@ -1,58 +1,118 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { TestBed, async, tick, fakeAsync, inject } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { throwError, of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
-import { Account } from 'app/core/user/account.model';
 import { SettingsComponent } from 'app/account/settings/settings.component';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;
-    let fixture: ComponentFixture<SettingsComponent>;
-    let accountService: AccountService;
+
+    const accountValues: User = {
+        guidedTourSettings: [],
+        name: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
+        activated: true,
+        email: 'john.doe@mail.com',
+        langKey: 'en',
+        login: 'john',
+        authorities: [],
+        imageUrl: '',
+    };
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [SettingsComponent],
-            providers: [FormBuilder, { provide: AccountService, useClass: MockAccountService }],
+            providers: [
+                FormBuilder,
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .overrideTemplate(SettingsComponent, '')
             .compileComponents();
     }));
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(SettingsComponent);
+        const fixture = TestBed.createComponent(SettingsComponent);
         comp = fixture.componentInstance;
-        accountService = TestBed.get(AccountService);
-        comp.settingsAccount = { langKey: 'en' } as Account;
+        comp.isRegistrationEnabled = true;
     });
 
-    it('should notify of success upon successful save', () => {
-        // GIVEN
-        spyOn(accountService, 'save').and.returnValue(of({}));
+    it('should send the current identity upon save', inject(
+        [AccountService],
+        fakeAsync((service: AccountService) => {
+            // GIVEN
+            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
+            spyOn(service, 'save').and.returnValue(of({}));
+            spyOn(service, 'authenticate');
 
-        // WHEN
-        comp.ngOnInit();
-        comp.save();
+            const settingsFormValues = {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john.doe@mail.com',
+                langKey: 'en',
+            };
 
-        // THEN
-        expect(comp.success).toBe('OK');
-        expect(comp.error).toBe(null);
-    });
+            // WHEN
+            comp.ngOnInit();
+            tick();
+            comp.save();
+            tick();
 
-    it('should notify of error upon failed save', () => {
-        // GIVEN
-        spyOn(accountService, 'save').and.returnValue(throwError('An error message'));
+            // THEN
+            expect(service.identity).toHaveBeenCalled();
+            expect(service.save).toHaveBeenCalledWith(accountValues);
+            expect(service.authenticate).toHaveBeenCalledWith(accountValues);
+            expect(comp.settingsForm.value).toEqual(settingsFormValues);
+        }),
+    ));
 
-        // WHEN
-        comp.ngOnInit();
-        comp.save();
+    it('should notify of success upon successful save', inject(
+        [AccountService],
+        fakeAsync((service: AccountService) => {
+            // GIVEN
+            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
+            spyOn(service, 'save').and.returnValue(of({}));
 
-        // THEN
-        expect(comp.success).toBe(null);
-        expect(comp.error).toBe('ERROR');
-    });
+            // WHEN
+            comp.ngOnInit();
+            tick();
+            comp.save();
+            tick();
+
+            // THEN
+            expect(comp.success).toBe(true);
+        }),
+    ));
+
+    it('should notify of error upon failed save', inject(
+        [AccountService],
+        fakeAsync((service: AccountService) => {
+            // GIVEN
+            spyOn(service, 'identity').and.returnValue(Promise.resolve(accountValues));
+            spyOn(service, 'save').and.returnValue(throwError('ERROR'));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            comp.save();
+            tick();
+
+            // THEN
+            expect(comp.success).toBe(false);
+        }),
+    ));
 });

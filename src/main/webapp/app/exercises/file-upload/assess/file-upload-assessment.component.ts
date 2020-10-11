@@ -27,6 +27,8 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -58,6 +60,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     isLoading = true;
     isTestRun = false;
     courseId: number;
+    hasAssessmentDueDatePassed: boolean;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -100,7 +103,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
         });
@@ -170,6 +173,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
         this.result = this.submission.result!;
         if (this.result.hasComplaint) {
             this.getComplaint();
@@ -455,22 +459,6 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             return this.isAssessor && isBeforeAssessmentDueDate;
         }
         return false;
-    }
-
-    toggleCollapse($event: any) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
-        target.blur();
-        const $card = $(target).closest('#instructions');
-
-        if ($card.hasClass('collapsed')) {
-            $card.removeClass('collapsed');
-            this.interactResizable.resizable({ enabled: true });
-            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
-        } else {
-            $card.addClass('collapsed');
-            $card.css({ width: '55px', minWidth: '55px' });
-            this.interactResizable.resizable({ enabled: false });
-        }
     }
 
     /**

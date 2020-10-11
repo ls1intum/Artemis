@@ -1,8 +1,13 @@
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import {
+    IProgrammingExerciseGradingService,
+    ProgrammingExerciseTestCaseUpdate,
+    StaticCodeAnalysisCategoryUpdate,
+} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-category.model';
 
-export class MockProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService {
+export class MockProgrammingExerciseGradingService implements IProgrammingExerciseGradingService {
     private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | undefined>(undefined);
 
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
@@ -29,6 +34,14 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
     }
 
     updateTestCase(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
+        return of();
+    }
+
+    getCodeAnalysisCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        return of();
+    }
+
+    updateCodeAnalysisCategories(exerciseId: number, updates: StaticCodeAnalysisCategoryUpdate[]): Observable<StaticCodeAnalysisCategoryUpdate[]> {
         return of();
     }
 }

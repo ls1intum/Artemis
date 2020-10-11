@@ -50,7 +50,7 @@
                         <span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
-                        <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell">
                         <span jhiTranslate="artemisApp.programmingExerciseTestCase.numberOfTests">Tests Number</span>
@@ -86,7 +86,7 @@
                         <jhi-programming-exercise-grading-dirty-warning
                             class="ml-2"
                             [programmingExerciseId]="programmingExercise.id"
-                            [hasUpdatedTestCasesInitialValue]="programmingExercise.testCasesChanged"
+                            [hasUpdatedGradingConfigInitialValue]="programmingExercise.testCasesChanged"
                         ></jhi-programming-exercise-grading-dirty-warning>
                     </td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
