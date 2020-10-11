@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1128,18 +1127,17 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        final var verifiables = new LinkedList<Verifiable>();
 
         List<String> studentLogins = new ArrayList<>();
         for (final User user : exam2.getRegisteredUsers()) {
             studentLogins.add(user.getLogin());
         }
-        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        bambooRequestMockProvider.mockDeleteProject(projectKey);
         List<String> planNames = new ArrayList<>(studentLogins);
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+            bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase());
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
         repoNames.add(RepositoryType.TEMPLATE.getName());
@@ -1152,9 +1150,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         bitbucketRequestMockProvider.mockDeleteProject(projectKey);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
-        for (final var verifiable : verifiables) {
-            verifiable.performVerification();
-        }
 
         deleteExam1WithInstructor();
     }

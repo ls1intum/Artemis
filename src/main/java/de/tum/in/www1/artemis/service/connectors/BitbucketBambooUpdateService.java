@@ -133,15 +133,15 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         }
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String url) {
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> getApplicationLink(String applicationLinkUrl) {
         // first try to find the application link from the local cache
-        var cachedLink = findCachedLinkForUrl(url);
+        var cachedLink = findCachedLinkForUrl(applicationLinkUrl);
         if (cachedLink.isPresent()) {
             return cachedLink;
         }
         // if there is no local application link available, load them Bamboo server
         cachedApplicationLinks = loadApplicationLinkList();
-        return findCachedLinkForUrl(url);
+        return findCachedLinkForUrl(applicationLinkUrl);
     }
 
     private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {

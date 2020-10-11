@@ -314,6 +314,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             var targetBuildPlan = getBuildPlan(targetPlanKey);
+            // TODO: double check what the acli plugin has done here to make sure the clone process is actually working
             if (targetBuildPlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;

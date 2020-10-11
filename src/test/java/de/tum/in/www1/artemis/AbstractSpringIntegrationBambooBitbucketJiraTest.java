@@ -119,8 +119,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var verifications = new LinkedList<Verifiable>();
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users);
-        verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
-        verifications.addAll(bambooRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username));
+        bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
+        bambooRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         return verifications;
     }
@@ -156,11 +156,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName());
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName());
         doReturn(null).when(bambooServer).publish(any());
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
+        bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
+        bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
         bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, sourceExercise.getTemplateRepositoryName(), templateRepoName);

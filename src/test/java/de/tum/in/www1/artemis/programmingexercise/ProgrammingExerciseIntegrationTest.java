@@ -22,7 +22,6 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +55,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
@@ -287,16 +285,15 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
-        final var verifiables = new LinkedList<Verifiable>();
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        bambooRequestMockProvider.mockDeleteProject(projectKey);
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+            bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase());
         }
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
@@ -304,10 +301,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bitbucketRequestMockProvider.mockDeleteProject(projectKey);
 
         request.delete(path, HttpStatus.OK, params);
-
-        for (final var verifiable : verifiables) {
-            verifiable.performVerification();
-        }
     }
 
     @Test

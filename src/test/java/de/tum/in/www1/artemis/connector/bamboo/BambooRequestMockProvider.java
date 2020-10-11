@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.util.TestConstants;
-import de.tum.in.www1.artemis.util.Verifiable;
 
 @Component
 @Profile("bamboo")
@@ -141,33 +140,41 @@ public class BambooRequestMockProvider {
                 .build().toUri();
     }
 
-    public List<Verifiable> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) {
-        final var verifications = new LinkedList<Verifiable>();
+    public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
         final var targetPlanKey = projectKey + "-" + targetPlanName;
         final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
-        final var buildProjectName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " " + exercise.getTitle();
 
-        when(planHelper.clonePlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean())).thenReturn("success");
-        verifications.add((() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));
-
-        return verifications;
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
 
-        return mockUpdatePlanRepository(exercise, username, bambooRepoName, bitbucketRepoName, List.of());
+        mockUpdatePlanRepository(exercise, username, bambooRepoName, bitbucketRepoName, List.of());
     }
 
-    public List<Verifiable> mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy) {
-        final var verifications = new LinkedList<Verifiable>();
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy) {
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
-        final var repositoryResponse = new BambooRepositoryDTO(null, 12345678L, "testName");
+        final var repositoryResponse = new BambooRepositoryDTO(12345678L, "testName");
+
+        // TODO 1) getBuildPlanRepositoryList: "/chain/admin/config/editChainRepository.action" --> return complex data / html object
+        // TODO 2) getBitbucketRepository: bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug; --> return BitbucketRepositoryDTO
+        // TODO 3) loadApplicationLinkList: bambooServerUrl + "/rest/applinks/latest/applicationlink"; --> ApplicationLinksDTO
+        // TODO 4) update repository: bambooServerUrl + "/chain/admin/config/updateRepository.action"; --> void
+
+        // in case there are triggers
+
+        // TODO 5) getTriggerList bambooServerUrl + "/chain/admin/config/editChainTriggers.action"; --> return complex data / html object
+        // TODO 6) removeTrigger (depending on the result of 5 once or twice) bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action"; --> void
+        // TODO 7) addTrigger (depending on the content of triggeredBy) bambooServerUrl + "/chain/admin/config/createChainTrigger.action"; --> void
+        // var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
+        // mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
         verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
@@ -189,8 +196,6 @@ public class BambooRequestMockProvider {
                 verifications.add(() -> verify(triggerHelper).addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false));
             }
         }
-
-        return verifications;
     }
 
     public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws URISyntaxException {
@@ -330,28 +335,27 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
     }
 
-    public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
-        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+    public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) throws URISyntaxException {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
-        doReturn(targetPlanKey).when(planHelper).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
-
-        return () -> verify(planHelper, times(1)).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
+        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public Verifiable mockEnablePlan(String projectKey, String planName) {
+    public void mockEnablePlan(String projectKey, String planName) throws URISyntaxException {
         final var planKey = projectKey + "-" + planName;
-        doReturn("foobar").when(planHelper).enablePlan(planKey, true);
-
-        return () -> verify(planHelper, times(1)).enablePlan(eq(planKey), eq(true));
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/" + planKey + "/enable").build().toUri();
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public Verifiable mockDeleteProject(String projectKey) {
-        doReturn("foobar").when(projectHelper).deleteProject(projectKey);
-        return () -> verify(projectHelper).deleteProject(projectKey);
+    public void mockDeleteProject(String projectKey) throws URISyntaxException {
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/project/" + projectKey).build().toUri();
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public Verifiable mockDeletePlan(String planKey) {
-        doReturn("foobar").when(planHelper).deletePlan(planKey);
-        return () -> verify(planHelper).deletePlan(planKey);
+    public void mockDeletePlan(String planKey) throws URISyntaxException {
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/" + planKey).build().toUri();
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+
     }
 }
