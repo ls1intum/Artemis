@@ -259,7 +259,7 @@ public class BambooRequestMockProvider {
     }
 
     public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
-        var newDate = (new Date()).getTime();
+        var newDate = new Date().getTime();
         Map firstLogEntry = Map.of( "log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
         Map response = Map.of("logEntries", Map.of("logEntry", List.of(firstLogEntry)));
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
