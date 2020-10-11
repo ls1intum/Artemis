@@ -669,6 +669,7 @@ public class BambooService implements ContinuousIntegrationService {
                 artifactLabelFilter.add("Build log");
                 buildResult.getArtifacts().setArtifacts(
                         buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).collect(Collectors.toList()));
+                buildResult.getArtifacts().setSize(buildResult.getArtifacts().getArtifacts().size());
             }
 
             // search for version control information
