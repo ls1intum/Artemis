@@ -114,7 +114,7 @@ public class BambooRequestMockProvider {
      */
     public void mockProjectKeyExists(ProgrammingExercise exercise) {
         mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + exercise.getProjectKey())).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK));
+            .andRespond(withStatus(HttpStatus.OK));
     }
 
     /**
@@ -137,10 +137,10 @@ public class BambooRequestMockProvider {
         bambooSearchDTO.setSearchResults(List.of(searchResult));
 
         mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+            .andRespond(withStatus(HttpStatus.NOT_FOUND));
         final var projectSearchPath = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/search/projects").queryParam("searchTerm", projectName);
         mockServer.expect(ExpectedCount.once(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
+            .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
@@ -148,9 +148,8 @@ public class BambooRequestMockProvider {
         List.of("ANONYMOUS", "LOGGED_IN").stream().map(role -> {
             try {
                 return UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/roles/")
-                        .pathSegment(role).build().toUri();
-            }
-            catch (URISyntaxException e) {
+                    .pathSegment(role).build().toUri();
+            } catch (URISyntaxException e) {
                 throw new AssertionError("Should be able to build URIs for Bamboo roles in mock setup");
             }
         }).forEach(rolePath -> mockServer.expect(ExpectedCount.once(), requestTo(rolePath)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT)));
@@ -161,18 +160,18 @@ public class BambooRequestMockProvider {
 
         final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName());
         mockServer.expect(ExpectedCount.once(), requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
-                .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+            .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
             final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName());
             mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
-                    .andRespond(withStatus(HttpStatus.NO_CONTENT));
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
         }
     }
 
     private URI buildGivePermissionsURIFor(String projectKey, String groupName) throws URISyntaxException {
         return UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/groups/").pathSegment(groupName)
-                .build().toUri();
+            .build().toUri();
     }
 
     public List<Verifiable> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws CliClient.RemoteRestException, CliClient.ClientException {
@@ -190,7 +189,7 @@ public class BambooRequestMockProvider {
     }
 
     public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+        throws CliClient.RemoteRestException, CliClient.ClientException {
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
@@ -199,7 +198,7 @@ public class BambooRequestMockProvider {
     }
 
     public List<Verifiable> mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+        throws CliClient.RemoteRestException, CliClient.ClientException {
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
@@ -243,24 +242,22 @@ public class BambooRequestMockProvider {
     public void mockQueryLatestBuildResultFromBambooServer(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
         final var response = createBuildResult(planKey);
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
-                .pathSegment("latest.json").queryParam("expand", "testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions").build().toUri();
+            .pathSegment("latest.json").queryParam("expand", "testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions").build().toUri();
 
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException{
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException {
         var noArtifactsResponse = "";
         URL url = new URL("https://bamboo.ase.in.tum.de/download/");
         final var uri = UriComponentsBuilder.fromUri(url.toURI()).build().toUri();
 
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
     }
 
     public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
         var newDate = new Date().getTime();
-        Map firstLogEntry = Map.of( "log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
+        Map firstLogEntry = Map.of("log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
         Map response = Map.of("logEntries", Map.of("logEntry", List.of(firstLogEntry)));
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
             .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
@@ -315,7 +312,7 @@ public class BambooRequestMockProvider {
         buildArtifact2.setName("Mock Build log");
         buildArtifact2.setProducerJobKey(planKey + "-JOB-1");
         buildArtifact2.setShared(false);
-        artifacts.setArtifacts(List.of(buildArtifact1,buildArtifact2));
+        artifacts.setArtifacts(List.of(buildArtifact1, buildArtifact2));
         artifacts.setSize(2);
         buildResult.setArtifacts(artifacts);
 
@@ -348,7 +345,7 @@ public class BambooRequestMockProvider {
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan").pathSegment(planKey + ".json").build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+            .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
     public void mockBuildPlanIsValid(final String buildPlanId, final boolean isValid) throws URISyntaxException {
@@ -358,7 +355,7 @@ public class BambooRequestMockProvider {
     }
 
     public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
+        throws CliClient.RemoteRestException, CliClient.ClientException {
         final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         doReturn(targetPlanKey).when(planHelper).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
