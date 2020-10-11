@@ -20,6 +20,9 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th *ngIf="isInExerciseGroup">
+                        <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | translate }}</span>
+                    </th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="releaseDate" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -43,6 +46,10 @@
                     <td>
                         <a [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
+                    <td *ngIf="isInExerciseGroup" class="align-middle" style="font-size: 1.35rem">
+                        <fa-icon [icon]="'file-upload'"></fa-icon>
+                    </td>
+
                     <td>{{ fileUploadExercise.title }}</td>
                     <td *ngIf="!isInExerciseGroup">{{ fileUploadExercise.releaseDate | artemisDate }}</td>
                     <td *ngIf="!isInExerciseGroup">{{ fileUploadExercise.dueDate | artemisDate }}</td>

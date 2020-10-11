@@ -32,6 +32,9 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th *ngIf="isInExerciseGroup">
+                        <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | translate }}</span>
+                    </th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="status" *ngIf="!isInExerciseGroup">
                         <span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
@@ -59,6 +62,9 @@
                     </td>
                     <td *ngIf="!isInExerciseGroup ? quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor : isExamOver()">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
+                    </td>
+                    <td *ngIf="isInExerciseGroup" class="align-middle" style="font-size: 1.35rem">
+                        <fa-icon [icon]="'check-double'"></fa-icon>
                     </td>
                     <td>{{ quizExercise.title }}</td>
                     <td *ngIf="!isInExerciseGroup">
