@@ -77,7 +77,7 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "student1")
-    public void performEmptySetupCommit_withNullExercise() {
+    public void performEmptySetupCommitWithNullExercise() {
         // test performEmptyCommit() with empty exercise
         participation.setProgrammingExercise(null);
         continuousIntegrationService.performEmptySetupCommit(participation);

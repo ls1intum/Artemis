@@ -90,9 +90,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private final static String teamShortName = "team1";
 
-    private final static String repoBaseUrl = "/api/repository/";
+    private final static String REPOBASEURL = "/api/repository/";
 
-    private final static String participationBaseUrl = "/api/participations/";
+    private final static String PARTICIPATIONBASEURL = "/api/participations/";
 
     LocalRepository exerciseRepo = new LocalRepository();
 
@@ -334,7 +334,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
-    public void startProgrammingExercise_student_submissionFailedWithBuildlog() throws Exception {
+    public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -349,7 +349,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         database.createProgrammingSubmission(participation, true);
         // get the failed build log
         bambooRequestMockProvider.mockFetchBuildLogs(participation.getBuildPlanId());
-        var buildLogs = request.get(repoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         for (final var verification : verifications) {
             verification.performVerification();
@@ -361,7 +361,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
-    public void startProgrammingExercise_student_retrieveEmptyArtifactPage() throws Exception {
+    public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -378,7 +378,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
         // prepare the artifact to be null
         bambooRequestMockProvider.mockRetrieveEmptyArtifactPage();
-        var artifact = request.get(participationBaseUrl + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATIONBASEURL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
 
         for (final var verification : verifications) {
             verification.performVerification();

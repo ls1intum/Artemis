@@ -121,7 +121,7 @@ public class BambooRequestMockProvider {
      * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
      *
      * @param exercise the programming exercise that might already exist
-     * @param exists whether the programming exercise with the same title exists
+     * @param exists   whether the programming exercise with the same title exists
      * @throws IOException
      * @throws URISyntaxException
      */
@@ -247,14 +247,24 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
+    /**
+     * This method mocks that the artifact page the latest build result is empty
+     */
     public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException {
+        var indexOfResponse = "href=\"/download/1\"";
         var noArtifactsResponse = "";
-        URL url = new URL("https://bamboo.ase.in.tum.de/download/");
-        final var uri = UriComponentsBuilder.fromUri(url.toURI()).build().toUri();
+        final var uri = new URL("https://bamboo.ase.in.tum.de/download/").toURI();
+        final var uri2 = new URL("https://bamboo.ase.in.tum.de/download/1").toURI();
 
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(indexOfResponse));
+        mockServer.expect(requestTo(uri2)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
     }
 
+    /**
+     * This method mocks that the build log of a given plan has failed
+     *
+     * @param planKey the build plan id
+     */
     public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
         var newDate = new Date().getTime();
         Map firstLogEntry = Map.of("log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
