@@ -200,7 +200,7 @@ public class BitbucketService extends AbstractVersionControlService {
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-        HttpEntity<?> entity = new HttpEntity<>(body, null);
+
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = bitbucketServerUrl + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
 
@@ -213,7 +213,7 @@ public class BitbucketService extends AbstractVersionControlService {
              */
             for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
-                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+                    final var response = restTemplate.postForEntity(new URI(repoUrl), null, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
@@ -530,7 +530,7 @@ public class BitbucketService extends AbstractVersionControlService {
     /**
      * Create a new project
      *
-     * @param programmingExercise the programming exercise for which the Bitbucket Project should be created
+     * @param programmingExercise
      * @throws BitbucketException if the project could not be created
      */
     @Override
@@ -540,6 +540,7 @@ public class BitbucketService extends AbstractVersionControlService {
         Map<String, Object> body = new HashMap<>();
         body.put("key", projectKey);
         body.put("name", projectName);
+        // TODO: add a description
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);

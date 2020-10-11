@@ -42,12 +42,12 @@ public final class HeaderUtil {
 
     /**
      * Creates a authorization headers for a given username and password
-     * @param username the username for the authentication
-     * @param password the password for the authentication
-     * @return the authorization header
+     * @param username the username
+     * @param password the password
+     * @return the acceptHeader
      */
     public static HttpHeaders createAuthorization(String username, String password) {
-        HttpHeaders authorizationHeaders = new HttpHeaders() {
+        HttpHeaders acceptHeaders = new HttpHeaders() {
 
             {
                 set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
@@ -56,24 +56,8 @@ public final class HeaderUtil {
         };
         String authorization = username + ":" + password;
         String basic = new String(Base64.getEncoder().encode(authorization.getBytes(StandardCharsets.UTF_8)));
-        authorizationHeaders.set("Authorization", "Basic " + basic);
-        return authorizationHeaders;
-    }
+        acceptHeaders.set("Authorization", "Basic " + basic);
 
-    /**
-     * Creates a authorization headers for a given token
-     * @param token the token for the authorization
-     * @return the acceptHeader
-     */
-    public static HttpHeaders createAuthorization(String token) {
-        HttpHeaders authorizationHeaders = new HttpHeaders() {
-
-            {
-                set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
-                set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());
-            }
-        };
-        authorizationHeaders.set("Authorization", "Bearer " + token);
-        return authorizationHeaders;
+        return acceptHeaders;
     }
 }

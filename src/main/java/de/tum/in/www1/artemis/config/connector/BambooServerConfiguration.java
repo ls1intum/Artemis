@@ -19,11 +19,9 @@ import com.atlassian.bamboo.specs.util.*;
 @Profile("bamboo")
 public class BambooServerConfiguration {
 
-    @Deprecated
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
 
-    @Deprecated
     @Value("${artemis.continuous-integration.password}")
     private String bambooPassword;
 
@@ -33,11 +31,9 @@ public class BambooServerConfiguration {
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
 
-    @Deprecated
     @Value("${artemis.version-control.user}")
     private String bitbucketUser;
 
-    @Deprecated
     @Value("${artemis.version-control.password}")
     private String bitbucketPassword;
 

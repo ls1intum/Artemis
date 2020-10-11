@@ -197,7 +197,6 @@ Configure Artemis
                url: http://localhost:8085
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
-               token: <bamboo-admin-token>
                vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>
@@ -210,7 +209,7 @@ Configure Artemis
        port: 8080                                         # The port of artemis
        url: http://172.20.0.1:8080                        # needs to be an ip
        // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
+       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one  
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,

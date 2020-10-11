@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 @Profile("gitlab")
 public class GitLabApiConfiguration {
 
-    @Value("${artemis.version-control.token}")
+    @Value("${artemis.version-control.secret}")
     private String gitlabPrivateToken;
 
     @Value("${artemis.version-control.url}")

@@ -124,7 +124,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
                 // this is only the case if the systems wants to login a user automatically (e.g. based on Oauth in LTI)
-                // when we provide null, the default restTemplate header will be used automatically
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
             else {
