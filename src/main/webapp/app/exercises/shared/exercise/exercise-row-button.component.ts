@@ -12,7 +12,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exercise-row-button',

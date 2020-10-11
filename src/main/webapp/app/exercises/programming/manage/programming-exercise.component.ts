@@ -19,10 +19,10 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { SortService } from 'app/shared/service/sort.service';
- import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { tap } from 'rxjs/operators';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -46,7 +46,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private javaBridge: OrionConnectorService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
-        private testCaseService: ProgrammingExerciseTestCaseService,
+        private gradingService: ProgrammingExerciseGradingService,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -113,7 +113,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     getHiddenTestCasesNumber(programmingExerciseId: number): number {
         let number = 0;
-        this.testCaseService
+        this.gradingService
             .subscribeForTestCases(programmingExerciseId)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
@@ -130,7 +130,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     getPublicTestCasesNumber(programmingExerciseId: number): number {
         let number = 0;
-        this.testCaseService
+        this.gradingService
             .subscribeForTestCases(programmingExerciseId)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
