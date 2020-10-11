@@ -49,7 +49,8 @@
     <!--This row of buttons is needed for all exercise besides QuizExercise for all modes and only in exam mode for QuizExercise -->
     <div
         *ngIf="exercise.type != exerciseType.QUIZ || (exercise.type == exerciseType.QUIZ && isInExerciseGroup)"
-        [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING, 'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING }"
+        [ngClass]="{ 'btn-group-vertical mr-1 mb-1': exercise.type == exerciseType.PROGRAMMING || exercise.type == exerciseType.QUIZ,
+        'btn-group flex-btn-group-container': exercise.type != exerciseType.PROGRAMMING && exercise.type != exerciseType.QUIZ }"
     >
         <!-- Participations needed in all possible situation -->
         <button
