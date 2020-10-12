@@ -62,7 +62,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
             this.loadLayout();
         }
         this.loadData();
-        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.question);
     }
 
     generateShortAnswerStructure() {
