@@ -100,6 +100,10 @@
         },
         "form": {
             "username": "Username",
+            "firstname": "First name",
+            "firstname.placeholder": "Your first name",
+            "lastname": "Last name",
+            "lastname.placeholder": "Your last name",
             "username.placeholder": "Your Username",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
@@ -109,6 +113,7 @@
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
             "email.placeholder": "Your email",
+            "email.pattern": "Please use an email with the following pattern:",
             "cancel": "Cancel",
             "confirm": "Confirm"
         },
@@ -130,20 +135,21 @@
             "validate": {
                 "newpassword": {
                     "required": "Your password is required.",
-                    "minlength": "Your password is required to be at least 4 characters.",
-                    "maxlength": "Your password cannot be longer than 50 characters.",
+                    "minlength": "Your password is required to be at least 8 characters.",
+                    "maxlength": "Your password cannot be longer than 100 characters.",
                     "strength": "Password strength:"
                 },
                 "confirmpassword": {
                     "required": "Your confirmation password is required.",
-                    "minlength": "Your confirmation password is required to be at least 4 characters.",
-                    "maxlength": "Your confirmation password cannot be longer than 50 characters."
+                    "minlength": "Your confirmation password is required to be at least 8 characters.",
+                    "maxlength": "Your confirmation password cannot be longer than 100 characters."
                 },
                 "email": {
                     "required": "Your email is required.",
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
-                    "maxlength": "Your email cannot be longer than 50 characters."
+                    "maxlength": "Your email cannot be longer than 100 characters.",
+                    "pattern": "Your email does not follow the required pattern."
                 }
             }
         },

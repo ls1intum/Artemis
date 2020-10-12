@@ -18,6 +18,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../helpers/mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -64,7 +65,7 @@ describe('UserRouteAccessService', () => {
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
         snapshot.queryParams = { ['jwt']: 'testToken' };
-        snapshot.data = { authorities: ['ROLE_USER'] };
+        snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
         expect(MockSyncStorage.retrieve('authenticationToken')).to.equal('testToken');

@@ -3,13 +3,14 @@ import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/p
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { NgModule } from '@angular/core';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: ':participationId',
         component: CodeEditorStudentContainerComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: [Authority.USER],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

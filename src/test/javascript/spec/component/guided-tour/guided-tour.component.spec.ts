@@ -19,6 +19,7 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,7 +34,7 @@ describe('GuidedTourComponent', () => {
         headlineTranslateKey: '',
         contentTranslateKey: '',
         highlightPadding: 10,
-        permission: ['ROLE_ADMIN'],
+        permission: [Authority.ADMIN],
     });
 
     const tourStepWithHighlightPadding = new TextTourStep({

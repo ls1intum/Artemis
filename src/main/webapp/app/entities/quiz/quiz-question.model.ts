@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
 export const enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
@@ -29,7 +30,7 @@ export class RenderedQuizQuestionMarkDownElement {
     renderedSubElements: RenderedQuizQuestionMarkDownElement[] = [];
 }
 
-export abstract class QuizQuestion implements BaseEntity, TextHintExplanationInterface {
+export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, TextHintExplanationInterface {
     public id?: number;
     public title?: string;
     public text?: string;

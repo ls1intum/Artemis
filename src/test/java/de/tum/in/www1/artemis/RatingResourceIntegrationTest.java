@@ -12,18 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Rating;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.RatingRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -62,6 +53,9 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     SubmissionRepository submissionRepo;
 
+    @Autowired
+    UserRepository userRepo;
+
     private TextExercise exercise;
 
     private List<User> users;
@@ -72,10 +66,12 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     private Rating rating;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() {
         users = database.addUsers(2, 1, 1);
-        database.addCourseWithOneReleasedTextExercise();
+        course = database.addCourseWithOneReleasedTextExercise();
         exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
         database.addParticipationForExercise(exercise, student1.getLogin());
@@ -89,6 +85,9 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         rating = new Rating();
         rating.setResult(result);
         rating.setRating(2);
+
+        // add instructor of other course
+        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
     }
 
     @AfterEach
@@ -102,8 +101,6 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     public void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
-        // also test toString()
-        System.out.println(savedRating.toString());
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }
@@ -172,5 +169,33 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         // check that rating is not updated
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
         assertThat(updatedRating.getRating()).isNotEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
+        Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
+        final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
+
+        assertThat(ratings.size()).isEqualTo(1);
+        assertThat(ratings.get(0).getId()).isEqualTo(savedRating.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
+        request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 }
