@@ -272,6 +272,7 @@ describe('TextFeedbackConflictsComponent', () => {
             const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
             if (textBlockAssessmentCardComponent.textBlockRef === component.rightTextBlockRefs[0]) {
                 textBlockAssessmentCardComponent.select();
+                fixture.detectChanges();
                 textBlockAssessmentCardComponent.select();
             }
         });
