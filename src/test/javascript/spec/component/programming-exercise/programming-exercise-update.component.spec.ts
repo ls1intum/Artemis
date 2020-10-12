@@ -106,7 +106,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         expectedExamProgrammingExercise.exerciseGroup = exerciseGroup;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId, examId, groupId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
@@ -136,7 +136,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         expectedProgrammingExercise.course = course;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });

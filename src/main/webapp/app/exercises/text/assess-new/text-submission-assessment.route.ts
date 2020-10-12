@@ -9,6 +9,7 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Injectable({ providedIn: 'root' })
 export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
@@ -73,7 +74,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -86,7 +87,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: ':submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

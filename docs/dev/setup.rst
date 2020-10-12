@@ -140,6 +140,7 @@ information about the setup for programming exercises provided:
 
    Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
    Jenkins and Gitlab <setup/jenkins-gitlab>
+   Multiple instances <setup/distributed>
 
 
 .. note::

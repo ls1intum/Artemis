@@ -23,6 +23,8 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { now } from 'moment';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -55,11 +57,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     isAtLeastInstructor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    hasAssessmentDueDatePassed: boolean;
 
     /*
      * Non-resetted properties:
      * These properties are not resetted on purpose, as they cannot change between assessments.
      */
+    private userId?: number;
     private cancelConfirmationText: string;
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
@@ -152,6 +156,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.result = this.submission?.result;
+
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();

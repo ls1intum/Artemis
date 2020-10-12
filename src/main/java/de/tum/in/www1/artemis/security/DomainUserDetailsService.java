@@ -12,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -32,7 +31,6 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    @Transactional
     public UserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating {}", login);
         String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);

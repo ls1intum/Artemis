@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -146,7 +147,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
+        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(Long participationId) {
