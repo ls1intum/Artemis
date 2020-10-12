@@ -119,6 +119,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseInExam.getId()).get();
 
         participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
@@ -291,10 +292,11 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
         }
@@ -412,9 +414,11 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+        // both values are not set --> bad request
         programmingExercise.setCourse(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
-        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        // both values are set --> bad request
+        programmingExerciseInExam.setCourse(course);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 

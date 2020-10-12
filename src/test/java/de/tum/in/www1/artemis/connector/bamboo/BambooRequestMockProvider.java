@@ -422,6 +422,6 @@ public class BambooRequestMockProvider {
         parameters.add("bamboo.successReturnMode", "json");
 
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/admin/deleteBuilds.action").queryParams(parameters).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 }

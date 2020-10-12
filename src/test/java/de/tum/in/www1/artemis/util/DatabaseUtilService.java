@@ -1383,11 +1383,8 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis);
-
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
@@ -1553,9 +1550,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-
         addTestCasesToProgrammingExercise(programmingExercise);
-
         return courseRepo.findById(course.getId()).get();
     }
 
