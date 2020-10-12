@@ -9,8 +9,4 @@ export class PlagiarismHeaderComponent {
     @Input() comparisonIdx: number;
     @Output() splitViewChange = new EventEmitter<string>();
     @Output() plagiarismConfirmation = new EventEmitter<boolean>();
-
-    tagPlagiarism(confirmed: boolean) {
-        this.plagiarismConfirmation.emit(confirmed);
-    }
 }
