@@ -100,7 +100,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: ':submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

@@ -23,7 +23,6 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess-new/text-assessment-base.component';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { now } from 'moment';
 
 @Component({
@@ -63,7 +62,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Non-resetted properties:
      * These properties are not resetted on purpose, as they cannot change between assessments.
      */
-    private userId?: number;
     private cancelConfirmationText: string;
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;

@@ -12,6 +12,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { AlertService } from 'app/core/alert/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     template: '',
@@ -41,7 +42,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
