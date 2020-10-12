@@ -495,6 +495,8 @@ public class BambooService implements ContinuousIntegrationService {
             final var hasArtifact = buildResult.getBuild().isArtifact();
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
+            // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
+            programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
             var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
@@ -522,6 +524,10 @@ public class BambooService implements ContinuousIntegrationService {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
                 buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), submission));
             }
+        }
+
+        if (buildLogEntries.isEmpty()) {
+            return buildLogEntries;
         }
 
         // Filter unwanted logs
