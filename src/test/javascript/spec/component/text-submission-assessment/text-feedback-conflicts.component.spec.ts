@@ -263,6 +263,41 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.result!.feedbacks![0].id);
     });
 
+    it('should be able to un-select conflicting feedback', () => {
+        component['setPropertiesFromServerResponse']([conflictingSubmission]);
+        fixture.detectChanges();
+
+        const textBlockAssessmentAreas = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
+        textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
+            const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
+            if (textBlockAssessmentCardComponent.textBlockRef === component.rightTextBlockRefs[0]) {
+                textBlockAssessmentCardComponent.select();
+                textBlockAssessmentCardComponent.select();
+            }
+        });
+
+        expect(component.selectedRightFeedbackId).toBeFalsy();
+        expect(component.selectedRightFeedbackId).toBe(undefined);
+    });
+
+    it('should not be able to select conflicting feedback for left submission', () => {
+        component['setPropertiesFromServerResponse']([conflictingSubmission]);
+        fixture.detectChanges();
+
+        const textBlockAssessmentAreas = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
+        textBlockAssessmentAreas.forEach((textBlockAssessmentCardArea) => {
+            const textBlockAssessmentCardComponent = textBlockAssessmentCardArea.componentInstance as TextblockAssessmentCardComponent;
+            if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
+                spyOn(textBlockAssessmentCardComponent, 'didSelect');
+                textBlockAssessmentCardComponent.select();
+                expect(textBlockAssessmentCardComponent.didSelect).toHaveBeenCalledTimes(0);
+            }
+        });
+
+        expect(component.selectedRightFeedbackId).toBeFalsy();
+        expect(component.selectedRightFeedbackId).toBe(undefined);
+    });
+
     it('should mark selected as no conflict', () => {
         textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
