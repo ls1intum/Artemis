@@ -150,15 +150,15 @@ under ``localhost:7990``.
        :align: center
 
 6. In Bamboo create a global variable named
-SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
-as the secret. The value of this variable should be then stored in
-``src/main/resources/config/application-artemis.yml`` as the value of
-``artemis-authentication-token-value``.
+   SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
+   as the secret. The value of this variable should be then stored in
+   ``src/main/resources/config/application-artemis.yml`` as the value of
+   ``artemis-authentication-token-value``.
 
 7. Download the
-`bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
-and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
-the downloaded .jar file → Upload
+   `bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
+   and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
+   the downloaded .jar file → Upload
 
 8. Add Maven and JDK:
 
@@ -166,8 +166,27 @@ the downloaded .jar file → Upload
    Capability type ``Executable`` → select type ``Maven 3.x`` → insert
    ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
--  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 15``
+-  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
    as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
+
+9. Generate a personal access token for Bamboo.
+   While username and password can still be used as a fallback, this option is already marked as deprecated and
+   will be removed in the future.
+
+- Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+
+    .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+       :align: center
+
+- Copy the generated token to your ``application-local.yml``:
+
+.. code:: yaml
+
+    artemis:
+        continuous-integration:
+            user: <username>
+            password: <password>
+            token: #insert the token here
 
 Configure Artemis
 -----------------
