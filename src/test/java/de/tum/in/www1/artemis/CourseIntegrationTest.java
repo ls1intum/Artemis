@@ -58,6 +58,7 @@ import de.tum.in.www1.artemis.repository.TutorLeaderboardMoreFeedbackRequestsVie
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -978,7 +979,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").hasSize(0);
 
-        String validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
