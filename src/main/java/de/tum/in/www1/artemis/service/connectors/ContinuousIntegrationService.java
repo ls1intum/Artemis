@@ -121,7 +121,7 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
+    boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
 
     /**
      * Get the build logs of the latest CI build.

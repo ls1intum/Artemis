@@ -198,7 +198,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
         var buildPlan = participation.getBuildPlanId();
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Map.class);
+            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
         }
         catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
@@ -208,7 +208,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
-        final var buildPlan = getBuildPlan(planId, false);
+        final var buildPlan = getBuildPlan(planId, false, true);
         return buildPlan != null && buildPlan.isEnabled();
     }
 
@@ -249,7 +249,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false);
+        final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false, true);
 
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
@@ -293,21 +293,24 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * get the build plan for the given planKey
      * @param planKey the unique Bamboo build plan identifier
+     * @param expand whether the expaned version of the build plan is needed
      * @return the build plan
      */
-    private BuildPlanDTO getBuildPlan(String planKey, boolean expand) {
+    private BambooBuildPlanDTO getBuildPlan(String planKey, boolean expand, boolean logNotFound) {
         try {
             String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
             if (expand) {
                 builder.queryParam("expand", "");
             }
-            return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BuildPlanDTO.class).getBody();
+            return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooBuildPlanDTO.class).getBody();
         }
         catch (HttpClientErrorException ex) {
-            // TODO: make this configurable
             if (HttpStatus.NOT_FOUND.equals(ex.getStatusCode())) {
-                // this can happen and might be wanted, we should not pollute the log.
+                // in certain cases, not found is the desired behavior
+                if (logNotFound) {
+                    log.error("The build plan " + planKey + " could not be found");
+                }
                 return null;
             }
             log.info(ex.getMessage());
@@ -326,7 +329,7 @@ public class BambooService implements ContinuousIntegrationService {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
-            var targetBuildPlan = getBuildPlan(targetPlanKey, false);
+            var targetBuildPlan = getBuildPlan(targetPlanKey, false, false);
             // TODO: double check what the acli plugin has done here to make sure the clone process is actually working
             if (targetBuildPlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
@@ -838,7 +841,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Map.class);
+            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Void.class);
             log.warn("Bamboo project " + projectKey + " already exists");
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
@@ -906,17 +909,11 @@ public class BambooService implements ContinuousIntegrationService {
      * Check if the given build plan is valid and accessible on Bamboo.
      *
      * @param buildPlanId unique identifier for build plan on CI system
-     * @return true if the build plan id is valid.
+     * @return true if the build plan exists.
      */
     @Override
-    public boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
-        try {
-            restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(), HttpMethod.GET, null, Map.class);
-        }
-        catch (Exception e) {
-            return false;
-        }
-        return true;
+    public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
+        return getBuildPlan(buildPlanId.toUpperCase(), false, false) != null;
     }
 
     private String getProjectKeyFromBuildPlanId(String buildPlanId) {

@@ -171,7 +171,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
         log.info("Delete bitbucket project " + projectKey);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not delete project", e);
@@ -213,6 +213,7 @@ public class BitbucketService extends AbstractVersionControlService {
              */
             for (int i = 0; i < MAX_FORK_RETRIES; i++) {
                 try {
+                    // TODO: either use Void.class or create a proper DTO
                     final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
@@ -327,7 +328,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private Boolean userExists(String username) throws BitbucketException {
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
@@ -357,7 +358,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
 
         try {
-            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Map.class);
+            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not create Bitbucket user " + username, e);
@@ -381,7 +382,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Adding Bitbucket user {} to groups {}", username, groups);
 
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
@@ -408,7 +409,7 @@ public class BitbucketService extends AbstractVersionControlService {
             User user = null;
             for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
                 try {
-                    restTemplate.exchange(url, HttpMethod.PUT, null, Map.class);
+                    restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
                 }
                 catch (HttpClientErrorException e) {
 
@@ -472,7 +473,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         String url = baseUrl + username + "&permission=REPO_" + permissionString;
         try {
-            restTemplate.exchange(url, HttpMethod.PUT, null, Map.class);
+            restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
@@ -492,7 +493,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
         String url = baseUrl + username;
         try {
-            restTemplate.exchange(url, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not remove repository access using " + url, e);
@@ -552,7 +553,7 @@ public class BitbucketService extends AbstractVersionControlService {
             // Get course over exerciseGroup in exam mode
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
             grantGroupPermissionToProject(projectKey, adminGroupName, "PROJECT_ADMIN"); // admins get administrative permissions
 
             if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
@@ -600,7 +601,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
 
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -615,7 +616,7 @@ public class BitbucketService extends AbstractVersionControlService {
     private void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         try {
-            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, null, Map.class);
+            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not give project permission", e);
@@ -665,6 +666,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
+        // TODO: use a proper DTO here
         Map<String, Object> body = new HashMap<>();
         body.put("name", webHookName);
         body.put("url", notificationUrl);
@@ -675,7 +677,7 @@ public class BitbucketService extends AbstractVersionControlService {
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
@@ -687,7 +689,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
         log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not delete WebHook", e);
@@ -711,7 +713,7 @@ public class BitbucketService extends AbstractVersionControlService {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
         log.info("Delete repository " + baseUrl);
         try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Map.class);
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not delete repository", e);
@@ -732,7 +734,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
 
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Void.class);
         }
         catch (Exception e) {
             return false;

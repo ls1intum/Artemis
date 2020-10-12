@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BuildPlanDTO {
+public class BambooBuildPlanDTO {
 
     private String name;
 
@@ -27,7 +27,16 @@ public class BuildPlanDTO {
 
     private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
 
-    public BuildPlanDTO() {
+    public BambooBuildPlanDTO() {
+    }
+
+    public BambooBuildPlanDTO(String key) {
+        this.key = key;
+    }
+
+    public BambooBuildPlanDTO(boolean active, boolean building) {
+        this.active = active;
+        this.building = building;
     }
 
     public String getName() {
