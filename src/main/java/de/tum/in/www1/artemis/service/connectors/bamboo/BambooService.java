@@ -130,7 +130,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the project key that was parsed.
      */
     // TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
-    private String getProjectKeyFromUrl(URL repositoryUrl) {
+    public String getProjectKeyFromUrl(URL repositoryUrl) {
         // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }

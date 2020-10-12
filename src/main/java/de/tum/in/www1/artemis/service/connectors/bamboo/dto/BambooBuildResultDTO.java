@@ -8,10 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooBuildResultDTO {
@@ -58,6 +62,7 @@ public class BambooBuildResultDTO {
     public static final class BambooBuildLogEntryDTO {
 
         @JsonDeserialize(using = UnixTimestampDeserializer.class)
+        @JsonSerialize(using = UnixTimestampSerializer.class)
         private ZonedDateTime date;
 
         private String log;
@@ -108,4 +113,12 @@ public class BambooBuildResultDTO {
         }
     }
 
+    public static final class UnixTimestampSerializer extends JsonSerializer<ZonedDateTime> {
+
+        @Override
+        public void serialize(ZonedDateTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            String dateInMillis = String.valueOf(value.toInstant().toEpochMilli());
+            gen.writeString(dateInMillis);
+        }
+    }
 }

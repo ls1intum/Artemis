@@ -356,6 +356,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         // create a submission which fails
         database.createProgrammingSubmission(participation, true);
+
+        bambooRequestMockProvider.reset();
+
         // get the failed build log
         bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId());
         var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
@@ -374,14 +377,19 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         final var course = getCourseForExercise();
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
+
         final var participation = createUserParticipation(course);
 
         // create a submission
         database.createProgrammingSubmission(participation, false);
+
+        bambooRequestMockProvider.reset();
+
         // prepare the build result
         bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
         // prepare the artifact to be null
         bambooRequestMockProvider.mockRetrieveEmptyArtifactPage();
+
         var artifact = request.get(PARTICIPATIONBASEURL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
 
         for (final var verification : verifications) {

@@ -71,7 +71,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateRepository(bambooRepository, bitbucketRepository, bitbucketProject, buildPlanKey);
+            updateBambooPlanRepository(bambooRepository, bitbucketRepository, bitbucketProject, buildPlanKey);
 
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise
@@ -96,12 +96,12 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * @param bambooRepository the bamboo repository which was obtained before
      * @param bitbucketRepositoryName the name of the new bitbucket repository
      * @param bitbucketProjectKey the key of the corresponding bitbucket project
-     * @param completePlanName the complete name of the plan
+     * @param buildPlanKey the complete name of the plan
      */
-    private void updateRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String completePlanName) {
+    private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("planKey", completePlanName);
+        parameters.add("planKey", buildPlanKey);
         parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
         // IMPORTANT: Don't change the name of the repo! We depend on the naming (assignment, tests) in some other parts of the application
         parameters.add("repositoryName", bambooRepository.getName());
@@ -144,7 +144,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         return findCachedLinkForUrl(applicationLinkUrl);
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
+    public Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
         return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
     }
 
