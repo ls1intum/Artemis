@@ -108,6 +108,13 @@ export default function (data) {
             // somePassedString = '1 of 4 passed';
             somePassedString = '4 of 4 passed';
             break;
+        case 'SWIFT':
+            // TODO: swift add test case for ...swift
+            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
+            allSuccessfulContent = allSuccessfulContentJava;
+            buildErrorContent = buildErrorContentJava;
+            somePassedString = '2 of 13 passed';
+            break;
     }
 
     group('Participate in Programming Exercise', function () {

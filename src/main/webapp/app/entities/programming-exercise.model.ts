@@ -10,6 +10,7 @@ export enum ProgrammingLanguage {
     PYTHON = 'PYTHON',
     C = 'C',
     HASKELL = 'HASKELL',
+    SWIFT = 'SWIFT',
 }
 
 export class ProgrammingExercise extends Exercise {

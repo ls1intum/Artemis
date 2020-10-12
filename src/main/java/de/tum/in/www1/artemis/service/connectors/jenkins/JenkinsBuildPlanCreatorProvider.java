@@ -17,12 +17,15 @@ public class JenkinsBuildPlanCreatorProvider {
 
     private final HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator;
 
+    private final SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator;
+
     public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, PythonJenkinsBuildPlanCreator pythonJenkinsBuildPlanCreator,
-            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator) {
+            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator, SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
         this.pythonJenkinsBuildPlanCreator = pythonJenkinsBuildPlanCreator;
         this.cJenkinsBuildPlanCreator = cJenkinsBuildPlanCreator;
         this.haskellJenkinsBuildPlanCreator = haskellJenkinsBuildPlanCreator;
+        this.swiftJenkinsBuildPlanCreator = swiftJenkinsBuildPlanCreator;
     }
 
     /**
@@ -38,6 +41,7 @@ public class JenkinsBuildPlanCreatorProvider {
             case PYTHON -> pythonJenkinsBuildPlanCreator;
             case C -> cJenkinsBuildPlanCreator;
             case HASKELL -> haskellJenkinsBuildPlanCreator;
+            case SWIFT -> swiftJenkinsBuildPlanCreator;
             default -> throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
         };
     }
