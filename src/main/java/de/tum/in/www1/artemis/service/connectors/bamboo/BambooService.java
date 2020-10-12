@@ -364,19 +364,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     // TODO: change the way this is mocked
     private void cloneBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
-        final var cleanPlanName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
-        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
-        var sourceBuildPlan = getBuildPlan(sourcePlanKey, false, true);
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("existingProjectKey", targetProjectKey);
-        parameters.add("projectKey", "");
-        parameters.add("projectName", "");
         parameters.add("planKeyToClone", sourcePlanKey);
-        parameters.add("chainName", targetPlanKey);
-        parameters.add("chainKey", targetProjectKey);
-        // TODO: we might be able to remove this parameter and then we could also remove the "getBuildPlan" call above
-        parameters.add("chainDescription", sourceBuildPlan.getDescription() != null ? sourceBuildPlan.getDescription() : "");
+        parameters.add("chainName", targetPlanName);
+        parameters.add("chainKey", targetPlanName);
+        parameters.add("chainDescription", "Student build plan for exercise " + sourceProjectKey);
         parameters.add("clonePlan", "true");
         parameters.add("tmp.createAsEnabled", "false");
         parameters.add("chainEnabled", "false");
@@ -385,6 +379,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         String requestUrl = bambooServerUrl + "/build/admin/create/performClonePlan.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        // TODO: in order to do error handling, we have to read the return value of this REST call
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
     }
 
