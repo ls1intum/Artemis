@@ -55,7 +55,8 @@
 
             <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         </div>
-        <jhi-programming-exercise-instructions
+        <jhi-assessment-instructions editorSidebar [readOnly]="readOnly" class="card-body markdown-preview instructions-wrapper__content overflow-auto" [exercise]="exercise"></jhi-assessment-instructions>
+        <!--<jhi-programming-exercise-instructions
             editorSidebar
             (onNoInstructionsAvailable)="showEditorInstructions = false"
             [exercise]="exercise"
@@ -63,7 +64,7 @@
             [personalParticipation]="true"
             [exerciseHints]="exercise.exerciseHints"
             class="instructions-wrapper__content card-body p-0"
-        ></jhi-programming-exercise-instructions>
+        ></jhi-programming-exercise-instructions> -->
         <div class="mt-3" editorBottom>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
