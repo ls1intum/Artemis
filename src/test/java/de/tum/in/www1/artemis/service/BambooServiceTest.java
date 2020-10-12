@@ -32,8 +32,6 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     DatabaseUtilService database;
 
-    private ProgrammingExercise programmingExercise;
-
     LocalRepository localRepo = new LocalRepository();
 
     GitUtilService.MockFileRepositoryUrl localRepoUrl;
@@ -47,7 +45,7 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     public void initTestCase() throws Exception {
         database.addUsers(2, 0, 0);
         database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAll().get(0);
 
         // init local repo
         String currentLocalFileName = "currentFileName";

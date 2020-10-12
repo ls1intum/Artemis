@@ -111,10 +111,10 @@ describe('ManualTextblockSelectionComponent', () => {
         fixture.detectChanges();
 
         const textBlockRef = TextBlockRef.new();
-        textBlockRef.block.startIndex = 25;
-        textBlockRef.block.endIndex = 49;
-        textBlockRef.block.setTextFromSubmission(submission);
-        textBlockRef.block.computeId();
+        textBlockRef.block!.startIndex = 25;
+        textBlockRef.block!.endIndex = 49;
+        textBlockRef.block!.setTextFromSubmission(submission);
+        textBlockRef.block!.computeId();
         textBlockRef.initFeedback();
         expect(component.textBlockRefAdded.emit).toHaveBeenCalledWith(textBlockRef);
     });
