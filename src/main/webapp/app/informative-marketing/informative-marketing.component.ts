@@ -29,10 +29,9 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
                 'informativeMarketing.instructor.feature.integratedProcess.icon',
                 undefined,
-                'informativeMarketing.instructor.feature.integratedProcess.imageOne',
             );
-
             featureIntegratedProcess.centerTextAndImageOne();
+
             const featureConfiguration = new Feature(
                 'informativeMarketing.instructor.feature.configuration.title',
                 'informativeMarketing.instructor.feature.configuration.shortDescription',
@@ -40,6 +39,7 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.configuration.icon',
                 undefined,
                 'informativeMarketing.instructor.feature.configuration.imageOne',
+                'informativeMarketing.instructor.feature.configuration.imageTwo',
             );
 
             const featureExerciseTypes = new Feature(
@@ -67,7 +67,6 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.sessionMonitoring.shortDescription',
                 'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
                 'informativeMarketing.instructor.feature.sessionMonitoring.icon',
-                'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
             );
 
             const featurePlagiarismDetection = new Feature(
@@ -77,7 +76,6 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.plagiarismDetection.icon',
                 undefined,
                 'informativeMarketing.instructor.feature.plagiarismDetection.imageOne',
-                'informativeMarketing.instructor.feature.plagiarismDetection.imageTwo',
             );
 
             const featureAssessment = new Feature(
@@ -87,7 +85,6 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.assessment.icon',
                 'informativeMarketing.instructor.feature.assessment.descriptionTextTwo',
                 'informativeMarketing.instructor.feature.assessment.imageOne',
-                'informativeMarketing.instructor.feature.assessment.imageTwo',
             );
 
             const featureAssessmentMonitoring = new Feature(
@@ -117,8 +114,8 @@ export class InformativeMarketingComponent implements OnInit {
                 'informativeMarketing.instructor.feature.complaints.icon',
                 undefined,
                 'informativeMarketing.instructor.feature.complaints.imageOne',
-                'informativeMarketing.instructor.feature.complaints.imageTwo',
             );
+            featureComplaints.alignFirstImageLeft();
 
             const featureStatistics = new Feature(
                 'informativeMarketing.instructor.feature.statistics.title',
@@ -128,7 +125,6 @@ export class InformativeMarketingComponent implements OnInit {
                 undefined,
                 'informativeMarketing.instructor.feature.statistics.imageOne',
             );
-            featureStatistics.alignFirstImageLeft();
             this.features = [
                 featureIntegratedProcess,
                 featureConfiguration,
