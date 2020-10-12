@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.Commit;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -60,6 +61,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     private Result result;
 
     @BeforeEach
+    @Commit
     public void initTestCase() {
         database.addUsers(3, 3, 3);
 
