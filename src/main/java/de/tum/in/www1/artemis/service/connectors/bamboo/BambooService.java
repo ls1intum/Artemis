@@ -818,8 +818,9 @@ public class BambooService implements ContinuousIntegrationService {
     private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
         var logs = new ArrayList<BuildLogEntry>();
         try {
-            var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
-                    HttpMethod.GET, null, BambooBuildResultDTO.class);
+            String requestUrl = bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json";
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "logEntries").queryParam("max-results", "2000");
+            var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooBuildResultDTO.class);
 
             if (response.getBody() != null && response.getBody().getLogEntries() != null) {
 
@@ -831,11 +832,7 @@ public class BambooService implements ContinuousIntegrationService {
                         logString = logEntry.getLog();
                     }
 
-                    // TODO: test that the automatic conversion into the ZonedDateTime works
-                    var logDate = logEntry.getDate();
-                    // Instant instant = Instant.ofEpochMilli((long) logEntry.get("date"));
-                    // ZonedDateTime logDate = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-                    BuildLogEntry log = new BuildLogEntry(logDate, logString);
+                    BuildLogEntry log = new BuildLogEntry(logEntry.getDate(), logString);
                     logs.add(log);
                 }
             }

@@ -264,7 +264,7 @@ public class BambooRequestMockProvider {
      */
     public void mockGetBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException {
         var log = "java.lang.AssertionError: BubbleSort does not sort correctly";
-        var logEntry = new BambooBuildLogDTO(ZonedDateTime.now(), log, log);
+        var logEntry = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), log, log);
         var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(List.of(logEntry)));
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
                 .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
