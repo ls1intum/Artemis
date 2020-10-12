@@ -291,9 +291,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        bambooRequestMockProvider.mockDeleteProject(projectKey);
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase());
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());

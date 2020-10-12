@@ -23,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -145,11 +147,7 @@ public class BambooRequestMockProvider {
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
-        final var targetPlanKey = projectKey + "-" + targetPlanName;
-        final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
-
-        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName);
     }
 
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
@@ -368,25 +366,56 @@ public class BambooRequestMockProvider {
 
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) throws URISyntaxException {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
-        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
-        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("existingProjectKey", targetProjectKey);
+        parameters.add("planKeyToClone", sourcePlanKey);
+        parameters.add("chainName", targetPlanName);
+        parameters.add("chainKey", targetPlanName);
+        parameters.add("chainDescription", "Student build plan for exercise " + sourceProjectKey);
+        parameters.add("clonePlan", "true");
+        parameters.add("tmp.createAsEnabled", "false");
+        parameters.add("chainEnabled", "false");
+        parameters.add("save", "Create");
+        parameters.add("bamboo.successReturnMode", "json");
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/build/admin/create/performClonePlan.action").queryParams(parameters).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockEnablePlan(String projectKey, String planName) throws URISyntaxException {
         final var planKey = projectKey + "-" + planName;
         var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/" + planKey + "/enable").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockDeleteProject(String projectKey) throws URISyntaxException {
-        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/project/" + projectKey).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {
+
+        var projectResponse = new BambooProjectDTO(projectKey, projectKey, projectKey);
+        projectResponse.setPlans(new BambooProjectDTO.BambooBuildPlansDTO(List.of()));
+
+        // 1) get all plans
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/project/" + projectKey).queryParam("expand", "plans")
+                .queryParam("max-results", 5000).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(projectResponse)));
+
+        // 2) in a normal scenario this list is empty, so we only expect another call to delete the project
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("selectedProjects", projectKey);
+        parameters.add("confirm", "true");
+        parameters.add("bamboo.successReturnMode", "json");
+
+        uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/admin/deleteBuilds.action").queryParams(parameters).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockDeletePlan(String planKey) throws URISyntaxException {
-        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/" + planKey).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    public void mockDeleteBambooBuildPlan(String planKey) throws URISyntaxException {
 
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("selectedBuilds", planKey);
+        parameters.add("confirm", "true");
+        parameters.add("bamboo.successReturnMode", "json");
+
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/admin/deleteBuilds.action").queryParams(parameters).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 }

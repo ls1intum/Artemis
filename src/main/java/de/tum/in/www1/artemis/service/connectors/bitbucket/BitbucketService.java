@@ -169,9 +169,10 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
-        log.info("Delete bitbucket project " + projectKey);
+        log.info("Try to delete bitbucket project " + projectKey);
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
+            log.info("Delete bitbucket project " + projectKey + " was successful");
         }
         catch (Exception e) {
             log.error("Could not delete project", e);

@@ -1132,12 +1132,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         for (final User user : exam2.getRegisteredUsers()) {
             studentLogins.add(user.getLogin());
         }
-        bambooRequestMockProvider.mockDeleteProject(projectKey);
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
         List<String> planNames = new ArrayList<>(studentLogins);
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase());
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
         repoNames.add(RepositoryType.TEMPLATE.getName());

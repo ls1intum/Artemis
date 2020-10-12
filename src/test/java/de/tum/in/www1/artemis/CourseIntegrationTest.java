@@ -310,7 +310,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof ProgrammingExercise) {
                     final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
-                    bambooRequestMockProvider.mockDeleteProject(projectKey);
+                    bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
                     bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
                     bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
                     bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());

@@ -61,6 +61,13 @@ public class BambooProjectDTO {
 
         private List<BambooBuildPlanDTO> plan;
 
+        public BambooBuildPlansDTO() {
+        }
+
+        public BambooBuildPlansDTO(List<BambooBuildPlanDTO> plan) {
+            this.plan = plan;
+        }
+
         public List<BambooBuildPlanDTO> getPlan() {
             return plan;
         }

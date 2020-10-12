@@ -217,8 +217,6 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
 
-        // TODO: adapt the mocked delete call
-
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
@@ -233,19 +231,32 @@ public class BambooService implements ContinuousIntegrationService {
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
+    /**
+     * NOTE: the REST call in this method fails silently with a 404 in case all build plans have already been deleted before
+     * @param projectKey the project which build plans should be retrieved
+     * @return a list of build plans
+     */
     private List<BambooBuildPlanDTO> getBuildPlans(String projectKey) {
 
         String requestUrl = bambooServerUrl + "/rest/api/latest/project/" + projectKey;
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "plans").queryParam("max-results", 5000); // just in case of exercises
-                                                                                                                                                     // with really really many
-                                                                                                                                                     // students
+        // we use 5000 just in case of exercises with really really many students ;-)
+        try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "plans").queryParam("max-results", 5000);
+            var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooProjectDTO.class);
 
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooProjectDTO.class);
-
-        // TODO: error handling
-
-        if (response.getBody() != null && response.getBody().getPlans() != null) {
-            return response.getBody().getPlans().getPlan();
+            if (response.getBody() != null && response.getBody().getPlans() != null) {
+                return response.getBody().getPlans().getPlan();
+            }
+        }
+        catch (HttpClientErrorException ex) {
+            if (HttpStatus.NOT_FOUND.equals(ex.getStatusCode())) {
+                // return an empty list silently (without log), because this is the typical case when deleting projects
+                return List.of();
+            }
+            log.warn(ex.getMessage());
+        }
+        catch (Exception ex) {
+            log.warn(ex.getMessage());
         }
         return List.of();
     }
@@ -257,12 +268,12 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void deleteProject(String projectKey) {
-        log.info("Delete project " + projectKey);
-        // TODO: adapt the mocked delete call
+        log.info("Try to delete bamboo project " + projectKey);
 
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey) here,
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
 
+        // in normal cases this list should be empty, because all build plans have been deleted before
         List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
@@ -283,7 +294,7 @@ public class BambooService implements ContinuousIntegrationService {
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
 
-        log.info("Delete project was successful.");
+        log.info("Delete bamboo project " + projectKey + " was successful.");
     }
 
     /**
@@ -375,14 +386,11 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             var targetBuildPlan = getBuildPlan(targetPlanKey, false, false);
-            // TODO: double check what the acli plugin has done here to make sure the clone process is actually working
             if (targetBuildPlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
             }
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
-            // TODO: the name of the new build plan is not set correctly
-            // restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
             cloneBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, targetPlanName);
             log.info("Clone build plan " + sourcePlanKey + " was successful");
         }
@@ -405,7 +413,6 @@ public class BambooService implements ContinuousIntegrationService {
         return targetPlanKey;
     }
 
-    // TODO: change the way this is mocked
     private void cloneBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
