@@ -20,16 +20,19 @@ export class InformativeMarketingComponent implements OnInit {
         if (this.route.snapshot.url[1]?.toString() === 'students') {
             this.targetAudience = targetAudience.STUDENTS;
         }
-        const featureIntegratedProcess = new Feature(
-            'informativeMarketing.instructor.feature.integratedProcess.title',
-            'informativeMarketing.instructor.feature.integratedProcess.shortDescription',
-            'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
-            'informativeMarketing.instructor.feature.integratedProcess.icon',
-        );
-        // featureIntegratedProcess.centerTextAndImageOne();
 
         if (this.targetAudience === targetAudience.INSTRUCTORS) {
             // Set up instructor features
+            const featureIntegratedProcess = new Feature(
+                'informativeMarketing.instructor.feature.integratedProcess.title',
+                'informativeMarketing.instructor.feature.integratedProcess.shortDescription',
+                'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
+                'informativeMarketing.instructor.feature.integratedProcess.icon',
+                undefined,
+                'informativeMarketing.instructor.feature.integratedProcess.imageOne',
+            );
+
+            featureIntegratedProcess.centerTextAndImageOne();
             const featureConfiguration = new Feature(
                 'informativeMarketing.instructor.feature.configuration.title',
                 'informativeMarketing.instructor.feature.configuration.shortDescription',
@@ -140,6 +143,107 @@ export class InformativeMarketingComponent implements OnInit {
             ];
         } else {
             // set up student features
+            const featurelocalIDE = new Feature(
+                'informativeMarketing.students.feature.localIDE.title',
+                'informativeMarketing.students.feature.localIDE.shortDescription',
+                'informativeMarketing.students.feature.localIDE.descriptionTextOne',
+                'informativeMarketing.students.feature.localIDE.icon',
+                undefined,
+            );
+
+            const featureCodeEditor = new Feature(
+                'informativeMarketing.students.feature.codeEditor.title',
+                'informativeMarketing.students.feature.codeEditor.shortDescription',
+                'informativeMarketing.students.feature.codeEditor.descriptionTextOne',
+                'informativeMarketing.students.feature.codeEditor.icon',
+                undefined,
+            );
+
+            const featureTextEditor = new Feature(
+                'informativeMarketing.students.feature.textEditor.title',
+                'informativeMarketing.students.feature.textEditor.shortDescription',
+                'informativeMarketing.students.feature.textEditor.descriptionTextOne',
+                'informativeMarketing.students.feature.textEditor.icon',
+                undefined,
+            );
+
+            const featureapollonEditor = new Feature(
+                'informativeMarketing.students.feature.apollonEditor.title',
+                'informativeMarketing.students.feature.apollonEditor.shortDescription',
+                'informativeMarketing.students.feature.apollonEditor.descriptionTextOne',
+                'informativeMarketing.students.feature.apollonEditor.icon',
+                undefined,
+            );
+
+            const featureQuizExercises = new Feature(
+                'informativeMarketing.students.feature.quizExercises.title',
+                'informativeMarketing.students.feature.quizExercises.shortDescription',
+                'informativeMarketing.students.feature.quizExercises.descriptionTextOne',
+                'informativeMarketing.students.feature.quizExercises.icon',
+                undefined,
+            );
+
+            const featureLogin = new Feature(
+                'informativeMarketing.students.feature.login.title',
+                'informativeMarketing.students.feature.login.shortDescription',
+                'informativeMarketing.students.feature.login.descriptionTextOne',
+                'informativeMarketing.students.feature.login.icon',
+                undefined,
+            );
+
+            const featureUserInterface = new Feature(
+                'informativeMarketing.students.feature.userInterface.title',
+                'informativeMarketing.students.feature.userInterface.shortDescription',
+                'informativeMarketing.students.feature.userInterface.descriptionTextOne',
+                'informativeMarketing.students.feature.userInterface.icon',
+                'informativeMarketing.students.feature.userInterface.descriptionTextTwo',
+            );
+
+            const featureConduction = new Feature(
+                'informativeMarketing.students.feature.conduction.title',
+                'informativeMarketing.students.feature.conduction.shortDescription',
+                'informativeMarketing.students.feature.conduction.descriptionTextOne',
+                'informativeMarketing.students.feature.conduction.icon',
+                undefined,
+            );
+
+            const featureSummary = new Feature(
+                'informativeMarketing.students.feature.summary.title',
+                'informativeMarketing.students.feature.summary.shortDescription',
+                'informativeMarketing.students.feature.summary.descriptionTextOne',
+                'informativeMarketing.students.feature.summary.icon',
+                undefined,
+            );
+
+            const featureOnlineReview = new Feature(
+                'informativeMarketing.students.feature.onlineReview.title',
+                'informativeMarketing.students.feature.onlineReview.shortDescription',
+                'informativeMarketing.students.feature.onlineReview.descriptionTextOne',
+                'informativeMarketing.students.feature.onlineReview.icon',
+                undefined,
+            );
+
+            const featureBrowserCompatibility = new Feature(
+                'informativeMarketing.students.feature.browserCompatibility.title',
+                'informativeMarketing.students.feature.browserCompatibility.shortDescription',
+                'informativeMarketing.students.feature.browserCompatibility.descriptionTextOne',
+                'informativeMarketing.students.feature.browserCompatibility.icon',
+                undefined,
+            );
+
+            this.features = [
+                featureConduction,
+                featureUserInterface,
+                featureCodeEditor,
+                featurelocalIDE,
+                featureapollonEditor,
+                featureTextEditor,
+                featureQuizExercises,
+                featureSummary,
+                featureOnlineReview,
+                featureLogin,
+                featureBrowserCompatibility,
+            ];
         }
     }
 
