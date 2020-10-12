@@ -98,4 +98,45 @@ describe('TextblockFeedbackEditorComponent', () => {
         const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
         expect(text).toBeTruthy();
     });
+
+    it('should focus to the text area if it is left conflicting feedback', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = 'Lorem Ipsum';
+        component.conflictMode = true;
+        component.isConflictingFeedback = true;
+        component.isLeftConflictingFeedback = true;
+        fixture.detectChanges();
+
+        spyOn(component['textareaElement'], 'focus');
+        component.focus();
+
+        expect(component['textareaElement'].focus).toHaveBeenCalled();
+    });
+
+    it('should not focus to the text area if it is right conflicting feedback', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = 'Lorem Ipsum';
+        component.conflictMode = true;
+        component.isConflictingFeedback = true;
+        component.isLeftConflictingFeedback = false;
+        fixture.detectChanges();
+
+        spyOn(component['textareaElement'], 'focus');
+        component.focus();
+
+        expect(component['textareaElement'].focus).toHaveBeenCalledTimes(0);
+    });
+
+    it('should call escKeyup when keyEvent', () => {
+        component.feedback.credits = 0;
+        component.feedback.detailText = '';
+        spyOn(component, 'escKeyup');
+        const event = new KeyboardEvent('keydown', {
+            key: 'Esc',
+        });
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        textarea.dispatchEvent(event);
+        fixture.detectChanges();
+        expect(component.escKeyup).toHaveBeenCalled();
+    });
 });
