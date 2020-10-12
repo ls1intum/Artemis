@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -91,6 +92,9 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
+        doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).deleteProject(any());
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
