@@ -22,6 +22,7 @@ import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/fee
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { now } from 'moment';
 
 @Component({
@@ -87,7 +88,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
@@ -264,7 +265,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onError(): void {
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.submission = undefined;
         this.modelingExercise = undefined;
         this.result = undefined;

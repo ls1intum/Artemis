@@ -15,6 +15,7 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choi
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -56,7 +57,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
-            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });
@@ -122,7 +123,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
