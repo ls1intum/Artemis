@@ -17,8 +17,8 @@
         <div class="left card" [class.border-0]="false">
             <div class="card-header bg-primary text-white">
                 <div class="flew-grow-1">
-                    <span *ngIf="isAssessor(this.leftSubmission?.result); else otherAssessor" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
-                    <ng-template #otherAssessor>
+                    <span *ngIf="isAssessor(this.leftSubmission?.result); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                    <ng-template #otherAssessorLeftCard>
                         <span
                             jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
                             [translateValues]="{ otherUser: this.leftSubmission?.result?.assessor?.name + ' (' + this.leftSubmission?.result?.assessor?.login + ')' }"
@@ -46,8 +46,8 @@
             <div class="right card" [class.border-0]="false">
                 <div class="card-header bg-primary text-white">
                     <div class="flew-grow-1">
-                        <span *ngIf="isAssessor(this.rightSubmission?.result); else otherAssessor" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
-                        <ng-template #otherAssessor>
+                        <span *ngIf="isAssessor(this.rightSubmission?.result); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
+                        <ng-template #otherAssessorRightCard>
                             <span
                                 jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
                                 [translateValues]="{ otherUser: this.rightSubmission?.result?.assessor?.name + ' (' + this.rightSubmission?.result?.assessor?.login + ')' }"
