@@ -216,14 +216,38 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        try {
-            log.info("Delete build plan " + buildPlanId);
-            restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId);
-            log.info("Delete build plan was successful");
+
+        // TODO: adapt the mocked delete call
+
+        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
+        // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("selectedBuilds", buildPlanId);
+        parameters.add("confirm", "true");
+        parameters.add("bamboo.successReturnMode", "json");
+
+        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        // TODO: in order to do error handling, we have to read the return value of this REST call
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+    }
+
+    private List<BambooBuildPlanDTO> getBuildPlans(String projectKey) {
+
+        String requestUrl = bambooServerUrl + "/rest/api/latest/project/" + projectKey;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "plans").queryParam("max-results", 5000); // just in case of exercises
+                                                                                                                                                     // with really really many
+                                                                                                                                                     // students
+
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooProjectDTO.class);
+
+        // TODO: error handling
+
+        if (response.getBody() != null && response.getBody().getPlans() != null) {
+            return response.getBody().getPlans().getPlan();
         }
-        catch (Exception e) {
-            log.error(e.getMessage());
-        }
+        return List.of();
     }
 
     /**
@@ -233,14 +257,33 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void deleteProject(String projectKey) {
-        try {
-            log.info("Delete project " + projectKey);
-            restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey);
-            log.info("Delete project was successful.");
+        log.info("Delete project " + projectKey);
+        // TODO: adapt the mocked delete call
+
+        // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey) here,
+        // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
+
+        List<BambooBuildPlanDTO> buildPlans = getBuildPlans(projectKey);
+        for (var buildPlan : buildPlans) {
+            try {
+                deleteBuildPlan(projectKey, buildPlan.getKey());
+            }
+            catch (Exception ex) {
+                log.error(ex.getMessage());
+            }
         }
-        catch (Exception e) {
-            log.error(e.getMessage());
-        }
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("selectedProjects", projectKey);
+        parameters.add("confirm", "true");
+        parameters.add("bamboo.successReturnMode", "json");
+
+        String requestUrl = bambooServerUrl + "/admin/deleteBuilds.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        // TODO: in order to do error handling, we have to read the return value of this REST call
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+
+        log.info("Delete project was successful.");
     }
 
     /**
@@ -380,7 +423,7 @@ public class BambooService implements ContinuousIntegrationService {
         String requestUrl = bambooServerUrl + "/build/admin/create/performClonePlan.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
-        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
     @Override
@@ -873,9 +916,9 @@ public class BambooService implements ContinuousIntegrationService {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
                 final var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
-                        BambooProjectSearchDTO.class);
+                        BambooProjectsSearchDTO.class);
                 if (response.getBody() != null && response.getBody().getSize() > 0) {
-                    final var exists = response.getBody().getSearchResults().stream().map(BambooProjectSearchDTO.SearchResultDTO::getSearchEntity)
+                    final var exists = response.getBody().getSearchResults().stream().map(BambooProjectsSearchDTO.SearchResultDTO::getSearchEntity)
                             .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
                     if (exists) {
                         log.warn("Bamboo project with name" + projectName + " already exists");

@@ -96,9 +96,9 @@ public class BambooRequestMockProvider {
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
-        final var bambooSearchDTO = new BambooProjectSearchDTO();
-        final var searchResult = new BambooProjectSearchDTO.SearchResultDTO();
-        final var foundProject = new BambooProjectDTO();
+        final var bambooSearchDTO = new BambooProjectsSearchDTO();
+        final var searchResult = new BambooProjectsSearchDTO.SearchResultDTO();
+        final var foundProject = new BambooProjectSearchDTO();
         foundProject.setProjectName(exercise.getProjectName() + (exists ? "" : "abc"));
         searchResult.setSearchEntity(foundProject);
         bambooSearchDTO.setSize(1);

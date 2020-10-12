@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooRepositoryDTO {
 
     private Long id;
