@@ -21,7 +21,7 @@
                     <ng-template #otherAssessor>
                         <span
                             jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
-                            [translateValues]="{ otherAssessor: this.leftSubmission?.result?.assessor?.name + ' (' + this.leftSubmission?.result?.assessor?.login + ')' }"
+                            [translateValues]="{ otherUser: this.leftSubmission?.result?.assessor?.name + ' (' + this.leftSubmission?.result?.assessor?.login + ')' }"
                         ></span>
                     </ng-template>
                 </div>
@@ -50,7 +50,7 @@
                         <ng-template #otherAssessor>
                             <span
                                 jhiTranslate="artemisApp.textAssessment.conflict.otherAssessor"
-                                [translateValues]="{ otherAssessor: this.rightSubmission?.result?.assessor?.name + ' (' + this.rightSubmission?.result?.assessor?.login + ')' }"
+                                [translateValues]="{ otherUser: this.rightSubmission?.result?.assessor?.name + ' (' + this.rightSubmission?.result?.assessor?.login + ')' }"
                             ></span>
                         </ng-template>
                     </div>
