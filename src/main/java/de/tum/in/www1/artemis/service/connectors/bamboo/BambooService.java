@@ -29,6 +29,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -325,8 +327,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
         final var cleanPlanName = getCleanPlanName(targetPlanName);
-        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
+        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
         try {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             var targetBuildPlan = getBuildPlan(targetPlanKey, false, false);
@@ -337,7 +339,8 @@ public class BambooService implements ContinuousIntegrationService {
             }
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             // TODO: the name of the new build plan is not set correctly
-            restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
+            // restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
+            cloneBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, targetPlanName);
             log.info("Clone build plan " + sourcePlanKey + " was successful");
         }
         catch (RestClientException clientException) {
@@ -357,6 +360,32 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return targetPlanKey;
+    }
+
+    // TODO: change the way this is mocked
+    private void cloneBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
+        final var cleanPlanName = getCleanPlanName(targetPlanName);
+        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
+        final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
+        var sourceBuildPlan = getBuildPlan(sourcePlanKey, false, true);
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("existingProjectKey", targetProjectKey);
+        parameters.add("projectKey", "");
+        parameters.add("projectName", "");
+        parameters.add("planKeyToClone", sourcePlanKey);
+        parameters.add("chainName", targetPlanKey);
+        parameters.add("chainKey", targetProjectKey);
+        // TODO: we might be able to remove this parameter and then we could also remove the "getBuildPlan" call above
+        parameters.add("chainDescription", sourceBuildPlan.getDescription() != null ? sourceBuildPlan.getDescription() : "");
+        parameters.add("clonePlan", "true");
+        parameters.add("tmp.createAsEnabled", "false");
+        parameters.add("chainEnabled", "false");
+        parameters.add("save", "Create");
+        parameters.add("bamboo.successReturnMode", "json");
+
+        String requestUrl = bambooServerUrl + "/build/admin/create/performClonePlan.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
     }
 
     @Override

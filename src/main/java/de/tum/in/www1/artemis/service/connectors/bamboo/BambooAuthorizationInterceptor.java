@@ -37,17 +37,20 @@ public class BambooAuthorizationInterceptor implements ClientHttpRequestIntercep
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         }
 
-        // MediaType.TEXT_HTML does not support token based authentication, we have to use basic auth then or we need to use cookie authentication
+        // certain Bamboo requests do not support token based authentication, we have to use basic auth then or we need to use cookie authentication
+        if (request.getURI().toString().contains(".action")) {
+            request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
+        }
+        else {
+            // for all other requests, we prefer bamboo token if it is available
+            if (bambooToken.isPresent()) {
+                request.getHeaders().setBearerAuth(bambooToken.get());
+            }
+            else {
+                request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
+            }
+        }
 
-        // TODO:
-
-        // prefer bamboo token if it is available
-        // if (bambooToken.isPresent()) {
-        // request.getHeaders().setBearerAuth(bambooToken.get());
-        // }
-        // else {
-        request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
-        // }
         return execution.execute(request, body);
     }
 }

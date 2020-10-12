@@ -315,7 +315,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         try {
             String requestUrl = bambooServerUrl + "/chain/admin/config/createChainTrigger.action";
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-            bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
+            bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (Exception ex) {
             throw new BambooException(
@@ -334,7 +334,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
         String requestUrl = bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
+        bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Void.class);
     }
 
     private static String getText(Element element) {
