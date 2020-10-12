@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.transaction.AfterTransaction;
-import org.springframework.test.context.transaction.BeforeTransaction;
+import org.springframework.test.annotation.Commit;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+@Commit
 public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -62,7 +62,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     private Result result;
 
     @BeforeEach
-    @BeforeTransaction
     public void initTestCase() {
         database.addUsers(3, 3, 3);
 
@@ -121,7 +120,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @AfterEach
-    @AfterTransaction
     public void tearDown() {
         database.resetDatabase();
     }
