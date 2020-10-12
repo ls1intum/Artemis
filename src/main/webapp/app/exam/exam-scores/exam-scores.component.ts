@@ -252,8 +252,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
 
         if (this.chart) {
-            this.chart!.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
-            this.chart.update();
+            this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.chart.update(0);
         }
     }
 

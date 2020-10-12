@@ -1,6 +1,7 @@
 import { Orientation, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -28,7 +29,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.courseAdminMenu.content',
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
-            permission: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            permission: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-admin',
@@ -36,7 +37,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.adminMenu.content',
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
-            permission: ['ROLE_ADMIN'],
+            permission: [Authority.ADMIN],
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-notification',

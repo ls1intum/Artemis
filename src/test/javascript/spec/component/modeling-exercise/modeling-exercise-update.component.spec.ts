@@ -93,7 +93,7 @@ describe('ModelingExercise Management Update Component', () => {
         const courseId = 1;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
@@ -125,7 +125,7 @@ describe('ModelingExercise Management Update Component', () => {
         const courseId = 1;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
@@ -153,7 +153,7 @@ describe('ModelingExercise Management Update Component', () => {
         const groupId = 1;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ groupId });
             route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
@@ -183,7 +183,7 @@ describe('ModelingExercise Management Update Component', () => {
         const groupId = 1;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ groupId });
             route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });

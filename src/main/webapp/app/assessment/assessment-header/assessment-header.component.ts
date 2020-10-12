@@ -32,6 +32,7 @@ export class AssessmentHeaderComponent {
     @Input() hasComplaint = false;
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
+    @Input() hasAssessmentDueDatePassed: boolean;
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();

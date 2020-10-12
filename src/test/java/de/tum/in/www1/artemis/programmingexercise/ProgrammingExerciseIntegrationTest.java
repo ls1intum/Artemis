@@ -183,7 +183,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
@@ -198,7 +198,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
@@ -1006,7 +1006,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise").isEqualTo(testCasesInDB);
+        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
