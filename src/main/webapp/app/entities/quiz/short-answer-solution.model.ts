@@ -1,8 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { generate } from 'app/exercises/quiz/manage/temp-id';
+import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
-export class ShortAnswerSolution implements BaseEntity {
+export class ShortAnswerSolution implements BaseEntity, CanBecomeInvalid {
     public id?: number;
     public text?: string;
     public invalid?: boolean;

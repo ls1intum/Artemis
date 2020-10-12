@@ -254,7 +254,7 @@ public class LtiService {
 
         // Make sure the user is activated
         if (!user.getActivated()) {
-            userService.activateRegistration(user.getActivationKey());
+            userService.activateUser(user);
         }
 
         log.info("Signing in as {}", username);

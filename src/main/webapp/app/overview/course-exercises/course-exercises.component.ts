@@ -101,6 +101,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
+        this.nextRelevantExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises);
     }
 
     ngOnChanges() {
