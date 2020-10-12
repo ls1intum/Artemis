@@ -13,8 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.text.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.service.UserService;
