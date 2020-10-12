@@ -149,7 +149,8 @@
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
                 }
             },
-            "exam": "Klausur"
+            "exam": "Klausur",
+            "maxScore": "Maximale Punkte"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

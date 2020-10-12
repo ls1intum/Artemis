@@ -149,7 +149,8 @@
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
                 }
             },
-            "exam": "Exam"
+            "exam": "Exam",
+            "maxScore": "Max Score"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",
