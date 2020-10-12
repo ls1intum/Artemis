@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.Commit;
+import org.springframework.test.context.transaction.BeforeTransaction;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -75,6 +76,7 @@ public class TutorScoreIntegrationTest extends AbstractSpringIntegrationBambooBi
     private Complaint feedbackRequest;
 
     @BeforeEach
+    @BeforeTransaction
     public void initTestCase() {
         database.addUsers(4, 3, 2);
 
