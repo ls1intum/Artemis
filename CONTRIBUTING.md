@@ -82,6 +82,7 @@ Encouraged html styling:
 
 We create unit & integration tests for the Artemis server and client.
 Adding tests is an integral part of any pull request - please be aware that your pull request will not be approved until you provide automated tests for your implementation!
+Our goal is to keep the test coverage above 80%.
 
 ### Server Testing
 
