@@ -7,10 +7,10 @@
             <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
             <span>{{ 'artemisApp.plagiarism.warning' | translate }}</span>
         </div>
-        <button class="btn btn-success btn-sm" data-qa="confirm-plagiarism-button" (click)="plagiarismConfirmation.emit(true)">
+        <button class="btn btn-success btn-sm" data-qa="confirm-plagiarism-button" (click)="plagiarismStatusChange.emit(true)">
             {{ 'artemisApp.plagiarism.confirm' | translate }}
         </button>
-        <button class="btn btn-danger btn-sm" data-qa="deny-plagiarism-button" (click)="plagiarismConfirmation.emit(false)">{{ 'artemisApp.plagiarism.deny' | translate }}</button>
+        <button class="btn btn-danger btn-sm" data-qa="deny-plagiarism-button" (click)="plagiarismStatusChange.emit(false)">{{ 'artemisApp.plagiarism.deny' | translate }}</button>
         <div class="vertical-divider"></div>
         <div class="split-controls">
             <div class="split-control" data-qa="split-view-left" (click)="splitViewChange.emit('left')">

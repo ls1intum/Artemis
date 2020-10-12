@@ -20,7 +20,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should emit when confirming a plagiarism', () => {
-        spyOn(comp.plagiarismConfirmation, 'emit');
+        spyOn(comp.plagiarismStatusChange, 'emit');
 
         const nativeElement = fixture.nativeElement;
         const confirmButton = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']");
@@ -28,11 +28,11 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.plagiarismConfirmation.emit).toHaveBeenCalledWith(true);
+        expect(comp.plagiarismStatusChange.emit).toHaveBeenCalledWith(true);
     });
 
     it('should emit when denying a plagiarism', () => {
-        spyOn(comp.plagiarismConfirmation, 'emit');
+        spyOn(comp.plagiarismStatusChange, 'emit');
 
         const nativeElement = fixture.nativeElement;
         const denyButton = nativeElement.querySelector("[data-qa='deny-plagiarism-button']");
@@ -40,7 +40,7 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.plagiarismConfirmation.emit).toHaveBeenCalledWith(false);
+        expect(comp.plagiarismStatusChange.emit).toHaveBeenCalledWith(false);
     });
 
     it('should emit when toggling split view on the left', () => {
