@@ -673,7 +673,7 @@ public class ModelFactory {
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
 
-        String logWith254Chars = "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle (default-cli)"
+        String logWith254Chars = "Ensure this won't get filtered [ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle (default-cli)"
                 + "on project testPluginSCA-Tests: An error has occurred in Checkstyle report generation. Failed during checkstyle" + "configuration: Exception was throw";
 
         var buildLogDTO254Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
