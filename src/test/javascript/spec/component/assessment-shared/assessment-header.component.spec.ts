@@ -48,6 +48,15 @@ describe('AssessmentHeaderComponent', () => {
         expect(jhiAlertContent).toContain('test-alert-string');
     });
 
+    it('should display alert when assessment due date has passed', () => {
+        component.hasAssessmentDueDatePassed = true;
+        // @ts-ignore
+        component.result = undefined;
+        fixture.detectChanges();
+        const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
+        expect(alertComponent).toBeTruthy();
+    });
+
     it('should show or hide a back button', () => {
         component.hideBackButton = false;
         fixture.detectChanges();

@@ -319,6 +319,15 @@ public class ModelFactory {
         return submission;
     }
 
+    public static QuizSubmission generateQuizSubmission(boolean submitted) {
+        QuizSubmission submission = new QuizSubmission();
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
+    }
+
     public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
         ExampleSubmission exampleSubmission = new ExampleSubmission();
         exampleSubmission.setSubmission(submission);
@@ -687,12 +696,13 @@ public class ModelFactory {
         return issue;
     }
 
-    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise) {
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise, String name, CategoryState state, Double penalty,
+            Double maxPenalty) {
         var category = new StaticCodeAnalysisCategory();
-        category.setName("Bad practice");
-        category.setPenalty(2D);
-        category.setMaxPenalty(10D);
-        category.setState(CategoryState.VISIBLE);
+        category.setName(name);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(maxPenalty);
+        category.setState(state);
         category.setProgrammingExercise(programmingExercise);
         return category;
     }

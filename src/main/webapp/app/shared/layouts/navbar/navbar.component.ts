@@ -36,6 +36,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
+    isRegistrationEnabled = false;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -68,6 +69,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
 

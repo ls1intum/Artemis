@@ -61,19 +61,39 @@
             ></jhi-date-time-picker>
             <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
         </div>
-        <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="maxScorePattern"
-                min="0"
-                max="9999"
-                name="maxScore"
-                id="field_maxScore"
-                [(ngModel)]="modelingExercise.maxScore"
-            />
+        <div class="row">
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">points</label>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        [pattern]="maxScorePattern"
+                        min="0"
+                        max="9999"
+                        name="points"
+                        id="field_points"
+                        [(ngModel)]="modelingExercise.maxScore"
+                    />
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        [pattern]="maxScorePattern"
+                        min="0"
+                        max="9999"
+                        name="bonusPoints"
+                        id="field_bonusPoints"
+                        [(ngModel)]="modelingExercise.bonusPoints"
+                    />
+                </div>
+            </div>
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>

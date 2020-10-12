@@ -9,6 +9,7 @@ import { userMgmtRoute1, userMgmtRoute2, userMgmtRoute3, userMgmtRoute4 } from '
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 import { healthRoute } from 'app/admin/health/health.route';
 import { metricsRoute } from 'app/admin/metrics/metrics.route';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const ADMIN_ROUTES = [
     auditsRoute,
@@ -29,7 +30,7 @@ export const adminState: Routes = [
     {
         path: '',
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: [Authority.ADMIN],
         },
         canActivate: [UserRouteAccessService],
         children: ADMIN_ROUTES,

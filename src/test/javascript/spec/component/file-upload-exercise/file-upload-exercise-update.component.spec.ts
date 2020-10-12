@@ -88,7 +88,7 @@ describe('FileUploadExercise Management Update Component', () => {
         const fileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
         });
 
@@ -106,7 +106,7 @@ describe('FileUploadExercise Management Update Component', () => {
         const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
         });
 
