@@ -440,8 +440,8 @@ public class BambooService implements ContinuousIntegrationService {
      * @throws BambooException is thrown on casting errors.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public String getPlanKey(Object requestBody) throws BambooException {
+        // TODO: convert into a proper DTO object to avoid unchecked Map casts
         try {
             Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
             Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
@@ -823,7 +823,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the html representation of the artifact page.
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO: It would be better to directly pass the buildPlanId.
         String planKey = participation.getBuildPlanId();
         final var latestResult = queryLatestBuildResultFromBambooServer(planKey);
         // If the build has an artifact, the response contains an artifact key.
