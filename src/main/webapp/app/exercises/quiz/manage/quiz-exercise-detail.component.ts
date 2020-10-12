@@ -637,7 +637,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     question.title !== '' &&
                     shortAnswerQuestion.correctMappings &&
                     shortAnswerQuestion.correctMappings.length > 0 &&
-                    // && this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion).length
                     this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
@@ -865,12 +864,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
-                } /*else if (this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion, []).length === 0) {
-                    reasons.push({
-                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
-                        translateValues: { index: index + 1 }
-                    });
-                } */
+                }
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
