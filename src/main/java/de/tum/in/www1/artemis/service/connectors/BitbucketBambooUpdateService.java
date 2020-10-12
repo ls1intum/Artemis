@@ -267,20 +267,6 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         }
     }
 
-    private void removeTrigger(String buildPlanKey, Long id) {
-
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("triggerId", Long.toString(id));
-        parameters.add("confirm", "true");
-        parameters.add("decorator", "nothing");
-        parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("planKey", buildPlanKey);
-
-        String requestUrl = bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-        bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
-    }
-
     private List<BambooTriggerDTO> getTriggerList(String buildPlanKey) {
         List<BambooTriggerDTO> list = new ArrayList<>();
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -311,10 +297,6 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         return list;
     }
 
-    private static String getText(Element element) {
-        return element == null ? "" : element.text();
-    }
-
     private void addTrigger(String buildPlanKey, String repository) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -339,5 +321,23 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             throw new BambooException(
                     ex.getMessage() + ". " + "Missing or invalid parameters for a custom trigger. Most likely cause is an invalid trigger key specified in the type parameter.");
         }
+    }
+
+    private void removeTrigger(String buildPlanKey, Long id) {
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("triggerId", Long.toString(id));
+        parameters.add("confirm", "true");
+        parameters.add("decorator", "nothing");
+        parameters.add("bamboo.successReturnMode", "json");
+        parameters.add("planKey", buildPlanKey);
+
+        String requestUrl = bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action";
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, Map.class);
+    }
+
+    private static String getText(Element element) {
+        return element == null ? "" : element.text();
     }
 }

@@ -327,7 +327,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private Boolean userExists(String username) throws BitbucketException {
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/1.0/users/" + username, HttpMethod.GET, null, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Map.class);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
@@ -350,7 +350,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/1.0/admin/users").queryParam("name", username)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
                 .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
                 .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
 
@@ -381,7 +381,7 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Adding Bitbucket user {} to groups {}", username, groups);
 
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/1.0/admin/users/add-groups", HttpMethod.POST, entity, Map.class);
+            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Map.class);
         }
         catch (HttpClientErrorException e) {
             log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);

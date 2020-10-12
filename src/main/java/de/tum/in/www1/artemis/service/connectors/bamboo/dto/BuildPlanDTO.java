@@ -21,6 +21,10 @@ public class BuildPlanDTO {
 
     private boolean enabled;
 
+    private boolean active;
+
+    private boolean building;
+
     private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
 
     public BuildPlanDTO() {
@@ -88,6 +92,22 @@ public class BuildPlanDTO {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isBuilding() {
+        return building;
+    }
+
+    public void setBuilding(boolean building) {
+        this.building = building;
     }
 
     public BambooRepositoryDTO getRepository(String name) {

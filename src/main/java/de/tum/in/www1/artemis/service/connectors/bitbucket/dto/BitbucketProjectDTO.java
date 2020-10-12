@@ -17,6 +17,13 @@ public class BitbucketProjectDTO {
 
     private String link;
 
+    public BitbucketProjectDTO(String key) {
+        this.key = key;
+    }
+
+    public BitbucketProjectDTO() {
+    }
+
     public String getKey() {
         return key;
     }

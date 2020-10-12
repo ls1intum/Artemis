@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BitbucketRepositoryDTO {
@@ -21,6 +22,17 @@ public class BitbucketRepositoryDTO {
     private boolean forkable;
 
     private LinksDTO links;
+
+    public BitbucketRepositoryDTO() {
+    }
+
+    public BitbucketRepositoryDTO(String id, String slug, String projectKey, String cloneSshUrl) {
+        this.id = id;
+        this.slug = slug;
+        this.project = new BitbucketProjectDTO(projectKey);
+        this.links = new LinksDTO();
+        this.links.clone.add(new LinksDTO.CloneDTO(cloneSshUrl, "ssh"));
+    }
 
     public String getId() {
         return id;
@@ -120,9 +132,9 @@ public class BitbucketRepositoryDTO {
 
     public static class LinksDTO {
 
-        private List<CloneDTO> clone;
+        private List<CloneDTO> clone = new ArrayList<>();
 
-        private List<CloneDTO> self;
+        private List<CloneDTO> self = new ArrayList<>();
 
         public List<CloneDTO> getClone() {
             return clone;
@@ -145,6 +157,14 @@ public class BitbucketRepositoryDTO {
             private String href;
 
             private String name;
+
+            public CloneDTO() {
+            }
+
+            public CloneDTO(String href, String name) {
+                this.href = href;
+                this.name = name;
+            }
 
             public String getHref() {
                 return href;

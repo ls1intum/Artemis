@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,7 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -35,7 +38,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -43,10 +49,7 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.*;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 
 @Service
 @Profile("bamboo")
@@ -205,8 +208,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
-        final var planInfo = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planId, HttpMethod.GET, null, Map.class, new HashMap<>()).getBody();
-        return planInfo != null && planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
+        final var buildPlan = getBuildPlan(planId, false);
+        return buildPlan != null && buildPlan.isEnabled();
     }
 
     @Override
@@ -246,14 +249,15 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        Map<String, Boolean> status = retrieveBuildStatus(participation.getBuildPlanId());
-        if (status == null) {
+        final var buildPlan = getBuildPlan(participation.getBuildPlanId(), false);
+
+        if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (status.get("isActive") && !status.get("isBuilding")) {
+        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (status.get("isActive") && status.get("isBuilding")) {
+        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -286,15 +290,24 @@ public class BambooService implements ContinuousIntegrationService {
         return buildLogEntries;
     }
 
-    private BuildPlanDTO getBuildPlan(String planName) {
+    /**
+     * get the build plan for the given planKey
+     * @param planKey the unique Bamboo build plan identifier
+     * @return the build plan
+     */
+    private BuildPlanDTO getBuildPlan(String planKey, boolean expand) {
         try {
-            String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planName;
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
+            String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + planKey;
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+            if (expand) {
+                builder.queryParam("expand", "");
+            }
             return restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BuildPlanDTO.class).getBody();
         }
         catch (HttpClientErrorException ex) {
+            // TODO: make this configurable
             if (HttpStatus.NOT_FOUND.equals(ex.getStatusCode())) {
-                // this is assumed
+                // this can happen and might be wanted, we should not pollute the log.
                 return null;
             }
             log.info(ex.getMessage());
@@ -313,13 +326,14 @@ public class BambooService implements ContinuousIntegrationService {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         try {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
-            var targetBuildPlan = getBuildPlan(targetPlanKey);
+            var targetBuildPlan = getBuildPlan(targetPlanKey, false);
             // TODO: double check what the acli plugin has done here to make sure the clone process is actually working
             if (targetBuildPlan != null) {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
             }
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
+            // TODO: the name of the new build plan is not set correctly
             restTemplate.put(bambooServerUrl + "/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey, null);
             log.info("Clone build plan " + sourcePlanKey + " was successful");
         }
@@ -598,7 +612,8 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return optionalRelevantRepoName.flatMap(relevantRepoName -> buildResult.getBuild().getVcs().stream()
-                .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName)).findFirst().map(change -> change.getId())).orElse(null);
+                .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName)).findFirst().map(BambooBuildResultNotificationDTO.BambooVCSDTO::getId))
+                .orElse(null);
     }
 
     /**
@@ -731,31 +746,32 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the list of retrieved build logs.
      */
     private List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
-        ResponseEntity<Map> response = null;
+        var logs = new ArrayList<BuildLogEntry>();
         try {
-            response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
-                    HttpMethod.GET, null, Map.class);
+            var response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=2000",
+                    HttpMethod.GET, null, BambooBuildResultDTO.class);
+
+            if (response.getBody() != null && response.getBody().getLogEntries() != null) {
+
+                for (var logEntry : response.getBody().getLogEntries().getLogEntry()) {
+                    String logString = logEntry.getUnstyledLog();
+                    // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
+                    // We want to have unescaped characters but fail back to the escaped characters in case no unescaped characters are present
+                    if (logString == null) {
+                        logString = logEntry.getLog();
+                    }
+
+                    // TODO: test that the automatic conversion into the ZonedDateTime works
+                    var logDate = logEntry.getDate();
+                    // Instant instant = Instant.ofEpochMilli((long) logEntry.get("date"));
+                    // ZonedDateTime logDate = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    BuildLogEntry log = new BuildLogEntry(logDate, logString);
+                    logs.add(log);
+                }
+            }
         }
         catch (Exception e) {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
-        }
-
-        var logs = new ArrayList<BuildLogEntry>();
-
-        if (response != null) {
-            for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
-                String logString = (String) logEntry.get("unstyledLog");
-                // The log is provided in two attributes: with unescaped characters in unstyledLog and with escaped characters in log
-                // We want to have unescaped characters but fail back to the escaped characters in case no unescaped characters are present
-                if (logString == null) {
-                    logString = (String) logEntry.get("log");
-                }
-
-                Instant instant = Instant.ofEpochMilli((long) logEntry.get("date"));
-                ZonedDateTime logDate = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-                BuildLogEntry log = new BuildLogEntry(logDate, logString);
-                logs.add(log);
-            }
         }
         return logs;
     }
@@ -884,33 +900,6 @@ public class BambooService implements ContinuousIntegrationService {
             // Actual artifact file
             return response;
         }
-    }
-
-    /**
-     * Retrieves the current build status of the given plan.
-     *
-     * @param planKey the key of the plan for which to retrieve the status
-     * @return a map containing the following data:
-     * - isActive: true if the plan is queued or building
-     * - isBuilding: true if the plan is building
-     */
-    public Map<String, Boolean> retrieveBuildStatus(String planKey) {
-        ResponseEntity<Map> response = null;
-        try {
-            response = restTemplate.exchange(bambooServerUrl + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json", HttpMethod.GET, null, Map.class);
-        }
-        catch (Exception e) {
-            log.error("Bamboo HttpError '" + e.getMessage() + "' while retrieving build status for plan " + planKey, e);
-        }
-        if (response != null) {
-            Map<String, Boolean> result = new HashMap<>();
-            boolean isActive = (boolean) response.getBody().get("isActive");
-            boolean isBuilding = (boolean) response.getBody().get("isBuilding");
-            result.put("isActive", isActive);
-            result.put("isBuilding", isBuilding);
-            return result;
-        }
-        return null;
     }
 
     /**

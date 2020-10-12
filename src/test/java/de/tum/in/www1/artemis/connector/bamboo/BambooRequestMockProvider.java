@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.connector.bamboo;
 
-import static org.mockito.Mockito.*;
+import static de.tum.in.www1.artemis.util.DatabaseUtilService.loadFileFromResources;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +35,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 @Component
@@ -44,6 +44,10 @@ public class BambooRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
+
+    // TODO: we would need to move some parts in a BambooBitbucketRequestMockProvider
+    @Value("${artemis.version-control.url}")
+    private URL BITBUCKET_SERVER_URL;
 
     @Autowired
     private ObjectMapper mapper;
@@ -87,8 +91,8 @@ public class BambooRequestMockProvider {
      *
      * @param exercise the programming exercise that might already exist
      * @param exists   whether the programming exercise with the same title exists
-     * @throws IOException
-     * @throws URISyntaxException
+     * @throws IOException an IO exception when reading test files
+     * @throws URISyntaxException exceptions related to URI handling in test REST calls
      */
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
@@ -150,7 +154,7 @@ public class BambooRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
@@ -158,42 +162,55 @@ public class BambooRequestMockProvider {
         mockUpdatePlanRepository(exercise, username, bambooRepoName, bitbucketRepoName, List.of());
     }
 
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy) {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+            throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
-        final var repositoryResponse = new BambooRepositoryDTO(12345678L, "testName");
 
-        // TODO 1) getBuildPlanRepositoryList: "/chain/admin/config/editChainRepository.action" --> return complex data / html object
-        // TODO 2) getBitbucketRepository: bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug; --> return BitbucketRepositoryDTO
-        // TODO 3) loadApplicationLinkList: bambooServerUrl + "/rest/applinks/latest/applicationlink"; --> ApplicationLinksDTO
-        // TODO 4) update repository: bambooServerUrl + "/chain/admin/config/updateRepository.action"; --> void
+        // TODO: add realistic values required for the test scenario
+        final var bambooRepository = new BambooRepositoryDTO(12345678L, "testName");
+        final var bitbucketRepository = new BitbucketRepositoryDTO("id", "slug", "projectKey", "ssh:cloneUrl");
+        final var applicationLinks = new ApplicationLinksDTO();
 
-        // in case there are triggers
+        final var repositoryListHtmlResponse = loadFileFromResources("test-data/bamboo-response/build-plan-repository-list-response.html");
 
-        // TODO 5) getTriggerList bambooServerUrl + "/chain/admin/config/editChainTriggers.action"; --> return complex data / html object
-        // TODO 6) removeTrigger (depending on the result of 5 once or twice) bambooServerUrl + "/chain/admin/config/deleteChainTrigger.action"; --> void
-        // TODO 7) addTrigger (depending on the content of triggeredBy) bambooServerUrl + "/chain/admin/config/createChainTrigger.action"; --> void
-        // var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/clone/" + sourcePlanKey + ":" + targetPlanKey).build().toUri();
-        // mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/chain/admin/config/editChainRepository.action").build().toUri();
+        // TODO: check all parameters
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(repositoryListHtmlResponse));
 
-        doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
-        verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
+        uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(bitbucketRepository)));
 
-        doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(any(), anyString(), anyString(), anyString());
+        uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/applinks/latest/applicationlink").queryParam("expand", "").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(applicationLinks)));
+
+        uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/chain/admin/config/updateRepository.action").build().toUri();
+        // TODO: check all parameters
+        mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
 
         if (!triggeredBy.isEmpty()) {
-            // Bamboo specific format for the used CLI dependency. Nothing we can improve here
-            final var oldTriggers = "foo,123,artemis\nbar,456,artemis";
-            doReturn(oldTriggers).when(triggerHelper).getTriggerList(anyString(), isNull(), isNull(), anyInt(), any());
-            doReturn("foobar").when(triggerHelper).removeTrigger(planKey, null, null, 123L, null, false);
-            doReturn("foobar").when(triggerHelper).removeTrigger(planKey, null, null, 456L, null, false);
-            verifications.add(() -> {
-                verify(triggerHelper).removeTrigger(planKey, null, null, 123L, null, false);
-                verify(triggerHelper).removeTrigger(planKey, null, null, 456L, null, false);
-            });
-            for (final var repo : triggeredBy) {
-                doReturn("foobar").when(triggerHelper).addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false);
-                verifications.add(() -> verify(triggerHelper).addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false));
+            // in case there are triggers
+            var triggerList = List.of(new BambooTriggerDTO(123L, "foo", "artemis"), new BambooTriggerDTO(456L, "bar", "artemis"));
+
+            final var triggerListHtmlResponse = loadFileFromResources("test-data/bamboo-response/build-plan-trigger-list-response.html");
+            uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/chain/admin/config/editChainTriggers.action").build().toUri();
+            // TODO: check all parameters, add actual response in html file
+            mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.GET))
+                    .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(triggerListHtmlResponse));
+
+            for (var trigger : triggerList) {
+                uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/chain/admin/config/deleteChainTrigger.action").build().toUri();
+                // TODO: check all parameters
+                mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+            }
+
+            for (var repo : triggeredBy) {
+                uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/chain/admin/config/createChainTrigger.action").build().toUri();
+                // TODO: check all parameters
+                mockServer.expect(ExpectedCount.once(), requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
             }
         }
     }
@@ -221,7 +238,7 @@ public class BambooRequestMockProvider {
     /**
      * This method mocks that the artifact page the latest build result is empty
      */
-    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException {
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, MalformedURLException {
         var indexOfResponse = "href=\"/download/1\"";
         var noArtifactsResponse = "";
         final var uri = new URL("https://bamboo.ase.in.tum.de/download/").toURI();
@@ -237,10 +254,10 @@ public class BambooRequestMockProvider {
      *
      * @param planKey the build plan id
      */
-    public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
-        var newDate = new Date().getTime();
-        Map firstLogEntry = Map.of("log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
-        Map response = Map.of("logEntries", Map.of("logEntry", List.of(firstLogEntry)));
+    public void mockGetBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
+        var log = "java.lang.AssertionError: BubbleSort does not sort correctly";
+        var logEntry = new BambooBuildLogDTO(ZonedDateTime.now(), log, log);
+        var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(List.of(logEntry)));
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
                 .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
 

@@ -115,7 +115,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
                 programmingExerciseParticipationServiceSpy);
     }
 
-    protected List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws Exception {
+    protected List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
         final var verifications = new LinkedList<Verifiable>();
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users);
@@ -153,7 +153,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
         bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName());

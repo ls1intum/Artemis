@@ -357,7 +357,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         // create a submission which fails
         database.createProgrammingSubmission(participation, true);
         // get the failed build log
-        bambooRequestMockProvider.mockFetchBuildLogs(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId());
         var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         for (final var verification : verifications) {

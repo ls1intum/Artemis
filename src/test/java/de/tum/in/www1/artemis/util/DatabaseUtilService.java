@@ -4,6 +4,7 @@ import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.Duration;
@@ -1942,9 +1943,9 @@ public class DatabaseUtilService {
     /**
      * @param path path relative to the test resources folder complaint
      * @return string representation of given file
-     * @throws Exception if the resource cannot be loaded
+     * @throws IOException if the resource cannot be loaded
      */
-    public String loadFileFromResources(String path) throws Exception {
+    public static String loadFileFromResources(String path) throws IOException {
         java.io.File file = ResourceUtils.getFile("classpath:" + path);
         StringBuilder builder = new StringBuilder();
         Files.lines(file.toPath()).forEach(builder::append);
