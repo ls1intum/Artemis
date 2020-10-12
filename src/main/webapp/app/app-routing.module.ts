@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
-import { InformativeMarketingComponent } from 'app/informative-marketing/informative-marketing.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -63,18 +62,8 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
                 },
                 {
-                    path: 'informative-marketing/instructors',
-                    component: InformativeMarketingComponent,
-                    data: {
-                        pageTitle: 'informativeMarketing.instructor.pageTitle',
-                    },
-                },
-                {
-                    path: 'informative-marketing/students',
-                    component: InformativeMarketingComponent,
-                    data: {
-                        pageTitle: 'informativeMarketing.students.pageTitle',
-                    },
+                    path: 'features',
+                    loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
                 },
             ],
             { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },

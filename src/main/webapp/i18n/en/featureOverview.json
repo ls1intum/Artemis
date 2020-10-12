@@ -1,5 +1,5 @@
 {
-    "informativeMarketing": {
+    "featureOverview": {
         "title": "Online Exams in Artemis",
         "featureDetails": "Feature Details",
         "instructor": {
@@ -28,7 +28,7 @@
                     "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/multiple_exercises.png?raw=true"
                 },
                 "exerciseVariants": {
-                    "title": "Add Exercise Variants",
+                    "title": "Exercise Variants",
                     "shortDescription": "Make every student exam unique by adding variants to each exercise.",
                     "descriptionTextOne": "Want to provide a unique exam for every student? No problem! You can create exercise groups which contain multiple exercises. Define as many exercise groups as you like for an exam. When the exam of every student is generated, Artemis will select one exercise randomly from each exercise group and combine those to create a unique exam for every student. You can also randomise the exercise order should you want to do so. Additionally, you can also distinguish between mandatory and non-mandatory exercises too!",
                     "icon": "fa fa-files-o",

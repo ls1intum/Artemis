@@ -4,11 +4,11 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>{{ 'informativeMarketing.title' | translate }}</h1>
+            <h1>{{ 'featureOverview.title' | translate }}</h1>
         </div>
         <div class="content">
             <div class="features-overview">
-                <h2 style="padding-top: 1.5em">{{ 'informativeMarketing.' + targetAudience + '.featureOverview' | translate }}</h2>
+                <h2 style="padding-top: 1.5em">{{ 'featureOverview.' + targetAudience + '.featureOverview' | translate }}</h2>
                 <div class="mb-4">
                     <hr class="hr-text" />
                 </div>
@@ -33,7 +33,7 @@
                 </div>
             </div>
             <hr class="hr-gradient" />
-            <h2 style="padding-top: 1.5em">{{ 'informativeMarketing.featureDetails' | translate }}</h2>
+            <h2 style="padding-top: 1.5em">{{ 'featureOverview.featureDetails' | translate }}</h2>
             <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
                 <h3>{{ feature.title | translate }}</h3>
                 <div class="feature-full-description">
