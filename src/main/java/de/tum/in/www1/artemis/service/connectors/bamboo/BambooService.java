@@ -816,7 +816,8 @@ public class BambooService implements ContinuousIntegrationService {
                     || logString.startsWith("[ERROR] For more information about the errors and possible solutions") || logString.startsWith("[ERROR] Re-run Maven using")
                     || logString.startsWith("[ERROR] To see the full stack trace of the errors") || logString.startsWith("[ERROR] -> [Help 1]")
                     || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                    || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin")) {
+                    || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || logString.startsWith("[INFO] Downloading")
+                    || logString.startsWith("[INFO] Downloaded")) {
                 continue;
             }
 
