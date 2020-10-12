@@ -96,44 +96,51 @@
                     "title": "Use your own IDE",
                     "shortDescription": "Clone the assignment and work on programming exercises on your own IDE.",
                     "descriptionTextOne": "Do you enjoy the familiarity of working with your IDE of choice? Does it throw you off when you are forced to use online code editors for coding assignments? We think so too, so for online exams on Artemis, we allow you to clone the assignment repository and work on it however you like! Use the clone button get the link of the assignment and clone it using GIT commands. Once you are done you can simply push your changes and continue on the other tasks. Every push will trigger a build agent to run your code and execute the automated tests and static code analysis tools to provide feedback if applicable.",
-                    "icon": "fa fa-code-fork"
+                    "icon": "fa fa-code-fork",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/clone_repository.png?raw=true"
                 },
                 "codeEditor": {
                     "title": "Integrated Code Editor",
                     "shortDescription": "Complete the programming exercise using the integrated code editor.",
                     "descriptionTextOne": "In case you do not have access to a computer with an installed IDE, or you just want to make some quick changes on the fly, Artemis exam mode provides an integrated code editor for you to finish the programming assignments. The Artemis code editor has an intuitive layout which includes a file browser and editor, a code area, the assignment description as well as a build log output to analyse your submissions. Errors are directly shown on the line which caused them allowing you to quickly introduce a change to fix all issues. Your progress on the assignment description is automatically updated with every submission you make.",
-                    "icon": "fa fa-code"
+                    "icon": "fa fa-code",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/code_editor.png?raw=true"
                 },
                 "textEditor": {
                     "title": "Integrated Text Editor",
                     "shortDescription": "Solve text exercises using the integrated text editor.",
                     "descriptionTextOne": "Solve text exercises using the integrated text editor. Not much more to it. The text editor is simple to use and easy to navigate. It works just as you would expect. There are no limits to the maximum length allowed and it automatically tracks the number of words and characters in your submission.",
-                    "icon": "fa fa-file-text"
+                    "icon": "fa fa-file-text",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/text_editor.png?raw=true"
                 },
                 "apollonEditor": {
                     "title": "Integrated Model Editor",
                     "shortDescription": "Create complex models for modeling exercises easily through drag and drop using the simple and intuitive Apollon Editor.",
                     "descriptionTextOne": "Powered by the Apollon Editor, Artemis exam mode supports modeling exercises of different types. These include class-, activity-, object-, use case-, communication-, component-, deployment diagrams, Petri nets and syntax trees. Using the integrated Apollon editor you can easily create complex models navigatable through an intuitive drag and drop user interface. ",
-                    "icon": "fa fa-object-group"
+                    "icon": "fa fa-object-group",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/modeling_editor.png?raw=true"
                 },
                 "quizExercises": {
                     "title": "Quiz Exercises",
                     "shortDescription": "Solve quiz exercises in the form of multiple choice, drag and drop and short answer questions.",
                     "descriptionTextOne": "Multiple-choice exercises are one of the most common exercise types of exams. Artemis exam mode supports these too in the form of quiz exercises. Quiz exercises are much more than just simple multiple-choice exercises. Artemis multiple choice questions can have one or multiple solutions and the assessment can be tweaked to not deduct points on the wrong answer for example. This way, it can mimic the exact assessment style of your tutors and instructors for offline exams. But quiz exercises can also take different forms other than just multiple-choice! Artemis also supports drag and drop questions and short answer questions. For drag and drop questions you can simply drag the appropriate element into the appropriate location. For short answer questions, you are given input fields within a text which you can fill out using your own words. ",
-                    "icon": "fa fa-check-square-o"
+                    "icon": "fa fa-check-square-o",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/quiz_exercises.png?raw=true"
                 },
                 "login": {
                     "title": "LRZ Login",
                     "shortDescription": "Log in through your LRZ account. No special account required.",
                     "descriptionTextOne": "Use the same LRZ credentials you use for all university applications to access Artemis. There is no need to create a new account and maintain another password! Log in using your TUMID and your password and you are ready to go.",
-                    "icon": "fa fa-sign-in"
+                    "icon": "fa fa-sign-in",
+                    "imageOne": "https://www.lrz.de/services/compute/labs/astrolab/ipcc/logo_lrz_badw_tum.jpg"
                 },
                 "userInterface": {
                     "title": "Intuitive User Interface",
                     "shortDescription": "Navigate through the exam using the intuitive user interface.",
                     "descriptionTextOne": "Conduct the exam using the intuitive Artemis exam mode user interface. The interface is focused only on the exam and hides all other functions. To the top, you have a status bar which indicates the status of each exercise. These will track your progress for each exercise and display it accordingly. Exams can be stressful. To ease your mind off the technical aspect of the conduction, your current status is displayed intuitively using colour-coding. As soon as you have unsaved changes, the status bar changes. Once you save your progress or it is synchronised automatically it will be displayed accordingly. You can use the status bar to also navigate between exercises by simply clicking on the exercise.",
                     "descriptionTextTwo": "For every exercise type, the question/instructions will be displayed on the right. To the left, you have your specific editor for every exercise type. To make sure that you do not miss a question in the quiz, an overview of all questions is displayed to the left. You can click on any question and the view will scroll accordingly. Once you have finished the exam you have the option to submit early. Otherwise, once the time runs up the view is automatically updated to the exam end confirmation page and your changes are automatically synchronised. After the exam end, you are given a grace period of a few minutes to confirm your exam end and conclude the exam.",
-                    "icon": "fa fa-puzzle-piece"
+                    "icon": "fa fa-puzzle-piece",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/user_interface.png?raw=true"
                 },
                 "conduction": {
                     "title": "Online Exam",
@@ -145,13 +152,15 @@
                     "title": "On Demand Exam Summary",
                     "shortDescription": "You always have access to the summary of your exam.",
                     "descriptionTextOne": "\"What was your answer to question 2?\"\n-\"I can't remember anymore, I think option B.\"\n\nNod internally if you have been part of the dialogue at least once during your studies. With Artemis exam mode, you do not need to second guess your answers as you will always have access to the summary of your exam. The summary includes an overview of all your exercise submissions and displays them in an aggregated view. Want to check the code of your programming exercise submission? No problem, the summary includes the last commit hash as well as the link to your repository where you will be able to view and analyse the code.",
-                    "icon": "fa fa-th-list"
+                    "icon": "fa fa-th-list",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/summary.png?raw=true"
                 },
                 "onlineReview": {
                     "title": "Online Exam Review",
                     "shortDescription": "Review the assessment of your exam with no location restrictions.",
                     "descriptionTextOne": "Long lines, packed rooms full of students anxiously waiting to review their exams, tutors struggling to rationalise the evaluation of your fellow peers. Student reviews are not a pleasant experience for the tutors, instructors and students alike. With the Artemis exam mode, all this lies in the past. After the results have been published, you can access your exam and review the assessment at your own place comfortably from your own computer. Take your time to really analyse the question and the assessment to understand what mistakes you made. There are no location restrictions to the student review, you can access it from anywhere! \n\nSometimes even tutors can make mistakes. Using the complaint functionality, you can complain about an assessment and provide some information into why you feel you were not assessed correctly. All student complaints will be collected and a tutor other than the original one will have the chance to either accept or reject your complaint. If your complaint is accepted, your points will be automatically updated!",
-                    "icon": "fa fa-comment-o"
+                    "icon": "fa fa-comment-o",
+                    "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/complaint.png?raw=true"
                 },
                 "browserCompatibility": {
                     "title": "Compatible with all major browsers.",

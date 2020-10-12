@@ -22,225 +22,247 @@ export class InformativeMarketingComponent implements OnInit {
         }
 
         if (this.targetAudience === targetAudience.INSTRUCTORS) {
-            // Set up instructor features
-            const featureIntegratedProcess = new Feature(
-                'informativeMarketing.instructor.feature.integratedProcess.title',
-                'informativeMarketing.instructor.feature.integratedProcess.shortDescription',
-                'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
-                'informativeMarketing.instructor.feature.integratedProcess.icon',
-                undefined,
-            );
-            featureIntegratedProcess.centerTextAndImageOne();
-
-            const featureConfiguration = new Feature(
-                'informativeMarketing.instructor.feature.configuration.title',
-                'informativeMarketing.instructor.feature.configuration.shortDescription',
-                'informativeMarketing.instructor.feature.configuration.descriptionTextOne',
-                'informativeMarketing.instructor.feature.configuration.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.configuration.imageOne',
-                'informativeMarketing.instructor.feature.configuration.imageTwo',
-            );
-
-            const featureExerciseTypes = new Feature(
-                'informativeMarketing.instructor.feature.exerciseTypes.title',
-                'informativeMarketing.instructor.feature.exerciseTypes.shortDescription',
-                'informativeMarketing.instructor.feature.exerciseTypes.descriptionTextOne',
-                'informativeMarketing.instructor.feature.exerciseTypes.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.exerciseTypes.imageOne',
-            );
-            featureExerciseTypes.alignFirstImageLeft();
-
-            const featureExerciseVariants = new Feature(
-                'informativeMarketing.instructor.feature.exerciseVariants.title',
-                'informativeMarketing.instructor.feature.exerciseVariants.shortDescription',
-                'informativeMarketing.instructor.feature.exerciseVariants.descriptionTextOne',
-                'informativeMarketing.instructor.feature.exerciseVariants.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.exerciseVariants.imageOne',
-            );
-            featureExerciseVariants.centerTextAndImageOne();
-
-            const featureSessionMonitoring = new Feature(
-                'informativeMarketing.instructor.feature.sessionMonitoring.title',
-                'informativeMarketing.instructor.feature.sessionMonitoring.shortDescription',
-                'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
-                'informativeMarketing.instructor.feature.sessionMonitoring.icon',
-            );
-
-            const featurePlagiarismDetection = new Feature(
-                'informativeMarketing.instructor.feature.plagiarismDetection.title',
-                'informativeMarketing.instructor.feature.plagiarismDetection.shortDescription',
-                'informativeMarketing.instructor.feature.plagiarismDetection.descriptionTextOne',
-                'informativeMarketing.instructor.feature.plagiarismDetection.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.plagiarismDetection.imageOne',
-            );
-
-            const featureAssessment = new Feature(
-                'informativeMarketing.instructor.feature.assessment.title',
-                'informativeMarketing.instructor.feature.assessment.shortDescription',
-                'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
-                'informativeMarketing.instructor.feature.assessment.icon',
-                'informativeMarketing.instructor.feature.assessment.descriptionTextTwo',
-                'informativeMarketing.instructor.feature.assessment.imageOne',
-            );
-
-            const featureAssessmentMonitoring = new Feature(
-                'informativeMarketing.instructor.feature.assessmentMonitoring.title',
-                'informativeMarketing.instructor.feature.assessmentMonitoring.shortDescription',
-                'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
-                'informativeMarketing.instructor.feature.assessmentMonitoring.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.assessmentMonitoring.imageOne',
-            );
-            featureAssessmentMonitoring.alignFirstImageLeft();
-
-            const featureGamification = new Feature(
-                'informativeMarketing.instructor.feature.assessmentGamification.title',
-                'informativeMarketing.instructor.feature.assessmentGamification.shortDescription',
-                'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
-                'informativeMarketing.instructor.feature.assessmentGamification.icon',
-                'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
-                'informativeMarketing.instructor.feature.assessmentGamification.imageOne',
-                'informativeMarketing.instructor.feature.assessmentGamification.imageTwo',
-            );
-
-            const featureComplaints = new Feature(
-                'informativeMarketing.instructor.feature.complaints.title',
-                'informativeMarketing.instructor.feature.complaints.shortDescription',
-                'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
-                'informativeMarketing.instructor.feature.complaints.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.complaints.imageOne',
-            );
-            featureComplaints.alignFirstImageLeft();
-
-            const featureStatistics = new Feature(
-                'informativeMarketing.instructor.feature.statistics.title',
-                'informativeMarketing.instructor.feature.statistics.shortDescription',
-                'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
-                'informativeMarketing.instructor.feature.statistics.icon',
-                undefined,
-                'informativeMarketing.instructor.feature.statistics.imageOne',
-            );
-            this.features = [
-                featureIntegratedProcess,
-                featureConfiguration,
-                featureExerciseTypes,
-                featureExerciseVariants,
-                featureSessionMonitoring,
-                featurePlagiarismDetection,
-                featureAssessment,
-                featureAssessmentMonitoring,
-                featureComplaints,
-                featureStatistics,
-            ];
+            this.setupInstructorFeatures();
         } else {
-            // set up student features
-            const featurelocalIDE = new Feature(
-                'informativeMarketing.students.feature.localIDE.title',
-                'informativeMarketing.students.feature.localIDE.shortDescription',
-                'informativeMarketing.students.feature.localIDE.descriptionTextOne',
-                'informativeMarketing.students.feature.localIDE.icon',
-                undefined,
-            );
-
-            const featureCodeEditor = new Feature(
-                'informativeMarketing.students.feature.codeEditor.title',
-                'informativeMarketing.students.feature.codeEditor.shortDescription',
-                'informativeMarketing.students.feature.codeEditor.descriptionTextOne',
-                'informativeMarketing.students.feature.codeEditor.icon',
-                undefined,
-            );
-
-            const featureTextEditor = new Feature(
-                'informativeMarketing.students.feature.textEditor.title',
-                'informativeMarketing.students.feature.textEditor.shortDescription',
-                'informativeMarketing.students.feature.textEditor.descriptionTextOne',
-                'informativeMarketing.students.feature.textEditor.icon',
-                undefined,
-            );
-
-            const featureapollonEditor = new Feature(
-                'informativeMarketing.students.feature.apollonEditor.title',
-                'informativeMarketing.students.feature.apollonEditor.shortDescription',
-                'informativeMarketing.students.feature.apollonEditor.descriptionTextOne',
-                'informativeMarketing.students.feature.apollonEditor.icon',
-                undefined,
-            );
-
-            const featureQuizExercises = new Feature(
-                'informativeMarketing.students.feature.quizExercises.title',
-                'informativeMarketing.students.feature.quizExercises.shortDescription',
-                'informativeMarketing.students.feature.quizExercises.descriptionTextOne',
-                'informativeMarketing.students.feature.quizExercises.icon',
-                undefined,
-            );
-
-            const featureLogin = new Feature(
-                'informativeMarketing.students.feature.login.title',
-                'informativeMarketing.students.feature.login.shortDescription',
-                'informativeMarketing.students.feature.login.descriptionTextOne',
-                'informativeMarketing.students.feature.login.icon',
-                undefined,
-            );
-
-            const featureUserInterface = new Feature(
-                'informativeMarketing.students.feature.userInterface.title',
-                'informativeMarketing.students.feature.userInterface.shortDescription',
-                'informativeMarketing.students.feature.userInterface.descriptionTextOne',
-                'informativeMarketing.students.feature.userInterface.icon',
-                'informativeMarketing.students.feature.userInterface.descriptionTextTwo',
-            );
-
-            const featureConduction = new Feature(
-                'informativeMarketing.students.feature.conduction.title',
-                'informativeMarketing.students.feature.conduction.shortDescription',
-                'informativeMarketing.students.feature.conduction.descriptionTextOne',
-                'informativeMarketing.students.feature.conduction.icon',
-                undefined,
-            );
-
-            const featureSummary = new Feature(
-                'informativeMarketing.students.feature.summary.title',
-                'informativeMarketing.students.feature.summary.shortDescription',
-                'informativeMarketing.students.feature.summary.descriptionTextOne',
-                'informativeMarketing.students.feature.summary.icon',
-                undefined,
-            );
-
-            const featureOnlineReview = new Feature(
-                'informativeMarketing.students.feature.onlineReview.title',
-                'informativeMarketing.students.feature.onlineReview.shortDescription',
-                'informativeMarketing.students.feature.onlineReview.descriptionTextOne',
-                'informativeMarketing.students.feature.onlineReview.icon',
-                undefined,
-            );
-
-            const featureBrowserCompatibility = new Feature(
-                'informativeMarketing.students.feature.browserCompatibility.title',
-                'informativeMarketing.students.feature.browserCompatibility.shortDescription',
-                'informativeMarketing.students.feature.browserCompatibility.descriptionTextOne',
-                'informativeMarketing.students.feature.browserCompatibility.icon',
-                undefined,
-            );
-
-            this.features = [
-                featureConduction,
-                featureUserInterface,
-                featureCodeEditor,
-                featurelocalIDE,
-                featureapollonEditor,
-                featureTextEditor,
-                featureQuizExercises,
-                featureSummary,
-                featureOnlineReview,
-                featureLogin,
-                featureBrowserCompatibility,
-            ];
+            this.setupStudentFeatures();
         }
+    }
+
+    private setupStudentFeatures() {
+        // set up student features
+        const featurelocalIDE = new Feature(
+            'informativeMarketing.students.feature.localIDE.title',
+            'informativeMarketing.students.feature.localIDE.shortDescription',
+            'informativeMarketing.students.feature.localIDE.descriptionTextOne',
+            'informativeMarketing.students.feature.localIDE.icon',
+            undefined,
+            'informativeMarketing.students.feature.localIDE.imageOne',
+        );
+        featurelocalIDE.centerTextAndImageOne();
+
+        const featureCodeEditor = new Feature(
+            'informativeMarketing.students.feature.codeEditor.title',
+            'informativeMarketing.students.feature.codeEditor.shortDescription',
+            'informativeMarketing.students.feature.codeEditor.descriptionTextOne',
+            'informativeMarketing.students.feature.codeEditor.icon',
+            undefined,
+            'informativeMarketing.students.feature.codeEditor.imageOne',
+        );
+
+        const featureTextEditor = new Feature(
+            'informativeMarketing.students.feature.textEditor.title',
+            'informativeMarketing.students.feature.textEditor.shortDescription',
+            'informativeMarketing.students.feature.textEditor.descriptionTextOne',
+            'informativeMarketing.students.feature.textEditor.icon',
+            undefined,
+            'informativeMarketing.students.feature.textEditor.imageOne',
+        );
+        featureTextEditor.centerTextAndImageOne();
+
+        const featureapollonEditor = new Feature(
+            'informativeMarketing.students.feature.apollonEditor.title',
+            'informativeMarketing.students.feature.apollonEditor.shortDescription',
+            'informativeMarketing.students.feature.apollonEditor.descriptionTextOne',
+            'informativeMarketing.students.feature.apollonEditor.icon',
+            undefined,
+            'informativeMarketing.students.feature.apollonEditor.imageOne',
+        );
+
+        const featureQuizExercises = new Feature(
+            'informativeMarketing.students.feature.quizExercises.title',
+            'informativeMarketing.students.feature.quizExercises.shortDescription',
+            'informativeMarketing.students.feature.quizExercises.descriptionTextOne',
+            'informativeMarketing.students.feature.quizExercises.icon',
+            undefined,
+            'informativeMarketing.students.feature.quizExercises.imageOne',
+        );
+        featureQuizExercises.alignFirstImageLeft();
+
+        const featureLogin = new Feature(
+            'informativeMarketing.students.feature.login.title',
+            'informativeMarketing.students.feature.login.shortDescription',
+            'informativeMarketing.students.feature.login.descriptionTextOne',
+            'informativeMarketing.students.feature.login.icon',
+            undefined,
+            'informativeMarketing.students.feature.login.imageOne',
+        );
+        featureLogin.centerTextAndImageOne();
+
+        const featureUserInterface = new Feature(
+            'informativeMarketing.students.feature.userInterface.title',
+            'informativeMarketing.students.feature.userInterface.shortDescription',
+            'informativeMarketing.students.feature.userInterface.descriptionTextOne',
+            'informativeMarketing.students.feature.userInterface.icon',
+            'informativeMarketing.students.feature.userInterface.descriptionTextTwo',
+            'informativeMarketing.students.feature.userInterface.imageOne',
+        );
+
+        const featureConduction = new Feature(
+            'informativeMarketing.students.feature.conduction.title',
+            'informativeMarketing.students.feature.conduction.shortDescription',
+            'informativeMarketing.students.feature.conduction.descriptionTextOne',
+            'informativeMarketing.students.feature.conduction.icon',
+            undefined,
+        );
+
+        const featureSummary = new Feature(
+            'informativeMarketing.students.feature.summary.title',
+            'informativeMarketing.students.feature.summary.shortDescription',
+            'informativeMarketing.students.feature.summary.descriptionTextOne',
+            'informativeMarketing.students.feature.summary.icon',
+            undefined,
+            'informativeMarketing.students.feature.summary.imageOne',
+        );
+
+        const featureOnlineReview = new Feature(
+            'informativeMarketing.students.feature.onlineReview.title',
+            'informativeMarketing.students.feature.onlineReview.shortDescription',
+            'informativeMarketing.students.feature.onlineReview.descriptionTextOne',
+            'informativeMarketing.students.feature.onlineReview.icon',
+            undefined,
+            'informativeMarketing.students.feature.onlineReview.imageOne',
+        );
+
+        const featureBrowserCompatibility = new Feature(
+            'informativeMarketing.students.feature.browserCompatibility.title',
+            'informativeMarketing.students.feature.browserCompatibility.shortDescription',
+            'informativeMarketing.students.feature.browserCompatibility.descriptionTextOne',
+            'informativeMarketing.students.feature.browserCompatibility.icon',
+            undefined,
+        );
+        featureBrowserCompatibility.centerTextAndImageOne();
+
+        this.features = [
+            featureConduction,
+            featureUserInterface,
+            featureCodeEditor,
+            featurelocalIDE,
+            featureapollonEditor,
+            featureTextEditor,
+            featureQuizExercises,
+            featureSummary,
+            featureOnlineReview,
+            featureLogin,
+            featureBrowserCompatibility,
+        ];
+    }
+
+    private setupInstructorFeatures() {
+        // Set up instructor features
+        const featureIntegratedProcess = new Feature(
+            'informativeMarketing.instructor.feature.integratedProcess.title',
+            'informativeMarketing.instructor.feature.integratedProcess.shortDescription',
+            'informativeMarketing.instructor.feature.integratedProcess.descriptionTextOne',
+            'informativeMarketing.instructor.feature.integratedProcess.icon',
+            undefined,
+        );
+        featureIntegratedProcess.centerTextAndImageOne();
+
+        const featureConfiguration = new Feature(
+            'informativeMarketing.instructor.feature.configuration.title',
+            'informativeMarketing.instructor.feature.configuration.shortDescription',
+            'informativeMarketing.instructor.feature.configuration.descriptionTextOne',
+            'informativeMarketing.instructor.feature.configuration.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.configuration.imageOne',
+            'informativeMarketing.instructor.feature.configuration.imageTwo',
+        );
+
+        const featureExerciseTypes = new Feature(
+            'informativeMarketing.instructor.feature.exerciseTypes.title',
+            'informativeMarketing.instructor.feature.exerciseTypes.shortDescription',
+            'informativeMarketing.instructor.feature.exerciseTypes.descriptionTextOne',
+            'informativeMarketing.instructor.feature.exerciseTypes.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.exerciseTypes.imageOne',
+        );
+        featureExerciseTypes.alignFirstImageLeft();
+
+        const featureExerciseVariants = new Feature(
+            'informativeMarketing.instructor.feature.exerciseVariants.title',
+            'informativeMarketing.instructor.feature.exerciseVariants.shortDescription',
+            'informativeMarketing.instructor.feature.exerciseVariants.descriptionTextOne',
+            'informativeMarketing.instructor.feature.exerciseVariants.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.exerciseVariants.imageOne',
+        );
+        featureExerciseVariants.centerTextAndImageOne();
+
+        const featureSessionMonitoring = new Feature(
+            'informativeMarketing.instructor.feature.sessionMonitoring.title',
+            'informativeMarketing.instructor.feature.sessionMonitoring.shortDescription',
+            'informativeMarketing.instructor.feature.sessionMonitoring.descriptionTextOne',
+            'informativeMarketing.instructor.feature.sessionMonitoring.icon',
+        );
+
+        const featurePlagiarismDetection = new Feature(
+            'informativeMarketing.instructor.feature.plagiarismDetection.title',
+            'informativeMarketing.instructor.feature.plagiarismDetection.shortDescription',
+            'informativeMarketing.instructor.feature.plagiarismDetection.descriptionTextOne',
+            'informativeMarketing.instructor.feature.plagiarismDetection.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.plagiarismDetection.imageOne',
+        );
+
+        const featureAssessment = new Feature(
+            'informativeMarketing.instructor.feature.assessment.title',
+            'informativeMarketing.instructor.feature.assessment.shortDescription',
+            'informativeMarketing.instructor.feature.assessment.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessment.icon',
+            'informativeMarketing.instructor.feature.assessment.descriptionTextTwo',
+            'informativeMarketing.instructor.feature.assessment.imageOne',
+        );
+
+        const featureAssessmentMonitoring = new Feature(
+            'informativeMarketing.instructor.feature.assessmentMonitoring.title',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.shortDescription',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentMonitoring.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.assessmentMonitoring.imageOne',
+        );
+        featureAssessmentMonitoring.alignFirstImageLeft();
+
+        const featureGamification = new Feature(
+            'informativeMarketing.instructor.feature.assessmentGamification.title',
+            'informativeMarketing.instructor.feature.assessmentGamification.shortDescription',
+            'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.icon',
+            'informativeMarketing.instructor.feature.assessmentGamification.descriptionTextOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.imageOne',
+            'informativeMarketing.instructor.feature.assessmentGamification.imageTwo',
+        );
+
+        const featureComplaints = new Feature(
+            'informativeMarketing.instructor.feature.complaints.title',
+            'informativeMarketing.instructor.feature.complaints.shortDescription',
+            'informativeMarketing.instructor.feature.complaints.descriptionTextOne',
+            'informativeMarketing.instructor.feature.complaints.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.complaints.imageOne',
+        );
+        featureComplaints.alignFirstImageLeft();
+
+        const featureStatistics = new Feature(
+            'informativeMarketing.instructor.feature.statistics.title',
+            'informativeMarketing.instructor.feature.statistics.shortDescription',
+            'informativeMarketing.instructor.feature.statistics.descriptionTextOne',
+            'informativeMarketing.instructor.feature.statistics.icon',
+            undefined,
+            'informativeMarketing.instructor.feature.statistics.imageOne',
+        );
+        this.features = [
+            featureIntegratedProcess,
+            featureConfiguration,
+            featureExerciseTypes,
+            featureExerciseVariants,
+            featureSessionMonitoring,
+            featurePlagiarismDetection,
+            featureAssessment,
+            featureAssessmentMonitoring,
+            featureComplaints,
+            featureStatistics,
+        ];
     }
 
     navigateToFeature(featureId: string): void {
