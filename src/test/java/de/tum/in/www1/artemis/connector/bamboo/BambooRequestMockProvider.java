@@ -163,25 +163,42 @@ public class BambooRequestMockProvider {
         }
     }
 
-    public void mockCreateTrigger() throws URISyntaxException {
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/createChainTrigger.action").build().toUri();
-        // TODO: check all parameters
+    public void mockAddTrigger(String buildPlanKey, String repository) throws URISyntaxException, IOException {
+        mockGetBuildPlanRepositoryList(buildPlanKey);
+
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        // we only support one very specific case here
+        parameters.add("repositoryTrigger", repository);
+        parameters.add("planKey", buildPlanKey);
+        parameters.add("triggerId", "-1");
+        parameters.add("createTriggerKey", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stashTrigger");
+        parameters.add("userDescription", null);
+        parameters.add("confirm", "true");
+        parameters.add("bamboo.successReturnMode", "json");
+        parameters.add("decorator", "nothing");
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/createChainTrigger.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockDeleteTrigger() throws URISyntaxException {
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/deleteChainTrigger.action").build().toUri();
-        // TODO: check all parameters
+    public void mockDeleteTrigger(String buildPlanKey, Long id) throws URISyntaxException {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("triggerId", Long.toString(id));
+        parameters.add("confirm", "true");
+        parameters.add("decorator", "nothing");
+        parameters.add("bamboo.successReturnMode", "json");
+        parameters.add("planKey", buildPlanKey);
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/deleteChainTrigger.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     @NotNull
-    public List<BambooTriggerDTO> mockGetTriggerList() throws IOException, URISyntaxException {
-        var triggerList = List.of(new BambooTriggerDTO(123L, "foo", "artemis"), new BambooTriggerDTO(456L, "bar", "artemis"));
+    public List<BambooTriggerDTO> mockGetTriggerList(String buildPlanKey) throws IOException, URISyntaxException {
+        var triggerList = List.of(new BambooTriggerDTO(1L, "foo", "artemis"));
 
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("buildKey", buildPlanKey);
         final var triggerListHtmlResponse = loadFileFromResources("test-data/bamboo-response/build-plan-trigger-list-response.html");
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/editChainTriggers.action").build().toUri();
-        // TODO: check all parameters, add actual response in html file
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/editChainTriggers.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(triggerListHtmlResponse));
         return triggerList;
     }

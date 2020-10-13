@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
@@ -139,12 +140,19 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         mockUpdatePlanRepository(exercise, username, Constants.ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
     }
 
+    private List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
+
+    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
+        return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
+    }
+
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
             throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var buildPlanKey = (projectKey + "-" + planName).toUpperCase();
 
-        final var bambooRepository = new BambooRepositoryDTO(296200357L, bambooRepoName);
+        final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
+        final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
         final var bitbucketRepository = new BitbucketRepositoryDTO("id", bitbucketRepoName, projectKey, "ssh:cloneUrl");
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
@@ -152,25 +160,39 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, bitbucketRepoName, bitbucketRepository);
 
         var applicationLinksToBeReturned = bambooRequestMockProvider.createApplicationLink();
-        var applicationLink = continuousIntegrationUpdateService.findCachedLinkForUrl(applicationLinksToBeReturned.getApplicationLinks().get(0).getRpcUrl());
+        // support caching for multiple tests (reusing the same continuousIntegrationUpdateService)
+        var url = applicationLinksToBeReturned.getApplicationLinks().get(0).getRpcUrl();
+        var applicationLink = continuousIntegrationUpdateService.findCachedLinkForUrl(url);
         if (applicationLink.isEmpty()) {
-            // no cached application link is available in BambooService
-            bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
-            applicationLink = Optional.of(applicationLinksToBeReturned.getApplicationLinks().get(0));
+            // and also support caching for multiple calls in the same test (then continuousIntegrationUpdateService is not yet caching during the mock initialization)
+            applicationLink = findCachedLinkForUrl(url);
+
+            if (applicationLink.isEmpty()) {
+                // no cached application link is available
+                bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
+                applicationLink = Optional.of(applicationLinksToBeReturned.getApplicationLinks().get(0));
+                cachedApplicationLinks.add(applicationLink.get());
+            }
         }
 
-        bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, applicationLink.get());
+        if (ASSIGNMENT_REPO_NAME.equals(bambooRepoName)) {
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink.get());
+        }
+        else {
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink.get());
+        }
 
         if (!triggeredBy.isEmpty()) {
             // in case there are triggers
-            List<BambooTriggerDTO> triggerList = bambooRequestMockProvider.mockGetTriggerList();
+            List<BambooTriggerDTO> triggerList = bambooRequestMockProvider.mockGetTriggerList(buildPlanKey);
 
             for (var trigger : triggerList) {
-                bambooRequestMockProvider.mockDeleteTrigger();
+                bambooRequestMockProvider.mockDeleteTrigger(buildPlanKey, trigger.getId());
             }
 
             for (var repo : triggeredBy) {
-                bambooRequestMockProvider.mockCreateTrigger();
+                // we only support one specific case for the repository above here
+                bambooRequestMockProvider.mockAddTrigger(buildPlanKey, bambooRepositoryAssignment.getId().toString());
             }
         }
     }
@@ -206,9 +228,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
         bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
         doReturn(null).when(bambooServer).publish(any());
+        bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
         bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
         bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
@@ -222,8 +246,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
