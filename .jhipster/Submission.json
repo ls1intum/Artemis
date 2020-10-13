@@ -21,10 +21,10 @@
     ],
     "relationships": [
         {
-            "relationshipType": "one-to-one",
-            "otherEntityName": "exerciseResult",
+            "relationshipType": "one-to-many",
+            "otherEntityName": "exerciseResults",
             "otherEntityRelationshipName": "submission",
-            "relationshipName": "result",
+            "relationshipName": "results",
             "otherEntityField": "id",
             "ownerSide": true
         },

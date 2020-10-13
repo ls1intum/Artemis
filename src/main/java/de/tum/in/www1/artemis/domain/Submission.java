@@ -1,75 +1,78 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
-
-import com.fasterxml.jackson.annotation.*;
+import java.io.Serializable;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A Submission.
  */
 @Entity
 @Table(name = "submission")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue(value = "S")
-@DiscriminatorOptions(force = true)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Submission implements Serializable {
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
-// Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"), @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
-        @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"), @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"), })
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Submission extends DomainObject {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "submitted")
-    @JsonView(QuizView.Before.class)
     private Boolean submitted;
 
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "jhi_type")
-    @JsonView(QuizView.Before.class)
+    @Column(name = "type")
     private SubmissionType type;
 
     @Column(name = "example_submission")
     private Boolean exampleSubmission;
 
+    @OneToMany(mappedBy = "submission")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    private Set<Result> results = new HashSet<>();
+
     @ManyToOne
+    @JsonIgnoreProperties(value = "submissions", allowSetters = true)
     private Participation participation;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<SubmissionVersion> versions = new ArrayList<>();
+    // jhipster-needle-entity-add-field - JHipster will add fields here
+    public Long getId() {
+        return id;
+    }
 
-    /**
-     * A submission can have a result and therefore, results are persisted and removed with a submission.
-     */
-    @OneToOne(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties({ "submission", "participation" })
-    @JoinColumn(unique = true)
-    private Result result;
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    @Column(name = "submission_date")
-    private ZonedDateTime submissionDate;
+    public Boolean isSubmitted() {
+        return submitted;
+    }
 
-    @JsonView(QuizView.Before.class)
+    public Submission submitted(Boolean submitted) {
+        this.submitted = submitted;
+        return this;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
+    }
+
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
     }
@@ -95,11 +98,13 @@ public abstract class Submission extends DomainObject {
     }
 
     public Result getResult() {
-        return result;
+        return results.iterator().next();
     }
 
     public void setResult(Result result) {
-        this.result = result;
+        if (result != null) {
+            this.results.add(result);
+        }
     }
 
     public Participation getParticipation() {
@@ -119,19 +124,6 @@ public abstract class Submission extends DomainObject {
         this.submissionDate = submissionDate;
     }
 
-    public Boolean isSubmitted() {
-        return submitted != null ? submitted : false;
-    }
-
-    public Submission submitted(Boolean submitted) {
-        this.submitted = submitted;
-        return this;
-    }
-
-    public void setSubmitted(Boolean submitted) {
-        this.submitted = submitted;
-    }
-
     public SubmissionType getType() {
         return type;
     }
@@ -149,7 +141,73 @@ public abstract class Submission extends DomainObject {
         return exampleSubmission;
     }
 
+    public Submission exampleSubmission(Boolean exampleSubmission) {
+        this.exampleSubmission = exampleSubmission;
+        return this;
+    }
+
     public void setExampleSubmission(Boolean exampleSubmission) {
         this.exampleSubmission = exampleSubmission;
+    }
+
+    public Set<Result> getResults() {
+        return results;
+    }
+
+    public Submission results(Set<Result> exerciseResults) {
+        this.results = exerciseResults;
+        return this;
+    }
+
+    public Submission addResults(Result exerciseResults) {
+        this.results.add(exerciseResults);
+        exerciseResults.setSubmission(this);
+        return this;
+    }
+
+    public Submission removeResults(Result exerciseResults) {
+        this.results.remove(exerciseResults);
+        exerciseResults.setSubmission(null);
+        return this;
+    }
+
+    public void setResults(Set<Result> exerciseResults) {
+        this.results = exerciseResults;
+    }
+
+
+    public Submission participation(Participation participation) {
+        this.participation = participation;
+        return this;
+    }
+
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Submission)) {
+            return false;
+        }
+        return id != null && id.equals(((Submission) o).id);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31;
+    }
+
+    // prettier-ignore
+    @Override
+    public String toString() {
+        return "Submission{" +
+            "id=" + getId() +
+            ", submitted='" + isSubmitted() + "'" +
+            ", submissionDate='" + getSubmissionDate() + "'" +
+            ", type='" + getType() + "'" +
+            ", exampleSubmission='" + isExampleSubmission() + "'" +
+            "}";
     }
 }

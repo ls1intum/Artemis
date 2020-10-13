@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <!--
+        Added the constraints for entity ExerciseResult.
+    -->
+    <changeSet id="20190315161931-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="assessor_id"
+                                 baseTableName="result"
+                                 constraintName="fk_result_assessor_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+
+        <addForeignKeyConstraint baseColumnNames="submission_id"
+                                 baseTableName="result"
+                                 constraintName="fk_result_submission_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="submission"/>
+
+        <addForeignKeyConstraint baseColumnNames="participation_id"
+                                 baseTableName="result"
+                                 constraintName="fk_result_participation_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="participation"/>
+
+    </changeSet>
+</databaseChangeLog>

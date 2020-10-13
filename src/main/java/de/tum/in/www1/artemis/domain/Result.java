@@ -75,10 +75,10 @@ public class Result extends DomainObject {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "result", "participation" })
+    @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)

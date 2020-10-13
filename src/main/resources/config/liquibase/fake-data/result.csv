@@ -1,0 +1,11 @@
+id;result_string;completion_date;successful;build_artifact;score;rated;has_feedback;assessment_type;has_complaint;example_result
+1;Mountain;2019-03-14T20:05:12;false;false;90791;true;true;MANUAL;true;true
+2;teal Savings Account;2019-03-15T07:47:26;false;true;96419;true;true;AUTOMATIC;true;false
+3;Frozen Auto Loan Account harness;2019-03-15T07:18:30;true;true;50390;false;false;AUTOMATIC;false;false
+4;primary;2019-03-15T10:28:14;true;true;99149;false;true;AUTOMATIC;true;true
+5;Tuvalu context-sensitive;2019-03-15T04:56:53;false;false;99063;false;false;MANUAL;false;true
+6;Uzbekistan Mews;2019-03-15T15:28:02;true;false;60969;true;false;AUTOMATIC;false;false
+7;Decentralized Home Loan Account;2019-03-15T05:48:04;false;false;32495;true;true;AUTOMATIC;false;false
+8;convergence one-to-one Arizona;2019-03-15T03:15:42;true;false;18529;true;true;MANUAL;true;false
+9;Tasty Rubber Keyboard payment asymmetric;2019-03-14T23:20:18;true;true;45304;true;true;AUTOMATIC;false;false
+10;impactful;2019-03-15T06:56:02;true;true;30749;true;false;MANUAL;true;true

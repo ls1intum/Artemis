@@ -1,0 +1,73 @@
+<div>
+    <h2 id="page-heading">
+        <span jhiTranslate="artemisApp.submission.home.title">Submissions</span>
+
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-submission" [routerLink]="['/submission/new']">
+            <fa-icon icon="plus"></fa-icon>
+            <span  jhiTranslate="artemisApp.submission.home.createLabel">
+            Create a new Submission
+            </span>
+        </button>
+    </h2>
+
+    <jhi-alert-error></jhi-alert-error>
+
+    <jhi-alert></jhi-alert>
+
+    <div class="alert alert-warning" id="no-result" *ngIf="submissions?.length === 0">
+        <span jhiTranslate="artemisApp.submission.home.notFound">No submissions found</span>
+    </div>
+
+    <div class="table-responsive" id="entities" *ngIf="submissions && submissions.length > 0">
+        <table class="table table-striped" aria-describedby="page-heading">
+            <thead>
+                <tr>
+                    <th scope="col" ><span jhiTranslate="global.field.id">ID</span></th>
+                    <th scope="col" ><span jhiTranslate="artemisApp.submission.submitted">Submitted</span></th>
+                    <th scope="col" ><span jhiTranslate="artemisApp.submission.submissionDate">Submission Date</span></th>
+                    <th scope="col" ><span jhiTranslate="artemisApp.submission.type">Type</span></th>
+                    <th scope="col" ><span jhiTranslate="artemisApp.submission.exampleSubmission">Example Submission</span></th>
+                    <th scope="col" ><span jhiTranslate="artemisApp.submission.participation">Participation</span></th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let submission of submissions ;trackBy: trackId">
+                    <td><a [routerLink]="['/submission', submission.id, 'view']">{{ submission.id }}</a></td>
+                    <td>{{ submission.submitted }}</td>
+                    <td>{{ submission.submissionDate | date:'medium' }}</td>
+                    <td jhiTranslate="{{ 'artemisApp.SubmissionType.' + submission.type }}">{{ submission.type }}</td>
+                    <td>{{ submission.exampleSubmission }}</td>
+                    <td>
+                        <div *ngIf="submission.participation">
+                            <a [routerLink]="['/participation', submission.participation?.id, 'view']" >{{ submission.participation?.id }}</a>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group">
+                            <button type="submit"
+                                    [routerLink]="['/submission', submission.id, 'view']"
+                                    class="btn btn-info btn-sm">
+                                <fa-icon icon="eye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+
+                            <button type="submit"
+                                    [routerLink]="['/submission', submission.id, 'edit']"
+                                    class="btn btn-primary btn-sm">
+                                <fa-icon icon="pencil-alt"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+
+                            <button type="submit" (click)="delete(submission)"
+                                    class="btn btn-danger btn-sm">
+                                <fa-icon icon="times"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+{
+    "artemisApp": {
+        "exerciseResult": {
+            "home": {
+                "title": "Exercise Results",
+                "createLabel": "Exercise Result erstellen",
+                "createOrEditLabel": "Exercise Result erstellen oder bearbeiten",
+                "notFound": "No Exercise Results found"
+            },
+            "created": "Exercise Result erstellt mit ID {{ param }}",
+            "updated": "Exercise Result aktualisiert mit ID {{ param }}",
+            "deleted": "Exercise Result gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Exercise Result {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Exercise Result"
+            },
+            "resultString": "Result String",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "rated": "Rated",
+            "hasFeedback": "Has Feedback",
+            "assessmentType": "Assessment Type",
+            "hasComplaint": "Has Complaint",
+            "exampleResult": "Example Result",
+            "assessor": "Assessor",
+            "feedbacks": "Feedbacks",
+            "submission": "Submission",
+            "participation": "Participation"
+        }
+    }
+}

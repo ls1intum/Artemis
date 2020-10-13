@@ -54,13 +54,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(type = LOAD, attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id)")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(Long exerciseId);
 
     /**
@@ -112,7 +112,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id) and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions submission left join fetch submission.results result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessor.id = participation.student.id) and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -124,7 +124,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.results results where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.id = :#{#participationId}")
@@ -159,7 +159,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
-    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch r.assessor a WHERE p.exercise.id = :#{#exerciseId} AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch r.assessor a WHERE p.exercise.id = :#{#exerciseId} AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "results" })
@@ -174,13 +174,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
@@ -209,6 +209,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor = :#{#assessor} AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id))")
+    // TODO: change here the sql statement
+    @Query("SELECT DISTINCT p FROM StudentParticipation p left join fetch p.submissions s WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND  :#{#assessor} IN (SELECT a FROM s JOIN s.results r JOIN r.assessor a) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id))")
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 }

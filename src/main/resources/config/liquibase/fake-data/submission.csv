@@ -1,0 +1,11 @@
+id;submitted;submission_date;type;example_submission
+1;true;2019-03-15T10:17:20;MANUAL;true
+2;true;2019-03-15T04:54:27;TIMEOUT;true
+3;true;2019-03-15T02:36:15;OTHER;false
+4;false;2019-03-14T17:23:07;OTHER;true
+5;true;2019-03-15T05:34:34;TIMEOUT;false
+6;true;2019-03-14T20:42:35;TIMEOUT;false
+7;false;2019-03-14T19:02:39;OTHER;false
+8;false;2019-03-15T04:17:01;TIMEOUT;false
+9;false;2019-03-15T06:01:17;TEST;false
+10;false;2019-03-15T03:10:55;TIMEOUT;true

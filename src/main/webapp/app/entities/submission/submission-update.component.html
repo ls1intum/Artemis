@@ -1,0 +1,63 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+            <h2 id="jhi-submission-heading" jhiTranslate="artemisApp.submission.home.createOrEditLabel">Create or edit a Submission</h2>
+
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+
+                <div class="form-group" [hidden]="!editForm.get('id')!.value">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.submission.submitted" for="field_submitted">Submitted</label>
+                    <input type="checkbox" class="form-control" name="submitted" id="field_submitted"
+                           formControlName="submitted"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.submission.submissionDate" for="field_submissionDate">Submission Date</label>
+                    <div class="d-flex">
+                        <input id="field_submissionDate" type="datetime-local" class="form-control" name="submissionDate" formControlName="submissionDate" placeholder="YYYY-MM-DD HH:mm"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.submission.type" for="field_type">Type</label>
+                    <select class="form-control" name="type" formControlName="type" id="field_type">
+                        <option value="MANUAL">{{ 'artemisApp.SubmissionType.MANUAL' | translate }}</option>
+                        <option value="TIMEOUT">{{ 'artemisApp.SubmissionType.TIMEOUT' | translate }}</option>
+                        <option value="TEST">{{ 'artemisApp.SubmissionType.TEST' | translate }}</option>
+                        <option value="OTHER">{{ 'artemisApp.SubmissionType.OTHER' | translate }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.submission.exampleSubmission" for="field_exampleSubmission">Example Submission</label>
+                    <input type="checkbox" class="form-control" name="exampleSubmission" id="field_exampleSubmission"
+                           formControlName="exampleSubmission"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.submission.participation" for="field_participation">Participation</label>
+                    <select class="form-control" id="field_participation" name="participation" formControlName="participation">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="participationOption.id === editForm.get('participation')!.value?.id ? editForm.get('participation')!.value : participationOption" *ngFor="let participationOption of participations; trackBy: trackById">{{ participationOption.id }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+
+                <button type="submit" id="save-entity" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

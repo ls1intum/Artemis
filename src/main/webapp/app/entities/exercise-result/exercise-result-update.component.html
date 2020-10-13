@@ -1,0 +1,113 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
+            <h2 id="jhi-exercise-result-heading" jhiTranslate="artemisApp.exerciseResult.home.createOrEditLabel">Create or edit a Exercise Result</h2>
+
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+
+                <div class="form-group" [hidden]="!editForm.get('id')!.value">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.resultString" for="field_resultString">Result String</label>
+                    <input type="text" class="form-control" name="resultString" id="field_resultString"
+                           formControlName="resultString"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.completionDate" for="field_completionDate">Completion Date</label>
+                    <div class="d-flex">
+                        <input id="field_completionDate" type="datetime-local" class="form-control" name="completionDate" formControlName="completionDate" placeholder="YYYY-MM-DD HH:mm"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.successful" for="field_successful">Successful</label>
+                    <input type="checkbox" class="form-control" name="successful" id="field_successful"
+                           formControlName="successful"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.buildArtifact" for="field_buildArtifact">Build Artifact</label>
+                    <input type="checkbox" class="form-control" name="buildArtifact" id="field_buildArtifact"
+                           formControlName="buildArtifact"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.score" for="field_score">Score</label>
+                    <input type="number" class="form-control" name="score" id="field_score"
+                           formControlName="score"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.rated" for="field_rated">Rated</label>
+                    <input type="checkbox" class="form-control" name="rated" id="field_rated"
+                           formControlName="rated"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.hasFeedback" for="field_hasFeedback">Has Feedback</label>
+                    <input type="checkbox" class="form-control" name="hasFeedback" id="field_hasFeedback"
+                           formControlName="hasFeedback"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.assessmentType" for="field_assessmentType">Assessment Type</label>
+                    <select class="form-control" name="assessmentType" formControlName="assessmentType" id="field_assessmentType">
+                        <option value="AUTOMATIC">{{ 'artemisApp.AssessmentType.AUTOMATIC' | translate }}</option>
+                        <option value="MANUAL">{{ 'artemisApp.AssessmentType.MANUAL' | translate }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.hasComplaint" for="field_hasComplaint">Has Complaint</label>
+                    <input type="checkbox" class="form-control" name="hasComplaint" id="field_hasComplaint"
+                           formControlName="hasComplaint"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.exampleResult" for="field_exampleResult">Example Result</label>
+                    <input type="checkbox" class="form-control" name="exampleResult" id="field_exampleResult"
+                           formControlName="exampleResult"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.assessor" for="field_assessor">Assessor</label>
+                    <select class="form-control" id="field_assessor" name="assessor" formControlName="assessor">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="userOption.id === editForm.get('assessor')!.value?.id ? editForm.get('assessor')!.value : userOption" *ngFor="let userOption of users; trackBy: trackById">{{ userOption.id }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.submission" for="field_submission">Submission</label>
+                    <select class="form-control" id="field_submission" name="submission" formControlName="submission">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="submissionOption.id === editForm.get('submission')!.value?.id ? editForm.get('submission')!.value : submissionOption" *ngFor="let submissionOption of submissions; trackBy: trackById">{{ submissionOption.id }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exerciseResult.participation" for="field_participation">Participation</label>
+                    <select class="form-control" id="field_participation" name="participation" formControlName="participation">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="participationOption.id === editForm.get('participation')!.value?.id ? editForm.get('participation')!.value : participationOption" *ngFor="let participationOption of participations; trackBy: trackById">{{ participationOption.id }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+
+                <button type="submit" id="save-entity" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

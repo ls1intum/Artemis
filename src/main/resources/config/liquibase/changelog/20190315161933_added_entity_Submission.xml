@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+        <property name="autoIncrement" value="true"/>
+
+    <!--
+        Added the entity Submission.
+    -->
+    <changeSet id="20190315161933-1" author="jhipster">
+        <createTable tableName="submission">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="submitted" type="boolean">
+                <constraints nullable="true" />
+            </column>
+            <column name="submission_date" type="datetime">
+                <constraints nullable="true" />
+            </column>
+            <column name="type" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="example_submission" type="boolean">
+                <constraints nullable="true" />
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
+        </createTable>
+        <dropDefaultValue tableName="submission" columnName="submission_date" columnDataType="datetime"/>
+    </changeSet>
+
+    <changeSet id="20190315161933-1-relations" author="jhipster">
+
+    </changeSet>
+    <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
+
+    <!--
+        Load sample data generated with Faker.js
+        - This data can be easily edited using a CSV editor (or even MS Excel) and
+          is located in the 'src/main/resources/config/liquibase/fake-data' directory
+        - By default this data is applied when running with the JHipster 'dev' profile.
+          This can be customized by adding or removing 'faker' in the 'spring.liquibase.contexts'
+          Spring Boot configuration key.
+    -->
+    <changeSet id="20190315161933-1-data" author="jhipster" context="faker">
+        <loadData
+                  file="config/liquibase/fake-data/submission.csv"
+                  separator=";"
+                  tableName="submission">
+            <column name="id" type="numeric"/>
+            <column name="submitted" type="boolean"/>
+            <column name="submission_date" type="datetime"/>
+            <column name="type" type="string"/>
+            <column name="example_submission" type="boolean"/>
+            <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
+        </loadData>
+    </changeSet>
+
+</databaseChangeLog>

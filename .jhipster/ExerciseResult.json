@@ -59,9 +59,9 @@
             "relationshipName": "feedbacks"
         },
         {
-            "relationshipType": "one-to-one",
+            "relationshipType": "many-to-one",
             "otherEntityName": "submission",
-            "otherEntityRelationshipName": "result",
+            "otherEntityRelationshipName": "results",
             "relationshipName": "submission",
             "ownerSide": false
         },
