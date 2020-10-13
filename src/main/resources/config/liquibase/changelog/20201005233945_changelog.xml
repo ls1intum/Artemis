@@ -1,0 +1,32 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="balazs-czopf" id="1598305196706-34">
+        <createTable tableName="achievement">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="achievementPK"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="icon" type="VARCHAR(255)"/>
+            <column name="achievement_rank" type="VARCHAR(255)"/>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="achievement_type" type="VARCHAR(255)"/>
+            <column name="course_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT"/>
+        </createTable>
+        <createTable tableName="user_achievement">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="achievement_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+        <addColumn tableName="course">
+            <column defaultValueBoolean="false" name="achievements_enabled" type="boolean"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_achievement" constraintName="FKag0f3cay7w8r2nn3qa42qjcmj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="achievement_id" baseTableName="user_achievement" constraintName="FKcxeo6malce3dsw6tc43bcrwfd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="achievement" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="achievement" constraintName="FKqdk7gj5csvsa1dq48aihd4lk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="achievement" constraintName="FKqivnrtxjebaum2opd716t7nhf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

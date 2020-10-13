@@ -112,6 +112,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
 
+    @ManyToMany
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JoinTable(name = "user_achievement", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "achievement_id", referencedColumnName = "id") })
+    @JsonIgnore
+    private Set<Achievement> achievements = new HashSet<>();
+
     public String getLogin() {
         return login;
     }
@@ -255,6 +262,22 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
+    }
+
+    public Set<Achievement> getAchievements() {
+        return achievements;
+    }
+
+    public void setAchievements(Set<Achievement> achievements) {
+        this.achievements = achievements;
+    }
+
+    public void addAchievement(Achievement achievement) {
+        this.achievements.add(achievement);
+    }
+
+    public void removeAchievement(Achievement achievement) {
+        this.achievements.remove(achievement);
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

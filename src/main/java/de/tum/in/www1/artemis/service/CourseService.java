@@ -50,9 +50,11 @@ public class CourseService {
 
     private final ExerciseGroupService exerciseGroupService;
 
+    private final AchievementService achievementService;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
-            ExerciseGroupService exerciseGroupService) {
+            ExerciseGroupService exerciseGroupService, AchievementService achievementService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -61,6 +63,7 @@ public class CourseService {
         this.lectureService = lectureService;
         this.notificationService = notificationService;
         this.exerciseGroupService = exerciseGroupService;
+        this.achievementService = achievementService;
     }
 
     @Autowired
@@ -245,6 +248,10 @@ public class CourseService {
         for (Exam exam : exams) {
             examService.deleteById(exam.getId());
         }
+
+        // delete the achievements
+        achievementService.deleteByCourseId(course.getId());
+
         courseRepository.deleteById(course.getId());
     }
 

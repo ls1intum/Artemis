@@ -64,11 +64,13 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
+    private final AchievementService achievementService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
-            ExamRepository exampRepository) {
+            ExamRepository exampRepository, AchievementService achievementService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = exampRepository;
         this.participationService = participationService;
@@ -83,6 +85,7 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -287,6 +290,9 @@ public class ExerciseService {
         }
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
+
+        // delete the achievements
+        achievementService.deleteByExerciseId(exercise.getId());
 
         if (exercise.hasExerciseGroup()) {
             Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());

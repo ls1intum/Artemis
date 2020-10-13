@@ -102,6 +102,9 @@ public class Course extends DomainObject {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
+    @Column(name = "achievements_enabled", columnDefinition = "Boolean default false")
+    private Boolean achievementsEnabled = false; // default value
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -335,6 +338,14 @@ public class Course extends DomainObject {
         if (exam.getCourse() != this) {
             exam.setCourse(this);
         }
+    }
+
+    public Boolean getAchievementsEnabled() {
+        return achievementsEnabled;
+    }
+
+    public void setAchievementsEnabled(Boolean achievementsEnabled) {
+        this.achievementsEnabled = achievementsEnabled;
     }
 
     /*
