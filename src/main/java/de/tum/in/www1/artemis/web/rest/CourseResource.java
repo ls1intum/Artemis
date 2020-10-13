@@ -159,6 +159,7 @@ public class CourseResource {
                     .body(null);
         }
 
+        validateRegistrationConfirmationMessage(course);
         validateComplaintsConfig(course);
 
         try {
@@ -270,6 +271,9 @@ public class CourseResource {
             }
         }
 
+        validateRegistrationConfirmationMessage(updatedCourse);
+        validateComplaintsConfig(updatedCourse);
+
         // Check if course shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
         if (!shortNameMatcher.matches()) {
@@ -293,6 +297,13 @@ public class CourseResource {
         // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
         if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
             throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
+        }
+    }
+
+    private void validateRegistrationConfirmationMessage(Course course) {
+        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 255) {
+            throw new BadRequestAlertException("Confirmation registration message must be shorter than 255 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
+                    true);
         }
     }
 
