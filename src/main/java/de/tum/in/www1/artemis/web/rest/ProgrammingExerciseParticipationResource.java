@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -41,15 +43,18 @@ public class ProgrammingExerciseParticipationResource {
 
     private AuthorizationCheckService authCheckService;
 
+    private GradingCriterionService gradingCriterionService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
             ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseService programmingExerciseService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.programmingExerciseService = programmingExerciseService;
         this.authCheckService = authCheckService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -97,6 +102,9 @@ public class ProgrammingExerciseParticipationResource {
             // hide details that should not be shown to the students
             participation.get().getExercise().filterSensitiveInformation();
         }
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(participation.get().getExercise().getId());
+        participation.get().getExercise().setGradingCriteria(gradingCriteria);
         return ResponseEntity.ok(participation.get());
     }
 
