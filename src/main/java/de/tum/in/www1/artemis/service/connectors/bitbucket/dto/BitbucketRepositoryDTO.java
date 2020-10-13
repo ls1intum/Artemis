@@ -106,6 +106,10 @@ public class BitbucketRepositoryDTO {
         this.links = links;
     }
 
+    /**
+     * helper method
+     * @return the clone url stored in the link based on http href
+     */
     public String getCloneUrl() {
         if (this.links == null)
             return null;
@@ -118,6 +122,10 @@ public class BitbucketRepositoryDTO {
         return null;
     }
 
+    /**
+     * helper method
+     * @return the clone url stored in the link based on ssh href
+     */
     public String getCloneSshUrl() {
         if (this.links == null)
             return null;

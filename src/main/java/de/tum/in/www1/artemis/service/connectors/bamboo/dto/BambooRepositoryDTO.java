@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
-import java.util.Map;
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -35,8 +32,6 @@ public class BambooRepositoryDTO {
     private String cloneSshUrl;
 
     protected String scmType;
-
-    private Map<String, String> fields;
 
     public BambooRepositoryDTO() {
     }
@@ -160,21 +155,5 @@ public class BambooRepositoryDTO {
 
     public void setScmType(String scmType) {
         this.scmType = scmType;
-    }
-
-    public Map<String, String> getFields() {
-        return this.fields;
-    }
-
-    public void setFields(Map<String, String> fields) {
-        this.fields = fields;
-    }
-
-    public String getFieldValue(String partialKey) {
-        var fields = getFields();
-        if (fields == null)
-            return null;
-        Optional<String> value = fields.entrySet().stream().filter(entry -> entry.getKey().contains(partialKey)).map(Map.Entry::getValue).findFirst();
-        return value.orElse(null);
     }
 }
