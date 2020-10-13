@@ -81,8 +81,8 @@
             }
         },
         "students": {
-            "pageTitle": "Klausur Features für Instructors",
-            "featureOverview": "Features für Instruktoren",
+            "pageTitle": "Klausur Features für Studenten",
+            "featureOverview": "Features für Studenten",
             "feature": {
                 "localIDE": {
                     "title": "Verwende deine eigene IDE",
@@ -100,14 +100,14 @@
                 },
                 "textEditor": {
                     "title": "Integrater Text Editor",
-                    "shortDescription": "Löse TextAufgaben mit dem integrierten Texteditor.",
+                    "shortDescription": "Löse Textaufgaben mit dem integrierten Texteditor.",
                     "descriptionTextOne": "Löse Textaufgaben mit dem integrierten Texteditor. Viel mehr ist nicht nötig. Der Texteditor ist einfach zu bedienen und leicht zu navigieren. Er funktioniert genau so, wie man es erwarten würde. Es gibt keine Beschränkungen für die maximal zulässige Länge und er verfolgt automatisch die Anzahl der Wörter und Zeichen in deiner Abgabe.",
                     "icon": "fa fa-file-text",
                     "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/text_editor.png?raw=true"
                 },
                 "apollonEditor": {
                     "title": "Integrater Model Editor",
-                    "shortDescription": "Erstelle komplexe Modelle für Modellieraufgaben einfach per Drag & Drop mit dem intuitiven Apollon-Editor.",
+                    "shortDescription": "Erstelle komplexe Modelle einfach per Drag & Drop mit dem intuitiven Apollon-Editor.",
                     "descriptionTextOne": "Powered by Apollon-Editor, unterstützt der Artemis-Klausurmodus das Modellieren von Aufgaben verschiedener Art. Dazu gehören Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Einsatzdiagramme, Petrinetze und Syntaxbäume. Mit dem integrierten Apollon-Editor kannst du auf einfache Weise komplexe Modelle erstellen, die über eine intuitive Drag&Drop-Benutzeroberfläche navigierbar sind.",
                     "icon": "fa fa-object-group",
                     "imageOne": "https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/modeling_editor.png?raw=true"

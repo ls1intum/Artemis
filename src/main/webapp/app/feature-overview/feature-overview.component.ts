@@ -8,20 +8,20 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class FeatureOverviewComponent implements OnInit {
     features: Feature[];
-    targetAudience = targetAudience.INSTRUCTORS;
+    targetAudience = TargetAudience.INSTRUCTORS;
 
     constructor(private route: ActivatedRoute) {}
 
     /**
-     * Initialises the informative marketing page either for students or for instructors, depending on the url.
+     * Initialises the feature overview page either for students or for instructors, depending on the url.
      * Sets up the features to be displayed
      */
     ngOnInit(): void {
         if (this.route.snapshot.url[0]?.toString() === 'students') {
-            this.targetAudience = targetAudience.STUDENTS;
+            this.targetAudience = TargetAudience.STUDENTS;
         }
 
-        if (this.targetAudience === targetAudience.INSTRUCTORS) {
+        if (this.targetAudience === TargetAudience.INSTRUCTORS) {
             this.setupInstructorFeatures();
         } else {
             this.setupStudentFeatures();
@@ -223,16 +223,6 @@ export class FeatureOverviewComponent implements OnInit {
         );
         featureAssessmentMonitoring.alignFirstImageLeft();
 
-        const featureGamification = new Feature(
-            'featureOverview.instructor.feature.assessmentGamification.title',
-            'featureOverview.instructor.feature.assessmentGamification.shortDescription',
-            'featureOverview.instructor.feature.assessmentGamification.descriptionTextOne',
-            'featureOverview.instructor.feature.assessmentGamification.icon',
-            'featureOverview.instructor.feature.assessmentGamification.descriptionTextOne',
-            'featureOverview.instructor.feature.assessmentGamification.imageOne',
-            'featureOverview.instructor.feature.assessmentGamification.imageTwo',
-        );
-
         const featureComplaints = new Feature(
             'featureOverview.instructor.feature.complaints.title',
             'featureOverview.instructor.feature.complaints.shortDescription',
@@ -276,7 +266,7 @@ export class FeatureOverviewComponent implements OnInit {
     }
 }
 
-enum targetAudience {
+export enum TargetAudience {
     INSTRUCTORS = 'instructor',
     STUDENTS = 'students',
 }
@@ -310,7 +300,7 @@ class Feature {
      * @private
      */
     setId(): string {
-        return ':' + Math.random().toString(36).substr(2, 9);
+        return '_' + Math.random().toString(36).substr(2, 9);
     }
 
     /**

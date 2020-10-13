@@ -14,7 +14,7 @@
                 </div>
             </div>
             <div class="container">
-                <div *ngFor="let feature of features" class="box" (click)="navigateToFeature(feature.id)">
+                <div *ngFor="let feature of features" id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
                     <div class="icon">
                         <i class="{{ feature.icon | translate }}" aria-hidden="true"></i>
                         <div class="title">
