@@ -854,8 +854,8 @@ public class UMLModelParser {
 
         // loop over all JSON control flow elements and create syntax tree links
         for (JsonElement rel : relationships) {
-            Optional<PetriNetArc> useCaseAssociation = parsePetriNetArc(rel.getAsJsonObject(), allElementsMap);
-            useCaseAssociation.ifPresent(arcs::add);
+            Optional<PetriNetArc> petriNetArc = parsePetriNetArc(rel.getAsJsonObject(), allElementsMap);
+            petriNetArc.ifPresent(arcs::add);
         }
 
         return new PetriNet(modelSubmissionId, List.copyOf(places.values()), List.copyOf(transitions.values()), arcs);
@@ -889,8 +889,8 @@ public class UMLModelParser {
         if (source == null || target == null) {
             throw new IOException("Relationship source or target not part of model!");
         }
-        PetriNetArc newSPetriNetArc = new PetriNetArc(multiplicity, source, target, relationshipJson.get(ELEMENT_ID).getAsString());
-        return Optional.of(newSPetriNetArc);
+        PetriNetArc newPetriNetArc = new PetriNetArc(multiplicity, source, target, relationshipJson.get(ELEMENT_ID).getAsString());
+        return Optional.of(newPetriNetArc);
     }
 
     /**
@@ -933,8 +933,8 @@ public class UMLModelParser {
 
         // loop over all JSON control flow elements and create syntax tree links
         for (JsonElement rel : relationships) {
-            Optional<SyntaxTreeLink> useCaseAssociation = parseSyntaxTreeLink(rel.getAsJsonObject(), allElementsMap);
-            useCaseAssociation.ifPresent(syntaxTreeLinkList::add);
+            Optional<SyntaxTreeLink> syntaxTreeLink = parseSyntaxTreeLink(rel.getAsJsonObject(), allElementsMap);
+            syntaxTreeLink.ifPresent(syntaxTreeLinkList::add);
         }
 
         return new SyntaxTree(modelSubmissionId, List.copyOf(nonterminalMap.values()), List.copyOf(terminalMap.values()), syntaxTreeLinkList);
