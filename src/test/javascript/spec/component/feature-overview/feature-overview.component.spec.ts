@@ -12,7 +12,7 @@ describe('Feature Overview Component', () => {
     let debugElement: DebugElement;
 
     describe('Target Audience: Instructors', function () {
-        let route = ({ snapshot: { url: ['instructors'] } } as any) as ActivatedRoute;
+        const route = ({ snapshot: { url: ['instructors'] } } as any) as ActivatedRoute;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -41,8 +41,8 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                for (let featureA of comp.features) {
-                    for (let featureB of comp.features) {
+                for (const featureA of comp.features) {
+                    for (const featureB of comp.features) {
                         if (featureA !== featureB) {
                             expect(featureA.id === featureB.id).toBeFalsy();
                         }
