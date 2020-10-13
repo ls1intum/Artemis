@@ -106,7 +106,8 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
+    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+            boolean targetProjectExists) {
         final var cleanTargetName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;

@@ -31,7 +31,9 @@ public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInter
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
-        request.getHeaders().setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        if (request.getHeaders().getAccept().isEmpty()) {
+            request.getHeaders().setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        }
         if (request.getHeaders().getContentType() == null) {
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         }

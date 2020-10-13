@@ -217,6 +217,12 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
 
+        var buildPlan = getBuildPlan(buildPlanId, false, false);
+        if (buildPlan == null) {
+            log.error("Cannot delete " + buildPlanId + ", because it does not exist!");
+            return;
+        }
+
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId) here,
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
@@ -269,6 +275,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void deleteProject(String projectKey) {
         log.info("Try to delete bamboo project " + projectKey);
+
+        // TODO: check if the project actually exists, if not, we can immediately return
 
         // NOTE: we cannot use official the REST API, e.g. restTemplate.delete(bambooServerUrl + "/rest/api/latest/project/" + projectKey) here,
         // because then the build plans are not deleted directly and subsequent calls to create build plans with the same id might fail
@@ -382,7 +390,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
+    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+            boolean targetProjectExists) {
         final var cleanPlanName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
@@ -393,9 +402,9 @@ public class BambooService implements ContinuousIntegrationService {
                 log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
             }
-            log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
-            cloneBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, targetPlanName);
-            log.info("Clone build plan " + sourcePlanKey + " was successful");
+            log.info("Try to clone build plan " + sourcePlanKey + " to " + targetPlanKey);
+            cloneBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, cleanPlanName, targetProjectExists);
+            log.info("Clone build plan " + sourcePlanKey + " to " + targetPlanKey + " was successful");
         }
         catch (RestClientException clientException) {
             if (clientException.getMessage() != null && clientException.getMessage().contains("already exists")) {
@@ -416,14 +425,25 @@ public class BambooService implements ContinuousIntegrationService {
         return targetPlanKey;
     }
 
-    private void cloneBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
+    private void cloneBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName, boolean targetProjectExists) {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("existingProjectKey", targetProjectKey);
+
+        if (targetProjectExists) {
+            parameters.add("existingProjectKey", targetProjectKey);
+            parameters.add("projectKey", "");
+            parameters.add("projectName", "");
+        }
+        else {
+            parameters.add("existingProjectKey", "newProject");
+            parameters.add("projectKey", targetProjectKey);
+            parameters.add("projectName", targetProjectKey);
+        }
+
         parameters.add("planKeyToClone", sourcePlanKey);
         parameters.add("chainName", targetPlanName);
         parameters.add("chainKey", targetPlanName);
-        parameters.add("chainDescription", "Student build plan for exercise " + sourceProjectKey);
+        parameters.add("chainDescription", "Build plan for exercise " + sourceProjectKey);
         parameters.add("clonePlan", "true");
         parameters.add("tmp.createAsEnabled", "false");
         parameters.add("chainEnabled", "false");
