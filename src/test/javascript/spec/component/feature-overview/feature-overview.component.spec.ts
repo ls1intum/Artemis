@@ -5,7 +5,6 @@ import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/f
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { spy } from 'sinon';
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;
