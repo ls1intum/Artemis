@@ -4,6 +4,7 @@ printWidth: 180
 singleQuote: true
 tabWidth: 4
 trailingComma: all
+endOfLine: auto
 
 # java rules:
 overrides:
