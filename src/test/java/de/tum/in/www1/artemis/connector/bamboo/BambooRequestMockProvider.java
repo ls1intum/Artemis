@@ -12,7 +12,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,6 +146,10 @@ public class BambooRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
         mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName);
+    }
+
+    public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
+        mockGetBuildPlan(buildPlanId, exists ? new BambooBuildPlanDTO(buildPlanId) : null);
     }
 
     public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned) throws URISyntaxException, JsonProcessingException {
@@ -344,26 +347,6 @@ public class BambooRequestMockProvider {
         failed.setErrors(resultError);
 
         return failed;
-    }
-
-    public void mockRetrieveBuildStatus(final String planKey) throws URISyntaxException, JsonProcessingException {
-        final var response = Map.of("isActive", true, "isBuilding", false);
-        final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/plan").pathSegment(planKey + ".json").build().toUri();
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
-    }
-
-    public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
-        final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/plan/").pathSegment(buildPlanId).build().toUri();
-        if (exists) {
-            var buildPlan = new BambooBuildPlanDTO(buildPlanId);
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                    .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(buildPlan)));
-        }
-        else {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
-        }
     }
 
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
