@@ -206,8 +206,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
-        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName());
-        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName());
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
         doReturn(null).when(bambooServer).publish(any());
         bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
         bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());

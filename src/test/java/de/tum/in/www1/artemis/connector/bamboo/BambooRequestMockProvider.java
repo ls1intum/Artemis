@@ -145,7 +145,7 @@ public class BambooRequestMockProvider {
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, JsonProcessingException {
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
-        mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName);
+        mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName, true);
     }
 
     public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
@@ -349,18 +349,26 @@ public class BambooRequestMockProvider {
         return failed;
     }
 
-    public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
+    public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName, boolean targetProjectExists)
             throws URISyntaxException, JsonProcessingException {
 
         mockGetBuildPlan(targetProjectKey + "-" + targetPlanName, null);
 
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("existingProjectKey", targetProjectKey);
+        if (targetProjectExists) {
+            parameters.add("existingProjectKey", targetProjectKey);
+        }
+        else {
+            parameters.add("existingProjectKey", "newProject");
+            parameters.add("projectKey", targetProjectKey);
+            parameters.add("projectName", targetProjectKey);
+        }
+
         parameters.add("planKeyToClone", sourcePlanKey);
         parameters.add("chainName", targetPlanName);
         parameters.add("chainKey", targetPlanName);
-        parameters.add("chainDescription", "Student build plan for exercise " + sourceProjectKey);
+        parameters.add("chainDescription", "Build plan for exercise " + sourceProjectKey);
         parameters.add("clonePlan", "true");
         parameters.add("tmp.createAsEnabled", "false");
         parameters.add("chainEnabled", "false");

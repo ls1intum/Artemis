@@ -431,8 +431,6 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (targetProjectExists) {
             parameters.add("existingProjectKey", targetProjectKey);
-            parameters.add("projectKey", "");
-            parameters.add("projectName", "");
         }
         else {
             parameters.add("existingProjectKey", "newProject");
