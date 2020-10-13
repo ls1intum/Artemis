@@ -34,7 +34,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
-    signInMessage = 'home.pleaseSignIn'; // default, might be overridden based on profile info
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden in ngOnInit
     accountName?: string; // additional information in the welcome message
 
@@ -70,9 +69,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 } else {
                     // TODO: in the future we might also allow external user management for non jira profiles
                     this.externalUserManagementActive = false;
-                }
-                if (profileInfo.accountName) {
-                    this.signInMessage = 'home.pleaseSignInAccount';
                 }
                 this.accountName = profileInfo.accountName;
                 if (this.accountName === 'TUM') {
