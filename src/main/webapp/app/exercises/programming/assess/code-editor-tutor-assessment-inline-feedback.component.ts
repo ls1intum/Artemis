@@ -88,6 +88,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.onEditFeedback.emit(line);
     }
 
+    /**
+     * Updates the feedback with data of Structured Grading Instructions (SGI)
+     * @param event Drop event with SGI data
+     */
     updateFeedbackOnDrop(event: Event) {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
         if (this.feedback.gradingInstruction && this.feedback.gradingInstruction.usageCount !== 0) {
