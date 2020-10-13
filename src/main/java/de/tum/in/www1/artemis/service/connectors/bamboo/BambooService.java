@@ -336,6 +336,9 @@ public class BambooService implements ContinuousIntegrationService {
 
         var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()));
 
+        // Truncate the logs so that they fit into the database
+        buildLogEntries.forEach(BuildLogEntry::truncateLogToMaxLength);
+
         // Add reference to ProgrammingSubmission
         buildLogEntries.forEach(buildLogEntry -> buildLogEntry.setProgrammingSubmission(programmingSubmission));
 
@@ -577,22 +580,12 @@ public class BambooService implements ContinuousIntegrationService {
             final var hasArtifact = buildResult.getBuild().isArtifact();
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
-
+            // Do not remove this save, otherwise Hibernate will throw an order column index null exception on saving the build logs
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-            // Store logs into database. Append logs of multiple jobs.
-            for (var job : buildResult.getBuild().getJobs()) {
-                for (var bambooLog : job.getLogs()) {
-                    // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                    buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), programmingSubmission));
-                }
-            }
-
+            var buildLogs = extractAndPrepareBuildLogs(buildResult, programmingSubmission);
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            programmingSubmission.setBuildLogEntries(filterBuildLogs(buildLogEntries));
-
+            programmingSubmission.setBuildLogEntries(buildLogs);
             programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
             result.setSubmission(programmingSubmission);
@@ -605,6 +598,29 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
+    }
+
+    private List<BuildLogEntry> extractAndPrepareBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingSubmission submission) {
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+        // Store logs into database. Append logs of multiple jobs.
+        for (var job : buildResult.getBuild().getJobs()) {
+            for (var bambooLog : job.getLogs()) {
+                // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog()), submission));
+            }
+        }
+
+        if (buildLogEntries.isEmpty()) {
+            return buildLogEntries;
+        }
+
+        // Filter unwanted logs
+        var filteredLogs = filterBuildLogs(buildLogEntries);
+        // Truncate the logs so that they fit into the database
+        filteredLogs.forEach(BuildLogEntry::truncateLogToMaxLength);
+
+        return filteredLogs;
     }
 
     @Override
@@ -874,7 +890,9 @@ public class BambooService implements ContinuousIntegrationService {
             if ((logString.startsWith("[INFO]") && !logString.contains("error")) || logString.startsWith("[WARNING]") || logString.startsWith("[ERROR] [Help 1]")
                     || logString.startsWith("[ERROR] For more information about the errors and possible solutions") || logString.startsWith("[ERROR] Re-run Maven using")
                     || logString.startsWith("[ERROR] To see the full stack trace of the errors") || logString.startsWith("[ERROR] -> [Help 1]")
-                    || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")) {
+                    || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
+                    || logString.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin") || logString.startsWith("[INFO] Downloading")
+                    || logString.startsWith("[INFO] Downloaded")) {
                 continue;
             }
 
