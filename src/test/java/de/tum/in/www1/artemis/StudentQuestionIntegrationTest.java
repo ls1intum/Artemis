@@ -248,7 +248,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getAllStudentQuestionsForCourse() throws Exception {
+    public void testGetAllStudentQuestionsForCourse() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndLectureAndStudentQuestions().get(0);
         Long courseID = studentQuestion.getCourse().getId();
 
