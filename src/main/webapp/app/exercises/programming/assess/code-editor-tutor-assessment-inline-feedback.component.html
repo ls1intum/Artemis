@@ -6,14 +6,14 @@
     [class.alert-warning]="feedback.credits === 0"
 >
     <div class="m-2">
-        <div *ngIf="!editOnly; else readOnlyFeedback" class="form-row align-items-start">
+        <div *ngIf="!editOnly; else readOnlyFeedback" class="form-row align-items-start" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
             <div class="form-group col-8" [style.max-width]="'500px'">
                 <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <textarea class="form-control" rows="5" [(ngModel)]="feedback.detailText" [readOnly]="editOnly"></textarea>
             </div>
             <div class="form-group col-2" [style.max-width]="'100px'">
                 <label jhiTranslate="artemisApp.exercise.score"></label>
-                <input class="form-control" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="editOnly" />
+                <input class="form-control" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="editOnly || disableEditScore" />
             </div>
             <div *ngIf="feedback.type === MANUAL" class="form-group col-2">
                 <button type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm mr-1">
