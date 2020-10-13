@@ -59,6 +59,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
+    checkedFlag = false;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -290,6 +291,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+    }
+
+    /**
+     * gets the flag of the structured grading instructions slide toggle
+     */
+    getCheckedFlag(event: boolean) {
+        this.checkedFlag = event;
     }
 
     /**
