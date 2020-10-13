@@ -186,14 +186,15 @@ public class BambooBuildPlanService {
             }
             case SWIFT -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("swift:latest"));
-                }
+//                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                defaultJob.dockerConfiguration(new DockerConfiguration().image("swift:latest"));
+//                }
                 // TODO: swift result directories correct?
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
                 tasks.add(0, checkoutTask);
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+//                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])));
             }
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }

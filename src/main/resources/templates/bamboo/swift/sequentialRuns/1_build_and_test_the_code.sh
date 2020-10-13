@@ -1,4 +1,4 @@
-cd /assignment
+cd assignment
 
 echo "move Tests to assignment"
 mv ../Tests .
