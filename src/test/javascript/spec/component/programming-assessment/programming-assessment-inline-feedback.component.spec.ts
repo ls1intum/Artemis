@@ -8,6 +8,7 @@ import { spy } from 'sinon';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { FeedbackType } from 'app/entities/feedback.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -70,5 +71,24 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(confirmSpy).to.be.calledOnce;
         expect(onDeleteFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
+    });
+
+    it('should update feedback with SGI and emit to parent', () => {
+        const onUpdateFeedbackSpy = spy(comp.onUpdateFeedback, 'emit');
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        // Fake call as a DragEvent cannot be created programmatically
+        spyOn(comp, 'updateFeedbackOnDrop').and.callFake(() => {
+            comp.feedback.gradingInstruction = instruction;
+            comp.feedback.credits = instruction.credits;
+            comp.feedback.detailText = instruction.feedback;
+            comp.onUpdateFeedback.emit(comp.feedback);
+        });
+        // Call spy function with empty event
+        comp.updateFeedbackOnDrop(new Event(''));
+        
+        expect(comp.feedback.gradingInstruction).to.be.equal(instruction);
+        expect(comp.feedback.credits).to.be.equal(instruction.credits);
+        expect(comp.feedback.detailText).to.be.equal(instruction.feedback);
+        expect(onUpdateFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
     });
 });
