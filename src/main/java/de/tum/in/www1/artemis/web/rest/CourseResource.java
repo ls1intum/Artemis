@@ -205,14 +205,6 @@ public class CourseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
-    public void validateShortName(Course course) {
-        // Check if course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
-        if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
-        }
-    }
-
     /**
      * PUT /courses : Updates an existing updatedCourse.
      *
@@ -342,6 +334,14 @@ public class CourseResource {
         if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    private void validateShortName(Course course) {
+        // Check if course shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
         }
     }
 
