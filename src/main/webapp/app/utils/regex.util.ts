@@ -9,10 +9,10 @@ export const matchesRegexFully = (input: string | undefined, regex: string | und
     }
     // we want to test for a full match, so wrap the regex in ^ and $
     if (!regex.startsWith('^')) {
-        regex = '^(' + regex;
+        regex = '^' + regex;
     }
     if (!regex.endsWith('$')) {
-        regex = regex + ')$';
+        regex = regex + '$';
     }
     // string.match returns null when there is no match and an array containing matches otherwise
     const matches = input.match(new RegExp(regex));
