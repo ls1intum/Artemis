@@ -17,6 +17,14 @@ jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
 }));
 
+const generateCsv = jest.fn();
+
+jest.mock('export-to-csv', () => ({
+    ExportToCsv: jest.fn().mockImplementation(() => ({
+        generateCsv,
+    })),
+}));
+
 describe('Plagiarism Inspector Component', () => {
     let comp: PlagiarismInspectorComponent;
     let fixture: ComponentFixture<PlagiarismInspectorComponent>;
@@ -111,5 +119,14 @@ describe('Plagiarism Inspector Component', () => {
         comp.downloadPlagiarismResultsJson();
 
         expect(downloadFile).toHaveBeenCalled();
+    });
+
+    it('should download the plagiarism detection results as CSV', () => {
+        comp.modelingExercise = modelingExercise;
+        comp.modelingSubmissionComparisons = modelingComparisons.slice(0, 1);
+        comp.downloadPlagiarismResultsCsv();
+
+        expect(ExportToCsv).toHaveBeenCalled();
+        expect(generateCsv).toHaveBeenCalled();
     });
 });
