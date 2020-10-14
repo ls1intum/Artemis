@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,11 +32,11 @@ import de.tum.in.www1.artemis.util.*;
 
 public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    @Value("${artemis.continuous-integration.url}")
+    private URL bambooServerUrl;
 
     @Autowired
-    DatabaseUtilService database;
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     LocalRepository localRepo = new LocalRepository();
 
@@ -58,7 +62,7 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Path filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
-        FileUtils.write(file, currentLocalFileContent);
+        FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
         // add folder to the repository folder
         filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath).toFile();
@@ -150,5 +154,36 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
         BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
         assertThat(buildStatus).as("buildStatus is building").isEqualTo(BuildStatus.BUILDING);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testHealthRunning() throws URISyntaxException, JsonProcessingException {
+
+        bambooRequestMockProvider.mockHealth("RUNNING", HttpStatus.OK);
+        var health = continuousIntegrationService.health();
+        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bambooServerUrl);
+        assertThat(health.isUp()).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
+
+        bambooRequestMockProvider.mockHealth("PAUSED", HttpStatus.OK);
+        var health = continuousIntegrationService.health();
+        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bambooServerUrl);
+        assertThat(health.isUp()).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testHealthException() throws URISyntaxException, JsonProcessingException {
+
+        bambooRequestMockProvider.mockHealth("PAUSED", HttpStatus.INTERNAL_SERVER_ERROR);
+        var health = continuousIntegrationService.health();
+        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bambooServerUrl);
+        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getException()).isNotNull();
     }
 }

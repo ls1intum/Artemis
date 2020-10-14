@@ -49,9 +49,6 @@ import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
     private RequestUtilService request;
 
     @Autowired

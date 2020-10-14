@@ -46,9 +46,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     private final String studentRepoBaseUrl = "/api/repository/";
 
     @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
     private RequestUtilService request;
 
     @Autowired

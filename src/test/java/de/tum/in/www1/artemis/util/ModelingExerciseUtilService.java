@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 public class ModelingExerciseUtilService {
 
     @Autowired
-    DatabaseUtilService database;
+    protected DatabaseUtilService database;
 
     /**
      * Create modeling exercise for a given course

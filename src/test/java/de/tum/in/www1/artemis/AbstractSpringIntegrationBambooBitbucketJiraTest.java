@@ -42,9 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketReposito
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
-import de.tum.in.www1.artemis.util.GitUtilService;
-import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.Verifiable;
+import de.tum.in.www1.artemis.util.*;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -114,6 +112,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    protected DatabaseUtilService database;
+
+    @Autowired
+    protected RequestUtilService request;
 
     @AfterEach
     public void resetSpyBeans() {

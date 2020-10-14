@@ -294,4 +294,11 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
+
+    public void mockHealth(String state, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
+        var response = Map.of("state", state);
+        var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/status").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
 }
