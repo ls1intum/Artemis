@@ -74,7 +74,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.quizExercises.descriptionTextOne',
             'fa fa-check-square-o',
             undefined,
-            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/quiz_exercises.gif?raw=true',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/quiz_exercises.png?raw=true',
         );
         featureQuizExercises.alignFirstImageLeft();
 
@@ -102,7 +102,6 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.conduction.shortDescription',
             'featureOverview.students.feature.conduction.descriptionTextOne',
             'fa fa-play',
-            undefined,
         );
 
         const featureSummary = new Feature(
@@ -111,7 +110,14 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.summary.descriptionTextOne',
             'fa fa-th-list',
             undefined,
-            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/summary.gif?raw=true',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/summary.png?raw=true',
+        );
+
+        const featureQualityAndFair = new Feature(
+            'featureOverview.students.feature.qualityAndFair.title',
+            'featureOverview.students.feature.qualityAndFair.shortDescription',
+            'featureOverview.students.feature.qualityAndFair.descriptionTextOne',
+            'fa fa-play',
         );
 
         const featureOnlineReview = new Feature(
@@ -141,6 +147,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureTextEditor,
             featureQuizExercises,
             featureSummary,
+            featureQualityAndFair,
             featureOnlineReview,
             featureLogin,
             featureBrowserCompatibility,
@@ -187,6 +194,14 @@ export class FeatureOverviewComponent implements OnInit {
         );
         featureExerciseVariants.centerTextAndImageOne();
 
+        const featureTestRuns = new Feature(
+            'featureOverview.instructor.feature.testRunConduction.title',
+            'featureOverview.instructor.feature.testRunConduction.shortDescription',
+            'featureOverview.instructor.feature.testRunConduction.descriptionTextOne',
+            'fa fa-tasks',
+            undefined,
+        );
+
         const featureSessionMonitoring = new Feature(
             'featureOverview.instructor.feature.sessionMonitoring.title',
             'featureOverview.instructor.feature.sessionMonitoring.shortDescription',
@@ -203,13 +218,21 @@ export class FeatureOverviewComponent implements OnInit {
             'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/plagiarism.png?raw=true',
         );
 
-        const featureAssessment = new Feature(
-            'featureOverview.instructor.feature.assessment.title',
-            'featureOverview.instructor.feature.assessment.shortDescription',
-            'featureOverview.instructor.feature.assessment.descriptionTextOne',
-            'fa fa-magic',
-            'featureOverview.instructor.feature.assessment.descriptionTextTwo',
+        const featureAnonymousAssessment = new Feature(
+            'featureOverview.instructor.feature.anonymousAssessment.title',
+            'featureOverview.instructor.feature.anonymousAssessment.shortDescription',
+            'featureOverview.instructor.feature.anonymousAssessment.descriptionTextOne',
+            'fa fa-shield',
+            undefined,
             'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/anonymous_assessment.png?raw=true',
+        );
+
+        const featureAutomaticAssessment = new Feature(
+            'featureOverview.instructor.feature.automaticAssessment.title',
+            'featureOverview.instructor.feature.automaticAssessment.shortDescription',
+            'featureOverview.instructor.feature.automaticAssessment.descriptionTextOne',
+            'fa fa-magic',
+            undefined,
         );
 
         const featureAssessmentMonitoring = new Feature(
@@ -245,9 +268,11 @@ export class FeatureOverviewComponent implements OnInit {
             featureConfiguration,
             featureExerciseTypes,
             featureExerciseVariants,
+            featureTestRuns,
             featureSessionMonitoring,
             featurePlagiarismDetection,
-            featureAssessment,
+            featureAnonymousAssessment,
+            featureAutomaticAssessment,
             featureAssessmentMonitoring,
             featureComplaints,
             featureStatistics,
