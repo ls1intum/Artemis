@@ -253,4 +253,14 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
                 "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(2));
     }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAllStudentQuestionsForCourse() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndLectureAndStudentQuestions().get(0);
+        Long courseID = studentQuestion.getCourse().getId();
+
+        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/courses/" + courseID + "/student-questions", HttpStatus.OK, StudentQuestion.class);
+        assertThat(returnedStudentQuestions.size()).isEqualTo(4);
+    }
 }

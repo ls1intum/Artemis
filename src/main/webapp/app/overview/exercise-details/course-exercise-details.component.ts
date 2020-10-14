@@ -32,6 +32,8 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
+import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -41,6 +43,8 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
+    readonly QuizStatus = QuizStatus;
+    readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -87,6 +91,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private jhiAlertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private teamService: TeamService,
+        private quizExerciseService: QuizExerciseService,
     ) {}
 
     ngOnInit() {
@@ -343,6 +348,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     buildPlanId(participation: Participation) {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    }
+
+    /**
+     * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
+     */
+    get quizExerciseStatus(): QuizStatus | undefined {
+        if (this.exercise!.type === ExerciseType.QUIZ) {
+            return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
+        }
+        return undefined;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

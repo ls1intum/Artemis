@@ -76,6 +76,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
     UserRepository userRepo;
 
     @Autowired
@@ -189,6 +195,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreBuildLogsForSubmission() {
+        final var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var expectedNoOfLogs = resultNotification.getBuild().getJobs().iterator().next().getLogs().size();
+        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
     }
 
     @Test
