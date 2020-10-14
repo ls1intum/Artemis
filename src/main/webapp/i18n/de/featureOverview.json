@@ -63,7 +63,7 @@
                 },
                 "statistics": {
                     "title": "Statistiken Erstellen",
-                    "shortDescription": "Erstellung von Statistiken und Einblicke in die Leistungen der Studierenden gewinnen.",
+                    "shortDescription": "Statistiken erstellen und Einblicke in die Leistungen der Studierenden gewinnen.",
                     "descriptionTextOne": "Die Klausur ist vorbei, alle Klausuren wurden bewertet und die Beschwerden der Studierenden ausgewertet. Was nun?\n\nDu kannst das Ergebnis der Klausur anhand der von Artemis generierten Statistiken auswerten. Überprüfe die Leistung der Studierenden anhand verschiedener Metriken wie Durchschnitt, Median und Standardabweichung. Überprüfen Sie die wahrgenommenen Schwierigkeiten der Studierenden bei jeder Aufgabe, um die Klausuren in Zukunft zu verbessern. Zusätzlich kannst du alle Ergebnisse in eine .csv-Datei herunterladen, um sie in externe Systeme zu exportieren und Diagramme und Grafiken zur weiteren Analyse zu erstellen."
                 }
             }
