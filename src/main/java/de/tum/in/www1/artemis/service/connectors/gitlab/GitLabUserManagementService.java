@@ -246,8 +246,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             final var userId = getUserId(login);
             gitlab.getUserApi().deleteUser(userId, true);
         }
-        catch (NullPointerException e) {
-            log.warn("Cannot delete user in GitLab. User does not exist! " + login);
+        catch (GitLabUserDoesNotExistException e) {
+            log.warn("Cannot delete user in GitLab. User does not exist! %s".formatted(login));
         }
         catch (GitLabApiException e) {
             throw new GitLabException(String.format("Cannot delete user %s from GitLab!", login), e);
@@ -300,7 +300,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             if (gitlabUser != null) {
                 return gitlabUser.getId();
             }
-            throw new GitLabException("Unable to get ID for user " + username);
+            throw new GitLabUserDoesNotExistException(username);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get ID for user " + username, e);
