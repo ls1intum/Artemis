@@ -25,7 +25,6 @@ describe('Exam Participation Service', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ArtemisTestModule],
