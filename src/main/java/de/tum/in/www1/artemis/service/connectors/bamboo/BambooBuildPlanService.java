@@ -139,7 +139,7 @@ public class BambooBuildPlanService {
             case JAVA -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:java15"));
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:java15-1"));
                 }
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
