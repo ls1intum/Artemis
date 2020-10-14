@@ -203,8 +203,16 @@
                         ngbTooltip="{{ 'artemisApp.course.studentQuestionsEnabled.description' | translate }}"
                     ></fa-icon>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="onlineCourse" id="field_onlineCourse" formControlName="onlineCourse" />
+                <div class="form-check" *ngIf="!this.course.registrationEnabled">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="onlineCourse"
+                        id="field_onlineCourse"
+                        formControlName="onlineCourse"
+                        [checked]="course.onlineCourse"
+                        (change)="this.changeOnlineCourse()"
+                    />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse">Online Course</label>
                     <fa-icon
                         [icon]="'question-circle'"
@@ -213,9 +221,16 @@
                         ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | translate }}"
                     ></fa-icon>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" [checked]="course.registrationEnabled" (change)="this.changeRegistrationEnabled()" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title">Registration Enabled</label>
+                <div class="form-check" *ngIf="!this.course.onlineCourse">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="registrationEnabled"
+                        id="field_registrationEnabled"
+                        [checked]="course.registrationEnabled"
+                        (change)="this.changeRegistrationEnabled()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"

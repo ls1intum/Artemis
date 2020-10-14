@@ -146,11 +146,7 @@ public class CourseResource {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        // Check if course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
+        validateShortName(course);
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
         if (coursesWithSameShortName.size() > 0) {
@@ -161,6 +157,7 @@ public class CourseResource {
 
         validateRegistrationConfirmationMessage(course);
         validateComplaintsConfig(course);
+        validateOnlineCourseAndRegistrationEnabled(course);
 
         try {
 
@@ -206,6 +203,14 @@ public class CourseResource {
         Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    public void validateShortName(Course course) {
+        // Check if course shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
     }
 
     /**
@@ -273,12 +278,8 @@ public class CourseResource {
 
         validateRegistrationConfirmationMessage(updatedCourse);
         validateComplaintsConfig(updatedCourse);
-
-        // Check if course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
+        validateOnlineCourseAndRegistrationEnabled(updatedCourse);
+        validateShortName(updatedCourse);
 
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
@@ -334,6 +335,13 @@ public class CourseResource {
         }
         if (course.getMaxComplaintTimeDays() != 0 && (course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0)) {
             throw new BadRequestAlertException("If no complaints are allowed, the complaint time in days should be set to zero.", ENTITY_NAME, "complaintsConfigInvalid", true);
+        }
+    }
+
+    private void validateOnlineCourseAndRegistrationEnabled(Course course) {
+        if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
+            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
+                    true);
         }
     }
 
