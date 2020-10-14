@@ -754,10 +754,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "ab123cd")
+    @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        User student = ModelFactory.generateActivatedUser("ab123cd");
+        User student = ModelFactory.generateActivatedUser("ab12cde");
         userRepo.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -774,7 +774,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
 
-        List<AuditEvent> auditEvents = auditEventRepo.find("ab123cd", Instant.now().minusSeconds(20), Constants.REGISTER_FOR_COURSE);
+        List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.REGISTER_FOR_COURSE);
         assertThat(auditEvents).as("Audit Event for course registration added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData().get("course")).as("Correct Event Data").isEqualTo(course1.getTitle());
@@ -783,10 +783,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "ab123cd")
+    @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse_notMeetsDate() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        User student = ModelFactory.generateActivatedUser("ab123cd");
+        User student = ModelFactory.generateActivatedUser("ab12cde");
         userRepo.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
