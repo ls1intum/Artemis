@@ -12,11 +12,9 @@
 <dt *ngIf="superExerciseDetails.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
 <dd *ngIf="superExerciseDetails.exerciseGroup">
     <div>
-        <!-- TODO Enable when implemented
         <a [routerLink]="['/course-management', superExerciseDetails.exerciseGroup?.exam?.course?.id, 'exams', superExerciseDetails.exerciseGroup?.exam?.id, 'view']">{{
             superExerciseDetails.exerciseGroup?.exam?.title
         }}</a>
-        -->
         <span>{{ superExerciseDetails.exerciseGroup?.exam?.title }}</span>
     </div>
 </dd>
@@ -74,7 +72,7 @@
     <span *ngIf="!superExerciseDetails.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
 </dd>
 <ng-container *ngIf="superExerciseDetails.type !== 'programming'">
-    <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
+    <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
     <dd>
         <span>{{ superExerciseDetails.maxScore }}</span>
     </dd>

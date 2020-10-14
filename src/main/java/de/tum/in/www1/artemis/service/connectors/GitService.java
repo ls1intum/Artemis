@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.annotation.Nullable;
 
@@ -27,6 +25,7 @@ import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -44,6 +43,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -70,11 +70,14 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    public GitService() {
+    private final ZipFileService zipFileService;
+
+    public GitService(ZipFileService zipFileService) {
         log.info("file.encoding=" + System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset=" + Charset.defaultCharset());
         log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        this.zipFileService = zipFileService;
     }
 
     /**
@@ -207,8 +210,10 @@ public class GitService {
             // Create the JGit repository object
             Repository repository = new Repository(builder);
             repository.setLocalPath(localPath);
-            // disable auto garbage collection because it can lead to problems
-            repository.getConfig().setString("gc", null, "auto", "0");
+            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+            repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             // Cache the JGit repository object for later use
             // Avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
@@ -333,39 +338,6 @@ public class GitService {
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex.getMessage());
-        }
-    }
-
-    /**
-     * checkout branch
-     *
-     * @param repo Local Repository Object.
-     */
-    public void checkoutBranch(Repository repo) {
-        try {
-            Git git = new Git(repo);
-            git.checkout().setForceRefUpdate(true).setName("master").call();
-            git.close();
-        }
-        catch (GitAPIException ex) {
-            log.error("Cannot checkout branch in repo " + repo.getLocalPath() + " due to the following exception: " + ex);
-        }
-    }
-
-    /**
-     * Remove branch from local repository.
-     *
-     * @param repo Local Repository Object.
-     * @param branch to delete from the repo.
-     */
-    public void deleteLocalBranch(Repository repo, String branch) {
-        try {
-            Git git = new Git(repo);
-            git.branchDelete().setBranchNames(branch).setForce(true).call();
-            git.close();
-        }
-        catch (GitAPIException ex) {
-            log.error("Cannot remove branch " + branch + " from the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 
@@ -706,20 +678,7 @@ public class GitService {
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
-        try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(repoPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());
-                try {
-                    zs.putNextEntry(zipEntry);
-                    Files.copy(path, zs);
-                    zs.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-        return zipFilePath;
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoPath);
     }
 
     /**

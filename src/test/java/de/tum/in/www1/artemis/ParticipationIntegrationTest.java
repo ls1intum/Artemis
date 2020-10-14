@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -58,6 +59,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    FeatureToggleService featureToggleService;
 
     private Course course;
 
@@ -101,7 +105,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        Feature.PROGRAMMING_EXERCISES.enable();
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test
@@ -165,8 +169,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
-        Feature.PROGRAMMING_EXERCISES.disable();
+        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+
+        // Reset
+        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
     }
 
     @Test
@@ -189,9 +196,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
-        Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission(), "student1");
+        Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
-        database.addResultToSubmission(submissionWithResult);
+        database.addResultToSubmission(submissionWithResult, null);
 
         // Participation should now exist.
         assertThat(participationRepo.existsById(participationId)).isTrue();
@@ -212,7 +219,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteSubmissionWithoutResult() throws Exception {
         Submission submissionWithoutResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
         Long participationId = submissionWithoutResult.getParticipation().getId();
 
         // Participation should now exist.
@@ -234,7 +241,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteResultWithoutSubmission() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
-        database.addResultToParticipation(studentParticipation);
+        database.addResultToParticipation(null, null, studentParticipation);
         Long participationId = studentParticipation.getId();
 
         // Participation should now exist.
@@ -316,7 +323,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getAllParticipationsForExercise_withLatestResult() throws Exception {
         database.addParticipationForExercise(textExercise, "student1");
         var participation = database.addParticipationForExercise(textExercise, "student2");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70).participation(participation);
         resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
@@ -435,7 +442,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipationWithLatestResult() throws Exception {
         var participation = database.addParticipationForExercise(textExercise, "student1");
-        database.addResultToParticipation(participation);
+        database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
@@ -459,8 +466,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getSubmissionOfParticipation() throws Exception {
         var participation = database.addParticipationForExercise(textExercise, "student1");
-        var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true), "student1");
-        var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true), "student1");
+        var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true));
         var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
         assertThat(submissions).contains(submission1, submission2);
     }
@@ -515,7 +522,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course).isPlannedToStart(true);
         quizEx = exerciseRepo.save(quizEx);
         var participation = database.addParticipationForExercise(quizEx, "student1");
-        var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true), "student1");
+        var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
         database.addResultToParticipation(participation, submission);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);

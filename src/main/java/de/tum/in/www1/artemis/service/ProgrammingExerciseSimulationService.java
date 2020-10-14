@@ -70,7 +70,7 @@ public class ProgrammingExerciseSimulationService {
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
     @Transactional
-    public ProgrammingExercise setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
+    public ProgrammingExercise createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         final var projectKey = programmingExercise.getProjectKey();
         // TODO: the following code is used quite often and should be done in only one place

@@ -14,6 +14,7 @@
         <configVersion>2</configVersion>
         <userRemoteConfigs>
           <hudson.plugins.git.UserRemoteConfig>
+            <name>tests</name>
             <url>#testRepository</url>
             <credentialsId>#gitCredentials</credentialsId>
           </hudson.plugins.git.UserRemoteConfig>
@@ -35,6 +36,7 @@
         <configVersion>2</configVersion>
         <userRemoteConfigs>
           <hudson.plugins.git.UserRemoteConfig>
+            <name>assignment</name>
             <url>#assignmentRepository</url>
             <credentialsId>#gitCredentials</credentialsId>
           </hudson.plugins.git.UserRemoteConfig>

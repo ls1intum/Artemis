@@ -2,10 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
-import { JhiEventWithContent } from 'ng-jhipster/service/event-with-content.model';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,28 +12,24 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
-    styleUrls: ['./exam-management.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
     exams: Exam[];
     isAtLeastInstructor = false;
     isAtLeastTutor = false;
+    examIdToExamInformation: Map<number, ExamInformationDTO> = new Map();
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    examListModificationDeleteEvent: JhiEventWithContent<string> = {
-        name: 'examListModification',
-        content: 'Deleted an exam',
-    };
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     constructor(
         private route: ActivatedRoute,
@@ -82,9 +76,14 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id).subscribe(
+        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe(
             (res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
+                this.exams.forEach((exam) => {
+                    this.examManagementService
+                        .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id!, examInformationDTORes.body!));
+                });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
@@ -101,14 +100,13 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Function is called when the delete button is pressed for an exam
-     * @fires examListModificationDeleteEvent
      * @param examId Id to be deleted
      */
     deleteExam(examId: number) {
-        this.examManagementService.delete(this.course.id, examId).subscribe(
+        this.examManagementService.delete(this.course.id!, examId).subscribe(
             () => {
-                this.eventManager.broadcast(this.examListModificationDeleteEvent);
                 this.dialogErrorSource.next('');
+                this.exams = this.exams.filter((exam) => exam.id !== examId);
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -125,5 +123,12 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     sortRows() {
         this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
+    }
+
+    examHasFinished(examId: number): boolean {
+        if (this.examIdToExamInformation.has(examId)) {
+            return this.examIdToExamInformation.get(examId)!.latestIndividualEndDate.isBefore(moment());
+        }
+        return true;
     }
 }

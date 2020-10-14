@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -17,9 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "QP")
-public class QuizPointStatistic extends QuizStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizPointStatistic extends QuizStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -31,11 +27,6 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
 
     public Set<PointCounter> getPointCounters() {
         return pointCounters;
-    }
-
-    public QuizPointStatistic pointCounters(Set<PointCounter> pointCounters) {
-        this.pointCounters = pointCounters;
-        return this;
     }
 
     public QuizPointStatistic addPointCounters(PointCounter pointCounter) {
@@ -58,33 +49,8 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
         return quiz;
     }
 
-    public QuizPointStatistic quiz(QuizExercise quizExercise) {
-        this.quiz = quizExercise;
-        return this;
-    }
-
     public void setQuiz(QuizExercise quizExercise) {
         this.quiz = quizExercise;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizPointStatistic quizPointStatistic = (QuizPointStatistic) o;
-        if (quizPointStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizPointStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
@@ -121,7 +87,10 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
      *              quizExercise)
      */
     public void addResult(Long score, Boolean rated) {
-        changeStatisticBasedOnResult(score, rated, 1);
+        if (score == null) {
+            return;
+        }
+        changeStatisticBasedOnResult(score.doubleValue(), rated, 1);
     }
 
     /**
@@ -132,7 +101,10 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
      *              quizExercise)
      */
     public void removeOldResult(Long score, Boolean rated) {
-        changeStatisticBasedOnResult(score, rated, -1);
+        if (score == null) {
+            return;
+        }
+        changeStatisticBasedOnResult(score.doubleValue(), rated, -1);
     }
 
     /**
@@ -141,35 +113,31 @@ public class QuizPointStatistic extends QuizStatistic implements Serializable {
      * @param score  whose PointCounter decreases
      * @param rated  specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
      *               quizExercise)
-     * @param change the int-value, which will be added to the Counter and participants
+     * @param countChange the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(Long score, Boolean rated, int change) {
+    private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
 
-        if (score == null) {
-            return;
-        }
-
-        Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score / 100));
+        Double points = (double) Math.round(quiz.getMaxTotalScore() * (score / 100));
 
         if (Boolean.TRUE.equals(rated)) {
             // change rated participants
-            setParticipantsRated(getParticipantsRated() + change);
+            setParticipantsRated(getParticipantsRated() + countChange);
 
             // find associated rated pointCounter and change it
             for (PointCounter pointCounter : pointCounters) {
                 if (points.equals(pointCounter.getPoints())) {
-                    pointCounter.setRatedCounter(pointCounter.getRatedCounter() + change);
+                    pointCounter.setRatedCounter(pointCounter.getRatedCounter() + countChange);
                 }
             }
         }
         else {
             // change unrated participants
-            setParticipantsUnrated(getParticipantsUnrated() + change);
+            setParticipantsUnrated(getParticipantsUnrated() + countChange);
 
             // find associated unrated pointCounter and change it
             for (PointCounter pointCounter : pointCounters) {
                 if (points.equals(pointCounter.getPoints())) {
-                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter() + change);
+                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter() + countChange);
                 }
             }
         }

@@ -8,10 +8,26 @@
     </div>
 
     <div class="card-body code-editor-ace__content">
+        <div class="btn-inline-comment">
+            <fa-icon [icon]="'plus-square'" size="lg"></fa-icon>
+        </div>
+        <div *ngFor="let line of lineCounter; let i = index" id="test-{{ i }}" class="inline-feedback-d-none">
+            <jhi-code-editor-tutor-assessment-inline-feedback
+                [selectedFile]="selectedFile"
+                [codeLine]="i"
+                [feedback]="fileFeedbackPerLine[i]"
+                [readOnly]="readOnlyManualFeedback"
+                (onUpdateFeedback)="updateFeedback($event)"
+                (onDeleteFeedback)="deleteFeedback($event)"
+                (onCancelFeedback)="cancelFeedback($event)"
+                (onEditFeedback)="adjustLineWidgetHeight($event)"
+            >
+            </jhi-code-editor-tutor-assessment-inline-feedback>
+        </div>
         <ace-editor
             #editor
             id="ace-code-editor"
-            [mode]="editorMode"
+            [mode]="editorMode ? editorMode : 'java'"
             [readOnly]="isLoading"
             [hidden]="!selectedFile || isLoading"
             [autoUpdateContent]="true"

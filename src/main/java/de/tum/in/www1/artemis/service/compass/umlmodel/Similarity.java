@@ -12,7 +12,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 public interface Similarity<T extends Similarity> {
 
     /**
-     * Calculates the similarity between this and another reference object of type Similarity<T>.
+     * Calculates the similarity between this and another reference object of type Similarity<T>. Takes all attributes of the type into account.
      *
      * @param reference the reference object that should be compared to this object
      * @return the similarity score as a number between 0 and 1

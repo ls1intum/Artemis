@@ -1,34 +1,25 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-container.component.html',
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
-    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     constructor(
         router: Router,
@@ -37,12 +28,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         exerciseHintService: ExerciseHintService,
+        location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
         jhiAlertService: AlertService,
-        sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService,
     ) {
         super(
             router,
@@ -51,40 +41,16 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
             domainService,
             programmingExerciseParticipationService,
             exerciseHintService,
+            location,
             participationService,
-            translateService,
             route,
             jhiAlertService,
-            sessionService,
-            fileService,
         );
     }
 
-    /**
-     * Select the solution participation repository and navigate to it
-     */
-    selectSolutionParticipation() {
-        this.router.navigate(['..', this.exercise.solutionParticipation.id], { relativeTo: this.route });
-    }
-
-    /**
-     * Select the template participation repository and navigate to it
-     */
-    selectTemplateParticipation() {
-        this.router.navigate(['..', this.exercise.templateParticipation.id], { relativeTo: this.route });
-    }
-
-    /**
-     * Select the assignment participation repository and navigate to it
-     */
-    selectAssignmentParticipation() {
-        this.router.navigate(['..', this.exercise.studentParticipations[0].id], { relativeTo: this.route });
-    }
-
-    /**
-     * Select the test repository and navigate to it
-     */
-    selectTestRepository() {
-        this.router.navigate(['..', 'test'], { relativeTo: this.route });
+    onResizeEditorInstructions() {
+        if (this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
+            this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
+        }
     }
 }

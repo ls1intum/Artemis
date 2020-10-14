@@ -12,6 +12,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
@@ -21,6 +22,7 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         ArtemisSharedModule,
         ArtemisResultModule,
         ArtemisComplaintsForTutorModule,
+        ArtemisSharedComponentModule,
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         TextSharedModule,

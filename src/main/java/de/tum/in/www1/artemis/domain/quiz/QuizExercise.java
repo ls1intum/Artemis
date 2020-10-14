@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -16,21 +15,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice or drag and drop. Artemis supports live quizzes with a start and end time which are
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-public class QuizExercise extends Exercise implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizExercise extends Exercise {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -75,22 +74,12 @@ public class QuizExercise extends Exercise implements Serializable {
         return randomizeQuestionOrder;
     }
 
-    public QuizExercise randomizeQuestionOrder(Boolean randomizeQuestionOrder) {
-        this.randomizeQuestionOrder = randomizeQuestionOrder;
-        return this;
-    }
-
     public void setRandomizeQuestionOrder(Boolean randomizeQuestionOrder) {
         this.randomizeQuestionOrder = randomizeQuestionOrder;
     }
 
     public Integer getAllowedNumberOfAttempts() {
         return allowedNumberOfAttempts;
-    }
-
-    public QuizExercise allowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
-        this.allowedNumberOfAttempts = allowedNumberOfAttempts;
-        return this;
     }
 
     public void setAllowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
@@ -101,11 +90,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return isVisibleBeforeStart;
     }
 
-    public QuizExercise isVisibleBeforeStart(Boolean isVisibleBeforeStart) {
-        this.isVisibleBeforeStart = isVisibleBeforeStart;
-        return this;
-    }
-
     public void setIsVisibleBeforeStart(Boolean isVisibleBeforeStart) {
         this.isVisibleBeforeStart = isVisibleBeforeStart;
     }
@@ -114,17 +98,12 @@ public class QuizExercise extends Exercise implements Serializable {
         return isOpenForPractice;
     }
 
-    public QuizExercise isOpenForPractice(Boolean isOpenForPractice) {
-        this.isOpenForPractice = isOpenForPractice;
-        return this;
-    }
-
     public void setIsOpenForPractice(Boolean isOpenForPractice) {
         this.isOpenForPractice = isOpenForPractice;
     }
 
-    public Boolean isIsPlannedToStart() {
-        return isPlannedToStart;
+    public boolean isIsPlannedToStart() {
+        return Boolean.TRUE.equals(isPlannedToStart);
     }
 
     public QuizExercise isPlannedToStart(Boolean isPlannedToStart) {
@@ -153,11 +132,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return quizPointStatistic;
     }
 
-    public QuizExercise quizPointStatistic(QuizPointStatistic quizPointStatistic) {
-        this.quizPointStatistic = quizPointStatistic;
-        return this;
-    }
-
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
     }
@@ -170,7 +144,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
-        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
+        return isIsPlannedToStart() && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
     }
 
     /**
@@ -246,9 +220,11 @@ public class QuizExercise extends Exercise implements Serializable {
             return false;
         }
 
-        // check duration
-        if (getDuration() == null || getDuration() < 0) {
-            return false;
+        // check duration (only for course exercises)
+        if (hasCourse()) {
+            if (getDuration() == null || getDuration() < 0) {
+                return false;
+            }
         }
 
         // check quizQuestions
@@ -270,18 +246,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * 1. replace the old QuizQuestion-List with the new one 2. recalculate the PointCounters in quizPointStatistic
-     *
-     * @param quizQuestions the List of QuizQuestion objects which will be set
-     * @return this QuizExercise-object
-     */
-    public QuizExercise questions(List<QuizQuestion> quizQuestions) {
-        this.quizQuestions = quizQuestions;
-        return this;
-    }
-
-    /**
-     * 1. add the new QuizQuestion object to the QuizQuestion-List 2. add backward relation in the quizQuestion-object 3. recalculate the PointCounters in quizPointStatistic
+     * 1. add the new QuizQuestion object to the QuizQuestion-List
+     * 2. add backward relation in the quizQuestion-object
      *
      * @param quizQuestion the new QuizQuestion object which will be added
      * @return this QuizExercise-object
@@ -293,8 +259,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * 1. remove the given QuizQuestion object in the QuizQuestion-List 2. remove backward relation in the quizQuestion-object 3. recalculate the PointCounters in
-     * quizPointStatistic
+     * 1. remove the given QuizQuestion object in the QuizQuestion-List
+     * 2. remove backward relation in the quizQuestion-object
      *
      * @param quizQuestion the QuizQuestion object which should be removed
      * @return this QuizExercise-object
@@ -305,11 +271,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return this;
     }
 
-    /**
-     * 1. replace the old QuizQuestion-List with the new one 2. recalculate the PointCounters in quizPointStatistic
-     *
-     * @param quizQuestions the List of QuizQuestion objects which will be set
-     */
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
     }
@@ -375,7 +336,7 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
-        int maxScore = getMaxTotalScore();
+        double maxScore = getMaxTotalScore();
         // map the resulting score to the 0 to 100 scale
         return Math.round(100.0 * score / maxScore);
     }
@@ -561,8 +522,8 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
-    public Integer getMaxTotalScore() {
-        int maxScore = 0;
+    public Double getMaxTotalScore() {
+        double maxScore = 0.0;
         // iterate through all quizQuestions of this quiz and add up the score
         if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
@@ -580,24 +541,9 @@ public class QuizExercise extends Exercise implements Serializable {
             return score;
         }
         else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return getMaxTotalScore().doubleValue();
+            return getMaxTotalScore();
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizExercise quizExercise = (QuizExercise) o;
-        if (quizExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizExercise.getId());
     }
 
     /**
@@ -728,11 +674,6 @@ public class QuizExercise extends Exercise implements Serializable {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

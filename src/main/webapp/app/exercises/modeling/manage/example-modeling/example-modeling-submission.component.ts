@@ -40,7 +40,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
-    invalidError: string | null;
+    invalidError?: string;
     exercise: ModelingExercise;
     isAtLeastInstructor = false;
     readOnly: boolean;
@@ -87,9 +87,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body!;
-            if (this.exercise.exerciseGroup !== null) {
-                this.isExamMode = true;
-            }
+            this.isExamMode = this.exercise.exerciseGroup != null;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
         });
 
@@ -106,8 +104,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.umlModel = JSON.parse(this.modelingSubmission.model);
                 }
             }
-            this.usedForTutorial = this.exampleSubmission.usedForTutorial;
-            this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
+            this.usedForTutorial = this.exampleSubmission.usedForTutorial!;
+            this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
@@ -115,7 +113,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 return;
             }
 
-            this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe((result) => {
+            this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
                 if (result) {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
@@ -145,7 +143,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
             (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id;
+                this.exampleSubmissionId = this.exampleSubmission.id!;
                 if (this.exampleSubmission.submission) {
                     this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
@@ -161,7 +159,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                console.error(error);
                 this.jhiAlertService.error(error.message);
             },
         );
@@ -186,7 +183,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
             (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id;
+                this.exampleSubmissionId = this.exampleSubmission.id!;
                 if (this.exampleSubmission.submission) {
                     this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
@@ -198,7 +195,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                console.error(error);
                 this.jhiAlertService.error(error.message);
             },
         );
@@ -243,12 +239,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 (result: Result) => {
                     this.result = result;
                     if (this.result) {
-                        this.feedbacks = this.result.feedbacks;
+                        this.feedbacks = this.result.feedbacks!;
                     }
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
                 },
-                (error: HttpErrorResponse) => {
-                    console.error(error);
+                () => {
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );
@@ -263,7 +258,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
             this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
+                this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
             });
         }
     }
@@ -282,7 +277,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         const credits = this.feedbacks.map((feedback) => feedback.credits);
 
-        if (!credits.every((credit) => credit !== null && !isNaN(credit))) {
+        if (!credits.every((credit) => credit && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
@@ -290,16 +285,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
-        this.invalidError = null;
+        this.invalidError = undefined;
     }
 
     async back() {
-        let courseId;
-        if (this.exercise.course) {
-            courseId = this.exercise.course!.id;
-        } else {
-            courseId = this.exercise.exerciseGroup!.exam!.course.id;
-        }
+        const courseId = this.exercise.course?.id || this.exercise.exerciseGroup?.exam?.course?.id;
         if (this.readOnly || this.toComplete) {
             await this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
         } else if (this.isExamMode) {
@@ -307,7 +297,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 '/course-management',
                 courseId,
                 'exams',
-                this.exercise.exerciseGroup!.exam!.id,
+                this.exercise.exerciseGroup?.exam?.id,
                 'exercise-groups',
                 this.exercise.exerciseGroup?.id,
                 'modeling-exercises',
@@ -329,8 +319,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission.result = new Result();
-        exampleSubmission.submission.result.feedbacks = this.feedbacks;
+        exampleSubmission.submission!.result = new Result();
+        exampleSubmission.submission!.result.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             () => {
@@ -344,7 +334,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 } else if (errorType === 'error.tooHigh') {
                     this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                 } else {
-                    console.error(error);
                     this.jhiAlertService.error(error.message);
                 }
             },

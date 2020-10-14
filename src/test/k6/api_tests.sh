@@ -71,6 +71,10 @@ while (( "$#" )); do
       waitQuizStart=true
       shift 1
       ;;
+    -op|--only-prepare)
+      onlyPrepare=true
+      shift 1
+      ;;
     --) # end argument parsing
       shift
       break
@@ -105,13 +109,14 @@ userOffset=${userOffset:-0}
 courseId=${courseId:-0}
 exerciseId=${exerciseId:-0}
 waitQuizStart=${waitQuizStart:-false}
+onlyPrepare=${onlyPrepare:-false}
 
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmingLanguage" -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" -e CLEANUP="$cleanup" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
   -e PROGRAMMING_LANGUAGE="$programmingLanguage" -e USER_OFFSET="$userOffset" -e COURSE_ID="$courseId" -e EXERCISE_ID="$exerciseId" \
-  -e WAIT_QUIZ_START="$waitQuizStart" \
+  -e WAIT_QUIZ_START="$waitQuizStart" -e ONLY_PREPARE="$onlyPrepare" \
   loadimpact/k6 run --address localhost:0 /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"

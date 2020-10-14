@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,8 +18,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "SP")
 public class StudentParticipation extends Participation {
-
-    private static final long serialVersionUID = 1L;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -31,11 +32,6 @@ public class StudentParticipation extends Participation {
 
     public Integer getPresentationScore() {
         return presentationScore;
-    }
-
-    public StudentParticipation presentationScore(Integer presentationScore) {
-        this.presentationScore = presentationScore;
-        return this;
     }
 
     public void setPresentationScore(Integer presentationScore) {
@@ -73,7 +69,9 @@ public class StudentParticipation extends Participation {
         }
         else if (participant == null) {
             this.student = null;
-            this.team = null;
+            if (this.team != null) {
+                this.team.setStudents(null);
+            }
         }
         else {
             throw new Error("Unknown participant type");
@@ -123,6 +121,23 @@ public class StudentParticipation extends Participation {
     public String toString() {
         String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
         return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
+    }
+
+    /**
+     * Utility method to flag whether the participation is part of an exam test run.
+     * This is indicated by {@link StudentParticipation#student} equals {@link Result#getAssessor()}
+     * <b>Note:</b> Test runs are only available for exams and only instructors are eligable to create test runs.
+     * User permissions should therefore be checked before using this utility method.
+     * Requires submissions and results to be eagerly loaded
+     * @return returns whether the exam participation is a test run participation
+     */
+    @JsonIgnore
+    public boolean isTestRunParticipation() {
+        if (this.getExercise().hasExerciseGroup() && this.getStudent().isPresent()) {
+            return this.getSubmissions().stream().filter(submission -> submission.getResult() != null).map(Submission::getResult)
+                    .anyMatch(result -> result.getAssessor() != null && result.getAssessor().equals(this.getStudent().get()));
+        }
+        return false;
     }
 
     @Override

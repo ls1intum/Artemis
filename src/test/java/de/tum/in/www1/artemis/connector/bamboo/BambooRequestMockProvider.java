@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -88,14 +89,42 @@ public class BambooRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        MockitoAnnotations.initMocks(this);
+        enableMockingOfRequests(false);
+    }
+
+    public void enableMockingOfRequests(boolean ignoreExpectOrder) {
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(ignoreExpectOrder);
+        mockServer = builder.build();
+
+        // necessary for injecting bambooClient above
+        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {
-        mockServer.reset();
+        if (mockServer != null) {
+            mockServer.reset();
+        }
     }
 
+    /**
+     * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
+     *
+     * @param exercise the programming exercise that already exists
+     */
+    public void mockProjectKeyExists(ProgrammingExercise exercise) {
+        mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + exercise.getProjectKey())).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK));
+    }
+
+    /**
+     * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
+     *
+     * @param exercise the programming exercise that might already exist
+     * @param exists   whether the programming exercise with the same title exists
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
@@ -220,13 +249,44 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
+    /**
+     * This method mocks that the artifact page the latest build result is empty
+     */
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, JsonProcessingException, MalformedURLException {
+        var indexOfResponse = "href=\"/download/1\"";
+        var noArtifactsResponse = "";
+        final var uri = new URL("https://bamboo.ase.in.tum.de/download/").toURI();
+        final var uri2 = new URL("https://bamboo.ase.in.tum.de/download/1").toURI();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(indexOfResponse));
+        mockServer.expect(requestTo(uri2)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(noArtifactsResponse));
+    }
+
+    /**
+     * This method mocks that the build log of a given plan has failed
+     *
+     * @param planKey the build plan id
+     */
+    public void mockFetchBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
+        var newDate = new Date().getTime();
+        Map firstLogEntry = Map.of("log", "java.lang.AssertionError: BubbleSort does not sort correctly", "date", newDate);
+        Map response = Map.of("logEntries", Map.of("logEntry", List.of(firstLogEntry)));
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
+                .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
     private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
         final var buildResult = new QueriedBambooBuildResultDTO();
         final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
         final var failedTests = new QueriedBambooBuildResultDTO.BambooFailedTestsDTO();
         final var changes = new BambooChangesDTO();
         final var artifacts = new BambooArtifactsDTO();
-        final var buildArtifact = new BambooArtifactsDTO.BambooArtifactDTO();
+        final var buildArtifact1 = new BambooArtifactsDTO.BambooArtifactDTO();
+        final var buildArtifact2 = new BambooArtifactsDTO.BambooArtifactDTO();
         final var buildLink = new BambooArtifactsDTO.BambooArtifactLinkDTO();
 
         failedTests.setExpand("testResult");
@@ -257,12 +317,16 @@ public class BambooRequestMockProvider {
 
         buildLink.setLinkToArtifact(new URL("https://bamboo.ase.in.tum.de/download/"));
         buildLink.setRel("self");
-        buildArtifact.setLink(buildLink);
-        buildArtifact.setName("Build log");
-        buildArtifact.setProducerJobKey(planKey + "-JOB-1");
-        buildArtifact.setShared(false);
-        artifacts.setArtifacts(List.of(buildArtifact));
-        artifacts.setSize(1);
+        buildArtifact1.setLink(buildLink);
+        buildArtifact1.setName("Build log");
+        buildArtifact1.setProducerJobKey(planKey + "-JOB-1");
+        buildArtifact1.setShared(false);
+        buildArtifact2.setLink(buildLink);
+        buildArtifact2.setName("Mock Build log");
+        buildArtifact2.setProducerJobKey(planKey + "-JOB-1");
+        buildArtifact2.setShared(false);
+        artifacts.setArtifacts(List.of(buildArtifact1, buildArtifact2));
+        artifacts.setSize(2);
         buildResult.setArtifacts(artifacts);
 
         return buildResult;

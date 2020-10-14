@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartOptions } from 'chart.js';
-import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { calculateHeightOfChart, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -12,12 +12,17 @@ import { PointCounter } from 'app/entities/quiz/point-counter.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { BaseChartDirective } from 'ng2-charts';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: Subscription;
@@ -56,14 +61,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
-    ) {
-        this.options = createOptions(this);
-    }
+    ) {}
 
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -91,14 +94,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadNewData(quiz.quizPointStatistic);
-            });
-
-            // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizPointStatistic.xAxes').subscribe((xLabel) => {
-                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
-            });
-            this.translateService.get('showStatistic.quizPointStatistic.yAxes').subscribe((yLabel) => {
-                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
 
@@ -170,7 +165,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -186,13 +181,13 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic;
+        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
         this.maxScore = this.calculateMaxScore();
 
         this.loadData();
@@ -206,8 +201,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.quizQuestions.forEach(function (question) {
-            result = result + question.score;
+        this.quizExercise.quizQuestions!.forEach((question) => {
+            result = result + question.score!;
         });
         return result;
     }
@@ -222,11 +217,11 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.ratedData = [];
         this.unratedData = [];
         // set data based on the pointCounters
-        this.order(this.quizPointStatistic.pointCounters).forEach((pointCounter) => {
-            this.label.push(pointCounter.points.toString());
-            this.ratedData.push(pointCounter.ratedCounter);
-            this.unratedData.push(pointCounter.unRatedCounter);
-            this.backgroundColor.push('#428bca');
+        this.order(this.quizPointStatistic.pointCounters!).forEach((pointCounter) => {
+            this.label.push(pointCounter.points!.toString());
+            this.ratedData.push(pointCounter.ratedCounter!);
+            this.unratedData.push(pointCounter.unRatedCounter!);
+            this.backgroundColor.push(blueColor);
         });
 
         this.labels = this.label;
@@ -242,19 +237,25 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      */
     loadDataInDiagram() {
         if (this.rated) {
-            this.participants = this.quizPointStatistic.participantsRated;
+            this.participants = this.quizPointStatistic.participantsRated!;
             this.data = this.ratedData;
         } else {
             // load the unrated data
-            this.participants = this.quizPointStatistic.participantsUnrated;
+            this.participants = this.quizPointStatistic.participantsUnrated!;
             this.data = this.unratedData;
         }
-        this.datasets = [
-            {
-                data: this.data,
-                backgroundColor: this.colors,
-            },
-        ];
+
+        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
+        const height = calculateHeightOfChart(this);
+
+        // add Axes-labels based on selected language
+        const xLabel = this.translateService.instant('showStatistic.quizPointStatistic.xAxes');
+        const yLabel = this.translateService.instant('showStatistic.quizPointStatistic.yAxes');
+        this.options = createOptions(this, height, height / 5, xLabel, yLabel);
+        if (this.chart) {
+            this.chart.update(0);
+        }
     }
 
     /**
@@ -263,7 +264,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id).subscribe((res) => {
+        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }
@@ -282,11 +283,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * order the point cursors ascending
      */
     order(pointCursors: Array<PointCounter>) {
+        // TODO: use sorting service
         return pointCursors.sort((a: PointCounter, b: PointCounter) => {
-            if (a.points < b.points) {
+            if (a.points! < b.points!) {
                 return -1;
             }
-            if (a.points > b.points) {
+            if (a.points! > b.points!) {
                 return 1;
             }
             // a must be equal to b

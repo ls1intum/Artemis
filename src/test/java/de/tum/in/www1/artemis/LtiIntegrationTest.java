@@ -48,16 +48,31 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private ProgrammingExercise programmingExercise;
 
-    private String requestBody = "custom_component_display_name=Exercise" + "&lti_version=LTI-1p0" + "&oauth_nonce=171298047571430710991572204884"
-            + "&resource_link_id=courses.edx.org-16a90aca094448ab95caf484b5c35d32" + "&context_id=course-v1%3ATUMx%2BSEECx%2B1T2018" + "&oauth_signature_method=HMAC-SHA1"
-            + "&oauth_timestamp=1572204884" + "&custom_require_existing_user=false" + "&lis_person_contact_email_primary=anh.montag%40tum.de"
-            + "&oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D" + "&context_title=Software+Engineering+Essentials" + "&lti_message_type=basic-lti-launch-request"
-            + "&custom_lookup_user_by_email=false" + "&launch_presentation_return_url=" + "&context_label=TUMx" + "&user_id=ff30145d6884eeb2c1cef50298939383" + "&roles=Student"
-            + "&oauth_version=1.0" + "&oauth_consumer_key=artemis_lti_key"
-            + "&lis_result_sourcedid=course-v1%253ATUMx%252BSEECx%252B1T2018%3Acourses.edx.org-16a90aca094448ab95caf484b5c35d32%3Aff30145d6884eeb2c1cef50298939383"
-            + "&launch_presentation_locale=en"
-            + "&lis_outcome_service_url=https%3A%2F%2Fcourses.edx.org%2Fcourses%2Fcourse-v1%3ATUMx%2BSEECx%2B1T2018%2Fxblock%2Fblock-v1%3ATUMx%2BSEECx%2B1T2018%2Btype%40lti_consumer%2Bblock%4016a90aca094448ab95caf484b5c35d32%2Fhandler_noauth%2Foutcome_service_handler"
-            + "&lis_person_sourcedid=lovaiible" + "&oauth_callback=about%3Ablank";
+    private String requestBody = """
+            custom_component_display_name=Exercise\
+            &lti_version=LTI-1p0\
+            &oauth_nonce=171298047571430710991572204884\
+            &resource_link_id=courses.edx.org-16a90aca094448ab95caf484b5c35d32\
+            &context_id=course-v1%3ATUMx%2BSEECx%2B1T2018\
+            &oauth_signature_method=HMAC-SHA1\
+            &oauth_timestamp=1572204884\
+            &custom_require_existing_user=false\
+            &lis_person_contact_email_primary=anh.montag%40tum.de\
+            &oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D\
+            &context_title=Software+Engineering+Essentials\
+            &lti_message_type=basic-lti-launch-request\
+            &custom_lookup_user_by_email=false\
+            &launch_presentation_return_url=\
+            &context_label=TUMx\
+            &user_id=ff30145d6884eeb2c1cef50298939383\
+            &roles=Student\
+            &oauth_version=1.0\
+            &oauth_consumer_key=artemis_lti_key\
+            &lis_result_sourcedid=course-v1%253ATUMx%252BSEECx%252B1T2018%3Acourses.edx.org-16a90aca094448ab95caf484b5c35d32%3Aff30145d6884eeb2c1cef50298939383\
+            &launch_presentation_locale=en\
+            &lis_outcome_service_url=https%3A%2F%2Fcourses.edx.org%2Fcourses%2Fcourse-v1%3ATUMx%2BSEECx%2B1T2018%2Fxblock%2Fblock-v1%3ATUMx%2BSEECx%2B1T2018%2Btype%40lti_consumer%2Bblock%4016a90aca094448ab95caf484b5c35d32%2Fhandler_noauth%2Foutcome_service_handler\
+            &lis_person_sourcedid=lovaiible\
+            &oauth_callback=about%3Ablank""";
 
     @BeforeEach
     void init() {
@@ -65,7 +80,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doReturn(null).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
-        database.addUsers(1, 1, 0);
+        database.addUsers(1, 1, 1);
 
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
@@ -113,10 +128,10 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "TA")
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
-        request.get("/api/lti/configuration/" + programmingExercise.getId() + 1, HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+        request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
     }
 
     @Test

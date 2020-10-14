@@ -9,9 +9,7 @@
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel">
-                Import Modeling Exercise
-            </span>
+            <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
         </button>
         <button
             id="modeling-exercise-create-button"
@@ -20,9 +18,7 @@
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">
-                Create Modeling Exercise
-            </span>
+            <span jhiTranslate="artemisApp.modelingExercise.home.createLabel"> Create Modeling Exercise </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
@@ -39,7 +35,7 @@
                     <th jhiSortBy="assessmentDueDate">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>

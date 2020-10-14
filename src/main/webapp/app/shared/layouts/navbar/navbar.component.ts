@@ -19,6 +19,7 @@ import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/rou
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -34,17 +35,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
-    currAccount: User | null;
+    currAccount?: User;
+    isRegistrationEnabled = false;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    private exam: Exam | undefined;
-    private examId: number | undefined;
+    private exam?: Exam;
+    private examId?: number;
 
     constructor(
         private loginService: LoginService,
         private languageService: JhiLanguageService,
         private languageHelper: JhiLanguageHelper,
+        private localeConversionService: LocaleConversionService,
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
@@ -57,7 +60,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-
         this.getExamId();
     }
 
@@ -67,6 +69,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
             }
         });
 
@@ -78,8 +81,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .pipe(tap((user: User) => (this.currAccount = user)))
             .subscribe();
 
-        this.examParticipationService.currentlyLoadedExam.subscribe((exam) => {
-            this.exam = exam;
+        this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
+            this.exam = studentExam.exam;
         });
     }
 
@@ -106,6 +109,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
         moment.locale(languageKey);
+        this.localeConversionService.locale = languageKey;
     }
 
     collapseNavbar() {
@@ -126,7 +130,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
     }
 
-    getImageUrl(): string | null {
+    getImageUrl() {
         return this.accountService.getImageUrl();
     }
 

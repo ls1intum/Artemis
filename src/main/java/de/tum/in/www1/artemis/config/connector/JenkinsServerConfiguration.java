@@ -15,20 +15,17 @@ import com.offbytwo.jenkins.JenkinsServer;
 public class JenkinsServerConfiguration {
 
     @Value("${artemis.continuous-integration.user}")
-    private String JENKINS_USER;
+    private String jenkinsUser;
 
     @Value("${artemis.continuous-integration.password}")
-    private String JENKINS_PASSWORD;
+    private String jenkinsPassword;
 
     @Value("${artemis.continuous-integration.url}")
-    private URL JENKINS_SERVER_URL;
-
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
+    private URL jenkinsServerUrl;
 
     @Bean
     public JenkinsServer jenkinsServer() throws URISyntaxException {
-        return new JenkinsServer(JENKINS_SERVER_URL.toURI(), JENKINS_USER, JENKINS_PASSWORD);
+        return new JenkinsServer(jenkinsServerUrl.toURI(), jenkinsUser, jenkinsPassword);
     }
 
 }

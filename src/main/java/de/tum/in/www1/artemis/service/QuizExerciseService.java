@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -79,7 +81,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Save the given quizExercise to the database and make sure that objects with references to one another are saved in the correct order to avoid PersistencyExceptions
+     * Save the given quizExercise to the database and make sure that objects with references to one another are saved in the correct order to avoid PersistenceExceptions
      *
      * @param quizExercise the quiz exercise to save
      * @return the saved quiz exercise
@@ -220,7 +222,7 @@ public class QuizExerciseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
         });
         return authorizedExercises.collect(Collectors.toList());
     }
@@ -273,18 +275,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Get one quiz exercise by id and eagerly load questions, statistics and submissions
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the quiz exercise entity
-     */
-    public QuizExercise findOneWithQuestionsAndStatisticsAndParticipations(Long quizExerciseId) {
-        log.debug("Find quiz exercise {} with questions and statistics and participations", quizExerciseId);
-        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndParticipationsById(quizExerciseId);
-        return optionalQuizExercise.orElse(null);
-    }
-
-    /**
      * Get all quiz exercises for the given course.
      *
      * @param courseId the id of the course
@@ -296,7 +286,7 @@ public class QuizExerciseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
                 return new LinkedList<>();
             }
         }
@@ -359,7 +349,7 @@ public class QuizExerciseService {
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, String quizChange) {
         try {
             long start = System.currentTimeMillis();
-            Class view = viewForStudentsInQuizExercise(quizExercise);
+            Class<?> view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.hasCourse()) {
@@ -382,7 +372,7 @@ public class QuizExerciseService {
     public boolean userHasTAPermissions(QuizExercise quizExercise) {
         Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user);
     }
 
     /**
@@ -391,7 +381,7 @@ public class QuizExerciseService {
      * @param quizExercise the quiz to get the view for
      * @return the view depending on the current state of the quiz
      */
-    public Class viewForStudentsInQuizExercise(QuizExercise quizExercise) {
+    public Class<?> viewForStudentsInQuizExercise(QuizExercise quizExercise) {
         if (!quizExercise.isStarted()) {
             return QuizView.Before.class;
         }
@@ -448,7 +438,7 @@ public class QuizExerciseService {
         }
 
         for (DragAndDropMapping mapping : mappingsToBeRemoved) {
-            dragAndDropQuestion.removeCorrectMappings(mapping);
+            dragAndDropQuestion.removeCorrectMapping(mapping);
         }
     }
 
@@ -497,7 +487,7 @@ public class QuizExerciseService {
         }
 
         for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
-            shortAnswerQuestion.removeCorrectMappings(mapping);
+            shortAnswerQuestion.removeCorrectMapping(mapping);
         }
     }
 
@@ -571,7 +561,7 @@ public class QuizExerciseService {
      * @param exerciseId Id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
-        // refetch exercise to make sure we have an updated version
+        // fetch exercise again to make sure we have an updated version
         QuizExercise quizExercise = findOneWithQuestionsAndStatistics(exerciseId);
 
         // for quizzes we need to delete the statistics and we need to reset the quiz to its original state

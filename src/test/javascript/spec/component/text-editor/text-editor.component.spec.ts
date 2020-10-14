@@ -1,13 +1,15 @@
+import * as sinon from 'sinon';
+import { SinonStub, stub } from 'sinon';
+import * as ace from 'brace';
 import * as chai from 'chai';
 import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
-import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
@@ -31,15 +33,26 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
+import { Language } from 'app/entities/tutor-group.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Submission } from 'app/entities/submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TextEditorComponent', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist.js');
+
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let debugElement: DebugElement;
     let textService: TextEditorService;
+    let textSubmissionService: TextSubmissionService;
 
     let getTextForParticipationStub: SinonStub;
 
@@ -81,6 +94,7 @@ describe('TextEditorComponent', () => {
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TextSubmissionService, useClass: MockTextSubmissionService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -90,6 +104,7 @@ describe('TextEditorComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 textService = debugElement.injector.get(TextEditorService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextForParticipationStub = stub(textService, 'get');
             });
     });
@@ -203,4 +218,97 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should not submit while saving', () => {
+        comp.isSaving = true;
+        sinon.spy(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).to.not.have.been.called;
+    });
+
+    it('should not submit without submission', () => {
+        // @ts-ignore
+        delete comp.submission;
+        sinon.spy(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).to.not.have.been.called;
+    });
+
+    it('should submit', () => {
+        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        comp.answer = 'abc';
+        sinon.spy(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).to.have.been.calledOnce;
+        expect(comp.isSaving).to.be.false;
+    });
+
+    it('should return submission for answer', () => {
+        sinon.spy(textService, 'predictLanguage');
+        const submissionForAnswer = comp['submissionForAnswer']('abc');
+        expect(submissionForAnswer.text).to.be.equal('abc');
+        expect(submissionForAnswer.language).to.be.equal(Language.ENGLISH);
+    });
+
+    it('should return general feedback', () => {
+        comp.result = {
+            id: 1,
+            feedbacks: [
+                {
+                    id: 1,
+                    detailText: 'abc',
+                    reference: undefined,
+                    type: FeedbackType.MANUAL,
+                } as Feedback,
+            ],
+        } as Result;
+        const feedbackWithoutReference = comp.generalFeedback;
+        expect(feedbackWithoutReference?.id).to.be.equal(1);
+    });
+
+    it('should return unreferenced feedback', () => {
+        comp.result = {
+            id: 1,
+            feedbacks: [
+                {
+                    id: 1,
+                    reference: undefined,
+                    type: FeedbackType.MANUAL_UNREFERENCED,
+                } as Feedback,
+            ],
+        } as Result;
+        const unreferencedFeedback = comp.unreferencedFeedback;
+        expect(unreferencedFeedback?.length).to.be.equal(1);
+    });
+
+    it('should receive submission from team', () => {
+        comp.textExercise = {
+            id: 1,
+            studentParticipations: [] as StudentParticipation[],
+        } as TextExercise;
+        const submission = {
+            id: 1,
+            participation: {
+                id: 1,
+                exercise: { id: 1 } as Exercise,
+                submissions: [] as Submission[],
+            } as Participation,
+            text: 'abc',
+        } as TextSubmission;
+        // @ts-ignore
+        sinon.spy(comp, 'updateParticipation');
+        comp.onReceiveSubmissionFromTeam(submission);
+        expect(comp['updateParticipation']).to.have.been.calledOnce;
+        expect(comp.answer).to.equal('abc');
+    });
+
+    it('should destroy', () => {
+        comp.submission = { text: 'abc' } as TextSubmission;
+        comp.answer = 'def';
+        comp.textExercise = { id: 1 } as TextExercise;
+        sinon.spy(textSubmissionService, 'update');
+        comp.ngOnDestroy();
+        expect(textSubmissionService.update).to.not.have.been.called;
+    });
 });

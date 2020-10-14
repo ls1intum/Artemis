@@ -3,9 +3,7 @@
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
             <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
-                Your participation is being loaded...
-            </span>
+            <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
         </span>
         <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
             <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>

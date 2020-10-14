@@ -14,23 +14,18 @@ import { AccountService } from 'app/core/auth/account.service';
 export class RatingComponent implements OnInit {
     public rating: Rating;
     public disableRating = false;
-    @Input() result: Result;
+    @Input() result?: Result;
 
     constructor(private ratingService: RatingService, private accountService: AccountService) {}
 
     ngOnInit(): void {
-        if (
-            !this.result ||
-            !this.result.submission ||
-            !this.result.participation ||
-            !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)
-        ) {
+        if (!this.result || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
             return;
         }
 
         // delete participation to prevent circular dependency
-        this.result.participation = null;
-        this.ratingService.getRating(this.result.id).subscribe((rating) => {
+        this.result.participation = undefined;
+        this.ratingService.getRating(this.result.id!).subscribe((rating) => {
             if (rating) {
                 this.rating = rating;
             } else {

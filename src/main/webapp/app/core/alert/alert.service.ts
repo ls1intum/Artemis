@@ -1,5 +1,5 @@
 import { JhiAlertService, JhiConfigService } from 'ng-jhipster';
-import { Injectable, Optional } from '@angular/core';
+import { Injectable, NgZone, Optional } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -12,8 +12,9 @@ export class AlertService extends JhiAlertService {
 
     mySanitizer: DomSanitizer;
 
-    constructor(sanitizer: DomSanitizer, configService: JhiConfigService, @Optional() translateService: TranslateService) {
-        super(sanitizer, configService, translateService);
+    constructor(sanitizer: DomSanitizer, configService: JhiConfigService, ngZone: NgZone, @Optional() translateService: TranslateService) {
+        // @ts-ignore
+        super(sanitizer, configService, ngZone, translateService);
         this.mySanitizer = sanitizer;
     }
 }

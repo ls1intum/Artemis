@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -11,6 +8,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,14 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "answer_option")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class AnswerOption extends DomainObject {
 
     @Column(name = "text")
     @JsonView(QuizView.Before.class)
@@ -52,14 +44,6 @@ public class AnswerOption implements Serializable {
     @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestion question;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getText() {
         return text;
@@ -114,12 +98,7 @@ public class AnswerOption implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
-    }
-
-    public AnswerOption invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -130,33 +109,8 @@ public class AnswerOption implements Serializable {
         return question;
     }
 
-    public AnswerOption question(MultipleChoiceQuestion multipleChoiceQuestion) {
-        this.question = multipleChoiceQuestion;
-        return this;
-    }
-
     public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
         this.question = multipleChoiceQuestion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        AnswerOption answerOption = (AnswerOption) o;
-        if (answerOption.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), answerOption.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

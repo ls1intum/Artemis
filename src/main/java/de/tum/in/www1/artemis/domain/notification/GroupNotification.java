@@ -1,18 +1,13 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 
 /**
@@ -20,9 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
  */
 @Entity
 @DiscriminatorValue(value = "G")
-public class GroupNotification extends Notification implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class GroupNotification extends Notification {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
@@ -71,22 +64,6 @@ public class GroupNotification extends Notification implements Serializable {
     public void setCourse(Course course) {
         this.course = course;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        GroupNotification groupNotification = (GroupNotification) o;
-        if (groupNotification.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), groupNotification.getId());
-    }
 
     public String getExerciseCreatedTarget(Exercise exercise) {
         return getExerciseTarget(exercise, "exerciseCreated");
@@ -114,6 +91,23 @@ public class GroupNotification extends Notification implements Serializable {
 
     public String getAttachmentUpdated(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
+    }
+
+    /**
+     * Create JSON representation for a GroupNotification for an ProgrammingExercise in an Exam.
+     *
+     * @param programmingExercise for which to create the notification.
+     * @param message to use for the notification.
+     * @return the stringified JSON of the target.
+     */
+    public String getExamProgrammingExerciseTarget(ProgrammingExercise programmingExercise, String message) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", message);
+        target.addProperty("id", programmingExercise.getId());
+        target.addProperty("entity", "programming-exercises");
+        target.addProperty("course", programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("mainPage", "course-management");
+        return target.toString();
     }
 
     /**
@@ -152,11 +146,6 @@ public class GroupNotification extends Notification implements Serializable {
 
     public String getTopic() {
         return "/topic/course/" + getCourse().getId() + "/" + getType();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

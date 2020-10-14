@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
@@ -10,16 +13,19 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 
+/**
+ * Represents the cache for one specific quiz exercise.
+ */
 abstract class QuizExerciseCache {
 
     private Long exerciseId;
 
     QuizExerciseCache(Long exerciseId) {
-        this.exerciseId = Objects.requireNonNull(exerciseId, "exerciseId must not be null");
+        this.exerciseId = exerciseId;
     }
 
     /**
-     * The id of the QuizExercise
+     * The id of the QuizExercise, only <code>null</code> for the {@linkplain EmptyQuizExerciseCache empty cache}.
      */
     final Long getExerciseId() {
         return exerciseId;
@@ -71,7 +77,7 @@ abstract class QuizExerciseCache {
 
     @Override
     public final int hashCode() {
-        return exerciseId.hashCode();
+        return Objects.hashCode(exerciseId);
     }
 
     @Override
@@ -80,7 +86,7 @@ abstract class QuizExerciseCache {
             return true;
         if (!(obj instanceof QuizExerciseCache))
             return false;
-        return exerciseId.equals(((QuizExerciseCache) obj).exerciseId);
+        return Objects.equals(exerciseId, ((QuizExerciseCache) obj).exerciseId);
     }
 
     @Override
@@ -88,6 +94,11 @@ abstract class QuizExerciseCache {
         return "QuizExerciseCache[" + exerciseId + "]";
     }
 
+    /**
+     * Returns an empty quiz exercise cache
+     *
+     * @return the {@link EmptyQuizExerciseCache} instance
+     */
     static QuizExerciseCache empty() {
         return EmptyQuizExerciseCache.INSTANCE;
     }

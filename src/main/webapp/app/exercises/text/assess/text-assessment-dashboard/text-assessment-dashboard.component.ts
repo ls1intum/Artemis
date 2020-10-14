@@ -14,7 +14,6 @@ import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
-    styles: [],
 })
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
@@ -64,14 +63,14 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
+            .getTextSubmissionsForExercise(this.exercise.id!, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body!.map((submission: TextSubmission) => {
                     if (submission.result) {
                         // reconnect some associations
                         submission.result.submission = submission;
                         submission.result.participation = submission.participation;
-                        submission.participation.results = [submission.result];
+                        submission.participation!.results = [submission.result];
                     }
 
                     return submission;
@@ -109,7 +108,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.exercise.id, submission.id).subscribe(() => {
+            this.assessmentsService.cancelAssessment(this.exercise.id!, submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }

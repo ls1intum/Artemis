@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
@@ -16,12 +17,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.SubmissionVersion;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -65,6 +83,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
+    private ExerciseGroupRepository exerciseGroupRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
     CompassService compassService;
 
     private ModelingExercise classExercise;
@@ -89,16 +113,18 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private TextExercise textExercise;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
-        Course course1 = database.addCourseWithDifferentModelingExercises();
-        List<Exercise> exercises = new ArrayList<>(course1.getExercises());
-        classExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ClassDiagram");
-        activityExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ActivityDiagram");
-        objectExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "ObjectDiagram");
-        useCaseExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "UseCaseDiagram");
-        finishedExercise = database.findModelingExerciseWithTitle(course1.getExercises(), "finished");
+        course = database.addCourseWithDifferentModelingExercises();
+        List<Exercise> exercises = new ArrayList<>(course.getExercises());
+        classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = database.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
+        finishedExercise = database.findModelingExerciseWithTitle(course.getExercises(), "finished");
         afterDueDateParticipation = database.addParticipationForExercise(finishedExercise, "student3");
         database.addParticipationForExercise(classExercise, "student3");
 
@@ -229,6 +255,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getCreatedDate()).isNotNull();
+        assertThat(version.get().getLastModifiedDate()).isNotNull();
 
         database.changeUser("student2");
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
@@ -477,7 +505,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.NOT_FOUND, ModelingSubmission.class);
+        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -563,6 +591,31 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         participation.setExercise(textExercise);
         studentParticipation = studentParticipationRepository.save(participation);
         request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
+        // create exam
+        Exam exam = database.addExamWithExerciseGroup(course, true);
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setPublishResultsDate(now().plusHours(3));
+
+        // creating exercise
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
+        exerciseGroup.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+
+        examRepository.save(exam);
+
+        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission("Some text", true);
+        modelingSubmission = database.addModelingSubmissionWithResultAndAssessor(modelingExercise, modelingSubmission, "student1", "tutor1");
+        request.get("/api/participations/" + modelingSubmission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test

@@ -12,6 +12,9 @@
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
             "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
+            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein anderer Tutor muss antworten.",
+            "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
+            "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
@@ -19,7 +22,8 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "scoreFor": "Bewertung für"
+                "scoreFor": "Bewertung für",
+                "tutorComment": "Tutor Kommentar:"
             },
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",

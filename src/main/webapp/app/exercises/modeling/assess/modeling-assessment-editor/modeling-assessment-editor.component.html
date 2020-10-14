@@ -5,16 +5,16 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="modelingExercise?.teamMode"
     [isAssessor]="isAssessor"
+    [isTestRun]="isTestRun"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="result"
-    [conflicts]="conflicts"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
     (cancel)="onCancelAssessment()"
-    (resolveConflict)="onShowConflictResolution()"
     (nextSubmission)="assessNextOptimal()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
@@ -30,6 +30,7 @@
             [maxScore]="modelingExercise?.maxScore"
             [totalScore]="totalScore"
             [model]="model"
+            [readOnly]="readOnly"
             [feedbacks]="result?.feedbacks"
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
@@ -44,8 +45,8 @@
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()"></jhi-unreferenced-feedback>
-            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
         </div>
         <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
             <h4 jhiTranslate="modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>

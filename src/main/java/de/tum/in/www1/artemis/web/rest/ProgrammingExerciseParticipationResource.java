@@ -58,11 +58,35 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with latest result and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping(value = "/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
+        if (participation.isEmpty()) {
+            return notFound();
+        }
+        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
+            return forbidden();
+        }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
+            // hide details that should not be shown to the students
+            participation.get().getExercise().filterSensitiveInformation();
+        }
+        return ResponseEntity.ok(participation.get());
+    }
+
+    /**
+     * Get the given student participation with its results and feedbacks.
+     *
+     * @param participationId for which to retrieve the student participation with results and feedbacks.
+     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
+     */
+    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-results-and-feedbacks")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationWithResultsForStudentParticipation(@PathVariable Long participationId) {
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
+                .findStudentParticipationWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }

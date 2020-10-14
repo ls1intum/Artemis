@@ -39,6 +39,42 @@
             overflow: auto;
         }
 
+        .file-input {
+            border-bottom: 1px dotted #ced4da;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        &__file-input {
+            // cannot be set to 'display: false' or similar
+            // input value would not be sent
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+
+        &__file-input:focus,
+        &__file-label:focus {
+            outline: 1px dotted #000;
+            outline: -webkit-focus-ring-color auto 5px;
+        }
+
+        &__file-label {
+            cursor: pointer;
+            width: 100%;
+            border: 1px solid #ced4da;
+            border-top: none;
+            border-radius: 0 0.15em 0.15em 0;
+
+            .upload-subtitle {
+                font-size: 12px;
+                color: #6c757d;
+            }
+        }
+
         &__markdown {
             height: inherit;
             overflow: auto;

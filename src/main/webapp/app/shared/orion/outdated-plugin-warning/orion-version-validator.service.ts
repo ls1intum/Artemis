@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { isOrion } from 'app/shared/orion/orion';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
@@ -16,7 +15,7 @@ export class OrionVersionValidator {
     private minVersion: string;
     private isValidVersion: boolean;
 
-    constructor(private profileService: ProfileService, private window: WindowRef, private router: Router) {}
+    constructor(private profileService: ProfileService, private router: Router) {}
 
     /**
      * Validates the installed Orion plugin version against the allowed version range. This will not validate anything
@@ -37,7 +36,7 @@ export class OrionVersionValidator {
             return of(this.isValidVersion);
         }
 
-        const userAgent = this.window.nativeWindow.navigator.userAgent;
+        const userAgent = window.navigator.userAgent;
         const orionVersionArray = this.extractVersionFromUserAgent(userAgent);
         if (orionVersionArray.length === 2) {
             const usedVersion = orionVersionArray[1];

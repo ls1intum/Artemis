@@ -1,9 +1,8 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
-import { getQuizQuestions, simulateQuizWork } from './requests/quiz.js';
 import { newCourse, deleteCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { createQuizExercise, deleteQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
+import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
 import {
     newExam,
     newExerciseGroup,
@@ -15,6 +14,7 @@ import {
     getStudentExams,
     updateWorkingTime,
     evaluateQuizzes,
+    submitExam,
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
@@ -39,6 +39,7 @@ const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
+const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -46,6 +47,7 @@ export function setup() {
     console.log('__ENV.TIMEOUT_EXERCISE: ' + __ENV.TIMEOUT_EXERCISE);
     console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
+    console.log('__ENV.ONLY_PREPARE: ' + onlyPrepare);
 
     let artemis, exerciseId, course, userId, textExercise, quizExercise;
 
@@ -105,6 +107,10 @@ export function setup() {
             }
         }
 
+        if (onlyPrepare) {
+            return;
+        }
+
         startExercises(artemis, exam);
 
         sleep(2);
@@ -112,11 +118,14 @@ export function setup() {
         return { courseId: exam.course.id, examId: exam.id };
     } else {
         console.log('Using existing course and exercise');
-        return { exerciseId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
+        return { examId: parseInt(__ENV.EXERCISE_ID), courseId: parseInt(__ENV.COURSE_ID) };
     }
 }
 
 export default function (data) {
+    if (onlyPrepare) {
+        return;
+    }
     const websocketConnectionTime = parseFloat(__ENV.TIMEOUT_PARTICIPATION); // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 50 users per second
@@ -143,64 +152,84 @@ export default function (data) {
         const timeUntilExamStart = differenceInMilliSeconds / 1000;
 
         console.log(`Waiting ${timeUntilExamStart}s for exam start`);
-        sleep(1 + timeUntilExamStart);
 
         const workingTime = studentExam.workingTime;
         const individualEndDate = new Date(parsedStartDate.getTime() + workingTime * 1000);
 
-        console.log('Individual end date: ' + individualEndDate.toISOString());
+        artemis.websocket(function (socket) {
+            // Send heartbeat to server so session is kept alive
+            socket.setInterval(function timeout() {
+                socket.send('\n');
+            }, 10000);
 
-        console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
+            socket.setInterval(function timeout() {
+                socket.close();
+            }, individualEndDate.getTime() - Date.now());
 
-        let programmingSubmissionCounter = 0;
-        endDateLoop: while (true) {
-            let submissions, submissionId;
-            for (const exercise of studentExam.exercises) {
-                if (individualEndDate.getTime() - Date.now() < 5000) {
-                    console.log(`End date is reached`);
-                    break endDateLoop;
-                }
-                console.log(`Exercise is of type ${exercise.type}`);
-                let studentParticipations = exercise.studentParticipations;
+            socket.setTimeout(function timeout() {
+                console.log('Sleeping now');
 
-                switch (exercise.type) {
-                    case 'quiz':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
-                        break;
+                sleep(1 + timeUntilExamStart);
 
-                    case 'text':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submitRandomTextAnswerExam(artemis, exercise, submissionId);
-                        break;
+                console.log('Individual end date: ' + individualEndDate.toISOString());
 
-                    case 'modeling':
-                        submissions = studentParticipations[0].submissions;
-                        submissionId = submissions[0].id;
-                        submitRandomModelingAnswerExam(artemis, exercise, submissionId);
-                        break;
+                console.log('Remaining: ' + (individualEndDate.getTime() - Date.now()));
 
-                    case 'programming':
-                        console.log('Programming submission counter is ' + programmingSubmissionCounter);
-                        if (programmingSubmissionCounter === 0) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, someSuccessfulErrorContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
-                        } else if (programmingSubmissionCounter === 1) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.SUCCESS);
-                        } else if (programmingSubmissionCounter === 2) {
-                            let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, buildErrorContentJava);
-                            simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+                let programmingSubmissionCounter = 0;
+                endDateLoop: while (true) {
+                    let submissions, submissionId;
+                    for (const exercise of studentExam.exercises) {
+                        if (individualEndDate.getTime() - Date.now() < 5000) {
+                            console.log(`End date is reached`);
+                            break endDateLoop;
                         }
-                        programmingSubmissionCounter++;
+                        console.log(`Exercise is of type ${exercise.type}`);
+                        let studentParticipations = exercise.studentParticipations;
 
-                        break;
+                        switch (exercise.type) {
+                            case 'quiz':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomAnswerRESTExam(artemis, exercise, 10, submissionId);
+                                break;
+
+                            case 'text':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomTextAnswerExam(artemis, exercise, submissionId);
+                                break;
+
+                            case 'modeling':
+                                submissions = studentParticipations[0].submissions;
+                                submissionId = submissions[0].id;
+                                submissions[0] = submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+                                break;
+
+                            case 'programming':
+                                console.log('Programming submission counter is ' + programmingSubmissionCounter);
+                                if (programmingSubmissionCounter === 0) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, someSuccessfulErrorContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
+                                } else if (programmingSubmissionCounter === 1) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.SUCCESS);
+                                } else if (programmingSubmissionCounter === 2) {
+                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, buildErrorContentJava);
+                                    simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+                                }
+                                programmingSubmissionCounter++;
+
+                                break;
+                        }
+                        sleep(10);
+                    }
                 }
-                sleep(1);
-            }
-        }
+
+                studentExam.started = true;
+                console.log('Submitting exam: ' + JSON.stringify(studentExam));
+                submitExam(artemis, data.courseId, data.examId, studentExam);
+            }, 1000);
+        });
 
         // console.log('Received EXAM ' + JSON.stringify(studentExam) + ' for user ' + baseUsername.replace('USERID', userId));
     });
@@ -209,6 +238,9 @@ export default function (data) {
 }
 
 export function teardown(data) {
+    if (onlyPrepare) {
+        return;
+    }
     const instructorUsername = baseUsername.replace('USERID', '1');
     const instructorPassword = basePassword.replace('USERID', '1');
 

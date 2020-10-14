@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -21,15 +21,11 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 @Table(name = "feedback")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Feedback implements Serializable {
+public class Feedback extends DomainObject {
 
     public static final int MAX_REFERENCE_LENGTH = 2000;
 
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
     @Size(max = 500)
     @Column(name = "text")
@@ -66,14 +62,12 @@ public class Feedback implements Serializable {
     @ManyToOne
     private GradingInstruction gradingInstruction;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
+    // TODO: JP remove these two references as they are not really needed
+    @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
+    private List<FeedbackConflict> firstConflicts = new ArrayList<>();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @OneToMany(mappedBy = "secondFeedback", orphanRemoval = true)
+    private List<FeedbackConflict> secondConflicts = new ArrayList<>();
 
     public String getText() {
         return text;
@@ -207,28 +201,33 @@ public class Feedback implements Serializable {
         this.gradingInstruction = gradingInstruction;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Feedback feedback = (Feedback) o;
-        if (feedback.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), feedback.getId());
+    public List<FeedbackConflict> getFirstConflicts() {
+        return firstConflicts;
+    }
+
+    public void setFirstConflicts(List<FeedbackConflict> firstConflicts) {
+        this.firstConflicts = firstConflicts;
+    }
+
+    public List<FeedbackConflict> getSecondConflicts() {
+        return secondConflicts;
+    }
+
+    public void setSecondConflicts(List<FeedbackConflict> secondConflicts) {
+        this.secondConflicts = secondConflicts;
+    }
+
+    /**
+     * Checks whether the feedback was created by static code analysis
+     * @return true if the it is static code analysis feedback else false
+     */
+    @JsonIgnore
+    public boolean isStaticCodeAnalysisFeedback() {
+        return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
     }
 
     public boolean referenceEquals(Feedback otherFeedback) {
         return reference.equals(otherFeedback.reference);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -33,7 +31,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -60,6 +57,8 @@ public class ResultResource {
 
     private final ResultService resultService;
 
+    private final ExamService examService;
+
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
@@ -78,10 +77,12 @@ public class ResultResource {
 
     private final AssessmentService assessmentService;
 
+    private ProgrammingExerciseGradingService programmingExerciseGradingService;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            AssessmentService assessmentService) {
+            AssessmentService assessmentService, ExamService examService, ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -94,127 +95,8 @@ public class ResultResource {
         this.programmingSubmissionService = programmingSubmissionService;
         this.assessmentService = assessmentService;
         this.userService = userService;
-    }
-
-    /**
-     * POST /participations/{participationId}/manual-results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types)
-     * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
-     *
-     * @param participationId the id of the participation for which the new manual result is created
-     * @param newResult the result to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result newResult) throws URISyntaxException {
-        log.debug("REST request to create a new result : {}", newResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
-        final var latestExistingResult = participation.findLatestResult();
-        if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
-            // prevent that tutors create multiple manual results
-            forbidden();
-        }
-
-        // make sure that the participation cannot be manipulated on the client side
-        newResult.setParticipation(participation);
-        final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
-            return forbidden();
-        }
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
-            return badRequest();
-        }
-
-        if (newResult.getId() != null) {
-            throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
-        }
-        else if (newResult.getResultString() == null) {
-            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getResultString().length() > 255) {
-            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newResult.getScore() == null) {
-            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
-        }
-        else if (newResult.getScore() != 100 && newResult.isSuccessful()) {
-            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
-        }
-        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
-        }
-
-        // Create manual submission with last commit hash und current time stamp.
-        ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
-                SubmissionType.MANUAL);
-        newResult.setSubmission(submission);
-        newResult = resultService.createNewRatedManualResult(newResult, true);
-
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
-    }
-
-    /**
-     * PUT /participations/{participationId}/manual-results : Updates an existing result.
-     *
-     * @param participationId the id of the participation for which the manual result is updated
-     * @param updatedResult the result to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
-     *         Server Error) if the result couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result updatedResult) throws URISyntaxException {
-        log.debug("REST request to update Result : {}", updatedResult);
-        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        // make sure that the participation cannot be manipulated on the client side
-        updatedResult.setParticipation(participation);
-        // TODO: we should basically set the submission here to prevent possible manipulation of the submission
-        if (updatedResult.getSubmission() == null) {
-            throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
-        }
-
-        final var exercise = (ProgrammingExercise) participation.getExercise();
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
-            return forbidden();
-        }
-        if (updatedResult.getId() == null) {
-            return createProgrammingExerciseManualResult(participationId, updatedResult);
-        }
-        // get the original result with assessor for permission checks below, otherwise the client could override the assessor and the check would not make any sense
-        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
-
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
-    }
-
-    protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-
-        // if the assessor is null, the user is allowed to save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
-        }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
-        // and tutors should be able to override the created results when the assessmentDueDate is null
-        final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
-
-        // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
-        // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
+        this.examService = examService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
     /**
@@ -263,7 +145,7 @@ public class ResultResource {
         ProgrammingExerciseParticipation participation = optionalParticipation.get();
         Optional<Result> result;
         // Process the new result from the build result.
-        result = resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
+        result = programmingExerciseGradingService.processNewProgrammingExerciseResult((Participation) participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
@@ -349,8 +231,9 @@ public class ResultResource {
         }
 
         List<Result> results = new ArrayList<>();
+        var examMode = exercise.hasExerciseGroup();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId, examMode);
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -535,10 +418,22 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
-                    "External submissions are not supported before the exercise due date.")).build();
+
+        if (!exercise.hasExerciseGroup()) {
+            if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the exercise due date.")).build();
+            }
         }
+        else {
+            Exam exam = exercise.getExerciseGroup().getExam();
+            ZonedDateTime latestIndiviudalExamEndDate = examService.getLatestIndiviudalExamEndDate(exam);
+            if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                        "External submissions are not supported before the end of the exam.")).build();
+            }
+        }
+
         if (exercise instanceof QuizExercise) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
                     "External submissions are not supported for Quiz exercises.")).build();

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -12,8 +10,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -22,9 +18,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonTypeName("short-answer")
-public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
@@ -36,11 +30,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
 
     public Set<ShortAnswerSubmittedText> getSubmittedTexts() {
         return submittedTexts;
-    }
-
-    public ShortAnswerSubmittedAnswer submittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
-        this.submittedTexts = shortAnswerSubmittedTexts;
-        return this;
     }
 
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
@@ -58,7 +47,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     public void setSubmittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
         this.submittedTexts = shortAnswerSubmittedTexts;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Delete all references to question, solutions and spots if the question was changed
@@ -83,7 +71,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
 
     /**
      * Check if a spot were deleted and delete reference to in submittedTexts
-     * 
+     *
      * @param question the changed question with the changed spot
      */
     private void checkAndDeleteSubmittedTexts(ShortAnswerQuestion question) {
@@ -118,27 +106,13 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) o;
-        if (shortAnswerSubmittedAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSubmittedAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
         return "ShortAnswerSubmittedAnswer{" + "id=" + getId() + "}";
+    }
+
+    @Override
+    public void filterOutCorrectAnswers() {
+        super.filterOutCorrectAnswers();
+        this.getSubmittedTexts().forEach(submittedText -> submittedText.setIsCorrect(null));
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,11 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -39,16 +38,19 @@ public class SubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authorizationCheckServiceCheckService;
 
     private final UserService userService;
 
+    private final ExerciseService exerciseService;
+
     public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService) {
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
+        this.exerciseService = exerciseService;
         this.participationService = participationService;
-        this.authCheckService = authCheckService;
+        this.authorizationCheckServiceCheckService = authCheckService;
         this.userService = userService;
     }
 
@@ -81,11 +83,37 @@ public class SubmissionResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
+    /**
+     * GET /test-run-submissions : get all the test run submissions for an exercise.
+     *
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping("/exercises/{exerciseId}/test-run-submissions")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getAllTestRunSubmissions(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!exercise.hasExerciseGroup()) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (!authorizationCheckServiceCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        var testRunParticipation = participationService.findTestRunParticipationOfInstructorForExercise(user.getId(), exercise);
+        if (testRunParticipation.isPresent()) {
+            var latestSubmission = testRunParticipation.get().findLatestSubmission().get();
+            return ResponseEntity.ok().body(List.of(latestSubmission));
+        }
+        throw new EntityNotFoundException("There is no test run participation for exercise: " + exerciseId);
+    }
+
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authorizationCheckServiceCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.LeaderboardId;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
@@ -43,6 +45,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -72,6 +75,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     ExerciseRepository exerciseRepo;
+
+    @Autowired
+    LectureRepository lectureRepo;
 
     @Autowired
     ParticipationRepository participationRepo;
@@ -113,7 +119,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
 
     @Autowired
-    ExamRepository examRepository;
+    ExamRepository examRepo;
 
     private final int numberOfStudents = 4;
 
@@ -278,8 +284,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
-        // mock certain requests to JIRA
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
+        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(true));
+        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null);
+        course3.setStudentGroupName(course3.getDefaultStudentGroupName());
+        course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
+        course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
+        course3 = courseRepo.save(course3);
+        courses.add(course3);
+        database.addExamWithExerciseGroup(courses.get(0), true);
+        // mock certain requests to JIRA Bitbucket and Bamboo
         for (Course course : courses) {
             if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
@@ -290,7 +306,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
             }
+            for (Exercise exercise : course.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    final String projectKey = ((ProgrammingExercise) exercise).getProjectKey();
+                    bambooRequestMockProvider.mockDeleteProject(projectKey);
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase());
+                    bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+                }
+            }
         }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
@@ -299,6 +326,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
         assertThat(courseRepo.findAll()).as("All courses deleted").hasSize(0);
         assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
+        assertThat(examRepo.findAll()).as("All exams are deleted").isEmpty();
+        assertThat(exerciseRepo.findAll()).as("All Exercises are deleted").isEmpty();
+        assertThat(lectureRepo.findAll()).as("All Lectures are deleted").isEmpty();
     }
 
     @Test
@@ -573,7 +603,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 if (exercise.getTutorParticipations().size() > 0) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
                     assertThat(tutorParticipation.getStatus()).as("Tutor participation status is correctly initialized").isEqualTo(TutorParticipationStatus.NOT_PARTICIPATED);
-                    assertThat(tutorParticipation.getPoints()).as("Tutor participation points are correctly initialized").isNull();
                 }
             }
 
@@ -594,10 +623,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
             else {
                 assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfSubmissions(),
-                        "inTime", "late");
-                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats.getNumberOfAssessments(),
-                        "inTime", "late");
+                assertThat(stats2.getNumberOfSubmissions()).as("Submission stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfSubmissions());
+                assertThat(stats2.getNumberOfAssessments()).as("Assessment stats for instructor are correct.").usingRecursiveComparison().isEqualTo(stats.getNumberOfAssessments());
             }
         }
     }
@@ -690,10 +717,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
-            String[] fields = { "studentGroupName", "teachingAssistantGroupName", "instructorGroupName", "startDate", "endDate", "maxComplaints", "presentationScore" };
-            assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").isEqualToComparingOnlyGivenFields(courseOnly, fields);
-            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly")
-                    .isEqualToComparingOnlyGivenFields(courseOnly, fields);
+            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService" };
+            assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
+            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly").usingRecursiveComparison()
+                    .ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations

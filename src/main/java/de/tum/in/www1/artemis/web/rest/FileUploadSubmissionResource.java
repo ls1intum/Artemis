@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,8 +38,6 @@ public class FileUploadSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseService courseService;
-
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
@@ -57,12 +54,11 @@ public class FileUploadSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+    public FileUploadSubmissionResource(FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
             AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
             GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
-        this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
@@ -180,7 +176,8 @@ public class FileUploadSubmissionResource {
 
     /**
      * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call
+     * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise
      * @param submittedOnly if only submitted submissions should be returned
@@ -205,12 +202,13 @@ public class FileUploadSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        final List<FileUploadSubmission> fileUploadSubmissions;
+        final boolean examMode = exercise.hasExerciseGroup();
+        List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
+            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsAssessedByTutorForExercise(exerciseId, user, examMode);
         }
         else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         // tutors should not see information about the student of a submission
@@ -251,9 +249,10 @@ public class FileUploadSubmissionResource {
             return badRequest();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
@@ -261,11 +260,13 @@ public class FileUploadSubmissionResource {
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
+            fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
+                    fileUploadExercise.hasExerciseGroup());
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
+                    .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.hasExerciseGroup());
+
             if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();
             }

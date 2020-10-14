@@ -56,7 +56,7 @@ public class ExerciseTest {
 
     @BeforeEach
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         exercise = mock(Exercise.class, CALLS_REAL_METHODS);
         exerciseService = mock(ExerciseService.class, CALLS_REAL_METHODS);

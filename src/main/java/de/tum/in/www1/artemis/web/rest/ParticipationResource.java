@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -70,10 +71,6 @@ public class ParticipationResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final TextSubmissionService textSubmissionService;
-
-    private final ResultService resultService;
-
     private final UserService userService;
 
     private final AuditEventRepository auditEventRepository;
@@ -82,11 +79,12 @@ public class ParticipationResource {
 
     private final TeamService teamService;
 
+    private final FeatureToggleService featureToggleService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration,
-            TeamService teamService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, UserService userService,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -95,12 +93,11 @@ public class ParticipationResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.textSubmissionService = textSubmissionService;
-        this.resultService = resultService;
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
         this.teamService = teamService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -134,7 +131,8 @@ public class ParticipationResource {
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             var programmingExercise = (ProgrammingExercise) exercise;
-            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
+            if (!featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES) || (programmingExercise.getDueDate() != null
+                    && now().isAfter(programmingExercise.getDueDate())
                     && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
@@ -279,9 +277,10 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        boolean examMode = exercise.hasExerciseGroup();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = participationService.findByExerciseIdWithLatestResult(exerciseId);
+            participations = participationService.findByExerciseIdWithLatestResult(exerciseId, examMode);
         }
         else {
             participations = participationService.findByExerciseId(exerciseId);
@@ -508,7 +507,7 @@ public class ParticipationResource {
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
-        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
         }
 
@@ -542,7 +541,7 @@ public class ParticipationResource {
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
-        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
         }
 

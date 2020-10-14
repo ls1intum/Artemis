@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
@@ -74,8 +73,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final AuditEventRepository auditEventRepository;
 
-    public JiraAuthenticationProvider(UserRepository userRepository, CourseRepository courseRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
-            Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
+    public JiraAuthenticationProvider(UserRepository userRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService,
+            AuditEventRepository auditEventRepository) {
         super(userRepository);
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
@@ -101,7 +100,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
         User user = getOrCreateUser(authentication, false);
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
@@ -122,9 +120,11 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
             // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
+                // this is only the case if the systems wants to login a user automatically (e.g. based on Oauth in LTI)
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
             else {
+                // this is the normal case, where we use the username and password provided by the user so that JIRA checks for us if this is valid
                 final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
             }
@@ -175,7 +175,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             user.setAuthorities(userService.buildAuthorities(user));
 
             if (!user.getActivated()) {
-                userService.activateRegistration(user.getActivationKey());
+                userService.activateUser(user);
             }
             userRepository.save(user);
             return user;

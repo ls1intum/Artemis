@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -11,6 +8,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -20,14 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "short_answer_mapping")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerMapping implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
+public class ShortAnswerMapping extends DomainObject {
 
     @Column(name = "short_answer_spot_index")
     @JsonView(QuizView.Before.class)
@@ -53,22 +45,8 @@ public class ShortAnswerMapping implements Serializable {
     @JsonIgnore
     private ShortAnswerQuestion question;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Integer getShortAnswerSpotIndex() {
         return shortAnswerSpotIndex;
-    }
-
-    public ShortAnswerMapping shortAnswerSpotIndex(Integer shortAnswerSpotIndex) {
-        this.shortAnswerSpotIndex = shortAnswerSpotIndex;
-        return this;
     }
 
     public void setShortAnswerSpotIndex(Integer shortAnswerSpotIndex) {
@@ -79,22 +57,12 @@ public class ShortAnswerMapping implements Serializable {
         return shortAnswerSolutionIndex;
     }
 
-    public ShortAnswerMapping shortAnswerSolutionIndex(Integer shortAnswerSolutionIndex) {
-        this.shortAnswerSolutionIndex = shortAnswerSolutionIndex;
-        return this;
-    }
-
     public void setShortAnswerSolutionIndex(Integer shortAnswerSolutionIndex) {
         this.shortAnswerSolutionIndex = shortAnswerSolutionIndex;
     }
 
     public Boolean isInvalid() {
-        return invalid;
-    }
-
-    public ShortAnswerMapping invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -131,34 +99,8 @@ public class ShortAnswerMapping implements Serializable {
         return question;
     }
 
-    public ShortAnswerMapping question(ShortAnswerQuestion shortAnswerQuestion) {
-        this.question = shortAnswerQuestion;
-        return this;
-    }
-
     public void setQuestion(ShortAnswerQuestion shortAnswerQuestion) {
         this.question = shortAnswerQuestion;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerMapping shortAnswerMapping = (ShortAnswerMapping) o;
-        if (shortAnswerMapping.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerMapping.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

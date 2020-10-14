@@ -25,7 +25,7 @@ export interface ICodeEditorRepositoryFileService {
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
 }
@@ -35,6 +35,18 @@ export interface ICodeEditorRepositoryService {
     commit: () => Observable<void>;
     pull: () => Observable<void>;
     resetRepository: () => Observable<void>;
+}
+
+export class ConnectionError extends Error {
+    constructor() {
+        super('InternetDisconnected');
+        // Set the prototype explicitly.
+        Object.setPrototypeOf(this, ConnectionError.prototype);
+    }
+
+    static get message(): string {
+        return 'InternetDisconnected';
+    }
 }
 
 /**
@@ -48,7 +60,7 @@ const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissio
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
 /**
  * Check a HttpErrorResponse for specific status codes that are relevant for the code-editor.
- * Atm we only check the conflict status code (409) and inform the conflictService about it.
+ * Atm we only check the conflict status code (409) & inform the conflictService about it, and 'internet disconnected' status code (0).
  *
  * @param conflictService
  */
@@ -57,6 +69,9 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
         catchError((err: HttpErrorResponse) => {
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+            }
+            if (err.status === 0) {
+                return throwError(new ConnectionError());
             }
             return throwError(err);
         }),
@@ -105,7 +120,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     getBuildLogs = () => {
         const [domainType, domainValue] = this.domain;
         if (domainType === DomainType.PARTICIPATION) {
-            return this.buildLogService.getBuildLogs(domainValue.id);
+            return this.buildLogService.getBuildLogs(domainValue.id!);
         }
         return of([]);
     };
@@ -113,19 +128,17 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
-    private fileUpdateSubject = new Subject<FileSubmission>();
+    fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
-
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 
     /**
-     * Calls ngOnDestroy of super and unsubscribes from current service.
+     * Calls ngOnDestroy of super to unsubscribe from domain/participation changes.
      */
     ngOnDestroy() {
         super.ngOnDestroy();
-        this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
     }
 
     /**
@@ -137,10 +150,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        if (this.fileUpdateUrl) {
-            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
-        }
-        this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
+        this.fileUpdateUrl = `${this.restResourceUrl}/files`;
     }
 
     getRepositoryContent = () => {
@@ -174,38 +184,37 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             .pipe(handleErrorResponse(this.conflictService));
     };
 
-    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
+    /** Call to server to update files.
+     * Checks all returned files submissions for submissionerrors, see {@link checkIfSubmissionIsError}
+     * Currently we only handle {@link GitConflictState#CHECKOUT_CONFLICT}
+     *
+     * @param fileUpdates the Array of updated files
+     * @param thenCommit indicates the server to also commit the saved changes
+     */
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
+        const currentFileUpdateUrl: string = this.fileUpdateUrl;
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
-        if (this.fileUpdateUrl) {
-            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
-        }
-
         this.fileUpdateSubject = new Subject<FileSubmission>();
-
-        this.jhiWebsocketService.subscribe(this.fileUpdateUrl);
-        this.jhiWebsocketService
-            .receive(this.fileUpdateUrl)
+        return this.http
+            .put<FileSubmission>(currentFileUpdateUrl, fileUpdates, {
+                params: { commit: thenCommit ? 'yes' : 'no' },
+            })
             .pipe(
+                handleErrorResponse(this.conflictService),
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (checkIfSubmissionIsError(fileSubmission)) {
-                        // The subject gets informed about all errors.
                         this.fileUpdateSubject.error(fileSubmission);
-                        // Checkout conflict handling.
-                        if (checkIfSubmissionIsError(fileSubmission) && fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
+                        if (fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
                             this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
                         }
                         return;
                     }
                     this.fileUpdateSubject.next(fileSubmission);
                 }),
-                catchError(() => of()),
-            )
-            .subscribe();
-        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        return this.fileUpdateSubject.asObservable();
-    };
+            );
+    }
 
     renameFile = (currentFilePath: string, newFilename: string) => {
         return this.http

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -12,11 +11,13 @@ import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,9 +31,13 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot()],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
             declarations: [CodeEditorAceComponent],
-            providers: [WindowRef, CodeEditorFileService, { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService }],
+            providers: [
+                CodeEditorFileService,
+                { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -127,10 +132,8 @@ describe('CodeEditorAceComponent', () => {
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } }, anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 } } };
         comp.selectedFile = newFileName;
         comp.fileSession = fileSession;
-        comp.fileChange = fileChange;
 
-        triggerChanges(comp, { property: 'fileChange', currentValue: fileChange, firstChange: false });
-        fixture.detectChanges();
+        comp.onFileChange(fileChange);
 
         expect(comp.fileSession).to.deep.equal({ anotherFile: fileSession.anotherFile, [fileChange.newFileName]: fileSession[selectedFile] });
     });
@@ -142,10 +145,8 @@ describe('CodeEditorAceComponent', () => {
         const initEditorAfterFileChangeSpy = spy(comp, 'initEditorAfterFileChange');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-        comp.fileChange = fileChange;
 
-        triggerChanges(comp, { property: 'fileChange', currentValue: fileChange, firstChange: false });
-        fixture.detectChanges();
+        comp.onFileChange(fileChange);
 
         expect(initEditorAfterFileChangeSpy).to.have.been.calledOnceWithExactly();
         expect(comp.fileSession).to.deep.equal({ anotherFile: fileSession.anotherFile, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } });
@@ -172,17 +173,40 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'file';
         const newFileContent = 'lorem ipsum new';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 } } };
-        const buildLogErrors = { errors: { [selectedFile]: new AnnotationArray(...[{ row: 5, column: 4, text: 'error', type: 'error', ts: 0 }]) }, timestamp: 0 };
-        const editorChangeLog = [{ start: { row: 1, column: 1 }, end: { row: 2, column: 1 }, action: 'remove' }];
+        const annotations = [{ fileName: selectedFile, row: 5, column: 4, text: 'error', type: 'error', timestamp: 0 }];
+        const editorChange = { start: { row: 1, column: 1 }, end: { row: 2, column: 1 }, action: 'remove' };
+
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
-        comp.buildLogErrors = buildLogErrors;
-        comp.editorChangeLog = editorChangeLog;
+        comp.annotationsArray = annotations;
 
+        comp.updateAnnotations(editorChange);
         comp.onFileTextChanged(newFileContent);
 
         expect(onFileContentChangeSpy).to.have.been.calledOnceWithExactly({ file: selectedFile, fileContent: newFileContent });
-        const newBuildLogErrors = { errors: { file: [{ text: 'error', type: 'error', ts: 0, row: 4, column: 4 }] }, timestamp: 0 };
-        expect(comp.buildLogErrors).to.deep.equal(newBuildLogErrors);
+        const newAnnotations = [{ fileName: selectedFile, text: 'error', type: 'error', timestamp: 0, row: 4, column: 4 }];
+        expect(comp.annotationsArray).to.deep.equal(newAnnotations);
+    });
+
+    it('should be in readonly mode and display feedback when in tutor assessment', () => {
+        comp.isTutorAssessment = true;
+        comp.fileFeedbacks = [];
+        const displayFeedbacksSpy = spy(comp, 'displayFeedbacks');
+        comp.onFileTextChanged('newFileContent');
+
+        expect(comp.editor.getEditor().getReadOnly()).to.be.true;
+        expect(displayFeedbacksSpy).to.have.been.calledOnce;
+    });
+
+    it('should setup inline comment buttons in gutter', () => {
+        comp.isTutorAssessment = true;
+        comp.readOnlyManualFeedback = false;
+        comp.fileFeedbacks = [];
+        const setupLineIconsSpy = spy(comp, 'setupLineIcons');
+        const observerDomSpy = spy(comp, 'observerDom');
+        comp.onFileTextChanged('newFileContent');
+
+        expect(setupLineIconsSpy).to.be.calledOnce;
+        expect(observerDomSpy).to.be.calledOnce;
     });
 });

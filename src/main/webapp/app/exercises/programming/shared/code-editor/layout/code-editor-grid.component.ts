@@ -1,28 +1,24 @@
 import * as $ from 'jquery';
-import { AfterViewInit, Component, ContentChild, ElementRef, Input, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, EventEmitter, Output, Input } from '@angular/core';
 
-import { WindowRef } from 'app/core/websocket/window.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
-    providers: [WindowRef, CodeEditorGridService],
     encapsulation: ViewEncapsulation.None,
 })
 export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
-
     @Input()
-    exerciseTitle: string;
-    @Input()
-    exerciseMaxScore: number;
+    isTutorAssessment = false;
+    @Output()
+    onResize = new EventEmitter<ResizeType>();
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
@@ -30,17 +26,17 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     interactResizableLeft: Interactable;
     resizableMinWidthLeft: number;
-    resizableMaxWidthLeft = 1200;
+    resizableMaxWidthLeft = 2000;
 
     interactResizableRight: Interactable;
     resizableMinWidthRight: number;
-    resizableMaxWidthRight = 1200;
+    resizableMaxWidthRight = 2000;
 
     interactResizableBottom: Interactable;
     resizableMinHeightBottom = 300;
     resizableMaxHeightBottom = 600;
 
-    constructor(private $window: WindowRef, private codeEditorGridService: CodeEditorGridService) {}
+    constructor() {}
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -48,7 +44,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
      * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinHeightMain = this.$window.nativeWindow.screen.height / 3;
+        this.resizableMinHeightMain = window.screen.height / 3;
         this.interactResizableMain = interact('.editor-main')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -67,7 +63,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.codeEditorGridService.submitResizeEvent(ResizeType.MAIN_BOTTOM);
+                this.onResize.emit(ResizeType.MAIN_BOTTOM);
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;
@@ -75,8 +71,8 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 target.style.height = event.rect.height + 'px';
             });
 
-        this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 7;
-        this.resizableMaxWidthLeft = this.$window.nativeWindow.screen.width / 2;
+        this.resizableMinWidthLeft = window.screen.width / 7;
+        this.resizableMaxWidthLeft = window.screen.width / 2;
         this.interactResizableLeft = interact('.editor-sidebar-left')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -95,7 +91,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_LEFT);
+                this.onResize.emit(ResizeType.SIDEBAR_LEFT);
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;
@@ -103,8 +99,8 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.resizableMinWidthRight = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 2;
+        this.resizableMinWidthRight = window.screen.width / 6;
+        this.resizableMaxWidthRight = window.screen.width / 1.3;
         this.interactResizableRight = interact('.editor-sidebar-right')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -123,7 +119,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_RIGHT);
+                this.onResize.emit(ResizeType.SIDEBAR_RIGHT);
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;
@@ -131,7 +127,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.resizableMinHeightBottom = this.$window.nativeWindow.screen.height / 6;
+        this.resizableMinHeightBottom = window.screen.height / 6;
         this.interactResizableBottom = interact('.editor-bottom')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -140,7 +136,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 modifiers: [
                     interact.modifiers!.restrictSize({
                         min: { width: 0, height: this.resizableMinHeightBottom },
-                        max: { width: this.$window.nativeWindow.screen.width, height: this.resizableMaxHeightBottom },
+                        max: { width: window.screen.width, height: this.resizableMaxHeightBottom },
                     }),
                 ],
                 inertia: true,
@@ -150,7 +146,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.codeEditorGridService.submitResizeEvent(ResizeType.BOTTOM);
+                this.onResize.emit(ResizeType.BOTTOM);
             })
             .on('resizemove', function (event: any) {
                 const target = event.target;

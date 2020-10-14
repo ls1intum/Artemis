@@ -1,10 +1,7 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
-import { AnnotationArray } from 'app/entities/annotation.model';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
@@ -15,50 +12,41 @@ import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-
-export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+import { Annotation } from '../ace/code-editor-ace.component';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { findLatestResult } from 'app/shared/util/utils';
+import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
-    providers: [WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()
     participation: Participation;
-    @Input()
-    get buildLogErrors() {
-        return this.buildLogErrorsValue;
-    }
+
+    @Output()
+    onAnnotations = new EventEmitter<Array<Annotation>>();
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
-    @Output()
-    buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
     onError = new EventEmitter<string>();
 
     isBuilding: boolean;
     rawBuildLogs = new BuildLogEntryArray();
-    buildLogErrorsValue: BuildLogErrors;
+    result?: Result;
 
     /** Resizable constants **/
     resizableMinHeight = 150;
     interactResizable: Interactable;
 
-    set buildLogErrors(buildLogErrors: BuildLogErrors) {
-        this.buildLogErrorsValue = buildLogErrors;
-        this.buildLogErrorsChange.emit(buildLogErrors);
-    }
-
     private resultSubscription: Subscription;
     private submissionSubscription: Subscription;
 
     constructor(
-        private $window: WindowRef,
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
-        private sessionService: CodeEditorSessionService,
         private participationWebsocketService: ParticipationWebsocketService,
         private submissionService: CodeEditorSubmissionService,
     ) {}
@@ -74,7 +62,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
+        this.resizableMinHeight = window.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput');
     }
 
@@ -91,36 +79,51 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.setupResultWebsocket();
         }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
-        if (participationChange && this.participation.results && this.participation.results.length) {
-            const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
+        if (participationChange && this.participation?.results?.length) {
+            const latestResult = findLatestResult(this.participation.results);
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
+                    tap((result) => (this.result = result)),
                     switchMap((result) => this.fetchBuildResults(result)),
                     map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
-                        const buildLogErrors = this.rawBuildLogs.extractErrors();
-                        // Only load errors from session if the last result has build errors
-                        if (this.rawBuildLogs.length) {
-                            const sessionBuildLogs = this.loadSession();
-                            this.buildLogErrors = !sessionBuildLogs || buildLogErrors.timestamp > sessionBuildLogs.timestamp ? buildLogErrors : sessionBuildLogs;
-                        } else {
-                            this.buildLogErrors = buildLogErrors;
-                        }
                     }),
                     catchError(() => {
                         this.rawBuildLogs = new BuildLogEntryArray();
-                        this.buildLogErrors = this.rawBuildLogs.extractErrors();
                         return Observable.of();
                     }),
                 )
-                .subscribe();
+                .subscribe(() => this.extractAnnotations());
         } else {
             if (!this.resultSubscription && this.participation) {
                 this.setupResultWebsocket();
             }
         }
+    }
+
+    /**
+     * Extracts annotations from
+     * - the build logs as compilation errors
+     * - the result feedbacks as static code analysis issues
+     * and emits them to the parent component
+     */
+    private extractAnnotations() {
+        const buildLogErrors = this.rawBuildLogs.extractErrors();
+        const codeAnalysisIssues = (this.result!.feedbacks || [])
+            .filter(Feedback.isStaticCodeAnalysisFeedback)
+            .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
+        const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
+            text: issue.message || '',
+            fileName: issue.filePath || '',
+            // TODO: Support endLine and endColumn
+            row: (issue.startLine || 1) - 1,
+            column: (issue.startColumn || 1) - 1,
+            type: 'warning', // TODO encode type in feedback
+            timestamp: this.result?.completionDate ? new Date(this.result.completionDate.toString()).valueOf() : 0,
+        }));
+        this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisAnnotations]);
     }
 
     /**
@@ -142,23 +145,22 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.resultSubscription.unsubscribe();
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, true)
+            .subscribeForLatestResultOfParticipation(this.participation.id!, true)
             .pipe(
-                // Ignore initial null result from service
+                // Ignore initial null/undefined result from service
                 filter((result) => !!result),
+                tap((result) => (this.result = result!)),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);
-                    this.buildLogErrors = this.rawBuildLogs.extractErrors();
                 }),
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
-                    this.buildLogErrors = this.rawBuildLogs.extractErrors();
-                    return Observable.of(null);
+                    return Observable.of(undefined);
                 }),
             )
-            .subscribe(() => {}, console.log);
+            .subscribe(() => this.extractAnnotations());
     }
 
     /**
@@ -167,7 +169,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -187,15 +189,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /**
      * Decides if the build log should be shown.
-     * If All tests were successful or there is test feedback -> don't show build logs.
-     * Else -> show build logs.
+     * Fetch the build logs if a result is available and no submission is available or the submission could not be build
      * @param result
      */
-    fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
-        if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-            return of([]);
-        } else {
+    fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | null> {
+        if (result && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
             return this.getBuildLogs();
+        } else {
+            return of([]);
         }
     }
 
@@ -203,7 +204,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
-     * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any) {
         this.onToggleCollapse.emit({
@@ -213,14 +213,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             resizableMinWidth: undefined,
             resizableMinHeight: this.resizableMinHeight,
         });
-    }
-
-    /**
-     * @function loadSession
-     * @desc Gets the user's session data from localStorage to load editor settings
-     */
-    loadSession() {
-        return this.sessionService.loadSession();
     }
 
     ngOnDestroy() {

@@ -15,10 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -35,21 +38,28 @@ public class CourseService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private final UserRepository userRepository;
 
     private final LectureService lectureService;
+
+    private final NotificationService notificationService;
 
     private ExamService examService;
 
     private final ExerciseGroupService exerciseGroupService;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, ExerciseGroupService exerciseGroupService) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, UserRepository userRepository, LectureService lectureService, NotificationService notificationService,
+            ExerciseGroupService exerciseGroupService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
+        this.notificationService = notificationService;
         this.exerciseGroupService = exerciseGroupService;
     }
 
@@ -191,13 +201,51 @@ public class CourseService {
     }
 
     /**
-     * Delete the course by id.
+     * Deletes all elements associated with the course including:
+     * <ul>
+     *     <li>The Course</li>
+     *     <li>All Exercises including:
+     *      Submissions, Participations, Results, Repositories and Buildplans, see {@link ExerciseService#delete}</li>
+     *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
+     *     <li>All default groups created by Artemis, see {@link ArtemisAuthenticationProvider#deleteGroup}</li>
+     *     <li>All Exams, see {@link ExamService#deleteById}</li>
+     * </ul>
      *
-     * @param id the id of the entity
+     * @param course the course to be deleted
      */
-    public void delete(Long id) {
-        log.debug("Request to delete Course : {}", id);
-        courseRepository.deleteById(id);
+    public void delete(Course course) {
+        log.debug("Request to delete Course : {}", course.getTitle());
+        for (Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId(), true, true);
+        }
+
+        for (Lecture lecture : course.getLectures()) {
+            lectureService.delete(lecture);
+        }
+
+        List<GroupNotification> notifications = notificationService.findAllGroupNotificationsForCourse(course);
+        for (GroupNotification notification : notifications) {
+            notificationService.deleteGroupNotification(notification);
+        }
+
+        // only delete (default) groups which have been created by Artemis before
+        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
+            artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
+        }
+        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
+            artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
+        }
+        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
+            artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        }
+
+        // delete the Exams
+        List<Exam> exams = examService.findAllByCourseId(course.getId());
+        for (Exam exam : exams) {
+            examService.deleteById(exam.getId());
+        }
+        courseRepository.deleteById(course.getId());
     }
 
     /**
@@ -219,12 +267,16 @@ public class CourseService {
      * @return the Course of the Exercise
      */
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
+
         if (exercise.hasExerciseGroup()) {
             ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(exercise.getExerciseGroup().getId());
+            exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            return findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = findOne(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            exercise.setCourse(course);
+            return course;
         }
     }
 

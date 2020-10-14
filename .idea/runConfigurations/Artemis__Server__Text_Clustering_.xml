@@ -2,7 +2,7 @@
   <configuration default="false" name="Artemis (Server, Text Clustering)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="Artemis.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
-    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,automaticText,scheduling" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,automaticText,scheduling,athene,local" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -13,7 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -21,10 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class QuizSubmission extends Submission implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class QuizSubmission extends Submission {
 
     @Column(name = "score_in_points")
     @JsonView(QuizView.After.class)
@@ -69,6 +64,21 @@ public class QuizSubmission extends Submission implements Serializable {
         return this;
     }
 
+    /**
+     * Filters the sensitive quiz submission information for exams, if the results are not published or the user is not an instructor
+     * It sets the {@link QuizSubmission#setScoreInPoints(Double)} & {@link SubmittedAnswer#setScoreInPoints(Double)} to null for every submitted answer.
+     * Additionally it calls {@link SubmittedAnswer#filterOutCorrectAnswers()} dynamically for the correct question type.
+     * @param examResultsPublished flag indicating if the results are published, see {@link Exam#resultsPublished()}
+     * @param isAtLeastInstructor flag indicating if the user has instructor privileges
+     */
+    public void filterForExam(boolean examResultsPublished, boolean isAtLeastInstructor) {
+        if (!(examResultsPublished || isAtLeastInstructor)) {
+            this.setScoreInPoints(null);
+            // Dynamic binding will call the right overridden method for different question types
+            this.getSubmittedAnswers().forEach(SubmittedAnswer::filterOutCorrectAnswers);
+        }
+    }
+
     public void setSubmittedAnswers(Set<SubmittedAnswer> submittedAnswers) {
         this.submittedAnswers = submittedAnswers;
     }
@@ -103,38 +113,7 @@ public class QuizSubmission extends Submission implements Serializable {
             }
         }
         // set total score
-
         setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
-    }
-
-    /**
-     * Remove all values for scoreInPoints in this submission and all its submitted answers
-     */
-    public void removeScores() {
-        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
-            submittedAnswer.setScoreInPoints(null);
-        }
-        setScoreInPoints(null);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizSubmission quizSubmission = (QuizSubmission) o;
-        if (quizSubmission.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizSubmission.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

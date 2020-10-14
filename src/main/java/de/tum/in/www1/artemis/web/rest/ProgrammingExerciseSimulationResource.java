@@ -73,7 +73,7 @@ public class ProgrammingExerciseSimulationResource {
     @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
+    public ResponseEntity<ProgrammingExercise> createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
             @RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
@@ -89,7 +89,7 @@ public class ProgrammingExerciseSimulationResource {
         programmingExercise.generateAndSetProjectKey();
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseSimulationService
-                    .setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
+                    .createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
             // Setup all repositories etc
             programmingExerciseSimulationService.setupInitialSubmissionsAndResults(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))

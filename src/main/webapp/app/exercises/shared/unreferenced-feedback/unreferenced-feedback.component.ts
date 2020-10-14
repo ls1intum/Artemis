@@ -10,6 +10,7 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
     @Input() busy: boolean;
+    @Input() readOnly: boolean;
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
 
     @Input() set feedbacks(feedbacks: Feedback[]) {
@@ -39,16 +40,17 @@ export class UnreferencedFeedbackComponent {
         }
         this.assessmentsAreValid = true;
     }
+
     updateAssessment(feedback: Feedback) {
         const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
         this.unreferencedFeedback[indexToUpdate] = feedback;
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
     }
-    public addReferencedFeedback(): void {
+
+    public addUnreferencedFeedback(): void {
         const feedback = new Feedback();
         feedback.credits = 0;
-        feedback.referenceId = null;
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();

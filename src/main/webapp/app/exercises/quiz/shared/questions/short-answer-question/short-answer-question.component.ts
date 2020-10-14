@@ -27,6 +27,7 @@ export class ShortAnswerQuestionComponent {
         return this._question;
     }
 
+    // TODO: Map vs. Array --> consistency
     @Input()
     submittedTexts: ShortAnswerSubmittedText[];
     @Input()
@@ -41,7 +42,6 @@ export class ShortAnswerQuestionComponent {
     set forceSampleSolution(forceSampleSolution) {
         this._forceSampleSolution = forceSampleSolution;
         if (this.forceSampleSolution) {
-            console.log('ForceSampleSolution activated');
             this.showSampleSolution();
         }
     }
@@ -53,7 +53,7 @@ export class ShortAnswerQuestionComponent {
     fnOnSubmittedTextUpdate: any;
 
     @Output()
-    submittedTextsChange = new EventEmitter();
+    submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -109,7 +109,7 @@ export class ShortAnswerQuestionComponent {
      */
     showSampleSolution() {
         // TODO: the question is not yet available
-        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.question);
         this.showingSampleSolution = true;
     }
 
@@ -125,7 +125,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the submitted text
      */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter((submittedText) => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts.filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     /**
@@ -133,7 +133,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the sample solution
      */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.question.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -142,10 +142,11 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to return the input field's background color
      */
     getBackgroundColourForInputField(spotTag: string): string {
-        if (this.getSubmittedTextForSpot(spotTag) === undefined) {
+        const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);
+        if (submittedTextForSpot === undefined) {
             return 'red';
         }
-        return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+        return submittedTextForSpot.isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
     }
 
     /**
@@ -158,8 +159,8 @@ export class ShortAnswerQuestionComponent {
             this.question.correctMappings,
             this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
         );
-
-        if (solutionsForSpot.filter((solution) => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
+        const solutions = solutionsForSpot?.filter((solution) => solution.text?.trim() === this.getSubmittedTextForSpot(spotTag)?.text?.trim());
+        if (solutions && solutions.length > 0) {
             isTextCorrect = true;
         }
         return isTextCorrect;

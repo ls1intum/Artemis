@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -12,8 +11,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -21,11 +18,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "MC")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -33,15 +27,8 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     @JsonView(QuizView.Before.class)
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-
     public Set<AnswerOption> getSelectedOptions() {
         return selectedOptions;
-    }
-
-    public MultipleChoiceSubmittedAnswer selectedOptions(Set<AnswerOption> answerOptions) {
-        this.selectedOptions = answerOptions;
-        return this;
     }
 
     public MultipleChoiceSubmittedAnswer addSelectedOptions(AnswerOption answerOption) {
@@ -57,18 +44,17 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {
         this.selectedOptions = answerOptions;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
      * Check if the given answer option is selected in this submitted answer
-     * 
+     *
      * @param answerOption the answer option to check for
      * @return true if the answer option is selected, false otherwise
      */
     public boolean isSelected(AnswerOption answerOption) {
         // search for this answer option in the selected answer options
         for (AnswerOption selectedOption : getSelectedOptions()) {
-            if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
+            if (Objects.equals(selectedOption.getId(), answerOption.getId())) {
                 // this answer option is selected => we can stop searching
                 return true;
             }
@@ -79,7 +65,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
 
     /**
      * Check if answerOptions were deleted and delete reference to in selectedOptions
-     * 
+     *
      * @param question the changed question with the answerOptions
      */
     private void checkAndDeleteSelectedOptions(MultipleChoiceQuestion question) {
@@ -114,26 +100,6 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
             // Check if an answerOption was deleted and delete reference to in selectedOptions
             checkAndDeleteSelectedOptions((MultipleChoiceQuestion) quizQuestion);
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) o;
-        if (multipleChoiceSubmittedAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), multipleChoiceSubmittedAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

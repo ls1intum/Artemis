@@ -9,6 +9,8 @@ import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
@@ -36,7 +38,7 @@ export class OrionBuildAndTestService {
      * @param exercise The exercise for which a build should get triggered
      */
     buildAndTestExercise(exercise: ProgrammingExercise) {
-        const participationId = exercise.studentParticipations[0].id;
+        const participationId = exercise.studentParticipations![0].id!;
         // Trigger a build for the current participation
         this.submissionService.triggerBuild(participationId).subscribe();
 
@@ -49,9 +51,9 @@ export class OrionBuildAndTestService {
      * @param exercise The exercise for which build results should get forwarded
      * @param participation The (optional) participation to subscribe to. The default is the first student participation
      */
-    listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation: Participation | null = null): Observable<void> {
-        const participationId = participation ? participation.id : exercise.studentParticipations[0].id;
-        this.javaBridge.onBuildStarted(exercise.problemStatement);
+    listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation?: Participation): Observable<void> {
+        const participationId = participation ? participation.id! : exercise.studentParticipations![0].id!;
+        this.javaBridge.onBuildStarted(exercise.problemStatement!);
 
         // Listen for the new result on the websocket
         if (this.resultSubsription) {
@@ -65,16 +67,18 @@ export class OrionBuildAndTestService {
             .pipe(
                 filter(Boolean),
                 map((result) => result as Result),
-                filter((result) => !this.latestResult || this.latestResult.id < result.id),
+                filter((result) => !this.latestResult || this.latestResult.id! < result.id!),
                 tap((result) => {
                     this.latestResult = result;
-                    // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
-                    if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-                        result.feedbacks.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
+                    // If there was a compile error or we don't have an submission, we have to fetch the error output, otherwise we can forward the test results
+                    if (!result.submission || (result.submission as ProgrammingSubmission).buildFailed) {
+                        this.forwardBuildLogs(participationId);
+                    } else {
+                        // TODO: Deal with static code analysis feedback in Orion
+                        const testCaseFeedback = result.feedbacks!.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
+                        testCaseFeedback.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
                         this.javaBridge.onBuildFinished();
                         this.buildFinished.next();
-                    } else {
-                        this.forwardBuildLogs(participationId);
                     }
                     this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
                 }),

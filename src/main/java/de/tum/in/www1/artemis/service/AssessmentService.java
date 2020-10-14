@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.validation.constraints.NotNull;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -33,11 +36,13 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
+    private final ExamService examService;
+
     private final SubmissionRepository submissionRepository;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, ExamService examService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -45,11 +50,20 @@ public class AssessmentService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.submissionRepository = submissionRepository;
+        this.examService = examService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
         Double maxScore = exercise.getMaxScore();
-        result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+
+        // Exam results and manual results of programming exercises are always to rated
+        if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
+            result.setRated(true);
+        }
+        else {
+            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        }
+
         result.setCompletionDate(ZonedDateTime.now());
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
@@ -88,37 +102,58 @@ public class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
-        if (!(exercise instanceof ProgrammingExercise)) {
-            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here
-            Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedScore);
-        }
-        // Note: This also saves the feedback objects in the database because of the 'cascade =
-        // CascadeType.ALL' option.
-        return resultRepository.save(originalResult);
+        Double calculatedScore = calculateTotalScore(originalResult.getFeedbacks());
+        return submitResult(originalResult, exercise, calculatedScore);
     }
 
     /**
-     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
-     * or if an instructor overrides it.
-     *
-     * If the result does not yet exist or is not yet submitted, this method returns true
+     * Checks if the user can create or override a submitted result.
+     * If the result does not yet exist or is not yet submitted, this tutors can create or override results.
+     * Overriding is only possible if the same tutor overrides before the assessment due date.
+     * Instructors can always create and override results also after the assessment due date.
      *
      * @param existingResult the existing result in case the result is updated (submitted or overridden)
      * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
      * @param user the user who initiates a request
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @param participation the participation to which the submission and result belongs to
      * @return true of the the given user can override a potentially existing result
      */
-    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, user);
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+    public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
+
+        final boolean isExamMode = exercise.hasExerciseGroup();
+        ZonedDateTime assessmentDueDate;
+
+        // For exam exercises, tutors cannot override submissions when the publish result date is in the past (assessmentDueDate)
+        if (isExamMode) {
+            assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
+        }
+        else {
+            assessmentDueDate = exercise.getAssessmentDueDate();
+        }
+
+        final boolean isAllowedToBeAssessor = isAllowedToBeAssessorOfResult(existingResult, exercise, participation, user);
+        // TODO make sure that tutors cannot assess the first assessment after the assessmentDueDate/publish result date (post). This is currently just used in the put request.
+        // Check if no result is available (first assessment)
+        if (existingResult == null) {
+            // Tutors can assess exam exercises only after the last student has finished the exam and before the publish result date
+            if (isExamMode && !isAtLeastInstructor) {
+                final Exam exam = exercise.getExerciseGroup().getExam();
+                ZonedDateTime latestExamDueDate = examService.getLatestIndiviudalExamEndDate(exam.getId());
+                if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
+                    return false;
+                }
+            }
             return isAllowedToBeAssessor || isAtLeastInstructor;
         }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+
+        // If the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+        if (existingResult.getCompletionDate() == null) {
+            return isAllowedToBeAssessor || isAtLeastInstructor;
+        }
+
+        // If the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        final boolean isBeforeAssessmentDueDate = assessmentDueDate != null ? ZonedDateTime.now().isBefore(assessmentDueDate) : true;
         return (isAllowedToBeAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
@@ -133,6 +168,18 @@ public class AssessmentService {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
+
+        // For programming exercise the first result is always automatic and must not be deleted
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            // Get manual result, as it has a higher id than the automatic result
+            List<Result> results = participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).collect(Collectors.toList());
+            result = results.get(0);
+
+            if (result.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+                return;
+            }
+        }
+
         participation.removeResult(result);
         feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
@@ -156,14 +203,17 @@ public class AssessmentService {
      * @param user User for whom to check if they can be the assessor of the given result
      * @return true if the user is allowed to be the assessor, false otherwise
      */
-    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, User user) {
+    private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
         if (exercise.isTeamMode()) {
             // for team exercises only the team tutor is allowed to be the assessor
-            return ((StudentParticipation) result.getParticipation()).getTeam().orElseThrow().isOwner(user);
+            return participation.getTeam().orElseThrow().isOwner(user);
         }
-        else {
+        else if (result != null) {
             // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet
             return result.getAssessor() == null || user.equals(result.getAssessor());
+        }
+        else {
+            return true;
         }
     }
 

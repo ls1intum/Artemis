@@ -17,7 +17,6 @@ enum TableColumn {
 @Component({
     selector: 'jhi-programming-exercise-import',
     templateUrl: './programming-exercise-import.component.html',
-    styles: [],
 })
 export class ProgrammingExerciseImportComponent implements OnInit {
     readonly column = TableColumn;
@@ -110,7 +109,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
      * @returns The ID of the programming exercise
      */
     trackId(index: number, item: ProgrammingExercise): number {
-        return item.id;
+        return item.id!;
     }
 
     /**

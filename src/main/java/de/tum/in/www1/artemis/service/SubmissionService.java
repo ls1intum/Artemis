@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,11 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -32,19 +36,28 @@ public class SubmissionService {
 
     protected ResultRepository resultRepository;
 
-    private UserService userService;
-
-    private CourseService courseService;
-
     protected AuthorizationCheckService authCheckService;
 
+    protected StudentParticipationRepository studentParticipationRepository;
+
+    protected ParticipationService participationService;
+
+    private final ExamService examService;
+
+    private final UserService userService;
+
+    private final CourseService courseService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ExamService examService, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+        this.examService = examService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.participationService = participationService;
     }
 
     /**
@@ -124,6 +137,61 @@ public class SubmissionService {
     }
 
     /**
+     * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutor - the tutor we are interested in
+     * @param examMode - flag should be set to ignore the test run submissions
+     * @return a list of Submissions
+     */
+    protected List<Submission> getAllSubmissionsAssessedByTutorForExercise(Long exerciseId, User tutor, boolean examMode) {
+        List<Submission> submissions;
+        if (examMode) {
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(toList());
+        }
+        else {
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+        }
+
+        submissions.forEach(submission -> submission.getResult().setSubmission(null));
+        return submissions;
+    }
+
+    /**
+     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise fileUploadExercise, boolean examMode) {
+        Random random = new Random();
+        List<StudentParticipation> participations;
+        if (examMode) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(fileUploadExercise.getId());
+        }
+        else {
+            participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
+        }
+
+        List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, fileUploadExercise.getDueDate());
+
+        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
+    }
+
+    /**
      * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
      * submission could be found for the given id.
      *
@@ -157,9 +225,13 @@ public class SubmissionService {
     /**
      * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    public DueDateStat countSubmissionsForExercise(long exerciseId) {
+    public DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
+        }
         return new DueDateStat(submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId), submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId));
     }
 
@@ -259,6 +331,7 @@ public class SubmissionService {
      * If not, the original list is returned.
      * @param submissions The submissions to filter
      * @param dueDate The due-date to filter by
+     * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
      */
     protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
@@ -275,5 +348,36 @@ public class SubmissionService {
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * @param exercise course exercise or exam exercise that is checked
+     * @return boolean
+     */
+    public boolean checkIfExerciseDueDateIsReached(Exercise exercise) {
+        final boolean isExamMode = exercise.hasExerciseGroup();
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (isExamMode) {
+            ZonedDateTime latestIndividualExamEndDate = this.examService.getLatestIndiviudalExamEndDate(exercise.getExerciseGroup().getExam());
+            if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        else {
+            // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                    return false;
+                }
+            }
+
+            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

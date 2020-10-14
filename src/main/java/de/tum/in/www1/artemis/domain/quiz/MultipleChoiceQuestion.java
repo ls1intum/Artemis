@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -17,11 +19,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "MC")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestion extends QuizQuestion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceQuestion extends QuizQuestion {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
@@ -30,15 +29,8 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-
     public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
-    }
-
-    public MultipleChoiceQuestion answerOptions(List<AnswerOption> answerOptions) {
-        this.answerOptions = answerOptions;
-        return this;
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
@@ -194,26 +186,6 @@ public class MultipleChoiceQuestion extends QuizQuestion implements Serializable
         }
         // no correct answer option exists
         return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) o;
-        if (multipleChoiceQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), multipleChoiceQuestion.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

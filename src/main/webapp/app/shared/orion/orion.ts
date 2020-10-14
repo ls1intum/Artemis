@@ -1,7 +1,7 @@
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { Observable } from 'rxjs';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export interface OrionState {
     opened: number;
@@ -159,7 +159,7 @@ export interface OrionConnectorFacade {
      * To be executed when the build failed.
      * @param buildLogsJsonString The Json string of the build logs.
      */
-    onBuildFailed(buildErrors: BuildLogErrors): void;
+    onBuildFailed(buildErrors: Array<Annotation>): void;
 
     /**
      * Executed when the result of the test is out.
@@ -198,7 +198,7 @@ export interface ArtemisClientConnector {
     startedBuildInOrion(courseId: number, exerciseId: number): void;
 }
 
-export interface Window {
+export interface OrionWindow {
     orionExerciseConnector: OrionExerciseConnector;
     orionSharedUtilConnector: OrionSharedUtilConnector;
     orionBuildConnector: OrionBuildConnector;

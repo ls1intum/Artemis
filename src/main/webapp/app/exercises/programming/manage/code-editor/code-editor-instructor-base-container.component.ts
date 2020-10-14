@@ -1,17 +1,14 @@
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-mode-container.component';
-import { OnDestroy, OnInit, Component } from '@angular/core';
+import { OnDestroy, OnInit, Component, ViewChild } from '@angular/core';
 import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from '../../../../course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
+import { Location } from '@angular/common';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -22,6 +19,9 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { Course } from 'app/entities/course.model';
 
 /**
  * Enumeration specifying the repository type
@@ -45,7 +45,9 @@ export enum LOADING_STATE {
 }
 
 @Component({ template: '' })
-export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainerComponent implements OnInit, OnDestroy {
+export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -59,8 +61,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
-    // Can only be null when the test repository is selected.
-    selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
+    course: Course;
+    // Can only be undefined when the test repository is selected.
+    selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
@@ -79,15 +82,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private exerciseHintService: ExerciseHintService,
-        participationService: ParticipationService,
-        translateService: TranslateService,
-        route: ActivatedRoute,
-        jhiAlertService: AlertService,
-        sessionService: CodeEditorSessionService,
-        fileService: CodeEditorFileService,
-    ) {
-        super(participationService, translateService, route, jhiAlertService, sessionService, fileService);
-    }
+        private location: Location,
+        private participationService: ParticipationService,
+        protected route: ActivatedRoute,
+        private jhiAlertService: AlertService,
+    ) {}
 
     /**
      * Initialize the route params subscription.
@@ -104,7 +103,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             this.loadExercise(exerciseId)
                 .pipe(
                     catchError(() => throwError('exerciseNotFound')),
-                    tap((exercise) => (this.exercise = exercise)),
+                    tap((exercise) => {
+                        this.exercise = exercise;
+                        this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                    }),
                     // Set selected participation
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
@@ -112,7 +114,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                         } else {
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
-                                this.selectParticipationDomainById(nextAvailableParticipation.id);
+                                this.selectParticipationDomainById(nextAvailableParticipation.id!);
+
+                                // Show a consistent route in the browser
+                                if (nextAvailableParticipation.id !== participationId) {
+                                    const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
+                                    this.location.replaceState(parentUrl + `/${nextAvailableParticipation.id}`);
+                                }
                             } else {
                                 throwError('participationNotFound');
                             }
@@ -187,11 +195,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        this.initializeProperties();
+        if (this.codeEditorContainer != null) {
+            this.codeEditorContainer.initializeProperties();
+        }
         if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
-            this.selectedParticipation = null;
+            this.selectedParticipation = undefined;
             this.selectedRepository = REPOSITORY.TEST;
         }
     }
@@ -203,15 +213,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     setSelectedParticipation(participationId: number) {
         // The result component needs a circular structure of participation -> exercise.
         const exercise = this.exercise;
-        if (participationId === this.exercise.templateParticipation.id) {
+        if (participationId === this.exercise.templateParticipation!.id) {
             this.selectedRepository = REPOSITORY.TEMPLATE;
             this.selectedParticipation = this.exercise.templateParticipation;
-            this.selectedParticipation.programmingExercise = exercise;
-        } else if (participationId === this.exercise.solutionParticipation.id) {
+            (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (participationId === this.exercise.solutionParticipation!.id) {
             this.selectedRepository = REPOSITORY.SOLUTION;
             this.selectedParticipation = this.exercise.solutionParticipation;
-            this.selectedParticipation.programmingExercise = exercise;
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+            (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
+        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
             this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
             this.selectedParticipation.exercise = exercise;
@@ -220,8 +230,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         }
     }
 
-    repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+    repositoryUrl(participation?: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUrl;
     }
 
     /**
@@ -240,7 +250,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
      */
     private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseId(this.exercise.id).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }
@@ -250,13 +260,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     selectParticipationDomainById(participationId: number) {
-        if (participationId === this.exercise.templateParticipation.id) {
-            this.exercise.templateParticipation.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
-        } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.exercise.solutionParticipation.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+        if (participationId === this.exercise.templateParticipation!.id) {
+            this.exercise.templateParticipation!.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
+        } else if (participationId === this.exercise.solutionParticipation!.id) {
+            this.exercise.solutionParticipation!.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
+        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
             this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
         } else {
@@ -265,24 +275,32 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     /**
-     * Select the solution participation repository and navigate to it
-     */
-    abstract selectSolutionParticipation(): void;
-
-    /**
      * Select the template participation repository and navigate to it
      */
-    abstract selectTemplateParticipation(): void;
+    selectTemplateParticipation() {
+        this.router.navigate(['..', this.exercise.templateParticipation!.id], { relativeTo: this.route });
+    }
+
+    /**
+     * Select the solution participation repository and navigate to it
+     */
+    selectSolutionParticipation() {
+        this.router.navigate(['..', this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+    }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
-    abstract selectAssignmentParticipation(): void;
+    selectAssignmentParticipation() {
+        this.router.navigate(['..', this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+    }
 
     /**
      * Select the test repository and navigate to it
      */
-    abstract selectTestRepository(): void;
+    selectTestRepository() {
+        this.router.navigate(['..', 'test'], { relativeTo: this.route });
+    }
 
     /**
      * Creates an assignment participation for this user for this exercise.
@@ -290,7 +308,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.exercise.course!.id, this.exercise.id)
+            .startExercise(this.course.id!, this.exercise.id!)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap((participation) => {
@@ -305,24 +323,39 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     /**
-     * Resets the assignment participation for this user for this exercise.
+     * Delete the assignment participation for this user for this exercise.
      * This deletes all build plans, database information, etc. and copies the current version of the template repository.
      */
-    resetAssignmentParticipation() {
+    deleteAssignmentParticipation() {
         this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
-        const assignmentParticipationId = this.exercise.studentParticipations[0].id;
+        const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];
         this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError('participationCouldNotBeDeleted')),
-                tap(() => this.createAssignmentParticipation()),
+                tap(() => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                }),
             )
             .subscribe(
                 () => {},
                 (err) => this.onError(err),
             );
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    }
+
+    canDeactivate() {
+        return this.codeEditorContainer.canDeactivate();
     }
 }

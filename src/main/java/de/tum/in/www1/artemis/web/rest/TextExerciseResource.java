@@ -1,15 +1,29 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.plagiarism.text.TextComparisonStrategy.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static java.util.stream.Collectors.toMap;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import jplag.ExitException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +37,12 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.plagiarism.text.TextPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionComparisonDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -52,6 +70,8 @@ public class TextExerciseResource {
 
     private final TextExerciseImportService textExerciseImportService;
 
+    private final TextSubmissionExportService textSubmissionExportService;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -72,11 +92,14 @@ public class TextExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final TextPlagiarismDetectionService textPlagiarismDetectionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
-            TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService, InstanceMessageSendService instanceMessageSendService) {
+            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -87,12 +110,14 @@ public class TextExerciseResource {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
+        this.textSubmissionExportService = textSubmissionExportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
         this.exerciseGroupService = exerciseGroupService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.textPlagiarismDetectionService = textPlagiarismDetectionService;
     }
 
     /**
@@ -133,7 +158,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+        if (textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
 
@@ -178,7 +203,7 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
-        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
+        if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin(user)) {
             return forbidden();
         }
 
@@ -343,6 +368,11 @@ public class TextExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
+        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
+        if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
+            return forbidden();
+        }
+
         // if no results, check if there are really no results or the relation to results was not
         // updated yet
         if (participation.getResults().size() <= 0) {
@@ -410,7 +440,7 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
-    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, user));
     }
@@ -479,4 +509,128 @@ public class TextExerciseResource {
         return ResponseEntity.created(new URI("/api/text-exercises/" + newExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((TextExercise) newExercise);
     }
+
+    /**
+     * POST /text-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param submissionExportOptions the options that should be used for the export
+     * @return ResponseEntity with status
+     */
+    @PostMapping("/text-exercises/{exerciseId}/export-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        // TAs are not allowed to download all participations
+        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
+            return forbidden();
+        }
+
+        try {
+            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+
+            if (zipFile.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                        .body(null);
+            }
+
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
+                    .body(resource);
+
+        }
+        catch (IOException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+    }
+
+    /**
+     * GET /check-plagiarism : Run comparison metrics pair-wise against all submissions of a given exercises.
+     * This can be used with human intelligence to identify suspicious similar submissions which might be a sign for plagiarism.
+     *
+     * @param exerciseId for which all submission should be checked
+     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise metrics.
+     */
+    @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Stream<SubmissionComparisonDTO>> checkPlagiarism(@PathVariable long exerciseId) {
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        final List<TextSubmission> textSubmissions = textPlagiarismDetectionService.textSubmissionsForComparison(textExercise);
+        textSubmissions.forEach(submission -> {
+            submission.getParticipation().setExercise(null);
+            submission.setResult(null);
+            submission.getParticipation().setSubmissions(null);
+        });
+
+        log.info("Found " + textSubmissions.size() + " non empty text submissions to compare");
+
+        Stream<SubmissionComparisonDTO> submissionComparisonDTOStream = Stream
+                .of(new Tuple<>(normalizedLevenshtein(), "normalizedLevenshtein"), new Tuple<>(metricLongestCommonSubsequence(), "metricLongestCommonSubsequence"),
+                        new Tuple<>(nGram(), "nGram"), new Tuple<>(cosine(), "cosine"))
+                .parallel()
+                .flatMap(comparisonStrategy -> textPlagiarismDetectionService
+                        .compareSubmissionsForExerciseWithStrategy(textSubmissions, comparisonStrategy.getX(), comparisonStrategy.getY(), 0.8).entrySet().stream()
+                        .map(entry -> new SubmissionComparisonDTO().addAllSubmissions(entry.getKey()).putMetric(comparisonStrategy.getY(), entry.getValue())))
+                .collect(toMap(dto -> dto.submissions, dto -> dto, SubmissionComparisonDTO::merge)).values().stream().sorted();
+
+        // TODO: Let the user specify the minimum similarity in the client
+        return ResponseEntity.ok(submissionComparisonDTOStream);
+    }
+
+    /**
+     * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
+     *
+     * @param exerciseId for which all submission should be checked
+     * @return the JPlag result directory as zip file
+     */
+    @GetMapping(value = "/text-exercises/{exerciseId}/check-plagiarism", params = { "strategy=JPlag" })
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Resource> checkPlagiarismJPlag(@PathVariable long exerciseId) throws ExitException, IOException {
+        Optional<TextExercise> optionalTextExercise = textExerciseService.findOneWithParticipationsAndSubmissions(exerciseId);
+
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        File zipFile = textPlagiarismDetectionService.checkPlagiarism(textExercise);
+
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
 }

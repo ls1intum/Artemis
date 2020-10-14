@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz.scoring;
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**

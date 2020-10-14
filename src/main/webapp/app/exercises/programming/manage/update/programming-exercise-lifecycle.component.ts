@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -11,6 +12,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 })
 export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
+    @Input() isExamMode: boolean;
+
     readonly assessmentType = AssessmentType;
 
     constructor(private translator: TranslateService) {}
@@ -29,8 +32,12 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
      *
      */
-    toggleHasManualTests() {
+    toggleHasManualAssessment() {
         this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? AssessmentType.AUTOMATIC : AssessmentType.SEMI_AUTOMATIC;
+        // when the new value is AssessmentType.AUTOMATIC, we need to reset assessment due date
+        if (this.exercise.assessmentType === AssessmentType.AUTOMATIC) {
+            this.exercise.assessmentDueDate = undefined;
+        }
     }
 
     /**
@@ -38,7 +45,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      *
      * @param newReleaseDate The new release date
      */
-    updateReleaseDate(newReleaseDate: moment.Moment | null) {
+    updateReleaseDate(newReleaseDate?: Moment) {
         if (this.exercise.dueDate && newReleaseDate && moment(newReleaseDate).isAfter(this.exercise.dueDate)) {
             this.updateDueDate(newReleaseDate);
         }
@@ -49,7 +56,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * Updates the due Date of the programming exercise
      * @param dueDate the new dueDate
      */
-    private updateDueDate(dueDate: moment.Moment) {
+    private updateDueDate(dueDate: Moment) {
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 

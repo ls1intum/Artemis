@@ -8,6 +8,7 @@
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
             },
             "pageHeader": "Tutor Übungs-Dashboard für die Übung",
+            "testRunPageHeader": "Testlauf Übungs-dashboard für die Übung:",
             "yourStatus": "Dein Status",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
             "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
@@ -28,6 +29,7 @@
             "assessingExampleSubmission": "Beispielabgabe bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
             "studentsSubmissions": "Abgaben der Studenten",
+            "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
             "result": "Ergebnis",
             "status": "Status",

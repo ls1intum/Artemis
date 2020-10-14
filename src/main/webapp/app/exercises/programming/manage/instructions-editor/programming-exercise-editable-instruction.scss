@@ -3,7 +3,7 @@
     display: flex;
     flex-flow: column nowrap;
     flex: 1 1 auto;
-    height: inherit;
+    height: 100%;
 
     // Override bootstrap tooltip width.
     .tooltip-inner {

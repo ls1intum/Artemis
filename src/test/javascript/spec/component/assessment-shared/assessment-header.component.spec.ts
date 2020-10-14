@@ -48,6 +48,15 @@ describe('AssessmentHeaderComponent', () => {
         expect(jhiAlertContent).toContain('test-alert-string');
     });
 
+    it('should display alert when assessment due date has passed', () => {
+        component.hasAssessmentDueDatePassed = true;
+        // @ts-ignore
+        component.result = undefined;
+        fixture.detectChanges();
+        const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
+        expect(alertComponent).toBeTruthy();
+    });
+
     it('should show or hide a back button', () => {
         component.hideBackButton = false;
         fixture.detectChanges();
@@ -155,25 +164,6 @@ describe('AssessmentHeaderComponent', () => {
         expect(component.submit.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should show resolve conflict button if hasConflict', () => {
-        component.isLoading = false;
-        component.hasConflict = false;
-        fixture.detectChanges();
-
-        let resolveConflictButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=resolveConflict]'));
-        expect(resolveConflictButtonSpan).toBeFalsy();
-
-        component.hasConflict = true;
-        fixture.detectChanges();
-
-        resolveConflictButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=resolveConflict]'));
-        expect(resolveConflictButtonSpan).toBeTruthy();
-
-        spyOn(component.resolveConflict, 'emit');
-        resolveConflictButtonSpan.nativeElement.click();
-        expect(component.resolveConflict.emit).toHaveBeenCalledTimes(1);
-    });
-
     it('should show next submission if assessor or instructur, result is present and no complaint', () => {
         spyOn(component.nextSubmission, 'emit');
         component.isLoading = false;
@@ -224,5 +214,12 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         nextSubmissionButtonSpan.nativeElement.click();
         expect(component.nextSubmission.emit).toHaveBeenCalledTimes(1);
+    });
+    it('should not show assess next button if is test run mode', () => {
+        component.isTestRun = true;
+        component.isLoading = false;
+        fixture.detectChanges();
+        const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
+        expect(nextSubmissionButtonSpan).toBeFalsy();
     });
 });

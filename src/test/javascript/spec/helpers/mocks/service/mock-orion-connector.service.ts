@@ -1,8 +1,8 @@
 import { OrionState, ArtemisOrionConnector } from 'app/shared/orion/orion';
 import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 export class MockOrionConnectorService implements ArtemisOrionConnector {
     onExerciseOpened = (exerciseId: number) => of();
@@ -18,7 +18,7 @@ export class MockOrionConnectorService implements ArtemisOrionConnector {
     isCloning = (cloning: boolean) => {};
     log = (message: string) => {};
     login = (username: string, password: string) => {};
-    onBuildFailed = (buildErrors: BuildLogErrors) => {};
+    onBuildFailed = (buildErrors: Array<Annotation>) => {};
     selectRepository = (repository: REPOSITORY) => {};
     startedBuildInOrion = (courseId: number, exerciseId: number) => {};
 }

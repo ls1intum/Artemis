@@ -8,6 +8,7 @@ import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
 } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-re-evaluate-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
@@ -19,12 +20,14 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         ProgrammingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseInstructorTriggerAllDialogComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
+        ProgrammingExerciseReEvaluateButtonComponent,
     ],
     exports: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
+        ProgrammingExerciseReEvaluateButtonComponent,
     ],
 })
 export class ArtemisProgrammingExerciseActionsModule {}

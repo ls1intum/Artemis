@@ -3,15 +3,13 @@ import { Location } from '@angular/common';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { cloneDeep } from 'lodash';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -85,7 +83,7 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.hasStudentInformation = true;
                 }
             },
-            (err: HttpErrorResponse) => this.onError(err.message),
+            () => this.onError(),
             () => (this.loading = false),
         );
     }
@@ -111,22 +109,14 @@ export class ListOfComplaintsComponent implements OnInit {
                 this.router.navigate([route]);
                 return;
             case ExerciseType.PROGRAMMING:
-                const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-                modalRef.componentInstance.participationId = studentParticipation.id;
-                modalRef.componentInstance.exercise = exercise;
-                modalRef.componentInstance.result = cloneDeep(complaint.result);
-                modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
-                modalRef.result.then(
-                    () => this.loadComplaints(),
-                    () => {},
-                );
+                const routeProgramming = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${studentParticipation.id}/assessment`;
+                this.router.navigate([routeProgramming]);
                 return;
         }
     }
 
-    private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error('error.http.400', null, undefined);
+    private onError() {
+        this.jhiAlertService.error('error.http.400');
     }
 
     back() {

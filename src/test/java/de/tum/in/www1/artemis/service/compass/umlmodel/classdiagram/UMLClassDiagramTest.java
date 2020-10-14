@@ -11,9 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-class UMLClassDiagramTest {
+class UMLClassDiagramTest extends AbstractUMLDiagramTest {
 
     private UMLClassDiagram classDiagram;
 
@@ -52,7 +53,7 @@ class UMLClassDiagramTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         classDiagram = new UMLClassDiagram(123456789, List.of(umlClass1, umlClass2, umlClass3), List.of(umlRelationship1, umlRelationship2, umlRelationship3),
                 List.of(umlPackage1, umlPackage2, umlPackage3));
@@ -141,5 +142,16 @@ class UMLClassDiagramTest {
         List<UMLElement> elementList = classDiagram.getModelElements();
 
         assertThat(elementList).isEmpty();
+    }
+
+    @Test
+    void similarityClassDiagram_EqualModels() {
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), 0.8, 1.0);
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), 0.8, 1.0);
+    }
+
+    @Test
+    void similarityClassDiagram_DifferentModels() {
+        compareSubmissions(modelingSubmission(UMLClassDiagrams.CLASS_MODEL_1), modelingSubmission(UMLClassDiagrams.CLASS_MODEL_2), 0.0, 0.3095);
     }
 }

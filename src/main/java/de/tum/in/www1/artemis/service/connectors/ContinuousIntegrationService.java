@@ -8,9 +8,13 @@ import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -98,9 +102,9 @@ public interface ContinuousIntegrationService {
      * @param participation The participation for which the build finished
      * @param requestBody   The request Body received from the CI-Server.
      * @return the result of the build
-     * @throws Exception if the Body could not be parsed
+     * @throws ContinousIntegrationException if the Body could not be parsed
      */
-    Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception;
+    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinousIntegrationException;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -122,11 +126,10 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
-     * @param projectKey The key of the project under which the plan is stored
-     * @param buildPlanId to get the latest build logs
+     * @param programmingSubmission The programming for which the latest build logs should be retrieved
      * @return list of build log entries
      */
-    List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId);
+    List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -137,19 +140,11 @@ public interface ContinuousIntegrationService {
     ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
-     * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission and save it into the database.
-     * @param participation to identify the build artifact with.
-     * @param submission    for commitHash comparison.
-     * @return the saved Result instance if a build result could be retrieved from the CIS.
-     */
-    Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
-
-    /**
      * Checks if the project with the given projectKey already exists
      *
      * @param projectKey to check if a project with this unique key already exists
      * @param projectName to check if a project with the same name already exists
-     * @return true if the project exists, false otherwise
+     * @return an error message if the project exists, null otherwise
      */
     String checkIfProjectExists(String projectKey, String projectName);
 
@@ -240,31 +235,21 @@ public interface ContinuousIntegrationService {
 
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
-                switch (language) {
-                    case JAVA:
-                    case PYTHON:
-                    case C:
-                    case HASKELL:
-                        return Constants.ASSIGNMENT_CHECKOUT_PATH;
-                    default:
-                        throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
-                }
+                return switch (language) {
+                    case JAVA, PYTHON, C, HASKELL -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    default -> throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
+                };
             }
         },
         TEST {
 
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
-                switch (language) {
-                    case JAVA:
-                    case PYTHON:
-                    case HASKELL:
-                        return "";
-                    case C:
-                        return Constants.TESTS_CHECKOUT_PATH;
-                    default:
-                        throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
-                }
+                return switch (language) {
+                    case JAVA, PYTHON, HASKELL -> "";
+                    case C -> Constants.TESTS_CHECKOUT_PATH;
+                    default -> throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
+                };
             }
         }
     }

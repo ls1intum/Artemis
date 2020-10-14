@@ -1,0 +1,22 @@
+.timer {
+    color: #212529;
+    margin-right: 2px;
+}
+.text-overflow {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.remaining-time {
+    min-width: 140px;
+    background: white;
+    text-align: center;
+}
+.critical {
+    background: #fedc56;
+}
+
+:host {
+    margin-right: 0;
+    margin-left: 0;
+}

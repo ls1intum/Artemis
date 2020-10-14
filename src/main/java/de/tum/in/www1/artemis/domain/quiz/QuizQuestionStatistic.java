@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -13,21 +10,15 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
-/**
- * A QuizQuestionStatistic.
- */
 @Entity
 @DiscriminatorValue(value = "Q")
 @DiscriminatorOptions(force = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
-public abstract class QuizQuestionStatistic extends QuizStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public abstract class QuizQuestionStatistic extends QuizStatistic {
 
     @Column(name = "rated_correct_counter")
     private Integer ratedCorrectCounter = 0;
@@ -43,22 +34,12 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
         return ratedCorrectCounter;
     }
 
-    public QuizQuestionStatistic ratedCorrectCounter(Integer ratedCorrectCounter) {
-        this.ratedCorrectCounter = ratedCorrectCounter;
-        return this;
-    }
-
     public void setRatedCorrectCounter(Integer ratedCorrectCounter) {
         this.ratedCorrectCounter = ratedCorrectCounter;
     }
 
     public Integer getUnRatedCorrectCounter() {
         return unRatedCorrectCounter;
-    }
-
-    public QuizQuestionStatistic unRatedCorrectCounter(Integer unRatedCorrectCounter) {
-        this.unRatedCorrectCounter = unRatedCorrectCounter;
-        return this;
     }
 
     public void setUnRatedCorrectCounter(Integer unRatedCorrectCounter) {
@@ -69,39 +50,8 @@ public abstract class QuizQuestionStatistic extends QuizStatistic implements Ser
         return quizQuestion;
     }
 
-    public QuizQuestionStatistic question(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
-        return this;
-    }
-
     public void setQuizQuestion(QuizQuestion quizQuestion) {
         this.quizQuestion = quizQuestion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizQuestionStatistic quizQuestionStatistic = (QuizQuestionStatistic) o;
-        if (quizQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizQuestionStatistic{" + "id=" + getId() + ", ratedCorrectCounter='" + getRatedCorrectCounter() + "'" + ", unRatedCorrectCounter='" + getUnRatedCorrectCounter()
-                + "'" + "}";
     }
 
     public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);

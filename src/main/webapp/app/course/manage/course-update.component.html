@@ -4,9 +4,7 @@
             <div class="headline">
                 <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>
                 <div *ngIf="!croppedImage" class="no-image"></div>
-                <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">
-                    Create new Course
-                </h4>
+                <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">Create new Course</h4>
                 <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel">Edit Course</h4>
             </div>
             <hr />

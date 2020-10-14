@@ -17,10 +17,11 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 export class TextAssessmentAreaComponent implements OnChanges {
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
+    @Input() readOnly: boolean;
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
     autoTextBlockAssessment = true;
-    selectedRef: TextBlockRef | null = null;
+    selectedRef?: TextBlockRef;
     wordCount = 0;
     characterCount = 0;
 
@@ -36,7 +37,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
             this.characterCount = this.stringCountService.countCharacters(text);
         }
 
-        this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
+        this.textBlockRefs.sort((a, b) => a.block!.startIndex! - b.block!.startIndex!);
     }
 
     @HostListener('document:keydown.alt', ['$event', 'false'])
@@ -58,7 +59,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     }
 
     removeTextBlockRef(ref: TextBlockRef): void {
-        const index = this.textBlockRefs.findIndex((elem) => elem.block.id === ref.block.id);
+        const index = this.textBlockRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
         this.textBlockRefs.splice(index, 1);
         this.textBlockRefsAddedRemoved.emit();
     }

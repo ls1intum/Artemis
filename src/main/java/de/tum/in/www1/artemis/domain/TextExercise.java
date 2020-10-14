@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -14,23 +12,18 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-public class TextExercise extends Exercise implements Serializable {
+public class TextExercise extends Exercise {
 
     @Column(name = "sample_solution")
     @Lob
     private String sampleSolution;
 
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
 
     public String getSampleSolution() {
         return sampleSolution;
-    }
-
-    public TextExercise sampleSolution(String sampleSolution) {
-        this.sampleSolution = sampleSolution;
-        return this;
     }
 
     public void setSampleSolution(String sampleSolution) {
@@ -48,26 +41,6 @@ public class TextExercise extends Exercise implements Serializable {
     public void filterSensitiveInformation() {
         setSampleSolution(null);
         super.filterSensitiveInformation();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        TextExercise textExercise = (TextExercise) o;
-        if (textExercise.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), textExercise.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

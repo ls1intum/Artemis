@@ -7,7 +7,6 @@ import { ArtemisModelingAssessmentEditorRoutingModule } from 'app/exercises/mode
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict.component';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
@@ -20,7 +19,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
         ArtemisModelingAssessmentEditorRoutingModule,
         ModelingAssessmentModule,
     ],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
     exports: [ModelingAssessmentEditorComponent],
 })
 export class ArtemisModelingAssessmentEditorModule {}

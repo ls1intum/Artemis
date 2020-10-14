@@ -1,10 +1,13 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
 [![GitHub Actions Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
-[![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
+[![Dependencies status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
+[![DevDependencies status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
 [![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 
-This application was generated using JHipster 6.10.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.0))
+Artemis was initially generated using JHipster 6.10.3. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.10.3))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
@@ -26,6 +29,10 @@ Find here a guide on [how to set up your local development environment](docs/dev
 
 You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](docs/dev/setup/jenkins-gitlab.rst) and Bamboo/Bitbucket/Jira [here](docs/dev/setup/bamboo-bitbucket-jira.rst)
 
+## Administration setup
+
+You can find information on how to setup user registration [here](docs/admin/registration.rst)
+
 ## Contributing 
 
 Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
@@ -44,13 +51,13 @@ While Artemis includes generic adapters to these three external systems with a d
 
 ## Building for production
 
-To optimize the Artemis application for production, run:
+To build and optimize the Artemis application for production, run:
 
 ```
 ./gradlew -Pprod -Pwar clean bootWar
 ```
 
-This will compile the TypeScript into JavaScript files, concatenate and minify them and the CSS files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:
+This will create a Artemis-<version>.war file in the folder `build/libs`. The build command compiles the TypeScript into JavaScript files, concatenates and minifies the created files (including HTML and CSS files). It will also modify `index.html` so it references these new files. To ensure everything worked, run the following command to start the application on your local computer:
 
 ```
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
@@ -61,6 +68,12 @@ java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
 Refer to [Using JHipster in production](http://www.jhipster.tech/production) for more details.
+
+The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
+
+```
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-4.4.5.war
+```
 
 ## Deployment
 

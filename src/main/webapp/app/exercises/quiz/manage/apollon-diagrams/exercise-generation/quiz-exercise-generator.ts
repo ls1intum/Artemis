@@ -40,14 +40,14 @@ export async function generateDragAndDropQuizExercise(
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
     const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
 
-    const backgroundFilePath: string = backgroundImageUploadResponse.path;
+    const backgroundFilePath = backgroundImageUploadResponse.path;
     const dragItems = new Map<string, DragItem>();
     const dropLocations = new Map<string, DropLocation>();
 
     // Create Drag Items and Drop Locations
     for (const elementId of interactiveElements) {
         const element = elements.find((elem) => elem.id === elementId);
-        if (element == null) {
+        if (!element) {
             continue;
         }
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, renderedDiagram.clip, fileUploaderService);
@@ -80,7 +80,7 @@ export async function generateDragAndDropQuizExercise(
  * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
  */
 function createDragAndDropQuizExercise(course: Course, title: string, question: DragAndDropQuestion): QuizExercise {
-    const quizExercise = new QuizExercise(course);
+    const quizExercise = new QuizExercise(course, undefined);
     quizExercise.title = title;
     quizExercise.duration = 600;
     quizExercise.releaseDate = moment();
@@ -100,11 +100,11 @@ function createDragAndDropQuizExercise(course: Course, title: string, question: 
  * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
  */
 function createDragAndDropQuestion(
-    title: string,
-    backgroundFilePath: string,
-    dragItems: DragItem[],
-    dropLocations: DropLocation[],
-    correctMappings: DragAndDropMapping[],
+    title?: string,
+    backgroundFilePath?: string,
+    dragItems?: DragItem[],
+    dropLocations?: DropLocation[],
+    correctMappings?: DragAndDropMapping[],
 ): DragAndDropQuestion {
     const dragAndDropQuestion = new DragAndDropQuestion();
     dragAndDropQuestion.title = title;
@@ -125,7 +125,7 @@ function createDragAndDropQuestion(
  *
  * @param {UMLModelElement} element A particular element of the UML model.
  * @param {UMLModel} model The complete UML model.
- * @param {svgSize} actual size of the generated svg
+ * @param svgSize actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
@@ -151,7 +151,7 @@ async function generateDragAndDropItem(
  *
  * @param {UMLModelElement} element An element of the UML model.
  * @param {UMLModel} model The complete UML model.
- * @param {svgSize} actual size of the generated svg
+ * @param svgSize actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
@@ -178,7 +178,7 @@ async function generateDragAndDropItemForElement(
  *
  * @param {UMLModelElement} element A textual based element of the UML model.
  * @param {UMLModel} model The complete UML model.
- * @param {svgSize} actual size of the generated svg
+ * @param svgSize actual size of the generated svg
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
@@ -195,7 +195,7 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
  *
  * @param {UMLModelElement} element A relationship of the UML model.
  * @param {UMLModel} model The complete UML model.
- * @param {svgSize} actual size of the generated svg
+ * @param svgSize actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
@@ -235,18 +235,18 @@ async function generateDragAndDropItemForRelationship(
  * Based on the total size of the complete UML model and the boundaries of an element a drop location is computed. Instead of abolute values
  * for position and size, `DropLocation`s use precentage values to the base of `MAX_SIZE_UNIT`.
  *
- * @param {Boundary} elementLocation The position and size of an element.
- * @param {Size} totalSize The total size of the UML model.
+ * @param elementLocation The position and size of an element.
+ * @param totalSize The total size of the UML model.
  *
  * @return {DropLocation} A Drag and Drop Quiz Exercise `DropLocation`.
  */
 function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
     // round to second decimal
-    dropLocation.posX = Math.round((elementLocation.x / (totalSize.width - 0)) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.posY = Math.round((elementLocation.y / (totalSize.height - 0)) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.width = Math.round((elementLocation.width / (totalSize.width - 0)) * MAX_SIZE_UNIT * 100) / 100;
-    dropLocation.height = Math.round((elementLocation.height / (totalSize.height - 0)) * MAX_SIZE_UNIT * 100) / 100;
+    dropLocation.posX = Math.round((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT * 100) / 100;
+    dropLocation.posY = Math.round((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT * 100) / 100;
+    dropLocation.width = Math.round((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT * 100) / 100;
+    dropLocation.height = Math.round((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT * 100) / 100;
     return dropLocation;
 }
 

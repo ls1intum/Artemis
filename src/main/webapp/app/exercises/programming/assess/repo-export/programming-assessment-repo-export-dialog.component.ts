@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -9,6 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
@@ -29,7 +29,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     isLoading = false;
 
     constructor(
-        private $window: WindowRef,
         private exerciseService: ExerciseService,
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
@@ -42,7 +41,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.repositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
-            filterLateSubmissionsDate: null,
             addParticipantName: true,
             combineStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
@@ -56,7 +54,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 catchError((err) => {
                     this.jhiAlertService.error(err);
                     this.clear();
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -68,9 +66,12 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    exportRepos(exerciseId: number) {
+    exportRepos(exerciseId?: number) {
+        if (!exerciseId) {
+            return;
+        }
         this.exportInProgress = true;
-        // The inputted participation ids take priority over the participant identifiers (student login or team names).
+        // The participation ids take priority over the participant identifiers (student login or team names).
         if (this.participationIdList) {
             // We anonymize the assessment process ("double-blind").
             this.repositoryExportOptions.addParticipantName = false;
@@ -93,15 +94,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
-        if (response.body) {
-            const zipFile = new Blob([response.body], { type: 'application/zip' });
-            const url = this.$window.nativeWindow.URL.createObjectURL(zipFile);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', response.headers.get('filename')!);
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            window.URL.revokeObjectURL(url);
-        }
+        downloadZipFileFromResponse(response);
     };
 }

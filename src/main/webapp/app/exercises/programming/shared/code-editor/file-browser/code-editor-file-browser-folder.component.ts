@@ -1,6 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
@@ -8,7 +7,7 @@ import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/sh
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',
     templateUrl: './code-editor-file-browser-folder.component.html',
-    providers: [NgbModal, WindowRef],
+    providers: [NgbModal],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;

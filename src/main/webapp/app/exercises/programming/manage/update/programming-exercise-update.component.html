@@ -1,15 +1,13 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-sm-12">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="($event.target.tagName == 'TEXTAREA')">
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
             </h4>
             <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
                 Edit Programming Exercise
             </h4>
-            <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
-                Import Programming Exercise
-            </h4>
+            <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h4>
             <div>
                 <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
@@ -57,9 +55,9 @@
                         [readonly]="!isImport && programmingExercise.id"
                         #shortName="ngModel"
                     />
-                    <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                    <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys: ['required']">
                         <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + e.key"></div>
+                            <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                         </div>
                     </ng-container>
                 </div>
@@ -127,26 +125,112 @@
                         </label>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
                     </div>
-                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise"> </jhi-programming-exercise-lifecycle>
+                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"> </jhi-programming-exercise-lifecycle>
                 </div>
-                <div class="form-group-narrow">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-                    <input
-                        required
-                        type="number"
-                        [pattern]="maxScorePattern"
-                        class="form-control"
-                        min="1"
-                        max="9999"
-                        name="maxScore"
-                        id="field_maxScore"
-                        [(ngModel)]="programmingExercise.maxScore"
-                        #maxScore="ngModel"
-                    />
-                    <ng-container *ngFor="let e of maxScore.errors! | keyvalue | removekeys: ['required']">
-                        <div *ngIf="maxScore.invalid && (maxScore.dirty || maxScore.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.exercise.form.maxScore' + '.' + e.key"></div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group-narrow">
+                            <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points">Regular Points</label>
+                            <input
+                                required
+                                type="number"
+                                [pattern]="maxScorePattern"
+                                class="form-control"
+                                min="1"
+                                max="9999"
+                                name="points"
+                                id="field_points"
+                                [(ngModel)]="programmingExercise.maxScore"
+                                #maxScore="ngModel"
+                            />
+                            <ng-container *ngFor="let e of maxScore.errors! | keyvalue | removekeys: ['required']">
+                                <div *ngIf="maxScore.invalid && (maxScore.dirty || maxScore.touched)" class="alert alert-danger">
+                                    <div [jhiTranslate]="'artemisApp.exercise.form.points' + '.' + e.key"></div>
+                                </div>
+                            </ng-container>
                         </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group-narrow">
+                            <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                            <input
+                                required
+                                type="number"
+                                [pattern]="maxScorePattern"
+                                class="form-control"
+                                min="1"
+                                max="9999"
+                                name="bonusPoints"
+                                id="field_bonusPoints"
+                                [(ngModel)]="programmingExercise.bonusPoints"
+                                #bonusPoints="ngModel"
+                            />
+                            <ng-container *ngFor="let e of bonusPoints.errors! | keyvalue | removekeys: ['required']">
+                                <div *ngIf="bonusPoints.invalid && (bonusPoints.dirty || bonusPoints.touched)" class="alert alert-danger">
+                                    <div [jhiTranslate]="'artemisApp.exercise.form.bonusPoints' + '.' + e.key"></div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
+                <!-- Static code analysis is only supported for JAVA at the moment.
+                Also this option can't be changed on edit or import because the build plans and the test repo are already set up-->
+                <div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            class="form-check-input custom-control-input"
+                            id="field_staticCodeAnalysisEnabled"
+                            name="staticCodeAnalysisEnabled"
+                            [disabled]="!!programmingExercise.id"
+                            [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
+                            (change)="onStaticCodeAnalysisChanged()"
+                        />
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="field_staticCodeAnalysisEnabled"
+                            jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title"
+                        >
+                            Enable Static Code Analysis</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | translate }}"
+                        ></fa-icon>
+                    </div>
+                    <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
+                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+                            >Max Static Code Analysis Penalty</label
+                        >
+                        <fa-icon
+                            icon="question-circle"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | translate }}"
+                        ></fa-icon>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <input
+                                type="number"
+                                [pattern]="maxPenaltyPattern"
+                                class="form-control"
+                                min="0"
+                                max="100"
+                                name="maxPenalty"
+                                id="field_maxPenalty"
+                                [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                                #maxPenalty="ngModel"
+                            />
+                        </div>
+                        <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
+                            <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
+                                <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+                            </div>
+                        </ng-container>
                     </ng-container>
                 </div>
                 <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
@@ -170,7 +254,7 @@
                         [(exercise)]="programmingExercise"
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
-                        (hasUnsavedChanges)="hashUnsavedChanges = $event"
+                        (hasUnsavedChanges)="hasUnsavedChanges = $event"
                         [forceRender]="rerenderSubject.asObservable()"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>

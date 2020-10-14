@@ -12,6 +12,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
         ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
         ArtemisFullscreenModule,
+        RatingModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })

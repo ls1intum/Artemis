@@ -1,5 +1,4 @@
 <jhi-assessment-header
-    [isComplaint]="complaint"
     [hideBackButton]="hideBackButton"
     (navigateBack)="navigateBack.emit()"
     [isLoading]="isLoading"
@@ -9,17 +8,18 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="isTeamMode"
     [isAssessor]="isAssessor"
+    [isTestRun]="isTestRun"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [assessmentsAreValid]="assessmentsAreValid"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     [result]="result"
     (save)="save.emit()"
     (submit)="submit.emit()"
     (cancel)="cancel.emit()"
     (nextSubmission)="nextSubmission.emit()"
-    [hasConflict]="conflicts && conflicts.length >= 0"
-    (resolveConflict)="resolveConflict.emit()"
     [hasComplaint]="!!complaint"
+    [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
 ></jhi-assessment-header>
 
 <jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>

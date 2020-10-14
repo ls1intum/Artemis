@@ -9,9 +9,7 @@
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel">
-                Import new programming exercise
-            </span>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel"> Import new programming exercise </span>
         </button>
         <button
             *ngIf="course && course.isAtLeastInstructor"
@@ -20,9 +18,7 @@
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span jhiTranslate="artemisApp.textExercise.home.createLabel">
-                Create Text Exercise
-            </span>
+            <span jhiTranslate="artemisApp.textExercise.home.createLabel"> Create Text Exercise </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
@@ -39,7 +35,7 @@
                     <th jhiSortBy="assessmentDueDate">
                         <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -58,7 +54,7 @@
                     <td>{{ textExercise.maxScore }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
-                        <jhi-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-exercise-row-buttons>
+                        <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-text-exercise-row-buttons>
                     </td>
                 </tr>
             </tbody>

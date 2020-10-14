@@ -5,27 +5,60 @@
         <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
     </div>
     <jhi-alert></jhi-alert>
+    <ngb-alert
+        *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
+        [style.fontSize]="'65%'"
+        [type]="'warning'"
+        (close)="hasAssessmentDueDatePassed = false"
+        jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver"
+    >
+        Assessment Due Date is over, the assessment will be published immediately after submitting
+    </ngb-alert>
     <div class="row-container" *ngIf="!isLoading">
         <span
             id="assessmentLocked"
-            *ngIf="!isAssessor && !isComplaint"
+            *ngIf="!isAssessor && !hasComplaint"
             class="text-danger ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Assessment locked by: otherUser
         </span>
         <span
-            *ngIf="!isAssessor && isComplaint"
+            id="assessmentReadOnlyUnhandledComplaint"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && !complaintHandled"
             class="ml-3"
-            style="font-size: 65%;"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
+        >
+            There is a complaint for this assessment. Another tutor must respond.
+        </span>
+        <span
+            id="assessmentReadOnlyhandled"
+            *ngIf="isAssessor && !isAtLeastInstructor && hasComplaint && complaintHandled"
+            class="ml-3"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
+        >
+            The complaint about your assessment has been resolved.
+        </span>
+        <span
+            *ngIf="!isAssessor && hasComplaint"
+            class="ml-3"
+            style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Original Assessor: otherUser
         </span>
-        <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
+        <span
+            id="assessmentLockedCurrentUser"
+            *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
+            class="text-danger ml-3"
+            style="font-size: 65%"
+            jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
+        >
             You have the lock for this assessment
         </span>
         <ng-container *ngIf="!result?.completionDate">
@@ -38,7 +71,12 @@
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy">
+            <button
+                *ngIf="!isTestRun"
+                class="btn ml-2 btn-danger"
+                (click)="cancel.emit()"
+                [disabled]="!(isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
+            >
                 <fa-icon *ngIf="cancelBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
@@ -47,14 +85,10 @@
             <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
-        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()" [disabled]="submitBusy">
-            <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
-            <span jhiTranslate="artemisApp.assessment.button.resolveConflict">Resolve Conflict</span>
-        </button>
         <button
             class="btn ml-2 btn-success"
             id="assessNextButton"
-            *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode"
+            *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
             [disabled]="nextSubmissionBusy || submitBusy"
             (click)="nextSubmission.emit()"
         >

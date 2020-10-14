@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,7 +9,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * A MultipleChoiceQuestionStatistic.
@@ -19,9 +16,7 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -29,11 +24,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
 
     public Set<AnswerCounter> getAnswerCounters() {
         return answerCounters;
-    }
-
-    public MultipleChoiceQuestionStatistic answerCounters(Set<AnswerCounter> answerCounters) {
-        this.answerCounters = answerCounters;
-        return this;
     }
 
     public MultipleChoiceQuestionStatistic addAnswerCounters(AnswerCounter answerCounter) {
@@ -53,26 +43,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) o;
-        if (multipleChoiceQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), multipleChoiceQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
     public String toString() {
         return "MultipleChoiceQuestionStatistic{" + "id=" + getId() + "}";
     }
@@ -83,11 +53,9 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
     public void addAnswerOption(AnswerOption answer) {
-
         if (answer == null) {
             return;
         }
-
         for (AnswerCounter counter : answerCounters) {
             if (answer.equals(counter.getAnswer())) {
                 return;
@@ -137,7 +105,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic imple
         }
 
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);

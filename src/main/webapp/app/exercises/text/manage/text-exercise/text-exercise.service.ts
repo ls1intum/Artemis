@@ -7,9 +7,14 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
+export type SubmissionComparisonDTO = {
+    submissions: Array<TextSubmission>;
+    distanceMetrics: Map<string, number>;
+};
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService {
@@ -81,5 +86,29 @@ export class TextExerciseService {
      */
     delete(id: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    }
+
+    /**
+     * Check for plagiarism
+     *
+     * @param exerciseId of the text exercise
+     */
+    checkPlagiarism(exerciseId: number): Observable<HttpResponse<Array<SubmissionComparisonDTO>>> {
+        return this.http.get<Array<SubmissionComparisonDTO>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response' });
+    }
+
+    /**
+     * Check plagiarism with JPlag
+     *
+     * @param exerciseId
+     */
+    checkPlagiarismJPlag(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            observe: 'response',
+            responseType: 'blob',
+            params: {
+                strategy: 'JPlag',
+            },
+        });
     }
 }

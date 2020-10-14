@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -29,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -88,9 +87,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     ResultRepository resultRepository;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
 
     private Long exerciseId;
 
@@ -490,14 +486,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
-        switch (participationType) {
-            case TEMPLATE:
-                return "BASE";
-            case SOLUTION:
-                return "SOLUTION";
-            default:
-                return getStudentLoginFromParticipation(participationNumber);
-        }
+        return switch (participationType) {
+            case TEMPLATE -> "BASE";
+            case SOLUTION -> "SOLUTION";
+            default -> getStudentLoginFromParticipation(participationNumber);
+        };
     }
 
     private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
@@ -549,14 +542,11 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {
-        switch (participationType) {
-            case SOLUTION:
-                return solutionParticipationId;
-            case TEMPLATE:
-                return templateParticipationId;
-            default:
-                return participationIds.get(participationNumber);
-        }
+        return switch (participationType) {
+            case SOLUTION -> solutionParticipationId;
+            case TEMPLATE -> templateParticipationId;
+            default -> participationIds.get(participationNumber);
+        };
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {

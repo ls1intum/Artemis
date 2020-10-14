@@ -1,12 +1,16 @@
 <div class="container" *ngIf="quizExercise">
     <h1>
-        <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title }"> </span>
+        <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"> </span>
     </h1>
+    <h5 *ngIf="!quizExercise.course">
+        <fa-icon class="text-warning" icon="exclamation-triangle"></fa-icon>
+        <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
+    </h5>
     <hr />
 
     <div class="edit-quiz">
         <div class="input-group">
-            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px;" />
+            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px" />
             <span class="input-group-btn">
                 <button class="btn btn-outline-secondary" type="button" (click)="resetQuizTitle()">
                     <fa-icon [icon]="'undo'"></fa-icon>
@@ -29,12 +33,12 @@
                 <span>{{ quizExercise.releaseDate | artemisDate: 'long':true }}</span>
             </div>
         </div>
-        <div *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%;">
+        <div *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    [backupQuestion]="backupQuiz.quizQuestions[i]"
+                    [backupQuestion]="backupQuiz.quizQuestions![i]"
                     (questionUpdated)="onQuestionUpdated()"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionMoveUp)="moveUp(question)"

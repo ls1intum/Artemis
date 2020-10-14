@@ -19,9 +19,19 @@ import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 
 @NgModule({
-    imports: [AceEditorModule, MomentModule, ArtemisSharedModule, FeatureToggleModule, TreeviewModule.forRoot(), ArtemisProgrammingExerciseInstructionsEditorModule],
+    imports: [
+        AceEditorModule,
+        MomentModule,
+        ArtemisSharedModule,
+        FeatureToggleModule,
+        TreeviewModule.forRoot(),
+        ArtemisProgrammingExerciseInstructionsEditorModule,
+        ArtemisProgrammingManualAssessmentModule,
+    ],
     declarations: [
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
@@ -37,6 +47,7 @@ import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programmin
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
         CodeEditorConfirmRefreshModalComponent,
+        CodeEditorContainerComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -46,6 +57,7 @@ import { CodeEditorConfirmRefreshModalComponent } from 'app/exercises/programmin
         CodeEditorActionsComponent,
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
+        CodeEditorContainerComponent,
     ],
     entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent, CodeEditorConfirmRefreshModalComponent],
     providers: [],

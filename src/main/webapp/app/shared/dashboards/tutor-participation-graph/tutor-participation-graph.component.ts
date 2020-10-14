@@ -41,7 +41,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit() {
-        this.tutorParticipationStatus = this.tutorParticipation.status;
+        this.tutorParticipationStatus = this.tutorParticipation.status!;
         const exerciseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
         const courseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
 
@@ -69,7 +69,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.tutorParticipation) {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
-            this.tutorParticipationStatus = this.tutorParticipation.status;
+            this.tutorParticipationStatus = this.tutorParticipation.status!;
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
@@ -96,7 +96,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
             this.percentageComplaintsProgress = Math.floor(
                 ((this.numberOfComplaints -
-                this.numberOfOpenComplaints + // nr of evaluated complaints
+                    this.numberOfOpenComplaints + // nr of evaluated complaints
                     (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) / // nr of evaluated more feedback requests
                     (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) * // total nr of complaints and feedback requests
                     100,

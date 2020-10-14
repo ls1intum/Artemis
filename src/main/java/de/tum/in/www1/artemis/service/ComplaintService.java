@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -35,42 +37,62 @@ public class ComplaintService {
 
     private CourseService courseService;
 
-    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService) {
+    private UserService userService;
+
+    private ExamService examService;
+
+    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
+            ExamService examService, UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
         this.courseService = courseService;
+        this.examService = examService;
+        this.userService = userService;
     }
 
     /**
-     * Create a new complaint checking the user has still enough complaint to create
+     * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
+     * whether the user still enough complaints left.
      *
      * @param complaint the complaint to create
      * @param principal the current Principal
+     * @param examId the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
     @Transactional
-    public Complaint createComplaint(Complaint complaint, Principal principal) {
+    public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
 
-        // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-        Course course = courseService.findOne(courseId);
-
-        if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
-            long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
-            if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
-                throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.", ENTITY_NAME,
-                        "toomanycomplaints");
+        if (examId.isPresent()) {
+            final Exam exam = examService.findOne(examId.getAsLong());
+            final List<User> instructors = userService.getInstructors(exam.getCourse());
+            boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
+            if (!examTestRun && !isTimeOfComplaintValid(exam)) {
+                throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
             }
         }
-        if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise(), course)) {
-            throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
+        else {
+            // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
+            final Course course = courseService.findOne(courseId);
+
+            if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+                long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
+                long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);
+                if (numberOfUnacceptedComplaints >= numberOfAllowedComplaintsInCourse) {
+                    throw new BadRequestAlertException("You cannot have more than " + numberOfAllowedComplaintsInCourse + " open or rejected complaints at the same time.",
+                            ENTITY_NAME, "toomanycomplaints");
+                }
+            }
+            if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise(), course)) {
+                throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
+            }
         }
+
         if (!studentParticipation.isOwnedBy(principal.getName())) {
             throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
@@ -207,10 +229,20 @@ public class ComplaintService {
      * before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     private boolean isTimeOfComplaintValid(Result result, Exercise exercise, Course course) {
-
         if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
             return result.getCompletionDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
         }
         return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
+    }
+
+    /**
+     * This function checks whether the student is allowed to submit a complaint or not for Exams. Submitting a complaint is allowed within the student exam review period.
+     * This period is defined by {@link Exam#getExamStudentReviewStart()} and {@link Exam#getExamStudentReviewEnd()}
+     */
+    private boolean isTimeOfComplaintValid(Exam exam) {
+        if (exam.getExamStudentReviewStart() != null && exam.getExamStudentReviewEnd() != null) {
+            return exam.getExamStudentReviewStart().isBefore(ZonedDateTime.now()) && exam.getExamStudentReviewEnd().isAfter(ZonedDateTime.now());
+        }
+        return false;
     }
 }

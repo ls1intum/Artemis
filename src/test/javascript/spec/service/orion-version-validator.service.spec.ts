@@ -5,7 +5,6 @@ import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
-import { MockWindowRef } from '../helpers/mocks/service/mock-window.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -13,10 +12,27 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
+function setUserAgent(userAgent: string) {
+    if (window.navigator.userAgent !== userAgent) {
+        const userAgentProp = {
+            get() {
+                return userAgent;
+            },
+        };
+        try {
+            Object.defineProperty(window.navigator, 'userAgent', userAgentProp);
+        } catch (e) {
+            // @ts-ignore
+            window.navigator = Object.create(navigator, {
+                userAgent: userAgentProp,
+            });
+        }
+    }
+}
+
 describe('OrionValidatorService', () => {
     let orionVersionValidator: OrionVersionValidator;
     let profileService: ProfileService;
-    let windowRef: MockWindowRef;
     let router: Router;
 
     let profileInfoStub: SinonStub;
@@ -30,10 +46,11 @@ describe('OrionValidatorService', () => {
     const legacy = 'IntelliJ';
 
     beforeEach(() => {
+        // @ts-ignore
         profileService = new MockProfileService();
-        windowRef = new MockWindowRef();
+        // @ts-ignore
         router = new MockRouter();
-        orionVersionValidator = new OrionVersionValidator(profileService, windowRef, router);
+        orionVersionValidator = new OrionVersionValidator(profileService, router);
 
         profileInfoStub = stub(profileService, 'getProfileInfo');
         navigateSpy = spy(router, 'navigateByUrl');
@@ -47,7 +64,7 @@ describe('OrionValidatorService', () => {
     });
 
     it('should route to the error page if a legacy version is used', () => {
-        windowRef.mockUserAgent = userAgent + legacy;
+        setUserAgent(userAgent + legacy);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion();
@@ -57,7 +74,7 @@ describe('OrionValidatorService', () => {
     });
 
     it('should route to the error page if the version is too low', () => {
-        windowRef.mockUserAgent = userAgent + versionTooLow;
+        setUserAgent(userAgent + versionTooLow);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion().subscribe();
@@ -67,7 +84,7 @@ describe('OrionValidatorService', () => {
     });
 
     it('should accept the correct version', () => {
-        windowRef.mockUserAgent = userAgent + versionCorrect;
+        setUserAgent(userAgent + versionCorrect);
         orionVersionValidator.isOrion = true;
 
         orionVersionValidator.validateOrionVersion();
@@ -77,7 +94,7 @@ describe('OrionValidatorService', () => {
     });
 
     it('should not do anything if a normal browser is connected', () => {
-        windowRef.mockUserAgent = userAgent;
+        setUserAgent(userAgent);
 
         orionVersionValidator.validateOrionVersion();
 

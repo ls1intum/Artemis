@@ -1,6 +1,6 @@
+import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -25,28 +25,31 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
+import { stub } from 'sinon';
 import { MockComponent } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
-import { stub } from 'sinon';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Component Tests', () => {
     describe('ModelingSubmission Management Component', () => {
+        // needed to make sure ace is defined
+        ace.acequire('ace/ext/modelist.js');
         let comp: ModelingSubmissionComponent;
         let fixture: ComponentFixture<ModelingSubmissionComponent>;
         let debugElement: DebugElement;
@@ -55,7 +58,7 @@ describe('Component Tests', () => {
 
         const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
-        participation.exercise = new ModelingExercise('ClassDiagram');
+        participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
         const result = { id: 1 } as Result;
 
@@ -73,6 +76,7 @@ describe('Component Tests', () => {
                     ArtemisFullscreenModule,
                     ArtemisTeamSubmissionSyncModule,
                     ArtemisHeaderExercisePageWithDetailsModule,
+                    RatingModule,
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
@@ -132,8 +136,8 @@ describe('Component Tests', () => {
         });
 
         it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
-            submission.participation.initializationDate = moment().subtract(2, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
+            submission.participation!.initializationDate = moment().subtract(2, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment().subtract(1, 'days');
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -144,8 +148,8 @@ describe('Component Tests', () => {
         });
 
         it('should allow to submit after the deadline if the initialization date is after the due date', () => {
-            submission.participation.initializationDate = moment().add(1, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment();
+            submission.participation!.initializationDate = moment().add(1, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -168,7 +172,7 @@ describe('Component Tests', () => {
         });
 
         it('should get inactive as soon as the due date passes the current date', () => {
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+            (<StudentParticipation>submission.participation).exercise!.dueDate = moment().add(1, 'days');
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -204,7 +208,7 @@ describe('Component Tests', () => {
             fixture.detectChanges();
 
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise('DeploymentDiagram');
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.saveDiagram();
             expect(fake).to.have.been.calledOnce;
@@ -217,7 +221,7 @@ describe('Component Tests', () => {
             const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
             comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'create', sinon.fake.returns(of({ body: submission })));
-            comp.modelingExercise = new ModelingExercise('DeploymentDiagram');
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
             comp.submit();
             expect(fake).to.have.been.calledOnce;

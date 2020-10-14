@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,7 +149,7 @@ public class TextClusteringService {
     @NotNull
     @Transactional(readOnly = true)
     List<TextBlock> getTextBlocks(Long exerciseId) throws NetworkingError {
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true);
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
 
         // We only support english languages so far, to prevent corruption of the clustering
         textSubmissions.removeIf(textSubmission -> textSubmission.getLanguage() != Language.ENGLISH);

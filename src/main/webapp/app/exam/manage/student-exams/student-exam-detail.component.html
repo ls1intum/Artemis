@@ -1,13 +1,8 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam.title }">
-            Student exam ({{ studentExam.exam.title }})
+        <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+            Student exam ({{ studentExam.exam!.title! }})
         </h4>
-    </div>
-    <div class="ml-auto d-flex" *ngIf="false">
-        <button class="btn btn-primary" style="height: 35px;" (click)="downloadPdf()" *ngIf="course?.isAtLeastInstructor">
-            <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon><span jhiTranslate="artemisApp.studentExamDetail.downloadPDF">&nbsp;Download PDF</span>
-        </button>
     </div>
 </div>
 <jhi-alert></jhi-alert>
@@ -15,7 +10,7 @@
 <div>
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol style="list-style-type: none;">
+        <ol style="list-style-type: none">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -39,15 +34,33 @@
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form class="d-flex" [formGroup]="workingTimeForm" (ngSubmit)="saveWorkingTime()">
             <div class="mr-2" [ngbTooltip]="getWorkingTimeToolTip()">
-                <input formControlName="minutes" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" step="1" required />
+                <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
                 :
-                <input formControlName="seconds" type="number" style="width: 60px; height: 35px;" class="text-center" min="0" max="59" step="1" required />
+                <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />
             </div>
             <button type="submit" class="btn btn-primary mr-2" [disabled]="workingTimeForm.invalid || isSavingWorkingTime || examIsVisible()">
                 <fa-icon [icon]="'save'" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
         </form>
+    </div>
+
+    <div class="mb-3">
+        <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
+        <ol style="list-style-type: none">
+            <li>
+                <strong>{{ 'artemisApp.studentExams.started' | translate }}:</strong>
+                {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | translate }}
+            </li>
+            <li>
+                <strong>{{ 'artemisApp.studentExams.submitted' | translate }}:</strong>
+                {{ (studentExam.submitted ? 'global.generic.yes' : 'global.generic.no') | translate }}
+            </li>
+            <li>
+                <strong>{{ 'artemisApp.studentExams.submissionDate' | translate }}:</strong>
+                {{ studentExam.submissionDate | artemisDate: 'long':true }}
+            </li>
+        </ol>
     </div>
 
     <div class="mb-3">
@@ -73,12 +86,15 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.title">Title</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.studentExamDetail.result">Result</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.result">Your points</span>
                         </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Max. points</span>
+                        </th>
+
                         <th>
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
                         </th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,36 +102,46 @@
                         <td class="align-middle">
                             {{ exercise?.id }}
                         </td>
-                        <td class="align-middle" style="font-size: 1.35rem;">
+                        <td class="align-middle" style="font-size: 1.35rem">
                             <fa-icon *ngIf="exercise" [icon]="exerciseIcon(exercise)"></fa-icon>
                         </td>
                         <td class="align-middle">
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <!-- TODO show result string -->
+                            <ng-container *ngIf="!!exercise?.studentParticipations && exercise.studentParticipations.length > 0 && !!(exercise?.studentParticipations)[0].results">
+                                {{ rounding((((exercise?.studentParticipations)[0]?.results)[0]?.score * exercise?.maxScore) / 100) }}
+                            </ng-container>
                         </td>
                         <td class="align-middle">
-                            <!-- TODO show assessor -->
+                            {{ exercise?.maxScore }}
                         </td>
-                        <td class="d-flex justify-content-end">
-                            <div class="btn-group">
-                                <button class="btn btn-primary btn-sm mr-1 mb-1" style="border: 4px;" disabled>
-                                    <span jhiTranslate="artemisApp.studentExamDetail.openSubmission">Open Submission</span>
-                                    <!-- TODO Open Submission -->
-                                </button>
-                                <button class="btn btn-warning btn-sm mr-1 mb-1" style="border: 4px;" disabled>
-                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                    <span jhiTranslate="artemisApp.studentExamDetail.openAssessment">&nbsp;Open Assessment</span>
-                                    <!-- TODO Open Assessment -->
-                                </button>
-                                <button class="btn btn-danger btn-sm mr-1 mb-1" disabled>
-                                    <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>
-                                    <span jhiTranslate="artemisApp.studentExamDetail.cancelAssessment">&nbsp;Cancel Assessment</span>
-                                    <!-- TODO Cancel Assessment -->
-                                </button>
-                            </div>
+                        <td class="align-middle">
+                            <ng-container
+                                *ngIf="
+                                    !!exercise?.studentParticipations &&
+                                    exercise.studentParticipations.length > 0 &&
+                                    !!(exercise?.studentParticipations)[0].results &&
+                                    ((exercise?.studentParticipations)[0]?.results)[0].assessor
+                                "
+                            >
+                                {{ ((exercise?.studentParticipations)[0]?.results)[0]?.assessor.name }}
+                            </ng-container>
                         </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td class="align-middle">
+                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Score</span>
+                        </td>
+                        <td class="align-middle">
+                            <u> {{ achievedTotalScore }} </u>
+                        </td>
+                        <td class="align-middle">
+                            <u> {{ maxTotalScore }} </u>
+                        </td>
+                        <td></td>
                     </tr>
                 </tbody>
             </table>

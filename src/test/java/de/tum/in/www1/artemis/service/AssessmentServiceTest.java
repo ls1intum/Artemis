@@ -150,7 +150,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -172,7 +172,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -194,7 +194,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
         submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();

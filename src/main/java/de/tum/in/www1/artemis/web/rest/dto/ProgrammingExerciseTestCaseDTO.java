@@ -2,13 +2,18 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 /**
  * This is a dto for updating a programming exercise test case.
- * It is only allowed to alter the weight and afterDueDate flag of a test case from an endpoint, the other attributes are generated automatically.
+ * It is only allowed to alter the weight, bonus multiplier, bonus points and afterDueDate flag of a test case from an
+ * endpoint, the other attributes are generated automatically.
  */
 public class ProgrammingExerciseTestCaseDTO {
 
     private Long id;
 
-    private Integer weight;
+    private Double weight;
+
+    private Double bonusMultiplier;
+
+    private Double bonusPoints;
 
     private boolean afterDueDate;
 
@@ -20,11 +25,11 @@ public class ProgrammingExerciseTestCaseDTO {
         this.id = id;
     }
 
-    public Integer getWeight() {
+    public Double getWeight() {
         return weight;
     }
 
-    public void setWeight(Integer weight) {
+    public void setWeight(Double weight) {
         this.weight = weight;
     }
 
@@ -34,5 +39,21 @@ public class ProgrammingExerciseTestCaseDTO {
 
     public void setAfterDueDate(boolean afterDueDate) {
         this.afterDueDate = afterDueDate;
+    }
+
+    public Double getBonusMultiplier() {
+        return bonusMultiplier;
+    }
+
+    public void setBonusMultiplier(Double bonusMultiplier) {
+        this.bonusMultiplier = bonusMultiplier;
+    }
+
+    public Double getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public void setBonusPoints(Double bonusPoints) {
+        this.bonusPoints = bonusPoints;
     }
 }

@@ -17,6 +17,7 @@ export class AssessmentDetailComponent implements AfterViewInit {
     @Input() public highlightColor: HighlightColors.Color;
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
+    @Input() public readOnly: boolean;
     disableEditScore = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;

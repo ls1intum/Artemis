@@ -1,5 +1,5 @@
 <div *ngIf="exercise">
-    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px;">
+    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px">
         <div [innerHTML]="'artemisApp.exercise.welcome' | translate"></div>
     </div>
     <!-- HEADER INFORMATION START -->
@@ -24,9 +24,7 @@
         <!-- These buttons will be only shown in dev environment and if the programming exercise has no
         connection to the VCS and CI
         This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">
-            Submission
-        </button>
+        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
         <button
             class="dev-button"
             [disabled]="!wasSubmissionSimulated"
@@ -37,22 +35,63 @@
         </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
         </jhi-submission-result-status>
-        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
+        <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
-            <div class="btn-group">
-                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/exercises/{{ exercise.id }}/scores">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.scores' | translate }}
-                </div>
-                <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate }}
-                </div>
-                <div
+            <div class="btn-group flex-btn-group-container">
+                <button type="submit" [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
+                    <fa-icon [icon]="'eye'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                </button>
+                <button type="submit" *ngIf="exerciseRouterLink" [routerLink]="[exerciseRouterLink]" class="btn btn-primary btn-sm mr-1">
+                    <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                </button>
+                <button
+                    type="submit"
                     *ngIf="exercise.type === MODELING"
                     [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
-                    class="btn btn-outline-primary"
+                    class="btn btn-info btn-sm mr-1"
                 >
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
-                </div>
+                    <fa-icon [icon]="'signal'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="exercise.type === PROGRAMMING"
+                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations']"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="exercise.type === PROGRAMMING"
+                    [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+                    class="btn btn-info btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
+                    [disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
+                    [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
+                    [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 're-evaluate']"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
+                </button>
             </div>
         </div>
     </div>
@@ -70,7 +109,7 @@
                     [buttonLoading]="exercise.loading"
                     [hideLabelMobile]="false"
                     [projectKey]="projectKey()"
-                    [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
                 ></button>
                 <jhi-programming-exercise-instructions
@@ -110,10 +149,10 @@
                     </h4>
                 </div>
                 <div class="col text-left">
-                    <jhi-result [result]="studentParticipation!.results[0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
+                    <jhi-result [result]="studentParticipation!.results![0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h6 [ngbTooltip]="studentParticipation!.results[0]!.completionDate | artemisDate">({{ studentParticipation!.results[0]!.completionDate! | amTimeAgo }})</h6>
+                    <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">({{ studentParticipation!.results![0].completionDate! | amTimeAgo }})</h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
@@ -137,7 +176,7 @@
                                 </h4>
                             </div>
                             <div class="col text-left">
-                                <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations![0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
                                 <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | amTimeAgo }})</h6>

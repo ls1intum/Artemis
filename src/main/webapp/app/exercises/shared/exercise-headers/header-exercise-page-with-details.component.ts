@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -11,9 +12,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     @Input() public exercise: Exercise;
     @Input() public onBackClick: () => void;
     @Input() public title: string;
+    @Input() public exam: Exam | null;
+    @Input() public isTestRun = false;
 
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];
+    public isExamMode = false;
 
     getIcon = getIcon;
 
@@ -33,11 +37,19 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+
+        if (this.exam) {
+            this.isExamMode = true;
+        }
     }
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+            if (this.isExamMode) {
+                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+            } else {
+                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+            }
         }
     }
 }

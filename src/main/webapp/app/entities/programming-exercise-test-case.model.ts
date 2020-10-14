@@ -1,16 +1,13 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
-export interface IProgrammingExerciseTestCase {
-    id: number;
-    testName: string;
-    weight: number;
-    active: boolean;
-    afterDueDate: boolean;
-    exercise: ProgrammingExercise;
-}
-
-export class ProgrammingExerciseTestCase implements IProgrammingExerciseTestCase {
-    constructor(public id: number, public testName: string, public weight: number, public active: boolean, public afterDueDate: boolean, public exercise: ProgrammingExercise) {
-        this.active = this.active || false;
-    }
+export class ProgrammingExerciseTestCase implements BaseEntity {
+    id?: number;
+    testName?: string;
+    weight?: number;
+    bonusMultiplier?: number;
+    bonusPoints?: number;
+    active?: boolean;
+    afterDueDate?: boolean;
+    exercise?: ProgrammingExercise;
 }

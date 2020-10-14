@@ -36,6 +36,10 @@
             <button type="button" [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <button class="btn btn-outline-primary" id="check-plagiarism-download" routerLink="plagiarism">
+                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+            </button>
         </div>
     </div>
 </div>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -16,6 +17,11 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exam } from 'app/entities/exam.model';
+import { Moment } from 'moment';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -23,16 +29,22 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 })
 export class ExerciseGroupsComponent implements OnInit {
     courseId: number;
+    course: Course;
     examId: number;
-    exerciseGroups: ExerciseGroup[] | null;
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    exam: Exam;
+    exerciseGroups?: ExerciseGroup[];
+    dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
+    latestIndividualEndDate?: Moment;
+    exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
     constructor(
         private route: ActivatedRoute,
         private exerciseGroupService: ExerciseGroupService,
         private examManagementService: ExamManagementService,
+        private courseManagementService: CourseManagementService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiEventManager: JhiEventManager,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -40,37 +52,79 @@ export class ExerciseGroupsComponent implements OnInit {
     ) {}
 
     /**
-     * Initialize the courseId and examId. Get all exercise groups for the exam.
+     * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
+     * See {@link setupExerciseGroupToExerciseTypesDict}.
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.loadExerciseGroups();
+        // Only take action when a response was received for both requests
+        forkJoin(this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()).subscribe(
+            ([examRes, examInfoDTO]) => {
+                this.exam = examRes.body!;
+                this.exerciseGroups = this.exam.exerciseGroups;
+                this.course = this.exam.course!;
+                this.courseManagementService.checkAndSetCourseRights(this.course);
+                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
+                this.setupExerciseGroupToExerciseTypesDict();
+            },
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
+    }
+
+    /**
+     * Load the latest individual end date of the exam. If this the HTTP response is erroneous, an observables emitting
+     * null will be returned
+     */
+    loadLatestIndividualEndDateOfExam() {
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+            // When the exam start date was not set properly an error will be thrown.
+            // Catch this in the inner observable otherwise forkJoin won't return data
+            catchError(() => {
+                return of(null);
+            }),
+        );
     }
 
     /**
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe(
-            (res) => (this.exerciseGroups = res.body!.exerciseGroups),
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+        return this.examManagementService.find(this.courseId, this.examId, false, true);
+    }
+
+    /**
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
+     * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
+     * @param exerciseId
+     * @param exerciseGroupId
+     */
+    removeExercise(exerciseId: number, exerciseGroupId: number) {
+        if (this.exerciseGroups) {
+            this.exerciseGroups.forEach((exerciseGroup) => {
+                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
+                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                    this.setupExerciseGroupToExerciseTypesDict();
+                }
+            });
+        }
     }
 
     /**
      * Delete the exercise group with the given id.
      * @param exerciseGroupId {number}
+     * @param $event representation of users choices to delete the student repositories and base repositories
      */
-    deleteExerciseGroup(exerciseGroupId: number) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId).subscribe(
+    deleteExerciseGroup(exerciseGroupId: number, $event: { [key: string]: boolean }) {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.jhiEventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.loadExerciseGroups();
+                this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                delete this.exerciseGroupToExerciseTypesDict[exerciseGroupId];
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -170,8 +224,43 @@ export class ExerciseGroupsComponent implements OnInit {
 
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe(
-            (res) => (this.exerciseGroups = res.body),
+            (res) => (this.exerciseGroups = res.body!),
             () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         );
     }
+
+    /**
+     * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
+     * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
+     * E.g. in case programming exercises are present, the user must decide whether (s)he wants to delete the build plans.
+     */
+    setupExerciseGroupToExerciseTypesDict() {
+        this.exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
+        if (!this.exerciseGroups) {
+            return;
+        } else {
+            for (const exerciseGroup of this.exerciseGroups) {
+                this.exerciseGroupToExerciseTypesDict.set(exerciseGroup.id!, []);
+                if (exerciseGroup.exercises) {
+                    for (const exercise of exerciseGroup.exercises) {
+                        this.exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)!.push(exercise.type!);
+                    }
+                }
+            }
+        }
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * Checks if the url includes the string "nolocalsetup', which is an indication
+     * that the particular programming exercise has no local setup
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+     * @param urlToCheck the url which will be check if it contains the substring
+     */
+    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
+        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

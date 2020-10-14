@@ -6,47 +6,47 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.reflection.FieldSetter;
+import org.mockito.Spy;
 
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 
 class UMLDiagramTest {
 
-    private UMLDiagram umlDiagram;
+    @Spy
+    UMLDiagram umlDiagram;
 
-    private UMLDiagram referenceDiagram;
+    @Spy
+    UMLDiagram referenceDiagram;
 
-    @Mock
+    @Spy
     UMLElement umlElement1;
 
-    @Mock
+    @Spy
     UMLElement umlElement2;
 
-    @Mock
+    @Spy
     UMLElement umlElement3;
 
-    @Mock
+    @Spy
     UMLElement referenceElement1;
 
-    @Mock
+    @Spy
     UMLElement referenceElement2;
+
+    @Spy
+    CompassResult compassResult;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
-
-        umlDiagram = mock(UMLDiagram.class, CALLS_REAL_METHODS);
-        when(umlDiagram.getModelElements()).thenReturn(List.of(umlElement1, umlElement2));
-
-        referenceDiagram = mock(UMLDiagram.class, CALLS_REAL_METHODS);
-        when(referenceDiagram.getModelElements()).thenReturn(List.of(referenceElement1, referenceElement2));
+        MockitoAnnotations.openMocks(this);
+        doReturn(List.of(umlElement1, umlElement2)).when(umlDiagram).getModelElements();
+        doReturn(List.of(referenceElement1, referenceElement2)).when(referenceDiagram).getModelElements();
 
         mockOverallSimilarity(umlElement1, referenceElement1, 1.0);
         mockOverallSimilarity(umlElement1, referenceElement2, 1.0);
@@ -56,27 +56,26 @@ class UMLDiagramTest {
         mockOverallSimilarity(umlElement3, referenceElement2, 0.456);
     }
 
+    @AfterEach
+    void tearDown() {
+        Mockito.reset(umlDiagram, umlElement1, umlElement2, umlElement3, referenceElement1, referenceElement2, referenceDiagram, compassResult);
+    }
+
     @Test
     void similarity_null() {
         double similarity = umlDiagram.similarity(null);
-
         assertThat(similarity).isEqualTo(0);
-        verifyNoElementInteraction();
     }
 
     @Test
     void similarity_differentDiagramType() {
-        umlDiagram = mock(UMLClassDiagram.class, CALLS_REAL_METHODS);
-        double similarity = umlDiagram.similarity(mock(UMLActivityDiagram.class));
-
+        double similarity = umlDiagram.similarity(spy(UMLActivityDiagram.class));
         assertThat(similarity).isEqualTo(0);
-        verifyNoElementInteraction();
     }
 
     @Test
     void similarity_sameDiagram() {
         double similarity = umlDiagram.similarity(referenceDiagram);
-
         assertThat(similarity).isEqualTo(1);
     }
 
@@ -102,52 +101,41 @@ class UMLDiagramTest {
     @Test
     void isUnassessed_true() {
         boolean isUnassessed = umlDiagram.isUnassessed();
-
         assertThat(isUnassessed).isTrue();
     }
 
     @Test
-    void isUnassessed_false() throws NoSuchFieldException {
-        FieldSetter.setField(umlDiagram, UMLDiagram.class.getDeclaredField("lastAssessmentCompassResult"), mock(CompassResult.class));
-
+    void isUnassessed_false() {
+        doReturn(spy(CompassResult.class)).when(umlDiagram).getLastAssessmentCompassResult();
         boolean isUnassessed = umlDiagram.isUnassessed();
-
         assertThat(isUnassessed).isFalse();
     }
 
     @Test
-    void getLastAssessmentConfidence() throws NoSuchFieldException {
-        CompassResult compassResult = mock(CompassResult.class);
-        FieldSetter.setField(umlDiagram, UMLDiagram.class.getDeclaredField("lastAssessmentCompassResult"), compassResult);
-        when(compassResult.getConfidence()).thenReturn(0.456);
-
+    void getLastAssessmentConfidence() {
+        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
+        doReturn(0.456).when(compassResult).getConfidence();
         double confidence = umlDiagram.getLastAssessmentConfidence();
-
         assertThat(confidence).isEqualTo(0.456);
     }
 
     @Test
     void getLastAssessmentConfidence_noCompassResult() {
         double confidence = umlDiagram.getLastAssessmentConfidence();
-
         assertThat(confidence).isEqualTo(-1);
     }
 
     @Test
-    void getLastAssessmentCoverage() throws NoSuchFieldException {
-        CompassResult compassResult = mock(CompassResult.class);
-        FieldSetter.setField(umlDiagram, UMLDiagram.class.getDeclaredField("lastAssessmentCompassResult"), compassResult);
-        when(compassResult.getCoverage()).thenReturn(0.789);
-
+    void getLastAssessmentCoverage() {
+        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
+        doReturn(0.789).when(compassResult).getCoverage();
         double confidence = umlDiagram.getLastAssessmentCoverage();
-
         assertThat(confidence).isEqualTo(0.789);
     }
 
     @Test
     void getLastAssessmentCoverage_noCompassResult() {
         double confidence = umlDiagram.getLastAssessmentCoverage();
-
         assertThat(confidence).isEqualTo(-1);
     }
 

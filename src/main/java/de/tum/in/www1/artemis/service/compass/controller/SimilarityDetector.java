@@ -38,11 +38,11 @@ public class SimilarityDetector {
 
             if (element instanceof UMLAttribute) {
                 UMLAttribute attribute = (UMLAttribute) element;
-                context = new Context(attribute.getParentClass().getSimilarityID());
+                context = new Context(attribute.getParentElement().getSimilarityID());
             }
             else if (element instanceof UMLMethod) {
                 UMLMethod method = (UMLMethod) element;
-                context = new Context(method.getParentClass().getSimilarityID());
+                context = new Context(method.getParentElement().getSimilarityID());
             }
 
             element.setContext(context);

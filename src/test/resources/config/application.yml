@@ -7,6 +7,7 @@ logging:
 artemis:
     version: 1.3.3-beta7
     file-upload-path: uploads
+    submission-export-path: exports
 
 spring:
     application:
@@ -107,6 +108,12 @@ management:
     endpoint:
         jhimetrics:
             enabled: true
+
+sentry:
+    dsn: https://not-activated@sentry.io/0000000
+    send-default-pii: true
+    logging:
+        enabled: false
 
 # Properties to be exposed on the /info management endpoint
 info:

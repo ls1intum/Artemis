@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -14,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -24,20 +23,13 @@ import de.tum.in.www1.artemis.service.FileService;
 @Entity
 @Table(name = "drag_item")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class DragItem implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragItem extends TempIdObject {
 
     @Transient
     private transient FileService fileService = new FileService();
 
     @Transient
     private String prevPictureFilePath;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
-    private Long id;
 
     @Column(name = "picture_file_path")
     @JsonView(QuizView.Before.class)
@@ -60,39 +52,8 @@ public class DragItem implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
-    /**
-     * tempID is needed to refer to drag items that have not been persisted yet in the correctMappings of a question (so user can create mappings in the UI before saving new drag
-     * items)
-     */
-    @Transient
-    // variable name must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
-    private Long tempIDTransient;
-
-    public Long getTempID() {
-        return tempIDTransient;
-    }
-
-    public void setTempID(Long tempID) {
-        this.tempIDTransient = tempID;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getPictureFilePath() {
         return pictureFilePath;
-    }
-
-    public DragItem pictureFilePath(String pictureFilePath) {
-        this.pictureFilePath = pictureFilePath;
-        return this;
     }
 
     public void setPictureFilePath(String pictureFilePath) {
@@ -117,17 +78,7 @@ public class DragItem implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid == null ? false : invalid;
-    }
-
-    public DragItem question(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-        return this;
-    }
-
-    public DragItem invalid(Boolean invalid) {
-        this.invalid = invalid;
-        return this;
+        return invalid != null && invalid;
     }
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
@@ -140,11 +91,6 @@ public class DragItem implements Serializable {
 
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
-    }
-
-    public DragItem mappings(Set<DragAndDropMapping> mappings) {
-        this.mappings = mappings;
-        return this;
     }
 
     public DragItem addMappings(DragAndDropMapping mapping) {
@@ -207,29 +153,6 @@ public class DragItem implements Serializable {
     public void onDelete() {
         // delete old file if necessary
         fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, FilePathService.getDragItemFilepath(), getId());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragItem dragItem = (DragItem) o;
-        if (dragItem.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dragItem.getTempID())) {
-            return true;
-        }
-        if (dragItem.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragItem.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

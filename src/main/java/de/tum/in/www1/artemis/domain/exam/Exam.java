@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.exam;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -13,18 +12,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
 @Table(name = "exam")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Exam implements Serializable {
-
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Exam extends DomainObject {
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -56,6 +51,12 @@ public class Exam implements Serializable {
     @Column(name = "exam_student_review_end")
     private ZonedDateTime examStudentReviewEnd;
 
+    /**
+     * The duration in which the students can do final submissions before the exam ends in seconds
+     */
+    @Column(name = "grace_period", columnDefinition = "integer default 180")
+    private Integer gracePeriod = 180;
+
     @Column(name = "start_text")
     @Lob
     private String startText;
@@ -85,6 +86,15 @@ public class Exam implements Serializable {
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
 
+    @Column(name = "examiner")
+    private String examiner;
+
+    @Column(name = "module_number")
+    private String moduleNumber;
+
+    @Column(name = "course_name")
+    private String courseName;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -95,7 +105,6 @@ public class Exam implements Serializable {
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
-    // TODO: add a big fat warning in case instructor delete exams where student exams already exist
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
@@ -109,14 +118,6 @@ public class Exam implements Serializable {
 
     @Transient
     private Long numberOfRegisteredUsersTransient;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
@@ -174,6 +175,14 @@ public class Exam implements Serializable {
         this.examStudentReviewEnd = examStudentReviewEnd;
     }
 
+    public Integer getGracePeriod() {
+        return gracePeriod;
+    }
+
+    public void setGracePeriod(Integer gracePeriod) {
+        this.gracePeriod = gracePeriod;
+    }
+
     public String getStartText() {
         return startText;
     }
@@ -228,6 +237,30 @@ public class Exam implements Serializable {
 
     public void setRandomizeExerciseOrder(Boolean randomizeExerciseOrder) {
         this.randomizeExerciseOrder = randomizeExerciseOrder;
+    }
+
+    public String getExaminer() {
+        return examiner;
+    }
+
+    public void setExaminer(String examiner) {
+        this.examiner = examiner;
+    }
+
+    public String getModuleNumber() {
+        return moduleNumber;
+    }
+
+    public void setModuleNumber(String moduleNumber) {
+        this.moduleNumber = moduleNumber;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
     }
 
     public Course getCourse() {
@@ -304,21 +337,6 @@ public class Exam implements Serializable {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        Exam exam = (Exam) o;
-        return Objects.equals(getId(), exam.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
     /**
      * check if students are allowed to see this exam
      *
@@ -341,5 +359,17 @@ public class Exam implements Serializable {
             return null;
         }
         return startDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * check if results of exam are published
+     *
+     * @return true, if the results are published, false if not published or not set!
+     */
+    public Boolean resultsPublished() {
+        if (publishResultsDate == null) {
+            return false;
+        }
+        return publishResultsDate.isBefore(ZonedDateTime.now());
     }
 }

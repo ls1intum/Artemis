@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -73,11 +74,11 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     private List<User> users;
 
-    private int numberOfParticipants = 12;
+    private final int numberOfParticipants = 12;
 
     @BeforeEach
     public void init() {
-        users = database.addUsers(numberOfParticipants, 0, 1);
+        users = database.addUsers(numberOfParticipants, 1, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -85,8 +86,11 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setNumberOfExercisesInExam(1);
         exerciseGroup = exam.getExerciseGroups().get(0);
 
-        quizExercise = database.createQuizForExam(exerciseGroup, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
+        quizExercise = database.createQuizForExam(exerciseGroup);
         exerciseGroup.addExercise(quizExercise);
+
+        // Add an instructor who is not in the course
+        userRepository.save(ModelFactory.generateActivatedUser("instructor6"));
     }
 
     @AfterEach
@@ -96,7 +100,23 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void evaluateQuiz_noInstructor_forbidden() throws Exception {
+    public void evaluateQuiz_asTutor_PreAuth_forbidden() throws Exception {
+        evaluateQuiz_authorization_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
+        evaluateQuiz_authorization_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
+    public void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
+        evaluateQuiz_authorization_forbidden();
+    }
+
+    public void evaluateQuiz_authorization_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -106,7 +126,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "USER")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void evaluateQuiz_notOver_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -133,17 +153,17 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
+        database.changeUser("instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
 
-        database.changeUser("instructor1");
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 
@@ -176,17 +196,17 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i + 1, true, ZonedDateTime.now());
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
+        database.changeUser("instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
 
-        database.changeUser("instructor1");
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
 

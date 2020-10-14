@@ -3,9 +3,7 @@
     <div class="card-body">
         <span *ngIf="loadingParticipation">
             <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
-                Your participation is being loaded...
-            </span>
+            <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
         </span>
         <span *ngIf="participationCouldNotBeFetched">
             <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
@@ -13,8 +11,16 @@
         </span>
     </div>
 </nav>
-<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
+<jhi-code-editor-container
+    *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
+    [editable]="!repositoryIsLocked"
+    [participation]="participation"
+    [showEditorInstructions]="showEditorInstructions"
+    [isTutorAssessment]="hasTutorAssessment"
+    [readOnlyManualFeedback]="true"
+>
+    <span editorTitle>{{ exercise.title }}</span>
+    <div editorToolbar class="d-inline-flex">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="mr-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
@@ -33,50 +39,14 @@
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
-        <jhi-code-editor-actions
-            [disableActions]="repositoryIsLocked"
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-actions>
     </div>
-    <jhi-code-editor-file-browser
-        editorSidebarLeft
-        [disableActions]="repositoryIsLocked"
-        [exerciseTitle]="exercise?.title"
-        [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
-        [editorState]="editorState"
-        [(selectedFile)]="selectedFile"
-        [(commitState)]="commitState"
-        (onFileChange)="onFileChange($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-file-browser>
-    <jhi-code-editor-ace
-        editorCenter
-        [selectedFile]="selectedFile"
-        [fileChange]="fileChange"
-        [commitState]="commitState"
-        [editorState]="editorState"
-        [(buildLogErrors)]="buildLogErrors"
-        (onFileContentChange)="onFileContentChange($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        editorSidebarRight
-        [participation]="participation"
+    <jhi-programming-exercise-instructions
+        editorSidebar
+        (onNoInstructionsAvailable)="showEditorInstructions = false"
         [exercise]="exercise"
-        (onToggleCollapse)="onToggleCollapse($event)"
-        (onError)="onError($event)"
-    ></jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
         [participation]="participation"
-        [(buildLogErrors)]="buildLogErrors"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event)"
-    ></jhi-code-editor-build-output>
-</jhi-code-editor-grid>
+        [personalParticipation]="true"
+        [exerciseHints]="exercise.exerciseHints"
+        class="instructions-wrapper__content card-body p-0"
+    ></jhi-programming-exercise-instructions>
+</jhi-code-editor-container>

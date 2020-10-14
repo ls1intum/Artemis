@@ -8,6 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -21,8 +22,8 @@ export class SubmissionService {
 
     /**
      * Delete an existing submission
-     * @param {number} submissionId - The id of the submission to be deleted
-     * @param {any} req - A request with additional options in it
+     * @param submissionId - The id of the submission to be deleted
+     * @param req - A request with additional options in it
      */
     delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
@@ -52,36 +53,38 @@ export class SubmissionService {
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : null;
+            res.body.submissionDate = res.body.submissionDate ? moment(res.body.submissionDate) : undefined;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
         }
         return res;
     }
 
-    protected convertParticipationDateFromServer(participation: Participation) {
-        participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
-        participation.results = this.convertResultsDateFromServer(participation.results);
-        participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+    protected convertParticipationDateFromServer(participation?: Participation) {
+        if (participation) {
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : undefined;
+            participation.results = this.convertResultsDateFromServer(participation.results);
+            participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+        }
         return participation;
     }
 
-    convertResultsDateFromServer(results: Result[]) {
+    convertResultsDateFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? moment(result.completionDate) : null;
+                result.completionDate = result.completionDate ? moment(result.completionDate) : undefined;
                 convertedResults.push(result);
             });
         }
         return convertedResults;
     }
 
-    convertSubmissionsDateFromServer(submissions: Submission[]) {
+    convertSubmissionsDateFromServer(submissions?: Submission[]) {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : null;
+                    submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
                     convertedSubmissions.push(submission);
                 }
             });
@@ -94,5 +97,29 @@ export class SubmissionService {
             this.convertSubmissionsDateFromServer(res.body);
         }
         return res;
+    }
+
+    getTestRunSubmissionsForExercise(exerciseId: number): Observable<HttpResponse<Submission[]>> {
+        return this.http
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/test-run-submissions`, {
+                observe: 'response',
+            })
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
+    }
+
+    private convertArrayResponse(res: HttpResponse<Submission[]>): HttpResponse<Submission[]> {
+        const jsonResponse: Submission[] = res.body!;
+        const body: Submission[] = [];
+        for (let i = 0; i < jsonResponse.length; i++) {
+            body.push(this.convertItemFromServer(jsonResponse[i]));
+        }
+        return res.clone({ body });
+    }
+
+    /**
+     * Convert a returned JSON object to TextSubmission.
+     */
+    private convertItemFromServer(submission: Submission): Submission {
+        return Object.assign({}, submission);
     }
 }

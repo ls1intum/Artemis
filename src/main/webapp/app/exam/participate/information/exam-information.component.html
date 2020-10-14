@@ -1,0 +1,42 @@
+<div class="mt-3 mb-4 text-center">
+    <div class="mb-2">
+        <span class="mx-2" *ngIf="exam && exam.startDate">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | translate }}:</strong>
+            {{ exam.startDate | artemisDate: 'long-date' }}
+        </span>
+        <span class="mx-2" *ngIf="exam">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | translate }}:</strong>
+            {{ exam.startDate | artemisDate: 'time' }}
+            -
+            {{ endTime() | artemisDate: 'time' }}
+        </span>
+        <span class="mx-2" *ngIf="studentExam && studentExam.workingTime">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | translate }}:</strong>
+            {{ studentExam.workingTime | artemisDurationFromSeconds }}
+        </span>
+    </div>
+    <div class="mb-2" *ngIf="exam && (exam.examiner || exam.moduleNumber || exam.courseName)">
+        <span class="mx-2" *ngIf="exam.examiner">
+            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.examiner' | translate }}:</strong>
+            {{ exam.examiner }}
+        </span>
+        <span class="mx-2" *ngIf="exam.moduleNumber">
+            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.moduleNumber' | translate }}:</strong>
+            {{ exam.moduleNumber }}
+        </span>
+        <span class="mx-2" *ngIf="exam.courseName">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.course' | translate }}:</strong>
+            {{ exam.courseName }}
+        </span>
+    </div>
+    <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.maxPoints)">
+        <span class="mx-2" *ngIf="exam.numberOfExercisesInExam">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | translate }}:</strong>
+            {{ exam.numberOfExercisesInExam }}
+        </span>
+        <span class="mx-2" *ngIf="exam.maxPoints">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.points' | translate }}:</strong>
+            {{ exam.maxPoints }}
+        </span>
+    </div>
+</div>

@@ -75,6 +75,7 @@ public class TextClusteringScheduleService {
             cancelScheduledClustering(exercise.getId());
             return;
         }
+        // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
         if (exercise.getDueDate() == null || exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
             return;
         }

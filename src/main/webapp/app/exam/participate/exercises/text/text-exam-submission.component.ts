@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -8,6 +8,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -32,16 +33,23 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private stringCountService: StringCountService,
+        changeDetectorReference: ChangeDetectorRef,
     ) {
-        super();
+        super(changeDetectorReference);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
     }
 
-    onActivate(): void {}
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.text) {
@@ -58,7 +66,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     public updateSubmissionFromView(): void {
         this.studentSubmission.text = this.answer;
         this.studentSubmission.language = this.textService.predictLanguage(this.answer);
-        this.studentSubmission.isSynced = false;
     }
 
     get wordCount(): number {

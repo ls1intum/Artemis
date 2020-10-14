@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, Validators, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/alert/alert.service';
+import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 
 @Component({
@@ -23,6 +24,8 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
+    maxTotalScore = 0;
+    achievedTotalScore = 0;
 
     constructor(
         private route: ActivatedRoute,
@@ -49,14 +52,7 @@ export class StudentExamDetailComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
-        this.student = this.studentExam.user;
-    }
-
-    /**
-     * Link to download the exported PDF of the students participation
-     */
-    downloadPdf() {
-        // TODO
+        this.student = this.studentExam.user!;
     }
 
     /**
@@ -84,7 +80,7 @@ export class StudentExamDetailComponent implements OnInit {
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
         const seconds = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam.id, this.studentExam.id, seconds).subscribe(
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe(
             (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
@@ -99,13 +95,29 @@ export class StudentExamDetailComponent implements OnInit {
         );
     }
 
+    /**
+     * Sets the student exam, initialised the component which allows changing the working time and sets the score of the student.
+     * @param studentExam
+     */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
+        studentExam.exercises!.forEach((exercise) => {
+            this.maxTotalScore += exercise.maxScore!;
+            if (
+                exercise.studentParticipations?.length &&
+                exercise.studentParticipations.length > 0 &&
+                exercise.studentParticipations[0].results?.length &&
+                exercise.studentParticipations[0].results.length > 0
+            ) {
+                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxScore!) / 100;
+                this.achievedTotalScore = this.rounding(this.achievedTotalScore);
+            }
+        });
     }
 
     private initWorkingTimeForm() {
-        const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime);
+        const workingTime = this.artemisDurationFromSecondsPipe.transform(this.studentExam.workingTime!);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
             minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.examIsVisible() }, [
@@ -133,5 +145,8 @@ export class StudentExamDetailComponent implements OnInit {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
+    }
+    rounding(number: number) {
+        return round(number, 1);
     }
 }

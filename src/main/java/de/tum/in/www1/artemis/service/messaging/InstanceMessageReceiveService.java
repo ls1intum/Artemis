@@ -71,7 +71,7 @@ public class InstanceMessageReceiveService {
     public void processScheduleProgrammingExercise(Long exerciseId) {
         log.info("Received schedule update for programming exercise " + exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        programmingExerciseScheduleService.updateScheduling(programmingExercise);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {

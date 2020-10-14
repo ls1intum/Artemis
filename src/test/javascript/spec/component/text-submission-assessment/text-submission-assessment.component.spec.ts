@@ -20,7 +20,7 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import moment = require('moment');
+import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
@@ -65,8 +65,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         submission,
         participation,
     } as unknown) as Result;
-    submission.participation.submissions = [submission];
-    submission.participation.results = [submission.result];
+    submission.participation!.submissions = [submission];
+    submission.participation!.results = [submission.result];
 
     beforeEach(async () => {
         TestBed.configureTestingModule({

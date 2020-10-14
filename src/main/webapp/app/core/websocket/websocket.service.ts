@@ -1,14 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
 import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
-import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
-import { timer } from 'rxjs';
 
 export interface IWebsocketService {
     /**
@@ -87,12 +85,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     consecutiveFailedAttempts = 0;
     connecting = false;
 
-    private logTimers: Subscription[] = [];
-
     private socket: any = undefined;
     private subscriptionCounter = 0;
 
-    constructor(private router: Router, private authServerProvider: AuthServerProvider, private $window: WindowRef, private csrfService: CSRFService) {
+    constructor(private router: Router, private authServerProvider: AuthServerProvider, private csrfService: CSRFService) {
         this.connection = this.createConnection();
     }
 
@@ -133,7 +129,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 waitUntilReconnectAttempt = 5;
             }
             setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
-            // console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
         }
     }
 
@@ -149,7 +144,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             this.connection = this.createConnection();
         }
         // building absolute path so that websocket doesn't fail when deploying with a context path
-        const loc = this.$window.nativeWindow.location;
+        const loc = window.location;
         let url = '//' + loc.host + loc.pathname + 'websocket/tracker';
         const authToken = this.authServerProvider.getToken();
         if (authToken) {
@@ -201,29 +196,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 } else {
                     this.alreadyConnectedOnce = true;
                 }
-                if (!this.subscription) {
-                    this.subscription = this.router.events.subscribe((event) => {
-                        if (event instanceof NavigationEnd) {
-                            this.sendActivity();
-                        }
-                    });
-                }
-                this.sendActivity();
-
-                // Setup periodic logs of websocket connection numbers
-                this.logTimers.push(
-                    timer(0, 60000).subscribe(() => {
-                        console.log('\n\n');
-                        console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
-                        // this.subscribers.forEach((sub, topic) => console.log(topic));
-
-                        // console.log(`Listeners (${this.myListeners.size}): `, this.myListeners.values());
-                        // this.myListeners.forEach((sub, topic) => console.log(topic));
-
-                        // console.log(`Observers (${this.listenerObservers.size}): `, this.listenerObservers.values());
-                        // this.listenerObservers.forEach((sub, topic) => console.log(topic));
-                    }),
-                );
             },
             this.stompFailureCallback.bind(this),
         );
@@ -233,7 +205,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Close the connection to the websocket and unsubscribe als listeners.
      */
     disconnect() {
-        this.logTimers.forEach((logTimer) => logTimer.unsubscribe());
         this.connection = this.createConnection();
         Object.keys(this.myListeners).forEach((listener) => this.unsubscribe(listener), this);
         if (this.stompClient) {
@@ -256,20 +227,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             this.myListeners.set(channel, this.createListener(channel));
         }
         return this.myListeners.get(channel)!;
-    }
-
-    /**
-     * Send a snapshot of the current routerState through the websocket connection.
-     */
-    sendActivity() {
-        // Note: this is temporarily deactivated for now to reduce server load on websocket connections
-        // if (this.stompClient !== null && this.stompClient.connected) {
-        //     this.stompClient.send(
-        //         '/topic/activity', // destination
-        //         JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
-        //         {}, // header
-        //     );
-        // }
     }
 
     /**

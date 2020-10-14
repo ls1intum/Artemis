@@ -19,7 +19,7 @@ public class UMLClass extends UMLElement {
 
     private String name;
 
-    private UMLClassType type;
+    private UMLClassType classType;
 
     @Nullable
     private UMLPackage umlPackage;
@@ -28,36 +28,37 @@ public class UMLClass extends UMLElement {
 
     private List<UMLMethod> methods;
 
-    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType type) {
+    /**
+     * empty constructor used to make mockito happy
+     */
+    public UMLClass() {
+        super();
+    }
+
+    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methods, String jsonElementID, UMLClassType classType) {
         super(jsonElementID);
 
         this.name = name;
         this.attributes = attributes;
         this.methods = methods;
-        this.type = type;
+        this.classType = classType;
 
-        setParentClassofChildElements();
+        setParentForChildElements();
     }
 
     /**
-     * Sets the parent class attribute of all child elements of this class. The child elements of a UML class are its attributes and methods.
+     * Sets the parent of all child elements of this class. The child elements of a UML class are its attributes and methods.
      */
-    private void setParentClassofChildElements() {
+    private void setParentForChildElements() {
         for (UMLAttribute attribute : attributes) {
-            attribute.setParentClass(this);
+            attribute.setParentElement(this);
         }
 
         for (UMLMethod method : methods) {
-            method.setParentClass(this);
+            method.setParentElement(this);
         }
     }
 
-    /**
-     * Calculates the similarity to another UML class by comparing the class names using the Levenshtein distance and checking the UML class types.
-     *
-     * @param reference the reference element to compare this class with
-     * @return the similarity as number [0-1]
-     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
@@ -67,9 +68,11 @@ public class UMLClass extends UMLElement {
         }
         UMLClass referenceClass = (UMLClass) reference;
 
-        similarity += NameSimilarity.levenshteinSimilarity(name, referenceClass.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
+        // TODO: take the parent element into account
+
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceClass.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
         // TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
-        if (type == referenceClass.type) {
+        if (getClassType() == referenceClass.getClassType()) {
             similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
         }
 
@@ -108,13 +111,13 @@ public class UMLClass extends UMLElement {
         similarity += weight * similarity(referenceClass);
 
         // check attributes
-        for (UMLAttribute attribute : attributes) {
+        for (UMLAttribute attribute : getAttributes()) {
             double similarityValue = referenceClass.similarAttributeScore(attribute);
             similarity += weight * similarityValue;
         }
 
         // check methods
-        for (UMLMethod method : methods) {
+        for (UMLMethod method : getMethods()) {
             double similarityValue = referenceClass.similarMethodScore(method);
             similarity += weight * similarityValue;
         }
@@ -130,7 +133,7 @@ public class UMLClass extends UMLElement {
      * @return the maximum similarity score of the reference attribute and the list of attributes of this class
      */
     private double similarAttributeScore(UMLAttribute referenceAttribute) {
-        return similarScore(referenceAttribute, attributes);
+        return similarScore(referenceAttribute, getAttributes());
     }
 
     /**
@@ -141,24 +144,12 @@ public class UMLClass extends UMLElement {
      * @return the maximum similarity score of the reference method and the list of method of this class
      */
     private double similarMethodScore(UMLMethod referenceMethod) {
-        return similarScore(referenceMethod, methods);
-    }
-
-    /**
-     * Compares a reference element to a list of UML elements and returns the maximum similarity score, i.e. the similarity of the reference element and the most similar element of
-     * the given list.
-     *
-     * @param referenceElement the reference element that should be compared to the model elements of the list
-     * @param elementList the list of model elements
-     * @return the maximum similarity score of the reference element and the list of model elements
-     */
-    private double similarScore(UMLElement referenceElement, List<? extends UMLElement> elementList) {
-        return elementList.stream().mapToDouble(umlElement -> umlElement.similarity(referenceElement)).max().orElse(0);
+        return similarScore(referenceMethod, getMethods());
     }
 
     @Override
     public String toString() {
-        return "Class " + name;
+        return "Class " + getName();
     }
 
     @Override
@@ -168,7 +159,7 @@ public class UMLClass extends UMLElement {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, classType.name());
     }
 
     /**
@@ -182,13 +173,13 @@ public class UMLClass extends UMLElement {
             return this;
         }
 
-        for (UMLAttribute umlAttribute : attributes) {
+        for (UMLAttribute umlAttribute : getAttributes()) {
             if (umlAttribute.getJSONElementID().equals(jsonElementId)) {
                 return umlAttribute;
             }
         }
 
-        for (UMLMethod umlMethod : methods) {
+        for (UMLMethod umlMethod : getMethods()) {
             if (umlMethod.getJSONElementID().equals(jsonElementId)) {
                 return umlMethod;
             }
@@ -225,6 +216,10 @@ public class UMLClass extends UMLElement {
         return umlPackage;
     }
 
+    public UMLClassType getClassType() {
+        return classType;
+    }
+
     /**
      * Set the UML package that contains this UML class. If the class is not contained in any package, the umlPackage field is null.
      *
@@ -240,7 +235,7 @@ public class UMLClass extends UMLElement {
      * @return the number of elements of the class
      */
     public int getElementCount() {
-        return attributes.size() + methods.size() + 1;
+        return getAttributes().size() + getMethods().size() + 1;
     }
 
     @Override
@@ -251,18 +246,14 @@ public class UMLClass extends UMLElement {
 
         UMLClass otherClass = (UMLClass) obj;
 
-        if (otherClass.getAttributes().size() != attributes.size() || otherClass.getMethods().size() != methods.size()) {
+        if (otherClass.getAttributes().size() != getAttributes().size() || otherClass.getMethods().size() != getMethods().size()) {
             return false;
         }
 
-        if (!otherClass.getAttributes().containsAll(attributes) || !attributes.containsAll(otherClass.getAttributes())) {
+        if (!otherClass.getAttributes().containsAll(getAttributes()) || !getAttributes().containsAll(otherClass.getAttributes())) {
             return false;
         }
 
-        if (!otherClass.getMethods().containsAll(methods) || !methods.containsAll(otherClass.getMethods())) {
-            return false;
-        }
-
-        return true;
+        return otherClass.getMethods().containsAll(getMethods()) && getMethods().containsAll(otherClass.getMethods());
     }
 }

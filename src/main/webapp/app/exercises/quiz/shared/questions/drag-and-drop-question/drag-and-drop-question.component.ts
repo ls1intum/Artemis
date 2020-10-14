@@ -1,10 +1,9 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { resizeImage } from 'app/shared/util/drag-and-drop.utils';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
@@ -16,6 +15,12 @@ polyfill({
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
+// Drag-enter listener for mobile devices: without this code, mobile drag and drop will not work correctly!
+/* eslint-disable */
+(event: any) => {
+    event.preventDefault();
+};
+/* eslint-enable */
 window.addEventListener('touchmove', function () {}, { passive: false });
 
 @Component({
@@ -41,6 +46,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     get question() {
         return this._question;
     }
+    // TODO: Map vs. Array --> consistency
     @Input()
     mappings: DragAndDropMapping[];
     @Input()
@@ -65,7 +71,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     fnOnMappingUpdate: any;
 
     @Output()
-    mappingsChange = new EventEmitter();
+    mappingsChange = new EventEmitter<DragAndDropMapping[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -76,10 +82,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
     loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
-
-    @HostListener('window:resize') onResize() {
-        resizeImage();
-    }
 
     ngOnChanges(): void {
         this.countCorrectMappings();
@@ -113,9 +115,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
-        if (this.loadingState === 'success') {
-            resizeImage();
-        }
     }
 
     /**
@@ -130,11 +129,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
     /**
      * react to the drop event of a drag item
      *
-     * @param dropLocation {object | null} the dropLocation that the drag item was dropped on.
-     *                     May be null if drag item was dragged back to the unassigned items.
+     * @param dropLocation {object | undefined} the dropLocation that the drag item was dropped on.
+     *                     May be undefined if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | undefined, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
 
@@ -217,7 +216,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * @return {Array} an array of all unassigned drag items
      */
     getUnassignedDragItems() {
-        return this.question.dragItems.filter((dragItem) => {
+        return this.question.dragItems?.filter((dragItem) => {
             return !this.mappings.some((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
@@ -290,6 +289,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
      */
     countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
+        this.correctAnswer = this.question.dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
     }
 }

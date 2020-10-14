@@ -26,8 +26,10 @@
             "sampleSolution": "Example Solution",
             "exampleSubmissions": "Example submissions",
             "assessedSubmission": "Your assessed submission",
+            "assessedSubmissionInstructor": "The assessed submission",
             "createExampleSubmissions": "Create example submission",
             "automaticAssessmentEnabled": "Automatic assessment suggestions enabled",
+            "checkPlagiarism": "Check Plagiarism",
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
             "saveSuccessful": "Your answer was saved successfully!",
             "error": "An error occurred. Please try again later."

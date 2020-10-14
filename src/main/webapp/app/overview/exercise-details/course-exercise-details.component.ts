@@ -32,6 +32,8 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
+import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -41,6 +43,8 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
+    readonly QuizStatus = QuizStatus;
+    readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -50,13 +54,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseId: number;
     public courseId: number;
     private subscription: Subscription;
-    public exercise: Exercise | null;
+    public exercise?: Exercise;
     public showMoreResults = false;
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
-    studentParticipation: StudentParticipation | null;
+    studentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
@@ -87,6 +91,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private jhiAlertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private teamService: TeamService,
+        private quizExerciseService: QuizExerciseService,
     ) {}
 
     ngOnInit() {
@@ -123,7 +128,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation!.id!, this.exercise!);
             }
         }
         if (this.teamAssignmentUpdateListener) {
@@ -132,7 +137,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
-        this.exercise = null;
+        this.exercise = undefined;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -141,7 +146,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
-        this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
+        this.exercise.studentParticipations = this.filterParticipations(newExercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
@@ -160,13 +165,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
      * removed from the participations. We also sort the participations so that FINISHED participations come first.
      */
-    private filterParticipations(participations: StudentParticipation[]): StudentParticipation[] | null {
+    private filterParticipations(participations?: StudentParticipation[]): StudentParticipation[] {
         if (!participations) {
-            return null;
+            return [];
         }
         const filteredParticipations = participations.filter((participation: StudentParticipation) => {
             const personal = participation.student?.id === this.currentUser.id;
-            const team = participation.team?.students.map((s) => s.id).includes(this.currentUser.id);
+            const team = participation.team?.students?.map((s) => s.id).includes(this.currentUser.id);
             return personal || team;
         });
         filteredParticipations.forEach((participation: Participation) => {
@@ -190,7 +195,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     sortResults() {
-        if (this.studentParticipation && this.hasResults) {
+        if (this.studentParticipation && this.studentParticipation.results) {
             this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
             const sortedResultLength = this.studentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
@@ -235,7 +240,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
                         ? this.exercise.studentParticipations.map((el) => {
@@ -273,11 +278,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        return this.studentParticipation !== null && this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
+        if (!this.studentParticipation || !this.studentParticipation.results) {
+            return false;
+        }
+        return this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get exerciseRouterLink(): string | null {
-        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type)) {
+        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type!)) {
             return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
         }
 
@@ -292,38 +300,40 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.studentParticipation) {
+        if (!this.studentParticipation || !this.studentParticipation.results) {
             return false;
         }
-        return this.studentParticipation.results && this.studentParticipation.results.length > 0;
+        return this.studentParticipation.results.length > 0;
     }
 
     /**
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    get currentResult(): Result | null {
+    get currentResult() {
         if (!this.studentParticipation || !this.hasResults) {
-            return null;
+            return undefined;
         }
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
+            return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
         }
 
-        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
-        const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
-        if (latestResult) {
-            latestResult.participation = this.studentParticipation;
+        const ratedResults = this.studentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
+        if (ratedResults) {
+            const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : undefined;
+            if (latestResult) {
+                latestResult.participation = this.studentParticipation;
+            }
+            return latestResult;
         }
-        return latestResult;
     }
 
-    publishBuildPlanUrl(): boolean {
+    publishBuildPlanUrl() {
         return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
     }
 
-    buildPlanActive(): boolean {
+    buildPlanActive() {
         return (
             !!this.exercise &&
             this.exercise.studentParticipations &&
@@ -336,8 +346,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
-    buildPlanId(participation: Participation): string {
+    buildPlanId(participation: Participation) {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    }
+
+    /**
+     * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
+     */
+    get quizExerciseStatus(): QuizStatus | undefined {
+        if (this.exercise!.type === ExerciseType.QUIZ) {
+            return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
+        }
+        return undefined;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

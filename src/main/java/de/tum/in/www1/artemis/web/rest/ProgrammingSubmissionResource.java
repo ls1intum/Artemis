@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -13,10 +12,8 @@ import java.util.Set;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,18 +41,11 @@ public class ProgrammingSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
 
-    private static final String ENTITY_NAME = "programmingSubmission";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ExerciseService exerciseService;
 
     private final ProgrammingExerciseService programmingExerciseService;
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -70,13 +60,12 @@ public class ProgrammingSubmissionResource {
     private final UserService userService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
-            ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
             UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
-        this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
@@ -114,10 +103,7 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            if (ex.getMessage().contains("empty setup commit")) {
-                // ignore
-            }
-            else {
+            if (!ex.getMessage().contains("empty setup commit")) {
                 log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
             }
             // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
@@ -192,18 +178,6 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
 
-        // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
-        // TODO: If the submission is not the latest but the latest graded submission, this does not work if there have been commits since. To make it work we would have to find
-        // the correct build for the given commit hash.
-        Optional<Result> optionalResult = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
-        if (optionalResult.isPresent()) {
-            Result result = optionalResult.get();
-            if (result.getParticipation() == null) {
-                result.setParticipation(participation);
-            }
-            resultService.notifyUserAboutNewResult(result, participation);
-            return ResponseEntity.ok().build();
-        }
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
         ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
         if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
@@ -339,6 +313,7 @@ public class ProgrammingSubmissionResource {
     /**
      * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call.
+     * In case of exam exercise, it filters out all test run submissions.
      *
      * @param exerciseId the id of the exercise.
      * @param submittedOnly if only submitted submissions should be returned.
@@ -356,13 +331,14 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        final boolean examMode = exercise.hasExerciseGroup();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForExercise(exerciseId, user.getId(), examMode);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);
@@ -384,19 +360,20 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        // Check if tutors can start assessing the students submission
+        boolean startAssessingSubmissions = this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        if (!startAssessingSubmissions) {
+            return forbidden();
         }
 
         // TODO: Handle lock limit.
 
-        final Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
-        if (programmingSubmissionOpt.isEmpty()) {
+        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionService.getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise,
+                programmingExercise.hasExerciseGroup());
+        if (optionalProgrammingSubmission.isEmpty()) {
             return notFound();
         }
-        final ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+        final ProgrammingSubmission programmingSubmission = optionalProgrammingSubmission.get();
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

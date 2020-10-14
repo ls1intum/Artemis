@@ -8,10 +8,9 @@ import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { WindowRef } from 'app/core/websocket/window.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -24,7 +23,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
     styleUrls: ['./text-exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
-    examCourseId: number;
+    examCourseId?: number;
     checkedFlag: boolean;
     isExamMode: boolean;
     isImport = false;
@@ -36,7 +35,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    notificationText: string | null;
+    notificationText?: string;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -52,7 +51,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private $window: WindowRef,
     ) {}
 
     /**
@@ -63,16 +61,12 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
-        this.$window.nativeWindow.scroll(0, 0);
+        window.scroll(0, 0);
 
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
-            if (!!this.textExercise.course) {
-                this.examCourseId = this.textExercise.course.id;
-            } else {
-                this.examCourseId = this.textExercise.exerciseGroup?.exam?.course.id!;
-            }
+            this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 
         this.activatedRoute.url
@@ -85,15 +79,8 @@ export class TextExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-                        if (!!this.textExercise.course) {
-                            this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
-                                (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
-                            );
-                        } else {
-                            this.courseService.findAllCategoriesOfCourse(this.textExercise.exerciseGroup!.exam!.course.id).subscribe(
+                        if (this.examCourseId) {
+                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
@@ -103,7 +90,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                     } else {
                         // Lock individual mode for exam exercises
                         this.textExercise.mode = ExerciseMode.INDIVIDUAL;
-                        this.textExercise.teamAssignmentConfig = null;
+                        this.textExercise.teamAssignmentConfig = undefined;
                         this.textExercise.teamMode = false;
                     }
                     if (this.isImport) {
@@ -115,24 +102,24 @@ export class TextExerciseUpdateComponent implements OnInit {
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
-                            this.textExercise.course = null;
+                            this.textExercise.course = undefined;
                         } else {
                             // The target course where we want to import into
                             const targetCourseId = params['courseId'];
                             this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
-                            this.textExercise.exerciseGroup = null;
+                            this.textExercise.exerciseGroup = undefined;
                         }
                         // Reset the due dates
-                        this.textExercise.dueDate = null;
-                        this.textExercise.releaseDate = null;
-                        this.textExercise.assessmentDueDate = null;
+                        this.textExercise.dueDate = undefined;
+                        this.textExercise.releaseDate = undefined;
+                        this.textExercise.assessmentDueDate = undefined;
                     }
                 }),
             )
             .subscribe();
         this.isSaving = false;
-        this.notificationText = null;
+        this.notificationText = undefined;
     }
 
     /**
@@ -159,6 +146,8 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Sends a request to either update or create a text exercise
      */
     save() {
+        Exercise.sanitize(this.textExercise);
+
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
@@ -181,7 +170,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     deleteExampleSubmission(id: number, index: number) {
         this.exampleSubmissionService.delete(id).subscribe(
             () => {
-                this.textExercise.exampleSubmissions.splice(index, 1);
+                this.textExercise.exampleSubmissions!.splice(index, 1);
             },
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.error(error.message);
@@ -203,7 +192,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
+        this.jhiAlertService.error(error.message);
         this.isSaving = false;
     }
 

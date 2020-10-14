@@ -52,23 +52,39 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         rules: [{
             test: /\.(j|t)s$/,
             enforce: 'pre',
-            loader: 'tslint-loader',
+            loader: 'eslint-loader',
             exclude: /node_modules/
         },
         {
             test: /\.scss$/,
-            use: ['to-string-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }],
+            use: [
+                'to-string-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
+                'postcss-loader',
+                {
+                    loader: 'sass-loader',
+                    options: { implementation: sass }
+                }
+            ],
             exclude: /(vendor\.scss|global\.scss)/
         },
         {
             test: /(vendor\.scss|global\.scss)/,
-            use: ['style-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }]
+            use: [
+                'style-loader',
+                {
+                    loader: 'css-loader',
+                    options: { esModule: false }
+                },
+                'postcss-loader',
+                {
+                    loader: 'sass-loader',
+                    options: { implementation: sass }
+                }
+            ]
         }]
     },
     stats: process.env.JHI_DISABLE_WEBPACK_LOGS ? 'none' : options.stats,
@@ -87,7 +103,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 target: `http${options.tls ? 's' : ''}://localhost:9060`,
                 ws: true,
                 proxyOptions: {
-                    changeOrigin: false  //pass the Host header to the backend unchanged  https://github.com/Browsersync/browser-sync/issues/430
+                    changeOrigin: false  //pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
                 }
             },
             socket: {

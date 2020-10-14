@@ -46,4 +46,8 @@ public class FilePathService {
     public static String getFileUploadExercisesFilepath() {
         return FILE_UPLOAD_PATH + File.separator + "file-upload-exercises" + File.separator;
     }
+
+    public static String getMarkdownFilepath() {
+        return FILE_UPLOAD_PATH + File.separator + "markdown" + File.separator;
+    }
 }

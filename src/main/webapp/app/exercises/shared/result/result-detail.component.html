@@ -2,7 +2,7 @@
     <h4 class="modal-title">Feedback</h4>
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">&times;</button>
 </div>
-<div class="modal-body" id="result-detail-body" style="position: relative;">
+<div class="modal-body" id="result-detail-body" style="position: relative">
     <!--
     Loading state
 -->
@@ -32,7 +32,19 @@
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
-            <div *ngIf="!feedbackList || feedbackList.length == 0"></div>
+        </ng-container>
+        <!-- Static Code Analysis Feedback -->
+        <ng-container *ngIf="!loadingFailed && staticCodeAnalysisIssues && staticCodeAnalysisIssues.length">
+            <hr />
+            <h6>Static Code Analysis Issues</h6>
+            <hr />
+            <div *ngFor="let issue of staticCodeAnalysisIssues; last as isLast">
+                <p>
+                    Issue in file <span class="code-error">{{ issue | staticCodeAnalysisLocationText }}</span> detected:
+                </p>
+                <pre>{{ issue.message }}</pre>
+                <hr *ngIf="!isLast" />
+            </div>
         </ng-container>
     </ng-template>
     <!--

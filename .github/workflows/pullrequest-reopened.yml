@@ -1,6 +1,6 @@
 name: Pull Request Converted to draft
 on:
-  pull_request:
+  pull_request_target:
     types: [assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, locked, unlocked]
 
 jobs:
@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Move to "In progress" column
         if: github.event.pull_request.draft == true
-        uses: alex-page/github-project-automation-plus@v0.2.3
+        uses: alex-page/github-project-automation-plus@v0.3.0
         with:
           project: Artemis Development
           column: In progress

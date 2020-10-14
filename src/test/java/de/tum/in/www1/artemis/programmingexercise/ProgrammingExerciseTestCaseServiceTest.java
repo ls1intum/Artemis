@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -19,14 +16,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -35,19 +32,37 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
     ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    ParticipationRepository participationRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @Autowired
     ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
+    ProgrammingExerciseService programmingExerciseService;
+
+    @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
+    ProgrammingExerciseGradingService gradingService;
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    RequestUtilService request;
 
     private ProgrammingExercise programmingExercise;
 
@@ -55,10 +70,11 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(1, 1, 0);
+        database.addUsers(5, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         result = new Result();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
+        programmingExercise = programmingExercises.get(0);
         bambooRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -117,20 +133,31 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
+    public void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
+        testCaseRepository.deleteAll();
+
+        List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
+        testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(0);
+    }
+
+    @Test
     public void shouldResetTestWeights() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
-        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
-        testCaseService.resetWeights(programmingExercise.getId());
+        testCaseService.reset(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
-        assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+        assertThat(testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
@@ -155,7 +182,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         Set<ProgrammingExerciseTestCaseDTO> programmingExerciseTestCaseDTOS = new HashSet<>();
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
-        programmingExerciseTestCaseDTO.setWeight(400);
+        programmingExerciseTestCaseDTO.setWeight(400.0);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
@@ -173,144 +200,5 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
-    }
-
-    @Test
-    public void shouldNotUpdateResultIfNoTestCasesExist() {
-        testCaseRepository.deleteAll();
-
-        Long scoreBeforeUpdate = result.getScore();
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-
-        assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
-    }
-
-    @Test
-    public void shouldRecalculateScoreBasedOnTestCasesWeight() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
-
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-
-        Long expectedScore = 25L;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-    }
-
-    @Test
-    public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
-        // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
-
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-
-        // All available test cases are fulfilled, however there are more test cases that will be run after due date.
-        Long expectedScore = 25L;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.getResultString()).isEqualTo("1 of 1 passed");
-        assertThat(result.isSuccessful()).isFalse();
-        // The feedback of the after due date test case must be removed.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
-    }
-
-    @Test
-    public void shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
-        // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
-
-        testCaseService.updateResultFromTestCases(result, programmingExercise, false);
-
-        // All available test cases are fulfilled.
-        Long expectedScore = 25L;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getFeedbacks()).hasSize(2);
-    }
-
-    @Test
-    public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
-        // Set programming exercise due date in past.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(10));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
-
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-
-        // All available test cases are fulfilled.
-        Long expectedScore = 25L;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-        // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
-    }
-
-    @Test
-    public void shouldGenerateZeroScoreIfThereAreNoTestCasesBeforeDueDate() {
-        // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        Long scoreBeforeUpdate = result.getScore();
-
-        // Set all test cases of the programming exercise to be executed after due date.
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.setAfterDueDate(true);
-        }
-        testCaseRepository.saveAll(testCases);
-
-        testCaseService.updateResultFromTestCases(result, programmingExercise, true);
-
-        // No test case was executed.
-        Long expectedScore = 0L;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("0 of 0 passed");
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-        // The feedback must be empty as not test should be executed yet.
-        assertThat(result.getFeedbacks()).hasSize(0);
     }
 }

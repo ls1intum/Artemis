@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,7 +9,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * A ShortAnswerQuestionStatistic.
@@ -19,22 +16,14 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonTypeName("short-answer")
-public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "shortAnswerQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerSpotCounter> shortAnswerSpotCounters = new HashSet<>();
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public Set<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
         return shortAnswerSpotCounters;
-    }
-
-    public ShortAnswerQuestionStatistic shortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
-        this.shortAnswerSpotCounters = shortAnswerSpotCounters;
-        return this;
     }
 
     public ShortAnswerQuestionStatistic addShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
@@ -51,27 +40,6 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
 
     public void setShortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
         this.shortAnswerSpotCounters = shortAnswerSpotCounters;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerQuestionStatistic shortAnswerQuestionStatistic = (ShortAnswerQuestionStatistic) o;
-        if (shortAnswerQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override
@@ -156,7 +124,8 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implemen
                         continue;
                     }
                     for (ShortAnswerSolution solution : shortAnswerSolutions) {
-                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()) {
+                        if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
+                                && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
                         }
                     }

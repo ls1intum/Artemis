@@ -13,7 +13,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseCategory } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -34,12 +34,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
     isImport: boolean;
     isExamMode: boolean;
-    hashUnsavedChanges = false;
+    hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
-    notificationText: string | null;
+    notificationText?: string;
     domainCommandsGradingInstructions = [new KatexCommand()];
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -48,6 +48,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
     maxScorePattern = MAX_SCORE_PATTERN;
+    maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
     packageNamePattern =
@@ -79,6 +80,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     set selectedProgrammingLanguage(language: ProgrammingLanguage) {
         this.selectedProgrammingLanguageValue = language;
+        // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.programmingExercise.staticCodeAnalysisEnabled = false;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language);
@@ -96,10 +102,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.notificationText = null;
+        this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage;
+            this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
         });
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
@@ -108,7 +114,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
-                        this.setupProgrammingExerciseForImport(params);
+                        this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['groupId']) {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
@@ -121,7 +127,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
-                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
+                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe(
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
@@ -143,8 +149,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             )
             .subscribe();
         // If an exercise is created, load our readme template so the problemStatement is not empty
-        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage;
-        if (this.programmingExercise.id !== undefined) {
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
+        if (this.programmingExercise.id) {
             this.problemStatementLoaded = true;
         }
 
@@ -162,31 +168,31 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      *
      * @param params given by ActivatedRoute
      */
-    private setupProgrammingExerciseForImport(params: Params) {
+    private createProgrammingExerciseForImport(params: Params) {
         this.isImport = true;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['groupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
-                // Set course to null if a normal exercise is imported
-                this.programmingExercise.course = null;
+                // Set course to undefined if a normal exercise is imported
+                this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
         } else if (params['courseId']) {
             this.courseService.find(params['courseId']).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
-                // Set exerciseGroup to null if an exam exercise is imported
-                this.programmingExercise.exerciseGroup = null;
+                // Set exerciseGroup to undefined if an exam exercise is imported
+                this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
         }
-        this.programmingExercise.dueDate = null;
-        this.programmingExercise.projectKey = null;
-        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = null;
-        this.programmingExercise.assessmentDueDate = null;
-        this.programmingExercise.releaseDate = null;
-        this.programmingExercise.shortName = '';
-        this.programmingExercise.title = '';
+        this.programmingExercise.dueDate = undefined;
+        this.programmingExercise.projectKey = undefined;
+        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        this.programmingExercise.assessmentDueDate = undefined;
+        this.programmingExercise.releaseDate = undefined;
+        this.programmingExercise.shortName = undefined;
+        this.programmingExercise.title = undefined;
     }
 
     /**
@@ -209,13 +215,17 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     save() {
         // If no release date is set, we warn the user.
-        if (!this.programmingExercise.releaseDate) {
+        if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;
             }
         }
+
+        Exercise.sanitize(this.programmingExercise);
+
         this.isSaving = true;
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
         } else if (this.programmingExercise.id !== undefined) {
@@ -266,7 +276,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
-        if (this.hashUnsavedChanges) {
+        if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
             if (!window.confirm(confirmLanguageChangeText)) {
                 return this.selectedProgrammingLanguage;
@@ -274,6 +284,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         this.selectedProgrammingLanguage = language;
         return language;
+    }
+
+    onStaticCodeAnalysisChanged() {
+        if (!this.programmingExercise.staticCodeAnalysisEnabled) {
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
     }
 
     /**
@@ -284,7 +300,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
-        this.hashUnsavedChanges = false;
+        this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage).subscribe(
@@ -292,10 +308,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
             },
-            (err) => {
+            () => {
                 this.programmingExercise.problemStatement = '';
                 this.problemStatementLoaded = true;
-                console.log('Error while getting template instruction file!', err);
             },
         );
     }

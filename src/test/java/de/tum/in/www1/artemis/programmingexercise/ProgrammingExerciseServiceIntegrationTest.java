@@ -1,52 +1,31 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
-import java.net.MalformedURLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.Verifiable;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
-
-    @Value("${server.url}")
-    protected String ARTEMIS_SERVER_URL;
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -55,19 +34,13 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     ProgrammingExerciseImportService programmingExerciseImportService;
 
     @Autowired
-    DatabaseUtilService databse;
+    DatabaseUtilService database;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     RequestUtilService request;
-
-    @Autowired
-    private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     private Course additionalEmptyCourse;
 
@@ -77,25 +50,27 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        databse.addUsers(1, 1, 1);
-        databse.addInstructor("other-instructors", "instructorother");
-        databse.addCourseWithOneProgrammingExerciseAndTestCases();
-        additionalEmptyCourse = databse.addEmptyCourse();
-        programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
-        databse.addHintsToExercise(programmingExercise);
-        databse.addHintsToProblemStatement(programmingExercise);
+        database.addUsers(1, 1, 1);
+        database.addInstructor("other-instructors", "instructorother");
+        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        additionalEmptyCourse = database.addEmptyCourse();
+        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        database.addHintsToExercise(programmingExercise);
+        database.addHintsToProblemStatement(programmingExercise);
+        database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
-        programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
+        programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
     }
 
     @AfterEach
     public void tearDown() {
-        databse.resetDatabase();
+        database.resetDatabase();
     }
 
     @Test
-    public void importProgrammingExerciseBasis_baseReferencesGotCloned() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         final var newlyImported = importExerciseBase();
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
@@ -120,13 +95,18 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases().size()).isEqualTo(programmingExercise.getTestCases().size());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
+        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
         final var newHintIDs = newlyImported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getExerciseHints().size()).isEqualTo(programmingExercise.getExerciseHints().size());
         assertThat(programmingExercise.getExerciseHints()).noneMatch(hint -> newHintIDs.contains(hint.getId()));
+        final var newStaticCodeAnalysisCategoriesIDs = newlyImported.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
+        assertThat(newlyImported.getStaticCodeAnalysisCategories().size()).isEqualTo(programmingExercise.getStaticCodeAnalysisCategories().size());
+        assertThat(programmingExercise.getStaticCodeAnalysisCategories()).noneMatch(category -> newStaticCodeAnalysisCategoriesIDs.contains(category.getId()));
     }
 
     @Test
-    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() {
         final var imported = importExerciseBase();
 
         final var oldHintIDs = programmingExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
@@ -138,7 +118,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() throws MalformedURLException {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
         // All copied hints/tests have the same content are are referenced to the new exercise
@@ -152,79 +133,58 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "tutor1", roles = "TA")
     public void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
-        final var toBeImported = createToBeImported();
-        final var verifications = new LinkedList<Verifiable>();
-        final var projectKey = toBeImported.getProjectKey();
-        final var sourceProjectKey = programmingExercise.getProjectKey();
-        final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
-        final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
-        final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
-        var nextParticipationId = programmingExercise.getTemplateParticipation().getId() + 1;
-        final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (programmingExercise.getId() + 1);
-
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
-        doReturn(null).when(bambooServer).publish(any());
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
-        bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTemplateRepositoryName(), templateRepoName);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getSolutionRepositoryName(), solutionRepoName);
-        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTestRepositoryName(), testsRepoName);
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
-        bambooRequestMockProvider.mockGiveProjectPermissions(toBeImported);
-        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
-        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + TEMPLATE.getName());
-        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + SOLUTION.getName());
-
-        request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
-
-        for (final var verifiable : verifications) {
-            verifiable.performVerification();
-        }
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
-    public void searchExercises_instructor_shouldOnlyGetResultsFromOwningCourses() throws Exception {
-        final var search = new PageableSearchDTO<String>();
-        search.setPage(1);
-        search.setPageSize(10);
-        search.setSearchTerm("");
-        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
-        search.setSortingOrder(SortingOrder.ASCENDING);
-        final var mapType = new TypeToken<Map<String, String>>() {
-        }.getType();
-        final var gson = new Gson();
-        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
-        final var paramMap = new LinkedMultiValueMap<String, String>();
-        params.forEach(paramMap::add);
-
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, paramMap);
+    public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
+        final var search = database.configureSearch("");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
         assertThat(result.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        final var searchPython = database.configureSearch("Python");
+        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchPython));
+        assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
+
+        final var searchJava = database.configureSearch("Java");
+        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchJava));
+        assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
+
+        final var searchSwift = database.configureSearch("Swift");
+        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
+        assertThat(resultSwift.getResultsOnPage()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testAdminGetsResultsFromAllCourses() throws Exception {
+        database.addCourseInOtherInstructionGroupAndExercise("Programming");
+        final var search = database.configureSearch("Programming");
+        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
     }
 
     private ProgrammingExercise importExerciseBase() {
@@ -235,4 +195,5 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
+
 }

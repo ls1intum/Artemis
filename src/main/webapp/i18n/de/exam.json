@@ -11,11 +11,27 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Lade neu, um den Commit Hash zu sehen.",
-                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}"
+                "noCommitHash": "Kein Commit wurde gemacht",
+                "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
+                "viewResult": " Ergebnis ansehen",
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Instruktor.",
+                "points": {
+                    "exercise": "Aufgabe",
+                    "overview": "Übersicht",
+                    "yourPoints": "Deine Punkte",
+                    "maxPoints": "Max. Punkte",
+                    "sum": "Summe"
+                }
             },
             "title": "Klausur",
-            "startExam": "Klausur starten",
+            "startExam": "Starten",
+            "endExam": "Beenden",
+            "date": "Datum",
+            "time": "Zeit",
+            "durationWithFormat": "Dauer (mm:ss)",
+            "course": "Kurs",
+            "exercises": "Aufgaben",
+            "points": "Punkte",
             "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
@@ -28,23 +44,33 @@
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "exercise": "Aufgabe {{nr}}",
-            "consentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
+            "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
+            "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
+            "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
+            "notSet": "Nicht gesetzt",
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
+                "numberOfExercisesMustBeSet": "Die Anzahl der Aufgaben für die Klasur muss gesetzt sein.",
                 "numberOfExercisesInExamNotSet": "Die Anzahl an Aufgaben in der Klausur ist nicht gesetzt.",
                 "tooFewExerciseGroups": "Die Anzahl der Aufgabengruppen ist zu klein.",
                 "tooManyMandatoryExerciseGroups": "Die Anzahl verpflichtender Aufgabengruppen ist zu groß."
             }
         },
         "examScores": {
-            "pointsAchievable": "{{ maxPoints }} Punkte erreichbar",
+            "maxPoints": "Maximale Punktzahl",
             "title": "Klausur Ergebnisse",
-            "titleColumn": "Titel",
-            "containedExercisesColumn": "Aufgaben in Gruppe",
-            "averagePointsColumn": "Durchschnittlich erreichte Punkte",
-            "maximumPointsColumn": "Maximal erreichbare Punkte",
+            "examStatisticsTitle": "Klausur Statistik",
+            "studentResultsTitle": "Studenten Ergebnisse",
+            "titleExerciseGroupColumn": "Aufgabengruppe",
+            "titleExerciseColumn": "Aufgabe",
+            "averageColumn": "Durchschnitt",
+            "participantsColumn": "Teilnehmer",
+            "averageExerciseTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "averageExerciseGroupTooltip": "(Durchschnittliche / Maximale) Punktzahl für die Aufgabengruppe. Die aktiven Filtereinstellungen beeinflussen den Durchschnitt.",
+            "participantsExerciseTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
+            "participantsExerciseGroupTooltip": "(Gefilterte / Totale) Anzahl an Teilnehmern für die Aufgabegruppe. Die aktiven Filtereinstellungen beeinflussen nur den ersten Wert.",
             "nameColumn": "Name",
             "loginColumn": "Login",
             "eMailColumn": "E-Mail",
@@ -52,10 +78,19 @@
             "overallPointsColumn": "Erreichte Punkte",
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "exportCSV": "Exportiere Ergebnisse als CSV",
-            "examResultSummary": "{{ exercisesLength }} Aufgabengruppen, {{ studentsLength }} registrierte Studenten"
+            "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
+            "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgaben",
+            "medianColumn": "Median",
+            "standardDeviationColumn": "Standardabweichung",
+            "noOfExams": "Klausuren",
+            "registered": "Angemeldete Studenten",
+            "noExerciseGroups": "Aufgabengruppen",
+            "submittedColumn": "Abgegeben",
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
+            "timerEndView": "Restzeit bis zur Prüfungsabgabe: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
@@ -64,24 +99,32 @@
             "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
-            "finishExam": "Klausur abgeben",
+            "finishExam": "Beenden",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an deinen Dozenten.",
+            "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
-            "greeting": "Hallo {{ fullName }}, willkommen zu \"{{ title }}\"",
+            "greeting": "Willkommen zu {{ title }}. Ihr voller Name ist: ",
+            "finish": "Das ist das Ende von {{ title }}. Ihr voller Name ist: ",
+            "submitFinalExam": "Bitte bestätige den Text unten und klicke innerhalb der verbleibenden Zeit auf 'Beenden', um die Prüfung abzugeben.<br />(Hinweis: Wenn du diesen Schritt versäumst, wird deine Prüfung nicht benotet)",
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
             "points": "Punkte",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
-            "submitted": "Aufgabe eingereicht",
+            "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
             "notSubmitted": "Aufgabe nicht eingereicht",
+            "notSavedOrSubmitted": "Du hast Änderungen die nicht gespeichert oder abgegeben sind",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
-            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?"
+            "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
+            "handInEarly": "Vorzeitig abgeben",
+            "continueAfterHandInEarly": "Weitermachen",
+            "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
+            "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
+            "namePlaceholder": "Trage deinen vollen Namen hier ein"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
@@ -100,9 +143,13 @@
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Klausur noch läuft!\nDies betrifft auch Studenten mit Nachteilsausgleich!\n\nDie Operation wird automatisch mit dem Ende der Klausur ausgeführt und sollte daher nur genutzt werden, falls das automatische Sperren nicht korrekt ausgeführt wurde!",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "student": "Student",
-            "result": "Ergebnis",
             "workingTime": "Bearbeitungszeit (mm:ss)",
+            "started": "Gestartet",
+            "submitted": "Abgegeben",
+            "submissionDate": "Abgabedatum",
+            "participationStatus": "Teilnahme-Status",
             "summary": "Zusammenfassung für den Studierenden",
+            "result": "Ergebnis",
             "created": "Erstellt",
             "view": "Ansicht",
             "assessment": "Bewertung",
@@ -136,6 +183,10 @@
             "startDate": "Bearbeitungszeit ab",
             "endDate": "Bearbeitungszeit bis",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "gracePeriod": "Karenzzeit (Sekunden)",
+            "examiner": "Prüfer",
+            "moduleNumber": "Modulnummer",
+            "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "maxPoints": "Anzahl an erreichbaren Punkten",
@@ -148,6 +199,22 @@
             "assessmentDashboard": "Bewertungstafel",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
+            "testRun": {
+                "testRun": "Testlauf",
+                "title": "Testlaufverwaltung: ",
+                "setup": "Testlauf Erstellen",
+                "author": "Autor*in",
+                "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
+                "assess": "Deine Testläufe Bewerten",
+                "manage": "Arbeitszeit verwalten",
+                "text": "Hier kannst du einen Testlauf für die Klausur erstellen. Wähle aus, welche Aufgaben die Klausur enthalten soll und führe sie aus. Anschließend, kannst du die Abgabe als Tutor bewerten. Das Ergebnis, kannst du als Student einsehen und dich beschweren. Diese Beschwerden kannst du dann als Tutor bewerten.\n<strong>Hinweis:</strong> Abgaben innerhalb von Testläufen werden nicht bei den Klausurergebnissen gezählt.",
+                "createTestRunDisabled": "Keine Aufgaben gefunden",
+                "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
+                "delete": {
+                    "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
+                    "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein."
+                }
+            },
             "examStudents": {
                 "registeredStudents": "Angemeldete Studenten",
                 "searchResults": "Suchergebnisse",
@@ -160,7 +227,7 @@
                 "firstName": "Vorname",
                 "lastName": "Nachname",
                 "email": "E-Mail",
-                "visibleRegistrationNumber": "Matrikelnummer",
+                "registrationNumber": "Matrikelnummer",
                 "removeFromExam": {
                     "modalQuestion": "Soll der Student mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Participations und submissions des Studenten in der zugehörigen Klausur löschen?"
@@ -205,7 +272,7 @@
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden"
             },
             "delete": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden auch gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "tutorDashboard": "Tutor Klausur Dashboard"
@@ -230,5 +297,10 @@
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert."
         }
+    },
+    "studentExam": {
+        "alreadySubmitted": "Du hast bereits abgegeben.",
+        "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
+        "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
     }
 }

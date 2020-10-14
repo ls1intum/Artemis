@@ -7,17 +7,16 @@ import * as sinonChai from 'sinon-chai';
 import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { Result } from 'app/entities/result.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
@@ -172,6 +171,12 @@ describe('CourseStatisticsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
@@ -191,8 +196,8 @@ describe('CourseStatisticsComponent', () => {
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).to.exist;
+        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).to.exist;
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).to.exist;
-        expect(modelingWrapper.query(By.css('#relative-score')).nativeElement.textContent).to.exist;
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).to.exist;
         const exercise: any = comp.groupedExercises[0];
         expect(exercise.presentationScore).to.equal(2);
@@ -201,20 +206,5 @@ describe('CourseStatisticsComponent', () => {
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
         expect(exercise.missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
-    });
-
-    it('should transform results correctly', () => {
-        const buildFailedsubmission = { id: 42, buildFailed: true, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
-        const result1 = { resultString: '17 of 26 passed' } as Result;
-        expect(comp.absoluteResult(result1)).to.be.null;
-        const result2 = { resultString: 'No tests found' } as Result;
-        result2.submission = buildFailedsubmission;
-        expect(comp.absoluteResult(result2)).to.be.null;
-        const result3 = {} as Result;
-        expect(comp.absoluteResult(result3)).to.equal(0);
-        const result4 = { resultString: '15 passed' } as Result;
-        expect(comp.absoluteResult(result4)).to.be.null;
-        const result5 = { resultString: '20 of 20 points' } as Result;
-        expect(comp.absoluteResult(result5)).to.equal(20);
     });
 });

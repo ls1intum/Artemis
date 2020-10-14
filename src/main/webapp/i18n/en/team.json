@@ -25,7 +25,8 @@
                     "title": "Participations in \"{{ courseTitle }}\" for",
                     "columns": {
                         "assessment": "Assessment"
-                    }
+                    },
+                    "complaintOrMoreFeedbackRequest": "Complaint or More Feedback Request"
                 }
             },
             "team": "Team",

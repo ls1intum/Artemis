@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -14,7 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -24,17 +24,17 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { cloneDeep } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { Exam } from 'app/entities/exam.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -51,6 +51,10 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+    exam?: Exam;
+    // TODO fix tutorLeaderboard and side panel for exam exercises
+    isExamMode = false;
+    isTestRun = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -68,7 +72,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
-    unassessedSubmission: Submission | null;
+    unassessedSubmission?: Submission;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -80,9 +84,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
 
-    formattedGradingInstructions: SafeHtml | null;
-    formattedProblemStatement: SafeHtml | null;
-    formattedSampleSolution: SafeHtml | null;
+    formattedGradingInstructions?: SafeHtml;
+    formattedProblemStatement?: SafeHtml;
+    formattedSampleSolution?: SafeHtml;
 
     readonly ExerciseType = ExerciseType;
 
@@ -102,9 +106,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor: User | null;
+    tutor?: User;
 
-    exerciseForGuidedTour: Exercise | null;
+    exerciseForGuidedTour?: Exercise;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -113,6 +117,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
+        private submissionService: SubmissionService,
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
@@ -130,6 +135,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-tutor-dashboard';
 
         this.loadAll();
 
@@ -172,8 +178,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 }
 
                 this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
-                this.tutorParticipation = this.exercise.tutorParticipations[0];
-                this.tutorParticipationStatus = this.tutorParticipation.status;
+                this.tutorParticipation = this.exercise.tutorParticipations![0];
+                this.tutorParticipationStatus = this.tutorParticipation.status!;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
                     this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                     this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
@@ -186,30 +192,43 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter((e) => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id!;
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id!;
                 }
 
-                this.getSubmissions();
+                // exercise belongs to an exam
+                if (this.exercise?.exerciseGroup) {
+                    this.isExamMode = true;
+                    this.exam = this.exercise?.exerciseGroup?.exam;
+                }
+
+                this.getTutorAssessedSubmissions();
 
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
-                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode) {
+                if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessment();
                 }
             },
             (response: string) => this.onError(response),
         );
 
-        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
-        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
+        if (!this.isTestRun) {
+            this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+            this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+        } else {
+            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                (error: HttpErrorResponse) => this.onError(error.message),
+            );
+        }
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -251,26 +270,37 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         );
     }
 
+    language(submission: Submission): string {
+        if (submission.submissionExerciseType === SubmissionExerciseType.TEXT) {
+            return (submission as TextSubmission).language || 'UNKNOWN';
+        }
+        return 'UNKNOWN';
+    }
+
     /**
      * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
-    private getSubmissions(): void {
+    private getTutorAssessedSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        // TODO: This could be one generic endpoint.
-        switch (this.exercise.type) {
-            case ExerciseType.TEXT:
-                submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.MODELING:
-                submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
-            case ExerciseType.PROGRAMMING:
-                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
-                break;
+        if (this.isTestRun) {
+            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
+        } else {
+            // TODO: This could be one generic endpoint.
+            switch (this.exercise.type) {
+                case ExerciseType.TEXT:
+                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.MODELING:
+                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.FILE_UPLOAD:
+                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+                case ExerciseType.PROGRAMMING:
+                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                    break;
+            }
         }
 
         submissionsObservable
@@ -281,7 +311,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
                 this.submissions = submissions.map((submission) => {
-                    submission.participation.submissions = [submission];
+                    submission.participation!.submissions = [submission];
                     return submission;
                 });
             });
@@ -296,7 +326,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 // reconnect some associations
                 submission.result.submission = submission;
                 submission.result.participation = submission.participation;
-                submission.participation.results = [submission.result];
+                submission.participation!.results = [submission.result];
             }
             return submission;
         });
@@ -332,7 +362,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmission = null;
+                    this.unassessedSubmission = undefined;
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
@@ -348,7 +378,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
-            this.tutorParticipationStatus = this.tutorParticipation.status;
+            this.tutorParticipationStatus = this.tutorParticipation.status!;
             this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
@@ -362,7 +392,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, undefined);
+        this.jhiAlertService.error(error);
     }
 
     /**
@@ -409,23 +439,23 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        await this.router.navigate([route]);
+        if (this.isTestRun) {
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+        } else {
+            await this.router.navigate([route]);
+        }
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
-    private openManualResultDialog(result: Result) {
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.participationId = result.participation!.id;
-        modalRef.componentInstance.result = cloneDeep(result);
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
-        modalRef.result.then(
-            () => this.loadAll(),
-            () => {},
-        );
-        return;
+    async openCodeEditorWithStudentSubmission(participationId: number) {
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationId}/assessment`;
+        if (this.isTestRun) {
+            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun } });
+        } else {
+            await this.router.navigate([route]);
+        }
     }
 
     /**
@@ -434,9 +464,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.openManualResultDialog(complaint.result);
+            this.openCodeEditorWithStudentSubmission(complaint.result!.participation!.id!);
         } else {
-            this.openAssessmentEditor(complaint.result.submission!);
+            this.openAssessmentEditor(complaint.result!.submission!);
         }
     }
 
@@ -452,10 +482,14 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
      * Navigates back to the tutor (exam) dashboard
      */
     back() {
-        if (this.exercise?.course) {
+        if (!this.isExamMode) {
             this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
         } else {
-            this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            if (this.isTestRun) {
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
+            } else {
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+            }
         }
     }
 }

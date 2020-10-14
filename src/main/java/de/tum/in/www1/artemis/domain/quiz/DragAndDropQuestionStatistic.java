@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,7 +9,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * A DragAndDropQuestionStatistic.
@@ -19,9 +16,7 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dragAndDropQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -29,11 +24,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implemen
 
     public Set<DropLocationCounter> getDropLocationCounters() {
         return dropLocationCounters;
-    }
-
-    public DragAndDropQuestionStatistic dropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.dropLocationCounters = dropLocationCounters;
-        return this;
     }
 
     public DragAndDropQuestionStatistic addDropLocationCounters(DropLocationCounter dropLocationCounter) {
@@ -50,26 +40,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implemen
 
     public void setDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
         this.dropLocationCounters = dropLocationCounters;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropQuestionStatistic dragAndDropQuestionStatistic = (DragAndDropQuestionStatistic) o;
-        if (dragAndDropQuestionStatistic.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropQuestionStatistic.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

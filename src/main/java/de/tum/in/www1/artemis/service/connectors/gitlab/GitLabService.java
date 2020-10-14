@@ -276,20 +276,25 @@ public class GitLabService extends AbstractVersionControlService {
         final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
             gitlab.getGroupApi().addGroup(group);
-
-            final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-            final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-            for (final var instructor : instructors) {
-                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
-            }
-            for (final var ta : teachingAssistants) {
-                final var userId = gitLabUserManagementService.getUserId(ta.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
-            }
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Unable to create new group for course " + exerciseName, e);
+            if (e.getMessage().contains("has already been taken")) {
+                // ignore this error, because it is not really a problem
+                log.warn("Failed to add group " + exerciseName + " due to error: " + e.getMessage());
+            }
+            else {
+                throw new GitLabException("Unable to create new group for course " + exerciseName, e);
+            }
+        }
+        final var instructors = userService.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var teachingAssistants = userService.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        for (final var instructor : instructors) {
+            final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
+            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+        }
+        for (final var ta : teachingAssistants) {
+            final var userId = gitLabUserManagementService.getUserId(ta.getLogin());
+            gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
         }
     }
 

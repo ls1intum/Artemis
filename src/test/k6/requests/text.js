@@ -19,4 +19,5 @@ export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
         }
         fail('ERROR: Could not submit text (Exam) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
+    return answer;
 }

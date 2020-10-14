@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
 public class ExamQuizService {
@@ -47,18 +48,18 @@ public class ExamQuizService {
     /**
      * Evaluate the given quiz exercise by evaluate the submission for each participation (there is only one for each participation in exams)
      * and update the statistics with the generated results.
-     * @param quizExercise the QuizExercise that should be evaluated
+     * @param quizExerciseId the id of the QuizExercise that should be evaluated
      */
-    public void evaluateQuizAndUpdateStatistics(@NotNull QuizExercise quizExercise) {
+    public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
+        long start = System.nanoTime();
+        log.info("Starting quiz evaluation for quiz " + quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
-        quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
+        var quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
+        log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
-
-        // The updateStatistics method filters the answer options, so we have to fetch them again
-        quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsAndParticipations(quizExercise.getId());
-        quizStatisticService.recalculateStatistics(quizExercise);
+        log.info("Statistic update for quiz {} finished after {}", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
@@ -73,15 +74,17 @@ public class ExamQuizService {
      *
      * After processing all participations, the created results will be returned for further processing
      * // @formatter:on
-     * @param quizExercise the QuizExercise that should be evaluated
+     * @param quizExercise the id of the QuizExercise that should be evaluated
      * @return the newly generated results
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        Set<StudentParticipation> studentParticipations = quizExercise.getStudentParticipations();
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
 
         for (var participation : studentParticipations) {
             try {
+                // reconnect so that the quiz questions are available later on (otherwise there will be a org.hibernate.LazyInitializationException)
+                participation.setExercise(quizExercise);
                 Set<Submission> submissions = participation.getSubmissions();
                 QuizSubmission quizSubmission;
                 if (submissions.size() == 0) {
@@ -130,7 +133,7 @@ public class ExamQuizService {
                 participation = studentParticipationRepository.save(participation);
                 quizSubmissionRepository.save(quizSubmission);
                 result = resultRepository.save(result);
-                result = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId()).orElse(null);
+                // result = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId()).orElse(null);
 
                 // Add result so that it can be returned (and processed later)
                 if (!resultExisting) {

@@ -1,16 +1,20 @@
-import { Component, ViewChild, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
     templateUrl: './modeling-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
     styleUrls: ['./modeling-exam-submission.component.scss'],
+    // change deactivation must be triggered manually
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -24,12 +28,22 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon
 
+    constructor(changeDetectorReference: ChangeDetectorRef) {
+        super(changeDetectorReference);
+    }
+
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
     }
 
-    onActivate(): void {}
+    getSubmission(): Submission {
+        return this.studentSubmission;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
+    }
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission.model) {
@@ -49,12 +63,11 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         const diagramJson = JSON.stringify(currentApollonModel);
         if (this.studentSubmission && diagramJson) {
             this.studentSubmission.model = diagramJson;
-            this.studentSubmission.isSynced = false;
         }
     }
 
     /**
-     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the subission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
         return !this.studentSubmission.isSynced!;

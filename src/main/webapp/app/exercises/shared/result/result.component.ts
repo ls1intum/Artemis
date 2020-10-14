@@ -9,11 +9,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import * as moment from 'moment';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { getExercise, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
@@ -36,7 +35,6 @@ enum ResultTemplateStatus {
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     styles: ['span { display: inline-block; line-height: 1.25 }'],
-    providers: [ResultService],
 })
 
 /**
@@ -55,18 +53,19 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showGradedBadge = false;
     @Input() showTestNames = false;
 
+    ParticipationType = ParticipationType;
+
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];
     resultString: string;
     templateStatus: ResultTemplateStatus;
-    submission: Submission | null;
+    submission: Submission | undefined;
 
     resultTooltip: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
-        private resultService: ResultService,
         private participationService: ParticipationService,
         private translate: TranslateService,
         private http: HttpClient,
@@ -150,7 +149,8 @@ export class ResultComponent implements OnInit, OnChanges {
 
     private evaluateTemplateStatus() {
         // Fallback if participation is not set
-        if (!this.participation || !getExercise(this.participation)) {
+        const exercise = getExercise(this.participation);
+        if (!this.participation || !exercise) {
             if (!this.result) {
                 return ResultTemplateStatus.NO_RESULT;
             } else {
@@ -161,9 +161,10 @@ export class ResultComponent implements OnInit, OnChanges {
         // Evaluate status for modeling, text and file-upload exercises
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
-            const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
-            const dueDate = this.dateAsMoment(getExercise(this.participation).dueDate);
-            const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
+
+            const inDueTime = isParticipationInDueTime(this.participation, exercise);
+            const dueDate = this.dateAsMoment(exercise.dueDate);
+            const assessmentDueDate = this.dateAsMoment(exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -251,17 +252,13 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Checks if there is feedback or not for a build result.
      */
-    getHasFeedback() {
+    getHasFeedback(): boolean {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
         } else if (this.result!.hasFeedback === null) {
             return false;
         }
-        return this.result!.hasFeedback;
-    }
-
-    private hasParticipationResults(): boolean {
-        return this.participation && this.participation.results && this.participation.results.length > 0;
+        return this.result!.hasFeedback === true;
     }
 
     /**
@@ -296,16 +293,18 @@ export class ResultComponent implements OnInit, OnChanges {
      * Download the build results of a specific participation.
      * @param participationId The identifier of the participation.
      */
-    downloadBuildResult(participationId: number) {
-        this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-            const fileURL = URL.createObjectURL(artifact);
-            const a = document.createElement('a');
-            a.href = fileURL;
-            a.target = '_blank';
-            a.download = 'artifact';
-            document.body.appendChild(a);
-            a.click();
-        });
+    downloadBuildResult(participationId?: number) {
+        if (participationId) {
+            this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
+                const fileURL = URL.createObjectURL(artifact);
+                const link = document.createElement('a');
+                link.href = fileURL;
+                link.target = '_blank';
+                link.download = 'artifact';
+                document.body.appendChild(link);
+                link.click();
+            });
+        }
     }
 
     /**

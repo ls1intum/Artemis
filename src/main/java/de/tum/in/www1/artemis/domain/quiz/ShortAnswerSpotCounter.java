@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,9 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Entity
 @DiscriminatorValue(value = "SA")
-public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class ShortAnswerSpotCounter extends QuizStatisticCounter {
 
     @ManyToOne
     @JsonIgnore
@@ -30,11 +25,6 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Seri
         return spot;
     }
 
-    public ShortAnswerSpotCounter spot(ShortAnswerSpot shortAnswerSpot) {
-        this.spot = shortAnswerSpot;
-        return this;
-    }
-
     public void setSpot(ShortAnswerSpot shortAnswerSpot) {
         this.spot = shortAnswerSpot;
     }
@@ -43,34 +33,8 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Seri
         return shortAnswerQuestionStatistic;
     }
 
-    public ShortAnswerSpotCounter shortAnswerQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
-        this.shortAnswerQuestionStatistic = shortAnswerQuestionStatistic;
-        return this;
-    }
-
     public void setShortAnswerQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
         this.shortAnswerQuestionStatistic = shortAnswerQuestionStatistic;
-    }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ShortAnswerSpotCounter shortAnswerSpotCounter = (ShortAnswerSpotCounter) o;
-        if (shortAnswerSpotCounter.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerSpotCounter.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

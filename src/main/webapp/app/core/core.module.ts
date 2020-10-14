@@ -11,7 +11,6 @@ import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap'
 import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
-import { DeviceDetectorModule } from 'ngx-device-detector';
 import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +28,6 @@ import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.
     imports: [
         HttpClientModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
-        DeviceDetectorModule,
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */

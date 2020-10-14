@@ -25,12 +25,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -40,20 +39,16 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api/text-assessments")
 public class TextAssessmentResource extends AssessmentResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
-
-    private static final String ENTITY_NAME = "textAssessment";
-
-    private final TextBlockRepository textBlockRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ResultService resultService;
+    private static final String ENTITY_NAME = "textAssessment";
+
+    private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
+
+    private final TextBlockRepository textBlockRepository;
 
     private final TextAssessmentService textAssessmentService;
-
-    private final TextBlockService textBlockService;
 
     private final TextExerciseService textExerciseService;
 
@@ -63,26 +58,28 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
+    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
+
+    private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
 
     private final GradingCriterionService gradingCriterionService;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
-            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
-        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockRepository textBlockRepository,
+            TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository, UserService userService, TextSubmissionService textSubmissionService,
+            WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService,
+            Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
+            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService) {
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository, examService);
 
-        this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
-        this.textBlockService = textBlockService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
-        this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.gradingCriterionService = gradingCriterionService;
+        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
+        this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
     }
 
     /**
@@ -105,8 +102,10 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
+        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!isAllowedToCreateOrOverrideResult(optionalTextSubmission.get(), textExercise, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -141,14 +140,16 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound");
         }
 
+        StudentParticipation studentParticipation = (StudentParticipation) optionalTextSubmission.get().getParticipation();
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
-        if (!isAllowedToCreateOrOverrideResult(optionalTextSubmission.get(), textExercise, user, isAtLeastInstructor)) {
+
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(optionalTextSubmission.get().getResult(), textExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
-        StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+        studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
             // TODO: we should send a result object here that includes the feedback (this might already be the case)
             messagingService.broadcastNewResult(studentParticipation, result);
@@ -156,6 +157,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             studentParticipation.filterSensitiveInformation();
+        }
+
+        // call feedback conflict service
+        if (textExercise.isAutomaticAssessmentEnabled() && automaticTextAssessmentConflictService.isPresent()) {
+            this.automaticTextAssessmentConflictService.get().asyncCheckFeedbackConsistency(textAssessment.getTextBlocks(), result.getFeedbacks(), exerciseId);
         }
 
         return ResponseEntity.ok(result);
@@ -204,51 +210,6 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Splits the TextSubmission corresponding to a resultId into TextBlocks.
-     * The TextBlocks get a suggested feedback if automatic assessment is enabled and feedback available
-     *
-     * TODO: Remove when migrating to Text Assessment V2
-     * @deprecated Text Blocks are now part of the retrieveParticipationForSubmission() response. Please use V2 text assessment which does not need this API call. This API call will be removed soon.
-     * @param resultId the resultId the which needs TextBlocks
-     * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
-     * @throws EntityNotFoundException if the corresponding Exercise isn't a TextExercise
-     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
-     */
-    @Deprecated(since = "4.0.0", forRemoval = true)
-    @GetMapping("/result/{resultId}/with-textblocks")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        final Result result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
-        final StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
-        final Exercise exercise = studentParticipation.getExercise();
-        checkAuthorization(exercise, user);
-
-        if (!(exercise instanceof TextExercise)) {
-            throw new BadRequestAlertException("No text exercise found for the given ID.", "textExercise", "exerciseNotFound");
-        }
-
-        final TextExercise textExercise = (TextExercise) exercise;
-
-        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
-            automaticTextFeedbackService.get().suggestFeedback(result);
-        }
-        else {
-            textBlockService.prepopulateFeedbackBlocks(result);
-        }
-
-        TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-        textSubmission.setBlocks(textBlocks);
-
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    /**
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
@@ -287,7 +248,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
-
+        // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
         result = textSubmission.getResult();
 
@@ -301,7 +262,12 @@ public class TextAssessmentResource extends AssessmentResource {
         // Remove Submission from Result
         result.setSubmission(null);
 
-        return ResponseEntity.ok(participation);
+        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+        final Result finalResult = result;
+
+        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
+        this.atheneTrackingTokenProvider.ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, finalResult));
+        return bodyBuilder.body(participation);
     }
 
     /**
@@ -343,7 +309,6 @@ public class TextAssessmentResource extends AssessmentResource {
      * required permissions
      * @param textExercise which needs to be checked
      * @throws BadRequestAlertException if no request was found
-     *
      */
     private void checkTextExerciseForRequest(@Nullable TextExercise textExercise, User user) {
         if (textExercise == null) {

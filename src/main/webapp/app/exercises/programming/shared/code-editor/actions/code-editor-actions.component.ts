@@ -7,8 +7,8 @@ import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/co
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CommitState, EditorState, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
 
 @Component({
@@ -42,6 +42,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     isBuildingChange = new EventEmitter<boolean>();
     @Output()
     onSavedFiles = new EventEmitter<{ [fileName: string]: string | null }>();
+    @Output()
+    onRefreshFiles = new EventEmitter();
     @Output()
     onError = new EventEmitter<string>();
 
@@ -108,17 +110,20 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     executeRefresh() {
         this.editorState = EditorState.REFRESHING;
-        setTimeout(() => {
-            if (this.editorState === EditorState.REFRESHING) {
+        this.repositoryService.pull().subscribe(
+            () => {
+                this.onRefreshFiles.emit();
+                this.editorState = EditorState.CLEAN;
+            },
+            (error: Error) => {
                 this.editorState = EditorState.UNSAVED_CHANGES;
-                const error = new Error('connectionTimeoutRefresh');
-                this.onError.emit(error.message);
-            }
-        }, 8000);
-        this.repositoryService.pull().subscribe(() => {
-            this.unsavedFiles = {};
-            this.editorState = EditorState.CLEAN;
-        });
+                if (error.message === ConnectionError.message) {
+                    this.onError.emit('refreshFailed' + error.message);
+                } else {
+                    this.onError.emit('refreshFailed');
+                }
+            },
+        );
     }
 
     onSave() {
@@ -131,28 +136,26 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveChangedFiles(): Observable<any> {
+    saveChangedFiles(andCommit = false): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
-            setTimeout(() => {
-                if (this.editorState === EditorState.SAVING) {
-                    this.editorState = EditorState.UNSAVED_CHANGES;
-                    const error = new Error('connectionTimeoutSave');
-                    this.onError.emit(error.message);
-                }
-            }, 8000);
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
-                tap((res) => this.onSavedFiles.emit(res)),
-                catchError((err) => {
-                    this.onError.emit(err.error);
+            return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
+                tap((fileSubmission: FileSubmission) => {
+                    this.onSavedFiles.emit(fileSubmission);
+                }),
+                catchError((error) => {
                     this.editorState = EditorState.UNSAVED_CHANGES;
-                    return throwError('saving failed');
+                    if (error.message === ConnectionError.message) {
+                        this.onError.emit('saveFailed' + error.message);
+                    } else {
+                        this.onError.emit('saveFailed');
+                    }
+                    return throwError(error);
                 }),
             );
-        } else {
-            return Observable.of(null);
         }
+        return Observable.of(null);
     }
 
     /**
@@ -168,9 +171,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         // If there are unsaved changes, save them before trying to commit again.
         Observable.of(null)
             .pipe(
-                switchMap(() => (this.editorState === EditorState.UNSAVED_CHANGES ? this.saveChangedFiles() : Observable.of(null))),
                 tap(() => (this.commitState = CommitState.COMMITTING)),
-                switchMap(() => this.repositoryService.commit()),
+                switchMap(() => {
+                    if (!_isEmpty(this.unsavedFiles)) {
+                        return this.saveChangedFiles(true);
+                    } else {
+                        return this.repositoryService.commit();
+                    }
+                }),
                 tap(() => {
                     this.commitState = CommitState.CLEAN;
                     // Note: this is not 100% clean, but not setting it here would complicate the state model.
@@ -182,14 +190,29 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             )
             .subscribe(
                 () => {},
-                () => {
+                (error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
-                    this.onError.emit('commitFailed');
+                    if (error.message === ConnectionError.message) {
+                        this.onError.emit('commitFailed' + error.message);
+                    } else {
+                        this.onError.emit('commitFailed');
+                    }
                 },
             );
     }
 
     resetRepository() {
-        this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
+        const modal = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
+        modal.componentInstance.shouldReset.subscribe(() => {
+            this.repositoryService.resetRepository().subscribe(
+                () => {
+                    this.conflictService.notifyConflictState(GitConflictState.OK);
+                    this.executeRefresh();
+                },
+                () => {
+                    this.onError.emit('resetFailed');
+                },
+            );
+        });
     }
 }

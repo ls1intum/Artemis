@@ -11,7 +11,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
 export const isLegacyResult = (result: Result) => {
-    return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
+    if (result.completionDate) {
+        return result.completionDate.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
+    } else {
+        return false;
+    }
 };
 
 /**

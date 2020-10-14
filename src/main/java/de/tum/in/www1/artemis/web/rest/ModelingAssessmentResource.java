@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -34,8 +33,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "modelingAssessment";
-
-    private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with existing assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
 
     private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
 
@@ -57,8 +54,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
-            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository) {
-        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository);
+            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository,
+            ExamService examService) {
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository, examService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
@@ -132,18 +130,16 @@ public class ModelingAssessmentResource extends AssessmentResource {
      *
      * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
-     * @param ignoreConflict currently not used
      * @param submit if true the assessment is submitted, else only saved
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
-            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
+            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
-            @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Object> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
+            @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
@@ -152,28 +148,13 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
-        if (!isAllowedToCreateOrOverrideResult(modelingSubmission, modelingExercise, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(modelingSubmission.getResult(), modelingExercise, studentParticipation, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
 
         if (submit) {
-            // SK: deactivate conflict handling for now, because it is not fully implemented yet.
-            // List<ModelAssessmentConflict> conflicts = new ArrayList<>();
-            // if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            // try {
-            // conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
-            // }
-            // catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
-            // log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
-            // }
-            // }
-            // if (!conflicts.isEmpty() && !ignoreConflict) {
-            // conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
-            // return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
-            // }
-            // else {
             result = modelingAssessmentService.submitManualAssessment(result.getId(), modelingExercise, modelingSubmission.getSubmissionDate());
             if (compassService.isSupported(modelingExercise)) {
                 compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
@@ -200,8 +181,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
-            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
+            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {

@@ -57,6 +57,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
+    Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
+
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
@@ -78,8 +81,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
             String partialCourseTitle, Pageable pageable);
 
-    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
+    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.staticCodeAnalysisCategories left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
@@ -90,6 +93,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("select pe from ProgrammingExercise pe where pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Returns the programming exercises that have manual assessment enabled and a due date higher than the provided date.
+     *
+     * @param dateTime ZonedDateTime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("select pe from ProgrammingExercise pe where pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Returns the programming exercises that are part of an exam with an end date after than the provided date.
@@ -114,12 +126,34 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * Should be used for exam dashboard to ignore test run submissions.
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of distinct submissions belonging to the exercise id
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
      *
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
     @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL)")
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * Should be used for exam dashboard to ignore test run submissions.
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of distinct submissions belonging to the exercise id that are assessed
+     */
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -143,5 +177,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     long countByShortNameAndCourse(String shortName, Course course);
 
+    long countByTitleAndCourse(String shortName, Course course);
+
     long countByShortNameAndExerciseGroupExamCourse(String shortName, Course course);
+
+    long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 }

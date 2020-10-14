@@ -41,7 +41,7 @@ describe('FileUploadExercise Management Update Component', () => {
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new FileUploadExercise();
+            const entity = new FileUploadExercise(undefined, undefined);
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.fileUploadExercise = entity;
@@ -56,7 +56,7 @@ describe('FileUploadExercise Management Update Component', () => {
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
-            const entity = new FileUploadExercise();
+            const entity = new FileUploadExercise(undefined, undefined);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.fileUploadExercise = entity;
             // WHEN
@@ -67,13 +67,28 @@ describe('FileUploadExercise Management Update Component', () => {
             expect(service.create).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+
+        it('Should trim the exercise title before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new FileUploadExercise(undefined, undefined);
+            entity.title = 'My Exercise   ';
+            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.fileUploadExercise = entity;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(entity.title).toEqual('My Exercise');
+        }));
     });
 
     describe('ngOnInit with given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(null, new ExerciseGroup());
+        const fileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
         });
 
@@ -88,10 +103,10 @@ describe('FileUploadExercise Management Update Component', () => {
     });
 
     describe('ngOnInit without given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(new Course(), null);
+        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
         });
 

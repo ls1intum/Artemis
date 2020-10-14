@@ -1,0 +1,11 @@
+.body-striped {
+    tbody {
+        &:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    }
+}
+
+.table-clear-width {
+    width: unset;
+}

@@ -35,6 +35,9 @@ export class ExamUpdateComponent implements OnInit {
                 },
                 (err: HttpErrorResponse) => this.onError(err),
             );
+            if (!this.exam.gracePeriod) {
+                this.exam.gracePeriod = 180;
+            }
         });
     }
 
@@ -45,9 +48,9 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.exam.id !== undefined) {
-            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id, this.exam));
+            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
         } else {
-            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id, this.exam));
+            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id!, this.exam));
         }
     }
 
@@ -64,7 +67,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, undefined);
+        this.jhiAlertService.error(error.message);
         this.isSaving = false;
     }
 
@@ -72,15 +75,48 @@ export class ExamUpdateComponent implements OnInit {
         this.jhiAlertService.error(error.message);
     }
 
-    get isValidVisibleDate() {
-        return this.exam.visibleDate && moment(this.exam.visibleDate).isAfter(moment());
+    get isValidConfiguration(): boolean {
+        const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
+        const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
+        return examConductionDatesValid && examReviewDatesValid;
     }
 
-    get isValidStartDate() {
-        return this.isValidVisibleDate && this.exam.startDate && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
+    get isValidVisibleDate(): boolean {
+        return this.exam.visibleDate !== undefined;
     }
 
-    get isValidEndDate() {
-        return this.isValidStartDate && this.exam.endDate && moment(this.exam.endDate).isAfter(this.exam.startDate);
+    get isValidStartDate(): boolean {
+        return this.exam.startDate !== undefined && moment(this.exam.startDate).isAfter(this.exam.visibleDate);
+    }
+
+    get isValidEndDate(): boolean {
+        return this.exam.endDate !== undefined && moment(this.exam.endDate).isAfter(this.exam.startDate);
+    }
+
+    get isValidPublishResultsDate(): boolean {
+        // allow instructors to set publishResultsDate later
+        if (!this.exam.publishResultsDate) {
+            return true;
+        }
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.endDate !== undefined && moment(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+    }
+
+    get isValidExamStudentReviewStart(): boolean {
+        // allow instructors to set examStudentReviewStart later
+        if (!this.exam.examStudentReviewStart) {
+            return true;
+        }
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.publishResultsDate !== undefined && moment(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+    }
+
+    get isValidExamStudentReviewEnd(): boolean {
+        // allow instructors to set examStudentReviewEnd later
+        if (!this.exam.examStudentReviewEnd) {
+            return true;
+        }
+        // check for undefined because undefined is otherwise treated as the now moment by moment.js
+        return this.exam.examStudentReviewStart !== undefined && moment(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 }

@@ -66,6 +66,11 @@ public class LectureService {
         return lecturesWithFilteredAttachments;
     }
 
+    /**
+     * Deletes the given lecture.
+     * Attachments are not explicitly deleted, as the delete operation is cascaded by the database.
+     * @param lecture the lecture to be deleted
+     */
     public void delete(Lecture lecture) {
         lectureRepository.delete(lecture);
     }

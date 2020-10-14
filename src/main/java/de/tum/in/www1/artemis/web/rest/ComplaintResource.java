@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -93,7 +94,43 @@ public class ComplaintResource {
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
-        Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
+        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
+
+        // Remove assessor information from client request
+        savedComplaint.getResult().setAssessor(null);
+
+        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+    }
+
+    /**
+     * POST /complaint/exam/examId: create a new complaint for an exam exercise
+     *
+     * @param complaint the complaint to create
+     * @param principal that wants to complain
+     * @param examId the examId of the exam which contains the exercise
+     * @return the ResponseEntity with status 201 (Created) and with body the new complaints
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/complaints/exam/{examId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
+        log.debug("REST request to save Complaint for exam exercise: {}", complaint);
+        if (complaint.getId() != null) {
+            throw new BadRequestAlertException("A new complaint cannot already have an id", ENTITY_NAME, "idexists");
+        }
+
+        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
+            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
+        }
+
+        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
+        }
+
+        // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
+        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
+        Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
 
         // Remove assessor information from client request
         savedComplaint.getResult().setAssessor(null);
@@ -140,10 +177,15 @@ public class ComplaintResource {
             return forbidden();
         }
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        var isTeamParticipation = participation.getParticipant() instanceof Team;
+        var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));
 
         if (!isAtLeastInstructor) {
             complaint.getResult().setAssessor(null);
-            complaint.filterSensitiveInformation();
+
+            if (!isTeamParticipation || !isTutorOfTeam) {
+                complaint.filterSensitiveInformation();
+            }
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);
@@ -183,6 +225,7 @@ public class ComplaintResource {
      * Get /exercises/:exerciseId/complaints-for-tutor-dashboard
      * <p>
      * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
+     * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
      *
      * @param exerciseId the id of the exercise we are interested in
      * @param principal that wants to get complaints
@@ -197,7 +240,28 @@ public class ComplaintResource {
         }
 
         List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false, false);
+        return ResponseEntity.ok(responseComplaints);
+    }
+
+    /**
+     * Get /exercises/:exerciseId/complaints-for-test-run-dashboard
+     * <p>
+     * Get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request, since this idicates test run exercises
+     *
+     * @param exerciseId the id of the exercise we are interested in
+     * @param principal that wants to get complaints
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/exercises/{exerciseId}/complaints-for-test-run-dashboard")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(@PathVariable Long exerciseId, Principal principal) {
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -218,7 +282,7 @@ public class ComplaintResource {
         }
 
         List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, false);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -411,7 +475,7 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller) {
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean testRun) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
         if (complaints.isEmpty()) {
@@ -421,8 +485,10 @@ public class ComplaintResource {
         complaints.forEach(complaint -> {
             String submissorName = principal.getName();
             User assessor = complaint.getResult().getAssessor();
+            User student = complaint.getStudent();
 
-            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
+            if (assessor != null && assessor.getLogin().equals(submissorName) == assessorSameAsCaller
+                    && (student != null && assessor.getLogin().equals(student.getLogin())) == testRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setParticipant(null);

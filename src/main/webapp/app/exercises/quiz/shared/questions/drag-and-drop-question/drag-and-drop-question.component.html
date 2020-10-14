@@ -1,16 +1,16 @@
 <div
     class="dnd-question markdown-preview"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution }"
+    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score! && !forceSampleSolution }"
 >
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
-            <span style="color: grey;"
+            <span style="color: grey"
                 ><fa-icon [icon]="'spinner'" spin="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | translate }}</span></span
             >
         </h2>
         <div *ngIf="loadingState === 'error'">
             <h2>
-                <span style="color: grey;"
+                <span style="color: grey"
                     ><fa-icon [icon]="'exclamation-circle'"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | translate }}</span></span
                 >
             </h2>
@@ -26,7 +26,7 @@
             <span>{{ questionIndex }})</span> {{ question.title }}
         </h4>
         <p [innerHTML]="renderedQuestion.text"></p>
-        <span style="color: red;" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+        <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
             <ng-template #renderedHint>
                 <div [innerHTML]="renderedQuestion.hint"></div>
@@ -47,7 +47,7 @@
             <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
             <span>{{ question.score }}</span>
         </div>
-        <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.score }">
+        <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.score! }">
             <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
             <span class="show-explanation">{{ score || 0 }}/{{ question.score }}</span>
             <span class="show-explanation">
@@ -139,7 +139,7 @@
                                     <fa-icon
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
-                                        style="color: black;"
+                                        style="color: black"
                                         [icon]="'question-circle'"
                                         *ngIf="dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)"
                                     ></fa-icon>
@@ -195,7 +195,7 @@
                                     <fa-icon
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
-                                        style="color: black;"
+                                        style="color: black"
                                         [icon]="'question-circle'"
                                         *ngIf="dropLocation.invalid || question.invalid"
                                     ></fa-icon>
@@ -214,7 +214,7 @@
                     </div>
                 </div>
             </div>
-            <div class="drag-and-drop-items">
+            <div class="drag-and-drop-items" [ngStyle]="{ 'max-height': '100vh' }">
                 <div class="dnd-instructions" *ngIf="!showResult">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
@@ -223,7 +223,7 @@
                     *ngIf="!showResult"
                     class="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
-                    (onDropSuccess)="onDragDrop(null, $event)"
+                    (onDropSuccess)="onDragDrop(undefined, $event)"
                     (onDragEnter)="preventDefault($event)"
                     (onDragOver)="preventDefault($event)"
                     (onDragLeave)="preventDefault($event)"

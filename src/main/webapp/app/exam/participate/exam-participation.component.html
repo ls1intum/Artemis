@@ -1,45 +1,51 @@
+<jhi-test-run-ribbon *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
+        *ngIf="isVisible() && !isOver() && !examStartConfirmed"
         [startView]="true"
         [exam]="exam"
-        *ngIf="isVisible() && !isOver() && !examConfirmed"
+        [studentExam]="studentExam"
+        [testRunStartTime]="testRunStartTime"
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
     <ng-container *ngIf="studentExam; else alert">
         <!-- exam participation -->
-        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examConfirmed; else alert">
+        <ng-container *ngIf="isVisible() && isActive() && !isOver() && examStartConfirmed && !examEndConfirmed; else alert">
             <!-- exam nav -->
             <jhi-exam-navigation-bar
                 id="exam-navigation-bar"
+                class="sticky-top d-block"
                 [exercises]="studentExam.exercises"
+                [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 (onExerciseChanged)="onExerciseChange($event)"
                 (examAboutToEnd)="examEnded()"
+                (onExamHandInEarly)="toggleHandInEarly()"
             ></jhi-exam-navigation-bar>
             <div class="d-flex justify-content-center mt-2 mb-4">
                 <jhi-alert></jhi-alert>
             </div>
             <!-- exercises -->
-            <ng-container *ngIf="activeExercise.studentParticipations && activeExercise.studentParticipations[0]">
-                <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+            <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+                <ng-container *ngIf="exercise.studentParticipations && exercise.studentParticipations[0]">
                     <ng-container *ngIf="submissionComponentVisited[i]">
                         <ng-container [ngSwitch]="exercise.type">
                             <div [hidden]="i !== activeExerciseIndex">
                                 <jhi-quiz-submission-exam
                                     *ngSwitchCase="QUIZ"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-text-editor-exam>
                                 <jhi-modeling-submission-exam
                                     *ngSwitchCase="MODELING"
                                     [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-modeling-submission-exam>
                                 <jhi-programming-submission-exam
                                     *ngSwitchCase="PROGRAMMING"
@@ -105,10 +111,20 @@
                 </div>
             </div>
         </ng-container>
-        <jhi-exam-participation-summary *ngIf="isOver()" [studentExam]="studentExam"></jhi-exam-participation-summary>
+        <jhi-exam-participation-cover
+            *ngIf="isOver() && !studentExam.submitted"
+            [startView]="false"
+            [exam]="exam"
+            [studentExam]="studentExam"
+            [handInEarly]="handInEarly"
+            [handInPossible]="handInPossible"
+            (onExamEnded)="onExamEndConfirmed()"
+            (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
+        ></jhi-exam-participation-cover>
+        <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
     <ng-template #alert>
-        <div class="d-flex my-2">
+        <div class="d-flex justify-content-center mt-2 mb-4">
             <jhi-alert></jhi-alert>
         </div>
     </ng-template>

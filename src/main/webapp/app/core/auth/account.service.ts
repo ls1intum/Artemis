@@ -13,27 +13,29 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/browser';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
     save: (account: any) => Observable<HttpResponse<any>>;
-    authenticate: (identity: User | null) => void;
+    authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: string[]) => boolean;
     hasAuthority: (authority: string) => Promise<boolean>;
-    identity: (force?: boolean) => Promise<User | null>;
+    identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
-    getAuthenticationState: () => Observable<User | null>;
-    getImageUrl: () => string | null;
+    getAuthenticationState: () => Observable<User | undefined>;
+    getImageUrl: () => string | undefined;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private userIdentityValue: User | null = null;
+    private userIdentityValue?: User;
     private authenticated = false;
-    private authenticationState = new BehaviorSubject<User | null>(null);
+    private authenticationState = new BehaviorSubject<User | undefined>(undefined);
 
     constructor(
         private languageService: JhiLanguageService,
@@ -47,10 +49,10 @@ export class AccountService implements IAccountService {
         return this.userIdentityValue;
     }
 
-    set userIdentity(user: User | null) {
+    set userIdentity(user: User | undefined) {
         this.userIdentityValue = user;
         this.authenticated = !!user;
-        // Alert subscribers about user updates, that is when the user logs in or logs out (null).
+        // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
         this.authenticationState.next(user);
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
@@ -65,11 +67,11 @@ export class AccountService implements IAccountService {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
-    save(account: any): Observable<HttpResponse<any>> {
-        return this.http.post(SERVER_API_URL + 'api/account', account, { observe: 'response' });
+    save(user: User): Observable<HttpResponse<{}>> {
+        return this.http.post(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
-    authenticate(identity: User | null) {
+    authenticate(identity?: User) {
         this.userIdentity = identity;
     }
 
@@ -111,17 +113,17 @@ export class AccountService implements IAccountService {
         );
     }
 
-    hasGroup(group: string): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups) {
+    hasGroup(group?: string): boolean {
+        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups || !group) {
             return false;
         }
 
         return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
     }
 
-    identity(force?: boolean): Promise<User | null> {
+    identity(force?: boolean): Promise<User | undefined> {
         if (force === true) {
-            this.userIdentity = null;
+            this.userIdentity = undefined;
         }
 
         // check and see if we have retrieved the userIdentity data from the server.
@@ -147,7 +149,7 @@ export class AccountService implements IAccountService {
                         const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
                         this.languageService.changeLanguage(langKey);
                     } else {
-                        this.userIdentity = null;
+                        this.userIdentity = undefined;
                     }
                     return this.userIdentity;
                 }),
@@ -155,32 +157,56 @@ export class AccountService implements IAccountService {
                     if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
                         this.websocketService.disconnect();
                     }
-                    this.userIdentity = null;
-                    return of(null);
+                    this.userIdentity = undefined;
+                    return of(undefined);
                 }),
             )
             .toPromise();
     }
 
-    isAtLeastTutorInCourse(course: Course): boolean {
-        return this.hasGroup(course.instructorGroupName) || this.hasGroup(course.teachingAssistantGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+    /**
+     * checks if the currently logged in user is at least tutor in the given course
+     * @param course
+     */
+    isAtLeastTutorInCourse(course?: Course): boolean {
+        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
-    isAtLeastInstructorInCourse(course: Course) {
-        return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+    /**
+     * checks if the currently logged in user is at least instructor in the given course
+     * @param course
+     */
+    isAtLeastInstructorInCourse(course?: Course) {
+        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
+    }
+
+    /**
+     * checks if the currently logged in user is at least tutor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastTutorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastTutorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * checks if the currently logged in user is at least instructor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastInstructorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastInstructorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
     }
 
     isAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+        return this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
     isAuthenticated(): boolean {
         return this.authenticated;
     }
 
-    getAuthenticationState(): Observable<User | null> {
+    getAuthenticationState(): Observable<User | undefined> {
         return this.authenticationState.asObservable().pipe(
-            // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
+            // We don't want to emit here e.g. [undefined, undefined] as it is still the same information [logged out, logged out].
             distinctUntilChanged(),
         );
     }
@@ -193,18 +219,18 @@ export class AccountService implements IAccountService {
     isOwnerOfParticipation(participation: StudentParticipation): boolean {
         if (participation.student) {
             return this.userIdentity?.login === participation.student.login;
-        } else if (participation.team) {
+        } else if (participation.team?.students) {
             return participation.team.students.some((student) => this.userIdentity?.login === student.login);
         }
         throw new Error('Participation does not have any owners');
     }
 
     /**
-     * Returns the image url of the user or null.
+     * Returns the image url of the user or undefined.
      *
-     * Returns null if the user is not authenticated or the user does not have an image.
+     * Returns undefined if the user is not authenticated or the user does not have an image.
      */
-    getImageUrl(): string | null {
-        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : null;
+    getImageUrl() {
+        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
     }
 }

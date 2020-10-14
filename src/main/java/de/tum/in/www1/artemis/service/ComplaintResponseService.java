@@ -60,7 +60,7 @@ public class ComplaintResponseService {
 
         // Do not trust user input
         Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
-        if (!originalComplaintOptional.isPresent()) {
+        if (originalComplaintOptional.isEmpty()) {
             throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "noresult");
         }
 
@@ -98,6 +98,7 @@ public class ComplaintResponseService {
      *
      * 2. Individual Exercises
      *    => Complaints can only be handled by a tutor who is not the original assessor
+     *    => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
      *    => More feedback requests are handled by the assessor himself
      *
      * @param participation Participation to which the complaint belongs to
@@ -114,6 +115,11 @@ public class ComplaintResponseService {
             return assessor.equals(reviewer);
         }
         else if (complaint.getComplaintType() == null || complaint.getComplaintType().equals(ComplaintType.COMPLAINT)) {
+            // if test run complaint
+            if (complaint.getStudent() != null && complaint.getStudent().getLogin().equals(assessor.getLogin())
+                    && authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+                return true;
+            }
             return !assessor.equals(reviewer);
         }
         else if (complaint.getComplaintType() != null && complaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK)) {

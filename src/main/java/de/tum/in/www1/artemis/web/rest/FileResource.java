@@ -15,6 +15,7 @@ import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -90,62 +91,10 @@ public class FileResource {
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
+        return handleSaveFile(file, keepFileName, false);
 
-        // NOTE: Maximum file size is set in resources/config/application.yml
-        // Currently set to 10 MB
-
-        // check for file type
-        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (fileExtension == null || this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
-        }
-
-        try {
-            // create folder if necessary
-            File folder = new File(FilePathService.getTempFilepath());
-            if (!folder.exists()) {
-                if (!folder.mkdirs()) {
-                    log.error("Could not create directory: {}", FilePathService.getTempFilepath());
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            }
-
-            // create file (generate new filename, if file already exists)
-            boolean fileCreated;
-            File newFile;
-            String filename;
-            do {
-                if (keepFileName) {
-                    filename = file.getOriginalFilename().replaceAll("\\s", "");
-                }
-                else {
-                    filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                            + fileExtension;
-                }
-                String path = FilePathService.getTempFilepath() + filename;
-
-                newFile = new File(path);
-                if (keepFileName && newFile.exists()) {
-                    newFile.delete();
-                }
-                fileCreated = newFile.createNewFile();
-            }
-            while (!fileCreated);
-            String responsePath = "/api/files/temp/" + filename;
-
-            // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            // return path for getting the file
-            String responseBody = "{\"path\":\"" + responsePath + "\"}";
-            return ResponseEntity.created(new URI(responsePath)).body(responseBody);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     /**
@@ -159,6 +108,35 @@ public class FileResource {
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(FilePathService.getTempFilepath() + filename);
+    }
+
+    /**
+     * POST /markdown-file-upload : Upload a new file for markdown.
+     *
+     * @param file The file to save
+     * @param keepFileName specifies if original file name should be kept
+     * @return The path of the file
+     * @throws URISyntaxException if response path can't be converted into URI
+     */
+    @PostMapping("/markdown-file-upload")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
+    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
+            throws URISyntaxException {
+        log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
+        return handleSaveFile(file, keepFileName, true);
+    }
+
+    /**
+     * GET /files/markdown/:filename : Get the markdown file with the given filename
+     *
+     * @param filename The filename of the file to get
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping("/files/markdown/{filename:.+}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return responseEntityForFilePath(FilePathService.getMarkdownFilepath() + filename);
     }
 
     /**
@@ -309,6 +287,88 @@ public class FileResource {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Helper method which handles the file creation for both normal file uploads and for markdown
+     * @param file The file to be uplaoded
+     * @param keepFileName specifies if original file name should be kept
+     * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
+     * @return The path of the file
+     * @throws URISyntaxException if response path can't be converted into URI
+     */
+    @NotNull
+    private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) throws URISyntaxException {
+        // NOTE: Maximum file size is set in resources/config/application.yml
+        // Currently set to 10 MB
+
+        // check for file type
+        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+        if (fileExtension == null || this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
+        }
+
+        final String filePath;
+        final String fileNameAddition;
+        final StringBuilder responsePath = new StringBuilder();
+
+        // set the appropriate values depending on the use case
+        if (markdown) {
+            filePath = FilePathService.getMarkdownFilepath();
+            fileNameAddition = "Markdown_";
+            responsePath.append("/api/files/markdown/");
+        }
+        else {
+            filePath = FilePathService.getTempFilepath();
+            fileNameAddition = "Temp_";
+            responsePath.append("/api/files/temp/");
+        }
+
+        try {
+            // create folder if necessary
+            File folder;
+            folder = new File(filePath);
+            if (!folder.exists()) {
+                if (!folder.mkdirs()) {
+                    log.error("Could not create directory: {}", filePath);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            }
+
+            // create file (generate new filename, if file already exists)
+            boolean fileCreated;
+            File newFile;
+            String filename;
+            do {
+                if (keepFileName) {
+                    filename = file.getOriginalFilename().replaceAll("\\s", "");
+                }
+                else {
+                    filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
+                            + "." + fileExtension;
+                }
+                String path = filePath + filename;
+
+                newFile = new File(path);
+                if (keepFileName && newFile.exists()) {
+                    newFile.delete();
+                }
+                fileCreated = newFile.createNewFile();
+            }
+            while (!fileCreated);
+            responsePath.append(filename);
+
+            // copy contents of uploaded file into newly created file
+            Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            // return path for getting the file
+            String responseBody = "{\"path\":\"" + responsePath.toString() + "\"}";
+            return ResponseEntity.created(new URI(responsePath.toString())).body(responseBody);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**

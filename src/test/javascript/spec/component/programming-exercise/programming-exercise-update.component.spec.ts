@@ -49,7 +49,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ProgrammingExercise(new Course());
+            const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
@@ -65,7 +65,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ProgrammingExercise();
+            const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = moment(); // We will get a warning if we do not set a release date
             spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
@@ -77,6 +77,23 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toEqual(false);
         }));
+
+        it('Should trim the exercise title before saving', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = moment(); // We will get a warning if we do not set a release date
+            entity.title = 'My Exercise   ';
+            spyOn(programmingExerciseService, 'automaticSetup').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.programmingExercise = entity;
+
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
+            expect(entity.title).toEqual('My Exercise');
+        }));
     });
 
     describe('exam mode', () => {
@@ -85,14 +102,14 @@ describe('ProgrammingExercise Management Update Component', () => {
         const groupId = 1;
         const exerciseGroup = new ExerciseGroup();
         exerciseGroup.id = groupId;
-        const expectedExamProgrammingExercise = new ProgrammingExercise();
+        const expectedExamProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedExamProgrammingExercise.exerciseGroup = exerciseGroup;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId, examId, groupId });
             route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: new ProgrammingExercise() });
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
         });
 
         it('Should be in exam mode after onInit', fakeAsync(() => {
@@ -115,17 +132,17 @@ describe('ProgrammingExercise Management Update Component', () => {
         const courseId = 1;
         const course = new Course();
         course.id = courseId;
-        const expectedProgrammingExercise = new ProgrammingExercise();
+        const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedProgrammingExercise.course = course;
 
         beforeEach(() => {
-            const route = TestBed.get(ActivatedRoute);
+            const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: new ProgrammingExercise() });
+            route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
         });
 
-        it('Should be in exam mode after onInit', fakeAsync(() => {
+        it('Should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             spyOn(courseService, 'find').and.returnValue(of(new HttpResponse({ body: course })));
 

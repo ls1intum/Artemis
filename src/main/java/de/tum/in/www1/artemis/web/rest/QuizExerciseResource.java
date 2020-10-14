@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,6 +49,8 @@ public class QuizExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExamService examService;
+
     private final QuizScheduleService quizScheduleService;
 
     private final QuizStatisticService quizStatisticService;
@@ -58,7 +61,7 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
@@ -68,6 +71,7 @@ public class QuizExerciseResource {
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
+        this.examService = examService;
     }
 
     /**
@@ -302,7 +306,7 @@ public class QuizExerciseResource {
         }
 
         switch (action) {
-            case "start-now":
+            case "start-now" -> {
                 // check if quiz hasn't already started
                 if (quizExercise.isStarted()) {
                     return ResponseEntity.badRequest()
@@ -313,8 +317,8 @@ public class QuizExerciseResource {
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 quizExercise.setIsPlannedToStart(true);
                 groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
-                break;
-            case "set-visible":
+            }
+            case "set-visible" -> {
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
                     return ResponseEntity.badRequest()
@@ -323,8 +327,8 @@ public class QuizExerciseResource {
 
                 // set quiz to visible
                 quizExercise.setIsVisibleBeforeStart(true);
-                break;
-            case "open-for-practice":
+            }
+            case "open-for-practice" -> {
                 // check if quiz has ended
                 if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
@@ -340,10 +344,11 @@ public class QuizExerciseResource {
                 // set quiz to open for practice
                 quizExercise.setIsOpenForPractice(true);
                 groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
-                break;
-            default:
+            }
+            default -> {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action))
                         .build();
+            }
         }
 
         // save quiz exercise
@@ -404,7 +409,16 @@ public class QuizExerciseResource {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
-        if (!originalQuizExercise.isEnded()) {
+
+        if (originalQuizExercise.hasExerciseGroup()) {
+            // Re-evaluation of an exam quiz is only possible if all students finished their exam
+            ZonedDateTime latestIndividualExamEndDate = examService.getLatestIndiviudalExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
+            if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "examOfQuizExerciseNotEnded",
+                        "The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.")).build();
+            }
+        }
+        else if (!originalQuizExercise.isEnded()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotEnded",
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }

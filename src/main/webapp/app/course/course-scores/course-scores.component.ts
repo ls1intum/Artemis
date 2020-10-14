@@ -1,16 +1,16 @@
-import { JhiLanguageService } from 'ng-jhipster';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -25,7 +25,7 @@ const SCORE_KEY = 'Score';
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
-    providers: [],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type
@@ -59,22 +59,18 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
-    options: Intl.NumberFormatOptions = { maximumFractionDigits: 1 }; // TODO: allow user to customize
-    locale = getLang(); // default value, will be overridden by the current language of Artemis
+    private languageChangeSubscription?: Subscription;
 
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
-        private languageHelper: JhiLanguageHelper,
-        private languageService: JhiLanguageService,
         private sortService: SortService,
+        private changeDetector: ChangeDetectorRef,
+        private languageHelper: JhiLanguageHelper,
+        private localeConversionService: LocaleConversionService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
-        this.locale = this.languageService.currentLang;
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            this.locale = languageKey;
-        });
     }
 
     /**
@@ -84,9 +80,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
                 this.course = res.body!;
-                this.exercises = this.course.exercises
-                    .filter((exercise) => {
-                        return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
+                this.exercises = this.course
+                    .exercises!.filter((exercise) => {
+                        return !exercise.releaseDate || exercise.releaseDate.isBefore(moment());
                     })
                     .sort((e1: Exercise, e2: Exercise) => {
                         if (e1.dueDate! > e2.dueDate!) {
@@ -95,16 +91,21 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         if (e1.dueDate! < e2.dueDate!) {
                             return -1;
                         }
-                        if (e1.title > e2.title) {
+                        if (e1.title! > e2.title!) {
                             return 1;
                         }
-                        if (e1.title < e2.title) {
+                        if (e1.title! < e2.title!) {
                             return -1;
                         }
                         return 0;
                     });
-                this.getParticipationsWithResults(this.course.id);
+                this.getParticipationsWithResults(this.course.id!);
             });
+        });
+
+        // Update the view if the language was changed
+        this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
+            this.changeDetector.detectChanges();
         });
     }
 
@@ -117,6 +118,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.participations = participations;
             this.groupExercises();
             this.calculatePointsPerStudent();
+            this.changeDetector.detectChanges();
         });
     }
 
@@ -129,11 +131,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.exercisesPerType.set(exerciseType, exercisesPerType);
             this.exerciseTitlesPerType.set(
                 exerciseType,
-                exercisesPerType.map((exercise) => exercise.title),
+                exercisesPerType.map((exercise) => exercise.title!),
             );
             this.exerciseMaxPointsPerType.set(
                 exerciseType,
-                exercisesPerType.map((exercise) => exercise.maxScore),
+                exercisesPerType.map((exercise) => exercise.maxScore!),
             );
             this.maxNumberOfPointsPerExerciseType.set(
                 exerciseType,
@@ -150,7 +152,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const studentsMap = new Map<number, Student>();
 
         for (const participation of this.participations) {
-            if (participation.results != null && participation.results.length > 0) {
+            if (participation.results && participation.results.length > 0) {
                 for (const result of participation.results) {
                     // reconnect
                     result.participation = participation;
@@ -158,10 +160,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
 
             // find all students by iterating through the participations
-            const participationStudents = participation.student ? [participation.student] : participation.team.students;
+            const participationStudents = participation.student ? [participation.student] : participation.team!.students!;
             for (const participationStudent of participationStudents) {
                 let student = studentsMap.get(participationStudent.id!);
-                if (student == null) {
+                if (!student) {
                     student = new Student(participationStudent);
                     studentsMap.set(participationStudent.id!, student);
                 }
@@ -182,7 +184,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.students.push(student);
 
             for (const exercise of this.exercises) {
-                const participation = student.participations.find((part) => part.exercise.id === exercise.id);
+                const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
                     const result = participation.results[0];
@@ -190,22 +192,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const studentExerciseResultPoints = (result.score * exercise.maxScore) / 100;
+                    const studentExerciseResultPoints = (result.score! * exercise.maxScore!) / 100;
                     student.overallPoints += studentExerciseResultPoints;
-                    student.pointsPerExercise.set(exercise.id, studentExerciseResultPoints);
-                    student.sumPointsPerExerciseType.set(exercise.type, student.sumPointsPerExerciseType.get(exercise.type)! + studentExerciseResultPoints);
+                    student.pointsPerExercise.set(exercise.id!, studentExerciseResultPoints);
+                    student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + studentExerciseResultPoints);
                     student.numberOfParticipatedExercises += 1;
-                    exercise.numberOfParticipationsWithRatedResult += 1;
-                    if (result.score >= 100) {
+                    exercise.numberOfParticipationsWithRatedResult! += 1;
+                    if (result.score! >= 100) {
                         student.numberOfSuccessfulExercises += 1;
-                        exercise.numberOfSuccessfulParticipations += 1;
+                        exercise.numberOfSuccessfulParticipations! += 1;
                     }
 
-                    student.pointsPerExerciseType.get(exercise.type)!.push(studentExerciseResultPoints);
+                    student.pointsPerExerciseType.get(exercise.type!)!.push(studentExerciseResultPoints);
                 } else {
                     // there is no result, the student has not participated or submitted too late
-                    student.pointsPerExercise.set(exercise.id, 0);
-                    student.pointsPerExerciseType.get(exercise.type)!.push(Number.NaN);
+                    student.pointsPerExercise.set(exercise.id!, 0);
+                    student.pointsPerExerciseType.get(exercise.type!)!.push(Number.NaN);
                 }
             }
             for (const exerciseType of this.exerciseTypes) {
@@ -236,10 +238,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.exerciseSuccessfulPerType.set(exerciseType, []); // initialize with empty array
 
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
-                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id)!, 0) / this.students.length;
+                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id!)!, 0) / this.students.length;
                 this.exerciseAveragePointsPerType.get(exerciseType)!.push(exercise.averagePoints);
-                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult);
-                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations);
+                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult!);
+                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations!);
             }
         }
 
@@ -251,7 +253,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportResults() {
         if (this.exportReady && this.students.length > 0) {
-            const rows = [];
+            const rows: any[] = [];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             for (const exerciseType of this.exerciseTypes) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
@@ -287,18 +289,18 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.toLocaleString(exercisePointValues[index]);
+                            rowData[title] = this.localeConversionService.toLocaleString(exercisePointValues[index]);
                         });
-                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(exercisePointsPerType);
-                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(exerciseScoresPerType);
+                        rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
+                        rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
                     }
                 }
 
                 const overallScore = (student.overallPoints / this.maxNumberOfOverallPoints) * 100;
-                rowData[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(student.overallPoints);
-                rowData[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(overallScore);
+                rowData[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
+                rowData[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
-                    rowData[PRESENTATION_SCORE_KEY] = this.toLocaleString(student.presentationScore);
+                    rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
                 }
                 rows.push(rowData);
             }
@@ -314,14 +316,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataMax[title] = this.toLocaleString(exerciseMaxPoints[index]);
+                        rowDataMax[title] = this.localeConversionService.toLocaleString(exerciseMaxPoints[index]);
                     });
-                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
-                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(100);
+                    rowDataMax[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
+                    rowDataMax[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
                 }
             }
-            rowDataMax[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(this.maxNumberOfOverallPoints);
-            rowDataMax[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(100);
+            rowDataMax[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.maxNumberOfOverallPoints);
+            rowDataMax[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
             }
@@ -336,19 +338,21 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.toLocaleString(exerciseAveragePoints[index]);
+                        rowDataAverage[title] = this.localeConversionService.toLocaleString(exerciseAveragePoints[index]);
                     });
 
                     const averageScore = (this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
 
-                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.toLocaleString(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!);
-                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.toLocalePercentageString(averageScore);
+                    rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
+                        this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
+                    );
+                    rowDataAverage[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageScore);
                 }
             }
 
             const averageOverallScore = (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100;
-            rowDataAverage[TOTAL_COURSE_POINTS_KEY] = this.toLocaleString(this.averageNumberOfOverallPoints);
-            rowDataAverage[TOTAL_COURSE_SCORE_KEY] = this.toLocalePercentageString(averageOverallScore);
+            rowDataAverage[TOTAL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
+            rowDataAverage[TOTAL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
                 rowDataAverage[PRESENTATION_SCORE_KEY] = '';
             }
@@ -363,7 +367,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipation[title] = this.toLocaleString(exerciseParticipations[index]);
+                        rowDataParticipation[title] = this.localeConversionService.toLocaleString(exerciseParticipations[index]);
                     });
                     rowDataParticipation[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipation[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -380,7 +384,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataParticipationSuccuessful[title] = this.toLocaleString(exerciseParticipationsSuccessful[index]);
+                        rowDataParticipationSuccuessful[title] = this.localeConversionService.toLocaleString(exerciseParticipationsSuccessful[index]);
                     });
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + POINTS_KEY] = '';
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + SCORE_KEY] = '';
@@ -442,34 +446,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.sortService.sortByProperty(this.students, this.predicate, this.reverse);
     }
 
+    getLocaleConversionService() {
+        return this.localeConversionService;
+    }
+
     /**
      * On destroy unsubscribe.
      */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-    }
-
-    /**
-     * Convert a number value to a locale string.
-     * @param value
-     */
-    toLocaleString(value: number) {
-        if (isNaN(value)) {
-            return '-';
-        } else {
-            return value.toLocaleString(this.locale, this.options);
-        }
-    }
-
-    /**
-     * Convert a number value to a locale string with a % added at the end.
-     * @param value
-     */
-    toLocalePercentageString(value: number) {
-        if (isNaN(value)) {
-            return '-';
-        } else {
-            return value.toLocaleString(this.locale, this.options) + '%';
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
         }
     }
 }
@@ -503,15 +490,4 @@ class Student {
  */
 function capitalizeFirstLetter(string: String) {
     return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-/**
- * Get the language set by the user.
- */
-function getLang() {
-    if (navigator.languages !== undefined) {
-        return navigator.languages[0];
-    } else {
-        return navigator.language;
-    }
 }

@@ -171,11 +171,14 @@ public class ExerciseGroupResource {
      * @param courseId          the course to which the exercise group belongs to
      * @param examId            the exam to which the exercise group belongs to
      * @param exerciseGroupId   the id of the exercise group to delete
+     * @param deleteStudentReposBuildPlans boolean which states whether the corresponding student build plans should be deleted
+     * @param deleteBaseReposBuildPlans boolean which states whether the corresponding base build plans should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
+    public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
+            @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
         Optional<ResponseEntity<Void>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
         if (accessFailure.isPresent()) {
@@ -190,7 +193,7 @@ public class ExerciseGroupResource {
         log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
+            exerciseService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         }
 
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.

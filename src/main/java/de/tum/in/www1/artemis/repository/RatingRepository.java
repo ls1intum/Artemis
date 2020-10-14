@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,18 @@ import de.tum.in.www1.artemis.domain.Rating;
 public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     Optional<Rating> findRatingByResultId(Long resultId);
+
+    /**
+     * Delete all ratings that belong to results of a given participation
+     * @param participationId the Id of the participation where the ratings should be deleted
+     */
+    void deleteByResult_Participation_Id(Long participationId);
+
+    /**
+     * Delete all ratings that belong to the given result
+     * @param resultId the Id of the result where the rating should be deleted
+     */
+    void deleteByResult_Id(long resultId);
+
+    List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
 }

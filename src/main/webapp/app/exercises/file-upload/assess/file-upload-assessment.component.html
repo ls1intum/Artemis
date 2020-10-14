@@ -4,10 +4,12 @@
     [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
+    [isTestRun]="isTestRun"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="onSaveAssessment()"
     (submit)="onSubmitAssessment()"
     (cancel)="onCancelAssessment()"
@@ -16,7 +18,7 @@
 >
     <div class="row mt-4 resizable-horizontal instructions-area" *ngIf="!busy && exercise">
         <div class="row flex-nowrap col-12">
-            <div class="card flex-grow-1 mr-4 file-upload-assessment">
+            <div class="card flex-grow-1 file-upload-assessment">
                 <div class="card-header bg-primary text-white">
                     <span *ngIf="exercise.title">{{ exercise.title }}</span>
                     <span class="flex-fill"></span>
@@ -30,7 +32,9 @@
                             {{ attachmentExtension(submission.filePath!) | uppercase }}
                         </span>
                     </div>
-                    <button class="btn btn-success mt-4" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+                    <button class="btn btn-success mt-4" (click)="addFeedback()" [disabled]="readOnly">
+                        {{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}
+                    </button>
                     <ng-container *ngIf="!busy && !notFound">
                         <div class="row mt-4">
                             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
@@ -45,25 +49,20 @@
                                     [(assessment)]="referencedFeedback[i]"
                                     (assessmentChange)="updateAssessment()"
                                     (deleteAssessment)="deleteAssessment($event)"
+                                    [readOnly]="readOnly"
                                 ></jhi-assessment-detail>
                             </div>
                         </div>
-                        <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()"></jhi-assessment-general-feedback>
+                        <jhi-assessment-general-feedback
+                            [(feedback)]="generalFeedback"
+                            (feedbackChange)="validateAssessment()"
+                            [readOnly]="readOnly"
+                        ></jhi-assessment-general-feedback>
                     </ng-container>
                 </div>
             </div>
 
-            <jhi-resizable-instructions
-                class="resizable-submission card resizable-instructions"
-                id="instructions"
-                [criteria]="this.exercise.gradingCriteria"
-                [problemStatement]="this.exercise.problemStatement"
-                [gradingInstructions]="this.exercise.gradingInstructions"
-                [sampleSolution]="this.exercise.sampleSolution"
-                [toggleCollapse]="toggleCollapse.bind(this)"
-            >
-                <div resizingbar class="resizing-bar"><span></span></div>
-            </jhi-resizable-instructions>
+            <jhi-collapsable-assessment-instructions *ngIf="exercise" [readOnly]="false" [exercise]="exercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
         </div>
     </div>
 </jhi-assessment-layout>

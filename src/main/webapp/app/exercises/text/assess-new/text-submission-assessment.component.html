@@ -12,6 +12,8 @@
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
     [complaint]="complaint"
+    [isTestRun]="isTestRun"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
     (save)="save()"
     (submit)="submit()"
     (cancel)="cancel()"
@@ -30,6 +32,7 @@
                 left-body
                 [submission]="submission"
                 [(textBlockRefs)]="textBlockRefs"
+                [readOnly]="readOnly"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
             ></jhi-text-assessment-area>
@@ -46,8 +49,8 @@
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()"></jhi-unreferenced-feedback>
-            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
+            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()" [readOnly]="readOnly"></jhi-assessment-general-feedback>
         </div>
     </div>
 </ng-template>

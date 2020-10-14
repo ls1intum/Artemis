@@ -1,11 +1,7 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
     <div>
-        <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">
-            Create a new Modeling Exercise
-        </h4>
-        <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">
-            Edit a Modeling Exercise
-        </h4>
+        <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h4>
+        <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h4>
         <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h4>
     </div>
     <div>
@@ -34,7 +30,7 @@
             </div>
         </div>
         <jhi-team-config-form-group [exercise]="modelingExercise"></jhi-team-config-form-group>
-        <div class="d-flex">
+        <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker
                     labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
@@ -55,7 +51,7 @@
                 <span *ngIf="modelingExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
             </div>
         </div>
-        <div class="form-group-narrow">
+        <div class="form-group-narrow" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 name="assessmentDueDate"
                 [error]="modelingExercise.assessmentDueDateError"
@@ -65,19 +61,39 @@
             ></jhi-date-time-picker>
             <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
         </div>
-        <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input
-                type="number"
-                required
-                class="form-control"
-                [pattern]="maxScorePattern"
-                min="0"
-                max="9999"
-                name="maxScore"
-                id="field_maxScore"
-                [(ngModel)]="modelingExercise.maxScore"
-            />
+        <div class="row">
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">points</label>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        [pattern]="maxScorePattern"
+                        min="0"
+                        max="9999"
+                        name="points"
+                        id="field_points"
+                        [(ngModel)]="modelingExercise.maxScore"
+                    />
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        [pattern]="maxScorePattern"
+                        min="0"
+                        max="9999"
+                        name="bonusPoints"
+                        id="field_bonusPoints"
+                        [(ngModel)]="modelingExercise.bonusPoints"
+                    />
+                </div>
+            </div>
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
@@ -96,9 +112,14 @@
                 <option value="CommunicationDiagram">{{ 'artemisApp.DiagramType.CommunicationDiagram' | translate }}</option>
                 <option value="ComponentDiagram">{{ 'artemisApp.DiagramType.ComponentDiagram' | translate }}</option>
                 <option value="DeploymentDiagram">{{ 'artemisApp.DiagramType.DeploymentDiagram' | translate }}</option>
+                <option value="PetriNet">{{ 'artemisApp.DiagramType.PetriNet' | translate }}</option>
+                <option value="SyntaxTree">{{ 'artemisApp.DiagramType.SyntaxTree' | translate }}</option>
             </select>
         </div>
-        <div class="form-group" *ngIf="this.modelingExercise.diagramType === DiagramType.ClassDiagram || this.modelingExercise.diagramType === DiagramType.ActivityDiagram">
+        <div
+            class="form-group"
+            *ngIf="!isExamMode && (this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)"
+        >
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
@@ -158,7 +179,7 @@
             <button
                 *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport && isExamMode"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
+                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course!.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
             >
                 Create example solution
@@ -192,11 +213,11 @@
                     >
                         Example submission {{ i + 1 }}
                     </button>
-                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" [icon]="'chalkboard-teacher'" style="margin-left: 10px;" title="Used for tutorial"></fa-icon>
+                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" [icon]="'chalkboard-teacher'" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon
                         *ngIf="exampleSubmission.submission?.result?.exampleResult"
                         [icon]="'check-circle'"
-                        style="margin-left: 10px;"
+                        style="margin-left: 10px"
                         title="An assessment is available"
                     ></fa-icon>
                     <button *ngIf="!isImport" class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
@@ -217,7 +238,7 @@
             <button
                 *ngIf="modelingExercise.id && !isImport && isExamMode"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
+                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course!.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
                 Create example submission

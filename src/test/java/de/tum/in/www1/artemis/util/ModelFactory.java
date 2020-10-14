@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -17,9 +18,10 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
 
@@ -60,17 +62,29 @@ public class ModelFactory {
         return quizExercise;
     }
 
-    public static QuizExercise generateQuizExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = new QuizExercise();
-        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, releaseDate, dueDate, null, exerciseGroup);
+        quizExercise = (QuizExercise) populateExerciseForExam(quizExercise, exerciseGroup);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsPlannedToStart(false);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
+        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                question.setQuizQuestionStatistic(new DragAndDropQuestionStatistic());
+            }
+            else if (question instanceof MultipleChoiceQuestion) {
+                question.setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
+            }
+            else {
+                question.setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
+            }
+        }
         quizExercise.setRandomizeQuestionOrder(true);
         return quizExercise;
     }
@@ -82,9 +96,9 @@ public class ModelFactory {
         return programmingExercise;
     }
 
-    public static ProgrammingExercise generateProgrammingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ExerciseGroup exerciseGroup) {
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, releaseDate, dueDate, null, exerciseGroup);
+        programmingExercise = (ProgrammingExercise) populateExerciseForExam(programmingExercise, exerciseGroup);
         populateProgrammingExercise(programmingExercise);
         return programmingExercise;
     }
@@ -92,10 +106,13 @@ public class ModelFactory {
     private static void populateProgrammingExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
-        programmingExercise.setTestRepositoryUrl("test@url");
+        final var repoName = (programmingExercise.getProjectKey() + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUrl(testRepoUrl);
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
@@ -106,10 +123,9 @@ public class ModelFactory {
         return modelingExercise;
     }
 
-    public static ModelingExercise generateModelingExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
-            ExerciseGroup exerciseGroup) {
+    public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
         ModelingExercise modelingExercise = new ModelingExercise();
-        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        modelingExercise = (ModelingExercise) populateExerciseForExam(modelingExercise, exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
         return modelingExercise;
     }
@@ -119,9 +135,9 @@ public class ModelFactory {
         return (TextExercise) populateExercise(textExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static TextExercise generateTextExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ExerciseGroup exerciseGroup) {
+    public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = new TextExercise();
-        return (TextExercise) populateExerciseForExam(textExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        return (TextExercise) populateExerciseForExam(textExercise, exerciseGroup);
     }
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
@@ -131,11 +147,10 @@ public class ModelFactory {
         return (FileUploadExercise) populateExercise(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, course);
     }
 
-    public static FileUploadExercise generateFileUploadExerciseForExam(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
-            ExerciseGroup exerciseGroup) {
+    public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup) {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
-        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, releaseDate, dueDate, assessmentDueDate, exerciseGroup);
+        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
@@ -143,6 +158,7 @@ public class ModelFactory {
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Problem Statement");
         exercise.setMaxScore(5.0);
+        exercise.setBonusPoints(0.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
@@ -155,20 +171,25 @@ public class ModelFactory {
         return exercise;
     }
 
-    private static Exercise populateExerciseForExam(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-            ExerciseGroup exerciseGroup) {
+    private static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         exercise.setProblemStatement("Exam Problem Statement");
         exercise.setMaxScore(5.0);
-        exercise.setReleaseDate(releaseDate);
-        exercise.setDueDate(dueDate);
-        exercise.assessmentDueDate(assessmentDueDate);
+        exercise.setBonusPoints(0.0);
+        // these values are set to null explicitly
+        exercise.setReleaseDate(null);
+        exercise.setDueDate(null);
+        exercise.assessmentDueDate(null);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setExerciseGroup(exerciseGroup);
         exercise.setCourse(null);
+        if (!(exercise instanceof QuizExercise)) {
+            exercise.setGradingInstructions("Grading instructions");
+            exercise.setGradingCriteria(List.of(new GradingCriterion()));
+        }
         return exercise;
     }
 
@@ -272,6 +293,12 @@ public class ModelFactory {
         return fileUploadSubmission;
     }
 
+    public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
+        FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
+        fileUploadSubmission.setFilePath(filePath);
+        return fileUploadSubmission;
+    }
+
     public static FileUploadSubmission generateLateFileUploadSubmission() {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(true);
@@ -282,6 +309,15 @@ public class ModelFactory {
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
         submission.setModel(model);
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
+    }
+
+    public static QuizSubmission generateQuizSubmission(boolean submitted) {
+        QuizSubmission submission = new QuizSubmission();
         submission.setSubmitted(submitted);
         if (submitted) {
             submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
@@ -326,6 +362,26 @@ public class ModelFactory {
         return course;
     }
 
+    public static Exam generateExamWithStudentReviewDates(Course course) {
+        ZonedDateTime currentTime = ZonedDateTime.now();
+        Exam exam = new Exam();
+        exam.setTitle("Test exam 1");
+        exam.setVisibleDate(currentTime);
+        exam.setStartDate(currentTime.plusMinutes(10));
+        exam.setEndDate(currentTime.plusMinutes(60));
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setExamStudentReviewStart(currentTime);
+        exam.setExamStudentReviewEnd(currentTime.plusMinutes(60));
+        exam.setCourse(course);
+        return exam;
+    }
+
     public static Exam generateExam(Course course) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
@@ -355,6 +411,7 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
         return studentExam;
     }
 
@@ -398,6 +455,25 @@ public class ModelFactory {
         return feedbacks;
     }
 
+    public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        for (int i = 0; i < numOfFeedback; i++) {
+            feedbackList.add(generateStaticCodeAnalysisFeedback());
+        }
+        return feedbackList;
+    }
+
+    private static Feedback generateStaticCodeAnalysisFeedback() {
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
+        feedback.setReference("Tool");
+        feedback.setDetailText("{\"filePath\":\"" + Constants.STUDENT_WORKING_DIRECTORY
+                + "/www/withSCA/MergeSort.java\",\"startLine\":9,\"endLine\":9,\"startColumn\":11,\"endColumn\":11,\"rule\":\"rule\",\"category\":\"category\",\"message\":\"message\"}");
+        return feedback;
+    }
+
     public static List<Feedback> applySGIonFeedback(Exercise receivedExercise) throws Exception {
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
@@ -418,6 +494,16 @@ public class ModelFactory {
         return feedbacks; // total score should be 3P
     }
 
+    public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
+        FeedbackConflict feedbackConflict = new FeedbackConflict();
+        feedbackConflict.setConflict(true);
+        feedbackConflict.setCreatedAt(ZonedDateTime.now());
+        feedbackConflict.setFirstFeedback(firstFeedback);
+        feedbackConflict.setSecondFeedback(secondFeedback);
+        feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
+        return feedbackConflict;
+    }
+
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
         toBeImported.setCourse(targetCourse);
@@ -425,6 +511,7 @@ public class ModelFactory {
         toBeImported.setShortName(shortName);
         toBeImported.setId(template.getId());
         toBeImported.setTestCases(null);
+        toBeImported.setStaticCodeAnalysisCategories(null);
         toBeImported.setNumberOfAssessments(template.getNumberOfAssessments());
         toBeImported.setNumberOfComplaints(template.getNumberOfComplaints());
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
@@ -435,6 +522,7 @@ public class ModelFactory {
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxScore(template.getMaxScore());
+        toBeImported.setBonusPoints(template.getBonusPoints());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
         toBeImported.setMode(template.getMode());
@@ -442,6 +530,7 @@ public class ModelFactory {
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
+        toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentQuestions(null);
         toBeImported.setStudentParticipations(null);
@@ -543,6 +632,7 @@ public class ModelFactory {
         job.setId(42);
         job.setFailedTests(failedTests);
         job.setSuccessfulTests(successfulTests);
+        job.setLogs(List.of());
 
         summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
         summary.setSuccessfulCount(successfulTestNames.size());
@@ -570,6 +660,86 @@ public class ModelFactory {
         notification.setBuild(build);
 
         return notification;
+    }
+
+    /**
+     * Generate a Bamboo notification with build logs of various sizes
+     *
+     * @param repoName repository name
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return notification with build logs
+     */
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+
+        StringBuilder logBuilder = new StringBuilder();
+        for (int i = 0; i < 254; i++) {
+            logBuilder.append("a");
+        }
+        String logWith254Chars = logBuilder.toString();
+
+        var buildLogDTO254Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO254Chars.setDate(ZonedDateTime.now());
+        buildLogDTO254Chars.setLog(logWith254Chars);
+
+        var buildLogDTO255Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO255Chars.setDate(ZonedDateTime.now());
+        buildLogDTO255Chars.setLog(logWith254Chars + "a");
+
+        var buildLogDTO256Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO256Chars.setDate(ZonedDateTime.now());
+        buildLogDTO256Chars.setLog(logWith254Chars + "aa");
+
+        var largeBuildLogDTO = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        largeBuildLogDTO.setDate(ZonedDateTime.now());
+        largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
+
+        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO));
+
+        return notification;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
+        var checkstyleReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.CHECKSTYLE);
+        var pmdReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.PMD);
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport, checkstyleReport, pmdReport));
+        return notification;
+    }
+
+    private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
+        var report = new StaticCodeAnalysisReportDTO();
+        report.setTool(tool);
+        report.setIssues(List.of(generateStaticCodeAnalysisIssue()));
+        return report;
+    }
+
+    private static StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue generateStaticCodeAnalysisIssue() {
+        var issue = new StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue();
+        issue.setFilePath(Constants.STUDENT_WORKING_DIRECTORY + "/www/packagename/Class1.java");
+        issue.setStartLine(1);
+        issue.setEndLine(2);
+        issue.setStartColumn(1);
+        issue.setEndColumn(10);
+        issue.setRule("Rule");
+        issue.setCategory("Category");
+        issue.setMessage("Message");
+        issue.setPriority("Priority");
+        return issue;
+    }
+
+    public static StaticCodeAnalysisCategory generateStaticCodeAnalysisCategory(ProgrammingExercise programmingExercise, String name, CategoryState state, Double penalty,
+            Double maxPenalty) {
+        var category = new StaticCodeAnalysisCategory();
+        category.setName(name);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(maxPenalty);
+        category.setState(state);
+        category.setProgrammingExercise(programmingExercise);
+        return category;
     }
 
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {

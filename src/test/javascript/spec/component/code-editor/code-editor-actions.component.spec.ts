@@ -81,7 +81,7 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
-    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
+    const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
     const enableRefreshButtonCombinations = cartesianProduct(
         [EditorState.CLEAN, EditorState.UNSAVED_CHANGES],
         [CommitState.COULD_NOT_BE_RETRIEVED, CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES, CommitState.UNDEFINED],
@@ -166,7 +166,7 @@ describe('CodeEditorActionsComponent', () => {
         // receive result for save
         saveObservable.next(savedFilesResult);
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }]);
+        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(onSavedFilesSpy).to.have.been.calledOnceWith(savedFilesResult);
 
         fixture.detectChanges();
@@ -190,7 +190,7 @@ describe('CodeEditorActionsComponent', () => {
         saveButton.nativeElement.click();
 
         // waiting for save result
-        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }]);
+        expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
 
         fixture.detectChanges();
@@ -198,7 +198,7 @@ describe('CodeEditorActionsComponent', () => {
 
         // receive error for save
         saveObservable.error(errorResponse);
-        expect(onErrorSpy).to.have.been.calledOnceWith(errorResponse.error);
+        expect(onErrorSpy).to.have.been.calledOnceWith('saveFailed');
         expect(comp.editorState).to.be.equal(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
         expect(saveButton.nativeElement.disabled).to.be.false;
@@ -232,7 +232,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -268,9 +268,8 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).to.be.false;
     });
 
-    it('should not commit if unsavedFiles exist, instead should save files first and then try to commit', () => {
+    it('should not commit if unsavedFiles exist, instead should save files with commit set to true', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
-        const commitObservable = new Subject<null>();
         const saveObservable = new Subject<null>();
         const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -281,7 +280,6 @@ describe('CodeEditorActionsComponent', () => {
         comp.saveChangedFiles = saveChangedFilesStub;
         fixture.detectChanges();
 
-        commitStub.returns(commitObservable);
         saveChangedFilesStub.returns(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
@@ -289,19 +287,18 @@ describe('CodeEditorActionsComponent', () => {
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
+
         expect(commitStub).to.not.have.been.called;
         expect(saveChangedFilesStub).to.have.been.calledOnce;
-
-        // save completed
-        saveObservable.next(null);
         expect(comp.commitState).to.equal(CommitState.COMMITTING);
 
-        // commit result returns
-        commitObservable.next(null);
+        // save + commit completed
+        saveObservable.next(null);
+
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).to.be.true;
+        expect(commitButton.nativeElement.disabled).to.be.false;
     });
 });

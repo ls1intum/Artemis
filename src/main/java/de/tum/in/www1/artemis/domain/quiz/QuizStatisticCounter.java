@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -10,6 +7,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  * A QuizStatisticCounter.
@@ -22,13 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizStatisticCounter implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public abstract class QuizStatisticCounter extends DomainObject {
 
     @Column(name = "rated_counter")
     private Integer ratedCounter = 0;
@@ -36,21 +28,8 @@ public abstract class QuizStatisticCounter implements Serializable {
     @Column(name = "un_rated_counter")
     private Integer unRatedCounter = 0;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Integer getRatedCounter() {
         return ratedCounter;
-    }
-
-    public QuizStatisticCounter ratedCounter(Integer ratedCounter) {
-        this.ratedCounter = ratedCounter;
-        return this;
     }
 
     public void setRatedCounter(Integer ratedCounter) {
@@ -61,37 +40,7 @@ public abstract class QuizStatisticCounter implements Serializable {
         return unRatedCounter;
     }
 
-    public QuizStatisticCounter unRatedCounter(Integer unRatedCounter) {
-        this.unRatedCounter = unRatedCounter;
-        return this;
-    }
-
     public void setUnRatedCounter(Integer unRatedCounter) {
         this.unRatedCounter = unRatedCounter;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        QuizStatisticCounter quizStatisticCounter = (QuizStatisticCounter) o;
-        if (quizStatisticCounter.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), quizStatisticCounter.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
-
-    @Override
-    public String toString() {
-        return "QuizStatisticCounter{" + "id=" + getId() + ", ratedCounter='" + getRatedCounter() + "'" + ", unRatedCounter='" + getUnRatedCounter() + "'" + "}";
     }
 }

@@ -11,6 +11,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -94,12 +95,30 @@ export class ExamManagementService {
      * Returns the exam with the provided unique identifier for the tutor dashboard
      * @param courseId - the id of the course
      * @param examId - the id of the exam
+     * @param isTestRun - boolean to determine whether it is a test run
      */
-    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
+        let url: string;
+        if (isTestRun) {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;
+        } else {
+            url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-dashboard`;
+        }
         return this.http
             .get<Exam>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
+    getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
+        return this.http
+            .get<ExamInformationDTO>(url, { observe: 'response' })
+            .pipe(
+                map((res: HttpResponse<ExamInformationDTO>) => {
+                    res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
+                    return res;
+                }),
+            );
     }
 
     /**
@@ -137,6 +156,7 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
+     * @param withParticipationsAndSubmission
      */
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
@@ -151,6 +171,36 @@ export class ExamManagementService {
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Generate a test run student exam based on the testRunConfiguration.
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunConfiguration the desired configuration
+     * @returns the created test run
+     */
+    createTestRun(courseId: number, examId: number, testRunConfiguration: StudentExam): Observable<HttpResponse<StudentExam>> {
+        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run`, testRunConfiguration, { observe: 'response' });
+    }
+
+    /**
+     * Delete a test run
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param testRunId the id of the test run
+     */
+    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<StudentExam>> {
+        return this.http.delete<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-run/${testRunId}`, { observe: 'response' });
+    }
+
+    /**
+     * Find all the test runs for the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     */
+    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
+        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
     }
 
     /**
@@ -215,23 +265,23 @@ export class ExamManagementService {
 
     private static convertDateFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
-            startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : null,
-            endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : null,
-            visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : null,
-            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : null,
-            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : null,
-            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : null,
+            startDate: exam.startDate && moment(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
+            endDate: exam.endDate && moment(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
+            visibleDate: exam.visibleDate && moment(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
+            publishResultsDate: exam.publishResultsDate && moment(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
+            examStudentReviewStart: exam.examStudentReviewStart && moment(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
+            examStudentReviewEnd: exam.examStudentReviewEnd && moment(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
         });
     }
 
     private static convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : null;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : null;
-            res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : null;
-            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : null;
-            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : null;
-            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : null;
+            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
+            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
+            res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : undefined;
+            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : undefined;
+            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : undefined;
+            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : undefined;
         }
         return res;
     }
@@ -239,12 +289,12 @@ export class ExamManagementService {
     private static convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((exam: Exam) => {
-                exam.startDate = exam.startDate ? moment(exam.startDate) : null;
-                exam.endDate = exam.endDate ? moment(exam.endDate) : null;
-                exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : null;
-                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : null;
-                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : null;
-                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : null;
+                exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
+                exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
+                exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
+                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
+                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
+                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
             });
         }
         return res;

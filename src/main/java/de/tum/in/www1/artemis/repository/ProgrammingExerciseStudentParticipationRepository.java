@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -21,8 +22,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission "
+            + "where p.id = :participationId and (pr.id = (select max(prr.id) from p.results prr where prr.assessmentType = 'AUTOMATIC' or (prr.completionDate IS NOT NULL and (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :#{#dateTime}))) or pr.id IS NULL)")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
+            @Param("dateTime") ZonedDateTime dateTime);
+
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission left join fetch pr.assessor where p.id = :participationId")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithResultsAndFeedbacksAndRelatedSubmissionsAndAssessor(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);

@@ -11,9 +11,6 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     private restResourceUrlBase = `${SERVER_API_URL}/api`;
     protected restResourceUrl: string | null;
-    private websocketResourceUrlBase = '/topic';
-    protected websocketResourceUrlSend: string | null;
-    protected websocketResourceUrlReceive: string | null;
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
@@ -30,18 +27,12 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         switch (domainType) {
             case DomainType.PARTICIPATION:
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
                 break;
             case DomainType.TEST_REPOSITORY:
                 this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
-                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/test-repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
                 break;
             default:
                 this.restResourceUrl = null;
-                this.websocketResourceUrlSend = null;
-                this.websocketResourceUrlReceive = null;
         }
     }
 }

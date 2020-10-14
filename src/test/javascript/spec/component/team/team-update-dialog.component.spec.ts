@@ -1,3 +1,4 @@
+import * as ace from 'brace';
 import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
@@ -24,6 +25,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('TeamUpdateDialogComponent', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist.js');
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
     let debugElement: DebugElement;
@@ -174,12 +177,12 @@ describe('TeamUpdateDialogComponent', () => {
         studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
         tick();
         fixture.detectChanges();
-        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1));
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students?.slice(1));
 
         // Add three new team members
         mockNonTeamStudents.forEach((student) => comp.onAddStudent(student));
         fixture.detectChanges();
-        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1).concat(mockNonTeamStudents));
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students?.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
         const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');

@@ -8,12 +8,7 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,28 +22,12 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -57,21 +36,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ComplaintService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExamService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.service.NotificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorDashboardService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
-import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -107,21 +72,15 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamService examService;
-
     private final ExerciseService exerciseService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final LectureService lectureService;
-
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final NotificationService notificationService;
 
     private final SubmissionService submissionService;
 
@@ -142,24 +101,21 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExamService examService, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, SubmissionService submissionService,
-            ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService, TutorDashboardService tutorDashboardService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ResultService resultService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService,
+            TutorDashboardService tutorDashboardService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
         this.courseRepository = courseRepository;
-        this.examService = examService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.lectureService = lectureService;
-        this.notificationService = notificationService;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
@@ -172,7 +128,7 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses : Create a new course.
+     * POST /courses : create a new course.
      *
      * @param course the course to create
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
@@ -277,7 +233,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        if (authCheckService.isAdmin()) {
+        if (authCheckService.isAdmin(user)) {
             // if an admin changes a group, we need to check that the changed group exists
             try {
                 if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
@@ -412,7 +368,7 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
+                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
@@ -552,7 +508,7 @@ public class CourseResource {
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations);
+        tutorDashboardService.prepareExercisesForTutorDashboard(course.getExercises(), tutorParticipations, false);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -663,12 +619,12 @@ public class CourseResource {
             DueDateStat numberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()), 0L);
-                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                numberOfAssessments = new DueDateStat(programmingExerciseService.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
-                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
-                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId(), false);
+                numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
             }
 
             exercise.setNumberOfSubmissions(numberOfSubmissions);
@@ -786,51 +742,11 @@ public class CourseResource {
         if (course == null) {
             return notFound();
         }
-
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
-
-        for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
-        }
-
-        for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
-        }
-
-        List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
-        for (GroupNotification notification : notifications) {
-            notificationService.deleteNotification(notification);
-        }
-        String title = course.getTitle();
-
-        // only delete (default) groups which have been created by Artemis before
-        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
-        }
-        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
-        }
-        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
-            artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
-        }
-
-        // delete the Exams
-        List<Exam> exams = examService.findAllByCourseId(courseId);
-        for (Exam exam : exams) {
-            exam = examService.findOneWithExercisesGroupsAndStudentExamsByExamId(exam.getId());
-            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseService.delete(exercise.getId(), false, false);
-                }
-            }
-            examService.delete(exam.getId());
-        }
-
-        courseService.delete(courseId);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
+        courseService.delete(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, course.getTitle())).build();
     }
 
     /**
@@ -846,7 +762,7 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user)) {
+        if (authCheckService.isAdmin(user) || authCheckService.isInstructorInCourse(course, user)) {
             Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
             return ResponseEntity.ok().body(categories);
         }
@@ -969,7 +885,7 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+        if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 return notFound();
@@ -1038,7 +954,7 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+        if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToRemoveFromGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToRemoveFromGroup.isEmpty()) {
                 return notFound();

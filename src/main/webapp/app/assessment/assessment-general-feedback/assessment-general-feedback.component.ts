@@ -10,6 +10,7 @@ export class AssessmentGeneralFeedbackComponent {
     private feedbackClone: Feedback;
     public text: string;
 
+    @Input() readOnly: boolean;
     @Input() set feedback(feedback: Feedback) {
         this.feedbackClone = Object.assign({}, feedback);
         this.text = feedback.detailText || '';
@@ -20,9 +21,8 @@ export class AssessmentGeneralFeedbackComponent {
     /**
      * Emits the change of the general feedback detail text to the parent component
      */
-    public onTextChange(text: string): void {
-        const feedbackText = text;
-        this.feedbackClone.detailText = feedbackText.length > 0 ? feedbackText : null;
+    public onTextChange(feedbackText: string): void {
+        this.feedbackClone.detailText = feedbackText.length > 0 ? feedbackText : undefined;
         this.feedbackChange.emit(this.feedbackClone);
     }
 }

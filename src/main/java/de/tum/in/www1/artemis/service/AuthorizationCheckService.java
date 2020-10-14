@@ -4,6 +4,8 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,7 +57,7 @@ public class AuthorizationCheckService {
 
     /**
      * checks if the passed user is at least a teaching assistant in the course of the given exercise
-     * The course is identified from either {@link Exercise#getCourse()} or {@link Exam#getCourse()}
+     * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
      *
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
@@ -106,7 +108,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin();
+        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
     }
 
     /**
@@ -122,7 +124,7 @@ public class AuthorizationCheckService {
             user = userService.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin();
+                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin(user);
     }
 
     /**
@@ -159,7 +161,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin();
+        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
     }
 
     /**
@@ -299,18 +301,21 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
-        if (isAdmin()) {
-            return true;
-        }
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();
+        }
+        if (isAdmin(user)) {
+            return true;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
     /**
-     * checks if the currently logged in user is an admin user
+     * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
+     * Preferably use the method isAdmin(user) below
+     *
+     * Checks if the currently logged in user is an admin user
      *
      * @return true, if user is admin, otherwise false
      */
@@ -319,8 +324,18 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the currently logged in user is an admin user
+     * @param user the user with authorities. Both cannot be null
+     *
+     * @return true, if user is admin, otherwise false
+     */
+    public boolean isAdmin(@NotNull User user) {
+        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+    }
+
+    /**
      * Checks if the currently logged in user is allowed to retrieve the given result.
-     * The user is allowed to retrieve the result if (s)he is at least a student in the corresponding course, the
+     * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
      *
      * @param exercise      the corresponding exercise
@@ -329,8 +344,26 @@ public class AuthorizationCheckService {
      * @return true if the user is allowed to retrieve the given result, false otherwise
      */
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        return isAtLeastStudentForExercise(exercise) && isOwnerOfParticipation(participation)
+        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
                 && result.getCompletionDate() != null;
+    }
+
+    /**
+     * Checks if the user is allowed to see the exam result. Returns true if
+     *
+     * - the current user is at least teaching assistant in the course
+     * - OR if the exercise is not part of an exam
+     * - OR if the exam has not ended
+     * - OR if the exam has already ended and the results were published
+     *
+     * @param exercise - Exercise that the result is requested for
+     * @param user - User that requests the result
+     * @return true if user is allowed to see the result, false otherwise
+     */
+    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
+        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
+                || (exercise.hasCourse() || (exercise.hasExerciseGroup() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
+                        || exercise.getExerciseGroup().getExam().resultsPublished());
     }
 }

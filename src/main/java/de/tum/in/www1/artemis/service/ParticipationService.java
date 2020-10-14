@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -56,6 +59,8 @@ public class ParticipationService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final RatingRepository ratingRepository;
+
     private final TeamRepository teamRepository;
 
     private final StudentExamRepository studentExamRepository;
@@ -68,8 +73,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ConflictingResultService conflictingResultService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final QuizScheduleService quizScheduleService;
@@ -80,8 +83,8 @@ public class ParticipationService {
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService, @Lazy QuizScheduleService quizScheduleService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
+            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -98,9 +101,9 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
+        this.ratingRepository = ratingRepository;
     }
 
     /**
@@ -241,9 +244,45 @@ public class ParticipationService {
                 }
             }
         }
-        participation = save(participation);
+        return save(participation);
+    }
 
-        return participation;
+    /**
+     * In order to distinguish test run submissions from student exam submissions we add a manual result to the test run submissions.
+     * We add draft assessments with the instructor as assessor to the empty submissions in order to hide them from tutors for correction.
+     * This way the submission appears to, and can only by assessed by, the instructor who created the test run.
+     * @param participations The test run participations
+     */
+    public void markSubmissionsOfTestRunParticipations(List<StudentParticipation> participations) {
+        for (final var participation : participations) {
+            final Exercise exercise = participation.getExercise();
+            Submission submission;
+            if (participation instanceof ProgrammingExerciseParticipation) {
+                Set<Submission> programmingSubmissions = new HashSet<>(submissionRepository.findAllByParticipationId(participation.getId()));
+                participation.setSubmissions(programmingSubmissions);
+                initializeSubmission(participation, exercise, null);
+                submission = participation.getSubmissions().iterator().next();
+                // required so that the tutor dashboard statistics are calculated correctly
+                submission.setSubmitted(true);
+            }
+            else {
+                submission = participation.getSubmissions().iterator().next();
+            }
+            submission.setSubmissionDate(ZonedDateTime.now());
+            // We add a result for test runs with the user set as an assessor in order to make sure it doesnt show up for assessment for the tutors
+            if (submission.getResult() == null) {
+                Result result = new Result();
+                result.setSubmission(submission);
+                submission.setResult(result);
+                result.setParticipation(submission.getParticipation());
+                submission.getResult().setAssessor(participation.getStudent().get());
+                submission.getResult().setAssessmentType(AssessmentType.TEST_RUN);
+
+                resultRepository.save(result);
+                submissionRepository.save(submission);
+            }
+            save(participation);
+        }
     }
 
     /**
@@ -478,9 +517,9 @@ public class ParticipationService {
             final var projectKey = programmingExercise.getProjectKey();
             final var participantIdentifier = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+            final var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);
@@ -498,7 +537,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise, participation));
+            boolean allowAccess = !isExamExercise(exercise) || ZonedDateTime.now().isAfter(getIndividualReleaseDate(exercise));
             versionControlService.get().configureRepository(exercise, participation.getRepositoryUrlAsUrl(), participation.getStudents(), allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
@@ -570,22 +609,15 @@ public class ParticipationService {
      * Currently, exercise start dates are the same for all users
      *
      * @param exercise that is possibly part of an exam
-     * @param participation the participation of the student
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
      */
-    public ZonedDateTime getIndividualReleaseDate(Exercise exercise, StudentParticipation participation) {
-        var studentExam = findStudentExam(exercise, participation).orElse(null);
-        // this is the case for all non-exam exercises
-        if (studentExam == null) {
+    public ZonedDateTime getIndividualReleaseDate(Exercise exercise) {
+        if (isExamExercise(exercise)) {
+            return exercise.getExerciseGroup().getExam().getStartDate();
+        }
+        else {
             return exercise.getReleaseDate();
         }
-        var exerciseReleaseDate = exercise.getReleaseDate();
-        var examStartDate = studentExam.getExam().getStartDate();
-        // use the exerciseReleaseDate if it was explicitly set to start after the exam
-        if (exerciseReleaseDate != null && exerciseReleaseDate.isAfter(examStartDate)) {
-            return exerciseReleaseDate;
-        }
-        return examStartDate;
     }
 
     /**
@@ -840,10 +872,24 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
+     * @param examMode flag should be set to ignore test run submissions
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to exercise with eager latest {@link AssessmentType#AUTOMATIC} results and feedbacks.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId);
     }
 
     /**
@@ -860,9 +906,13 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
      *
      * @param exerciseId the id of exercise
+     * @param examMode set flag to ignore test run submissions for exam mode
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId, boolean examMode) {
+        if (examMode) {
+            return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+        }
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
@@ -909,6 +959,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRun(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndNoTestRunParticipation(exerciseId);
+    }
+
+    /**
      * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
@@ -920,14 +981,14 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations belonging to exam with relevant results.
+     * Get all participations belonging to exam with submissions and their relevant results.
      *
      * @param examId the id of the exam
      * @return list of participations belonging to course
      */
-    public List<StudentParticipation> findByExamIdWithRelevantResult(Long examId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerRatedResults(examId);
-        return filterParticipationsWithRelevantResults(participations);
+    public List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExamIdWithEagerSubmissionsRatedResults(examId);
+        return filterParticipationsWithRelevantResults(participations, true);
     }
 
     /**
@@ -938,15 +999,28 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations);
+        return filterParticipationsWithRelevantResults(participations, false);
     }
 
     /**
-     * filters the relevant results by removing all irrelevent ones (
+     * filters the relevant results by removing all irrelevent ones
      * @param participations the participations to get filtered
+     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+        // if exam exercise
+        if (!participations.isEmpty() && participations.get(0).getExercise().getExerciseGroup() != null) {
+            List<User> instructors = userService.getInstructors(participations.get(0).getExercise().getExerciseGroup().getExam().getCourse());
+            // filter out the participations of test runs which can only be made by instructors
+            participations = participations.stream().filter(studentParticipation -> {
+                if (studentParticipation.getStudent().isPresent()) {
+                    return !instructors.contains(studentParticipation.getStudent().get());
+                }
+                return true;
+            }).collect(Collectors.toList());
+        }
+
         return participations.stream()
 
                 // Filter out participations without Students
@@ -957,9 +1031,17 @@ public class ParticipationService {
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<Result>();
 
+                    // Get the results over the participation or over submissions
+                    Set<Result> resultsOfParticipation;
+                    if (resultInSubmission) {
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getResult).collect(Collectors.toSet());
+                    }
+                    else {
+                        resultsOfParticipation = participation.getResults();
+                    }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : participation.getResults()) {
+                    for (Result result : resultsOfParticipation) {
                         // this should not happen because the database call above only retrieves rated results
                         if (Boolean.FALSE.equals(result.isRated())) {
                             continue;
@@ -1056,7 +1138,9 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.deleteLocalRepository(programmingExerciseParticipation);
+                    // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
+                    Repository repo = gitService.getOrCheckoutRepository(programmingExerciseParticipation.getRepositoryUrlAsUrl(), false);
+                    gitService.deleteLocalRepository(repo);
                 }
             }
             catch (Exception ex) {
@@ -1066,6 +1150,7 @@ public class ParticipationService {
 
         complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
         complaintRepository.deleteByResult_Participation_Id(participationId);
+        ratingRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
@@ -1087,11 +1172,6 @@ public class ParticipationService {
         // This is the default case: We delete results and submissions from direction result -> submission. This will only delete submissions that have a result.
         if (participation.getResults() != null) {
             for (Result result : participation.getResults()) {
-
-                if (participation.getExercise() instanceof ModelingExercise) {
-                    // The conflicting results referencing a result of the given participation need to be deleted to prevent Hibernate constraint violation errors.
-                    conflictingResultService.deleteConflictingResultsByResultId(result.getId());
-                }
 
                 resultRepository.deleteById(result.getId());
                 // The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not
@@ -1223,6 +1303,22 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Loads the test run participation for the instructor.
+     * See {@link StudentParticipation#isTestRunParticipation()}
+     * @param instructorId the id of the instructor
+     * @param exercise the exercise id
+     * @return the optional test run participation with submissions and results loaded
+     */
+    public Optional<StudentParticipation> findTestRunParticipationOfInstructorForExercise(Long instructorId, Exercise exercise) {
+        var studentParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructorId, List.of(exercise));
+        if (studentParticipations.isEmpty() || !studentParticipations.get(0).isTestRunParticipation()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(studentParticipations.get(0));
     }
 
     /**

@@ -8,14 +8,16 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     public exerciseHints: ExerciseHint[] = [];
-    private latestResult: Result | null = null;
+    private latestResult?: Result;
+    private exercise: Exercise;
 
-    private testsForTaskSubject = new Subject<TaskArray>();
+    private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
@@ -30,10 +32,19 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     /**
      * Sets latest result according to parameter.
-     * @param result - either a result or null.
+     * @param result - either a result or undefined.
      */
-    public setLatestResult(result: Result | null) {
+    public setLatestResult(result: Result | undefined) {
         this.latestResult = result;
+    }
+
+    /**
+     * Sets the exercise. This is needed as multiple instructions components use this service in parallel and we have to
+     * associate tasks with an exercise to identify tasks properly
+     * @param exercise - the current exercise.
+     */
+    public setExercise(exercise: Exercise) {
+        this.exercise = exercise;
     }
 
     /**
@@ -61,7 +72,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id.toString(10)));
+                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
@@ -107,7 +118,11 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });
-                this.testsForTaskSubject.next(testsForTask);
+                const tasksWithParticipationId: TaskArrayWithExercise = {
+                    exerciseId: this.exercise.id!,
+                    tasks: testsForTask,
+                };
+                this.testsForTaskSubject.next(tasksWithParticipationId);
                 // Emit new found elements that need to be injected into html after it is rendered.
                 this.injectableElementsFoundSubject.next(() => {
                     this.injectTasks(testsForTask);

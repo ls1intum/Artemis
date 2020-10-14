@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -12,8 +10,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -22,9 +18,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
@@ -32,14 +26,8 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     @JsonView(QuizView.Before.class)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
-    }
-
-    public DragAndDropSubmittedAnswer mappings(Set<DragAndDropMapping> dragAndDropMappings) {
-        this.mappings = dragAndDropMappings;
-        return this;
     }
 
     public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping dragAndDropMapping) {
@@ -57,7 +45,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
         this.mappings = dragAndDropMappings;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Get the drag item that was drag-and-dropped on the given drop location
@@ -76,7 +63,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
 
     /**
      * Check if a dragItem or dropLocation were deleted and delete reference to in mappings
-     * 
+     *
      * @param question the changed question with the changed DragItems and DropLocations
      */
     private void checkAndDeleteMappings(DragAndDropQuestion question) {
@@ -114,26 +101,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
             // Check if a dragItem or dropLocation was deleted and delete the mappings with it
             checkAndDeleteMappings((DragAndDropQuestion) quizQuestion);
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) o;
-        if (dragAndDropSubmittedAnswer.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), dragAndDropSubmittedAnswer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
     }
 
     @Override

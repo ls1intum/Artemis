@@ -43,7 +43,7 @@ In this case the reviewer or PR maintainer needs to make sure to create an issue
 
 ## Development Workflow
 
-Find here [a guide](doc/setup/SETUP.md) on how to setup your local development environment.
+Find here [a guide](docs/dev/setup.rst) on how to setup your local development environment.
 
 ## Route Naming Conventions
 
@@ -82,6 +82,7 @@ Encouraged html styling:
 
 We create unit & integration tests for the Artemis server and client.
 Adding tests is an integral part of any pull request - please be aware that your pull request will not be approved until you provide automated tests for your implementation!
+Our goal is to keep the test coverage above 80%.
 
 ### Server Testing
 

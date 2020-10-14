@@ -14,13 +14,13 @@ import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
-export const enum DifficultyLevel {
+export enum DifficultyLevel {
     EASY = 'EASY',
     MEDIUM = 'MEDIUM',
     HARD = 'HARD',
 }
 
-export const enum ExerciseMode {
+export enum ExerciseMode {
     INDIVIDUAL = 'INDIVIDUAL',
     TEAM = 'TEAM',
 }
@@ -57,33 +57,34 @@ export interface ExerciseCategory {
 }
 
 export abstract class Exercise implements BaseEntity {
-    public id: number;
-    public problemStatement: string | null;
-    public gradingInstructions: string;
-    public title: string;
-    public shortName: string;
-    public releaseDate: Moment | null;
-    public dueDate: Moment | null;
-    public assessmentDueDate: Moment | null;
-    public maxScore: number;
-    public assessmentType: AssessmentType;
-    public difficulty: DifficultyLevel | null;
-    public mode: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
-    public teamAssignmentConfig: TeamAssignmentConfig | null;
-    public categories: string[];
-    public type: ExerciseType;
+    public id?: number;
+    public problemStatement?: string;
+    public gradingInstructions?: string;
+    public title?: string;
+    public shortName?: string;
+    public releaseDate?: Moment;
+    public dueDate?: Moment;
+    public assessmentDueDate?: Moment;
+    public maxScore?: number;
+    public bonusPoints?: number;
+    public assessmentType?: AssessmentType;
+    public difficulty?: DifficultyLevel;
+    public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
+    public teamAssignmentConfig?: TeamAssignmentConfig;
+    public categories?: string[];
+    public type?: ExerciseType;
 
-    public teams: Team[];
-    public studentParticipations: StudentParticipation[];
-    public tutorParticipations: TutorParticipation[];
-    public course: Course | null;
-    public participationStatus: ParticipationStatus;
-    public exampleSubmissions: ExampleSubmission[];
-    public attachments: Attachment[];
-    public studentQuestions: StudentQuestion[];
-    public exerciseHints: ExerciseHint[];
-    public gradingCriteria: GradingCriterion[];
-    public exerciseGroup: ExerciseGroup | null;
+    public teams?: Team[];
+    public studentParticipations?: StudentParticipation[];
+    public tutorParticipations?: TutorParticipation[];
+    public course?: Course;
+    public participationStatus?: ParticipationStatus;
+    public exampleSubmissions?: ExampleSubmission[];
+    public attachments?: Attachment[];
+    public studentQuestions?: StudentQuestion[];
+    public exerciseHints?: ExerciseHint[];
+    public gradingCriteria?: GradingCriterion[];
+    public exerciseGroup?: ExerciseGroup;
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
@@ -96,23 +97,43 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamIdComputed = false;
 
     // helper attributes
-    public isAtLeastTutor = false; // default value
-    public isAtLeastInstructor = false; // default value
-    public teamMode = false; // default value
-    public assessmentDueDateError = false;
-    public dueDateError = false;
-    public loading: boolean;
-    public numberOfParticipationsWithRatedResult: number;
-    public numberOfSuccessfulParticipations: number;
-    public averagePoints: number;
-    public presentationScoreEnabled = false; // default value;
+    public isAtLeastTutor?: boolean;
+    public isAtLeastInstructor?: boolean;
+    public teamMode?: boolean;
+    public assessmentDueDateError?: boolean;
+    public dueDateError?: boolean;
+    public loading?: boolean;
+    public numberOfParticipationsWithRatedResult?: number;
+    public numberOfSuccessfulParticipations?: number;
+    public averagePoints?: number;
+    public presentationScoreEnabled?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
+        this.bonusPoints = 0; // default value
+        this.isAtLeastTutor = false; // default value
+        this.isAtLeastInstructor = false; // default value
+        this.teamMode = false; // default value
+        this.assessmentDueDateError = false;
+        this.dueDateError = false;
+        this.presentationScoreEnabled = false; // default value;
+    }
+
+    /**
+     * Sanitize exercise attributes.
+     * This method should be used before sending an exercise to the server.
+     *
+     * @param exercise
+     */
+    public static sanitize(exercise: Exercise): void {
+        exercise.title = exercise.title?.trim();
     }
 }
 
-export function getIcon(exerciseType: ExerciseType): string {
+export function getIcon(exerciseType?: ExerciseType): string {
+    if (!exerciseType) {
+        return '';
+    }
     const icons = {
         [ExerciseType.PROGRAMMING]: 'keyboard',
         [ExerciseType.MODELING]: 'project-diagram',
@@ -124,7 +145,10 @@ export function getIcon(exerciseType: ExerciseType): string {
     return icons[exerciseType];
 }
 
-export function getIconTooltip(exerciseType: ExerciseType): string {
+export function getIconTooltip(exerciseType?: ExerciseType): string {
+    if (!exerciseType) {
+        return '';
+    }
     const tooltips = {
         [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',
         [ExerciseType.MODELING]: 'artemisApp.exercise.isModeling',
@@ -142,8 +166,14 @@ export function getIconTooltip(exerciseType: ExerciseType): string {
  * @param exercise the exercise for which the course id should be extracted
  */
 export function getCourseId(exercise: Exercise): number | undefined {
-    if (exercise.course) {
-        return exercise.course.id;
-    }
-    return exercise.exerciseGroup?.exam?.course.id;
+    return getCourseFromExercise(exercise)?.id;
+}
+
+/**
+ * Get the course for an exercise.
+ * The course is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
+ * @param exercise the exercise for which the course should be extracted
+ */
+export function getCourseFromExercise(exercise: Exercise): Course | undefined {
+    return exercise.course || exercise.exerciseGroup?.exam?.course;
 }
