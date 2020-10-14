@@ -75,13 +75,35 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.splitControlSubject.next(pane);
     }
 
-    checkPlagiarismJson() {
+    /**
+     * Trigger the server-side plagiarism detection and fetch its result.
+     */
+    checkPlagiarism() {
+        this.plagiarismDetectionInProgress = true;
+
+        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
+            (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
+                this.plagiarismDetectionInProgress = false;
+                this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);
+            },
+            () => (this.plagiarismDetectionInProgress = false),
+        );
+    }
+
+    /**
+     * Download plagiarism detection results as JSON document.
+     */
+    downloadPlagiarismResultsJson() {
         const json = JSON.stringify(this.modelingSubmissionComparisons);
         const blob = new Blob([json], { type: 'application/json' });
+
         downloadFile(blob, `check-plagiarism-modeling-exercise_${this.modelingExercise.id}.json`);
     }
 
-    checkPlagiarismCsv() {
+    /**
+     * Download plagiarism detection results as CSV document.
+     */
+    downloadPlagiarismResultsCsv() {
         if (this.modelingSubmissionComparisons.length > 0) {
             const csvExporter = new ExportToCsv({
                 fieldSeparator: ';',
@@ -145,17 +167,5 @@ export class PlagiarismInspectorComponent implements OnInit {
 
             csvExporter.generateCsv(csvData);
         }
-    }
-
-    checkPlagiarism() {
-        this.plagiarismDetectionInProgress = true;
-
-        this.modelingExerciseService.checkPlagiarism(this.modelingExercise.id!).subscribe(
-            (response: HttpResponse<Array<ModelingSubmissionComparisonDTO>>) => {
-                this.plagiarismDetectionInProgress = false;
-                this.modelingSubmissionComparisons = response.body!.sort((c1, c2) => c2.similarity - c1.similarity);
-            },
-            () => (this.plagiarismDetectionInProgress = false),
-        );
     }
 }

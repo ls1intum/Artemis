@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService, ModelingSubmissionComparisonDTO } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
@@ -10,6 +11,11 @@ import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/pl
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { downloadFile } from 'app/shared/util/download.util';
+
+jest.mock('app/shared/util/download.util', () => ({
+    downloadFile: jest.fn(),
+}));
 
 describe('Plagiarism Inspector Component', () => {
     let comp: PlagiarismInspectorComponent;
@@ -17,7 +23,21 @@ describe('Plagiarism Inspector Component', () => {
     let modelingExerciseService: ModelingExerciseService;
 
     const modelingComparisons = [
-        { similarity: 0.5 } as ModelingSubmissionComparisonDTO,
+        {
+            similarity: 0.5,
+            element1: {
+                studentLogin: 'ab10cde',
+                submissionId: 1,
+                score: 10,
+                size: 5,
+            },
+            element2: {
+                studentLogin: 'ab20cde',
+                submissionId: 2,
+                score: 10,
+                size: 6,
+            },
+        } as ModelingSubmissionComparisonDTO,
         { similarity: 0.9 } as ModelingSubmissionComparisonDTO,
         { similarity: 0.8 } as ModelingSubmissionComparisonDTO,
     ];
@@ -73,5 +93,23 @@ describe('Plagiarism Inspector Component', () => {
         comp.handleSplitViewChange('left');
 
         expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
+    });
+
+    it('should fetch the plagiarism detection results', () => {
+        comp.modelingExercise = modelingExercise;
+        const mockResponse = new HttpResponse({ body: modelingComparisons });
+        spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(mockResponse));
+
+        comp.checkPlagiarism();
+
+        expect(comp.modelingSubmissionComparisons.length).toEqual(modelingComparisons.length);
+    });
+
+    it('should download the plagiarism detection results as JSON', () => {
+        comp.modelingExercise = modelingExercise;
+        comp.modelingSubmissionComparisons = modelingComparisons;
+        comp.downloadPlagiarismResultsJson();
+
+        expect(downloadFile).toHaveBeenCalled();
     });
 });

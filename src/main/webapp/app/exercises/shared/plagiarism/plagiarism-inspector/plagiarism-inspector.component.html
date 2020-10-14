@@ -33,8 +33,8 @@
                     <span>Download</span>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="download-plagiarism">
-                    <button type="button" (click)="checkPlagiarismJson()" ngbDropdownItem>JSON</button>
-                    <button type="button" (click)="checkPlagiarismCsv()" ngbDropdownItem>CSV</button>
+                    <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
+                    <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
                 </div>
             </div>
             <button class="btn btn-primary btn-block" (click)="checkPlagiarism()" [disabled]="plagiarismDetectionInProgress">
