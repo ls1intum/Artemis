@@ -102,6 +102,7 @@
             },
             "configureGrading": {
                 "title": "Configure Grading",
+                "shortTitle": "Grading",
                 "save": "Save",
                 "reset": "Reset",
                 "status": {
