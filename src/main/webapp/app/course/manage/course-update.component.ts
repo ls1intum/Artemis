@@ -222,7 +222,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param error The error for providing feedback
      */
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers.get('x-artemisapp-alert');
+        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
             const jhiAlert = this.jhiAlertService.error(errorMessage);
