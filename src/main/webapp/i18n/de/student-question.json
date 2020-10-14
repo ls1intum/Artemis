@@ -5,10 +5,10 @@
             "updated": "Frage erfolgreich aktualisiert",
             "deleted": "Frage erfolgreich gelöscht",
             "text": "Frage",
-            "creationDate": "gestellt am",
+            "creationDate": "Gestellt am",
             "votes": "Votes",
             "answers": "Antworten",
-            "approvedAnswers": "bestätigte Antworten",
+            "approvedAnswers": "Bestätigte Antworten",
             "exerciseOrLecture": "Aufgabe / Vorlesung",
             "overview": {
                 "title": "Fragen",

@@ -13,8 +13,8 @@
             "overview": {
                 "title": "Questions",
                 "noQuestions": "There are no questions for this course",
-                "showApproved": "show questions with approved answers",
-                "hideApproved": "hide questions with approved answers"
+                "showApproved": "Show questions with approved answers",
+                "hideApproved": "Hide questions with approved answers"
             }
         },
         "questionAnswer": {
