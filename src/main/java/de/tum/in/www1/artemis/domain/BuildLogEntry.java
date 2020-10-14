@@ -19,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildLogEntry extends DomainObject {
 
+    // Maximum characters for the attribute log as defined in the database model
+    private static final int MAX_LOG_LENGTH = 255;
+
     @Column(name = "time")
     private ZonedDateTime time;
 
@@ -66,6 +69,15 @@ public class BuildLogEntry extends DomainObject {
 
     public void setProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
         this.programmingSubmission = programmingSubmission;
+    }
+
+    /**
+     * Truncates the log to the maximum size allowed by the database model
+     */
+    public void truncateLogToMaxLength() {
+        if (log != null && log.length() > MAX_LOG_LENGTH) {
+            log = log.substring(0, MAX_LOG_LENGTH);
+        }
     }
 
     @Override

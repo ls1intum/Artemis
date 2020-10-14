@@ -23,6 +23,7 @@
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
             "rating": "Ratings",
+            "questionsAndAnswers": "Fragen",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Kurs Bestenliste",
                 "id": "ID",

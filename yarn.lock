@@ -1343,11 +1343,12 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@ls1intum/apollon@2.1.20":
-  version "2.1.20"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.1.20.tgz#1bf0122b8a7968f2e4dcd6a90bc8f25864c5f008"
-  integrity sha512-WF7gbo3x7+KXFykCHrOOyxZ4eqLiNZzhGkcE1mEQmu+bKySjbdpRsPQ/Ui7XG9KCvUSkitvEoFaNESbLyw0JbQ==
+"@ls1intum/apollon@2.2.5":
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.2.5.tgz#2079f4c3da204f10d520dd56d6e4de139376572d"
+  integrity sha512-iV11drpOOStIfZL4dAbQCb4UFHL88esrzaRdYJBp9BGD+6t5ryewey9DPMk7QZgzoZKFxoqnu7AQ9eVXkHz+Og==
   dependencies:
+    is-mobile "2.2.2"
     pepjs "0.5.2"
     react "16.13.1"
     react-dom "16.13.1"
@@ -1357,7 +1358,7 @@
     redux-thunk "2.3.0"
     styled-components "5.2.0"
     tslib "2.0.1"
-    uuid "8.3.0"
+    uuid "8.3.1"
 
 "@ng-bootstrap/ng-bootstrap@7.0.0":
   version "7.0.0"
@@ -6925,6 +6926,11 @@ is-map@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/is-map/-/is-map-2.0.1.tgz#520dafc4307bb8ebc33b813de5ce7c9400d644a1"
   integrity sha512-T/S49scO8plUiAOA2DBTBG3JHpn1yiw0kRp6dgiZ0v2/6twi5eiB0rHtHFH9ZIrvlWc6+4O+m4zg5+Z833aXgw==
+
+is-mobile@2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/is-mobile/-/is-mobile-2.2.2.tgz#f6c9c5d50ee01254ce05e739bdd835f1ed4e9954"
+  integrity sha512-wW/SXnYJkTjs++tVK5b6kVITZpAZPtUrt9SF80vvxGiF/Oywal+COk1jlRkiVq15RFNEQKQY31TkV24/1T5cVg==
 
 is-module@^1.0.0:
   version "1.0.0"
@@ -12801,15 +12807,15 @@ uuid@8.3.0:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.0.tgz#ab738085ca22dc9a8c92725e459b1d507df5d6ea"
   integrity sha512-fX6Z5o4m6XsXBdli9g7DtWgAx+osMsRRZFKma1mIUsLCz6vRvv+pz5VNbyu9UEDzpMWulZfvpgb/cmDXVulYFQ==
 
+uuid@8.3.1, uuid@^8.3.0:
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.1.tgz#2ba2e6ca000da60fce5a196954ab241131e05a31"
+  integrity sha512-FOmRr+FmWEIG8uhZv6C2bTgEVXsHk08kE7mPlrBbEe+c3r9pjceVPgupIfNIhc4yx55H69OXANrUaSuu9eInKg==
+
 uuid@^3.0.0, uuid@^3.1.0, uuid@^3.3.2, uuid@^3.3.3, uuid@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
-
-uuid@^8.3.0:
-  version "8.3.1"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.1.tgz#2ba2e6ca000da60fce5a196954ab241131e05a31"
-  integrity sha512-FOmRr+FmWEIG8uhZv6C2bTgEVXsHk08kE7mPlrBbEe+c3r9pjceVPgupIfNIhc4yx55H69OXANrUaSuu9eInKg==
 
 v8-compile-cache@^2.0.3, v8-compile-cache@^2.1.1:
   version "2.1.1"
