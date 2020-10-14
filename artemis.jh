@@ -96,10 +96,12 @@ entity ProgrammingExercise {        //extends Exercise
     packageName String
 }
 
-// TODO: swift needed?
 enum ProgrammingLanguage {
     JAVA,
-    PYTHON
+    PYTHON,
+    C,
+    HASKELL,
+    SWIFT
 }
 
 entity ModelingExercise {           //extends Exercise
