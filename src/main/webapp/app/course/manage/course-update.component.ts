@@ -108,7 +108,7 @@ export class CourseUpdateComponent implements OnInit {
             studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
             registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
-                validators: [Validators.max(255)],
+                validators: [Validators.maxLength(255)],
             }),
             presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                 Validators.min(1),
