@@ -64,7 +64,7 @@
                         </ng-template>
                     </ng-container>
                     <ng-template #noSecondText>
-                        <ng-container *ngIf="!feature.textOneCentered; else centerTextAndImage">
+                        <ng-container *ngIf="!feature.centered; else centerTextAndImage">
                             <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeft">
                                 <img
                                     *ngIf="feature.imageOne"
@@ -91,11 +91,25 @@
                         <ng-template #centerTextAndImage>
                             <p style="text-align: center">{{ feature.descriptionTextOne | translate }}</p>
                             <img
-                                *ngIf="feature.imageOne"
+                                *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrinkedImage"
                                 src="{{ feature.imageOne }}"
                                 class="center"
                                 alt="feature-image-one"
                                 style="margin-top: 5px; max-width: 800px; width: 100%"
+                            />
+                            <img
+                                *ngIf="feature.imageOne && feature.expandedImage"
+                                src="{{ feature.imageOne }}"
+                                class="center"
+                                alt="feature-image-one"
+                                style="margin-top: 5px; max-width: 1600px; width: 100%"
+                            />
+                            <img
+                                *ngIf="feature.imageOne && feature.shrinkedImage"
+                                src="{{ feature.imageOne }}"
+                                class="center"
+                                alt="feature-image-one"
+                                style="margin-top: 5px; max-width: 400px; width: 100%"
                             />
                             <img *ngIf="feature.imageTwo" src="{{ feature.imageTwo }}" class="center" alt="feature-image-one" style="max-width: 800px; width: 100%" />
                         </ng-template>
