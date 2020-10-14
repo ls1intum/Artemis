@@ -2,8 +2,8 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
         <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with Individual Feedback</p>
-        <div *ngIf="!accountName" class="lead" [jhiTranslate]="signInMessage">Please sign in with your account.</div>
-        <div *ngIf="accountName" class="lead" [jhiTranslate]="signInMessage" [translateValues]="{ account: accountName }">Please sign in with your account.</div>
+        <div *ngIf="!accountName" class="lead" [jhiTranslate]="'home.pleaseSignIn'">Please sign in with your account.</div>
+        <div *ngIf="accountName" class="lead" [jhiTranslate]="'home.pleaseSignInAccount'" [translateValues]="{ account: accountName }">Please sign in with your account.</div>
     </div>
 </div>
 <div class="row mt-3">
