@@ -34,9 +34,9 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.localIDE.title',
             'featureOverview.students.feature.localIDE.shortDescription',
             'featureOverview.students.feature.localIDE.descriptionTextOne',
-            'featureOverview.students.feature.localIDE.icon',
+            'fa fa-code-fork',
             undefined,
-            'featureOverview.students.feature.localIDE.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/clone_repository.png?raw=true',
         );
         featurelocalIDE.centerTextAndImageOne();
 
@@ -44,18 +44,18 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.codeEditor.title',
             'featureOverview.students.feature.codeEditor.shortDescription',
             'featureOverview.students.feature.codeEditor.descriptionTextOne',
-            'featureOverview.students.feature.codeEditor.icon',
+            'fa fa-code',
             undefined,
-            'featureOverview.students.feature.codeEditor.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/code_editor.png?raw=true',
         );
 
         const featureTextEditor = new Feature(
             'featureOverview.students.feature.textEditor.title',
             'featureOverview.students.feature.textEditor.shortDescription',
             'featureOverview.students.feature.textEditor.descriptionTextOne',
-            'featureOverview.students.feature.textEditor.icon',
+            'fa fa-file-text',
             undefined,
-            'featureOverview.students.feature.textEditor.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/text_editor.png?raw=true',
         );
         featureTextEditor.centerTextAndImageOne();
 
@@ -63,18 +63,18 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.apollonEditor.title',
             'featureOverview.students.feature.apollonEditor.shortDescription',
             'featureOverview.students.feature.apollonEditor.descriptionTextOne',
-            'featureOverview.students.feature.apollonEditor.icon',
+            'fa fa-object-group',
             undefined,
-            'featureOverview.students.feature.apollonEditor.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/modeling_editor.png?raw=true',
         );
 
         const featureQuizExercises = new Feature(
             'featureOverview.students.feature.quizExercises.title',
             'featureOverview.students.feature.quizExercises.shortDescription',
             'featureOverview.students.feature.quizExercises.descriptionTextOne',
-            'featureOverview.students.feature.quizExercises.icon',
+            'fa fa-check-square-o',
             undefined,
-            'featureOverview.students.feature.quizExercises.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/quiz_exercises.gif?raw=true',
         );
         featureQuizExercises.alignFirstImageLeft();
 
@@ -82,9 +82,9 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.login.title',
             'featureOverview.students.feature.login.shortDescription',
             'featureOverview.students.feature.login.descriptionTextOne',
-            'featureOverview.students.feature.login.icon',
+            'fa fa-sign-in',
             undefined,
-            'featureOverview.students.feature.login.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/login.png?raw=true',
         );
         featureLogin.centerTextAndImageOne();
 
@@ -92,16 +92,16 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.userInterface.title',
             'featureOverview.students.feature.userInterface.shortDescription',
             'featureOverview.students.feature.userInterface.descriptionTextOne',
-            'featureOverview.students.feature.userInterface.icon',
+            'fa fa-puzzle-piece',
             'featureOverview.students.feature.userInterface.descriptionTextTwo',
-            'featureOverview.students.feature.userInterface.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/user_interface.png?raw=true',
         );
 
         const featureConduction = new Feature(
             'featureOverview.students.feature.conduction.title',
             'featureOverview.students.feature.conduction.shortDescription',
             'featureOverview.students.feature.conduction.descriptionTextOne',
-            'featureOverview.students.feature.conduction.icon',
+            'fa fa-play',
             undefined,
         );
 
@@ -109,25 +109,25 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.summary.title',
             'featureOverview.students.feature.summary.shortDescription',
             'featureOverview.students.feature.summary.descriptionTextOne',
-            'featureOverview.students.feature.summary.icon',
+            'fa fa-th-list',
             undefined,
-            'featureOverview.students.feature.summary.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/summary.gif?raw=true',
         );
 
         const featureOnlineReview = new Feature(
             'featureOverview.students.feature.onlineReview.title',
             'featureOverview.students.feature.onlineReview.shortDescription',
             'featureOverview.students.feature.onlineReview.descriptionTextOne',
-            'featureOverview.students.feature.onlineReview.icon',
+            'fa fa-comment-o',
             undefined,
-            'featureOverview.students.feature.onlineReview.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/students/complaint.png?raw=true',
         );
 
         const featureBrowserCompatibility = new Feature(
             'featureOverview.students.feature.browserCompatibility.title',
             'featureOverview.students.feature.browserCompatibility.shortDescription',
             'featureOverview.students.feature.browserCompatibility.descriptionTextOne',
-            'featureOverview.students.feature.browserCompatibility.icon',
+            'fa fa-chrome',
             undefined,
         );
         featureBrowserCompatibility.centerTextAndImageOne();
@@ -153,28 +153,27 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.integratedProcess.title',
             'featureOverview.instructor.feature.integratedProcess.shortDescription',
             'featureOverview.instructor.feature.integratedProcess.descriptionTextOne',
-            'featureOverview.instructor.feature.integratedProcess.icon',
+            'fa fa-cubes',
             undefined,
         );
-        featureIntegratedProcess.centerTextAndImageOne();
 
         const featureConfiguration = new Feature(
             'featureOverview.instructor.feature.configuration.title',
             'featureOverview.instructor.feature.configuration.shortDescription',
             'featureOverview.instructor.feature.configuration.descriptionTextOne',
-            'featureOverview.instructor.feature.configuration.icon',
+            'fa fa-cogs',
             undefined,
-            'featureOverview.instructor.feature.configuration.imageOne',
-            'featureOverview.instructor.feature.configuration.imageTwo',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/import_students.png?raw=true',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/fully_configurable.png?raw=true',
         );
 
         const featureExerciseTypes = new Feature(
             'featureOverview.instructor.feature.exerciseTypes.title',
             'featureOverview.instructor.feature.exerciseTypes.shortDescription',
             'featureOverview.instructor.feature.exerciseTypes.descriptionTextOne',
-            'featureOverview.instructor.feature.exerciseTypes.icon',
+            'fa fa-tasks',
             undefined,
-            'featureOverview.instructor.feature.exerciseTypes.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/multiple_exercises.png?raw=true',
         );
         featureExerciseTypes.alignFirstImageLeft();
 
@@ -182,9 +181,9 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.exerciseVariants.title',
             'featureOverview.instructor.feature.exerciseVariants.shortDescription',
             'featureOverview.instructor.feature.exerciseVariants.descriptionTextOne',
-            'featureOverview.instructor.feature.exerciseVariants.icon',
+            'fa fa-files-o',
             undefined,
-            'featureOverview.instructor.feature.exerciseVariants.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/exercise_variants.png?raw=true',
         );
         featureExerciseVariants.centerTextAndImageOne();
 
@@ -192,34 +191,34 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.sessionMonitoring.title',
             'featureOverview.instructor.feature.sessionMonitoring.shortDescription',
             'featureOverview.instructor.feature.sessionMonitoring.descriptionTextOne',
-            'featureOverview.instructor.feature.sessionMonitoring.icon',
+            'fa fa-hdd-o',
         );
 
         const featurePlagiarismDetection = new Feature(
             'featureOverview.instructor.feature.plagiarismDetection.title',
             'featureOverview.instructor.feature.plagiarismDetection.shortDescription',
             'featureOverview.instructor.feature.plagiarismDetection.descriptionTextOne',
-            'featureOverview.instructor.feature.plagiarismDetection.icon',
+            'fa fa-user-secret',
             undefined,
-            'featureOverview.instructor.feature.plagiarismDetection.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/plagiarism.png?raw=true',
         );
 
         const featureAssessment = new Feature(
             'featureOverview.instructor.feature.assessment.title',
             'featureOverview.instructor.feature.assessment.shortDescription',
             'featureOverview.instructor.feature.assessment.descriptionTextOne',
-            'featureOverview.instructor.feature.assessment.icon',
+            'fa fa-magic',
             'featureOverview.instructor.feature.assessment.descriptionTextTwo',
-            'featureOverview.instructor.feature.assessment.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/anonymous_assessment.png?raw=true',
         );
 
         const featureAssessmentMonitoring = new Feature(
             'featureOverview.instructor.feature.assessmentMonitoring.title',
             'featureOverview.instructor.feature.assessmentMonitoring.shortDescription',
             'featureOverview.instructor.feature.assessmentMonitoring.descriptionTextOne',
-            'featureOverview.instructor.feature.assessmentMonitoring.icon',
+            'fa fa-microchip',
             undefined,
-            'featureOverview.instructor.feature.assessmentMonitoring.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/progress_monitoring.png?raw=true',
         );
         featureAssessmentMonitoring.alignFirstImageLeft();
 
@@ -227,9 +226,9 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.complaints.title',
             'featureOverview.instructor.feature.complaints.shortDescription',
             'featureOverview.instructor.feature.complaints.descriptionTextOne',
-            'featureOverview.instructor.feature.complaints.icon',
+            'fa fa-question',
             undefined,
-            'featureOverview.instructor.feature.complaints.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/complaint_response.png?raw=true',
         );
         featureComplaints.alignFirstImageLeft();
 
@@ -237,9 +236,9 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.statistics.title',
             'featureOverview.instructor.feature.statistics.shortDescription',
             'featureOverview.instructor.feature.statistics.descriptionTextOne',
-            'featureOverview.instructor.feature.statistics.icon',
+            'fa fa-pie-chart',
             undefined,
-            'featureOverview.instructor.feature.statistics.imageOne',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/informative-marketing/instructors/exam_statistics.png?raw=true',
         );
         this.features = [
             featureIntegratedProcess,
