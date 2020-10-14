@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { User } from 'app/core/user/user.model';
+import { matchesRegexFully } from 'app/utils/regex.util';
 
 @Component({
     selector: 'jhi-course-registration-selector',
@@ -31,25 +31,10 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo) {
-                    this.userIsAllowedToRegister = this.usernameMatchesRegex(user, profileInfo.allowedCourseRegistrationUsernamePattern);
+                    this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
                 }
             });
         });
-    }
-
-    usernameMatchesRegex(user: User | undefined, regex: string | undefined) {
-        if (regex) {
-            // we want to test for a full match, so wrap the regex in ^ and $
-            if (!regex.startsWith('^') || !regex.endsWith('$')) {
-                regex = '^(' + regex + ')$';
-            }
-            // string.match returns null when there is no match and an array containing matches otherwise
-            const matches = user!.login!.match(new RegExp(regex));
-            return !!matches;
-        } else {
-            // if this value is not defined, everyone can register
-            return true;
-        }
     }
 
     trackCourseById(index: number, item: Course) {
