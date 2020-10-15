@@ -14,7 +14,7 @@
                 "noCommitHash": "Kein Commit wurde gemacht",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
-                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere dein Dozent.",
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere deinen Dozenten.",
                 "points": {
                     "exercise": "Aufgabe",
                     "overview": "Übersicht",
