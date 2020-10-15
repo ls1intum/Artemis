@@ -105,9 +105,9 @@ public class CourseService {
      *
      * @return the list of entities
      */
-    public List<Course> findAllCurrentlyActiveAndNotOnlineAndEnabled() {
+    public List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled() {
         log.debug("Request to get all active courses which are not online and enabled");
-        return courseRepository.findAllCurrentlyActiveAndNotOnlineAndEnabled(ZonedDateTime.now());
+        return courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(ZonedDateTime.now());
     }
 
     /**

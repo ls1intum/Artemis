@@ -25,7 +25,6 @@ describe('Exam Participation Service', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
-    let currentDate: moment.Moment;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ArtemisTestModule],
@@ -38,7 +37,6 @@ describe('Exam Participation Service', () => {
         injector = getTestBed();
         service = injector.get(ExamParticipationService);
         httpMock = injector.get(HttpTestingController);
-        currentDate = moment();
 
         exam = new Exam();
         studentExam = new StudentExam();

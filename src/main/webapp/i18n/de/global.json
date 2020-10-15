@@ -217,7 +217,8 @@
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "manageHints": "Verwalte Hinweise",
-            "addExternalSubmission": "Externe Einreichung anlegen"
+            "addExternalSubmission": "Externe Einreichung anlegen",
+            "questionsAndAnswers": "Q&A"
         },
         "detail": {
             "field": "Feld",

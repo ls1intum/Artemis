@@ -2,7 +2,8 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
         <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with Individual Feedback</p>
-        <div class="lead" [jhiTranslate]="signInMessage">Please sign in with your account.</div>
+        <div *ngIf="!accountName" class="lead" [jhiTranslate]="'home.pleaseSignIn'">Please sign in with your account.</div>
+        <div *ngIf="accountName" class="lead" [jhiTranslate]="'home.pleaseSignInAccount'" [translateValues]="{ account: accountName }">Please sign in with your account.</div>
     </div>
 </div>
 <div class="row mt-3">
@@ -37,7 +38,7 @@
                             #usernameForm="ngModel"
                             [ngModelOptions]="{ updateOn: 'blur' }"
                         />
-                        <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMesssageUsername">
+                        <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMessageUsername">
                             <p class="text-primary small">Invalid username</p>
                         </div>
                     </div>
