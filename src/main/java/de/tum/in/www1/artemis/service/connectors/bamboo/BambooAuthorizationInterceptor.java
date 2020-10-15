@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +23,8 @@ public class BambooAuthorizationInterceptor implements ClientHttpRequestIntercep
     @Value("${artemis.continuous-integration.password}")
     private String bambooPassword;
 
-    @Value("${artemis.continuous-integration.token:#{null}}")
-    private Optional<String> bambooToken;
+    @Value("${artemis.continuous-integration.token}")
+    private String bambooToken;
 
     @NotNull
     @Override
@@ -42,13 +41,8 @@ public class BambooAuthorizationInterceptor implements ClientHttpRequestIntercep
             request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
         }
         else {
-            // for all other requests, we prefer bamboo token if it is available
-            if (bambooToken.isPresent()) {
-                request.getHeaders().setBearerAuth(bambooToken.get());
-            }
-            else {
-                request.getHeaders().setBasicAuth(bambooUser, bambooPassword);
-            }
+            // for all other requests, we use the bamboo token because the authentication is faster and also possible in case JIRA is not available
+            request.getHeaders().setBearerAuth(bambooToken);
         }
 
         return execution.execute(request, body);

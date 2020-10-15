@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config.connector;
 
 import java.net.URL;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,15 +13,8 @@ import com.atlassian.bamboo.specs.util.*;
 @Profile("bamboo")
 public class BambooServerConfiguration {
 
-    @Value("${artemis.continuous-integration.user}")
-    private String bambooUser;
-
-    @Deprecated
-    @Value("${artemis.continuous-integration.password}")
-    private String bambooPassword;
-
-    @Value("${artemis.continuous-integration.token:#{null}}")
-    private Optional<String> bambooToken;
+    @Value("${artemis.continuous-integration.token}")
+    private String bambooToken;
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
@@ -33,14 +25,7 @@ public class BambooServerConfiguration {
      */
     @Bean
     public BambooServer bambooServer() {
-        if (bambooToken.isPresent()) {
-            TokenCredentials tokenCredentials = new SimpleTokenCredentials(bambooToken.get());
-            return new BambooServer(bambooServerUrl.toString(), tokenCredentials);
-        }
-        else {
-            // supports the legacy case if BAMBOO_TOKEN is not available --> TODO: Remove soon, because user password credentials are deprecated
-            UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(bambooUser, bambooPassword);
-            return new BambooServer(bambooServerUrl.toString(), userPasswordCredentials);
-        }
+        TokenCredentials tokenCredentials = new SimpleTokenCredentials(bambooToken);
+        return new BambooServer(bambooServerUrl.toString(), tokenCredentials);
     }
 }
