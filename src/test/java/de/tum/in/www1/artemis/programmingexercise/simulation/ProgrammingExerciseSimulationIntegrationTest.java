@@ -20,21 +20,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource;
 
 public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
-    RequestUtilService request;
-
-    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private DatabaseUtilService database;
 
     private ProgrammingExercise exercise;
 

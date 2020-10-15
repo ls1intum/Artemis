@@ -18,7 +18,6 @@ import java.util.concurrent.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -616,7 +615,7 @@ public class FileService implements DisposableBean {
 
         String fileContent = new String(contentArray, charset);
 
-        Files.writeString(replaceFilePath, fileContent, Charsets.UTF_8);
+        Files.writeString(replaceFilePath, fileContent, StandardCharsets.UTF_8);
     }
 
     /**

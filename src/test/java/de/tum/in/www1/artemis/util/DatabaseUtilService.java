@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -23,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -481,7 +479,7 @@ public class DatabaseUtilService {
             }
 
             for (int i = 0; i < 5; i++) {
-                String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+                String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
                 var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
                 exampleSubmission.assessmentExplanation("exp");
                 for (var tutorParticipation : tutorParticipations) {
@@ -558,6 +556,63 @@ public class DatabaseUtilService {
         studentQuestion2.setVisibleForStudents(true);
         studentQuestion2.setAuthor(getUserByLogin("student2"));
         studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
+
+        return studentQuestions;
+    }
+
+    public List<StudentQuestion> createCourseWithExerciseAndLectureAndStudentQuestions() {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        lecture.setDescription("a test lecture");
+        course1.addLectures(lecture);
+
+        courseRepo.save(course1);
+        textExercise = exerciseRepo.save(textExercise);
+        lecture = lectureRepo.save(lecture);
+
+        List<StudentQuestion> studentQuestions = new ArrayList<>();
+        StudentQuestion studentQuestion1 = new StudentQuestion();
+        studentQuestion1.setExercise(textExercise);
+        studentQuestion1.setQuestionText("Test Student Question 1");
+        studentQuestion1.setVisibleForStudents(true);
+        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestions.add(studentQuestion1);
+
+        StudentQuestion studentQuestion2 = new StudentQuestion();
+        studentQuestion2.setExercise(textExercise);
+        studentQuestion2.setQuestionText("Test Student Question 2");
+        studentQuestion2.setVisibleForStudents(true);
+        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
+
+        StudentQuestion studentQuestion3 = new StudentQuestion();
+        studentQuestion3.setLecture(lecture);
+        studentQuestion3.setQuestionText("Test Student Question 3");
+        studentQuestion3.setVisibleForStudents(true);
+        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion3);
+        studentQuestions.add(studentQuestion3);
+
+        StudentQuestion studentQuestion4 = new StudentQuestion();
+        studentQuestion4.setLecture(lecture);
+        studentQuestion4.setQuestionText("Test Student Question 4");
+        studentQuestion4.setVisibleForStudents(true);
+        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion4);
         studentQuestions.add(studentQuestion2);
 
         return studentQuestions;
@@ -1385,11 +1440,8 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis);
-
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
@@ -1555,9 +1607,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-
         addTestCasesToProgrammingExercise(programmingExercise);
-
         return courseRepo.findById(course.getId()).get();
     }
 
@@ -1903,7 +1953,7 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
-        String model = loadFileFromResources(path);
+        String model = FileUtils.loadFileFromResources(path);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);
         checkModelingSubmissionCorrectlyStored(submission.getId(), model);
@@ -1939,21 +1989,8 @@ public class DatabaseUtilService {
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
-    /**
-     * @param path path relative to the test resources folder complaint
-     * @return string representation of given file
-     * @throws Exception if the resource cannot be loaded
-     */
-    public String loadFileFromResources(String path) throws Exception {
-        java.io.File file = ResourceUtils.getFile("classpath:" + path);
-        StringBuilder builder = new StringBuilder();
-        Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
-        return builder.toString();
-    }
-
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-        String fileContent = loadFileFromResources(path);
+        String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 

@@ -1,11 +1,11 @@
 {
     "artemisApp": {
         "instructorExerciseDashboard": {
-            "title": "Instructor Übungs-Dashboard",
-            "pageHeader": "Instructor Übungs-Dashboard für",
+            "title": "Dozenten Dashboard für Übung",
+            "pageHeader": "Dozenten Dashboard für Übung",
             "back": "Zurück",
-            "noProblemStatement": "No problem statement available",
-            "informationAboutExercise": "Keine Problembeschreibung verfügbar",
+            "noProblemStatement": "Keine Problembeschreibung verfügbar",
+            "informationAboutExercise": "Informationen über die Aufgabe",
             "exerciseDueDate": "Einreichungsfrist der Aufgabe",
             "submissions": "Einreichungen",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",

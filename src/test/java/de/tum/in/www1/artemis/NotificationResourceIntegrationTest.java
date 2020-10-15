@@ -20,9 +20,7 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -36,16 +34,10 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     UserService userService;
 
     @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
     SingleUserNotificationRepository singleUserNotificationRepository;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     NotificationRepository notificationRepository;

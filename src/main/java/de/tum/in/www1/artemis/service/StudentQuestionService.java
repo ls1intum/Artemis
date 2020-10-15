@@ -23,4 +23,8 @@ public class StudentQuestionService {
     public List<StudentQuestion> findStudentQuestionsForLecture(Long lectureId) {
         return studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
     }
+
+    public List<StudentQuestion> findStudentQuestionsForCourse(Long courseId) {
+        return studentQuestionRepository.findStudentQuestionsForCourse(courseId);
+    }
 }

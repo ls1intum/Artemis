@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>ATESTJTEST121 - BASE: Edit plan configuration - LS1 Bamboo</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+    <meta name="application-name" content="Bamboo" />
+    <meta name="ajs-remote-user" content="ne23kow"/>
+
+    <link rel="shortcut icon" href="/s/70119/1/_/images/icons/favicon.ico" type="image/x-icon"/>
+
+    <script type="text/javascript">
+        (function (window) {
+            window.BAMBOO = (window.BAMBOO || {});
+            BAMBOO.contextPath = '';
+            BAMBOO.staticResourcePrefix = '/s/70119/1/_';
+        })(window);
+    </script>
+
+
+
+
+
+
+
+    <script>
+        window.WRM=window.WRM||{};window.WRM._unparsedData=window.WRM._unparsedData||{};window.WRM._unparsedErrors=window.WRM._unparsedErrors||{};
+        WRM._unparsedData["com.atlassian.plugins.atlassian-plugins-webresource-plugin:context-path.context-path"]="\u0022\u0022";
+        WRM._unparsedData["bamboo.web.resources.common:util-server-info.server-info"]="{\u0022timeZone\u0022:{\u0022id\u0022:\u0022Europe/Berlin\u0022,\u0022name\u0022:\u0022Central European Time\u0022}}";
+        WRM._unparsedData["bamboo.web.resources:bamboo-js.branch-workflow-integration-strategies"]="{\u0022pr\u0022:[\u0022BRANCH_UPDATER\u0022],\u0022manually\u0022:[\u0022GATE_KEEPER\u0022,\u0022BRANCH_UPDATER\u0022],\u0022matching_vcs_branch\u0022:[\u0022GATE_KEEPER\u0022,\u0022BRANCH_UPDATER\u0022],\u0022new_vcs_branch\u0022:[\u0022GATE_KEEPER\u0022,\u0022BRANCH_UPDATER\u0022]}";
+        WRM._unparsedData["bamboo.web.resources:variables.password-variable-keywords"]="[\u0022password\u0022,\u0022sshKey\u0022,\u0022secret\u0022,\u0022passphrase\u0022]";
+        WRM._unparsedData["com.atlassian.bamboo.plugins.branchinator:branchinator-resources.known-navigation-sources"]="[\u0022header\u0022,\u0022plan\u0022,\u0022email\u0022]";
+        WRM._unparsedData["com.atlassian.bamboo.plugins.branchinator:branchinator-resources.builds-sort-orderings"]="[{\u0022column\u0022:\u0022buildStatus\u0022,\u0022label\u0022:\u0022Build status\u0022,\u0022selected\u0022:false},{\u0022column\u0022:\u0022planName\u0022,\u0022label\u0022:\u0022Plan name\u0022,\u0022selected\u0022:false},{\u0022column\u0022:\u0022completionDate\u0022,\u0022label\u0022:\u0022Completion date\u0022,\u0022selected\u0022:false}]";
+        WRM._unparsedData["com.atlassian.analytics.analytics-client:policy-update-init.policy-update-data-provider"]="false";
+        WRM._unparsedData["com.atlassian.analytics.analytics-client:programmatic-analytics-init.programmatic-analytics-data-provider"]="false";
+        WRM._unparsedData["bamboo.web.resources.common:util-preferences.user-preferences"]="{\u0022feature.discovery.last.product.version\u0022:\u00227.1\u0022,\u0022sal_applinks.featurediscovery.v3_ui\u0022:\u0022true\u0022,\u0022bamboo.user.contact.jabber\u0022:\u0022\u0022,\u0022bamboo.user.actions.addJob\u0022:\u0022true\u0022,\u0022sal_applinks.featurediscovery.bitbucket_rebrand\u0022:\u0022true\u0022,\u0022branch.repositories.discovery.dialog.displayed\u0022:\u0022true\u0022,\u0022activeQuickFilters\u0022:\u0022\u0022,\u0022bamboo.user.contact.preference\u0022:\u0022none\u0022,\u0022bamboo.dashboard.labels\u0022:null,\u0022branchinator.user.properties\u0022:\u0022{\u005C\u0022plan.page.navigation.discovery.dialog.displayed\u005C\u0022:\u005C\u0022true\u005C\u0022}\u0022,\u0022bamboo.dashboard.filter.enabled\u0022:\u0022true\u0022,\u0022bamboo.user.branches.splashscreen.hide\u0022:\u0022true\u0022,\u0022bamboo.user.contact.transportPreference\u0022:\u0022multipart\u0022,\u0022bamboo.dashboard.projects\u0022:\u0022ARTEMIS\u0022}";
+        WRM._unparsedData["bamboo.web.resources.common:util-dark-features.enabled-dark-features"]="[]";
+        WRM._unparsedData["bamboo.web.resources.common:util-help-links.help-links"]="{\u0022expiry.global.logSettings.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configure max log size\u0022,\u0022specs.config.export.view.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Exporting+existing+plans+to+Bamboo+Specs\u0022,\u0022elastic.intro.generic\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/About+Elastic+Bamboo\u0022,\u0022deployments.versions.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployment releases work\u0022,\u0022plan.create.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Creating+a+plan#Creatingaplan-Creatinganewplan\u0022,\u0022branch.using.plan.branches\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches\u0022,\u0022help.embedded.crowd.support.prefix\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://confluence.atlassian.com/display/CROWD/\u0022,\u0022deployments.environment.permissions.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How environment permissions work\u0022,\u0022permissions.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to configure permissions in Bamboo\u0022,\u0022help.s3.artifact.storage.configuration\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Amazon+S3+artifact+storage\u0022,\u0022bamboo.marketplace.tasks.popular\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://marketplace.atlassian.com/addons/app/bamboo/top-rated?category=Tasks\u0022,\u0022branch.automatic.cleanup\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Autobranching\u0022,\u0022ssh.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the SSH task\u0022,\u0022plugin.blacklist\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Apps+blacklist\u0022,\u0022ant.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Ant\u0022,\u0022msbuild.exe.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/MSBuild\u0022,\u0022feature.discovery.6.9.project.permissions\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+project+permissions\u0022,\u0022bamboo.specs.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/What are Bamboo Specs?\u0022,\u0022feature.discovery.6.7.ipv6.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/IPv6+in+Bamboo\u0022,\u0022script.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Script task\u0022,\u0022cron.expression\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Constructing+a+cron+expression+in+Bamboo\u0022,\u0022deployments.assigned.agents.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Agents+for+deployment+environments\u0022,\u0022mavendependency.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Setting+up+plan+build+dependencies#Settingupplanbuilddependencies-AutomaticdependencymanagementwithMaven3\u0022,\u0022sourcecodecheckout.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Source Code Checkout task\u0022,\u0022phpunit.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/PHPUnit#PHPUnit-workingsubdirectory\u0022,\u0022deployments.project.permissions.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployment project permissions work\u0022,\u0022cloud.reduce.artifacts.size\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Reducing+size+of+artifacts+in+Bamboo\u0022,\u0022tasks.configuring\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+a+builder+task\u0022,\u0022specs.troubleshooting\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+Specs+troubleshooting\u0022,\u0022command.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022branch.mergeStrategy\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Usingautomaticmerging\u0022,\u0022script.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Script#Script-workingsubdirectory\u0022,\u0022feature.discovery.6.8.final.stages.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+stages+in+a+plan\u0022,\u0022feature.discovery.7.1.conditional.tasks.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+tasks\u0022,\u0022rest.apis.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on Bamboo\u0027s REST APIs\u0022,\u0022feature.discovery.7.0.look.and.feel.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Custom+headers\u0022,\u0022deployments.tasks.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Tasks+for+deployment+environments\u0022,\u0022build.strategy.cron.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on Bamboo cron Trigger\u0022,\u0022bamboo.specs.webhook.setup\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Enabling+webhooks\u0022,\u0022build.strategy\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Triggering+builds\u0022,\u0022help.aws.s3.sync\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/http://docs.aws.amazon.com/cli/latest/reference/s3/sync.html\u0022,\u0022scp.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the SCP task\u0022,\u0022variables.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+variables\u0022,\u0022scp.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+the+SCP+task+in+Bamboo\u0022,\u0022projects.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How projects work\u0022,\u0022tomcat.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+Tomcat+with+Bamboo+for+continuous+deployment\u0022,\u0022plan.triggers.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Triggering+builds\u0022,\u0022deployments.variables.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployment variables work\u0022,\u0022cloud.remote.agent.troubleshooting\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Troubleshooting+remote+agents+in+Bamboo\u0022,\u0022elastic.instance.manage\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Working+with+Elastic+Bamboo\u0022,\u0022bbserver.ssh.keys.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bitbucket+Server\u0022,\u0022quick.filters.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Quick+filters+for+Bamboo\u0022,\u0022feature.discovery.7.1.agent.capabilities.sync.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Synchronising+remote+agent+capabilities+with+Bamboo+Server\u0022,\u0022ssh.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+the+SSH+task+in+Bamboo\u0022,\u0022specs.encryption\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+Specs+encryption\u0022,\u0022nant.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022devenv.com.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022variables.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use variables\u0022,\u0022permissions.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+permissions\u0022,\u0022cloud.remote.agent.supported.platforms\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Supported+platforms\u0022,\u0022embedded.crowd.directory.configure.delegating.ldap.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help\u0022,\u0022security.system.encryption\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/System-wide+encryption\u0022,\u0022deployments.notifications.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Notifications+for+deployment+environments\u0022,\u0022plan.clone.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Creating+a+plan#Creatingaplan-Cloninganexistingplan\u0022,\u0022junitparser.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the JUnit Parser task\u0022,\u0022command.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Command task\u0022,\u0022cvs.module.version\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/CVS#CVS-versionofmodule\u0022,\u0022embedded.crowd.directory.configure.ldap\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Integrating+Bamboo+with+LDAP\u0022,\u0022elastic.customise.image\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Creating+a+custom+elastic+image\u0022,\u0022embedded.crowd.directory.configure.jira\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Connecting+Bamboo+to+JIRA+for+user+management\u0022,\u0022help.cloud.storage.policy\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://confluence.atlassian.com/display/Cloud/Atlassian+Cloud+Storage+Policy\u0022,\u0022command.unit.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022security.serialization.protection.method\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Serialization+protection+methods\u0022,\u0022dependency.blocking\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Dependency+blocking+strategies\u0022,\u0022feature.discovery.6.7.vcs.tasks.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+a+Source+Control+task\u0022,\u0022jira.createissue.troubleshooting\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/http://confluence.atlassian.com/display/BAMKB/Error+when+creating+an+issue+in+Jira+from+Bamboo\u0022,\u0022deployments.tasks.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployment tasks work\u0022,\u0022deployments.notifications.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How environment notifications work\u0022,\u0022help.community\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://community.atlassian.com\u0022,\u0022security.rss\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Repository-stored+Bamboo+Specs+security\u0022,\u0022embedded.crowd.directory.configure.crowd\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Integrating+Bamboo+with+Crowd\u0022,\u0022deployments.environments.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How environments work\u0022,\u0022maven2.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Maven#Maven-workingsubdirectory\u0022,\u0022dashboard.projects.projects.welcomemat.faq\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+FAQ\u0022,\u0022plan.create.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to create a build plan\u0022,\u0022mavendependency.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use Maven automatic dependencies\u0022,\u0022db.oracle\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Oracle\u0022,\u0022deployments.versioning.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How release versioning works\u0022,\u0022expiry.global.logSettings\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://confluence.atlassian.com/display/BAMKB/Build+expiry+removes+all+logs\u0022,\u0022feature.discovery.documentation.home\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+releases\u0022,\u0022shared.credentials.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Find out more about shared credentials\u0022,\u0022embedded.crowd.directory.configure.crowd.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help\u0022,\u0022agent.remote.capabilities\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Agents+and+capabilities\u0022,\u0022access.token.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Personal+access+tokens\u0022,\u0022deployments.assigned.agents.howtheywork.link\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Agents for deployment environments.\u0022,\u0022grails.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Grails task\u0022,\u0022phpunit.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022testng.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/TestNG\u0022,\u0022ant.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022dependency.general\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Setting+up+plan+build+dependencies\u0022,\u0022cvs.module.version.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on choosing the version of the CVS module\u0022,\u0022feature.discovery.6.9.agent.notifications\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/System+level+notifications\u0022,\u0022expiry.global\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+global+expiry\u0022,\u0022cvs.quiet.period.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on entering the CVS quiet period value\u0022,\u0022agent.remote.installation.jaronly\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Additional+remote+agent+options#Additionalremoteagentoptions-nosupervisorRunningBamboowithouttheRemoteAgentSupervisor\u0022,\u0022build.strategy.cron\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Cron-based+scheduling\u0022,\u0022feature.discovery.7.1.yaml.exporter.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Exporting+existing+plan+configuration+to+Bamboo+YAML+Specs\u0022,\u0022access.token.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How personal access tokens work\u0022,\u0022help.aws.best.practices.keys\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/http://docs.aws.amazon.com/general/latest/gr/aws-access-keys-best-practices.html\u0022,\u0022embedded.crowd.directory.configure.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help\u0022,\u0022ant.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Ant#Ant-workingsubdirectory\u0022,\u0022elastic.cost\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Elastic+Bamboo+Costs\u0022,\u0022plugin.clover.enabling\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Enabling+Clover+for+Bamboo\u0022,\u0022msbuild.exe.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022supported.platforms\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Supported+platforms\u0022,\u0022online.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Online\u0022,\u0022maven2.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022plan.anatomy\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+plans\u0022,\u0022plugin.clover.report.file\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://confluence.atlassian.com/display/CLOVER/clover-report\u0022,\u0022rest.apis\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+REST+APIs\u0022,\u0022sourcecodecheckout.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Checking+out+code\u0022,\u0022help.support\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://support.atlassian.com\u0022,\u0022maven.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Maven task\u0022,\u0022local.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Local\u0022,\u0022security.best.practices\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Best+practices+for+Bamboo+security\u0022,\u0022help.pricing\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://www.atlassian.com/pt/software/bamboo/pricing\u0022,\u0022plugins.artifactHandlers\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Artifact+handlers\u0022,\u0022feature.discovery.7.1.webhooks.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+webhooks\u0022,\u0022deployments.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Deployment+projects\u0022,\u0022embedded.crowd.directory.configure\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Connecting+to+external+user+directories\u0022,\u0022quick.filters.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How quick filters work\u0022,\u0022maven.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Maven\u0022,\u0022embedded.crowd.directory.configure.jira.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help\u0022,\u0022help.kb\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/http://confluence.atlassian.com/display/BAMKB/\u0022,\u0022deployments.versioning.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Naming+versions+for+deployment+releases\u0022,\u0022command.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Custom+command+executable#Customcommandexecutable-workingsubdirectory\u0022,\u0022integration.atlassian\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Integrating+Bamboo+with+Atlassian+applications\u0022,\u0022grails.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Grails\u0022,\u0022artifacts.shared.description.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on configuring Artifact Sharing between Jobs\u0022,\u0022nant.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/NAnt#NAnt-workingsubdirectory\u0022,\u0022tasks.builder\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/executable\u0022,\u0022testng.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the TestNG Parser task\u0022,\u0022feature.discovery.7.0.divergent.branches.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Enhanced+plan+branch+configuration\u0022,\u0022elastic.configure\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+Elastic+Bamboo\u0022,\u0022help.dev\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://developer.atlassian.com/display/BAMBOODEV/\u0022,\u0022artifacts.description.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on configuring a Job\u0027s Build Artifacts\u0022,\u0022artifacts.description\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Sharing+artifacts#Sharingartifacts-jobs\u0022,\u0022cloud.remote.agent.first.setup\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Setting+up+your+first+remote+agent\u0022,\u0022feature.discovery.6.7.build.warnings.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+Build+warnings+parser+task\u0022,\u0022branch.autointegration.branchUpdater\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Branchupdater\u0022,\u0022security.trusted.keys\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Managing+trusted+keys\u0022,\u0022agent.remote.installation\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+remote+agent+installation+guide\u0022,\u0022deployments.triggers.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployment triggers work\u0022,\u0022dashboard.projects.projects.welcomemat.best.practice\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+Best+Practice\u0022,\u0022deployments.project.permissions.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Creating+and+configuring+a+deployment+project#Creatingandconfiguringadeploymentproject-Configuringdeploymentprojectpermissions\u0022,\u0022devenv.com.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Visual+Studio\u0022,\u0022help.home.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo Documentation\u0022,\u0022deployments.environments.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Creating+a+deployment+environment\u0022,\u0022embedded.crowd.directory.configure.ldap.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help\u0022,\u0022plan.triggers.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How build triggers work\u0022,\u0022agent.remote.security\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Security\u0022,\u0022projects.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/projects+in+Bamboo\u0022,\u0022feature.discovery.7.1.project.variables.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Defining+project+variables\u0022,\u0022phpunit.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/PHPUnit\u0022,\u0022command.unit.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Custom+command+executable#Customcommandexecutable-workingsubdirectory\u0022,\u0022cloud.getting.started\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Getting+started+with+Bamboo+Cloud\u0022,\u0022elastic.customise.ebs\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+elastic+instances+to+use+the+EBS\u0022,\u0022plan.run.parameterised\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Running+a+plan+build+manually\u0022,\u0022feature.discovery.6.8.deployments.performance.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+6.8+Release+Notes#Bamboo6.8ReleaseNotes-Deploymentperformanceimprovement\u0022,\u0022elastic.intro.bamboo\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Working+with+Elastic+Bamboo\u0022,\u0022maven1.working.sub.directory\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Maven#Maven-workingsubdirectory\u0022,\u0022cron.expression.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on Bamboo cron expressions\u0022,\u0022command.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Custom+command+executable\u0022,\u0022branch.featureBranches\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-jiraissues\u0022,\u0022deployments.environment.permissions.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Permissions+for+deployment+environments\u0022,\u0022branch.gitCapabilityHelp\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Defining+a+new+version+control+capability\u0022,\u0022capabilities.executables\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Defining+a+new+executable+capability\u0022,\u0022capabilities.and.requirements\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/About+capabilities+and+requirements\u0022,\u0022artifacts.shared.description\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Sharing+artifacts#Sharingartifacts-plans\u0022,\u0022tasks.condition\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+tasks\u0022,\u0022deployments.variables.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Variables+for+deployment+environments\u0022,\u0022perforce.fields\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Perforce#Perforce-perforceconfiguration\u0022,\u0022cvs.quiet.period\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/CVS#CVS-quietperiod\u0022,\u0022deployments.assigned.agents.howtheywork.text\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/You can dedicate specific agents or images to execute all deployments for this environment. For more information, see\u0022,\u0022script.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022feature.discovery.7.1.live.logs.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+live+logs+transmission\u0022,\u0022github.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/GitHub\u0022,\u0022branch.automatic.creation\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Autobranching\u0022,\u0022embedded.crowd.directory.configure.delegating.ldap\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Integrating+Bamboo+with+LDAP\u0022,\u0022shared.credentials\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Shared+credentials\u0022,\u0022deployments.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How deployments work\u0022,\u0022branch.buildStrategy.override\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Configuringbranchplans\u0022,\u0022tomcat.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Tomcat task\u0022,\u0022maven1.working.sub.directory.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on setting the working subdirectory\u0022,\u0022deployments.triggers.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Triggers+for+deployment+environments\u0022,\u0022elastic.configure.keys\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Generating+your+AWS+Private+Key+File+and+Certificate+File\u0022,\u0022bamboo.specs.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+Specs\u0022,\u0022perforce.fields.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on Perforce configuration options\u0022,\u0022bamboo.upgrade\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+upgrade+guide\u0022,\u0022ant.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the Ant task\u0022,\u0022dashboard.projects.projects.welcomemat.using.bamboo\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+Bamboo\u0022,\u0022script.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Script\u0022,\u0022branch.autointegration.gateKeeper\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+plan+branches#Usingplanbranches-Gatekeeper\u0022,\u0022tasks.extending\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Task+Plugin+Module\u0022,\u0022build.strategy.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Help on choosing a trigger\u0022,\u0022bbserver.ssh.keys.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use Bitbucket Server repository\u0022,\u0022plan.clone.howtheywork.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to clone an existing plan\u0022,\u0022help.prefix\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/http://docs.atlassian.com/bamboo/docs-0701/\u0022,\u0022embedded.crowd.support.troubleshoot\u0022:\u0022https://confluence.atlassian.com/display/CROWD/Troubleshooting+LDAP+Error+Codes\u0022,\u0022phpunit.task.help.title\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/How to use the PHPUnit task\u0022,\u0022help.home\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+Documentation+Home\u0022,\u0022agent.remote.authentication.docs\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Agent+authentication\u0022,\u0022plugin.clover.json.reference\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/https://confluence.atlassian.com/display/CLOVER/JSON+reference\u0022,\u0022junitparser.task.help\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/JUnit+Parser\u0022,\u0022deployments.versions.howtheywork\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Understanding+deployment+releases\u0022,\u0022db.mysql\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/MySQL\u0022}";
+        WRM._unparsedData["com.atlassian.feature.discovery.feature-discovery-plugin-bamboo:feature.discovery.resources.feature-discovery-data"]="{\u0022currentUser\u0022:\u0022ne23kow\u0022,\u0022currentProductVersion\u0022:\u00227.1\u0022,\u0022lastProductVersionForUser\u0022:\u00227.1\u0022,\u0022showDiscoveryDialog\u0022:false,\u0022notificationsForUser\u0022:[{\u0022id\u0022:70108,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Webhooks notifications\u0022,\u0022description\u0022:\u0022Bamboo webhooks allow you to send selected real-time information about Bamboo to third-party applications.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Using+webhooks\u0022,\u0022featureUrl\u0022:\u0022/admin/viewWebhookTemplates.action\u0022},{\u0022id\u0022:70107,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Export to Yaml Specs\u0022,\u0022description\u0022:\u0022Moving to Yaml Specs has never been easier! Export your existing plans and deployments to Bamboo Yaml Specs automatically.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Exporting+existing+plan+configuration+to+Bamboo+YAML+Specs\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70106,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Project variables\u0022,\u0022description\u0022:\u0022Define variables in a specific project and then use them in all plans that belong to the project.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Defining+project+variables\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70105,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Synchronizing remote agent capabilities\u0022,\u0022description\u0022:\u0022Remote agents capabilities defined in bamboo-capabilities.properties file will now be correctly synchronized with the Bamboo server.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Synchronising+remote+agent+capabilities+with+Bamboo+Server\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70104,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Remote agents workspace cleanup\u0022,\u0022description\u0022:\u0022Remote agents will now automatically remove workspaces for deleted builds and deployments.\u0022,\u0022documentationUrl\u0022:\u0022\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70103,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Conditional tasks\u0022,\u0022description\u0022:\u0022Use variables and regular expressions to specify conditions under which your tasks will run.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+tasks\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70102,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Branch overrides for Yaml Specs\u0022,\u0022description\u0022:\u0022Use branch overrides to predefine configuration for specific Specs branches and reduce the number of merge conflicts in Yaml Specs.\u0022,\u0022documentationUrl\u0022:\u0022https://docs.atlassian.com/bamboo-specs-docs/latest\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70101,\u0022productVersion\u0022:\u00227.1\u0022,\u0022title\u0022:\u0022Optional live logs transmission\u0022,\u0022description\u0022:\u0022Turn live logs transmission off to mitigate problems with performance, including build result processing timing out.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Configuring+live+logs+transmission\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70003,\u0022productVersion\u0022:\u00227.0\u0022,\u0022title\u0022:\u0022Enhanced plan branch configuration\u0022,\u0022description\u0022:\u0022Configure each plan branch differently! Use Bamboo Specs to tailor the branch configuration accordingly to your needs.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Enhanced+plan+branch+configuration\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70002,\u0022productVersion\u0022:\u00227.0\u0022,\u0022title\u0022:\u0022New plan branch navigator\u0022,\u0022description\u0022:\u0022Navigate more easily between different plan branches configuration. A new plan branch selector has replaced the sidebar branches list.\u0022,\u0022documentationUrl\u0022:\u0022\u0022,\u0022featureUrl\u0022:\u0022\u0022},{\u0022id\u0022:70001,\u0022productVersion\u0022:\u00227.0\u0022,\u0022title\u0022:\u0022Look and feel\u0022,\u0022description\u0022:\u0022Customize the look of Bamboo by changing the logo, favicon, and header colors.\u0022,\u0022documentationUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Custom+headers\u0022,\u0022featureUrl\u0022:\u0022/admin/lookandfeel/configureLookAndFeel.action\u0022}],\u0022featuresSummaryPageUrl\u0022:\u0022http://docs.atlassian.com/bamboo/docs-0701/Bamboo+releases\u0022}";
+        WRM._unparsedData["bamboo.web.resources.common:util-build-info.build-info"]="{\u0022devMode\u0022:false,\u0022buildNumber\u0022:\u002270119\u0022,\u0022version\u0022:\u00227.1.2\u0022}";
+        if(window.WRM._dataArrived)window.WRM._dataArrived();</script>
+    <link type="text/css" rel="stylesheet" href="/s/3e065e566384464eee4a9a2092ce7ced-CDN/70119/1/48255fc26950b5dcd911bae72f704c52/_/download/contextbatch/css/aui,atl.general,bamboo.configuration,-_super/batch.css?healthcheck-resources=true" data-wrm-key="aui,atl.general,bamboo.configuration,-_super" data-wrm-batch-type="context" media="all">
+    <script type="text/javascript" src="/s/d41d8cd98f00b204e9800998ecf8427e-CDN/70119/1/4c8df722d00477da16fad70d2ad9a360/_/download/contextbatch/js/_super/batch.js" data-wrm-key="_super" data-wrm-batch-type="context" data-initially-rendered></script>
+    <script type="text/javascript" src="/s/7a537dfb38448b5c0d02ee1b61499481-CDN/70119/1/48255fc26950b5dcd911bae72f704c52/_/download/contextbatch/js/aui,atl.general,bamboo.configuration,-_super/batch.js?healthcheck-resources=true&amp;locale=en-US" data-wrm-key="aui,atl.general,bamboo.configuration,-_super" data-wrm-batch-type="context" data-initially-rendered></script>
+
+
+
+    <meta name="tab" content="triggers" />
+</head>
+<body class="aui-layout aui-theme-default dec_planConfig">
+<ul id="assistive-skip-links" class="assistive">
+    <li><a href="#main-nav">Skip to navigation</a></li>
+    <li><a href="#content">Skip to content</a></li>
+</ul>
+<div id="page">
+
+    <header id="header" role="banner">
+        <section class="notifications">
+
+            <div id="system-state-banner" class="aui-message warning" style="display: none;">
+
+                <span id="system-state-banner-info"></span>
+                <span class="aui-button"></span>
+                <span class="aui-icon icon-warning"></span>
+            </div>
+            <script type="text/javascript">
+                if (BAMBOO && BAMBOO.ADMIN && BAMBOO.ADMIN.SERVERSTATE) {
+                    BAMBOO.ADMIN.SERVERSTATE.serverStateUpdater.init();
+                    BAMBOO.ADMIN.SERVERSTATE.serverState.init({
+                        control: "#system-state-banner",
+                        statusInfo: "#system-state-banner-info",
+                        button: ".aui-button",
+                        serverRunningCallback: function() {
+                            var $pause = AJS.$("#pause-server-button");
+
+                            if ($pause && $pause.length) {
+                                $pause.removeClass("disabled");
+                            }
+                        }
+                    });
+                }
+            </script>
+
+        </section>    <nav class="aui-header aui-dropdown2-trigger-group" role="navigation"><div class="aui-header-inner"><div class="aui-header-before"><a class=" aui-dropdown2-trigger app-switcher-trigger" aria-controls="app-switcher" aria-haspopup="true" role="button" tabindex="0" data-aui-trigger href="#app-switcher"><span class="aui-icon aui-icon-small aui-iconfont-appswitcher">Linked Applications</span></a><div id="app-switcher" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true" data-is-switcher="true" data-environment="{&quot;isUserAdmin&quot;:true,&quot;isAppSuggestionAvailable&quot;:false,&quot;isSiteAdminUser&quot;:true}"><div role="application"><div class="app-switcher-loading">Loading&hellip;</div></div></div></div><div class="aui-header-primary"><h1 id="logo" class="aui-header-logo aui-header-logo-bamboo"><a href="/"><span class="aui-header-logo-device">Atlassian Bamboo</span></a></h1><ul class="aui-nav"><li id="system_myBamboo" ><a href="/myBamboo.action" id="myBamboo" >My Bamboo</a></li><li id="system_allProjects" ><a href="/allProjects.action" id="allProjects" >Projects</a></li><li id="system_build_menu" >                    <a class=" aui-dropdown2-trigger" aria-controls="bamboo.global.header-build.menu" aria-haspopup="true" role="button" title="Build" tabindex="0" data-aui-trigger>Build</a><div id="bamboo.global.header-build.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/allPlans.action" id="allPlansTab" >All build plans</a></li><li><a href="/currentActivity.action" id="currentTab" >Build activity</a></li><li><a href="/branchStatus?source=header" id="branch_builds" >Branch status</a></li></ul></div></div></div></li><li id="system_deploy_menu" >                    <a class=" aui-dropdown2-trigger" aria-controls="bamboo.deployments-deploy.menu" aria-haspopup="true" role="button" title="Deploy" tabindex="0" data-aui-trigger>Deploy</a><div id="bamboo.deployments-deploy.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/deploy/viewAllDeploymentProjects.action" id="deployments" accesskey="D" >All deployment projects</a></li></ul></div></div></div></li><li id="system_specs_menu" >                    <a class=" aui-dropdown2-trigger" aria-controls="bamboo.global.header-specs.menu" aria-haspopup="true" role="button" title="Specs" tabindex="0" data-aui-trigger>Specs</a><div id="bamboo.global.header-specs.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/build/admin/create/newSpecs.action" id="createNewRssPlan" >Set up Specs repository</a></li><li><a href="/specs/encryption.action" id="specsEncryption" >Bamboo Specs encryption</a></li></ul></div></div></div></li><li id="system_reports_menu" >                    <a class=" aui-dropdown2-trigger" aria-controls="bamboo.global.header-reports.menu" aria-haspopup="true" role="button" title="Reports" tabindex="0" data-aui-trigger>Reports</a><div id="bamboo.global.header-reports.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/reports/viewReport.action" id="reports" accesskey="R" >Reports</a></li><li><a href="/authors/gotoAuthorReport.action" id="authors" accesskey="U" >Authors</a></li></ul></div></div></div></li><li>                    <button id="createPlanLink"  class=" aui-dropdown2-trigger aui-button aui-button-primary aui-style" aria-controls="bamboo.global.header-create.menu" aria-haspopup="true" role="button" data-aui-trigger accesskey="c">Create<span class="icon aui-icon-dropdown"></span></button><div id="bamboo.global.header-create.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/build/admin/create/newPlan.action?existingProjectKey=ATESTJTEST121" id="createNewPlan" >Create plan</a></li><li><a href="/build/admin/create/clonePlan.action?planKeyToClone=ATESTJTEST121-BASE" id="clonePlan" >Clone plan</a></li><li><a href="/project/newProject.action" id="createNewProject" >Create project</a></li><li><a href="/deploy/config/newDeploymentProjectDetails.action?planKey=ATESTJTEST121-BASE" >Create deployment project</a></li></ul></div></div></div></li></ul></div><div class="aui-header-secondary"><ul class="aui-nav">            <li>
+        <div id="quicksearch" class="aui-quicksearch">
+            <input name="term" class="term text" type="text" autocomplete="off" accesskey="/" placeholder="Search" title="(Type '/')">
+            <ul class="results hidden"></ul>
+            <script type="text/javascript">
+                require(['jquery', 'widget/quicksearch'], function($, QuickSearch){
+                    return new QuickSearch({
+                        el: $('#quicksearch')
+                    });
+                });
+            </script>
+        </div>
+    </li>
+        <li id="system_help_menu" >                    <a class=" aui-dropdown2-trigger aui-dropdown2-trigger-arrowless" aria-controls="bamboo.global.header-help.menu" aria-haspopup="true" role="button" title="Help" tabindex="0" data-aui-trigger><span class="aui-icon aui-icon-small aui-iconfont-help">Help</span></a><div id="bamboo.global.header-help.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="https://confluence.atlassian.com/display/BAMBOO/Bamboo+Documentation+Home" id="bamboo-on-premises-help"  rel="help">Online help</a></li><li><a href="/about.action" id="about-link"  rel="about">About Bamboo</a></li></ul></div></div></div></li><li id="system_admin_menu" >                    <a class=" aui-dropdown2-trigger aui-dropdown2-trigger-arrowless" aria-controls="bamboo.global.header-admin.menu" aria-haspopup="true" role="button" title="Administration" tabindex="0" data-aui-trigger><span class="aui-icon aui-icon-small aui-iconfont-configure">Administration</span></a><div id="bamboo.global.header-admin.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><strong>Bamboo administration</strong><ul class="aui-list-truncate"><li><a href="/admin/administer.action" id="admin" >Overview</a></li><li><a href="/admin/agent/configureAgents!doDefault.action" id="agentsConfig" >Agents</a></li><li><a href="/admin/elastic/manageElasticInstances.action" id="elasticInstancesAdmin" >Elastic instances</a></li><li><a href="/admin/configureGlobalVariables!doDefault.action" id="globalVariablesConfig" >Global variables</a></li><li><a href="/admin/configureLinkedRepositories!doDefault.action" id="linkedRepositoriesConfig" >Linked repositories</a></li><li><a href="/admin/user/viewUsers.action" id="userAdmin" >User management</a></li><li><a href="/plugins/servlet/upm" id="pluginAdmin" >Manage apps</a></li></ul></div></div></div></li><li id="userInfo" data-username="ne23kow">                    <a class=" aui-dropdown2-trigger aui-dropdown2-trigger-arrowless" aria-controls="bamboo.global.header-user.menu" aria-haspopup="true" role="button" title="Stephan Krusche" tabindex="0" data-aui-trigger>                <div class="aui-avatar aui-avatar-small">
+            <div class="aui-avatar-inner">
+                <img src="https://secure.gravatar.com/avatar/fe6244d8363ae4e14c5449586e18945e.jpg?r=g&s=24&d=mm" height="24" width="24" alt="Stephan Krusche" />
+            </div>
+        </div>
+            <span class="icon aui-icon-dropdown"></span></a><div id="bamboo.global.header-user.menu" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true"><div role="application"><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/profile/userProfile.action" id="profile" >Profile</a></li></ul></div><div class="aui-dropdown2-section"><ul class="aui-list-truncate"><li><a href="/userLogout.action" id="log-out" >Log Out</a></li></ul></div></div></div></li></ul></div></div><!-- .aui-header-inner--></nav><!-- .aui-header -->
+
+
+    </header><!-- END #header -->
+
+
+    <script type="text/javascript">
+        AJS.trigger('analyticsEvent', {
+            name: 'bamboo.plan.configuration.visit',
+            data: {
+                readonly: false,
+                yaml: false
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+    <section id="content" role="main"><header class="aui-page-header"><div class="aui-page-header-inner"><div class="aui-page-header-image">    <div class="aui-avatar aui-avatar-large aui-avatar-project">
+        <div class="aui-avatar-inner" data-key="ATESTJTEST121" data-name="ATESTJTEST121" data-entity-type="bamboo.project">
+            <img src="/images/plan-avatar.png" alt=""/>
+        </div>
+    </div>
+    </div><!-- .aui-page-header-image --><div class="aui-page-header-main">
+        <ol id="breadcrumb" class="aui-nav aui-nav-breadcrumbs"><li><a href="/start.action">Build dashboard</a></li>
+
+            <li><a href="/browse/ATESTJTEST121" id="breadcrumb:ATESTJTEST121">ATESTJTEST121</a></li>
+
+            <li><a href="/browse/ATESTJTEST121-BASE" id="breadcrumb:ATESTJTEST121-BASE">BASE</a></li>
+
+
+        </ol>
+
+
+        <div class="breadcrumbs-title-wrapper">
+            <div class="breadcrumb-item-group">
+                <h1><a href="/chain/admin/config/editChainConfiguration.action?planKey=ATESTJTEST121-BASE">Plan configuration</a></h1>
+                <span class="plan-branch-lozenge"><span class="lozenge lozenge-default lozenge-subtle" title="It is the base branch in your repository, against which all pull requests and commits are made, and plan, which contains the base build configuration.">Default branch</span></span>
+                <script>
+                    AJS.$('.plan-branch-lozenge span').tooltip({gravity:'w', className: 'plan-branch-lozenge-tooltip'});
+                </script>
+            </div>
+            <div class="plan-branch-navigator-wrapper">
+
+                <div class="field-group">
+                    <div class="description">
+                        Plan branch:
+
+                    </div>
+                </div>
+                <input id="plan-branch-navigator" aria-owns="branch-selector-dropdown" aria-haspopup="true" value="ATESTJTEST121-BASE" data-plan-branch-name="master" data-plan-key="ATESTJTEST121-BASE"/>
+                <script type="text/javascript">
+                    require(['jquery', 'feature/plan-branch-navigator'], function($, PlanBranchNavigator){
+                        return new PlanBranchNavigator({
+                            el: $('#plan-branch-navigator'),
+                            isConfigurationPage: true,
+                            params: {
+                                masterPlanKey: "ATESTJTEST121-BASE",
+                                url: "\/chain/admin/config/editChainTriggers.action?buildKey=ATESTJTEST121-BASE",
+                                includeMasterBranch: true,
+                            }
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+                    BAMBOO.redirectToBranchRepositoryConfig = function (data) {
+                        window.location = AJS.contextPath() + data.redirectUrl;
+                    }
+                </script>
+                <a title="Create plan branch" href="/chain/admin/newPlanBranch.action?planKey=ATESTJTEST121-BASE&amp;returnUrl=%2Fchain%2Fadmin%2Fconfig%2FeditChainTriggers.action%3FbuildKey%3DATESTJTEST121-BASE"  id="createBranchSidebar" class="
+
+ aui-button create-plan-branch-button"  data-bamboo-analytics-event="bamboo.create.plan.branch.sidebar.link"><span class="aui-icon aui-icon-small aui-iconfont-create-branch"></span></a>
+
+                <script type="text/javascript">
+                    if (typeof AJS !== 'undefined') {
+                        BAMBOO.simpleDialogForm({
+                            trigger: '#createBranchSidebar',
+                            dialogWidth: 680,
+                            dialogHeight: 500,
+                            success: BAMBOO.redirectToBranchRepositoryConfig,
+                            cancel: null,
+                            header: "Create plan branch"
+                        });
+                    }
+                </script>
+
+            </div>
+        </div>
+    </div><!-- .aui-page-header-main --><div class="aui-page-header-actions"><div id="plan-status-history"></div><script type="text/javascript">require(['jquery', 'widget/plan-status-history'], function($, PlanStatusHistory){return new PlanStatusHistory({el: $('#plan-status-history'), planKey: 'ATESTJTEST121-BASE', buildNumber: null, bootstrap: [], returnUrl: '%2Fchain%2Fadmin%2Fconfig%2FeditChainTriggers.action%3FbuildKey%3DATESTJTEST121-BASE', keyToNavigate: 'ATESTJTEST121-BASE', firstBuildNumber: null, lastBuildNumber: null});});</script>
+
+        <div class="aui-buttons aui-dropdown2-trigger-group">
+            <button class="aui-button aui-dropdown2-trigger" aria-owns="runMenuParent" aria-haspopup="true"><span class="icon icon-build-run " ></span> Run</button>
+
+            <div class="aui-dropdown2 aui-style-default aui-dropdown2-in-page-header" id="runMenuParent">                <div class="aui-dropdown2-section">
+                <ul><li class="dropdown-item"><a href="/build/admin/triggerManualBuild.action?buildKey=ATESTJTEST121-BASE"  id="manualBuild_ATESTJTEST121-BASE" class="        mutative
+item-link
+" >Run plan</a></li>
+
+                    <script type="text/javascript">
+                        if (typeof AJS !== 'undefined') {
+                            BAMBOO.simpleDialogForm({
+                                trigger: '#parameterisedManualBuild_ATESTJTEST121-BASE',
+                                dialogWidth: 800,
+                                dialogHeight: 400,
+                                success: redirectAfterReturningFromDialog,
+                                cancel: null,
+                                header: "Run customized build",
+                                help: "Need help <a href=\"http://docs.atlassian.com/bamboo/docs-0701/Running+a+plan+build+manually\" rel=\"help\">running a customized manual build<\/a>?"
+                            });
+                        }
+                    </script>
+
+
+                    <li class="dropdown-item"><a id="parameterisedManualBuild_ATESTJTEST121-BASE" href="/ajax/editParameterisedManualBuild.action?planKey=ATESTJTEST121-BASE&amp;returnUrl=%2Fchain%2Fadmin%2Fconfig%2FeditChainTriggers.action%3FbuildKey%3DATESTJTEST121-BASE" class="item-link " >Run customized&hellip;</a></li></ul>
+            </div>
+
+            </div>
+
+
+            <div class="aui-dropdown2 aui-style-default aui-dropdown2-in-page-header" id="buildMenuParent">                <div class="aui-dropdown2-section">
+                <ul><li class="dropdown-item"><a href="/build/admin/suspendBuild.action?buildKey=ATESTJTEST121-BASE&amp;returnUrl=%2Fchain%2Fadmin%2Fconfig%2FeditChainTriggers.action%3FbuildKey%3DATESTJTEST121-BASE"  id="suspendBuild:ATESTJTEST121-BASE" class="        mutative
+item-link
+" ><span class="icon icon-build-disable " ></span>Disable plan</a></li>
+                    <li class="dropdown-item"><a id="addPlanLabel" href="/build/label/ajax/editLabels.action?buildKey=ATESTJTEST121-BASE" class="item-link " ><span class="aui-icon aui-icon-small aui-iconfont-devtools-tag"></span>Modify plan label</a></li>        <script type="text/javascript">
+                        new BAMBOO.LABELS.LabelDialog({
+                            trigger: "#addPlanLabel",
+                            labelView: "#planLabel .label-list, #planLabel .label-none, #planLabelDialog .label-list, #planLabelDialog .label-none",
+                            labelsDialog: {
+                                id: "planLabelDialog",
+                                header: "Plan labels",
+                            },
+                            removeUrl: '/build/label/ajax/deleteLabel.action?buildKey=ATESTJTEST121-BASE'
+                        });
+                    </script>
+
+
+                    <li class="dropdown-item"><a href="/ajax/confirmDeleteChain.action?buildKey=ATESTJTEST121-BASE"  id="deleteBuild:ATESTJTEST121-BASE" class="
+item-link
+ plan-delete-link"  data-redirect="/chain/admin/config/start.action" data-title="Delete plan"><span class="aui-icon aui-icon-small aui-iconfont-remove"></span>Delete plan</a></li><li class="dropdown-item"><a href="/exportSpecs/plan.action?buildKey=ATESTJTEST121-BASE"  id="exportPlanSpecs:ATESTJTEST121-BASE" class="
+item-link
+"  target="_blank" data-bamboo-analytics-event="{&quot;name&quot;: &quot;bamboo.export.specs.view.chain&quot;}"><span class="aui-icon aui-icon-small aui-iconfont-file-code"></span>View plan as Java Specs</a></li><li class="dropdown-item"><a href="/exportSpecs/planYaml.action?buildKey=ATESTJTEST121-BASE"  id="exportPlanYaml:ATESTJTEST121-BASE" class="
+item-link
+"  target="_blank" data-bamboo-analytics-event="{&quot;name&quot;: &quot;bamboo.export.specs.view.chain&quot;}"><span class="aui-icon aui-icon-small aui-iconfont-file-code"></span>View plan as YAML</a></li></ul>
+            </div>
+
+            </div>
+            <button class="aui-button aui-dropdown2-trigger" aria-owns="buildMenuParent" aria-haspopup="true"><span class="aui-icon aui-icon-small aui-iconfont-configure"></span> Actions</button>
+
+        </div>
+
+
+
+    </div><!-- .aui-page-header-actions --></div><!-- .aui-page-header-inner --></header><!-- .aui-page-header --><div class="bamboo-page-header-extra">
+        <span class="label-none" id="plan-labels">None</span>
+    </div><div class="aui-page-panel"><div class="aui-page-panel-inner"><section class="aui-page-panel-item plan-sidebar">        <div id="config-sidebar">
+
+        <h2 class="active">
+            <a data-test-ref="plan-configuration-link" href="/chain/admin/config/editChainTriggers.action?buildKey=ATESTJTEST121-BASE">Default plan configuration</a>
+        </h2>
+
+
+        <h2 class="collapsed" data-sidebar-section="planNavigator" data-item-count="1"><span class="icon icon-expand " ></span>Stages &amp; jobs</h2>
+        <ol data-plan-key="ATESTJTEST121-BASE">
+            <li id="stage-296522982" data-stage-name="Default Stage" >
+                <h3 >Default Stage</h3>
+                <ul>
+                    <li id="job-ATESTJTEST121-BASE-JOB1"  class="" data-job-key="ATESTJTEST121-BASE-JOB1">
+                        <span class="icon icon-job " ></span>                                    <a id="navJob_ATESTJTEST121-BASE-JOB1" href="/build/admin/edit/editBuildDetails.action?buildKey=ATESTJTEST121-BASE-JOB1">Default Job</a>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    </section><!-- .aui-page-panel-item --><section class="aui-page-panel-content"><div class="aui-tabs horizontal-tabs aui-tabs-disabled history-xhr-disabled">
+
+        <ul class="tabs-menu">
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="chain_details_ATESTJTEST121-BASE" href="/chain/admin/config/editChainDetails.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Plan details</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="stages:ATESTJTEST121-BASE" href="/chain/admin/config/defaultStages.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Stages</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="repository_ATESTJTEST121-BASE" href="/chain/admin/config/editChainRepository.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Repositories</strong></a>
+            </li>
+            <li class="menu-item active-tab" data-section="chainConfiguration" data-params={}>
+                <a  id="triggers_ATESTJTEST121-BASE" href="/chain/admin/config/editChainTriggers.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Triggers</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="chain_details_ATESTJTEST121-BASE" href="/chain/admin/config/configureBranches.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Branches</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="dependencies_ATESTJTEST121-BASE" href="/chain/admin/config/editChainDependencies.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Dependencies</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="permissions_ATESTJTEST121-BASE" href="/chain/admin/config/editChainPermissions.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Permissions</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="notifications_ATESTJTEST121-BASE" href="/chain/admin/config/defaultChainNotification.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Notifications</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="variables_ATESTJTEST121-BASE" href="/chain/admin/config/configureChainVariables.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Variables</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="auditLog_ATESTJTEST121-BASE" href="/chain/admin/config/viewChainAuditLog.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Audit log</strong></a>
+            </li>
+            <li class="menu-item" data-section="chainConfiguration" data-params={}>
+                <a  id="miscellaneous_ATESTJTEST121-BASE" href="/chain/admin/config/editChainMiscellaneous.action?buildKey=ATESTJTEST121-BASE" class=""         ><strong>Other</strong></a>
+            </li>
+
+        </ul>
+        <div class="tabs-pane active-pane">
+            <div class="floating-toolbar">
+                <a href="http://docs.atlassian.com/bamboo/docs-0701/Triggering+builds" title="How build triggers work" rel="help">How build triggers work</a>
+            </div>
+
+
+            <h2>Triggers</h2><div class="description">    If you want Bamboo to start this plan automatically, you will need to set triggers to specify how and when the build will be triggered. If you want to start it manually at any time, use the "run" menu or <a href="https://confluence.atlassian.com/display/jira/running+a+bamboo+build+when+releasing+a+version">trigger a release from Jira</a>.
+        </div>
+
+
+
+            <div id="panel-editor-setup" class="trigger-config">
+                <p id="no-items-message">No automatic triggers defined</p>
+
+                <div id="panel-editor-list">
+                    <h2 class="assistive">Triggers</h2>
+                    <ul>
+                        <li class="item" data-item-id="1" id="item-1">
+                            <a href="/chain/admin/config/editChainTrigger.action?planKey=ATESTJTEST121-BASE&amp;triggerId=1">
+                                <h3 class="item-title">Bitbucket Server repository triggered</h3>
+                            </a>
+                            <a href="/chain/admin/config/confirmDeleteChainTrigger.action?planKey=ATESTJTEST121-BASE&amp;triggerId=1" class="delete" title="Delete trigger"><span class="assistive">Delete</span></a>
+                        </li>
+                    </ul>
+                    <div class="aui-toolbar inline">
+                        <ul class="toolbar-group">
+                            <li class="toolbar-item">
+                                <a href="/chain/admin/config/viewTriggerTypes.action?planKey=ATESTJTEST121-BASE" id="addTrigger" class="aui-button toolbar-trigger hideInConfigReadOnlyMode">Add trigger</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="panel-editor-config"></div>
+            </div>
+
+            <script type="text/x-template" title="triggerListItem-template">
+                <li class="item" data-item-id="{id}" id="item-{id}">
+                    <a href="/chain/admin/config/editChainTrigger.action?planKey=ATESTJTEST121-BASE&amp;triggerId={id}">
+                        <h3 class="item-title">{name}</h3>
+                        <div class="item-description">{description}</div>
+                    </a>
+                    <a href="/chain/admin/config/confirmDeleteChainTrigger.action?planKey=ATESTJTEST121-BASE&amp;triggerId={id}" class="delete" title="Delete trigger"><span class="assistive">Delete</span></a>
+                </li>
+            </script>
+
+            <script type="text/x-template" title="triggerListItemDefaultMarker-template">
+    </script>
+            <script type="text/x-template" title="lozengeDisabled-template">
+                <span class="lozenge lozenge-default-subtle" title="Disabled">Disabled</span>    </script>
+            <script type="text/x-template" title="icon-template">
+                <span class="icon icon-{type} " ></span>    </script>
+
+            <script type="text/javascript">
+                BAMBOO.TRIGGER.chainTriggerConfig.init({
+                    addTriggerTrigger: "#addTrigger",
+                    triggerSetupContainer: "#panel-editor-setup",
+                    triggerConfigContainer: "#panel-editor-config",
+                    triggerList: "#panel-editor-list > ul",
+                    templates: {
+                        triggerListItem: "triggerListItem-template",
+                        triggerListItemDefaultMarker: "triggerListItemDefaultMarker-template",
+                        lozengeDisabled: "lozengeDisabled-template",
+                        iconTemplate: "icon-template"
+                    },
+                    preselectItemId: 0
+                });
+
+            </script>
+        </div>
+    </div>
+        <script>
+            BAMBOO.currentPlan = {
+                key: 'ATESTJTEST121-BASE',
+                name: 'BASE'
+            };
+            BAMBOO.ConfigSidebar.init();
+        </script>
+    </section><!-- .aui-page-panel-content --></div><!-- .aui-page-panel-inner --></div><!-- .aui-page-panel --></section>
+
+    <script>
+        require('feature/plan-config-delete-confirmation')();
+    </script>
+    <footer id="footer" role="contentinfo" class="has-notifications">
+        <section class="notifications">
+            <div id="license-message" class="aui-message warning">
+                Level up your DevOps kung fu with Bamboo, the <a href="http://www.atlassian.com/software/bamboo/overview?utm_source=community&sid=BTOJ-K84E-AULH-X8BA">Continuous Delivery tool for Jira teams.</a> (Free community license for Technische Universität München)
+                <span class="aui-icon icon-warning"></span>
+            </div>
+        </section>
+        <div class="footer-body">
+            <p><a href="http://www.atlassian.com/software/bamboo/">Continuous integration</a> powered by <a href="http://www.atlassian.com/software/bamboo/">Atlassian Bamboo</a> version 7.1.2 build 70119 - <time datetime="2020-09-02T17:01:41+0200" title="02 Sep 2020 05:01 PM">02 Sep 20</time>
+            </p>
+            <ul>
+                <li><a href="https://support.atlassian.com/contact/">Report a problem</a></li><li><a href="http://jira.atlassian.com/secure/CreateIssue.jspa?pid=11011&amp;issuetype=4">Request a feature</a></li><li><a href="http://www.atlassian.com/about/contact.jsp">Contact Atlassian</a></li><li><a href="/viewAdministrators.action">Contact Administrators</a></li>
+            </ul>
+            <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+        </div> <!-- END .footer-body -->
+    </footer> <!-- END #footer -->
+</div> <!-- END #page -->
+</body>
+</html>

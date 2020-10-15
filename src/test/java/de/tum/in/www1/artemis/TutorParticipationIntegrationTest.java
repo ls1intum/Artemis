@@ -15,19 +15,12 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.FileUtils;
 
 public class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ExampleSubmissionService exampleSubmissionService;
@@ -48,7 +41,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
         modelingExercise.setTitle("UML Class Diagram");
         exerciseRepo.save(modelingExercise);
 
-        String validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         exampleSubmissionService.save(exampleSubmission);
     }

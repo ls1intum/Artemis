@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -44,9 +43,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     @Autowired
     ResultRepository resultRepository;
-
-    @Autowired
-    DatabaseUtilService database;
 
     AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
 
