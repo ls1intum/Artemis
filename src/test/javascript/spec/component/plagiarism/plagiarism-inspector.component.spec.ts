@@ -105,7 +105,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results', () => {
         comp.modelingExercise = modelingExercise;
-        const mockResponse = new HttpResponse({ body: modelingComparisons });
+        const mockResponse = new HttpResponse({ body: modelingComparisons.slice() });
         spyOn(modelingExerciseService, 'checkPlagiarism').and.returnValue(of(mockResponse));
 
         comp.checkPlagiarism();
