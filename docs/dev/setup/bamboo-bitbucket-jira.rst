@@ -188,6 +188,17 @@ under ``localhost:7990``.
             password: <password>
             token: #insert the token here
 
+10. Disable XSRF checking
+   Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
+   sending the required headers.
+
+- Log in as the admin user go to Bamboo -> Overview -> Security Settings
+
+   Edit the settings and disable XSRF checking:
+
+    .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
+       :align: center
+
 Configure Artemis
 -----------------
 
