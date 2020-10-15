@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,9 +44,6 @@ import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final String studentRepoBaseUrl = "/api/repository/";
-
-    @Autowired
-    private DatabaseUtilService database;
 
     @Autowired
     private RequestUtilService request;
@@ -98,7 +96,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         var file = Files.createFile(filePath).toFile();
 
         // write content to the created file
-        FileUtils.write(file, currentLocalFileContent);
+        FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the repository folder
         filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName);
@@ -232,7 +230,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
         Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
-        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 
     @Test
@@ -249,7 +247,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
 
         Path filePath = Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName);
-        assertThat(FileUtils.readFileToString(filePath.toFile())).isEqualTo("updatedFileContent");
+        assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits.size() == 1).isTrue();
@@ -311,7 +309,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Path localFilePath = Paths.get(studentRepository.localRepoFile + "/" + fileName);
         var localFile = Files.createFile(localFilePath).toFile();
         // write content to the created file
-        FileUtils.write(localFile, "local");
+        FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
         studentRepository.localGit.commit().setMessage("local").call();
 
@@ -319,7 +317,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         Path remoteFilePath = Paths.get(studentRepository.originRepoFile + "/" + fileName);
         var remoteFile = Files.createFile(remoteFilePath).toFile();
         // write content to the created file
-        FileUtils.write(remoteFile, "remote");
+        FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
         gitService.stageAllChanges(remoteRepo);
         studentRepository.originGit.commit().setMessage("remote").call();
 
