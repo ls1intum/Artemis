@@ -1,32 +1,34 @@
 package de.tum.in.www1.artemis.domain.lecture_module;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 
 @Entity
-@DiscriminatorValue(value = "E")
+@DiscriminatorValue("E")
 public class ExerciseModule extends LectureModule {
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @OrderColumn(name = "exercise_order")
-    @JoinTable(name = "exercise_module_exercise", joinColumns = @JoinColumn(name = "exercise_module_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    private List<Exercise> exercises = new ArrayList<>();
+    @Column(name = "description")
+    @Lob
+    private String description;
 
-    public List<Exercise> getExercises() {
-        return exercises;
+    @ManyToOne
+    @JoinColumn(name = "exercise_id")
+    private Exercise exercise;
+
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public void setExercises(List<Exercise> exercises) {
-        this.exercises = exercises;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
-    public ExerciseModule addExercise(Exercise exercise) {
-        this.exercises.add(exercise);
-        return this;
+    public String getDescription() {
+        return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

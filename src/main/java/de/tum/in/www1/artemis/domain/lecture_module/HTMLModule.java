@@ -6,7 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 
 @Entity
-@DiscriminatorValue(value = "H")
+@DiscriminatorValue("H")
 public class HTMLModule extends LectureModule {
 
     @Lob

@@ -37,11 +37,12 @@ public class Lecture extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    // ToDo Remove and write conversion script to replace with AttachmentModule
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "lecture_module_order")
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private List<LectureModule> lectureModules = new ArrayList<>();
@@ -50,11 +51,6 @@ public class Lecture extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("lecture")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
-
-    @ManyToMany(mappedBy = "lectures")
-    @OrderColumn(name = "learning_goal_order")
-    @JsonIgnoreProperties("lectures")
-    public List<LearningGoal> learningGoals = new ArrayList<>();
 
     @ManyToOne
     @JsonIgnoreProperties("lectures")
@@ -136,38 +132,6 @@ public class Lecture extends DomainObject {
 
     public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
         this.studentQuestions = studentQuestions;
-    }
-
-    public List<LearningGoal> getLearningGoals() {
-        return learningGoals;
-    }
-
-    public void setLearningGoals(List<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
-    }
-
-    /**
-     * Adds a learning goal to the lecture. Also handles the other side of the relationship.
-     *
-     * @param learningGoal the learning goal to add
-     * @return the lecture with the learning goal added
-     */
-    public Lecture addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getLectures().add(this);
-        return this;
-    }
-
-    /**
-     * Removes an learning goal from the lecture. Also handles the other side of the relationship
-     *
-     * @param learningGoal the learning goal to remove
-     * @return the lecture with the learning goal removed
-     */
-    public Lecture removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getLectures().remove(this);
-        return this;
     }
 
     public Course getCourse() {

@@ -1,31 +1,42 @@
 package de.tum.in.www1.artemis.domain.lecture_module;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 
 @Entity
-@DiscriminatorValue(value = "A")
+@DiscriminatorValue("A")
 public class AttachmentModule extends LectureModule {
 
+    @Column(name = "description")
+    @Lob
+    private String description;
+
     @ManyToMany(fetch = FetchType.EAGER)
-    @OrderColumn(name = "attachment_order")
     @JoinTable(name = "attachment_module_attachment", joinColumns = @JoinColumn(name = "attachment_module_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "attachment_id", referencedColumnName = "id"))
-    private List<Attachment> attachments = new ArrayList<>();
+    private Set<Attachment> attachments = new HashSet<>();
 
     public AttachmentModule addAttachement(Attachment attachment) {
         this.attachments.add(attachment);
         return this;
     }
 
-    public List<Attachment> getAttachements() {
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Set<Attachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachements(List<Attachment> attachments) {
+    public void setAttachments(Set<Attachment> attachments) {
         this.attachments = attachments;
     }
 }

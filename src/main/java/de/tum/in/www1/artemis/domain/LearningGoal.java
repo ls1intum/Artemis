@@ -9,6 +9,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.artemis.domain.lecture_module.LectureModule;
 
 /**
  * Entity that represents a learning goal students should try to achieve
@@ -35,9 +36,9 @@ public class LearningGoal extends DomainObject {
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_lecture", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_id", referencedColumnName = "id"))
+    @JoinTable(name = "learning_goal_lecture_module", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_module_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")
-    private Set<Lecture> lectures = new HashSet<>();
+    private Set<LectureModule> lectureModules = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -68,37 +69,37 @@ public class LearningGoal extends DomainObject {
         this.course = course;
     }
 
-    public Set<Lecture> getLectures() {
-        return lectures;
+    public Set<LectureModule> getLectureModules() {
+        return lectureModules;
     }
 
-    public void setLectures(Set<Lecture> lectures) {
-        this.lectures = lectures;
+    public void setLectureModules(Set<LectureModule> lectureModules) {
+        this.lectureModules = lectureModules;
     }
 
     /**
-     * Adds an lecture to the learning goal. Also handles the other side of the relationship
+     * Adds an lecture module to the learning goal. Also handles the other side of the relationship
      *
-     * @param lecture the lecture to add
-     * @return learning goal with lecture added
+     * @param lectureModule the lecture module to add
+     * @return learning goal with lecture module added
      */
-    public LearningGoal addLecture(Lecture lecture) {
-        this.lectures.add(lecture);
-        if (!lecture.getLearningGoals().contains(this)) {
-            lecture.getLearningGoals().add(this);
+    public LearningGoal addLectureModule(LectureModule lectureModule) {
+        this.lectureModules.add(lectureModule);
+        if (!lectureModule.getLearningGoals().contains(this)) {
+            lectureModule.getLearningGoals().add(this);
         }
         return this;
     }
 
     /**
-     * Removes a lecture from the learning goal. Also handles the other side of the relationship.
+     * Removes a lecture module from the learning goal. Also handles the other side of the relationship.
      *
-     * @param lecture the lecture to remove
-     * @return learning goal with lecture removed
+     * @param lectureModule the lectureModule to remove
+     * @return learning goal with lectureModule removed
      */
-    public LearningGoal removeLecture(Lecture lecture) {
-        this.lectures.remove(lecture);
-        lecture.getLearningGoals().remove(this);
+    public LearningGoal removeLectureModule(LectureModule lectureModule) {
+        this.lectureModules.remove(lectureModule);
+        lectureModule.getLearningGoals().remove(this);
         return this;
     }
 
