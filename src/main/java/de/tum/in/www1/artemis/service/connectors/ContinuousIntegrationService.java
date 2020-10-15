@@ -43,9 +43,10 @@ public interface ContinuousIntegrationService {
      * @param targetProjectKey The key of the project the plan should get copied to
      * @param targetProjectName The wanted name of the new project
      * @param targetPlanName The wanted name of the new plan after copying it
+     * @param targetProjectExists whether the target project already exists or not
      * @return The key of the new build plan
      */
-    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName);
+    String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName, boolean targetProjectExists);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
@@ -121,7 +122,7 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
+    boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
 
     /**
      * Get the build logs of the latest CI build.

@@ -31,9 +31,7 @@ import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -52,12 +50,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    protected DatabaseUtilService database;
-
-    @Autowired
-    protected RequestUtilService request;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
