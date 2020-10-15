@@ -18,13 +18,8 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ExerciseRepository exerciseRepository;
@@ -34,9 +29,6 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
 
     @Autowired
     ExampleSubmissionRepository exampleSubmissionRepository;
-
-    @Autowired
-    RequestUtilService request;
 
     private Exercise exercise;
 

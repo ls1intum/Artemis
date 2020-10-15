@@ -51,10 +51,6 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
-
-    public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
-
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
@@ -141,6 +137,12 @@ public final class Constants {
 
     public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";
 
+    public static final String ALLOWED_LDAP_USERNAME_PATTERN = "allowedLdapUsernamePattern";
+
+    public static final String ACCOUNT_NAME = "accountName";
+
+    public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
+
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
 
     public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
@@ -150,6 +152,8 @@ public final class Constants {
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
+
+    public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
     private Constants() {
     }

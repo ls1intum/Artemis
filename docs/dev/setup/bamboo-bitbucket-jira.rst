@@ -216,6 +216,7 @@ Configure Artemis
                url: http://localhost:8085
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
+               token: <bamboo-admin-token>
                vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>

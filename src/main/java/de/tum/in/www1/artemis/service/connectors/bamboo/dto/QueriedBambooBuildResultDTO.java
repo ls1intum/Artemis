@@ -223,7 +223,7 @@ public class QueriedBambooBuildResultDTO {
 
         SUCCESS("Successful"), FAILED("Failed");
 
-        private String state;
+        private final String state;
 
         BuildState(String state) {
             this.state = state;
