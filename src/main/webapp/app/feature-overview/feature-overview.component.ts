@@ -220,7 +220,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.plagiarismDetection.descriptionTextOne',
             'fa fa-user-secret',
             undefined,
-            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/feature-overview/instructors/plagiarism.png?raw=true',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public' + '/images/feature-overview/instructors/plagiarism.png?raw=true',
         );
 
         const featureAnonymousAssessment = new Feature(
@@ -229,7 +229,8 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.anonymousAssessment.descriptionTextOne',
             'fa fa-shield',
             undefined,
-            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public/images/feature-overview/instructors/anonymous_assessment.png?raw=true',
+            'https://github.com/ls1intum/Artemis/blob/feature/informative-marketing/src/main/resources/public' +
+                '/images/feature-overview/instructors/anonymous_assessment.png?raw=true',
         );
 
         const featureAutomaticAssessment = new Feature(
