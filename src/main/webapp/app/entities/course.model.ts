@@ -16,6 +16,7 @@ export class Course implements BaseEntity {
     public instructorGroupName?: string;
     public startDate?: Moment;
     public endDate?: Moment;
+    public semester: string;
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;

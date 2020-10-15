@@ -14,6 +14,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-update',
@@ -95,6 +96,7 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
+                semester: new FormControl(this.course.semester),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
@@ -309,6 +311,20 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
+    }
+
+    /**
+     * Returns a string array of possible semester values
+     */
+    getSemesters() {
+        // 2018 is the first year we offer semesters for and go one year into the future
+        const years = moment().year() - 2018 + 1;
+        const semesters: string[] = [];
+        for (let i = 0; i <= years; i++) {
+            semesters[2 * i] = 'SS' + (18 + i);
+            semesters[2 * i + 1] = 'WS' + (18 + i) + '/' + (19 + i);
+        }
+        return semesters;
     }
 }
 

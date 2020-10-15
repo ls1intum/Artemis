@@ -53,6 +53,7 @@
             "description": "Kurs Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
+            "semester": "Semester",
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
                 "title": "Online Kurs",

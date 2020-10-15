@@ -70,6 +70,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
+    @Column(name = "semester")
+    @JsonView(QuizView.Before.class)
+    private String semester;
+
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
@@ -211,6 +215,14 @@ public class Course extends DomainObject {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public String getSemester() {
+        return semester;
+    }
+
+    public void setSemester(String semester) {
+        this.semester = semester;
     }
 
     public Boolean isOnlineCourse() {
@@ -400,9 +412,9 @@ public class Course extends DomainObject {
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
-                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
-                + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'"
-                + ", presentationScore='" + getPresentationScore() + "}";
+                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
+                + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='"
+                + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
