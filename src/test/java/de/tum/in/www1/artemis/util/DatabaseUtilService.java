@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -23,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -481,7 +479,7 @@ public class DatabaseUtilService {
             }
 
             for (int i = 0; i < 5; i++) {
-                String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+                String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
                 var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
                 exampleSubmission.assessmentExplanation("exp");
                 for (var tutorParticipation : tutorParticipations) {
@@ -1442,11 +1440,8 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
-
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis);
-
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
     }
 
@@ -1612,9 +1607,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-
         addTestCasesToProgrammingExercise(programmingExercise);
-
         return courseRepo.findById(course.getId()).get();
     }
 
@@ -1960,7 +1953,7 @@ public class DatabaseUtilService {
     }
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
-        String model = loadFileFromResources(path);
+        String model = FileUtils.loadFileFromResources(path);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);
         checkModelingSubmissionCorrectlyStored(submission.getId(), model);
@@ -1996,21 +1989,8 @@ public class DatabaseUtilService {
         return exampleSubmissionRepo.save(exampleSubmission);
     }
 
-    /**
-     * @param path path relative to the test resources folder complaint
-     * @return string representation of given file
-     * @throws Exception if the resource cannot be loaded
-     */
-    public String loadFileFromResources(String path) throws Exception {
-        java.io.File file = ResourceUtils.getFile("classpath:" + path);
-        StringBuilder builder = new StringBuilder();
-        Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
-        return builder.toString();
-    }
-
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-        String fileContent = loadFileFromResources(path);
+        String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
     }
 

@@ -22,7 +22,6 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,10 +52,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
@@ -65,12 +61,6 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     GitUtilService gitUtilService;
@@ -121,6 +111,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseInExam = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseInExam.getId()).get();
 
         participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
@@ -157,8 +148,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // we use the temp repository as remote origing for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
     }
 
     @AfterEach
@@ -287,27 +278,23 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
-        final var verifiables = new LinkedList<Verifiable>();
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
         }
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
         }
         bitbucketRequestMockProvider.mockDeleteProject(projectKey);
 
         request.delete(path, HttpStatus.OK, params);
-
-        for (final var verifiable : verifiables) {
-            verifiable.performVerification();
-        }
     }
 
     @Test
@@ -404,7 +391,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), false);
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
@@ -419,15 +406,17 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+        // both values are not set --> bad request
         programmingExercise.setCourse(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
-        programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        // both values are set --> bad request
+        programmingExerciseInExam.setCourse(course);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
     }
@@ -462,7 +451,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
@@ -474,9 +463,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), false);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
     }
@@ -487,8 +476,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
 
@@ -762,7 +751,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    public void importProgrammingExercise_maxScoreNull_badRequest() throws Exception {
+    public void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
         programmingExercise.setMaxScore(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }

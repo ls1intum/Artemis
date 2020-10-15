@@ -22,12 +22,8 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     StudentExamAccessService studentExamAccessService;

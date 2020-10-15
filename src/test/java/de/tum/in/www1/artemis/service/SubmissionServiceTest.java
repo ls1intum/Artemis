@@ -20,12 +20,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     CourseService courseService;

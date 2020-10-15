@@ -18,25 +18,17 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    RequestUtilService request;
-
-    @Autowired
     UserRepository userRepo;
 
     @Autowired
     UserService userService;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @AfterEach
     public void resetDatabase() {

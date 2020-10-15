@@ -15,19 +15,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @BeforeEach
     public void initTestCase() {
