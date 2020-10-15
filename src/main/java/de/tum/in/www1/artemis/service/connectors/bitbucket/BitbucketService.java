@@ -505,9 +505,9 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
-            // first check that the project key is unique
-            getBitbucketProject(projectKey);
-            log.warn("Bitbucket project with key " + projectKey + " already exists");
+            // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
+            var project = getBitbucketProject(projectKey);
+            log.warn("Bitbucket project with key " + projectKey + " already exists: " + project.getName());
             return true;
         }
         catch (HttpClientErrorException e) {
@@ -529,8 +529,12 @@ public class BitbucketService extends AbstractVersionControlService {
 
                 return false;
             }
+            else {
+                // rethrow so that other errors are not hidden
+                log.error(e.getMessage(), e);
+                throw e;
+            }
         }
-        return true;
     }
 
     /**

@@ -213,9 +213,12 @@ public class BitbucketRequestMockProvider {
      *
      * @param exercise the programming exercise that already exists
      */
-    public void mockProjectKeyExists(ProgrammingExercise exercise) throws URISyntaxException {
+    public void mockProjectKeyExists(ProgrammingExercise exercise) throws URISyntaxException, JsonProcessingException {
         final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
-        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+        var existingProject = new BitbucketProjectDTO(exercise.getProjectKey());
+        existingProject.setName("existingProject");
+        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(existingProject)));
     }
 
     /**
