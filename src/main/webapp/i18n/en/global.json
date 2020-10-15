@@ -218,7 +218,8 @@
             "exercise": "Exercises",
             "scores": "Scores",
             "manageHints": "Manage Hints",
-            "addExternalSubmission": "Add External Submission"
+            "addExternalSubmission": "Add External Submission",
+            "questionsAndAnswers": "Q&A"
         },
         "detail": {
             "field": "Field",

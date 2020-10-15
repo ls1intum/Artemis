@@ -16,6 +16,15 @@
                 >
                     <fa-icon [icon]="'info-circle'" [fixedWidth]="true" style="color: white"></fa-icon>
                 </a>
+                <a
+                    *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
+                    routerLinkActive="active"
+                    [routerLink]="['/course-management', course?.id, 'questions']"
+                    class="text-white card-link"
+                >
+                    <fa-icon [icon]="'comment'"></fa-icon>
+                    <span jhiTranslate="entity.action.questionsAndAnswers">Q&A</span>
+                </a>
             </h2>
         </div>
     </div>
