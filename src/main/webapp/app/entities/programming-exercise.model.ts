@@ -10,6 +10,9 @@ export enum ProgrammingLanguage {
     PYTHON = 'PYTHON',
     C = 'C',
     HASKELL = 'HASKELL',
+    KOTLIN = 'KOTLIN',
+    VHDL = 'VHDL',
+    ASSEMBLER = 'ASSEMBLER',
 }
 
 export class ProgrammingExercise extends Exercise {

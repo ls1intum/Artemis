@@ -34,7 +34,7 @@ public class JenkinsBuildPlanCreatorProvider {
      */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA -> javaJenkinsBuildPlanCreator;
+            case JAVA, KOTLIN -> javaJenkinsBuildPlanCreator;
             case PYTHON -> pythonJenkinsBuildPlanCreator;
             case C -> cJenkinsBuildPlanCreator;
             case HASKELL -> haskellJenkinsBuildPlanCreator;
