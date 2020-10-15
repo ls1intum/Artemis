@@ -4,7 +4,7 @@
         "login": "Login",
         "subtitle": "Interactive Learning with Individual Feedback",
         "please": "Please",
-        "pleaseSignInTUM": "Please sign in with your TUM account.",
+        "pleaseSignInAccount": "Please sign in with your {{account}} account.",
         "pleaseSignIn": "Please sign in with your account.",
         "logged": {
             "message": "You are logged in as user \"{{username}}\"."

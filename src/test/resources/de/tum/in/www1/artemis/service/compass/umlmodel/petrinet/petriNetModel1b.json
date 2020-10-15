@@ -1,0 +1,192 @@
+{
+    "version": "2.0.0",
+    "type": "PetriNet",
+    "size": {
+        "width": 500,
+        "height": 620
+    },
+    "interactive": {
+        "elements": [
+        ],
+        "relationships": [
+        ]
+    },
+    "elements": [
+        {
+            "id": "f406d5df-9404-4914-8631-8588cd289566",
+            "name": "t1",
+            "type": "PetriNetTransition",
+            "owner": null,
+            "bounds": {
+                "x": 340,
+                "y": 110,
+                "width": 20,
+                "height": 60
+            }
+        },
+        {
+            "id": "9336eb67-ddfb-4622-8593-d640402a04fc",
+            "name": "t2",
+            "type": "PetriNetTransition",
+            "owner": null,
+            "bounds": {
+                "x": 0,
+                "y": 130,
+                "width": 20,
+                "height": 60
+            }
+        },
+        {
+            "id": "a12c5ed0-56aa-4174-b64b-7aead67429fd",
+            "name": "a",
+            "type": "PetriNetPlace",
+            "owner": null,
+            "bounds": {
+                "x": 150,
+                "y": 0,
+                "width": 60,
+                "height": 60
+            },
+            "amountOfTokens": 1,
+            "capacity": 1
+        },
+        {
+            "id": "c67e50de-22a0-42df-8056-1cc65fc0f950",
+            "name": "b",
+            "type": "PetriNetPlace",
+            "owner": null,
+            "bounds": {
+                "x": 150,
+                "y": 230,
+                "width": 60,
+                "height": 60
+            },
+            "amountOfTokens": 0,
+            "capacity": "Infinity"
+        }
+    ],
+    "relationships": [
+        {
+            "id": "818fd351-bf3e-48b8-b41b-d775b23c13e5",
+            "name": "1",
+            "type": "PetriNetArc",
+            "owner": null,
+            "bounds": {
+                "x": 20,
+                "y": 30,
+                "width": 130,
+                "height": 130
+            },
+            "path": [
+                {
+                    "x": 130,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 130
+                }
+            ],
+            "source": {
+                "direction": "Left",
+                "element": "a12c5ed0-56aa-4174-b64b-7aead67429fd"
+            },
+            "target": {
+                "direction": "Right",
+                "element": "9336eb67-ddfb-4622-8593-d640402a04fc"
+            }
+        },
+        {
+            "id": "60e82121-c0a2-4140-b723-c192783df7af",
+            "name": "1",
+            "type": "PetriNetArc",
+            "owner": null,
+            "bounds": {
+                "x": 20,
+                "y": 160,
+                "width": 130,
+                "height": 100
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 0
+                },
+                {
+                    "x": 130,
+                    "y": 100
+                }
+            ],
+            "source": {
+                "direction": "Right",
+                "element": "9336eb67-ddfb-4622-8593-d640402a04fc"
+            },
+            "target": {
+                "direction": "Left",
+                "element": "c67e50de-22a0-42df-8056-1cc65fc0f950"
+            }
+        },
+        {
+            "id": "b161c092-db0b-41cd-9b77-08e1e663ca5a",
+            "name": "1",
+            "type": "PetriNetArc",
+            "owner": null,
+            "bounds": {
+                "x": 210,
+                "y": 140,
+                "width": 130,
+                "height": 120
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 120
+                },
+                {
+                    "x": 130,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Right",
+                "element": "c67e50de-22a0-42df-8056-1cc65fc0f950"
+            },
+            "target": {
+                "direction": "Left",
+                "element": "f406d5df-9404-4914-8631-8588cd289566"
+            }
+        },
+        {
+            "id": "80519154-e81d-465b-b692-fa6343345ece",
+            "name": "1",
+            "type": "PetriNetArc",
+            "owner": null,
+            "bounds": {
+                "x": 210,
+                "y": 30,
+                "width": 130,
+                "height": 110
+            },
+            "path": [
+                {
+                    "x": 130,
+                    "y": 110
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "source": {
+                "direction": "Left",
+                "element": "f406d5df-9404-4914-8631-8588cd289566"
+            },
+            "target": {
+                "direction": "Right",
+                "element": "a12c5ed0-56aa-4174-b64b-7aead67429fd"
+            }
+        }
+    ],
+    "assessments": [
+    ]
+}

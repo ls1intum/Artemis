@@ -662,6 +662,44 @@ public class ModelFactory {
         return notification;
     }
 
+    /**
+     * Generate a Bamboo notification with build logs of various sizes
+     *
+     * @param repoName repository name
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return notification with build logs
+     */
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+
+        StringBuilder logBuilder = new StringBuilder();
+        for (int i = 0; i < 254; i++) {
+            logBuilder.append("a");
+        }
+        String logWith254Chars = logBuilder.toString();
+
+        var buildLogDTO254Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO254Chars.setDate(ZonedDateTime.now());
+        buildLogDTO254Chars.setLog(logWith254Chars);
+
+        var buildLogDTO255Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO255Chars.setDate(ZonedDateTime.now());
+        buildLogDTO255Chars.setLog(logWith254Chars + "a");
+
+        var buildLogDTO256Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        buildLogDTO256Chars.setDate(ZonedDateTime.now());
+        buildLogDTO256Chars.setLog(logWith254Chars + "aa");
+
+        var largeBuildLogDTO = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        largeBuildLogDTO.setDate(ZonedDateTime.now());
+        largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
+
+        notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO));
+
+        return notification;
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);

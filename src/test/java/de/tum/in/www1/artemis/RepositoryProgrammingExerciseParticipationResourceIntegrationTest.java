@@ -74,6 +74,14 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
 
+    BuildLogEntry largeBuildLogEntry = new BuildLogEntry(ZonedDateTime.now(),
+            "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle (default-cli)"
+                    + "on project testPluginSCA-Tests: An error has occurred in Checkstyle report generation. Failed during checkstyle"
+                    + "configuration: Exception was thrown while processing C:\\Users\\Stefan\\bamboo-home\\xml-data\\build-dir\\STCTES"
+                    + "TPLUGINSCA-SOLUTION-JOB1\\assignment\\src\\www\\testPluginSCA\\BubbleSort.java: MismatchedTokenException occurred"
+                    + "while parsing file C:\\Users\\Stefan\\bamboo-home\\xml-data\\build-dir\\STCTESTPLUGINSCA-SOLUTION-JOB1\\assignment\\"
+                    + "src\\www\\testPluginSCA\\BubbleSort.java. expecting EOF, found '}' -> [Help 1]");
+
     StudentParticipation participation;
 
     @BeforeEach
@@ -107,6 +115,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), false);
 
         logs.add(buildLogEntry);
+        logs.add(largeBuildLogEntry);
     }
 
     @AfterEach
@@ -384,7 +393,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs).hasSize(1);
+        assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
         assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
