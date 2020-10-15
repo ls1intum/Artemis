@@ -193,6 +193,16 @@ public class BambooBuildPlanService {
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
+            case ASSEMBLER -> {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("tizianleonhardt/era-artemis-assembler:latest"));
+                }
+                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/result.xml");
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
+                tasks.add(0, checkoutTask);
+                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+            }
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
