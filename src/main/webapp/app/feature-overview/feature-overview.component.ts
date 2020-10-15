@@ -35,7 +35,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.localIDE.title',
             'featureOverview.students.feature.localIDE.shortDescription',
             'featureOverview.students.feature.localIDE.descriptionTextOne',
-            'fa fa-code-fork',
+            'code-branch',
             undefined,
             '/content/images/feature-overview/students/clone_repository.png',
         );
@@ -45,7 +45,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.codeEditor.title',
             'featureOverview.students.feature.codeEditor.shortDescription',
             'featureOverview.students.feature.codeEditor.descriptionTextOne',
-            'fa fa-code',
+            'code',
             undefined,
             '/content/images/feature-overview/students/code_editor.png',
         );
@@ -54,7 +54,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.textEditor.title',
             'featureOverview.students.feature.textEditor.shortDescription',
             'featureOverview.students.feature.textEditor.descriptionTextOne',
-            'fa fa-file-text',
+            'file',
             undefined,
             '/content/images/feature-overview/students/text_editor.png',
         );
@@ -64,7 +64,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.apollonEditor.title',
             'featureOverview.students.feature.apollonEditor.shortDescription',
             'featureOverview.students.feature.apollonEditor.descriptionTextOne',
-            'fa fa-object-group',
+            'object-group',
             undefined,
             '/content/images/feature-overview/students/modeling_editor.png',
         );
@@ -73,7 +73,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.quizExercises.title',
             'featureOverview.students.feature.quizExercises.shortDescription',
             'featureOverview.students.feature.quizExercises.descriptionTextOne',
-            'fa fa-check-square-o',
+            'check-square',
             undefined,
             '/content/images/feature-overview/students/quiz_exercises.png',
         );
@@ -83,7 +83,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.login.title',
             'featureOverview.students.feature.login.shortDescription',
             'featureOverview.students.feature.login.descriptionTextOne',
-            'fa fa-sign-in',
+            'sign-in-alt',
             undefined,
             '/content/images/feature-overview/students/login.png',
         );
@@ -93,7 +93,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.userInterface.title',
             'featureOverview.students.feature.userInterface.shortDescription',
             'featureOverview.students.feature.userInterface.descriptionTextOne',
-            'fa fa-puzzle-piece',
+            'puzzle-piece',
             'featureOverview.students.feature.userInterface.descriptionTextTwo',
             '/content/images/feature-overview/students/user_interface.png',
         );
@@ -102,7 +102,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.conduction.title',
             'featureOverview.students.feature.conduction.shortDescription',
             'featureOverview.students.feature.conduction.descriptionTextOne',
-            'fa fa-play',
+            'play',
             undefined,
             '/content/images/feature-overview/students/online_exams.png',
         );
@@ -112,14 +112,14 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.offline.title',
             'featureOverview.students.feature.offline.shortDescription',
             'featureOverview.students.feature.offline.descriptionTextOne',
-            'fa fa-signal',
+            'signal',
         );
 
         const featureSummary = new Feature(
             'featureOverview.students.feature.summary.title',
             'featureOverview.students.feature.summary.shortDescription',
             'featureOverview.students.feature.summary.descriptionTextOne',
-            'fa fa-th-list',
+            'th-list',
             undefined,
             '/content/images/feature-overview/students/summary.png',
         );
@@ -128,14 +128,14 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.qualityAndFair.title',
             'featureOverview.students.feature.qualityAndFair.shortDescription',
             'featureOverview.students.feature.qualityAndFair.descriptionTextOne',
-            'fa fa-superpowers',
+            'eye',
         );
 
         const featureOnlineReview = new Feature(
             'featureOverview.students.feature.onlineReview.title',
             'featureOverview.students.feature.onlineReview.shortDescription',
             'featureOverview.students.feature.onlineReview.descriptionTextOne',
-            'fa fa-comment-o',
+            'comment',
             undefined,
             '/content/images/feature-overview/students/complaint.png',
         );
@@ -171,7 +171,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.createConductAssess.title',
             'featureOverview.instructor.feature.createConductAssess.shortDescription',
             'featureOverview.instructor.feature.createConductAssess.descriptionTextOne',
-            'fa fa-cubes',
+            'cubes',
             undefined,
             '/content/images/feature-overview/instructors/create_conduct_assess.png',
         );
@@ -181,7 +181,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.configuration.title',
             'featureOverview.instructor.feature.configuration.shortDescription',
             'featureOverview.instructor.feature.configuration.descriptionTextOne',
-            'fa fa-cogs',
+            'cogs',
             undefined,
             '/content/images/feature-overview/instructors/import_students.png',
             '/content/images/feature-overview/instructors/fully_configurable.png',
@@ -191,7 +191,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.exerciseTypes.title',
             'featureOverview.instructor.feature.exerciseTypes.shortDescription',
             'featureOverview.instructor.feature.exerciseTypes.descriptionTextOne',
-            'fa fa-tasks',
+            'tasks',
             undefined,
             '/content/images/feature-overview/instructors/multiple_exercises.png',
         );
@@ -201,7 +201,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.exerciseVariants.title',
             'featureOverview.instructor.feature.exerciseVariants.shortDescription',
             'featureOverview.instructor.feature.exerciseVariants.descriptionTextOne',
-            'fa fa-files-o',
+            'copy',
             undefined,
             '/content/images/feature-overview/instructors/exercise_variants.png',
         );
@@ -211,7 +211,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.testRunConduction.title',
             'featureOverview.instructor.feature.testRunConduction.shortDescription',
             'featureOverview.instructor.feature.testRunConduction.descriptionTextOne',
-            'fa fa-tasks',
+            'pencil-alt',
             undefined,
         );
 
@@ -219,14 +219,14 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.sessionMonitoring.title',
             'featureOverview.instructor.feature.sessionMonitoring.shortDescription',
             'featureOverview.instructor.feature.sessionMonitoring.descriptionTextOne',
-            'fa fa-hdd-o',
+            'hdd',
         );
 
         const featurePlagiarismDetection = new Feature(
             'featureOverview.instructor.feature.plagiarismDetection.title',
             'featureOverview.instructor.feature.plagiarismDetection.shortDescription',
             'featureOverview.instructor.feature.plagiarismDetection.descriptionTextOne',
-            'fa fa-user-secret',
+            'user-secret',
             undefined,
             '/content/images/feature-overview/instructors/plagiarism.png',
         );
@@ -235,7 +235,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.anonymousAssessment.title',
             'featureOverview.instructor.feature.anonymousAssessment.shortDescription',
             'featureOverview.instructor.feature.anonymousAssessment.descriptionTextOne',
-            'fa fa-shield',
+            'shield-alt',
             undefined,
             '/content/images/feature-overview/instructors/anonymous_assessment.png',
         );
@@ -244,21 +244,23 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.automaticAssessment.title',
             'featureOverview.instructor.feature.automaticAssessment.shortDescription',
             'featureOverview.instructor.feature.automaticAssessment.descriptionTextOne',
-            'fa fa-magic',
+            'magic',
         );
 
         const featureReviewIndividualExams = new Feature(
             'featureOverview.instructor.feature.reviewIndividualExams.title',
             'featureOverview.instructor.feature.reviewIndividualExams.shortDescription',
             'featureOverview.instructor.feature.reviewIndividualExams.descriptionTextOne',
-            'fa fa-search-plus',
+            'search-plus',
+            undefined,
+            '/content/images/feature-overview/instructors/student_exams.png',
         );
 
         const featureAssessmentMonitoring = new Feature(
             'featureOverview.instructor.feature.assessmentMonitoring.title',
             'featureOverview.instructor.feature.assessmentMonitoring.shortDescription',
             'featureOverview.instructor.feature.assessmentMonitoring.descriptionTextOne',
-            'fa fa-microchip',
+            'microchip',
             undefined,
             '/content/images/feature-overview/instructors/progress_monitoring.png',
         );
@@ -268,7 +270,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.complaints.title',
             'featureOverview.instructor.feature.complaints.shortDescription',
             'featureOverview.instructor.feature.complaints.descriptionTextOne',
-            'fa fa-question',
+            'question',
             undefined,
             '/content/images/feature-overview/instructors/complaint_response.png',
         );
@@ -278,7 +280,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.statistics.title',
             'featureOverview.instructor.feature.statistics.shortDescription',
             'featureOverview.instructor.feature.statistics.descriptionTextOne',
-            'fa fa-pie-chart',
+            'chart-pie',
             undefined,
             '/content/images/feature-overview/instructors/exam_statistics.png',
         );
