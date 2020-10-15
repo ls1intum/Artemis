@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
@@ -47,6 +48,8 @@ public class StudentQuestionResource {
 
     private final LectureRepository lectureRepository;
 
+    private final CourseRepository courseRepository;
+
     private final StudentQuestionService studentQuestionService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -56,7 +59,8 @@ public class StudentQuestionResource {
     GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
-            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository) {
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
@@ -64,6 +68,7 @@ public class StudentQuestionResource {
         this.userService = userService;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -179,9 +184,9 @@ public class StudentQuestionResource {
 
     /**
      *
-     * GET /lectures/{lectureId}/student-questions : get all student questions for exercise.
+     * GET /lectures/{lectureId}/student-questions : get all student questions for lecture.
      * @param lectureId the lecture that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture
      */
     @GetMapping("lectures/{lectureId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -189,13 +194,35 @@ public class StudentQuestionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Lecture> lecture = lectureRepository.findById(lectureId);
         if (lecture.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + lectureId + " does not exist!");
+            throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
         }
         if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
         hideSensitiveInformation(studentQuestions);
+
+        return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
+    }
+
+    /**
+     *
+     * GET /courses/{courseId}/student-questions : get all student questions for course
+     * @param courseId the course that the student questions belong to
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for course
+     */
+    @GetMapping("courses/{courseId}/student-questions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Course> course = courseRepository.findById(courseId);
+        if (course.isEmpty()) {
+            throw new EntityNotFoundException("Course with courseId " + courseId + " does not exist!");
+        }
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course.get(), user)) {
+            return forbidden();
+        }
+        List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForCourse(courseId);
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }

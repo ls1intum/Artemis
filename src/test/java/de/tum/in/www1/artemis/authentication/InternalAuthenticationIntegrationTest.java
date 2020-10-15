@@ -145,9 +145,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = "ab123cd")
+    @WithMockUser(username = "ab12cde")
     public void registerForCourse_internalAuth_success() throws Exception {
-        final var student = ModelFactory.generateActivatedUser("ab123cd");
+        final var student = ModelFactory.generateActivatedUser("ab12cde");
         userRepository.save(student);
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
