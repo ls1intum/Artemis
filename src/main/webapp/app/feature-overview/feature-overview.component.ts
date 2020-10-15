@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-feature-overview',
@@ -10,7 +11,7 @@ export class FeatureOverviewComponent implements OnInit {
     features: Feature[];
     targetAudience = TargetAudience.INSTRUCTORS;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute, private profileService: ProfileService) {}
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.
@@ -59,7 +60,7 @@ export class FeatureOverviewComponent implements OnInit {
         );
         featureTextEditor.centerTextAndImageOne();
 
-        const featureapollonEditor = new Feature(
+        const featureApollonEditor = new Feature(
             'featureOverview.students.feature.apollonEditor.title',
             'featureOverview.students.feature.apollonEditor.shortDescription',
             'featureOverview.students.feature.apollonEditor.descriptionTextOne',
@@ -107,6 +108,13 @@ export class FeatureOverviewComponent implements OnInit {
         );
         featureConduction.centerAndExpandImage();
 
+        const featureOffline = new Feature(
+            'featureOverview.students.feature.offline.title',
+            'featureOverview.students.feature.offline.shortDescription',
+            'featureOverview.students.feature.offline.descriptionTextOne',
+            'fa fa-signal',
+        );
+
         const featureSummary = new Feature(
             'featureOverview.students.feature.summary.title',
             'featureOverview.students.feature.summary.shortDescription',
@@ -132,29 +140,29 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/students/complaint.png',
         );
 
-        const featureBrowserCompatibility = new Feature(
-            'featureOverview.students.feature.browserCompatibility.title',
-            'featureOverview.students.feature.browserCompatibility.shortDescription',
-            'featureOverview.students.feature.browserCompatibility.descriptionTextOne',
-            'fa fa-chrome',
-            undefined,
-        );
-        featureBrowserCompatibility.centerTextAndImageOne();
-
         this.features = [
             featureConduction,
+            featureOffline,
             featureUserInterface,
             featureCodeEditor,
             featurelocalIDE,
-            featureapollonEditor,
+            featureApollonEditor,
             featureTextEditor,
             featureQuizExercises,
             featureSummary,
             featureQualityAndFair,
             featureOnlineReview,
-            featureLogin,
-            featureBrowserCompatibility,
         ];
+
+        // only add login feature for tum accounts
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                const accountName = profileInfo.accountName;
+                if (accountName === 'TUM') {
+                    this.features.push(featureLogin);
+                }
+            }
+        });
     }
 
     private setupInstructorFeatures() {
@@ -239,6 +247,13 @@ export class FeatureOverviewComponent implements OnInit {
             'fa fa-magic',
         );
 
+        const featureReviewIndividualExams = new Feature(
+            'featureOverview.instructor.feature.reviewIndividualExams.title',
+            'featureOverview.instructor.feature.reviewIndividualExams.shortDescription',
+            'featureOverview.instructor.feature.reviewIndividualExams.descriptionTextOne',
+            'fa fa-search-plus',
+        );
+
         const featureAssessmentMonitoring = new Feature(
             'featureOverview.instructor.feature.assessmentMonitoring.title',
             'featureOverview.instructor.feature.assessmentMonitoring.shortDescription',
@@ -277,6 +292,7 @@ export class FeatureOverviewComponent implements OnInit {
             featurePlagiarismDetection,
             featureAnonymousAssessment,
             featureAutomaticAssessment,
+            featureReviewIndividualExams,
             featureAssessmentMonitoring,
             featureComplaints,
             featureStatistics,
