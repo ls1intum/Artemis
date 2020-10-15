@@ -751,7 +751,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    public void importProgrammingExercise_maxScoreNull_badRequest() throws Exception {
+    public void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
         programmingExercise.setMaxScore(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }

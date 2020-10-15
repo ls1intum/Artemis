@@ -23,6 +23,9 @@ public class BitbucketRepositoryDTO {
 
     private LinksDTO links;
 
+    /**
+     * needed for Jackson
+     */
     public BitbucketRepositoryDTO() {
     }
 
@@ -111,8 +114,9 @@ public class BitbucketRepositoryDTO {
      * @return the clone url stored in the link based on http href
      */
     public String getCloneUrl() {
-        if (this.links == null)
+        if (this.links == null) {
             return null;
+        }
 
         for (var clone : this.links.clone) {
             if ("http".equals(clone.getName())) {
@@ -127,8 +131,9 @@ public class BitbucketRepositoryDTO {
      * @return the clone url stored in the link based on ssh href
      */
     public String getCloneSshUrl() {
-        if (this.links == null)
+        if (this.links == null) {
             return null;
+        }
 
         for (var clone : this.links.clone) {
             if ("ssh".equals(clone.getName())) {
@@ -166,6 +171,9 @@ public class BitbucketRepositoryDTO {
 
             private String name;
 
+            /**
+             * empty constructor needed for Jackson
+             */
             public CloneDTO() {
             }
 

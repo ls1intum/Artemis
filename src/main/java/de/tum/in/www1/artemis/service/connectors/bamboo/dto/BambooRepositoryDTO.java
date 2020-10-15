@@ -33,6 +33,9 @@ public class BambooRepositoryDTO {
 
     protected String scmType;
 
+    /**
+     * needed for Jackson
+     */
     public BambooRepositoryDTO() {
     }
 

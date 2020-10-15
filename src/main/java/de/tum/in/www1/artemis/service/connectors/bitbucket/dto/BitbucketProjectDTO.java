@@ -21,6 +21,9 @@ public class BitbucketProjectDTO {
         this.key = key;
     }
 
+    /**
+     * needed for Jackson
+     */
     public BitbucketProjectDTO() {
     }
 

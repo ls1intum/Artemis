@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -382,8 +383,19 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         bambooRequestMockProvider.reset();
 
+        var log1 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "java.lang.AssertionError: BubbleSort does not sort correctly");
+        var log2 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Test");
+        var log3 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[WARNING]");
+        var log4 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] [Help 1]");
+        var log5 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] To see the full stack trace of the errors\"");
+        var log6 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "Unable to publish artifact");
+        var log7 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "NOTE: Picked up JDK_JAVA_OPTIONS");
+        var log8 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin");
+        var log9 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloading error");
+        var log10 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloaded error");
+
         // get the failed build log
-        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10));
         var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         for (final var verification : verifications) {
@@ -391,6 +403,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         }
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+        // some build logs have been filtered out
         assertThat(buildLogs.size()).as("Failed build log was created").isEqualTo(1);
     }
 

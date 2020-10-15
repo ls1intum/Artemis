@@ -69,13 +69,16 @@ public class BambooBuildResultDTO {
 
         private String unstyledLog;
 
+        /**
+         * needed for Jackson
+         */
         public BambooBuildLogEntryDTO() {
         }
 
-        public BambooBuildLogEntryDTO(ZonedDateTime date, String log, String unstyledLog) {
+        public BambooBuildLogEntryDTO(ZonedDateTime date, String log) {
             this.date = date;
             this.log = log;
-            this.unstyledLog = unstyledLog;
+            this.unstyledLog = log;
         }
 
         public ZonedDateTime getDate() {

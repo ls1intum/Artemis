@@ -14,7 +14,6 @@ import com.atlassian.bamboo.specs.util.*;
 @Profile("bamboo")
 public class BambooServerConfiguration {
 
-    @Deprecated
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
 
@@ -27,17 +26,6 @@ public class BambooServerConfiguration {
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
-
-    @Deprecated
-    @Value("${artemis.version-control.user}")
-    private String bitbucketUser;
-
-    @Deprecated
-    @Value("${artemis.version-control.password}")
-    private String bitbucketPassword;
-
-    @Value("${artemis.version-control.url}")
-    private URL bitbucketServerUrl;
 
     /**
      * initializes the bamboo server with the provided token (if available) or with username and password (fallback that will be removed soon)

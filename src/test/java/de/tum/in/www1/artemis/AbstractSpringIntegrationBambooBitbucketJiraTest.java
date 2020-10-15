@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -119,6 +118,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Autowired
     protected RequestUtilService request;
 
+    /**
+     * used to mimic the caching behavior of BambooService
+     */
+    private final List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
+
     @AfterEach
     public void resetSpyBeans() {
         Mockito.reset(ltiService, continuousIntegrationService, versionControlService, bambooServer, gitService, groupNotificationService, websocketMessagingService,
@@ -141,16 +145,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         final var projectKey = exercise.getProjectKey();
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
 
-        mockUpdatePlanRepository(exercise, username, Constants.ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
+        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
     }
-
-    private List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
 
     private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
         return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
     }
 
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+    private void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
             throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var buildPlanKey = (projectKey + "-" + planName).toUpperCase();
@@ -194,7 +196,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
                 bambooRequestMockProvider.mockDeleteTrigger(buildPlanKey, trigger.getId());
             }
 
-            for (var repo : triggeredBy) {
+            for (var ignored : triggeredBy) {
                 // we only support one specific case for the repository above here
                 bambooRequestMockProvider.mockAddTrigger(buildPlanKey, bambooRepositoryAssignment.getId().toString());
             }

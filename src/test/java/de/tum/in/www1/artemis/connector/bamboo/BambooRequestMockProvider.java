@@ -150,7 +150,12 @@ public class BambooRequestMockProvider {
     }
 
     public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
-        mockGetBuildPlan(buildPlanId, exists ? new BambooBuildPlanDTO(buildPlanId) : null);
+        if (exists) {
+            mockGetBuildPlan(buildPlanId, new BambooBuildPlanDTO(buildPlanId));
+        }
+        else {
+            mockGetBuildPlan(buildPlanId, null);
+        }
     }
 
     public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned) throws URISyntaxException, JsonProcessingException {
@@ -283,10 +288,8 @@ public class BambooRequestMockProvider {
      *
      * @param planKey the build plan id
      */
-    public void mockGetBuildLogs(String planKey) throws URISyntaxException, JsonProcessingException {
-        var log = "java.lang.AssertionError: BubbleSort does not sort correctly";
-        var logEntry = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), log, log);
-        var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(List.of(logEntry)));
+    public void mockGetBuildLogs(String planKey, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> buildLogs) throws URISyntaxException, JsonProcessingException {
+        var response = new BambooBuildResultDTO(new BambooBuildResultDTO.BambooBuildLogEntriesDTO(buildLogs));
         final var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
                 .pathSegment("latest.json").queryParam("expand", "logEntries&max-results=2000").build().toUri();
 
@@ -294,7 +297,7 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
+    private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws MalformedURLException {
         final var buildResult = new QueriedBambooBuildResultDTO();
         final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
         final var failedTests = new QueriedBambooBuildResultDTO.BambooFailedTestsDTO();
@@ -367,6 +370,16 @@ public class BambooRequestMockProvider {
         return failed;
     }
 
+    /**
+     * configures mock REST request for copying a build plan
+     * @param sourceProjectKey the source Bamboo project key
+     * @param sourcePlanName the source Bamboo build plan name
+     * @param targetProjectKey the target Bamboo project key
+     * @param targetPlanName the target Bamboo build plan name
+     * @param targetProjectExists whether the target project already exists
+     * @throws URISyntaxException can happen due to wrong URL handling
+     * @throws JsonProcessingException can happen due to wrong response handling
+     */
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName, boolean targetProjectExists)
             throws URISyntaxException, JsonProcessingException {
 

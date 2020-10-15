@@ -15,6 +15,9 @@ public class BambooProjectDTO {
 
     private BambooBuildPlansDTO plans;
 
+    /**
+     * needed for Jackson
+     */
     public BambooProjectDTO() {
     }
 

@@ -14,9 +14,6 @@ public class ApplicationLinksDTO {
         this.applicationLinks = applicationLinks;
     }
 
-    public ApplicationLinksDTO() {
-    }
-
     public static class ApplicationLinkDTO {
 
         private String id;

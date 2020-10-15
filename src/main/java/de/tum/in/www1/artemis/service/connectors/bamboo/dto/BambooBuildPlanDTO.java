@@ -30,6 +30,9 @@ public class BambooBuildPlanDTO {
 
     private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
 
+    /**
+     * needed for Jackson
+     */
     public BambooBuildPlanDTO() {
     }
 

@@ -13,6 +13,9 @@ public class BambooTriggerDTO {
 
     private boolean enabled = true;
 
+    /**
+     * needed for Jackson
+     */
     public BambooTriggerDTO() {
     }
 

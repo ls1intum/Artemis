@@ -171,17 +171,8 @@ public class BambooService implements ContinuousIntegrationService {
                     }
                 }
             }
-            catch (GitAPIException ex) {
-                log.error("Git error while doing empty commit", ex);
-            }
-            catch (IOException ex) {
-                log.error("IOError while doing empty commit", ex);
-            }
-            catch (InterruptedException ex) {
-                log.error("InterruptedException while doing empty commit", ex);
-            }
-            catch (NullPointerException ex) {
-                log.error("NullPointerException while doing empty commit", ex);
+            catch (GitAPIException | IOException | InterruptedException | NullPointerException ex) {
+                log.error("Exception while doing empty commit", ex);
             }
         }
     }

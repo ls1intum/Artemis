@@ -34,7 +34,6 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1")
     public void testHealthRunning() throws URISyntaxException, JsonProcessingException {
-
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);
@@ -44,7 +43,6 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1")
     public void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
-
         bitbucketRequestMockProvider.mockHealth("PAUSED", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);
@@ -54,7 +52,6 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1")
     public void testHealthException() throws URISyntaxException, JsonProcessingException {
-
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);

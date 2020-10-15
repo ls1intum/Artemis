@@ -13,15 +13,6 @@ public class BambooBuildLogDTO {
 
     private String unstyledLog;
 
-    public BambooBuildLogDTO() {
-    }
-
-    public BambooBuildLogDTO(ZonedDateTime date, String log, String unstyledLog) {
-        this.date = date;
-        this.log = log;
-        this.unstyledLog = unstyledLog;
-    }
-
     public ZonedDateTime getDate() {
         return date;
     }
