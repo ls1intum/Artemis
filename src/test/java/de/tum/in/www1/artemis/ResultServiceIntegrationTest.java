@@ -42,9 +42,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -76,13 +74,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
     UserRepository userRepo;
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ResultRepository resultRepository;
@@ -189,6 +187,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(savedResult.getFeedbacks());
         assertThat(savedResult.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
         assertThat(result.getFeedbacks()).usingElementComparator(scaFeedbackComparator).containsAll(staticCodeAnalysisFeedback);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreBuildLogsForSubmission() {
+        final var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var expectedNoOfLogs = resultNotification.getBuild().getJobs().iterator().next().getLogs().size();
+        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
     }
 
     @Test

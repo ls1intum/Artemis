@@ -19,17 +19,9 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StudentQuestionService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     CourseRepository courseRepo;
@@ -244,5 +236,15 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(2));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAllStudentQuestionsForCourse() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndLectureAndStudentQuestions().get(0);
+        Long courseID = studentQuestion.getCourse().getId();
+
+        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/courses/" + courseID + "/student-questions", HttpStatus.OK, StudentQuestion.class);
+        assertThat(returnedStudentQuestions.size()).isEqualTo(4);
     }
 }
