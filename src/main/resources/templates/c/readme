@@ -18,3 +18,6 @@
 #### Leak Sanitizer
 1. [task][Leak Sanitizer Kompilieren](TestCompileLeak)
 2. [task][Leak Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputLSan)
+
+#### GCC Static Analysis
+1. [task][GCC Static analysis](TestGccStaticAnalysis)

@@ -4,9 +4,7 @@ from tests.TestASan import TestASan
 from tests.TestUBSan import TestUBSan
 from tests.TestLSan import TestLSan
 from tests.TestOutput import TestOutput
-
-from string import ascii_letters, digits
-from random import choices, randint
+from random import seed, choice
 
 
 def main():
@@ -21,22 +19,49 @@ def main():
 
     # Basic compile test:
     # Run after the sanitizer so we run the tests without any sanitizer enabled
-    testCompile: TestCompile = TestCompile(makefileLocation, "rotX")
+    testCompile: TestCompile = TestCompile(makefileLocation, "hexdump")
     tester.addTest(testCompile)
 
-    # Test RotX:
+    # Test Output:
     # This test requires the "TestCompile" to finish with "SUCCESS" to be run:
-    tester.addTest(TestOutput(makefileLocation, 0,
-                              "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_0"))
-    tester.addTest(TestOutput(makefileLocation, 1,
-                              "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_1"))
-    tester.addTest(TestOutput(makefileLocation, 26,
-                              "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_26"))
+    with open("/tmp/hello_world.txt", "w", encoding='utf-8') as f:
+        f.write("Hello World!")
+    with open("/tmp/lazy_fox.txt", "w", encoding='utf-8') as f:
+        f.write("The quick brown fox jumps over the lazy dog")
+    with open("/tmp/numbers.txt", "w", encoding='utf-8') as f:
+        for i in range(100):
+            f.write("{} ".format(i))
+    with open("/tmp/random_fox.txt", "w", encoding='utf-8') as f:
+        seed()
+        for i in range(100):
+            f.write("{:s} ".format(
+                choice(
+                    ["The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog", "+", "-", "~", "0", "!!!",
+                     ".", ",", " ", ";"])))
+    with open("/tmp/dev_random_short.txt", "wb") as f:
+        with open("/tmp/dev_random_medium.txt", "wb") as f2:
+            with open("/tmp/dev_random_long.txt", "wb") as f3:
+                with open("/dev/urandom", "rb") as rand:
+                    f.write(rand.read(16))
+                    f2.write(rand.read(84))
+                    f3.write(rand.read(444))
 
-    # Random RotX tests:
-    for i in range(0, 10):
-        tester.addTest(TestOutput(makefileLocation, randint(26, 2626), __getRandomSting(
-            randint(10, 20)), [testCompile.name], name="TestOutputRandom_" + str(i)))
+    tester.addTest(TestOutput(makefileLocation, [testCompile.name], files=[
+                   "/tmp/hello_world.txt"], name="HelloWorld"))
+    tester.addTest(TestOutput(makefileLocation, [testCompile.name], files=["/tmp/lazy_fox.txt", "/tmp/numbers.txt"],
+                              name="LazyFoxNumbers"))
+
+    tester.addTest(TestOutput(makefileLocation, [
+                   testCompile.name], files=[], name="NoInput"))
+    tester.addTest(TestOutput(makefileLocation, [testCompile.name], files=[
+                   "/tmp/random_fox.txt"], name="RandomFox"))
+
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_short.txt"], name="DevRandomShort"))
+    tester.addTest(TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_medium.txt"],
+                              name="DevRandomMedium"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_long.txt"], name="DevRandomLong"))
 
     # Sanitizer:
 
@@ -46,8 +71,12 @@ def main():
         makefileLocation, requirements=[testCompile.name])
     tester.addTest(testASan)
     # This test requires the "TestASan" to finish with "SUCCESS" to be run:
-    tester.addTest(TestOutput(makefileLocation, 27, "aAbByYzZ123!%&/()Oau",
-                              requirements=[testASan.name], name="TestOutputASan", executable="asan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/hello_world.txt"], name="HelloWorldASan",
+                   executable="asan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_long.txt"], name="DevRandomLongASan",
+                   executable="asan.out"))
 
     # Undefined Behavior Sanitizer:
     # This test requires the "TestCompile" to finish with "SUCCESS" to be run:
@@ -55,8 +84,12 @@ def main():
         makefileLocation, requirements=[testCompile.name])
     tester.addTest(testUBSan)
     # This test requires the "TestUBSan" to finish with "SUCCESS" to be run:
-    tester.addTest(TestOutput(makefileLocation, 27, "aAbByYzZ123!%&/()Oau",
-                              requirements=[testUBSan.name], name="TestOutputUBSan", executable="ubsan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/hello_world.txt"], name="HelloWorldUBSan",
+                   executable="ubsan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_long.txt"], name="DevRandomLongUBSan",
+                   executable="ubsan.out"))
 
     # Leak Sanitizer:
     # This test requires the "TestCompile" to finish with "SUCCESS" to be run:
@@ -64,17 +97,17 @@ def main():
         makefileLocation, requirements=[testCompile.name])
     tester.addTest(testLSan)
     # This test requires the "TestLSan" to finish with "SUCCESS" to be run:
-    tester.addTest(TestOutput(makefileLocation, 27, "aAbByYzZ123!%&/()Oau",
-                              requirements=[testLSan.name], name="TestOutputLSan", executable="lsan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/hello_world.txt"], name="HelloWorldLSan",
+                   executable="lsan.out"))
+    tester.addTest(
+        TestOutput(makefileLocation, [testCompile.name], files=["/tmp/dev_random_long.txt"], name="DevRandomLongLSan",
+                   executable="lsan.out"))
 
     # Run the actual tests:
     tester.run()
     # Export the results into the JUnit XML format:
     tester.exportResult("../test-reports/tests-results.xml")
-
-
-def __getRandomSting(len: int):
-    return ''.join(choices(ascii_letters + digits, k=len))
 
 
 if __name__ == '__main__':

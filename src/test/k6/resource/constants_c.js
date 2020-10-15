@@ -1,7 +1,7 @@
 export const programmingExerciseProblemStatementC =
     '### Tests\n' +
     '\n'
-    '#### Allgemein\n' +
+'#### Allgemein\n' +
     '1. [task][Kompilieren](TestCompile)\n' +
     '2. [task][Rot0 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_0)\n' +
     '3. [task][Rot1 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_1)\n' +
@@ -18,7 +18,10 @@ export const programmingExerciseProblemStatementC =
     '\n' +
     '#### Leak Sanitizer\n' +
     '1. [task][Leak Sanitizer Kompilieren](TestCompileLeak)\n' +
-    '2. [task][Leak Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputLSan)';
+    '2. [task][Leak Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputLSan)\n' +
+    '\n' +
+    '#### GCC Static Analysis\n' +
+    '1. [task][GCC Static analysis](TestGccStaticAnalysis)';
 
 export const buildErrorContentC = {
     newFiles: [],
