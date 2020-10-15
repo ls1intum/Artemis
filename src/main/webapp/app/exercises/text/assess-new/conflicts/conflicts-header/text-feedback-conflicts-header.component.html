@@ -14,9 +14,9 @@
             <fa-icon *ngIf="overrideBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.conflict.overrideAssessment">Override Left Assessment</span>
         </button>
-        <button class="btn ml-2 btn-primary" *ngIf="haveRights" (click)="markSelectedAsNoConflict.emit()" [disabled]="isMarkingDisabled">
+        <button class="btn ml-2 btn-primary" *ngIf="haveRights" (click)="discardConflict.emit()" [disabled]="isMarkingDisabled">
             <fa-icon *ngIf="markBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
-            <span jhiTranslate="artemisApp.textAssessment.conflict.markAsNoConflict">Mark Selected as No Conflict</span>
+            <span jhiTranslate="artemisApp.textAssessment.conflict.discard">Discard</span>
         </button>
     </div>
 </h3>

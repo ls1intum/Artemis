@@ -14,7 +14,7 @@ export class FeedbackConflict implements BaseEntity {
     public createdAt?: Moment;
     public solvedAt?: Moment;
     public type?: FeedbackConflictType;
-    public markedAsNoConflict?: boolean;
+    public discard?: boolean;
 
     constructor() {}
 }

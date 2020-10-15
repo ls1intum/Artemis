@@ -299,7 +299,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.selectedRightFeedbackId).toBe(undefined);
     });
 
-    it('should mark selected as no conflict', () => {
+    it('should discard conflict', () => {
         textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
@@ -308,7 +308,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
         const feedbackConflict = textSubmission.result!.feedbacks![0].conflictingTextAssessments![0];
         feedbackConflict.conflict = false;
-        feedbackConflict.markedAsNoConflict = true;
+        feedbackConflict.discard = true;
         spyOn(textAssessmentsService, 'solveFeedbackConflict').and.returnValue(
             of(
                 new HttpResponse({
@@ -316,7 +316,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 }),
             ),
         );
-        component.markSelectedAsNoConflict();
+        component.discardConflict();
         expect(textAssessmentsService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
     });
 

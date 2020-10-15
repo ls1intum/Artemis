@@ -14,7 +14,7 @@ export class TextFeedbackConflictsHeaderComponent {
     @Input() isMarkingDisabled: boolean;
     @Output() didChangeConflictIndex = new EventEmitter<number>();
     @Output() overrideLeftSubmission = new EventEmitter<void>();
-    @Output() markSelectedAsNoConflict = new EventEmitter<void>();
+    @Output() discardConflict = new EventEmitter<void>();
 
     currentConflictIndex = 1;
 

@@ -209,7 +209,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     /**
      * Finds the feedback conflict id based on the selected conflicting right feedback's id and calls the service function to solve conflict.
      */
-    markSelectedAsNoConflict(): void {
+    discardConflict(): void {
         if (this.markBusy || !this.selectedRightFeedbackId) {
             return;
         }

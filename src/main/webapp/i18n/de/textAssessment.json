@@ -55,7 +55,7 @@
                 "assessor": "Bewerter: Du",
                 "otherAssessor": "Bewerter: {{otherUser}}",
                 "conflictingAssessments": "{{number}} Konflikte",
-                "markAsNoConflict": "Ausgewählte als konfliktfrei markieren",
+                "discard": "Konflikt verwerfen",
                 "notFound": "Wir haben für das ausgewählte Feedback keine Konflikte gefunden, bitte gehe zurück.",
                 "overrideAssessment": "Linke Bewertung überschreiben",
                 "solveFeedbackConflictSuccessful": "Konflikt erfolgreich gelöst.",

@@ -7,7 +7,7 @@
     [isOverrideDisabled]="isOverrideDisabled"
     [isMarkingDisabled]="isMarkingDisabled"
     (overrideLeftSubmission)="overrideLeftSubmission()"
-    (markSelectedAsNoConflict)="markSelectedAsNoConflict()"
+    (discardConflict)="discardConflict()"
 ></jhi-text-feedback-conflicts-header>
 
 <ng-container *ngIf="conflictingSubmissions && conflictingSubmissions.length > 0; then conflict; else noConflict"></ng-container>

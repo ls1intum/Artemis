@@ -34,8 +34,8 @@ public class FeedbackConflict extends DomainObject {
     @JoinColumn(name = "second_feedback_id", referencedColumnName = "id")
     private Feedback secondFeedback;
 
-    @Column(name = "markedAsNotConflict")
-    private Boolean markedAsNotConflict;
+    @Column(name = "discard")
+    private Boolean discard;
 
     public Boolean getConflict() {
         return conflict;
@@ -85,11 +85,11 @@ public class FeedbackConflict extends DomainObject {
         this.secondFeedback = secondFeedback;
     }
 
-    public boolean getMarkedAsNotConflict() {
-        return markedAsNotConflict;
+    public boolean getDiscard() {
+        return discard;
     }
 
-    public void setMarkedAsNotConflict(Boolean markedAsNotConflict) {
-        this.markedAsNotConflict = markedAsNotConflict;
+    public void setDiscard(Boolean discard) {
+        this.discard = discard;
     }
 }

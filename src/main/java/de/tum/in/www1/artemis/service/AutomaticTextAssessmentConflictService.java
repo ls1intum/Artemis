@@ -104,7 +104,7 @@ public class AutomaticTextAssessmentConflictService {
         feedbackConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());
             Optional<Feedback> secondFeedback = feedbackRepository.findById(conflict.getSecondFeedbackId());
-            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findConflictsOrMarkedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
+            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findConflictsOrDiscardedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
                     conflict.getSecondFeedbackId());
             // if the found conflict is present but its type has changed, update it
             if (!storedConflicts.isEmpty() && !storedConflicts.get(0).getType().equals(conflict.getType())) {
@@ -120,7 +120,7 @@ public class AutomaticTextAssessmentConflictService {
                 feedbackConflict.setSecondFeedback(secondFeedback.get());
                 feedbackConflict.setType(conflict.getType());
                 feedbackConflict.setCreatedAt(ZonedDateTime.now());
-                feedbackConflict.setMarkedAsNotConflict(false);
+                feedbackConflict.setDiscard(false);
                 feedbackConflicts.add(feedbackConflict);
             }
         });
@@ -159,7 +159,7 @@ public class AutomaticTextAssessmentConflictService {
     public void solveFeedbackConflict(FeedbackConflict feedbackConflict) {
         feedbackConflict.setSolvedAt(ZonedDateTime.now());
         feedbackConflict.setConflict(false);
-        feedbackConflict.setMarkedAsNotConflict(true);
+        feedbackConflict.setDiscard(true);
         this.feedbackConflictRepository.save(feedbackConflict);
     }
 

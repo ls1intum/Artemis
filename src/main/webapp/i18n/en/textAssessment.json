@@ -55,7 +55,7 @@
                 "assessor": "Assessor: You",
                 "otherAssessor": "Assessor: {{otherUser}}",
                 "conflictingAssessments": "{{number}} conflicts",
-                "markAsNoConflict": "Mark Selected as No Conflict",
+                "discard": "Discard Conflict",
                 "notFound": "We haven't found any conflicts for the selected feedback, please go back.",
                 "overrideAssessment": "Override Left Assessment",
                 "solveFeedbackConflictSuccessful": "Feedback conflict solved successfully.",
