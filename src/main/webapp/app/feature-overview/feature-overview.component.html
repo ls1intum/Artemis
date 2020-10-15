@@ -91,7 +91,7 @@
                         <ng-template #centerTextAndImage>
                             <p style="text-align: center">{{ feature.descriptionTextOne | translate }}</p>
                             <img
-                                *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrinkedImage"
+                                *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrunkImage"
                                 src="{{ feature.imageOne }}"
                                 class="center"
                                 alt="feature-image-one"
@@ -105,7 +105,7 @@
                                 style="margin-top: 5px; max-width: 1600px; width: 100%"
                             />
                             <img
-                                *ngIf="feature.imageOne && feature.shrinkedImage"
+                                *ngIf="feature.imageOne && feature.shrunkImage"
                                 src="{{ feature.imageOne }}"
                                 class="center"
                                 alt="feature-image-one"
