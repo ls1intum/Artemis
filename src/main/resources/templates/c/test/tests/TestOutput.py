@@ -1,66 +1,40 @@
 from testUtils.AbstractProgramTest import AbstractProgramTest
+from time import sleep
 from os.path import join
 from typing import List
 from testUtils.Utils import printTester, studSaveStrComp
 
 
 class TestOutput(AbstractProgramTest):
-    files: List[str]
-
-    def __init__(self, makefileLocation: str, requirements: List[str] = None, files: List[str] = list(), name: str = "TestOutput", executable: str = "hexdump.out"):
-        super(TestOutput, self).__init__(name, makefileLocation,
-                                         executable, requirements, timeoutSec=-1)
-        self.files: List[str] = files
+    def __init__(self, executionDirectory: str, rot: int, input: str, requirements: List[str] = list(), name: str = "TestOutput", executable: str = "rotX.out"):
+        super(TestOutput, self).__init__(
+            name, executionDirectory, executable, requirements, timeoutSec=10)
+        self.rot = rot
+        self.input = input
 
     def _run(self):
         # Start the program:
         self.pWrap = self._createPWrap(
-            [join(".", self.executionDirectory, self.executable)] + self.files)
+            [join(".", self.executionDirectory, self.executable)])
         self._startPWrap(self.pWrap)
 
-        i: int = 0
-        expected: List[str] = self._getExpected()
-        while True:
-            if self.pWrap.hasTerminated():
-                if len(self.files) == 0:
-                    if self.pWrap.canReadLineStdout():
-                        self._failWith(
-                            "Programm generated output although no parameter was given")
-                    else:
-                        break
-                elif not self.pWrap.canReadLineStdout():
-                    self.__progTerminatedUnexpectedly()
+        # Wait for child beeing ready:
+        self.__waitForInput("Enter Rot:")
 
-            # Read a single line form the programm output:
-            line: str = self.pWrap.readLineStdout()
-            if not line and self.pWrap.hasTerminated() and (len(self.files) <= 0):
-                break
+        # Send rot:
+        self.pWrap.writeStdin("{}\n".format(self.rot))
+        sleep(0.25)
+        self.__waitForInput("Enter text:")
 
-            # exact match required for full lines (i.e. 16 bytes in buffer to be dumped)
-            if expected[i] == line:
-                i += 1
-                if i > len(expected) - 1:
-                    break
-                continue
-            # trailing whitespace is okay for non-full lines only
-            elif len(expected[i]) < 76:
-                if line.rstrip() == expected[i].rstrip():
-                    i += 1
-                    if i > len(expected) - 1:
-                        break
-                    continue
-                else:
-                    printTester("Expected '{}' with length {} but received '{}' with length {}".format(
-                        expected[i], len(expected[i]), line, len(line)))
-                    self._failWith("Output did not match")
-            else:
-                printTester("Expected '{}' but received '{}'".format(
-                    expected[i], line))
-                self._failWith("Output did not match")
+        # Send input text:
+        self.pWrap.writeStdin("{}\n".format(self.input))
+
+        # Compare result:
+        self.__waitForInput(self.__getExpectedRotX(self.rot, self.input))
 
         # Wait reading until the programm terminates:
         printTester("Waiting for the programm to terminate...")
-        if not self.pWrap.waitUntilTerminationReading(3):
+        if(not self.pWrap.waitUntilTerminationReading(3)):
             printTester("Programm did not terminate - killing it!")
             self.pWrap.kill()
             self._failWith("Programm did not terminate at the end.")
@@ -68,25 +42,30 @@ class TestOutput(AbstractProgramTest):
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()
 
-    def _getExpected(self):
-        expected: List[str] = list()
-        for file in self.files:
-            with open(file, "rb") as f:
-                offset = 0
-                buf = f.read(16)
-                while len(buf) > 0:
-                    line = "{:06x} :".format(offset)
-                    for char in buf:
-                        line += " {:02x}".format(char)
-                    line += "   " * (16 - len(buf) + 1)
-                    for char in buf:
-                        if 0x20 <= char <= 0x7e:
-                            line += "{:c}".format(char)
-                        else:
-                            line += "."
-                    line += "\n"
-                    offset += 16
-                    expected.append(line)
-                    buf = f.read(16)
-            expected.append("\n")
-        return expected[:-1]
+    def __getExpectedRotX(self, rot: int, input: str):
+        output: str = ""
+        for i in range(0, len(input)):
+            if input[i].isalpha():
+                if input[i].isupper():
+                    output += chr(ord('A') +
+                                  ((ord(input[i]) - ord('A')) + rot) % 26)
+                else:
+                    output += chr(ord('a') +
+                                  ((ord(input[i]) - ord('a')) + rot) % 26)
+            else:
+                output += input[i]
+        return output
+
+    def __waitForInput(self, expected: str):
+        printTester("Waiting for: '{}'".format(expected))
+        while True:
+            if self.pWrap.hasTerminated() and not self.pWrap.canReadLineStdout():
+                self.__progTerminatedUnexpectedly()
+            # Read a single line form the programm output:
+            line: str = self.pWrap.readLineStdout()
+            # Perform a "student save" compare:
+            if studSaveStrComp(expected, line):
+                break
+            else:
+                printTester(
+                    "Expected '{}' but received '{}'".format(expected, line))

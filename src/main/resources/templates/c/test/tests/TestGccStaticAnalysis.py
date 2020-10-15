@@ -1,19 +1,20 @@
-from testUtils.AbstractProgramTest import AbstractProgramTest
-
 from typing import List
 
+from testUtils.AbstractProgramTest import AbstractProgramTest
 
-class TestUBSan(AbstractProgramTest):
+
+class TestGccStaticAnalysis(AbstractProgramTest):
     """
-    Test case that tries to compile the given program with undefined behavior sanitizer enabled.
+    Test case that tries to compile the given program with gcc static analysis enabled.
     All warnings will be treated as errors and compilation will fail.
-    Requires "libubsan" to be installed on your system.
+    Requires "gcc" >= 10.0 to be installed on your system.
     """
 
     makeTarget: str
 
-    def __init__(self, executionDirectory: str, makeTarget: str = "ubsan", requirements: List[str] = None, name: str = "TestCompileUBSan"):
-        super(TestUBSan, self).__init__(
+    def __init__(self, executionDirectory: str, makeTarget: str = "staticAnalysis", requirements: List[str] = None,
+                 name: str = "TestGccStaticAnalysis"):
+        super(TestGccStaticAnalysis, self).__init__(
             name, executionDirectory, "make", requirements, timeoutSec=5)
         self.makeTarget = makeTarget
 
@@ -27,8 +28,8 @@ class TestUBSan(AbstractProgramTest):
 
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
-            self._failWith("Make for directory {} failed. Returncode is {}.".format(
-                str(self.executionDirectory), retCode))
+            self._failWith(
+                "Make for directory {} failed. Returncode is {}.".format(str(self.executionDirectory), retCode))
 
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()
