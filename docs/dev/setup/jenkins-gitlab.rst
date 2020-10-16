@@ -377,6 +377,7 @@ Start Jenkins
     For jenkins to be able to read data from the volume you might need to allow the jenkins user to read the jenkins_data folder.
     One way to do that is transfer the ownership to the user with id 1000 which is normally the user the jenkins process runs with.
     ::
+
         sudo chown -R 1000 jenkins_data/
 
 8.  Wait until the docker container has started and Jenkins is running.
