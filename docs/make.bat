@@ -31,6 +31,7 @@ goto end
 
 :livehtml
 sphinx-autobuild %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+goto end
 
 :help
 %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
