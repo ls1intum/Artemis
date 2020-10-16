@@ -150,15 +150,15 @@ under ``localhost:7990``.
        :align: center
 
 6. In Bamboo create a global variable named
-SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
-as the secret. The value of this variable should be then stored in
-``src/main/resources/config/application-artemis.yml`` as the value of
-``artemis-authentication-token-value``.
+   SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
+   as the secret. The value of this variable should be then stored in
+   ``src/main/resources/config/application-artemis.yml`` as the value of
+   ``artemis-authentication-token-value``.
 
 7. Download the
-`bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
-and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
-the downloaded .jar file → Upload
+   `bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
+   and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
+   the downloaded .jar file → Upload
 
 8. Add Maven and JDK:
 
@@ -166,8 +166,38 @@ the downloaded .jar file → Upload
    Capability type ``Executable`` → select type ``Maven 3.x`` → insert
    ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
--  Add capabilities menu → Capability type ``JDK`` → insert ``JDK 15``
+-  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
    as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
+
+9. Generate a personal access token for Bamboo.
+   While username and password can still be used as a fallback, this option is already marked as deprecated and
+   will be removed in the future.
+
+- Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+
+    .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+       :align: center
+
+- Copy the generated token to your ``application-local.yml``:
+
+.. code:: yaml
+
+    artemis:
+        continuous-integration:
+            user: <username>
+            password: <password>
+            token: #insert the token here
+
+10. Disable XSRF checking
+   Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
+   sending the required headers.
+
+- Log in as the admin user go to Bamboo -> Overview -> Security Settings
+
+   Edit the settings and disable XSRF checking:
+
+    .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
+       :align: center
 
 Configure Artemis
 -----------------
@@ -197,6 +227,7 @@ Configure Artemis
                url: http://localhost:8085
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
+               token: <bamboo-admin-token>
                vcs-application-link-name: LS1 Bitbucket Server
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>
@@ -209,7 +240,7 @@ Configure Artemis
        port: 8080                                         # The port of artemis
        url: http://172.20.0.1:8080                        # needs to be an ip
        // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one  
+       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,

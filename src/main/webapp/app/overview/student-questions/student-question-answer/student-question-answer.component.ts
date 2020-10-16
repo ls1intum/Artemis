@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
@@ -28,14 +29,16 @@ export class StudentQuestionAnswerComponent implements OnInit {
     editText?: string;
     isEditMode: boolean;
     EditorMode = EditorMode;
+    courseId: number;
 
-    constructor(private studentQuestionAnswerService: StudentQuestionAnswerService) {}
+    constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private route: ActivatedRoute) {}
 
     /**
      * Sets the text of the answer as the editor text
      */
     ngOnInit(): void {
         this.editText = this.studentQuestionAnswer.answerText;
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
     /**
@@ -51,7 +54,7 @@ export class StudentQuestionAnswerComponent implements OnInit {
      * Deletes this studentQuestionAnswer
      */
     deleteAnswer(): void {
-        this.studentQuestionAnswerService.delete(this.studentQuestionAnswer.id!).subscribe(() => {
+        this.studentQuestionAnswerService.delete(this.courseId, this.studentQuestionAnswer.id!).subscribe(() => {
             this.interactAnswer.emit({
                 name: QuestionAnswerActionName.DELETE,
                 studentQuestionAnswer: this.studentQuestionAnswer,
@@ -64,7 +67,7 @@ export class StudentQuestionAnswerComponent implements OnInit {
      */
     saveAnswer(): void {
         this.studentQuestionAnswer.answerText = this.editText;
-        this.studentQuestionAnswerService.update(this.studentQuestionAnswer).subscribe(() => {
+        this.studentQuestionAnswerService.update(this.courseId, this.studentQuestionAnswer).subscribe(() => {
             this.isEditMode = false;
         });
     }
@@ -74,7 +77,7 @@ export class StudentQuestionAnswerComponent implements OnInit {
      */
     toggleAnswerTutorApproved(): void {
         this.studentQuestionAnswer.tutorApproved = !this.studentQuestionAnswer.tutorApproved;
-        this.studentQuestionAnswerService.update(this.studentQuestionAnswer).subscribe(() => {
+        this.studentQuestionAnswerService.update(this.courseId, this.studentQuestionAnswer).subscribe(() => {
             this.interactAnswer.emit({
                 name: QuestionAnswerActionName.APPROVE,
                 studentQuestionAnswer: this.studentQuestionAnswer,

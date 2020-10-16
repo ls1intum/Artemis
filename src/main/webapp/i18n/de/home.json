@@ -3,7 +3,7 @@
         "title": "Willkommen zu Artemis!",
         "login": "Login",
         "subtitle": "Interaktives Lernen mit Individuellem Feedback",
-        "pleaseSignInTUM": "Bitte melde dich mit deinem TUM Account an.",
+        "pleaseSignInAccount": "Bitte melde dich mit deinem {{account}} Account an.",
         "pleaseSignIn": "Bitte melde dich mit deinem Account an.",
         "logged": {
             "message": "Du bist als Benutzer \"{{username}}\" angemeldet."

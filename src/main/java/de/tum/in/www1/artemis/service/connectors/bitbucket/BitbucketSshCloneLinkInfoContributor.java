@@ -16,21 +16,23 @@ import de.tum.in.www1.artemis.config.Constants;
 public class BitbucketSshCloneLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")
-    private URL BITBUCKED_SERVER_URL;
+    private URL bitbucketServerUrl;
 
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    private Optional<String> BITBUCKET_SSH_URL_TEMPLATE;
+    private Optional<String> bitbucketSshUrlTemplate;
 
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
-    private Optional<String> BITBUCKET_SSH_KEYS_URL_PATH;
+    private Optional<String> bitbucketSshKeysUrlPath;
 
     @Override
     public void contribute(Info.Builder builder) {
 
-        if (BITBUCKET_SSH_URL_TEMPLATE.isPresent()) {
-            builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, BITBUCKET_SSH_URL_TEMPLATE);
-            if (BITBUCKET_SSH_KEYS_URL_PATH.isPresent()) {
-                final var sshKeysUrl = BITBUCKED_SERVER_URL + BITBUCKET_SSH_KEYS_URL_PATH.get();
+        builder.withDetail(Constants.VERSION_CONTROL_URL, bitbucketServerUrl);
+
+        if (bitbucketSshUrlTemplate.isPresent()) {
+            builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, bitbucketSshUrlTemplate);
+            if (bitbucketSshKeysUrlPath.isPresent()) {
+                final var sshKeysUrl = bitbucketServerUrl + bitbucketSshKeysUrlPath.get();
                 builder.withDetail(Constants.INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
             }
         }
