@@ -26,11 +26,16 @@ Create and Configure Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 - When you click on ``create an exam`` you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. You also can set the timeline of the exam. This is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``. 
 - The first three dates are mandatory whereas you can define the rest when it suits best. 
-- The ``grace period`` defines the amount of time the students must hand in their exam, after the ``working time`` is over. This is set to 3 minutes by default. 
+- The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam, after the ``working time`` is over. This is set to 3 minutes by default. 
 - You can also define the ``number of exercises`` in the exam. You can leave this out initally, however it must be set before you can generate the student exams. For more information see `Exercise Groups`_. 
 - If you activate ``randomize order of exercise groups``, the order of the exercises will be random for each student. 
 - Finally, you can fill out the ``exam start-`` and ``end texts``. These will be displayed during the exam conduction to student, at the *Start-* and *End* page respectively.
- 
+
+.. figure:: exam_configuration.png
+   :alt: Create and Configure
+   :align: center
+
+   Create and Configure the Exam
 
 Exercise Groups
 ^^^^^^^^^^^^^^^
@@ -38,6 +43,12 @@ Exercise Groups
 - When the student exams are generated, one exercise will be selected per exercise group. This can be tweaked further as you can distinguish between ``mandatory`` exercise groups and ``non-mandatory`` exercise groups. This is set initially, when you create an exercise group. By default, every exercise group is mandatory. You can edit this by clicking ``Edit`` on the exercise group.
 - Depending on the ``number of exercises`` set in the exam configuration, see `Create and Configure Exam`_, if you have more exercise groups then the number set, no exercise from the ``non-mandatory`` exercise groups will be added to the student exams. 
 - Once you have created an exercise group you can start adding exercises. 
+
+.. figure:: exercise_variants.png
+   :alt: Exercise Groups with different Exercise Variants
+   :align: center
+
+   Exercise Groups with different Exercise Variants
 
 Adding Exercises
 ^^^^^^^^^^^^^^^^
@@ -47,6 +58,12 @@ Adding Exercises
     **Hint:** For programming exercises you can check the option to allow manual assessment. 
 - For exercise types ``text``, ``programming``, and ``modeling``, you can also define example submissions and example assessments to guide your assessor team.
 
+.. figure:: add_exercises.png
+   :alt: Add different Exercises
+   :align: center
+
+   Add different Exercises
+
 Registering Students
 ^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *“Students”* page. Here you are presented with two options to register students. You can: 
@@ -54,6 +71,12 @@ Registering Students
     2. Bulk import students using a ``.csv`` file. You can do this by pressing the ``Import Students`` button.
 - You can also choose to remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s student exam. 
     **Hint:** Just registering the students to the exam will not allow them to participate in the exam. First, individual student exams must be generated. For more information see `Manage Student Exams`_.
+
+.. figure:: add_students.png
+   :alt: Register Students
+   :align: center
+
+   Register Students Page
 
 Manage Student Exams
 ^^^^^^^^^^^^^^^^^^^^
@@ -68,6 +91,12 @@ Manage Student Exams
 - On the *"Student Exams"* page, you can also maintain the repositories of the student exams. You can choose to ``lock the repositories`` and ``unlock`` them.
 - Additionally, once the exam is over you can click on ``Evaluate quizzes``. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result. 
    **Hint:** If you do not press this button, the students quiz exercise will not be graded.
+
+.. figure:: student_exams.png
+   :alt: Student Exam Page
+   :align: center
+
+   Student Exam Page
 
 Conducting Test Runs
 ^^^^^^^^^^^^^^^^^^^^
@@ -92,10 +121,24 @@ Assessing Student Exams and Complaints
      *Exam Management* -> *Exercise Groups* -> click ``view`` on the specific exercise.
 
      At the bottom of the page you will find the option ``check for plagiarism``.
+
+.. figure:: tutor_dashboard.png
+   :alt: Tutor Exam Dashboard
+   :align: center
+
+   Tutor Exam Dashboard
+
 - To assess a submission for an exercise, you can click on ``Exercise Dashboard``.
 - First you must go through the example submissions and assessments to review how a specific exercise should be evaluated. 
 - If there is a submission which has not been assessed yet, you can click ``Start new assessment``. This will fetch a random student submission of this exercise which you can then assess.
 - Programming exercises are graded automatically but if ``manual assessment`` is allowed, see `Add Exercises`_, you can review and enhance the automatic results. Programming exercise submissions with manual assessment allowed are accessed as described above.
+
+.. figure:: programming_assessment.png
+   :alt: Programming Submission Assessment
+   :align: center
+
+   Manually Assessing a Programming Submission
+
 - Quiz exercises are graded automatically via the student exam page, see `Manage Student Exams`_, and therefore do not appear in the *"Tutor Exam Dashboard"*.
 - Once the student review period begins students can complain about their results. You can evaluate these complaints in the *"Tutor Exam Dashboard"*. All complaints are listed below the submissions. The original assessor may not respond to the complaint, this must be done by a second assessor. 
 
@@ -105,3 +148,9 @@ Exam Scores
 - You can view the spread between different achieved scores, the average results per exercise as well as the individual students' results.
 - Additionally, you can choose to modify the dataset by selecting ``only include submitted exams`` or ``only include exercises with at least one non-empty submission``.
 - The exam scores can also be exported via ``Export Results as CSV``.
+
+.. figure:: exam_statistics.png
+   :alt: Exam Scores page
+   :align: center
+
+   Exam Scores Page
