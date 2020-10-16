@@ -494,7 +494,7 @@ GitLab API Token
 1. Create a new access token in GitLab named “Jenkins” and give it
    **api** rights and **read_repository** rights. For detailed
    instructions on how to create such a token follow `Gitlab Access
-   Token `<#Gitlab-Access-Token>`__.
+   Token <#gitlab-access-token>`__.
 
    .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
       :align: center
