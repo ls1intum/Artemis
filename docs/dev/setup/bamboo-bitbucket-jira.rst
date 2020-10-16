@@ -74,6 +74,7 @@ under ``localhost:7990``.
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
    between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
    has finished. If not open them manually:
+
  - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
  - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
  - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
