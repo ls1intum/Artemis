@@ -43,13 +43,11 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private DatabaseUtilService database;
 
     @Autowired
     private RequestUtilService request;
@@ -137,14 +135,33 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         studentTeamRepo.resetLocalRepo();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_sequential_validExercise_created() throws Exception {
+        exercise.setSequentialTestRuns(true);
+        mockConnectorRequestsForSetup(exercise);
+        validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+    }
+
     @ParameterizedTest
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
+    public void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         mockConnectorRequestsForSetup(exercise);
-        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+    }
 
+    @ParameterizedTest
+    @EnumSource(ProgrammingLanguage.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
+        exercise.setProgrammingLanguage(language);
+        mockConnectorRequestsForSetup(exercise);
+        validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+    }
+
+    private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
@@ -194,17 +211,22 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(ProgrammingLanguage.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExercise_created() throws Exception {
+    public void importExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        sourceExercise.setProgrammingLanguage(programmingLanguage);
+        sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
         database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
-
+        exerciseToBeImported.setProgrammingLanguage(programmingLanguage);
+        exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         // Mock requests
         List<Verifiable> verifiables = mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
@@ -219,18 +241,22 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         for (var verifiable : verifiables) {
             verifiable.performVerification();
         }
-        // Assert correct creation of static code analysis categories
-        var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
-        var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
-        assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
-        assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
-                .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
+        if (staticCodeAnalysisEnabled) {
+            // Assert correct creation of static code analysis categories
+            var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+            var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+            assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
+            assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                    .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
+        }
+
         // Assert correct creation of test cases
         var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+
         // Assert correct creation of hints
         var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
         var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
@@ -278,9 +304,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
-        exercise.setId(generatedExercise.getId());
-        assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+        validateProgrammingExercise(generatedExercise);
     }
 
     @Test
@@ -356,8 +380,22 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         // create a submission which fails
         database.createProgrammingSubmission(participation, true);
+
+        bambooRequestMockProvider.reset();
+
+        var log1 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "java.lang.AssertionError: BubbleSort does not sort correctly");
+        var log2 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Test");
+        var log3 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[WARNING]");
+        var log4 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] [Help 1]");
+        var log5 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] To see the full stack trace of the errors\"");
+        var log6 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "Unable to publish artifact");
+        var log7 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "NOTE: Picked up JDK_JAVA_OPTIONS");
+        var log8 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin");
+        var log9 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloading error");
+        var log10 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloaded error");
+
         // get the failed build log
-        bambooRequestMockProvider.mockFetchBuildLogs(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10));
         var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         for (final var verification : verifications) {
@@ -365,6 +403,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         }
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+        // some build logs have been filtered out
         assertThat(buildLogs.size()).as("Failed build log was created").isEqualTo(1);
     }
 
@@ -374,14 +413,19 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         final var course = getCourseForExercise();
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user));
+
         final var participation = createUserParticipation(course);
 
         // create a submission
         database.createProgrammingSubmission(participation, false);
+
+        bambooRequestMockProvider.reset();
+
         // prepare the build result
         bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
         // prepare the artifact to be null
         bambooRequestMockProvider.mockRetrieveEmptyArtifactPage();
+
         var artifact = request.get(PARTICIPATIONBASEURL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
 
         for (final var verification : verifications) {

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -556,7 +557,7 @@ public class ParticipationService {
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
+            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase(), true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
@@ -568,7 +569,18 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.get().configureBuildPlan(participation);
+            try {
+                continuousIntegrationService.get().configureBuildPlan(participation);
+            }
+            catch (ContinousIntegrationException ex) {
+                // this means something with the configuration of the build plan is wrong.
+                // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
+                // the user again clicks on the start / resume exercise button.
+                participation.setInitializationState(InitializationState.REPO_CONFIGURED);
+                save(participation);
+                // rethrow
+                throw ex;
+            }
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         }
