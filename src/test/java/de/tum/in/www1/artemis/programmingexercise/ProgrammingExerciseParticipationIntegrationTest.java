@@ -289,6 +289,36 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getParticipationWithResultsForStudentParticipation_success() throws Exception {
+        database.addGradingInstructionsToExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+        addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now());
+        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
+
+        ProgrammingExerciseStudentParticipation response = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        ProgrammingExercise exercise = (ProgrammingExercise) response.getExercise();
+
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(response.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(response.getResults().iterator().next().getResultString()).isEqualTo("x of y passed");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getParticipationWithResultsForStudentParticipation_notFound() throws Exception {
+        StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND, ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "stidemt1", roles = "USER")
+    public void getParticipationWithResultsForStudentParticipation_forbidden() throws Exception {
+        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void checkIfParticipationHasResult_withResult_returnsTrue() throws Exception {
         addStudentParticipationWithResult(null, null);
