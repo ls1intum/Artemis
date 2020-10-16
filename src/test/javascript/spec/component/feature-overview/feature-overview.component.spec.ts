@@ -1,3 +1,6 @@
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import { spy } from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
@@ -5,6 +8,11 @@ import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/f
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;
@@ -18,7 +26,10 @@ describe('Feature Overview Component', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [FeatureOverviewComponent, TranslatePipeMock],
-                providers: [{ provide: ActivatedRoute, useValue: route }],
+                providers: [
+                    { provide: ActivatedRoute, useValue: route },
+                    { provide: ProfileService, useValue: MockProfileService },
+                ],
             }).compileComponents();
 
             fixture = TestBed.createComponent(FeatureOverviewComponent);
@@ -32,8 +43,8 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(comp.targetAudience).toEqual(TargetAudience.INSTRUCTORS);
-                expect(comp.features.length).toBeGreaterThan(0);
+                expect(comp.targetAudience).to.be.equal(TargetAudience.INSTRUCTORS);
+                expect(comp.features.length).to.be.greaterThan(0);
             });
 
             it('should ensure all features have unique IDs', function () {
@@ -44,7 +55,7 @@ describe('Feature Overview Component', () => {
                 for (const featureA of comp.features) {
                     for (const featureB of comp.features) {
                         if (featureA !== featureB) {
-                            expect(featureA.id === featureB.id).toBeFalsy();
+                            expect(featureA.id === featureB.id).to.be.false;
                         }
                     }
                 }
@@ -53,7 +64,7 @@ describe('Feature Overview Component', () => {
 
         describe('Navigate to Feature Details', () => {
             it('should scroll to the correct feature detail', fakeAsync(() => {
-                const navigateToFeatureSpy = spyOn(comp, 'navigateToFeature');
+                const navigateToFeatureSpy = spy(comp, 'navigateToFeature');
                 // WHEN
                 comp.ngOnInit();
                 fixture.detectChanges();
@@ -64,36 +75,8 @@ describe('Feature Overview Component', () => {
                 featureOverview.nativeElement.click();
 
                 // THEN
-                expect(navigateToFeatureSpy).toHaveBeenCalledWith(comp.features[0].id);
+                expect(navigateToFeatureSpy).to.have.been.calledOnceWithExactly(comp.features[0].id);
             }));
-        });
-    });
-
-    describe('Target Audience: Students', function () {
-        const studentRoute = ({ snapshot: { url: ['students'] } } as any) as ActivatedRoute;
-
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [FeatureOverviewComponent],
-                providers: [{ provide: ActivatedRoute, useValue: studentRoute }],
-            })
-                .overrideTemplate(FeatureOverviewComponent, '')
-                .compileComponents();
-
-            fixture = TestBed.createComponent(FeatureOverviewComponent);
-            comp = fixture.componentInstance;
-        });
-
-        describe('onInit', () => {
-            it('should load all features for students', function () {
-                // WHEN
-                comp.ngOnInit();
-
-                // THEN
-                expect(comp.targetAudience).toEqual(TargetAudience.STUDENTS);
-                expect(comp.features.length).toBeGreaterThan(0);
-            });
         });
     });
 });
