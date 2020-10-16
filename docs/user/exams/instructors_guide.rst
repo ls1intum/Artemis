@@ -19,7 +19,9 @@ Accessing the Exam Management Page
 - Log in to Artemis with your account credentials.
 - Head to ``Course Management``.
 - Click on ``Create Exam`` for your course. It will open the *Exam Management Screen*.
-    Here you have access to all the exams of your course. All aspects of the exam are managed from the management screen. 
+
+    - Here you have access to all the exams of your course. All aspects of the exam are managed from the management screen. 
+
 - You can create an exam by clicking on ``Create new Exam``. 
 
 Create and Configure Exam
@@ -53,9 +55,13 @@ Exercise Groups
 Add Exercises
 ^^^^^^^^^^^^^
 - Exercises are grouped by exercise groups. For every student exam, one exercise per exercise group will be chosen, see `Exercise Groups`_. 
-     **Hint:** If you want all student to have the same exam, define only one exercise per exercise group.
+
+     - **Hint:** If you want all student to have the same exam, define only one exercise per exercise group.
+
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each exercise group you will find the available exercise types. You can choose between ``creating a new exercise`` or ``importing an existing one`` from your courses. 
-    **Hint:** For programming exercises you can check the option to allow manual assessment. 
+
+    - **Hint:** For programming exercises you can check the option to allow manual assessment. 
+
 - For exercise types ``text``, ``programming``, and ``modeling``, you can also define example submissions and example assessments to guide your assessor team.
 
 .. figure:: instructor/add_exercises.png
@@ -67,10 +73,13 @@ Add Exercises
 Registering Students
 ^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *“Students”* page. Here you are presented with two options to register students. You can: 
+
     1. Add students manually my searching via the search bar
     2. Bulk import students using a ``.csv`` file. You can do this by pressing the ``Import Students`` button.
+
 - You can also choose to remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s student exam. 
-    **Hint:** Just registering the students to the exam will not allow them to participate in the exam. First, individual student exams must be generated. For more information see `Manage Student Exams`_.
+    
+    - **Hint:** Just registering the students to the exam will not allow them to participate in the exam. First, individual student exams must be generated. For more information see `Manage Student Exams`_.
 
 .. figure:: instructor/add_students.png
    :alt: Register Students
@@ -82,15 +91,20 @@ Manage Student Exams
 ^^^^^^^^^^^^^^^^^^^^
 -  The student exams are managed via the *“Student Exams”* page from the Exam Management. 
 - Here you can have an overview of all student exams. When you press ``View`` on a student exam, you can view the ``details of the student``, the allocated ``working time``, his/her ``participation status``, their ``summary`` as well as their *scores*. Additionally, you will also be able to view which assessor is responsible for each exercise. 
+
     - You can also change the individual ``working time`` of students should this be necessary. 
+
 - To generate the student exams, you must click on ``Generate individual exams``. This will automatically create a student exam for every registered user. The number of exercises will be determined by the exam configuration set, see `Create and Configure Exam`_ whereas the exercises will be randomly selected from the available exercise variants per exercise group, see `Exercise Groups`_.
 - The ``Generate individual exams`` button will be locked once the exam becomes visible to the students. You cannot perform changes to the student exams once the exam conduction has started. 
 - If you have added more students recently, you can choose to ``Generate missing individual exams``. 
 - ``Prepare exercise start`` creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the VC and CI server. 
-    **Warning:** ``Prepare exercise start`` must be executed before the exam conduction begins. 
+
+    - **Warning:** ``Prepare exercise start`` must be executed before the exam conduction begins. 
+
 - On the *"Student Exams"* page, you can also maintain the repositories of the student exams. You can choose to ``lock the repositories`` and ``unlock`` them.
 - Additionally, once the exam is over you can click on ``Evaluate quizzes``. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result. 
-   **Hint:** If you do not press this button, the students quiz exercise will not be graded.
+
+   - **Hint:** If you do not press this button, the students quiz exercise will not be graded.
 
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
@@ -103,10 +117,14 @@ Conducting Test Runs
 - Test runs are designed to offer the instructors confidence that the exam conduction will run smoothly. They allow you to experience the exam from a student’s perspective. A ``test run`` is distinct from a ``student exam`` and is not taken into consideration for the Tutor *"Exam Dashboard"*, *"Student Participations"* and *"Exam Scores"*. 
 - You can manage your test runs from the *"Test Run"* page.
 - To create a new test run you can press ``Create a Test Run``. This will open a modal where you can select an exercise for each exercise group. You can also set the ``working time``. Test runs only follow the exercise groups created and do not take the exam configuration for ``number of exercises`` under consideration. 
-    **Hint:** Exercise groups with no exercises are ignored.
+
+    - **Hint:** Exercise groups with no exercises are ignored.
+
 - When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run. 
 - If you have a completed test run, you can assess your submissions. You can access this using the button *“Assess your Test Runs”*. 
-    **Hint:** Only the creator of the test run is able to assess his submissions.
+
+    - **Hint:** Only the creator of the test run is able to assess his submissions.
+
 - The results can be viewed by clicking on ``Summary``. This page simulates the *"Student Exam Summary"* where the students can view their submissions and view the results once they are published. 
 - For assessed test run submissions, you can also use the ``complaint`` feature. This feature allows students to request a review of an assessment during the student review period, see `Create and Configure Exam`_ 
 
@@ -114,11 +132,15 @@ Assessing Student Exams and Complaints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - Once the exam conduction is over and the latest individual ``working time`` has passed, see `Manage Student Exams`_, your team can begin the assessment process. 
 - This is done through the *“Tutor Exam Dashboard”*. 
-    **Hint:** If the exam is not over, you will not be able to access this page.
+
+    - **Hint:** If the exam is not over, you will not be able to access this page.
+
 - The assessment process is anonymised. All student information will not be displayed to the assessors.
 - The Tutor Exam dashboard provides an overview over the current assessment progress. This is divided by exercises and for each exercise, you can view how many submissions have already been assessed and how many are still left. The status of the student complaints is also displayed here. 
-    **Hint:** To check for plagiarism, you must navigate to the individual exercise. This can be done by navigating to:
-     *Exam Management* -> *Exercise Groups* -> click ``view`` on the specific exercise.
+
+    - **Hint:** To check for plagiarism, you must navigate to the individual exercise. This can be done by navigating to:
+
+     *Exam Management* -> *Exercise Groups* -> *View* on the specific exercise.
 
      At the bottom of the page you will find the option ``check for plagiarism``.
 
