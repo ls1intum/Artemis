@@ -178,7 +178,7 @@ Other run / debug configurations
 
 
 Typical problems with Liquibase checksums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One typical problem in the development setup is that an exception occurs
 during the database initialization. Artemis uses
