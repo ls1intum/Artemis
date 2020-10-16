@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
@@ -62,7 +62,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private assessmentsService: TextAssessmentsService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
