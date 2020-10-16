@@ -687,7 +687,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getConflictingTextSubmissions() throws Exception {
+    public void retrieveConflictingTextSubmissions() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/text-assessments/submission/" + textSubmissions.get(0).getId() + "/feedback/"
                 + textSubmissions.get(0).getResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.OK, TextSubmission.class);
@@ -704,7 +704,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void getConflictingTextSubmissions_otherTutorForbidden() throws Exception {
+    public void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         request.getList("/api/text-assessments/submission/" + textSubmissions.get(0).getId() + "/feedback/" + textSubmissions.get(0).getResult().getFeedbacks().get(0).getId()
                 + "/feedback-conflicts", HttpStatus.FORBIDDEN, TextSubmission.class);
@@ -712,7 +712,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
+    public void retrieveConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         List<TextSubmission> conflictingTextSubmissions = request.getList(
                 "/api/text-assessments/submission/123/feedback/" + textSubmissions.get(0).getResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST,
