@@ -209,11 +209,6 @@ public class BambooBuildPlanService {
         if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
             vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
         }
-        // If the solution repository is checked out for the assignment repos (because comparisons between solution & assignment are made), also trigger updates of assignments when
-        // updating the solution
-        if (checkoutSolutionRepository) {
-            vcsTriggerRepositories.add(new VcsRepositoryIdentifier(SOLUTION_REPO_NAME));
-        }
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
         planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
