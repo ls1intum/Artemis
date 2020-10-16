@@ -49,6 +49,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public sshEnabled = false;
     private sshTemplateUrl: string;
     public sshKeysUrl: string;
+    private baseUrl: string;
 
     private user: User;
 
@@ -79,6 +80,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             this.sshKeysUrl = info.sshKeysURL;
             this.sshTemplateUrl = info.sshCloneURLTemplate;
             this.sshEnabled = !!this.sshTemplateUrl;
+            if (info.versionControlUrl) {
+                this.baseUrl = info.versionControlUrl;
+            }
         });
     }
 
@@ -195,7 +199,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * @return sourceTreeUrl
      */
     buildSourceTreeUrl(cloneUrl?: string) {
-        return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
+        return this.sourceTreeService.buildSourceTreeUrl(this.baseUrl, cloneUrl);
     }
 
     /**

@@ -9,18 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooArtifactsDTO {
 
-    private int size;
-
     @JsonProperty("artifact")
     private List<BambooArtifactDTO> artifacts;
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
 
     public List<BambooArtifactDTO> getArtifacts() {
         return artifacts;

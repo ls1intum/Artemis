@@ -3,7 +3,19 @@
         "studentQuestion": {
             "created": "Frage erfolgreich erstellt",
             "updated": "Frage erfolgreich aktualisiert",
-            "deleted": "Frage erfolgreich gelöscht"
+            "deleted": "Frage erfolgreich gelöscht",
+            "text": "Frage",
+            "creationDate": "Gestellt am",
+            "votes": "Votes",
+            "answers": "Antworten",
+            "approvedAnswers": "Bestätigte Antworten",
+            "exerciseOrLecture": "Aufgabe / Vorlesung",
+            "overview": {
+                "title": "Fragen",
+                "noQuestions": "Es wurden noch keine Fragen in diesem Kurs gestellt",
+                "showApproved": "Zeige Fragen mit bestätigten Antworten an",
+                "hideApproved": "Verstecke Fragen mit bestätigten Antworten"
+            }
         },
         "questionAnswer": {
             "created": "Antwort erfolgreich erstellt",

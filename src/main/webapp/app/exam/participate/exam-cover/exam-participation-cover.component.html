@@ -1,8 +1,8 @@
 <div class="w-100 d-flex" *ngIf="!startView">
     <div class="col-md-3"></div>
-    <h2 class="col-md-6" style="text-align: center">
-        <span
-            >{{
+    <h2 class="col-md-6" style="text-align: center; font-weight: normal">
+        <span>
+            {{
                 'artemisApp.examParticipation.finish'
                     | translate
                         : {
@@ -10,9 +10,7 @@
                           }
             }}
         </span>
-        <span style="color: blue">
-            {{ accountName }}
-        </span>
+        <br />
     </h2>
     <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
 </div>
@@ -23,19 +21,19 @@
     </p>
 </div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
-    <h2 style="text-align: center" *ngIf="startView">
-        <span>{{
-            'artemisApp.examParticipation.greeting'
-                | translate
-                    : {
-                          title: exam.title
-                      }
-        }}</span>
-        <span style="color: blue">
-            {{ accountName }}
+    <h2 style="text-align: center; font-weight: normal" *ngIf="startView">
+        <span>
+            {{
+                'artemisApp.examParticipation.greeting'
+                    | translate
+                        : {
+                              title: exam.title
+                          }
+            }}
         </span>
+        <br />
     </h2>
-    <jhi-exam-information [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
+    <jhi-exam-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">
         {{ 'studentExam.submissionNotInTime' | translate }}
@@ -65,8 +63,8 @@
                         ></label>
                     </div>
                 </div>
-                <div class="row justify-content-center">
-                    <div class="form-group">
+                <div class="row justify-content-center" style="padding-bottom: 0; margin-bottom: 0">
+                    <div class="form-group" style="padding-bottom: 0; margin-bottom: 0">
                         <input
                             size="50"
                             type="text"
@@ -78,6 +76,11 @@
                             [ngModelOptions]="{ updateOn: 'change' }"
                             [disabled]="startView ? waitingForExamStart : false"
                         />
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-6" style="font-weight: lighter">
+                        <span> ({{ 'artemisApp.examParticipation.nameDisplay' | translate: { fullName: accountName } }}) </span>
                     </div>
                 </div>
                 <div class="row justify-content-center">
@@ -98,7 +101,9 @@
             </ng-container>
             <ng-template #endButton>
                 <div *ngIf="handInEarly" class="mb-2 font-weight-bold text-danger">
-                    {{ 'artemisApp.examParticipation.handInEarlyNotice' | translate }}
+                    <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeFirstSentence"></span>
+                    <br />
+                    <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                 </div>
                 <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>

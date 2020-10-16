@@ -1,12 +1,11 @@
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
-import { filter, tap } from 'rxjs/operators';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -14,7 +13,6 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -59,67 +57,69 @@ export class CourseUpdateComponent implements OnInit {
             this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
         });
 
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    if (info.inProduction) {
-                        // in production mode, the groups should not be customized by default when creating a course
-                        // when editing a course, only admins can customize groups automatically
-                        this.customizeGroupNames = !!this.course.id;
-                    } else {
-                        // developers typically want to customize the groups, therefore this is prefilled
-                        this.customizeGroupNames = true;
-                        if (!this.course.studentGroupName) {
-                            this.course.studentGroupName = 'artemis-dev';
-                        }
-                        if (!this.course.teachingAssistantGroupName) {
-                            this.course.teachingAssistantGroupName = 'artemis-dev';
-                        }
-                        if (!this.course.instructorGroupName) {
-                            this.course.instructorGroupName = 'artemis-dev';
-                        }
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                if (profileInfo.inProduction) {
+                    // in production mode, the groups should not be customized by default when creating a course
+                    // when editing a course, only admins can customize groups automatically
+                    this.customizeGroupNames = !!this.course.id;
+                } else {
+                    // developers typically want to customize the groups, therefore this is prefilled
+                    this.customizeGroupNames = true;
+                    if (!this.course.studentGroupName) {
+                        this.course.studentGroupName = 'artemis-dev';
                     }
-                }),
-            )
-            .subscribe();
-
-        this.courseForm = new FormGroup({
-            id: new FormControl(this.course.id),
-            title: new FormControl(this.course.title, [Validators.required]),
-            shortName: new FormControl(this.course.shortName, {
-                validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
-                updateOn: 'blur',
-            }),
-            // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
-            customizeGroupNames: new FormControl(this.customizeGroupNames),
-            studentGroupName: new FormControl(this.course.studentGroupName),
-            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
-            instructorGroupName: new FormControl(this.course.instructorGroupName),
-            description: new FormControl(this.course.description),
-            startDate: new FormControl(this.course.startDate),
-            endDate: new FormControl(this.course.endDate),
-            onlineCourse: new FormControl(this.course.onlineCourse),
-            complaintsEnabled: new FormControl(this.complaintsEnabled),
-            maxComplaints: new FormControl(this.course.maxComplaints, {
-                validators: [Validators.required, Validators.min(0)],
-            }),
-            maxTeamComplaints: new FormControl(this.course.maxTeamComplaints, {
-                validators: [Validators.required, Validators.min(0)],
-            }),
-            maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
-                validators: [Validators.required, Validators.min(0)],
-            }),
-            studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
-            registrationEnabled: new FormControl(this.course.registrationEnabled),
-            presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
-                Validators.min(1),
-                regexValidator(this.presentationScorePattern),
-            ]),
-            color: new FormControl(this.course.color),
-            courseIcon: new FormControl(this.course.courseIcon),
+                    if (!this.course.teachingAssistantGroupName) {
+                        this.course.teachingAssistantGroupName = 'artemis-dev';
+                    }
+                    if (!this.course.instructorGroupName) {
+                        this.course.instructorGroupName = 'artemis-dev';
+                    }
+                }
+            }
         });
+
+        this.courseForm = new FormGroup(
+            {
+                id: new FormControl(this.course.id),
+                title: new FormControl(this.course.title, [Validators.required]),
+                shortName: new FormControl(this.course.shortName, {
+                    validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
+                    updateOn: 'blur',
+                }),
+                // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
+                customizeGroupNames: new FormControl(this.customizeGroupNames),
+                studentGroupName: new FormControl(this.course.studentGroupName),
+                teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
+                instructorGroupName: new FormControl(this.course.instructorGroupName),
+                description: new FormControl(this.course.description),
+                startDate: new FormControl(this.course.startDate),
+                endDate: new FormControl(this.course.endDate),
+                onlineCourse: new FormControl(this.course.onlineCourse),
+                complaintsEnabled: new FormControl(this.complaintsEnabled),
+                maxComplaints: new FormControl(this.course.maxComplaints, {
+                    validators: [Validators.required, Validators.min(0)],
+                }),
+                maxTeamComplaints: new FormControl(this.course.maxTeamComplaints, {
+                    validators: [Validators.required, Validators.min(0)],
+                }),
+                maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                    validators: [Validators.required, Validators.min(0)],
+                }),
+                studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
+                registrationEnabled: new FormControl(this.course.registrationEnabled),
+                registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
+                    validators: [Validators.maxLength(255)],
+                }),
+                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
+                    Validators.min(1),
+                    regexValidator(this.presentationScorePattern),
+                ]),
+                color: new FormControl(this.course.color),
+                courseIcon: new FormControl(this.course.courseIcon),
+            },
+            { validators: CourseValidator },
+        );
         this.courseImageFileName = this.course.courseIcon!;
         this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
@@ -225,7 +225,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param error The error for providing feedback
      */
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers.get('x-artemisapp-alert');
+        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
             const jhiAlert = this.jhiAlertService.error(errorMessage);
@@ -252,6 +252,29 @@ export class CourseUpdateComponent implements OnInit {
             presentationScoreControl.reset({ value: 0, disabled: true });
             this.presentationScoreEnabled = false;
         }
+    }
+
+    /**
+     * Enable or disable online course
+     */
+    changeOnlineCourse() {
+        this.course.onlineCourse = !this.course.onlineCourse;
+        if (this.course.onlineCourse) {
+            // registration enabled cannot be activate if online course is active
+            this.courseForm.controls['registrationEnabled'].setValue(false);
+        }
+        this.courseForm.controls['onlineCourse'].setValue(this.course.onlineCourse);
+    }
+    /**
+     * Enable or disable student course registration
+     */
+    changeRegistrationEnabled() {
+        this.course.registrationEnabled = !this.course.registrationEnabled;
+        if (this.course.registrationEnabled) {
+            // online course cannot be activate if registration enabled is set
+            this.courseForm.controls['onlineCourse'].setValue(false);
+        }
+        this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
     }
 
     /**
@@ -282,9 +305,16 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
         } else {
             this.customizeGroupNames = false;
-            this.courseForm.controls['studentGroupName'].setValue(null);
-            this.courseForm.controls['teachingAssistantGroupName'].setValue(null);
-            this.courseForm.controls['instructorGroupName'].setValue(null);
+            this.courseForm.controls['studentGroupName'].setValue(undefined);
+            this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
+            this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
 }
+
+const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
+    const onlineCourse = formGroup.controls['onlineCourse'].value;
+    const registrationEnabled = formGroup.controls['registrationEnabled'].value;
+    // it cannot be the case that both values are true
+    return onlineCourse != null && registrationEnabled != null && !(onlineCourse && registrationEnabled) ? null : { range: true };
+};

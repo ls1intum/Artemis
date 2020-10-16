@@ -10,13 +10,9 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -25,12 +21,6 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private final byte[] UML_PNG = new byte[] { 3, 4, 2, 1 };
 
     private final String UML_SVG = "foobar";
-
-    @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
-    private RequestUtilService request;
 
     @BeforeEach
     public void setUp() throws IOException {
