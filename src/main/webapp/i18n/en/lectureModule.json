@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "lecture": {
+        "lectureModule": {
             "home": {
                 "title": "Lecture Modules"
             }
