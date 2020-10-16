@@ -99,6 +99,10 @@ public class ProgrammingExercise extends Exercise {
     @Transient
     private boolean isLocalSimulationTransient;
 
+    @Transient
+    @JsonProperty
+    private boolean checkoutSolutionRepository = false;
+
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -548,5 +552,13 @@ public class ProgrammingExercise extends Exercise {
 
     public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
         this.isLocalSimulationTransient = isLocalSimulationTransient;
+    }
+
+    public boolean getCheckoutSolutionRepository() {
+        return this.checkoutSolutionRepository;
+    }
+
+    public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 }
