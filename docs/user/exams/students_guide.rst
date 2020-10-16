@@ -37,7 +37,7 @@ Pro Tips
     - Working in multiple browser windows at the same time is **not** allowed!
     - It will lead to synchronization issues and is seen as suspicious behaviour that can be flagged as cheating.
 
-.. figure:: reload.png
+.. figure:: student/reload.png
    :alt: Reload
    :align: center
 
@@ -54,7 +54,7 @@ Accessing the Exam
     **Hint:** The exam will become visible shortly before the working time starts.
 
 
-.. figure:: access_exam.png
+.. figure:: student/access_exam.png
    :alt: Access Exam
    :align: center
 
@@ -70,7 +70,7 @@ Welcome Screen
 - After you confirm, if the exam working time has started, the *Conduction* screen will automatically appear, see `Exam Conduction`_. 
 - Otherwise, you must wait until the exam begins. A popup will appear which will notify you how much time is left before the planned start.
 
-.. figure:: welcome_screen.png
+.. figure:: student/welcome_screen.png
    :alt: Welcome Screen
    :align: center
 
@@ -89,7 +89,7 @@ Exam Conduction
 - The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
     **Hint:** When the time is about to run out, the background of the timer will turn yellow to warn you.
 
-.. figure:: exam_navigation.png
+.. figure:: student/exam_navigation.png
    :alt: Exam Navigation
    :align: center
 
@@ -107,7 +107,7 @@ Participating in Quiz Exercises
 - To submit your solution, simply press ``Save & Continue``.
     **Hint:** Your submission will automatically be saved every 30 seconds. 
 
-.. figure:: quiz_exercises.png
+.. figure:: student/quiz_exercises.png
    :alt: Participating in Quiz Exercises
    :align: center
 
@@ -121,7 +121,7 @@ Participating in Text Exercises
     **Hint:** You can also choose to resize the problem statement by dragging the ``outline box``.
 - Within the editor you can type out your solution. The editor will automatically track your number of words and number of characters.
 
-.. figure:: text_exercises.png
+.. figure:: student/text_exercises.png
    :alt: Participating in Text Exercises
    :align: center
 
@@ -139,7 +139,7 @@ Participating in Modeling Exercises
 - If you are unclear about how to use the modeling editor, you can click on ``Help``. It will provide further information about how to use the modeling editor. 
 - **Tip:** If you need more space, you can work in fullscreen by clicking on ``Fullscreen``. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode simply click ``Exit Fullscreen``.
 
-.. figure:: modeling_exercises.png
+.. figure:: student/modeling_exercises.png
    :alt: Participating in Modeling Exercises
    :align: center
 
@@ -171,7 +171,7 @@ Participating in Programming Exercises
     **Warning:** There is no auto-submit!
 - **Hint:** Result status only shows whether your code complies on not for the exam mode. It will give no information on how many tests it passed. 
 
-.. figure:: programming_exercises.png
+.. figure:: student/programming_exercises.png
    :alt: Participating in Programming Exercises
    :align: center
 
@@ -185,7 +185,7 @@ Participating in Programming Exercises
     3. Work on the code
     4. Commit and push the code. A push is equivalent to pressing the ``Submit`` button.
 
-.. figure:: clone_repository.png
+.. figure:: student/clone_repository.png
    :alt: Clone Repository
    :align: center
 
@@ -212,7 +212,7 @@ End Screen
     **Warning:** Your exam will not be graded, should you fail to submit!
 - Once you submit your exam, no further changes can be made to any exercise. 
 
-.. figure:: end_screen.png
+.. figure:: student/end_screen.png
    :alt: End Screen
    :align: center
 
@@ -224,7 +224,7 @@ Summary
 - You always have access to the summary. You can find it by following the steps displayed in: `Accessing the Exam`_.
 - The summary contains an aggregated view of all your submissions. For programming exercises, it also contains the latest commit hash and repository URL so you can review your code.
 
-.. figure:: summary.png
+.. figure:: student/summary.png
    :alt: Summary
    :align: center
 
@@ -235,7 +235,7 @@ Summary
     - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
     - **Note:** The results will automatically be updated, if your complaint was successful.
 
-.. figure:: complaint.png
+.. figure:: student/complaint.png
    :alt: Complaint
    :align: center
 

@@ -9,7 +9,7 @@ Phases of Artemis Online Exam
 - **Exam Conduction**
     The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the exam configuration or individual student exams. 
 - **Exam Assessment**
-    The assessment begins as soon as the latest student exam working time is over. During this period, your team can assess the submissions of the students and provide results. The testing suites for programming exercises are executed and you can evaluate the quiz exercises automatically, see `Assessing Student Exams`_. The exam assessment ends, when the results are published, see `Create and Configure Exam`_.
+    The assessment begins as soon as the latest student exam working time is over. During this period, your team can assess the submissions of the students and provide results. The testing suites for programming exercises are executed and you can evaluate the quiz exercises automatically, see `Assessing Student Exams and Complaints`_. The exam assessment ends, when the results are published, see `Create and Configure Exam`_.
 - **Exam Student Review**
     The student review period is set by the exam configuration, see `Create and Configure Exam`_. The students can view their results as soon as they are published, but during the review period then can submit complaints about perceived mistakes made during the exam assessment. A second assessor, other than the original one will have the opportunity to review the complaint and respond to it. The results are then updated automatically. 
 
@@ -31,7 +31,7 @@ Create and Configure Exam
 - If you activate ``randomize order of exercise groups``, the order of the exercises will be random for each student. 
 - Finally, you can fill out the ``exam start-`` and ``end texts``. These will be displayed during the exam conduction to student, at the *Start-* and *End* page respectively.
 
-.. figure:: exam_configuration.png
+.. figure:: instructor/exam_configuration.png
    :alt: Create and Configure
    :align: center
 
@@ -44,21 +44,21 @@ Exercise Groups
 - Depending on the ``number of exercises`` set in the exam configuration, see `Create and Configure Exam`_, if you have more exercise groups then the number set, no exercise from the ``non-mandatory`` exercise groups will be added to the student exams. 
 - Once you have created an exercise group you can start adding exercises. 
 
-.. figure:: exercise_variants.png
+.. figure:: instructor/exercise_variants.png
    :alt: Exercise Groups with different Exercise Variants
    :align: center
 
    Exercise Groups with different Exercise Variants
 
-Adding Exercises
-^^^^^^^^^^^^^^^^
+Add Exercises
+^^^^^^^^^^^^^
 - Exercises are grouped by exercise groups. For every student exam, one exercise per exercise group will be chosen, see `Exercise Groups`_. 
      **Hint:** If you want all student to have the same exam, define only one exercise per exercise group.
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each exercise group you will find the available exercise types. You can choose between ``creating a new exercise`` or ``importing an existing one`` from your courses. 
     **Hint:** For programming exercises you can check the option to allow manual assessment. 
 - For exercise types ``text``, ``programming``, and ``modeling``, you can also define example submissions and example assessments to guide your assessor team.
 
-.. figure:: add_exercises.png
+.. figure:: instructor/add_exercises.png
    :alt: Add different Exercises
    :align: center
 
@@ -72,7 +72,7 @@ Registering Students
 - You can also choose to remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s student exam. 
     **Hint:** Just registering the students to the exam will not allow them to participate in the exam. First, individual student exams must be generated. For more information see `Manage Student Exams`_.
 
-.. figure:: add_students.png
+.. figure:: instructor/add_students.png
    :alt: Register Students
    :align: center
 
@@ -83,7 +83,7 @@ Manage Student Exams
 -  The student exams are managed via the *“Student Exams”* page from the Exam Management. 
 - Here you can have an overview of all student exams. When you press ``View`` on a student exam, you can view the ``details of the student``, the allocated ``working time``, his/her ``participation status``, their ``summary`` as well as their *scores*. Additionally, you will also be able to view which assessor is responsible for each exercise. 
     - You can also change the individual ``working time`` of students should this be necessary. 
-- To generate the student exams, you must click on ``Generate individual exams``. This will automatically create a student exam for every registered user. The number of exercises will be determined by the exam configuration set, see `Configure Exam`_ whereas the exercises will be randomly selected from the available exercise variants per exercise group, see `Exercise Groups`_.
+- To generate the student exams, you must click on ``Generate individual exams``. This will automatically create a student exam for every registered user. The number of exercises will be determined by the exam configuration set, see `Create and Configure Exam`_ whereas the exercises will be randomly selected from the available exercise variants per exercise group, see `Exercise Groups`_.
 - The ``Generate individual exams`` button will be locked once the exam becomes visible to the students. You cannot perform changes to the student exams once the exam conduction has started. 
 - If you have added more students recently, you can choose to ``Generate missing individual exams``. 
 - ``Prepare exercise start`` creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the VC and CI server. 
@@ -92,7 +92,7 @@ Manage Student Exams
 - Additionally, once the exam is over you can click on ``Evaluate quizzes``. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result. 
    **Hint:** If you do not press this button, the students quiz exercise will not be graded.
 
-.. figure:: student_exams.png
+.. figure:: instructor/student_exams.png
    :alt: Student Exam Page
    :align: center
 
@@ -122,7 +122,7 @@ Assessing Student Exams and Complaints
 
      At the bottom of the page you will find the option ``check for plagiarism``.
 
-.. figure:: tutor_dashboard.png
+.. figure:: instructor/tutor_dashboard.png
    :alt: Tutor Exam Dashboard
    :align: center
 
@@ -133,7 +133,7 @@ Assessing Student Exams and Complaints
 - If there is a submission which has not been assessed yet, you can click ``Start new assessment``. This will fetch a random student submission of this exercise which you can then assess.
 - Programming exercises are graded automatically but if ``manual assessment`` is allowed, see `Add Exercises`_, you can review and enhance the automatic results. Programming exercise submissions with manual assessment allowed are accessed as described above.
 
-.. figure:: programming_assessment.png
+.. figure:: instructor/programming_assessment.png
    :alt: Programming Submission Assessment
    :align: center
 
@@ -149,7 +149,7 @@ Exam Scores
 - Additionally, you can choose to modify the dataset by selecting ``only include submitted exams`` or ``only include exercises with at least one non-empty submission``.
 - The exam scores can also be exported via ``Export Results as CSV``.
 
-.. figure:: exam_statistics.png
+.. figure:: instructor/exam_statistics.png
    :alt: Exam Scores page
    :align: center
 
