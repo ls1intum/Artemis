@@ -88,6 +88,12 @@ public class ComplaintService {
                             ENTITY_NAME, "toomanycomplaints");
                 }
             }
+            else if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+                if (!course.getRequestMoreFeedbackEnabled()) {
+                    throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
+                            "moreFeedbackRequestsDisabled");
+                }
+            }
             if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise(), course)) {
                 throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
             }
