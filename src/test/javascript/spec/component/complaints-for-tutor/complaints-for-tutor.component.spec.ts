@@ -3,8 +3,7 @@ import * as chai from 'chai';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -46,10 +45,6 @@ describe('ComplaintsForTutorComponent', () => {
                 {
                     provide: ComplaintService,
                     useClass: MockComplaintService,
-                },
-                {
-                    provide: AlertService,
-                    useClass: MockAlertService,
                 },
                 {
                     provide: ComplaintResponseService,

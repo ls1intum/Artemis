@@ -2,7 +2,7 @@ import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { throttleTime, filter } from 'rxjs/internal/operators';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -27,7 +27,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     currentUser: User;
     websocketTopic: string;
 
-    constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private jhiAlertService: AlertService) {
+    constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private jhiAlertService: JhiAlertService) {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 

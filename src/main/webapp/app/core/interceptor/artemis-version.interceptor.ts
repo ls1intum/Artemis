@@ -3,14 +3,14 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Observable, Subject } from 'rxjs';
 import { tap, throttleTime } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     private showAlert = new Subject();
 
-    constructor(alertService: AlertService, private serverDateService: ArtemisServerDateService) {
+    constructor(alertService: JhiAlertService, private serverDateService: ArtemisServerDateService) {
         this.showAlert.pipe(throttleTime(10000)).subscribe(() => alertService.addAlert({ type: 'info', msg: 'artemisApp.outdatedAlert', timeout: 30000 }, []));
     }
 

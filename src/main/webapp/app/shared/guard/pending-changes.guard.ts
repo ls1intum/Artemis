@@ -1,6 +1,5 @@
 import { CanDeactivate } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
@@ -14,7 +13,7 @@ export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate
      *
      * @returns boolean | Observable<boolean>
      */
-    canDeactivate(component: ComponentCanDeactivate): boolean | Observable<boolean> {
+    canDeactivate(component: ComponentCanDeactivate): boolean {
         const warning = component.canDeactivateWarning || this.translateService.instant('pendingChanges');
         return component.canDeactivate() ? true : confirm(warning);
     }

@@ -13,8 +13,7 @@ import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
-import { Observable } from 'rxjs/Observable';
+import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -134,7 +133,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private location: Location,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
@@ -272,7 +271,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /**
      * Returns whether pending changes are present, preventing a deactivation.
      */
-    canDeactivate(): Observable<boolean> | boolean {
+    canDeactivate(): boolean {
         return !this.pendingChangesCache;
     }
 
