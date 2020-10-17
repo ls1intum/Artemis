@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.util.ModelFactory;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -338,7 +337,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-            .isEqualTo("created first instruction with empty criteria for testing");
+                .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @Test
