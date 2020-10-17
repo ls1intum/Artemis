@@ -363,14 +363,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
-        // No feedback for build errors
-        if (report.getResults() == null || report.getResults().isEmpty()) {
-            result.setHasFeedback(false);
-            return;
-        }
+        final ProgrammingExercise programmingExercise = ((ProgrammingExercise) result.getParticipation().getExercise());
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
-        final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise()).getProgrammingLanguage();
-
+        // Extract test case feedback
         for (final var testSuite : report.getResults()) {
             for (final var testCase : testSuite.getTestCases()) {
                 var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMessage());
@@ -381,7 +377,13 @@ public class JenkinsService implements ContinuousIntegrationService {
             }
         }
 
-        result.setHasFeedback(true);
+        // Extract static code analysis feedback if option was enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && report.getStaticCodeAnalysisReports() != null) {
+            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(report.getStaticCodeAnalysisReports());
+            result.addFeedbacks(scaFeedback);
+        }
+
+        result.setHasFeedback(!result.getFeedbacks().isEmpty());
     }
 
     @Override
