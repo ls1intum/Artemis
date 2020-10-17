@@ -88,7 +88,14 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-            final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+            final Document jobConfig;
+
+            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+                jobConfig = configBuilder.buildConfigWithStaticCodeAnalysis(testRepositoryURL, repositoryURL);
+            }
+            else {
+                jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+            }
             planKey = exercise.getProjectKey() + "-" + planKey;
 
             jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);

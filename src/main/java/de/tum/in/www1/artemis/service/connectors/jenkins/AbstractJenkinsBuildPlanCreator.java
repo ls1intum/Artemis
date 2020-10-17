@@ -31,6 +31,8 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
     protected static final String REPLACE_NOTIFICATIONS_TOKEN = "#jenkinsNotificationToken";
 
+    protected static final String REPLACE_STATIC_CODE_ANALYSIS_SCRIPT = "#staticCodeAnalysisScript";
+
     protected String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")

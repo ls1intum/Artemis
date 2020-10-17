@@ -33,6 +33,11 @@ public class PythonJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreat
     }
 
     @Override
+    public Document buildConfigWithStaticCodeAnalysis(URL testRepositoryURL, URL assignmentRepositoryURL) {
+        throw new UnsupportedOperationException("Jenkins builds with static code analysis not yet supported for Python!");
+    }
+
+    @Override
     public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
         if (!isSequential) {
             return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
