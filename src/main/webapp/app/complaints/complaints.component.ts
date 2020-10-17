@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -34,7 +34,7 @@ export class ComplaintsComponent implements OnInit {
     ComplaintType = ComplaintType;
     loaded = true;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService

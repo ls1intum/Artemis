@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockOrionConnectorService } from '../../../helpers/mocks/service/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -51,7 +51,6 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: OrionConnectorService, useClass: MockOrionConnectorService },
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],

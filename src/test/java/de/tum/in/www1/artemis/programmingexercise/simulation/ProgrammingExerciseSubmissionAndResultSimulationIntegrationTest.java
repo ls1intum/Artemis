@@ -23,22 +23,14 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     ParticipationRepository participationRepository;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;

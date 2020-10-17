@@ -29,9 +29,6 @@ import de.tum.in.www1.artemis.util.*;
 class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
     private RequestUtilService request;
 
     @Autowired
