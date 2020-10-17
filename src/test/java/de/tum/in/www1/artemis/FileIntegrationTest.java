@@ -22,9 +22,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.FileResource;
 
 public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,12 +35,6 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     AttachmentRepository attachmentRepo;
-
-    @Autowired
-    RequestUtilService request;
-
-    @Autowired
-    DatabaseUtilService database;
 
     @Autowired
     QuizExerciseRepository quizExerciseRepository;

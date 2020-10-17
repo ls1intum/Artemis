@@ -11,8 +11,8 @@ export class SourceTreeService {
      * Build source tree url.
      * @param cloneUrl - url of the target.
      */
-    buildSourceTreeUrl(cloneUrl?: string) {
-        return cloneUrl ? 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://bitbucket.ase.in.tum.de' : undefined;
+    buildSourceTreeUrl(baseUrl: string, cloneUrl?: string) {
+        return cloneUrl ? 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=' + baseUrl : undefined;
     }
 
     /**
