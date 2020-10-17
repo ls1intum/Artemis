@@ -105,6 +105,9 @@ public class Course extends DomainObject {
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
+    @Column(name = "request_more_feedback_enabled")
+    private boolean requestMoreFeedbackEnabled;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -255,6 +258,14 @@ public class Course extends DomainObject {
 
     public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
         this.studentQuestionsEnabled = studentQuestionsEnabled;
+    }
+
+    public boolean getRequestMoreFeedbackEnabled() {
+        return requestMoreFeedbackEnabled;
+    }
+
+    public void setRequestMoreFeedbackEnabled(boolean requestMoreFeedbackEnabled) {
+        this.requestMoreFeedbackEnabled = requestMoreFeedbackEnabled;
     }
 
     public String getColor() {
