@@ -249,7 +249,10 @@ public class Course extends DomainObject {
     }
 
     public boolean getComplaintsEnabled() {
-        return this.maxComplaints > 0 && this.maxComplaintTimeDays > 0;
+        // maxComplaintTimeDays must be larger than zero,
+        // and then either maxComplaints, maxTeamComplaints is larger than zero or requestMoreFeedbackEnabled is active
+        // See CourseResource for more details on the validation
+        return this.maxComplaintTimeDays > 0;
     }
 
     public boolean getStudentQuestionsEnabled() {
