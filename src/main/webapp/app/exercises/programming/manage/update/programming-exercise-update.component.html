@@ -259,15 +259,6 @@
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>
-                <!-- <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" id="field_gradingInstructions">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
-                    <jhi-markdown-editor
-                        class="markdown-editor"
-                        [domainCommands]="domainCommandsGradingInstructions"
-                        [(markdown)]="programmingExercise.gradingInstructions"
-                        [editorMode]="EditorMode.LATEX"
-                    ></jhi-markdown-editor>
-                </div> -->
                 <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" name="gradingInstructions" id="field_gradingInstructions">
                     <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
                     <jhi-markdown-editor

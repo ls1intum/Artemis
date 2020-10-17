@@ -60,15 +60,6 @@
             class="card-body markdown-preview instructions-wrapper__content overflow-auto"
             [exercise]="exercise"
         ></jhi-assessment-instructions>
-        <!--<jhi-programming-exercise-instructions
-            editorSidebar
-            (onNoInstructionsAvailable)="showEditorInstructions = false"
-            [exercise]="exercise"
-            [participation]="participation"
-            [personalParticipation]="true"
-            [exerciseHints]="exercise.exerciseHints"
-            class="instructions-wrapper__content card-body p-0"
-        ></jhi-programming-exercise-instructions> -->
         <div class="mt-3" editorBottom>
             <jhi-programming-assessment-repo-export
                 [exerciseId]="exercise.id"
