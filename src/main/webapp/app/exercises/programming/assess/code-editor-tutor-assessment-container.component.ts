@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
+import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
@@ -28,7 +29,6 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Course } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { now } from 'moment';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -72,6 +72,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
+    automaticFeedback: Feedback[] = [];
     totalScore = 0;
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
@@ -113,6 +114,20 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.participation = participationWithResults;
                     this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
                     this.manualResult = this.getLatestManualResult(this.participation.results);
+
+                    // Setup automatic feedback, set or round credits and set detailText if not already set
+                    this.automaticFeedback = this.automaticResult?.feedbacks!;
+                    this.automaticFeedback.forEach((feedback) => {
+                        feedback.id = undefined;
+                        if (feedback.credits) {
+                            feedback.credits = Math.round(feedback.credits);
+                        } else {
+                            feedback.credits = 0;
+                        }
+                        if (!feedback.detailText) {
+                            feedback.detailText = `${feedback.text} was successful`;
+                        }
+                    });
 
                     // Add participation with manual results to display manual result
                     this.participationForManualResult = cloneDeep(this.participation);
@@ -383,9 +398,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private setFeedbacksForManualResult() {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         } else {
-            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         }
     }
 
@@ -396,7 +411,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback];
+        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
         this.totalScore = (feedbacks || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
     }
 }
