@@ -1,4 +1,4 @@
-User Registartion
+User Registration
 =================
 
 Artemis supports user registration based on the Jhipster template.

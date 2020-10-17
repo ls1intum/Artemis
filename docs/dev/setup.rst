@@ -214,7 +214,8 @@ profiles by
 
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
-* Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to ``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
+* Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
+  ``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""
