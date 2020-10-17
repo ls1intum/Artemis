@@ -9,6 +9,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -16,6 +17,7 @@ const expect = chai.expect;
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    let sgiService: StructuredGradingCriterionService;
     const fileName = 'testFile';
     const codeLine = 1;
 
@@ -37,6 +39,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 comp.readOnly = false;
                 comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
+                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
             });
     });
 
@@ -77,11 +80,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const onUpdateFeedbackSpy = spy(comp.onUpdateFeedback, 'emit');
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         // Fake call as a DragEvent cannot be created programmatically
-        spyOn(comp, 'updateFeedbackOnDrop').and.callFake(() => {
+        spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').and.callFake(() => {
             comp.feedback.gradingInstruction = instruction;
             comp.feedback.credits = instruction.credits;
             comp.feedback.detailText = instruction.feedback;
-            comp.onUpdateFeedback.emit(comp.feedback);
         });
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
