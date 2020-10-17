@@ -98,13 +98,23 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
             return forbidden();
         }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
-            // hide details that should not be shown to the students
-            participation.get().getExercise().filterSensitiveInformation();
-        }
+
+        // Fetch template and solution participation into exercise of participation
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
+        exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId());
+
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(participation.get().getExercise().getId());
-        participation.get().getExercise().setGradingCriteria(gradingCriteria);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            // hide details that should not be shown to the students
+            exercise.filterSensitiveInformation();
+        }
+
+        // Set exercise back to participation
+        participation.get().setExercise(exercise);
+
         return ResponseEntity.ok(participation.get());
     }
 
