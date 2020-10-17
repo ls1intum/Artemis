@@ -9,7 +9,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
@@ -41,7 +41,7 @@ export class StudentExamsComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
     ) {}
 

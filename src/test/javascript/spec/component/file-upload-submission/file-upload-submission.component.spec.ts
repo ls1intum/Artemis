@@ -7,8 +7,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
+import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
@@ -52,7 +52,7 @@ describe('FileUploadSubmissionComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let fileUploaderService: FileUploaderService;
-    let jhiAlertService: AlertService;
+    let jhiAlertService: JhiAlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const result = { id: 1 } as Result;
@@ -79,7 +79,6 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(FileUploadResultComponent),
             ],
             providers: [
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -95,9 +94,11 @@ describe('FileUploadSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                router.initialNavigation();
+                fixture.ngZone!.run(() => {
+                    router.initialNavigation();
+                });
                 fileUploaderService = TestBed.inject(FileUploaderService);
-                jhiAlertService = TestBed.inject(AlertService);
+                jhiAlertService = TestBed.inject(JhiAlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });

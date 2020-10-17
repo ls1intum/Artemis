@@ -28,7 +28,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -88,7 +88,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,

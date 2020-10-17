@@ -74,9 +74,10 @@ under ``localhost:7990``.
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
    between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
    has finished. If not open them manually:
- - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
- - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
- - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
+
+   - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
+   - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
+   - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
 
  **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
  Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
@@ -131,23 +132,23 @@ under ``localhost:7990``.
    Jira <https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html>`__
    to synchronize the users in bitbucket and bamboo:
 
--  Go to Jira → User management → Jira user server → Add application →
-   Create one application for bitbucket and one for bamboo → add the
-   IP-address ``0.0.0.0/0`` to IP Addresses
+   -  Go to Jira → User management → Jira user server → Add application →
+      Create one application for bitbucket and one for bamboo → add the
+      IP-address ``0.0.0.0/0`` to IP Addresses
 
-    .. figure:: bamboo-bitbucket-jira/jira_add_application.png
-       :align: center
+       .. figure:: bamboo-bitbucket-jira/jira_add_application.png
+          :align: center
 
 
--  Go to Bitbucket and Bamboo → User Directories → Add Directories →
-   Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
-   use the application name and password which you used in the previous
-   step. Also, you should decrease the synchronisation period (e.g. to 2
-   minutes). Press synchronise after adding the directory, the users and
-   groups should now be available.
+   -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
+      Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
+      use the application name and password which you used in the previous
+      step. Also, you should decrease the synchronisation period (e.g. to 2
+      minutes). Press synchronise after adding the directory, the users and
+      groups should now be available.
 
-    .. figure:: bamboo-bitbucket-jira/user_directories.png
-       :align: center
+       .. figure:: bamboo-bitbucket-jira/user_directories.png
+          :align: center
 
 6. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
@@ -162,49 +163,49 @@ under ``localhost:7990``.
 
 8. Add Maven and JDK:
 
--  Go to Bamboo → Server capabilities → Add capabilities menu →
-   Capability type ``Executable`` → select type ``Maven 3.x`` → insert
-   ``Maven 3`` as executable label → insert ``/artemis`` as path.
+   -  Go to Bamboo → Server capabilities → Add capabilities menu →
+      Capability type ``Executable`` → select type ``Maven 3.x`` → insert
+      ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
--  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
-   as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
+   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
+      as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
 9. Generate a personal access token for Bamboo.
    While username and password can still be used as a fallback, this option is already marked as deprecated and
    will be removed in the future.
 
-- Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+   - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
-    .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
-       :align: center
+       .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+          :align: center
 
-- Copy the generated token to your ``application-local.yml``:
+   - Copy the generated token to your ``application-local.yml``:
 
-.. code:: yaml
+   .. code:: yaml
 
-    artemis:
-        continuous-integration:
-            user: <username>
-            password: <password>
-            token: #insert the token here
+       artemis:
+           continuous-integration:
+               user: <username>
+               password: <password>
+               token: #insert the token here
 
 10. Disable XSRF checking
-   Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
-   sending the required headers.
+    Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
+    sending the required headers.
 
-- Log in as the admin user go to Bamboo -> Overview -> Security Settings
+    - Log in as the admin user go to Bamboo -> Overview -> Security Settings
 
-   Edit the settings and disable XSRF checking:
+       Edit the settings and disable XSRF checking:
 
-    .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
-       :align: center
+        .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
+           :align: center
 
 Configure Artemis
 -----------------
 
 1. Modify ``src/main/resources/config/application-artemis.yml``
 
-.. code:: yaml
+   .. code:: yaml
 
            repo-clone-path: ./repos/
            repo-download-clone-path: ./repos-download/
@@ -234,13 +235,13 @@ Configure Artemis
 
 2. Modify the application-dev.yml
 
-.. code:: yaml
+   .. code:: yaml
 
-   server:
-       port: 8080                                         # The port of artemis
-       url: http://172.20.0.1:8080                        # needs to be an ip
-       // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-       // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
+      server:
+          port: 8080                                         # The port of artemis
+          url: http://172.20.0.1:8080                        # needs to be an ip
+          // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
+          // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,

@@ -5,8 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -28,10 +27,7 @@ describe('FileUploadResultComponent', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisSharedComponentModule],
             declarations: [FileUploadResultComponent],
-            providers: [
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: AccountService, useClass: MockAccountService },
-            ],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
