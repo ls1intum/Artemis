@@ -326,7 +326,7 @@ public class CourseResource {
             throw new BadRequestAlertException("If complaints or more feedback requests are allowed, the complaint time in days must be positive.", ENTITY_NAME,
                     "complaintsConfigInvalid", true);
         }
-        if (course.getMaxComplaintTimeDays() != 0 && (course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0 && !course.getRequestMoreFeedbackEnabled())) {
+        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0 && course.getMaxTeamComplaints() == 0 && !course.getRequestMoreFeedbackEnabled()) {
             throw new BadRequestAlertException("If no complaints or more feedback requests are allowed, the complaint time in days should be set to zero.", ENTITY_NAME,
                     "complaintsConfigInvalid", true);
         }
