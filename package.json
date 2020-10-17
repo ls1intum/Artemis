@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "4.6.2",
+    "version": "4.6.3",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -175,7 +175,7 @@
         "write-file-webpack-plugin": "4.5.1"
     },
     "engines": {
-        "node": ">=14.7.0",
+        "node": ">=14.9.0",
         "yarn": ">=1.22.4"
     },
     "lint-staged": {
