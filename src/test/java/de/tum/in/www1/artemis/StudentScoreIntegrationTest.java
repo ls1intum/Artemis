@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.StudentScoreService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -48,6 +49,9 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    StudentScoreService studentScoreService;
 
     private User user;
 
@@ -83,6 +87,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(70L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         // score for student2 in exercise1 in course1
         user = userRepo.findAllInGroup("tumuser").get(1);
@@ -94,6 +99,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(80L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         // course2
         course = database.addCourseWithOneFinishedTextExercise();
@@ -115,6 +121,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(60L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
     }
 
     @AfterEach
@@ -143,6 +150,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(75L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -198,6 +206,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(30L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -247,6 +256,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setRated(true);
         result.setScore(90L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
 
@@ -293,6 +303,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         result.setScore(100L);
         resultRepo.save(result);
+        studentScoreService.updateResult(result);
 
         response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
         assertThat(response.getScore()).as("response score is new score").isEqualTo(result.getScore());
@@ -307,6 +318,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         result = resultRepo.findAll().get(0);
         resultRepo.deleteById(result.getId());
+        studentScoreService.removeResult(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -330,6 +342,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         newResult.setRated(true);
         newResult.setScore(15L);
         resultRepo.save(newResult);
+        studentScoreService.updateResult(newResult);
 
         response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
         assertThat(response.getResult().getId()).as("response result id is new result id").isEqualTo(newResult.getId());

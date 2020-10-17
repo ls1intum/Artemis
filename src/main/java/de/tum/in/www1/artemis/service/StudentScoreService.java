@@ -91,6 +91,7 @@ public class StudentScoreService {
 
             studentScore.setScore(updatedResult.getScore());
 
+            studentScoreRepository.save(studentScore);
             return;
         }
 
@@ -107,11 +108,11 @@ public class StudentScoreService {
             return;
         }
 
-        // make all tests but mine pass
+        /* // make all tests but mine pass
         var kaputt = studentParticipationRepository.findById(participation.getId());
         if (kaputt.isEmpty()) {
             return;
-        }
+        }*/
 
         existingStudentScore = getStudentScoreForStudentAndExercise(student.get(), exercise);
 
@@ -126,6 +127,7 @@ public class StudentScoreService {
                 oldScore.setScore(0);
             }
 
+            studentScoreRepository.save(oldScore);
             log.info("Updated existing StudentScore: " + oldScore);
         }
         else {
