@@ -44,17 +44,20 @@ public class ProgrammingExerciseGradingService {
 
     private final ParticipationService participationService;
 
+    private final StudentScoreService studentScoreService;
+
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService) {
+                                             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                             SimpMessageSendingOperations messagingTemplate, StudentScoreService studentScoreService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
+        this.studentScoreService = studentScoreService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -94,6 +97,10 @@ public class ProgrammingExerciseGradingService {
             }
             result = updateResult(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
             result = resultRepository.save(result);
+
+            // update StudentScore
+            studentScoreService.updateResult(result);
+
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
             // If the solution participation was updated, also trigger the template participation build.

@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.listeners;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
@@ -25,7 +28,7 @@ public class ResultListener {
 
     @Autowired
     // we use lazy injection here, because a EntityListener needs an empty constructor
-    public void setResultService(StudentScoreService studentScoreService) {
+    public void setStudentScoreService(StudentScoreService studentScoreService) {
         ResultListener.studentScoreService = studentScoreService;
     }
 
@@ -43,11 +46,13 @@ public class ResultListener {
     @PreRemove
     public void postRemove(Result deletedResult) {
         log.info("Result " + deletedResult + " was deleted");
+
         // remove from Student Scores and Tutor Scores
         log.info("Result " + deletedResult + " will be deleted from StudentScores");
         studentScoreService.removeResult(deletedResult);
-        log.info("Result " + deletedResult + " will be deleted from TutorScores");
-        tutorScoreService.removeResult(deletedResult);
+
+        // log.info("Result " + deletedResult + " will be deleted from TutorScores");
+        // tutorScoreService.removeResult(deletedResult);
     }
 
     /**
@@ -59,8 +64,8 @@ public class ResultListener {
     public void preUpdate(Result updatedResult) {
         if (updatedResult.getAssessor() != null) {
             // remove from tutor scores for future update
-            log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
-            tutorScoreService.removeResult(updatedResult);
+            // log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
+            // tutorScoreService.removeResult(updatedResult);
         }
     }
 
@@ -71,15 +76,15 @@ public class ResultListener {
      */
     @PostUpdate
     public void postUpdate(Result updatedResult) {
-        log.info("Result " + updatedResult + " was updated");
+        // log.info("Result " + updatedResult + " was updated");
         // update student score
-        log.info("StudentScore for Result " + updatedResult + " will be updated");
-        studentScoreService.updateResult(updatedResult);
+        // log.info("StudentScore for Result " + updatedResult + " will be updated");
+        // studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
             // update tutor scores
-            log.info("TutorScores for Result " + updatedResult + " will be updated");
-            tutorScoreService.updateResult(updatedResult);
+            // log.info("TutorScores for Result " + updatedResult + " will be updated");
+            // tutorScoreService.updateResult(updatedResult);
         }
     }
 }

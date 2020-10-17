@@ -77,7 +77,7 @@ public class StudentScoreService {
      *
      * @param updatedResult result to be updated
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    // @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         // ignore results without score or participation
         if (updatedResult.getScore() == null || updatedResult.getParticipation() == null) {
@@ -90,6 +90,8 @@ public class StudentScoreService {
             StudentScore studentScore = existingStudentScore.get();
 
             studentScore.setScore(updatedResult.getScore());
+
+            return;
         }
 
         if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {

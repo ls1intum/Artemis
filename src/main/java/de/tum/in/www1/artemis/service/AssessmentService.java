@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,9 +41,11 @@ public class AssessmentService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final StudentScoreService studentScoreService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ExamService examService) {
+            SubmissionRepository submissionRepository, ExamService examService, StudentScoreService studentScoreService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -51,6 +54,7 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionRepository = submissionRepository;
         this.examService = examService;
+        this.studentScoreService = studentScoreService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -68,7 +72,10 @@ public class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-        return resultRepository.save(result);
+        result = resultRepository.save(result);
+        studentScoreService.updateResult(result);
+        
+        return result;
     }
 
     /**
