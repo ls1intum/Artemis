@@ -322,14 +322,9 @@ public class ProgrammingExerciseService {
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
             throws Exception {
+        // Only copy template if repo is empty
         if (gitService.listFiles(repository).size() == 0
-                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) { // Only
-                                                                                                                                                                               // copy
-                                                                                                                                                                               // template
-                                                                                                                                                                               // if
-                                                                                                                                                                               // repo
-                                                                                                                                                                               // is
-                                                                                                                                                                               // empty
+                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
