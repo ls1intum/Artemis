@@ -221,6 +221,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(0);
         course.setMaxComplaints(1);
+        course.setMaxTeamComplaints(0);
+        course.setRequestMoreFeedbackEnabled(false);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
@@ -228,7 +230,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // change configuration
         course.setMaxComplaintTimeDays(1);
         course.setMaxComplaints(0);
-        course.setMaxTeamComplaints(0);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+
+        // change configuration again
+        course.setMaxComplaintTimeDays(0);
+        course.setRequestMoreFeedbackEnabled(true);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
@@ -250,7 +258,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false, false);
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
         jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
@@ -261,16 +269,19 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getStudentQuestionsEnabled()).as("Course has right studentQuestionsEnabled Value").isFalse();
+        assertThat(getFromRepo.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isFalse();
 
         // Test edit course
         course.setId(getFromRepo.getId());
         course.setMaxComplaints(1);
         course.setMaxComplaintTimeDays(7);
         course.setStudentQuestionsEnabled(true);
+        course.setRequestMoreFeedbackEnabled(true);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.getStudentQuestionsEnabled()).as("studentQuestionsEnabled Value updated successfully").isTrue();
+        assertThat(updatedCourse.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
     }
 
     @Test

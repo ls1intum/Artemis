@@ -336,12 +336,12 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true, true);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            Boolean studentQuestionsEnabled) {
+            boolean studentQuestionsEnabled, boolean requestMoreFeedbackEnabled) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
@@ -352,6 +352,7 @@ public class ModelFactory {
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
+        course.setRequestMoreFeedbackEnabled(requestMoreFeedbackEnabled);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setInstructorGroupName(instructorGroupName);
