@@ -3,6 +3,13 @@
         "lectureModule": {
             "home": {
                 "title": "Vorlesungsmodule"
+            },
+            "moduleCreationCard": {
+                "title": "Erzeuge ein neues Vorlesungsmodul",
+                "html": "HTML",
+                "exercise": "Aufgabe",
+                "video": "Video",
+                "file": "Datei"
             }
         }
     }

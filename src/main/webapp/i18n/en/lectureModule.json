@@ -3,6 +3,13 @@
         "lectureModule": {
             "home": {
                 "title": "Lecture Modules"
+            },
+            "moduleCreationCard": {
+                "title": "Add a new Lecture Module",
+                "html": "HTML",
+                "exercise": "Exercise",
+                "video": "Video",
+                "file": "File"
             }
         }
     }

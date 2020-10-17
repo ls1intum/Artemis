@@ -4,11 +4,12 @@ import { LectureComponentManagementComponent } from 'app/lecture/lecture-compone
 import { NgModule } from '@angular/core';
 import { lectureComponentRoute } from 'app/lecture/lecture-component/lecture-component-management/lecture-component-management.route';
 import { RouterModule } from '@angular/router';
+import { ModuleCreationCardComponent } from './module-creation-card/module-creation-card.component';
 
 const ENTITY_STATES = [...lectureComponentRoute];
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(ENTITY_STATES)],
-    declarations: [LectureComponentManagementComponent],
+    declarations: [LectureComponentManagementComponent, ModuleCreationCardComponent],
 })
 export class ArtemisLectureComponentManagementModule {}
