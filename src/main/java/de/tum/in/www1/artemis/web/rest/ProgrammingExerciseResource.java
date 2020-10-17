@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import jplag.ExitException;
 
 import org.apache.http.HttpException;
@@ -94,6 +95,8 @@ public class ProgrammingExerciseResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -106,7 +109,7 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +123,8 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupService = exerciseGroupService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.gradingCriterionService = gradingCriterionService;
+
     }
 
     /**
@@ -658,6 +663,10 @@ public class ProgrammingExerciseResource {
             return notFound();
         }
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.hasExerciseGroup()) {
