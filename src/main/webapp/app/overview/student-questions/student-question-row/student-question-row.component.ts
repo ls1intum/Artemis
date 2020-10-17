@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -39,17 +40,20 @@ export class StudentQuestionRowComponent implements OnInit {
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
     EditorMode = EditorMode;
+    courseId: number;
 
     constructor(
         private studentQuestionAnswerService: StudentQuestionAnswerService,
         private studentQuestionService: StudentQuestionService,
         private localStorage: LocalStorageService,
+        private route: ActivatedRoute,
     ) {}
 
     /**
      * sort answers when component is initialized
      */
     ngOnInit(): void {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.sortQuestionAnswers();
     }
 
@@ -123,7 +127,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id!).subscribe(() => {
+        this.studentQuestionService.delete(this.courseId, this.studentQuestion.id!).subscribe(() => {
             this.localStorage.clear(`q${this.studentQuestion.id}u${this.user.id}`);
             this.interactQuestionRow.emit({
                 name: QuestionRowActionName.DELETE,
@@ -143,7 +147,7 @@ export class StudentQuestionRowComponent implements OnInit {
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.tutorApproved = false;
         studentQuestionAnswer.answerDate = moment();
-        this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.create(this.courseId, studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
             if (!this.studentQuestion.answers) {
                 this.studentQuestion.answers = [];
             }

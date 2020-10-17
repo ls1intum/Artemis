@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -27,7 +27,7 @@ export class SubmissionExportDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private submissionExportService: SubmissionExportService,
         public activeModal: NgbActiveModal,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
