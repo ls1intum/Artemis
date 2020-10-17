@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -41,9 +42,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -104,6 +103,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     Git localGit2;
 
     Git remoteGit2;
+
+    private List<GradingCriterion> gradingCriteria;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -320,6 +321,24 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
         // TODO add more assertions
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetProgrammingExerciseWithStructuredGradingInstruction() throws Exception {
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
+
+        gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
+
+        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
+            .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @Test
