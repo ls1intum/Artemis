@@ -54,7 +54,8 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
             // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-            this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
+            this.complaintsEnabled =
+                (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0 || this.course.requestMoreFeedbackEnabled!) && this.course.maxComplaintTimeDays! > 0;
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -97,6 +98,7 @@ export class CourseUpdateComponent implements OnInit {
                 endDate: new FormControl(this.course.endDate),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
+                requestMoreFeedbackEnabled: new FormControl(this.course.requestMoreFeedbackEnabled),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -283,11 +285,13 @@ export class CourseUpdateComponent implements OnInit {
     changeComplaintsEnabled() {
         if (!this.complaintsEnabled) {
             this.complaintsEnabled = true;
+            this.courseForm.controls['requestMoreFeedbackEnabled'].setValue(true);
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
         } else {
             this.complaintsEnabled = false;
+            this.courseForm.controls['requestMoreFeedbackEnabled'].setValue(false);
             this.courseForm.controls['maxComplaints'].setValue(0);
             this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);

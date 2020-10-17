@@ -155,6 +155,24 @@
                         ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | translate }}"
                     ></fa-icon>
                 </div>
+                <div class="form-check" *ngIf="complaintsEnabled">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="requestMoreFeedbackEnabled"
+                        id="field_requestMoreFeedbackEnabled"
+                        formControlName="requestMoreFeedbackEnabled"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_requestMoreFeedbackEnabled"
+                        >Enable Request More Feedback</label
+                    >
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | translate }}"
+                    ></fa-icon>
+                </div>
                 <div class="form-group" *ngIf="complaintsEnabled">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints">
                         Maximum amount of complaints per student
