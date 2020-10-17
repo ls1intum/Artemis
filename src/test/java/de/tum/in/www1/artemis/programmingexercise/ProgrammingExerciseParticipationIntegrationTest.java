@@ -276,13 +276,13 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestSubmissionsForExercise_studentForbidden() throws Exception {
+    public void testGetLatestSubmissionsForExercise_studentForbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getParticipationWithResultsForStudentParticipation_success() throws Exception {
+    public void testGetParticipationWithResultsForStudentParticipation_success() throws Exception {
         database.addGradingInstructionsToExercise(programmingExercise);
         programmingExerciseRepository.save(programmingExercise);
         addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now());
@@ -300,7 +300,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getParticipationWithResultsForStudentParticipation_notFound() throws Exception {
+    public void testGetParticipationWithResultsForStudentParticipation_notFound() throws Exception {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
@@ -308,7 +308,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "stidemt1", roles = "USER")
-    public void getParticipationWithResultsForStudentParticipation_forbidden() throws Exception {
+    public void testGetParticipationWithResultsForStudentParticipation_forbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 
