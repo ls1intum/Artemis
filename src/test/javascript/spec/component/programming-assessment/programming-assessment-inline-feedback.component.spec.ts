@@ -85,7 +85,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         });
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
-        
+
         expect(comp.feedback.gradingInstruction).to.be.equal(instruction);
         expect(comp.feedback.credits).to.be.equal(instruction.credits);
         expect(comp.feedback.detailText).to.be.equal(instruction.feedback);

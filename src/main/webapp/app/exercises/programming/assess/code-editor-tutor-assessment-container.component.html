@@ -55,7 +55,11 @@
 
             <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         </div>
-        <jhi-assessment-instructions editorSidebar class="card-body markdown-preview instructions-wrapper__content overflow-auto" [exercise]="exercise"></jhi-assessment-instructions>
+        <jhi-assessment-instructions
+            editorSidebar
+            class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+            [exercise]="exercise"
+        ></jhi-assessment-instructions>
         <!--<jhi-programming-exercise-instructions
             editorSidebar
             (onNoInstructionsAvailable)="showEditorInstructions = false"

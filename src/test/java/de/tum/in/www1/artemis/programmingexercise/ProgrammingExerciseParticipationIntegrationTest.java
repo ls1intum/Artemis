@@ -296,7 +296,8 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now());
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
 
-        ProgrammingExerciseStudentParticipation response = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        ProgrammingExerciseStudentParticipation response = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks",
+                HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
         ProgrammingExercise exercise = (ProgrammingExercise) response.getExercise();
 
         assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
@@ -309,7 +310,8 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipationWithResultsForStudentParticipation_notFound() throws Exception {
         StudentParticipation participation = database.addParticipationForExercise(programmingExercise, "student1");
-        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND, ProgrammingExerciseStudentParticipation.class);
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-results-and-feedbacks", HttpStatus.NOT_FOUND,
+                ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test

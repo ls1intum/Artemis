@@ -268,7 +268,7 @@
                         [editorMode]="EditorMode.LATEX"
                     ></jhi-markdown-editor>
                 </div> -->
-                <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"  class="form-group" name="gradingInstructions" id="field_gradingInstructions">
+                <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" name="gradingInstructions" id="field_gradingInstructions">
                     <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
                     <jhi-markdown-editor
                         *ngIf="this.checkedFlag === false"
