@@ -318,7 +318,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
 
         result = resultRepo.findAll().get(0);
         resultRepo.deleteById(result.getId());
-        studentScoreService.removeResult(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
