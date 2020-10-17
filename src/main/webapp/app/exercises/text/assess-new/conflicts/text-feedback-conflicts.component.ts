@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { Location } from '@angular/common';
 
@@ -54,7 +54,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         private location: Location,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
-        protected jhiAlertService: AlertService,
+        protected jhiAlertService: JhiAlertService,
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {

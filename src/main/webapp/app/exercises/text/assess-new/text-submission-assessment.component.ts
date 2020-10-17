@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
 import { AccountService } from 'app/core/auth/account.service';
@@ -89,7 +89,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private router: Router,
         private location: Location,
         private route: ActivatedRoute,
-        protected jhiAlertService: AlertService,
+        protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
         private complaintService: ComplaintService,

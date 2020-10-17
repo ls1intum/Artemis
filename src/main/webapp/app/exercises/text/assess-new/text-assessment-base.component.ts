@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -31,7 +31,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected constructor(
-        protected jhiAlertService: AlertService,
+        protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
         protected assessmentsService: TextAssessmentsService,
         translateService: TranslateService,
