@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
@@ -80,8 +80,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     result.submission!.id = 1;
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
     const exercise = <ProgrammingExercise>{ id: 1, gradingInstructions: 'Grading Instructions', course: <Course>{ instructorGroupName: 'instructorGroup' } };
+    const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.results = [result];
+    participation.results = [result, automaticResult];
     participation.exercise = exercise;
     participation.id = 1;
 
@@ -141,8 +142,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
-        comp.manualResult = result;
-        comp.exercise = exercise;
         comp.ngOnInit();
         tick(100);
 
@@ -163,8 +162,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it("should not show complaint when result doesn't have it", fakeAsync(() => {
         result.hasComplaint = false;
-        comp.manualResult = result;
-        comp.exercise = exercise;
         comp.ngOnInit();
         tick(100);
 
