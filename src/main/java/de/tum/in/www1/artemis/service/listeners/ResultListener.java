@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.listeners;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
@@ -79,12 +80,31 @@ public class ResultListener {
         // log.info("Result " + updatedResult + " was updated");
         // update student score
         // log.info("StudentScore for Result " + updatedResult + " will be updated");
-        // studentScoreService.updateResult(updatedResult);
+        studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
             // update tutor scores
             // log.info("TutorScores for Result " + updatedResult + " will be updated");
             // tutorScoreService.updateResult(updatedResult);
+        }
+    }
+
+    /**
+     * After new result gets persisted, update all StudentScores/TutorScores with this result.
+     *
+     * @param newResult new result
+     */
+    @PostPersist
+    public void postPersist(Result newResult) {
+        // log.info("Result " + newResult + " was updated");
+        // update student score
+        // log.info("StudentScore for Result " + newResult + " will be updated");
+        studentScoreService.updateResult(newResult);
+
+        if (newResult.getAssessor() != null) {
+            // update tutor scores
+            // log.info("TutorScores for Result " + newResult + " will be updated");
+            // tutorScoreService.updateResult(newResult);
         }
     }
 }

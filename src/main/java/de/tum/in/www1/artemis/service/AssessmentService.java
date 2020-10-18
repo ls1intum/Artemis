@@ -72,9 +72,14 @@ public class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
+
+        var score = studentScoreService.getStudentScoreForStudentAndExercise(((StudentParticipation) result.getParticipation()).getStudent().get(), exercise);
+        if (score.isPresent()) {
+            result.setStudentScore(score.get());
+        }
+
         result = resultRepository.save(result);
-        studentScoreService.updateResult(result);
-        
+
         return result;
     }
 

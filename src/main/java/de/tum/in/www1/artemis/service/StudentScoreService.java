@@ -6,8 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -15,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 
@@ -27,9 +26,12 @@ public class StudentScoreService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public StudentScoreService(StudentScoreRepository studentScoreRepository, StudentParticipationRepository studentParticipationRepository) {
+    private final ResultRepository resultRepository;
+
+    public StudentScoreService(StudentScoreRepository studentScoreRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository) {
         this.studentScoreRepository = studentScoreRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -69,6 +71,7 @@ public class StudentScoreService {
      * @param deletedResult result to be deleted
      */
     public void removeResult(Result deletedResult) {
+        deletedResult.setStudentScore(null);
         studentScoreRepository.deleteByResult(deletedResult);
     }
 
@@ -77,21 +80,9 @@ public class StudentScoreService {
      *
      * @param updatedResult result to be updated
      */
-    // @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateResult(Result updatedResult) {
         // ignore results without score or participation
         if (updatedResult.getScore() == null || updatedResult.getParticipation() == null) {
-            return;
-        }
-
-        var existingStudentScore = studentScoreRepository.findByResult(updatedResult);
-
-        if (existingStudentScore.isPresent()) {
-            StudentScore studentScore = existingStudentScore.get();
-
-            studentScore.setScore(updatedResult.getScore());
-
-            studentScoreRepository.save(studentScore);
             return;
         }
 
@@ -100,7 +91,6 @@ public class StudentScoreService {
         }
 
         var participation = (StudentParticipation) updatedResult.getParticipation();
-
         var student = participation.getStudent();
         var exercise = participation.getExercise();
 
@@ -108,40 +98,21 @@ public class StudentScoreService {
             return;
         }
 
-        /* // make all tests but mine pass
-        var kaputt = studentParticipationRepository.findById(participation.getId());
-        if (kaputt.isEmpty()) {
-            return;
-        }*/
+        if (updatedResult.getStudentScore() != null) {
+            StudentScore studentScore = updatedResult.getStudentScore();
 
-        existingStudentScore = getStudentScoreForStudentAndExercise(student.get(), exercise);
+            studentScore.setResult(updatedResult);
+            studentScore.setScore(updatedResult.getScore());
 
-        if (existingStudentScore.isPresent()) {
-            StudentScore oldScore = existingStudentScore.get();
-            oldScore.setResult(updatedResult);
+            studentScoreRepository.save(studentScore);
+            log.info("Updated existing StudentScore: " + studentScore);
+            // why does this not save?
+        } else {
+            StudentScore studentScore = new StudentScore(student.get(), exercise, updatedResult);
+            studentScore.setScore(updatedResult.getScore());
 
-            if (updatedResult.getScore() != null) {
-                oldScore.setScore(updatedResult.getScore());
-            }
-            else {
-                oldScore.setScore(0);
-            }
-
-            studentScoreRepository.save(oldScore);
-            log.info("Updated existing StudentScore: " + oldScore);
-        }
-        else {
-            StudentScore newScore = new StudentScore(student.get(), exercise, updatedResult);
-
-            if (updatedResult.getScore() != null) {
-                newScore.setScore(updatedResult.getScore());
-            }
-            else {
-                newScore.setScore(0);
-            }
-
-            studentScoreRepository.save(newScore);
-            log.info("Added new StudentScore: " + newScore);
+            studentScoreRepository.save(studentScore);
+            log.info("Added new StudentScore: " + studentScore);
         }
     }
 }

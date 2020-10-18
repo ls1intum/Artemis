@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
@@ -108,6 +109,11 @@ public class Result extends DomainObject {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    @Transient
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Nullable
+    private StudentScore studentScore = null;
 
     public String getResultString() {
         return resultString;
@@ -306,6 +312,14 @@ public class Result extends DomainObject {
 
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
+    }
+
+    public StudentScore getStudentScore() {
+        return studentScore;
+    }
+
+    public void setStudentScore(StudentScore studentScore) {
+        this.studentScore = studentScore;
     }
 
     /**
