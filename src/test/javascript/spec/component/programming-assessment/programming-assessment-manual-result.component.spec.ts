@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +10,6 @@ import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -28,7 +27,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
@@ -97,7 +96,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 BuildLogService,
                 AccountService,
                 JhiAlertService,
-                { provide: ResultService, useClass: MockResultService },
+                ResultService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
@@ -160,7 +159,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
     }));
 
-    it("should not show complaint when result doesn't have it", fakeAsync(() => {
+    it('should not show complaint when result does not have it', fakeAsync(() => {
         result.hasComplaint = false;
         comp.ngOnInit();
         tick(100);
@@ -176,5 +175,36 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Wait until periodic timer has passed out
         tick(100);
+    }));
+
+    it('should save and submit manual result', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+        comp.automaticFeedback[0] = { type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 };
+        comp.referencedFeedback[0] = { type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' };
+        comp.unreferencedFeedback[0] = { type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 };
+        comp.generalFeedback = { detailText: 'general feedback' };
+        comp.save();
+        const alertElement = debugElement.queryAll(By.css('jhi-alert'));
+
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(alertElement).to.exist;
+
+        // Reset feedbacks
+        comp.manualResult!.feedbacks! = [];
+        comp.submit();
+        const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
+
+        expect(comp.manualResult?.feedbacks?.length).to.be.equal(4);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).to.be.true;
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference == null)).to.be.true;
+        expect(alertElementSubmit).to.exist;
+        flush();
     }));
 });
