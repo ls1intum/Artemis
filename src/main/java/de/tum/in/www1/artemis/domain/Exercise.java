@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
@@ -153,6 +154,10 @@ public abstract class Exercise extends DomainObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<StudentScore> studentScores;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -454,6 +459,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
+    }
+
+    public List<StudentScore> getStudentScores() {
+        return studentScores;
+    }
+
+    public void setStudentScores(List<StudentScore> studentScores) {
+        this.studentScores = studentScores;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
