@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 /**
  * A user.
@@ -111,6 +113,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<StudentScore> studentScores;
 
     public String getLogin() {
         return login;
@@ -273,6 +279,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
+    }
+
+    public List<StudentScore> getStudentScores() {
+        return studentScores;
+    }
+
+    public void setStudentScores(List<StudentScore> studentScores) {
+        this.studentScores = studentScores;
     }
 
     @Override

@@ -155,7 +155,7 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<StudentScore> studentScores;
 
