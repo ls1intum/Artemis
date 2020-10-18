@@ -60,9 +60,11 @@ public class ResultListener {
      */
     @PreUpdate
     public void preUpdate(Result updatedResult) {
+        log.info("Result " + updatedResult + " will be updated");
+
         if (updatedResult.getAssessor() != null) {
             // remove from tutor scores for future update
-            // log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
+            log.info("Result " + updatedResult + " will be removed from TutorScores before getting updated.");
             // tutorScoreService.removeResult(updatedResult);
         }
     }
@@ -74,14 +76,15 @@ public class ResultListener {
      */
     @PostUpdate
     public void postUpdate(Result updatedResult) {
-        // log.info("Result " + updatedResult + " was updated");
+        log.info("Result " + updatedResult + " was updated");
+
         // update student score
-        // log.info("StudentScore for Result " + updatedResult + " will be updated");
+        log.info("StudentScore for Result " + updatedResult + " will be updated");
         studentScoreService.updateResult(updatedResult);
 
         if (updatedResult.getAssessor() != null) {
             // update tutor scores
-            // log.info("TutorScores for Result " + updatedResult + " will be updated");
+            log.info("TutorScores for Result " + updatedResult + " will be updated");
             // tutorScoreService.updateResult(updatedResult);
         }
     }
@@ -93,14 +96,15 @@ public class ResultListener {
      */
     @PostPersist
     public void postPersist(Result newResult) {
-        // log.info("Result " + newResult + " was updated");
+        log.info("Result " + newResult + " was updated");
+
         // update student score
-        // log.info("StudentScore for Result " + newResult + " will be updated");
+        log.info("StudentScore for Result " + newResult + " will be added");
         studentScoreService.updateResult(newResult);
 
         if (newResult.getAssessor() != null) {
             // update tutor scores
-            // log.info("TutorScores for Result " + newResult + " will be updated");
+            log.info("TutorScores for Result " + newResult + " will be updated");
             // tutorScoreService.updateResult(newResult);
         }
     }
