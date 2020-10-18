@@ -299,8 +299,8 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         result.setStudentScore(response); // does nothing for listener somehow
         resultRepo.save(result);
 
-        //response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
-        //assertThat(response.getScore()).as("response score is new score").isEqualTo(result.getScore());
+        response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getScore()).as("response score is new score").isEqualTo(result.getScore());
     }
 
     @Test
@@ -322,7 +322,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void studentScoreNewResultForExistingScore() throws Exception {
         user = userRepo.findAllInGroup("tumuser").get(0);
-        course = courseRepo.findAll().get(0);
         exercise = exerciseRepo.findAll().get(0);
         Result oldResult = resultRepo.findAll().get(0);
         studentParticipation = studentParticipationRepo.findAll().get(0);
@@ -331,12 +330,14 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(response.getResult().getId()).as("response result id is old result id").isEqualTo(oldResult.getId());
 
         Result newResult = new Result();
-        result.setParticipation(studentParticipation);
+        newResult.setParticipation(studentParticipation);
         newResult.setRated(true);
         newResult.setScore(15L);
         resultRepo.save(newResult);
+        // kleiner umweg
+        resultRepo.delete(oldResult);
 
-        //response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
-        //assertThat(response.getResult().getId()).as("response result id is new result id").isEqualTo(newResult.getId());
+        response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
+        assertThat(response.getResult().getId()).as("response result id is new result id").isEqualTo(newResult.getId());
     }
 }

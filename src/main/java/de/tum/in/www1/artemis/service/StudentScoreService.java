@@ -99,20 +99,13 @@ public class StudentScoreService {
         }
 
         if (updatedResult.getStudentScore() != null) {
-            StudentScore studentScore = updatedResult.getStudentScore();
-
-            studentScore.setResult(updatedResult);
-            studentScore.setScore(updatedResult.getScore());
-
-            studentScoreRepository.save(studentScore);
-            log.info("Updated existing StudentScore: " + studentScore);
-            // why does this not save?
-        } else {
-            StudentScore studentScore = new StudentScore(student.get(), exercise, updatedResult);
-            studentScore.setScore(updatedResult.getScore());
-
-            studentScoreRepository.save(studentScore);
-            log.info("Added new StudentScore: " + studentScore);
+            studentScoreRepository.delete(updatedResult.getStudentScore());
         }
+
+        StudentScore studentScore = new StudentScore(student.get(), exercise, updatedResult);
+        studentScore.setScore(updatedResult.getScore());
+
+        studentScore = studentScoreRepository.save(studentScore);
+        log.info("StudentScore: " + studentScore + " with Score: " + studentScore.getScore());
     }
 }
