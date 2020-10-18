@@ -86,7 +86,7 @@ public class StudentScoreService {
         var student = participation.getStudent();
         var exercise = participation.getExercise();
 
-        if (student.isEmpty()) {
+        if (student.isEmpty() || exercise == null) {
             return;
         }
 
