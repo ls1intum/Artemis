@@ -107,11 +107,6 @@ public class ProgrammingExerciseParticipationResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            // hide details that should not be shown to the students
-            exercise.filterSensitiveInformation();
-        }
-
         // Set exercise back to participation
         participation.get().setExercise(exercise);
 
