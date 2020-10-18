@@ -1,5 +1,5 @@
 ===================
-Students’ Guide:
+Students’ Guide
 ===================
 
 General Information
@@ -25,7 +25,7 @@ Offline Mode
 - Artemis tries to save your solution every 30 seconds, when you navigate between exercises and when you click ``Save`` or ``Save & Continue``.
 - Programming exercises have 2 modes.
 
-    1. **Online code editor:** can only be used when you are online. Note: You have to click on Submit! Otherwise your solution will not be pushed to the VC server and no build will be triggered.
+    1. **Online code editor:** can only be used when you are online. **Note:** You have to click on Submit! Otherwise your solution will not be pushed to the VC server and no build will be triggered.
     2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution)
 
 - At the end of the online exercise, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded
@@ -34,7 +34,7 @@ Pro Tips
 ^^^^^^^^
 1. Do **NOT** reload the browser
 
-    - If you reload the browser, the welcome screen opens again and you must enter your name and confirm the checkbox again, see `Welcome Screen`_
+    - If you reload the browser, the `Welcome Screen`_ screen opens and you must enter your name and confirm the checkbox again.
     - You should only reload if an error occurs that cannot be recovered otherwise!
 2. Participate in **ONE** browser window!
 
@@ -74,7 +74,7 @@ Welcome Screen
     - **Note:** Your full name represents your signature.
     - **Hint:** You can find your full name as registered on Artemis below the input field.
 
-- After you confirm, if the exam working time has started, the *Conduction* screen will automatically appear, see `Exam Conduction`_. 
+- After you confirm, if the exam working time has started, the `Exam Conduction`_ screen will automatically appear. 
 - Otherwise, you must wait until the exam begins. A popup will appear which will notify you how much time is left before the planned start.
 
 .. figure:: student/welcome_screen.png
@@ -85,18 +85,18 @@ Welcome Screen
 
 Exam Conduction
 ^^^^^^^^^^^^^^^
-- When you start the exam conduction, the *Conduction* screen will appear. 
-- On the header, you will find the *Exam Navigation Bar*.. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
+- Once the exam working time starts and you have confirmed your participation, the *Conduction* screen will appear. 
+- On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
 
-    - When there are u``nsaved/unsubmitted changes``, the icon will become ``yellow``. 
-    - When your changes have been ``saved`` **and** ``submitted``, the icon with turn ``blue`` and a ``checkmark`` will appear. 
-    - A blue icon without a checkmark represents that you have not started this exercise.
+    - When there are ``unsaved`` **or** ``unsubmitted``, the exercise representation on the navigation bar will become ``yellow``. 
+    - When your changes have been ``saved`` **and** ``submitted``, it's background with turn ``blue`` and a ``checkmark`` icon will be shown. 
+    - A blue background without a checkmark indicates that you have not started this exercise.
 
-- You can also navigate through the exercises when you are done with one by clicking ``Save`` or ``Save & Continue``. This action will save your changes and move to the next exercise. 
+- You can also navigate through the exercises when you are done with one by clicking ``Save & Continue``. This action will save and submit your changes and move to the next exercise. 
 
     - **Warning:** For programming exercises, you must manually press ``submit`` otherwise your solution will not be counted!
 
-- On the header, you will also find the ``Hand in early`` button. If you press this, you will be sent to the exam *End Screen*, see `End Screen`_. 
+- On the header, you will also find the ``Hand in early`` button. If you press this, you will be sent to the exam `End Screen`_. 
 - The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
 
     - **Hint:** When the time is about to run out, the background of the timer will turn yellow to warn you.
@@ -156,7 +156,7 @@ Participating in Modeling Exercises
 
 - Within the editor you can model your solution. Depending on the diagram type, you will find the available elements on the right side of the editor. Simply drag and drop them into the editing field.
 - When you click on a dropped element, you can configure it by setting it's ``name``, it's ``attributes``, ``methods`` etc. 
-- To connect elements within the modeling editor you can simply drag its edges to another element. The editor will then automatically connect those two. 
+- To connect elements you can simply drag an element's edges to another element. The editor will then automatically connect those two. 
 - If you are unclear about how to use the modeling editor, you can click on ``Help``. It will provide further information about how to use the modeling editor. 
 
 - **Tip:** If you need more space, you can work in fullscreen by clicking on ``Fullscreen``. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode simply click ``Exit Fullscreen``.
@@ -188,7 +188,7 @@ Participating in Programming Exercises
 
         - **Hint:** If you accidentally delete or remove a file, you can use ``Refresh files``, to load the last saved version from the server.
 
-- The code editor allows you to edit the code in specific files. It shows the line numbers and will also annotate the appropriate line, if a compilation error occurs. 
+- The code editor allows you to edit the content of specific files. It shows the line numbers and will also annotate the appropriate line, if a compilation error occurs. 
 - The instructions are docked to the right.
 - If you want to focus only on the code editor, you can collapse the instructions by pressing on the ``right arrow``. This can be reverted by pressing the arrow again. Similarly, if you want to collapse the file browser, you can press the ``left arrow`` above the file browser. 
 
@@ -196,6 +196,7 @@ Participating in Programming Exercises
 
 - When you press ``Save``, your files are saved on the Artemis server. However, you must press ``Submit`` for your solution to be counted!
 - When you press ``Submit``, your changes are pushed to the VC server and a build is started on the CI server. This is indicated by the results changing from ``No results found`` to ``Building and testing``.
+
     - **Warning:** There is no auto-submit!
 
 .. figure:: student/programming_exercises.png
@@ -204,8 +205,11 @@ Participating in Programming Exercises
 
    Participating in Programming Exercises with the online code editor and local IDE enabled
 
-- If your exercise allows the use of the local IDE you will have access to the button ``Clone Repository``
+- If your exercise allows the use of the local IDE you will have access to the button ``Clone Repository``.
 - When you click it you can choose to clone the exercise via ``HTTPS`` or ``SSH``, if you have configured your private key.
+
+    - **Note:** You must link a public key to your account in advance if you want to use ``SSH``. 
+
 - To work offline follow these steps: 
 
     1. Clone the Exercise
@@ -221,7 +225,7 @@ Participating in Programming Exercises
 
 **WARNING: You are responsible for pushing/submitting your code. Your instructors cannot help you if you have saved, but did not submit.**
 
-- Real-time feedback in programming exercises during the online exam is limited
+- Real-time feedback in programming exercises during the online exam is limited.
 - You will only see if your code compiles or not
 
     1. **0%, Build failed** means that your code does **not** compile!

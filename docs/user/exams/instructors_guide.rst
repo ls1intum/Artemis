@@ -1,6 +1,8 @@
 ===================
-Instructors’ Guide:
+Instructors’ Guide
 ===================
+
+.. _timeline:
 
 Timeline of an Artemis Online Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,12 +20,12 @@ Timeline of an Artemis Online Exam
     .. _exam_assessment:
 
 - **Exam Assessment**
-    The assessment begins as soon as the latest student exam working time is over. During this period, your team can assess the submissions of the students and provide results. The testing suites for programming exercises are executed and you can evaluate the quiz exercises automatically, see `Assessing Student Exams and Complaints`_. The exam assessment ends when the results are published, see `Create and Configure Exam`_.
+    The assessment begins as soon as the latest student exam working time is over. During this period, your team can assess the submissions of the students and provide results. The testing suites for programming exercises are executed and you can evaluate the quiz exercises automatically, see `Assess Student Exams and Complaints`_. The exam assessment ends when the results are published, see `Create and Configure Exam`_.
 
     .. _student_review:
 
 - **Student Review**
-    The student review period is set as part of the the exam configuration, see `Create and Configure Exam`_. The students can view their achieved results as soon as they are published. During the review period however, students have the oppertunity to submit complaints about perceived mistakes made in the assessment. A second assessor, other than the original one can review the complaint and respond to it. The results are then updated automatically. 
+    The student review period can be set in the exam configuration, see `Create and Configure Exam`_. During the review period, students have the oppertunity to submit complaints about perceived mistakes made in the assessment. A second assessor, other than the original one can review the complaint and respond to it. The results are then updated automatically. 
 
 
 Accessing the Exam Management Page
@@ -38,7 +40,7 @@ Accessing the Exam Management Page
 
 Create and Configure Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-- When you click on ``create an exam`` you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. You can set the timeline of the exam described in `Timeline of an Artemis Online Exam`_. The timeline is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``. 
+- When you click on ``create an exam`` you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``. 
 - The first three dates are mandatory when you create an exam. The rest can be set when required. 
 - The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam after the ``working time`` is over. This is set to 3 minutes by default. 
 - You can also define the ``number of exercises`` in the exam. You can leave this out initally, however it must be set before you can generate the student exams. For more information, see `Exercise Groups`_. 
@@ -71,7 +73,7 @@ Add Exercises
 
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each exercise group you will find the available exercise types. You can choose between ``creating a new exercise`` or ``importing an existing one`` from your courses. 
 
-    - **Hint:** For programming exercises you can check the option to ``allow manual assessment``. If you do not set this flag, your assessors will not be able to manually assess the student's submissions.
+    - **Hint:** For programming exercises you can check the option to ``allow manual assessment``. If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the :ref:`assessment process <exam_assessment>`.
 
 - For exercise types ``text``, ``programming``, and ``modeling``, you can also define example submissions and example assessments to guide your assessor team.
 
@@ -123,25 +125,9 @@ Manage Student Exams
 
    Student Exam Page
 
-Conducting Test Runs
-^^^^^^^^^^^^^^^^^^^^
-- Test runs are designed to offer the instructors confidence that the :ref:`exam conduction <exam_conduction>` will run smoothly. They allow you to experience the exam from the student’s perspective. A ``test run`` is distinct from a ``student exam`` and is not taken into consideration during the calculation of the exam scores. 
-- You can manage your test runs from the *Test Run* page.
-- To create a new test run you can press ``Create a Test Run``. This will open a modal where you can select an exercise for each exercise group. You can also set the ``working time``. A test run will have as many exercises, as there are exercise groups. It does not take the ``number of exercises`` set in the exam configuration under consideration.
-
-    - **Hint:** Exercise groups with no exercises are ignored.
-
-- When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run. 
-- An instructor can also assess his test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click ``Assess your Test Runs``. 
-
-    - **Hint:** Only the creator of the test run is able to assess his submissions.
-
-- You can view the results of the assessment of the test run by clicking on ``Summary``. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published. 
-- Here instructors can also use the ``complaint`` feature and respond to it to conclude the full exam timeline for the test run. This feature allows students to request a review of an assessment during the :ref:`student review <student_review>`.
-
-Assessing Student Exams and Complaints
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- Once the :ref:`exam conduction <exam_conduction>` is over and the latest individual ``working time`` has passed, see `Manage Student Exams`_, your team can begin the :ref:`assessment <exam_assessment>` process. 
+Assess Student Exams and Complaints
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Once the :ref:`exam conduction <exam_conduction>` is over and the latest individual ``working time`` has passed, your team can begin the :ref:`assessment <exam_assessment>` process. 
 - This is done through the *Tutor Exam Dashboard*. 
 
     - **Hint:** If the :ref:`exam conduction <exam_conduction>` is not over, you will not be able to access this page.
@@ -173,7 +159,8 @@ Assessing Student Exams and Complaints
    Manually Assessing a Programming Submission
 
 - Quiz exercises are graded automatically via the student exam page, see `Manage Student Exams`_, and therefore do not appear in the *Tutor Exam Dashboard*.
-- Students can complain about their results during the :ref:`student review <student_review>` period. You can evaluate these complaints in the *Tutor Exam Dashboard*. The original assessor may not respond to the complaint, this must be done by a second assessor. 
+- Students can complain about their results during the :ref:`student review <student_review>` period. You can evaluate these complaints also in the *Tutor Exam Dashboard*. 
+- The original assessor may not respond to the complaint about his assessment, this must be done by a second assessor. 
 
 Exam Scores
 ^^^^^^^^^^^
@@ -187,3 +174,19 @@ Exam Scores
    :align: center
 
    Exam Scores Page
+
+Conducting Test Runs
+^^^^^^^^^^^^^^^^^^^^
+- Test runs are designed to offer the instructors confidence that the :ref:`exam conduction <exam_conduction>` will run smoothly. They allow you to experience the exam from the student’s perspective. A ``test run`` is distinct from a ``student exam`` and is not taken into consideration during the calculation of the exam scores. 
+- You can manage your test runs from the *Test Run* page.
+- To create a new test run you can press ``Create a Test Run``. This will open a modal where you can select an exercise for each exercise group. You can also set the ``working time``. A test run will have as many exercises, as there are exercise groups. It does not take the ``number of exercises`` set in the exam configuration under consideration.
+
+    - **Hint:** Exercise groups with no exercises are ignored.
+
+- When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run. 
+- An instructor can also assess his test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click ``Assess your Test Runs``. 
+
+    - **Hint:** Only the creator of the test run is able to assess his submissions.
+
+- You can view the results of the assessment of the test run by clicking on ``Summary``. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published. 
+- Here instructors can also use the ``complaint`` feature and respond to it to conclude the full  :ref:`exam timeline <timeline>`.
