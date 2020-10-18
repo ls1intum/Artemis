@@ -124,9 +124,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         } else {
                             feedback.credits = 0;
                         }
-                        if (!feedback.detailText) {
-                            feedback.detailText = `${feedback.text} was successful`;
-                        }
                     });
 
                     // Add participation with manual results to display manual result
