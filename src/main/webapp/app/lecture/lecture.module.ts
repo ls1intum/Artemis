@@ -10,7 +10,7 @@ import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { lectureRoute } from 'app/lecture/lecture.route';
-import { ArtemisLectureComponentManagementModule } from 'app/lecture/lecture-component/lecture-component-management/artemis-lecture-component-management.module';
+import { ArtemisLectureModuleManagementModule } from 'app/lecture/lecture-module/lecture-module-management/artemis-lecture-module-management.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -18,7 +18,7 @@ const ENTITY_STATES = [...lectureRoute];
     imports: [
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArtemisLectureComponentManagementModule,
+        ArtemisLectureModuleManagementModule,
         FormDateTimePickerModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownEditorModule,
