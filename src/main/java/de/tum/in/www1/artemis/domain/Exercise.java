@@ -155,10 +155,6 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<StudentScore> studentScores;
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -459,14 +455,6 @@ public abstract class Exercise extends DomainObject {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
-    }
-
-    public List<StudentScore> getStudentScores() {
-        return studentScores;
-    }
-
-    public void setStudentScores(List<StudentScore> studentScores) {
-        this.studentScores = studentScores;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
