@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -284,6 +285,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Feedbacks have empty text
         result.setScore(100L);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        // Make one feedback type of manual
+        feedbacks.get(0).setType(FeedbackType.MANUAL);
         result.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
 
