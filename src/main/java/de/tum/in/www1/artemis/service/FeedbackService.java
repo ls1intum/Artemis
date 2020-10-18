@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +112,7 @@ public class FeedbackService {
 
         if (!successful) {
 
-            String errorMessageString = testErrors.stream().map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).reduce("", String::concat);
+            String errorMessageString = testErrors.stream().map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).collect(Collectors.joining("\n\n"));
 
             if (errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
                 errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
@@ -139,13 +140,19 @@ public class FeedbackService {
      */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            // Splitting string at the first linebreak to only get the first line of the Exception
-            // TODO Improve this to support multi-line exceptions
-            return message.split("\\n", 2)[0]
-                    // junit 4
-                    .replace("java.lang.AssertionError: ", "")
-                    // junit 5
-                    .replace("org.opentest4j.AssertionFailedError: ", "");
+            // Replace all Junit Prefixes:
+            // if it is the first line of the feedback, do not add empty newline at the start;
+            // otherwise, insert additional newline to visually separate different exceptions.
+            final boolean[] isFirst = { true };
+            return message.lines().map(line -> {
+                String replaceBy = isFirst[0] ? "" : "\n";
+                isFirst[0] = false;
+                return line
+                        // junit 4
+                        .replace("java.lang.AssertionError: ", replaceBy)
+                        // junit 5
+                        .replace("org.opentest4j.AssertionFailedError: ", replaceBy);
+            }).collect(Collectors.joining("\n"));
         }
 
         return message;
