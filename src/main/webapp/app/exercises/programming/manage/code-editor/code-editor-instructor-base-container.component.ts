@@ -3,7 +3,7 @@ import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -85,7 +85,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         private location: Location,
         private participationService: ParticipationService,
         protected route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     /**
