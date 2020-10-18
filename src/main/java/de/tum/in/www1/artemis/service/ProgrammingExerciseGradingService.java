@@ -49,8 +49,8 @@ public class ProgrammingExerciseGradingService {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-                                             ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                             SimpMessageSendingOperations messagingTemplate, StudentScoreService studentScoreService, StaticCodeAnalysisService staticCodeAnalysisService) {
+            ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            SimpMessageSendingOperations messagingTemplate, StudentScoreService studentScoreService, StaticCodeAnalysisService staticCodeAnalysisService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.participationService = participationService;
