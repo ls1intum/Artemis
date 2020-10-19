@@ -44,7 +44,7 @@ public class Lecture extends DomainObject {
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "lecture_module_order")
-    @JsonIgnoreProperties(value = "lecture")
+    @JsonIgnoreProperties("lecture")
     private List<LectureUnit> lectureUnits = new ArrayList<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)

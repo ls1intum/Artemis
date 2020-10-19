@@ -117,7 +117,7 @@ public class Course extends DomainObject {
     private Set<Lecture> lectures = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = "course")
+    @JsonIgnoreProperties("course")
     private List<LearningGoal> learningGoals = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
