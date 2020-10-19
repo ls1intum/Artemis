@@ -42,9 +42,7 @@ import de.tum.in.www1.artemis.util.*;
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private RequestUtilService request;
-
-    private Course course;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     private ProgrammingExercise exercise;
 
@@ -90,7 +88,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     @SuppressWarnings("resource")
     public void setup() throws Exception {
         database.addUsers(1, 1, 1);
-        course = database.addEmptyCourse();
+        Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -99,7 +97,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
     }
 
     @AfterEach

@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -63,17 +62,17 @@ public class ProgrammingExerciseExportService {
 
     private final GitService gitService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final ZipFileService zipFileService;
 
+    private final UrlService urlService;
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, ZipFileService zipFileService) {
+            ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
-        this.versionControlService = versionControlService;
         this.zipFileService = zipFileService;
+        this.urlService = urlService;
     }
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
@@ -185,7 +184,7 @@ public class ProgrammingExerciseExportService {
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var repoFolder = REPO_DOWNLOAD_CLONE_PATH + (REPO_DOWNLOAD_CLONE_PATH.endsWith(File.separator) ? "" : File.separator) + projectKey;
-        final var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+        final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
         final var args = new String[] { "-l", programmingLanguage, "-r", outputFolder, "-s", repoFolder, "-bc", templateRepoName, "-vq" };
 
         final var options = new CommandLineOptions(args, null);
