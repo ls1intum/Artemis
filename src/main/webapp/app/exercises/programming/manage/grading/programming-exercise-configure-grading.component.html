@@ -178,6 +178,15 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="State" prop="state">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>State</span
+                                    ><fa-icon
+                                    [icon]="'question-circle'"
+                                    class="text-secondary ml-2"
+                                    placement="bottom"
+                                    [ngbTooltip]="'Determines whether issues in this category should be shown to the students and used for grading.'"
+                                ></fa-icon>
+                                </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <select [ngModel]="value" class="p-1" (change)="updateEditedCategoryField($event.target.value, row, EditableField.STATE)">
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
@@ -185,6 +194,15 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Penalty" prop="penalty">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>Penalty</span
+                                    ><fa-icon
+                                        [icon]="'question-circle'"
+                                        class="text-secondary ml-2"
+                                        placement="bottom"
+                                        [ngbTooltip]="'Penalty points given on each detected issue of this category.'"
+                                    ></fa-icon>
+                                </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
@@ -196,6 +214,15 @@
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Max Penalty" prop="maxPenalty">
+                                <ng-template ngx-datatable-header-template>
+                                    <span>Max Penalty</span
+                                    ><fa-icon
+                                    [icon]="'question-circle'"
+                                    class="text-secondary ml-2"
+                                    placement="bottom"
+                                    [ngbTooltip]="'Maximum applied penalty across all issues of this category for one student.'"
+                                ></fa-icon>
+                                </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                                     <jhi-table-editable-field
                                         *ngIf="row.state === CategoryState.Graded"
@@ -206,7 +233,7 @@
                                     <span *ngIf="row.state === CategoryState.Inactive" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Issues by students">
+                            <ngx-datatable-column name="Detected Issues">
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-category-issues-chart
                                         *ngIf="row.state !== CategoryState.Inactive"
