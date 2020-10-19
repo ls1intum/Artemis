@@ -59,14 +59,15 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
 
     private String createStaticCodeAnalysisScript() {
         StringBuilder script = new StringBuilder();
+        String lineEnding = "&#xd;";
         script.append("mvn ");
         // Execute all static code analysis tools for Java
-        script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA)).append("&#xd");
+        script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA)).append(lineEnding);
         // Make directory for generated static code analysis reports
-        script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("&#xd");
+        script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         // Copy all static code analysis reports to new directory
         for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA)) {
-            script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("&#xd");
+            script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         }
         return script.toString();
     }
