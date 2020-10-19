@@ -102,6 +102,7 @@
             },
             "configureGrading": {
                 "title": "Konfiguration der Bewertung",
+                "shortTitle": "Bewertung",
                 "save": "Speichern",
                 "reset": "Zurücksetzen",
                 "status": {

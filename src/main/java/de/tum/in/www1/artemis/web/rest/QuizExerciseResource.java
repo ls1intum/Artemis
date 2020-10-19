@@ -59,12 +59,9 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final AchievementService achievementService;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService,
-            AchievementService achievementService) {
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserService userService, ExamService examService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userService = userService;
@@ -75,7 +72,6 @@ public class QuizExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
         this.examService = examService;
-        this.achievementService = achievementService;
     }
 
     /**
@@ -113,9 +109,6 @@ public class QuizExerciseResource {
         }
 
         quizExercise = quizExerciseService.save(quizExercise);
-
-        // Generate achievements if enabled in course and exercise not part of exam
-        achievementService.generateForExercise(course, quizExercise);
 
         // Only notify students and tutors if the exercise is created for a course
         if (quizExercise.hasCourse()) {

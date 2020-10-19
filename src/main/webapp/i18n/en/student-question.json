@@ -3,7 +3,19 @@
         "studentQuestion": {
             "created": "New question successfully created",
             "updated": "Question successfully updated",
-            "deleted": "Question successfully deleted"
+            "deleted": "Question successfully deleted",
+            "text": "Question text",
+            "creationDate": "Asked on",
+            "votes": "Votes",
+            "answers": "Answers",
+            "approvedAnswers": "Approved answers",
+            "exerciseOrLecture": "Exercise / Lecture",
+            "overview": {
+                "title": "Questions",
+                "noQuestions": "There are no questions for this course",
+                "showApproved": "Show questions with approved answers",
+                "hideApproved": "Hide questions with approved answers"
+            }
         },
         "questionAnswer": {
             "created": "New answer successfully created",

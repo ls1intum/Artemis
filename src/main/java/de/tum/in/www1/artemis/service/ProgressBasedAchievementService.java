@@ -18,11 +18,13 @@ public class ProgressBasedAchievementService {
 
     private final AchievementRepository achievementRepository;
 
-    private final static int EXERCISES_AMOUNT_GOLD = 10;
+    private final static long EXERCISES_AMOUNT_GOLD = 10L;
 
-    private final static int EXERCISES_AMOUNT_SILVER = 8;
+    private final static long EXERCISES_AMOUNT_SILVER = 8L;
 
-    private final static int EXERCISES_AMOUNT_BRONZE = 5;
+    private final static long EXERCISES_AMOUNT_BRONZE = 5L;
+
+    private final static long MIN_SCORE_TO_QUALIFY = 50L;
 
     private final static int EXERCISES_AMOUNT_UNRANKED = 1;
 
@@ -64,13 +66,14 @@ public class ProgressBasedAchievementService {
      */
     public void generateAchievements(Course course) {
         Set<Achievement> achievementsToSave = new HashSet<>();
-        achievementsToSave.add(
-                new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS, course, null));
+        achievementsToSave.add(new Achievement("Course Master", "Solve at least " + EXERCISES_AMOUNT_GOLD + " exercises", "tasks", AchievementRank.GOLD, AchievementType.PROGRESS,
+                EXERCISES_AMOUNT_GOLD, MIN_SCORE_TO_QUALIFY, course, null));
         achievementsToSave.add(new Achievement("Course Intermediate", "Solve at least " + EXERCISES_AMOUNT_SILVER + " exercises", "tasks", AchievementRank.SILVER,
-                AchievementType.PROGRESS, course, null));
+                AchievementType.PROGRESS, EXERCISES_AMOUNT_SILVER, MIN_SCORE_TO_QUALIFY, course, null));
         achievementsToSave.add(new Achievement("Course Beginner", "Solve at least " + EXERCISES_AMOUNT_BRONZE + " exercises", "tasks", AchievementRank.BRONZE,
-                AchievementType.PROGRESS, course, null));
-        achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, course, null));
+                AchievementType.PROGRESS, EXERCISES_AMOUNT_BRONZE, MIN_SCORE_TO_QUALIFY, course, null));
+        achievementsToSave.add(new Achievement("Course Amateur", "Solve your first exercise", "tasks", AchievementRank.UNRANKED, AchievementType.PROGRESS, 1L, MIN_SCORE_TO_QUALIFY,
+                course, null));
 
         achievementRepository.saveAll(achievementsToSave);
     }

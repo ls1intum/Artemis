@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Achievement;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementRank;
 import de.tum.in.www1.artemis.domain.enumeration.AchievementType;
@@ -65,19 +64,6 @@ public class AchievementService {
     }
 
     /**
-     * Deletes all achievements that belong to the exercise with the given exerciseId
-     * Used when an exercise is deleted
-     * @param exerciseId
-     */
-    public void deleteByExerciseId(Long exerciseId) {
-        Set<Achievement> achievements = achievementRepository.findAllByExerciseId(exerciseId);
-        for (Achievement achievement : achievements) {
-            removeFromUsers(achievement);
-        }
-        achievementRepository.deleteAll(achievements);
-    }
-
-    /**
      * Removes an achievement from all users
      * @param achievement achievement to be deleted
      */
@@ -96,20 +82,8 @@ public class AchievementService {
      */
     public void generateForCourse(Course course) {
         progressBasedAchievementService.generateAchievements(course);
-    }
-
-    /**
-     * Generates achievements for an exercise
-     * If achievements are enabled for corresponding course and exercise is not part of exam
-     * Used when exercise is created
-     * @param course
-     * @param exercise
-     */
-    public void generateForExercise(Course course, Exercise exercise) {
-        if (course.getAchievementsEnabled() && exercise.getExerciseGroup() == null) {
-            pointBasedAchievementService.generateAchievements(exercise);
-            timeBasedAchievementService.generateAchievements(exercise);
-        }
+        pointBasedAchievementService.generateAchievements(course);
+        timeBasedAchievementService.generateAchievements(course);
     }
 
     /**

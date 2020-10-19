@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,9 @@ public class CourseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
     private final UserService userService;
 
@@ -145,11 +149,7 @@ public class CourseResource {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        // Check if course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
+        validateShortName(course);
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
         if (coursesWithSameShortName.size() > 0) {
@@ -158,7 +158,9 @@ public class CourseResource {
                     .body(null);
         }
 
+        validateRegistrationConfirmationMessage(course);
         validateComplaintsConfig(course);
+        validateOnlineCourseAndRegistrationEnabled(course);
 
         try {
 
@@ -275,11 +277,10 @@ public class CourseResource {
             }
         }
 
-        // Check if course shortname matches regex
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updatedCourse.getShortName());
-        if (!shortNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
+        validateRegistrationConfirmationMessage(updatedCourse);
+        validateComplaintsConfig(updatedCourse);
+        validateOnlineCourseAndRegistrationEnabled(updatedCourse);
+        validateShortName(updatedCourse);
 
         // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors and TAs, so that the VCS user management service can determine which
@@ -307,6 +308,13 @@ public class CourseResource {
         // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
         if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
             throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
+        }
+    }
+
+    private void validateRegistrationConfirmationMessage(Course course) {
+        if (course.getRegistrationConfirmationMessage() != null && course.getRegistrationConfirmationMessage().length() > 255) {
+            throw new BadRequestAlertException("Confirmation registration message must be shorter than 255 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
+                    true);
         }
     }
 
@@ -340,6 +348,21 @@ public class CourseResource {
         }
     }
 
+    private void validateOnlineCourseAndRegistrationEnabled(Course course) {
+        if (course.isOnlineCourse() && course.isRegistrationEnabled()) {
+            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
+                    true);
+        }
+    }
+
+    private void validateShortName(Course course) {
+        // Check if course shortname matches regex
+        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
+        if (!shortNameMatcher.matches()) {
+            throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
+    }
+
     /**
      * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
@@ -354,6 +377,10 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
+        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
+                    "Registration with this username is not allowed. Cannot register user")).body(null);
+        }
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
@@ -425,7 +452,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
+        return courseService.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
     }
 
     /**

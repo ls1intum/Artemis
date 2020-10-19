@@ -10,7 +10,7 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 
@@ -28,7 +28,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         private router: Router,
         courseService: CourseManagementService,
         translateService: TranslateService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private sortService: SortService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,

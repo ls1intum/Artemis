@@ -11,75 +11,92 @@ type EntityArrayResponseType = HttpResponse<StudentQuestion[]>;
 
 @Injectable({ providedIn: 'root' })
 export class StudentQuestionService {
-    public resourceUrl = SERVER_API_URL + 'api/student-questions';
+    public resourceUrl = SERVER_API_URL + 'api/courses/';
 
     constructor(protected http: HttpClient) {}
 
     /**
      * create a studentQuestion
+     * @param {number} courseId
      * @param {StudentQuestion} studentQuestion
      * @return {Observable<EntityResponseType>}
      */
-    create(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
+    create(courseId: number, studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
         return this.http
-            .post<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
+            .post<StudentQuestion>(`${this.resourceUrl}${courseId}/student-questions`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
      * update the studentQuestion
+     * @param {number} courseId
      * @param {StudentQuestion} studentQuestion
      * @return {Observable<EntityResponseType>}
      */
-    update(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
+    update(courseId: number, studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
         return this.http
-            .put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
+            .put<StudentQuestion>(`${this.resourceUrl}${courseId}/student-questions`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
      * update the votes of a studentQuestion
+     * @param {number} courseId
      * @param {number} questionId
-     * @param {number} votes
+     * @param {number} voteChange
      * @return {Observable<EntityResponseType>}
      */
-    updateVotes(questionId: number, voteChange: number): Observable<EntityResponseType> {
+    updateVotes(courseId: number, questionId: number, voteChange: number): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}/${questionId}/votes`, voteChange, { observe: 'response' })
+            .put(`${this.resourceUrl}${courseId}/student-questions}/${questionId}/votes`, voteChange, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
      * find all questions for id of exercise
+     * @param {number} courseId
      * @param {number} exerciseId
      * @return {Observable<EntityArrayResponseType>}
      */
-    findQuestionsForExercise(exerciseId: number): Observable<EntityArrayResponseType> {
+    findQuestionsForExercise(courseId: number, exerciseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<StudentQuestion[]>(`api/exercises/${exerciseId}/student-questions`, { observe: 'response' })
+            .get<StudentQuestion[]>(`${this.resourceUrl}${courseId}/exercises/${exerciseId}/student-questions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     /**
      * find all questions for id of lecture
+     * @param {number} courseId
      * @param {number} lectureId
      * @return {Observable<EntityArrayResponseType>}
      */
-    findQuestionsForLecture(lectureId: number): Observable<EntityArrayResponseType> {
+    findQuestionsForLecture(courseId: number, lectureId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<StudentQuestion[]>(`api/lectures/${lectureId}/student-questions`, { observe: 'response' })
+            .get<StudentQuestion[]>(`${this.resourceUrl}${courseId}/lectures/${lectureId}/student-questions`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * find all questions for id of course
+     * @param {number} courseId
+     * @return {Observable<EntityArrayResponseType>}
+     */
+    findQuestionsForCourse(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<StudentQuestion[]>(`api/courses/${courseId}/student-questions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     /**
      * delete studentQuestion by id
+     * @param {number} courseId
      * @param {number} studentQuestionId
      * @return {Observable<HttpResponse<any>>}
      */
-    delete(studentQuestionId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' });
+    delete(courseId: number, studentQuestionId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}${courseId}/student-questions/${studentQuestionId}`, { observe: 'response' });
     }
 
     /**
@@ -88,15 +105,14 @@ export class StudentQuestionService {
      * @return  {StudentQuestion}
      */
     protected convertDateFromClient(studentQuestion: StudentQuestion): StudentQuestion {
-        const copy: StudentQuestion = Object.assign({}, studentQuestion, {
+        return Object.assign({}, studentQuestion, {
             creationDate: studentQuestion.creationDate && moment(studentQuestion.creationDate).isValid() ? moment(studentQuestion.creationDate).toJSON() : undefined,
         });
-        return copy;
     }
 
     /**
      * Takes a studentQuestion and converts the date from the server
-     * @param   {StudentQuestion} studentQuestion
+     * @param   {EntityResponseType} res
      * @return  {StudentQuestion}
      */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {

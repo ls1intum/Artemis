@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -120,7 +120,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,

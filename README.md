@@ -31,7 +31,7 @@ You can find the guide for setting up Artemis in conjunction with Jenkins and Gi
 
 ## Administration setup
 
-You can find information on how to setup user registration [here](docs/admin/registartion.rst)
+You can find information on how to setup user registration [here](docs/admin/registration.rst)
 
 ## Contributing 
 

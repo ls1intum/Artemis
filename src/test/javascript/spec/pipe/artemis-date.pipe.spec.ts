@@ -38,7 +38,12 @@ describe('ArtemisDatePipe', () => {
     });
 
     it('Return empty string if given date time is invalid moment object', () => {
-        const localizedDateTime = pipe.transform(moment('2019-02-333'));
+        const invalidMoment = moment({
+            year: 2019,
+            month: 2,
+            day: 333,
+        }); // 2019-02-333
+        const localizedDateTime = pipe.transform(invalidMoment);
         expect(localizedDateTime).to.be.equal('');
     });
 

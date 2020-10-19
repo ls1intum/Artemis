@@ -9,7 +9,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 
@@ -23,7 +23,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private sortService: SortService,
         courseService: CourseManagementService,
