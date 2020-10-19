@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -1468,6 +1469,26 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+        return course;
+    }
+
+    @Value("${info.tutorial-course-groups.students:#{null}}")
+    private Optional<String> tutorialGroupStudents;
+
+    @Value("${info.tutorial-course-groups.tutors:#{null}}")
+    private Optional<String> tutorialGroupTutors;
+
+    @Value("${info.tutorial-course-groups.instructors:#{null}}")
+    private Optional<String> tutorialGroupInstructors;
+
+    /**
+     * @return A tutorial course with the names specified in application-dev or application-prod
+     */
+    public Course addTutorialCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
+                tutorialGroupInstructors.get());
+        courseRepo.save(course);
+        assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
         return course;
     }
 
