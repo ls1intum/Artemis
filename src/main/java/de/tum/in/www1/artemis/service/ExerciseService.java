@@ -64,13 +64,15 @@ public class ExerciseService {
 
     private final TeamService teamService;
 
-    private TutorScoreService tutorScoreService;
+    private final StudentScoreService studentScoreService;
+
+    private final TutorScoreService tutorScoreService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService, StudentExamRepository studentExamRepository,
-            ExamRepository examRepository, TutorScoreService tutorScoreService) {
+            ExamRepository examRepository, StudentScoreService studentScoreService, TutorScoreService tutorScoreService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -85,6 +87,7 @@ public class ExerciseService {
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
+        this.studentScoreService = studentScoreService;
         this.tutorScoreService = tutorScoreService;
     }
 
@@ -290,7 +293,9 @@ public class ExerciseService {
         }
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
-        // make sure tutor score are deleted before the exercise is deleted
+        // make sure student scores are deleted before the exercise is deleted
+        studentScoreService.deleteStudentScoresForExercise(exercise);
+        // make sure tutor scores are deleted before the exercise is deleted
         tutorScoreService.deleteTutorScoresForExercise(exercise);
 
         if (exercise.hasExerciseGroup()) {

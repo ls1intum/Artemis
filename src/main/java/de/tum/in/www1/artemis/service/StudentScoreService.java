@@ -47,6 +47,19 @@ public class StudentScoreService {
     }
 
     /**
+     * Delete all StudentScores for exercise.
+     *
+     * @param exercise exercise
+     */
+    public void deleteStudentScoresForExercise(Exercise exercise) {
+        var scores = getStudentScoresForExercise(exercise);
+
+        for (StudentScore score : scores) {
+            studentScoreRepository.delete(score);
+        }
+    }
+
+    /**
      * Returns one StudentScores for exercise and student if there is one.
      *
      * @param student student user
@@ -74,7 +87,7 @@ public class StudentScoreService {
      */
     public void updateResult(Result updatedResult) {
         // ignore results without score or participation
-        if (updatedResult.getScore() == null || updatedResult.getParticipation() == null) {
+        if (updatedResult.getScore() == null || updatedResult.getParticipation() == null || !Boolean.TRUE.equals(updatedResult.isRated())) {
             return;
         }
 

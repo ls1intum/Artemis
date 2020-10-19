@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -23,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.scores.StudentScore;
 
 /**
  * A user.
