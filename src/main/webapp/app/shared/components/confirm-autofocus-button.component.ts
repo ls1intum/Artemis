@@ -10,7 +10,8 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
             </button>
         </div>
         <div class="modal-body">
-            <p style="white-space: pre-line">{{ text | translate }}</p>
+            <p *ngIf="translateText === true" style="white-space: pre-line">{{ text | translate }}</p>
+            <p *ngIf="translateText !== true" style="white-space: pre-line">{{ text }}</p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')" jhiTranslate="global.form.cancel">Cancel</button>
@@ -21,6 +22,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 export class ConfirmAutofocusModalComponent {
     title: string;
     text: string;
+    translateText: boolean;
 
     constructor(public modal: NgbActiveModal) {}
 }
@@ -38,6 +40,7 @@ export class ConfirmAutofocusButtonComponent {
 
     @Input() confirmationTitle: string;
     @Input() confirmationText: string;
+    @Input() translateText?: boolean;
     @Output() onConfirm = new EventEmitter<void>();
     @Output() onCancel = new EventEmitter<void>();
 
@@ -50,6 +53,11 @@ export class ConfirmAutofocusButtonComponent {
         const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.text = this.confirmationText;
         modalRef.componentInstance.title = this.confirmationTitle;
+        if (this.translateText !== undefined) {
+            modalRef.componentInstance.translateText = this.translateText;
+        } else {
+            modalRef.componentInstance.translateText = false;
+        }
         modalRef.result.then(
             () => {
                 this.onConfirm.emit();

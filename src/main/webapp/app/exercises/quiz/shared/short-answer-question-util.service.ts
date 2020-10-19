@@ -285,60 +285,6 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * checks if the first line of the question text is the question
-     *
-     * @param text
-     * @return {string}
-     */
-    firstLineOfQuestion(text: string): string {
-        // first line is the question if there is no [-spot #] tag in the string
-        if (text.split(/\n/g)[0].search(/\[-spot/g) === -1) {
-            return text.split(/\n/g)[0];
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * separates first line from the rest of the text
-     *
-     * @param text
-     * @return {string}
-     */
-    separateFirstLineOfQuestionFromRestOfText(text: string): string {
-        let firstLineHasQuestion = false;
-
-        if (this.firstLineOfQuestion(text) !== '') {
-            firstLineHasQuestion = true;
-        }
-
-        let questionTextSplitAtNewLine = '';
-
-        // separates the the rest of the text from the question
-        if (firstLineHasQuestion) {
-            questionTextSplitAtNewLine = text.split(/\n+/g).slice(1).join('\n');
-        } else {
-            questionTextSplitAtNewLine = text.split(/\n+/g).join('\n');
-        }
-
-        // checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
-        if (questionTextSplitAtNewLine.includes(',')) {
-            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, ' ');
-        }
-        return questionTextSplitAtNewLine;
-    }
-
-    /**
-     * splits the text at the "[-spot " tag to have the parts of the text without the spots
-     *
-     * @param {string} text
-     * @returns {string[]}
-     */
-    getTextWithoutSpots(text: string): string[] {
-        return this.separateFirstLineOfQuestionFromRestOfText(text).split(/\[-spot\s\d\]/g);
-    }
-
-    /**
      * checks if mappings have duplicate values
      *
      * @param mappings
@@ -365,7 +311,7 @@ export class ShortAnswerQuestionUtil {
      * @param {ShortAnswerQuestion} question
      * @returns {ShortAnswerSolution[]}
      */
-    getSampleSolution(question: ShortAnswerQuestion): ShortAnswerSolution[] {
+    getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
         for (const spot of question.spots!) {
             const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings!, spot);

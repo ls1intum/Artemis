@@ -43,7 +43,7 @@
             },
             "owner": {
                 "label": "Tutor",
-                "tooltip": "Nur Instruktoren können die Tutor-Zuweisung für Teams ändern."
+                "tooltip": "Nur Dozenten können die Tutor-Zuweisung für Teams ändern."
             },
             "ownerChangeWarning": "Wichtig: Der Tutor für das Team {{ shortName }} wird hiermit für den ganzen Kurs geändert!",
             "image": "Bild",

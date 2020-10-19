@@ -14,7 +14,7 @@ import {
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -64,7 +64,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examService: ExamManagementService,
         private sortService: SortService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,

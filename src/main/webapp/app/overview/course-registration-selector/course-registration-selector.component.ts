@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
-import { TUM_USERNAME_REGEX } from 'app/app.constants';
+import { JhiAlertService } from 'ng-jhipster';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { matchesRegexFully } from 'app/utils/regex.util';
 
 @Component({
     selector: 'jhi-course-registration-selector',
@@ -14,21 +15,26 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
     public courseToRegister: Course | undefined;
-    public isTumStudent = false;
+    public userIsAllowedToRegister = false;
     showCourseSelection = false;
     addedSuccessful = false;
     loading = false;
 
-    constructor(private accountService: AccountService, private courseService: CourseManagementService, private jhiAlertService: AlertService) {}
+    constructor(
+        private accountService: AccountService,
+        private courseService: CourseManagementService,
+        private jhiAlertService: JhiAlertService,
+        private profileService: ProfileService,
+    ) {}
 
     ngOnInit(): void {
         this.accountService.identity().then((user) => {
-            this.isTumStudent = !!user!.login!.match(TUM_USERNAME_REGEX);
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                if (profileInfo) {
+                    this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
+                }
+            });
         });
-    }
-
-    private onError(error: string) {
-        this.jhiAlertService.error(error);
     }
 
     trackCourseById(index: number, item: Course) {

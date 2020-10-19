@@ -1,3 +1,6 @@
+User Registration
+=================
+
 Artemis supports user registration based on the Jhipster template.
 User registration has to be enabled in one ``application-*.yml`` file and can be customized.
 
@@ -13,24 +16,24 @@ Example:
                 allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
                 allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
     spring:
-    mail:
-        host: <host>
-        port: 25
-        username: <username>
-        password: <password>
-        protocol: smtp
-        tls: true
-        properties.mail.smtp:
-            auth: true
-            starttls:
-                enable: true
-            ssl:
-                trust: <host>
+        mail:
+            host: <host>
+            port: 25
+            username: <username>
+            password: <password>
+            protocol: smtp
+            tls: true
+            properties.mail.smtp:
+                auth: true
+                starttls:
+                    enable: true
+                ssl:
+                    trust: <host>
 
-jhipster:
-    mail:
-        base-url: https://artemis.ase.in.tum.de
-        from: artemis.in@tum.de
+    jhipster:
+        mail:
+            base-url: https://artemis.ase.in.tum.de
+            from: artemis.in@tum.de
 
 Users can register a new account on the start page based on ``allowed-email-pattern``.
 If no email pattern is defined, any email address can be used.

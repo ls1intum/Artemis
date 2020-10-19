@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -34,18 +35,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -59,7 +53,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     ProgrammingExercise exercise;
 
     @BeforeEach
-    public void init() throws Exception {
+    public void init() {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -240,6 +234,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void triggerFailedBuild_resultPresentInCI_ok() throws Exception {
+        var user = database.getUserByLogin("student1");
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
@@ -248,9 +243,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         final var participation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId()).get();
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockRetrieveBuildStatus(participation.getBuildPlanId());
+        var buildPlan = new BambooBuildPlanDTO(true, false);
+        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
 
         request.postWithoutLocation("/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+
+        verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
     }
 
     @Test

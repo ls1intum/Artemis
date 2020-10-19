@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 public class ModelingExerciseUtilService {
 
     @Autowired
-    DatabaseUtilService database;
+    protected DatabaseUtilService database;
 
     /**
      * Create modeling exercise for a given course
@@ -56,7 +56,7 @@ public class ModelingExerciseUtilService {
      */
     public ModelingExercise addExampleSubmission(ModelingExercise modelingExercise) throws Exception {
         Set<ExampleSubmission> exampleSubmissionSet = new HashSet<>();
-        String validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, true);
         exampleSubmission.assessmentExplanation("explanation");
         exampleSubmissionSet.add(exampleSubmission);

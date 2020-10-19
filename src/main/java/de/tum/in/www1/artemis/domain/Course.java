@@ -99,6 +99,9 @@ public class Course extends DomainObject {
     @Column(name = "registration_enabled")
     private Boolean registrationEnabled;
 
+    @Column(name = "registration_confirmation_message")
+    private String registrationConfirmationMessage;
+
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
@@ -279,6 +282,14 @@ public class Course extends DomainObject {
 
     public void setRegistrationEnabled(Boolean registrationEnabled) {
         this.registrationEnabled = registrationEnabled;
+    }
+
+    public String getRegistrationConfirmationMessage() {
+        return registrationConfirmationMessage;
+    }
+
+    public void setRegistrationConfirmationMessage(String registrationConfirmationMessage) {
+        this.registrationConfirmationMessage = registrationConfirmationMessage;
     }
 
     public Integer getPresentationScore() {

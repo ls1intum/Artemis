@@ -38,7 +38,7 @@ describe('UserManagementComponent', () => {
                 fixture = TestBed.createComponent(UserManagementComponent);
                 comp = fixture.componentInstance;
                 service = fixture.debugElement.injector.get(UserService);
-                mockActivatedRoute = TestBed.get(ActivatedRoute);
+                mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 mockActivatedRoute.setParameters({
                     sort: 'id,desc',
                 });
