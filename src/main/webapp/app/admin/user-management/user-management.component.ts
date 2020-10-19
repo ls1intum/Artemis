@@ -9,7 +9,7 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { combineLatest, Subject } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
@@ -37,7 +37,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     constructor(
         private userService: UserService,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,

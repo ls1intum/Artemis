@@ -1,4 +1,4 @@
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +17,7 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     modelIds: string[] = [];
     elementIds: string[] = [];
 
-    constructor(private route: ActivatedRoute, private jhiAlertService: AlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
+    constructor(private route: ActivatedRoute, private jhiAlertService: JhiAlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
 
     /**
      * Displays the statistics for this modeling exercise on initialization

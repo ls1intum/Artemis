@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.6.2"
+version = "4.6.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -144,7 +144,7 @@ jacocoTestCoverageVerification {
                 counter = "LINE"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.80
-                minimum = 0.78
+                minimum = 0.79
             }
         }
     }
@@ -180,8 +180,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:3.0.0"
-    implementation "io.sentry:sentry-logback:3.0.0"
+    implementation "io.sentry:sentry-spring-boot-starter:3.1.0"
+    implementation "io.sentry:sentry-logback:3.1.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
     // import JHipster dependencies BOM
@@ -328,7 +328,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.6.1"
+    gradleVersion = "6.7"
 }
 
 task stage(dependsOn: "bootWar") {

@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -52,7 +52,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,

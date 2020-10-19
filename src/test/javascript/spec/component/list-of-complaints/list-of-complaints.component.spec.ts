@@ -3,13 +3,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { AlertService } from 'app/core/alert/alert.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;
@@ -36,10 +37,6 @@ describe('ListOfComplaintsComponent', () => {
                 },
                 DifferencePipe,
                 {
-                    provide: AlertService,
-                    useValue: MockAlertService,
-                },
-                {
                     provide: ComplaintService,
                     useValue: {
                         findAllByTutorIdForCourseId() {
@@ -58,15 +55,21 @@ describe('ListOfComplaintsComponent', () => {
                 },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
                 comp = fixture.componentInstance;
-
                 comp.ngOnInit();
             });
     });
+
+    afterEach(() => {});
 
     it('should hide addressed complaints by default', () => {
         expect(comp.complaintsToShow.length).toEqual(1);

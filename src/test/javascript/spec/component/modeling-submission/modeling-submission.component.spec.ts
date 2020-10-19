@@ -18,9 +18,9 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
@@ -81,7 +81,6 @@ describe('Component Tests', () => {
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
                 providers: [
-                    { provide: AlertService, useClass: MockAlertService },
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -99,10 +98,6 @@ describe('Component Tests', () => {
                     debugElement = fixture.debugElement;
                     service = debugElement.injector.get(ModelingSubmissionService);
                     router = debugElement.injector.get(Router);
-                    // Ignore window scroll
-                    window.scroll = () => {
-                        return false;
-                    };
                 });
         });
 

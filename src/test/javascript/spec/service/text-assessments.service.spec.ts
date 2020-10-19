@@ -10,6 +10,7 @@ describe('TextAssessment Service', () => {
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
     let mockResponse: any;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -59,36 +60,34 @@ describe('TextAssessment Service', () => {
         };
     });
 
-    describe('Tracking', async () => {
-        it('should not send feedback', async () => {
-            service.trackAssessment();
-            httpMock.expectNone({ method: 'POST' });
+    it('should not send feedback', async () => {
+        service.trackAssessment();
+        httpMock.expectNone({ method: 'POST' });
+    });
+
+    it('should send feedback', async () => {
+        textSubmission.atheneTextAssessmentTrackingToken = '12345';
+        service.trackAssessment(textSubmission);
+        httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
+    });
+
+    it('should not parse jwt from header', async () => {
+        service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
+            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
         });
 
-        it('should send feedback', async () => {
-            textSubmission.atheneTextAssessmentTrackingToken = '12345';
-            service.trackAssessment(textSubmission);
-            httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ method: 'GET' });
+        mockRequest.flush(mockResponse);
+    });
+
+    it('should parse jwt from header', async () => {
+        service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
+            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
         });
 
-        it('should not parse jwt from header', async () => {
-            service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
-                expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
-            });
+        const mockRequest = httpMock.expectOne({ method: 'GET' });
 
-            const mockRequest = httpMock.expectOne({ method: 'GET' });
-            mockRequest.flush(mockResponse);
-        });
-
-        it('should parse jwt from header', async () => {
-            service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
-                expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
-            });
-
-            const mockRequest = httpMock.expectOne({ method: 'GET' });
-
-            mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
-        });
+        mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
     });
 
     afterEach(() => {
