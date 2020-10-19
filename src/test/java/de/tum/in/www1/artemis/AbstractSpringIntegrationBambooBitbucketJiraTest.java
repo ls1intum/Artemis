@@ -131,9 +131,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     protected List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
+        return mockConnectorRequestsForStartParticipation(exercise, username, users, true);
+    }
+
+    protected List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
+            throws IOException, URISyntaxException {
         final var verifications = new LinkedList<Verifiable>();
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users);
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         mockUpdatePlanRepositoryForParticipation(exercise, username);
         bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);

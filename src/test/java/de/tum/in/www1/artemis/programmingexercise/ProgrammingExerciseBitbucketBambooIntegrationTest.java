@@ -5,11 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
@@ -25,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -43,6 +40,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
@@ -73,6 +71,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
+
+    @Autowired
+    private UserService userService;
+
+    @Value("${artemis.lti.user-prefix-edx:#{null}}")
+    private Optional<String> userPrefixEdx;
 
     private Course course;
 
@@ -473,6 +477,32 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         for (final var verification : verifications) {
             verification.performVerification();
         }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void configureRepository_createUserWhenLtiUserIsNotExistent() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // create a team for the user (necessary condition before starting an exercise)
+        final String edxUsername = userPrefixEdx.get() + "student";
+        User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
+        edxStudent.setPassword(userService.encryptor().encrypt(edxStudent.getPassword()));
+        edxStudent = userRepo.save(edxStudent);
+        Set<User> students = Set.of(edxStudent);
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
+
+        // Set up mock requests for start participation
+        mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), false);
+
+        // Start participation with original team
+        participationService.startExercise(exercise, team, false);
     }
 
     @Test
