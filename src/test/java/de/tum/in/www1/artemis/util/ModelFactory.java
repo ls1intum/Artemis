@@ -22,6 +22,11 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.ErrorDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestsuiteDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -618,6 +623,47 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
+    public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        var notification = new TestResultsDTO();
+
+        var testSuite = new TestsuiteDTO();
+        testSuite.setName("TestSuiteName1");
+        testSuite.setTime(ZonedDateTime.now().toEpochSecond());
+        testSuite.setErrors(0);
+        testSuite.setSkipped(0);
+        testSuite.setFailures(failedTestNames.size());
+        testSuite.setTests(successfulTestNames.size() + failedTestNames.size());
+        testSuite.setTestCases(successfulTestNames.stream().map(name -> {
+            var testcase = new TestCaseDTO();
+            testcase.setName(name);
+            testcase.setClassname("Class");
+            return testcase;
+        }).collect(Collectors.toList()));
+        testSuite.getTestCases().addAll(failedTestNames.stream().map(name -> {
+            var testcase = new TestCaseDTO();
+            testcase.setName(name);
+            testcase.setClassname("Class");
+            var error = new ErrorDTO();
+            error.setMessage(name + " error message");
+            testcase.setErrors(List.of(error));
+            return testcase;
+        }).collect(Collectors.toList()));
+
+        var commitDTO = new CommitDTO();
+        commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
+        commitDTO.setRepositorySlug(repoName);
+
+        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+
+        notification.setCommits(List.of(commitDTO));
+        notification.setResults(List.of(testSuite));
+        notification.setStaticCodeAnalysisReports(reports);
+        notification.setSuccessful(successfulTestNames.size());
+        notification.setFailures(failedTestNames.size());
+        notification.setRunDate(ZonedDateTime.now());
+        return notification;
+    }
+
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         final var notification = new BambooBuildResultNotificationDTO();
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
@@ -700,11 +746,13 @@ public class ModelFactory {
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
-        var spotbugsReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.SPOTBUGS);
-        var checkstyleReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.CHECKSTYLE);
-        var pmdReport = generateStaticCodeAnalysisReport(StaticCodeAnalysisTool.PMD);
-        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(List.of(spotbugsReport, checkstyleReport, pmdReport));
+        var reports = generateStaticCodeAnalysisReports(ProgrammingLanguage.JAVA);
+        notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(reports);
         return notification;
+    }
+
+    public static List<StaticCodeAnalysisReportDTO> generateStaticCodeAnalysisReports(ProgrammingLanguage language) {
+        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).collect(Collectors.toList());
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {
