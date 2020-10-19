@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
@@ -118,11 +117,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Autowired
     protected RequestUtilService request;
 
-    /**
-     * used to mimic the caching behavior of BambooService
-     */
-    private final List<ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ArrayList<>();
-
     @AfterEach
     public void resetSpyBeans() {
         Mockito.reset(ltiService, continuousIntegrationService, versionControlService, bambooServer, gitService, groupNotificationService, websocketMessagingService,
@@ -153,10 +147,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
     }
 
-    private Optional<ApplicationLinksDTO.ApplicationLinkDTO> findCachedLinkForUrl(String url) {
-        return cachedApplicationLinks.stream().filter(link -> url.equalsIgnoreCase(link.getRpcUrl())).findFirst();
-    }
-
     private void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
             throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
@@ -171,26 +161,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
         bitbucketRequestMockProvider.mockGetBitbucketRepository(exercise, bitbucketRepoName, bitbucketRepository);
 
         var applicationLinksToBeReturned = bambooRequestMockProvider.createApplicationLink();
-        // support caching for multiple tests (reusing the same continuousIntegrationUpdateService)
-        var url = applicationLinksToBeReturned.getApplicationLinks().get(0).getRpcUrl();
-        var applicationLink = continuousIntegrationUpdateService.findCachedLinkForUrl(url);
-        if (applicationLink.isEmpty()) {
-            // and also support caching for multiple calls in the same test (then continuousIntegrationUpdateService is not yet caching during the mock initialization)
-            applicationLink = findCachedLinkForUrl(url);
-
-            if (applicationLink.isEmpty()) {
-                // no cached application link is available
-                bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
-                applicationLink = Optional.of(applicationLinksToBeReturned.getApplicationLinks().get(0));
-                cachedApplicationLinks.add(applicationLink.get());
-            }
-        }
+        var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
+        bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
 
         if (ASSIGNMENT_REPO_NAME.equals(bambooRepoName)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink.get());
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink);
         }
         else {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink.get());
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink);
         }
 
         if (!triggeredBy.isEmpty()) {
