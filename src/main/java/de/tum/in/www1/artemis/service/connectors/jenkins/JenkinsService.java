@@ -84,7 +84,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL) {
         try {
             // TODO support sequential test runs
             final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
