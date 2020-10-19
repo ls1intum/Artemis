@@ -73,6 +73,12 @@ During the exam creation and configuration, you can create your exam and configu
 
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each :ref:`exercise group <exercise_groups>` you will find the available exercise types. You can choose between ``creating a new exercise`` or ``importing an existing one`` from your courses. 
 
+.. figure:: instructor/add_exercises.png
+   :alt: Add different Exercises
+   :align: center
+
+   Add different Exercises
+
 .. _manual_assessment:
 
 - For programming exercises you can check the option to ``allow manual assessment``. 
@@ -81,13 +87,8 @@ During the exam creation and configuration, you can create your exam and configu
         If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the :ref:`assessment process <exam_assessment>`.
 
 - For exercise types ``text``, ``programming``, and ``modeling``, you can also define example submissions and example assessments to guide your assessor team.
-- Assessors will review the example submissions and assessments in order to familiarise themselves with the exercise and assessment instructions.
+- Assessors will review the example submissions and assessments in order to familiarise themselves with the exercise and assessment instructions, before they can assess the real submissions.
 
-.. figure:: instructor/add_exercises.png
-   :alt: Add different Exercises
-   :align: center
-
-   Add different Exercises
 
 1.5 Register Students
 ^^^^^^^^^^^^^^^^^^^^^
@@ -139,7 +140,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 .. _evaluate_quiz_exercises:
 
-- Additionally, once the :ref:`exam conduction <exam_conduction>` is over, you can click on ``Evaluate quizzes``. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result. 
+- Additionally, once the :ref:`exam conduction <exam_conduction>` ends, you can click on ``Evaluate quizzes``. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result. 
 
     .. note::
        If you do not press this button, the students quiz exercises will not be graded.
@@ -222,8 +223,8 @@ The assessment begins as soon as the latest :ref:`student exam <student_exams>` 
 - To assess a submission for an exercise, you can click on ``Exercise Dashboard``.
 - Your assessors must first complete the example submissions and assessments, if you have attached those to the exercise, see `1.4 Add Exercises`_. 
 - If there is a submission which has not been assessed yet, you can click ``Start new assessment``. This will fetch a random student submission of this exercise which you can then assess.
-- Artemis grades programming exercises automatically. However if ``manual assessment`` is allowed, see `1.4 Add Exercises`_, you can review and enhance the automatic results. 
-- Artemis grades quiz exercises automatically via the student exam page, see `1.6 Manage Student Exams`_, and therefore do not appear in the *Assessment Dashboard*. 
+- Artemis grades programming exercises automatically. However if :ref:`manual assessment <manual_assessment>` is allowed, you can review and enhance the automatic results. 
+- You can trigger Artemis to :ref:`automatically grade quiz exercises <evaluate_quiz_exercises>` via the *Manage Student Exams Screen*. Therefore, quiz exercises do not appear in the *Assessment Dashboard*. 
 
 .. figure:: instructor/programming_assessment.png
    :alt: Programming Submission Assessment
@@ -234,7 +235,7 @@ The assessment begins as soon as the latest :ref:`student exam <student_exams>` 
 - Artemis also allows you to detect plagiarism attempts. 
 - Artemis conducts this by analyzing the similarities between all student submissions and flagging those which exceed a given threshold. You can compare all flagged submissions side by side and confirm plagiarism attempts.
 - Instructors can download a ``CSV`` report of accepted and rejected plagiarism attempts for further processing on external systems.
-- To check for plagiarism, you must navigate to the individual exercise. This can be done by navigating to:
+- To apply the plagiarism check, you must navigate to the individual exercise. This can be done by navigating to:
 
      *Exam Management* -> *Exercise Groups* -> *View* on the specific exercise.
 
@@ -250,9 +251,7 @@ The assessment begins as soon as the latest :ref:`student exam <student_exams>` 
 4. **Publication of Results**
 -----------------------------
 
-You can specify the moment when Artemis publishes the results of the exam, see `1.2 Create and Configure Exam`_. This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student will be able to view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as 
-
-    `TUM Online <https://campus.tum.de/>`__ as a ``CSV`` file, see `4.1 Exam Scores`_.
+You can specify the moment when Artemis publishes the results of the exam, see `1.2 Create and Configure Exam`_. This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
 
 4.1 Exam Scores
 ^^^^^^^^^^^^^^^
@@ -263,10 +262,8 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 .. note::
         Unsubmitted exams are not eligable for the assessment process.
 
-- By eliminating unsubmitted exams and exercises which were part of the exam conduction, see `1.3 Exercise Groups`_, you can gain a more realistic overview of the performance of the students.
-- The exam scores can also be exported via ``Export Results as CSV``. This is useful to upload the results into university systems such as 
-
-    `TUM Online <https://campus.tum.de/>`__ as a ``CSV`` file, see `4.1 Exam Scores`_.
+- By eliminating unsubmitted exams and exercises which were not part of the exam conduction, see `1.3 Exercise Groups`_, you can gain a more realistic overview of the performance of the students.
+- The exam scores can also be exported via ``Export Results as CSV``. This is useful to upload the results into university systems such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
 
 - The exported ``CSV`` file includes the ``students name``, ``username``, ``email``, ``registration number``, their assigned ``exercises`` as well as their ``score`` for every exercise. 
 - The exported ``CSV`` file also contains the aggregated statistics of the exam conduction such as the ``number of participations`` and the ``average score`` per exercise. 
@@ -287,4 +284,4 @@ You can set the the student review period in the exam configuration, see `1.2 Cr
 
 6. **Complaint Assessment**
 ---------------------------
-During the complaint assessment, your assessors can review the complaints made by the students in the :ref:`student review <student_review>`. A second assessor must review the complaint and respond to it. Artemis updates the results automatically when changes occur. After the complaint assessment, you can view the updated exam scores in the *Scores* page. There you can also export the data in ``CSV`` format, see `4.1 Exam Scores`_. 
+During the complaint assessment, your assessors can review the complaints made by the students in the :ref:`student review <student_review>`. A second assessor must review the complaint and respond to it. You can access the complaints from the *Assessment Dashboard*. Artemis updates the results automatically when changes occur. After the complaint assessment, you can view the updated exam scores in the *Scores* page. There you can also export the data in ``CSV`` format, see `4.1 Exam Scores`_. 
