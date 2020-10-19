@@ -30,7 +30,7 @@ public class LectureService {
     }
 
     public Optional<Lecture> findByIdWithStudentQuestionsAndLectureModules(Long lectureId) {
-        return lectureRepository.findByIdWithStudentQuestionsAndLectureModules(lectureId);
+        return lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(lectureId);
     }
 
     public Set<Lecture> findAllByCourseId(Long courseId) {

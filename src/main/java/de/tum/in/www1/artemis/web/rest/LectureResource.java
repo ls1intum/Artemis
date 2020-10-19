@@ -134,7 +134,7 @@ public class LectureResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
-        Optional<Lecture> lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureModules(id);
+        Optional<Lecture> lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnits(id);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (lecture.isEmpty()) {
             return ResponseEntity.notFound().build();

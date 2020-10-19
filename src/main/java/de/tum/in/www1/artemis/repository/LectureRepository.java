@@ -24,9 +24,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.studentQuestions
-            LEFT JOIN FETCH lecture.lectureModules
+            LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithStudentQuestionsAndLectureModules(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithStudentQuestionsAndLectureUnits(@Param("lectureId") Long lectureId);
 
 }
