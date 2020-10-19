@@ -14,6 +14,7 @@ export enum LectureModuleType {
 
 export abstract class LectureModule implements BaseEntity {
     public id?: number;
+    public name?: string;
     public releaseDate?: Moment;
     public lecture?: Lecture;
     public learningGoals?: LearningGoal[];

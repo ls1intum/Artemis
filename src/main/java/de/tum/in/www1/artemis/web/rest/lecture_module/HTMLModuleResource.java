@@ -68,6 +68,9 @@ public class HTMLModuleResource {
         if (htmlModule.getLecture() == null) {
             return conflict();
         }
+        if (htmlModule.getLecture().getId() == null) {
+            return conflict();
+        }
         if (htmlModule.getLecture().getCourse() == null) {
             return conflict();
         }

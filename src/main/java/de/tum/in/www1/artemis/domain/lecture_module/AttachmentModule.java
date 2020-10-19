@@ -5,10 +5,12 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Attachment;
 
 @Entity
 @DiscriminatorValue("A")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AttachmentModule extends LectureModule {
 
     @Column(name = "description")

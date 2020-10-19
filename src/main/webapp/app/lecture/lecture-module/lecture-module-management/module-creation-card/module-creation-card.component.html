@@ -8,19 +8,19 @@
     </div>
     <div class="row">
         <div class="col text-center">
-            <button type="button" class="btn btn-lg btn-primary m-1">
+            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1" (debounceClick)="createHTMLModule.emit()" [debounceDuration]="200">
                 <fa-icon [icon]="'code'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureModule.moduleCreationCard.html">HTML</span>
             </button>
-            <button type="button" class="btn btn-lg btn-primary m-1">
+            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1" (debounceClick)="createExerciseModule.emit()" [debounceDuration]="200">
                 <fa-icon [icon]="'check'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureModule.moduleCreationCard.exercise">Exercise</span>
             </button>
-            <button type="button" class="btn btn-lg btn-primary m-1">
+            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1" (debounceClick)="createVideoModule.emit()" [debounceDuration]="200">
                 <fa-icon [icon]="'video'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureModule.moduleCreationCard.video">Video</span>
             </button>
-            <button type="button" class="btn btn-lg btn-primary m-1">
+            <button type="button" jhiDebounceClick class="btn btn-lg btn-primary m-1" (debounceClick)="createAttachmentModule.emit()" [debounceDuration]="200">
                 <fa-icon [icon]="'file-upload'"></fa-icon>
                 <span class="ml-1" jhiTranslate="artemisApp.lectureModule.moduleCreationCard.file">File</span>
             </button>

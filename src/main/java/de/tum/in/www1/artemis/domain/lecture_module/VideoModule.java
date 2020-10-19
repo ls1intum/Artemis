@@ -5,8 +5,11 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Entity
 @DiscriminatorValue("V")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class VideoModule extends LectureModule {
 
     @Column(name = "description")

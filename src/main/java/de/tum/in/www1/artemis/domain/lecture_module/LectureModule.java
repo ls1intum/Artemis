@@ -11,6 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentModule.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseModule.class, name = "exercise"),
         @JsonSubTypes.Type(value = HTMLModule.class, name = "html"), @JsonSubTypes.Type(value = VideoModule.class, name = "video"), })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class LectureModule extends DomainObject {
 
     @Column(name = "name")
@@ -39,7 +41,6 @@ public abstract class LectureModule extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "lecture_id")
-    @JsonIgnoreProperties("lectureModules")
     private Lecture lecture;
 
     @ManyToMany(mappedBy = "lectureModules")

@@ -5,8 +5,11 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Entity
 @DiscriminatorValue("H")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class HTMLModule extends LectureModule {
 
     @Lob

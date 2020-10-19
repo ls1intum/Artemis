@@ -42,7 +42,7 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "lecture_module_order")
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private List<LectureModule> lectureModules = new ArrayList<>();
