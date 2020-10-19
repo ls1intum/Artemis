@@ -43,7 +43,7 @@ public class Lecture extends DomainObject {
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OrderColumn(name = "lecture_module_order")
+    @OrderColumn(name = "lecture_unit_order")
     @JsonIgnoreProperties("lecture")
     private List<LectureUnit> lectureUnits = new ArrayList<>();
 

@@ -44,7 +44,7 @@
             <column name="lecture_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="attachment_id" type="BIGINT"/>
-            <column name="lecture_module_order" type="INT"/>
+            <column name="lecture_unit_order" type="INT"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="learning_goal_id" baseTableName="learning_goal_lecture_unit"
                                  constraintName="FK34nd0arw9mr0ei8quno6u4sw3" deferrable="false"
