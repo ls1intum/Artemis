@@ -66,6 +66,10 @@ public class GitService {
     @Value("${artemis.git.email}")
     private String ARTEMIS_GIT_EMAIL;
 
+    /*
+     * TODO FIXME this should to be distributed, because storage is distributed as well!
+     */
+
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
