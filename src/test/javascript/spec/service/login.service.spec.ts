@@ -27,10 +27,12 @@ describe('LoginService', () => {
 
     let removeAuthTokenFromCachesStub: SinonStub;
     let authenticateStub: SinonStub;
-    let alertServiceClearStub: SinonStub;
+    // let alertServiceClearStub: SinonStub;
     let notificationServiceCleanUpStub: SinonStub;
     let navigateByUrlStub: SinonStub;
     let alertServiceErrorStub: SinonStub;
+
+    // TODO: reimplement this test using the typical TestBed configuration as in other tests
 
     beforeEach(() => {
         accountService = new MockAccountService();
@@ -44,7 +46,7 @@ describe('LoginService', () => {
 
         removeAuthTokenFromCachesStub = stub(authServerProvider, 'removeAuthTokenFromCaches');
         authenticateStub = stub(accountService, 'authenticate');
-        alertServiceClearStub = stub(alertService, 'clear');
+        // alertServiceClearStub = stub(alertService, 'clear');
         notificationServiceCleanUpStub = stub(notificationService, 'cleanUp');
         navigateByUrlStub = stub(router, 'navigateByUrl');
         alertServiceErrorStub = stub(alertService, 'error');
@@ -53,7 +55,7 @@ describe('LoginService', () => {
     afterEach(() => {
         removeAuthTokenFromCachesStub.restore();
         authenticateStub.restore();
-        alertServiceClearStub.restore();
+        // alertServiceClearStub.restore();
         notificationServiceCleanUpStub.restore();
         navigateByUrlStub.restore();
         alertServiceErrorStub.restore();
@@ -66,7 +68,7 @@ describe('LoginService', () => {
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
         expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
-        expect(alertServiceClearStub).to.have.been.calledOnceWithExactly();
+        // expect(alertServiceClearStub).to.have.been.calledOnceWithExactly();
         expect(notificationServiceCleanUpStub).to.have.been.calledOnceWithExactly();
         expect(navigateByUrlStub).to.have.been.calledOnceWithExactly('/');
         expect(alertServiceErrorStub).not.to.have.been.called;
@@ -80,7 +82,7 @@ describe('LoginService', () => {
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
         expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
-        expect(alertServiceClearStub).not.to.have.been.called;
+        // expect(alertServiceClearStub).not.to.have.been.called;
         expect(navigateByUrlStub).not.to.have.been.called;
         expect(alertServiceErrorStub).to.have.been.calledOnce;
     });

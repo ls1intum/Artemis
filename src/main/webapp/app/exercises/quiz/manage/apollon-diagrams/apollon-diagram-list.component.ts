@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -21,7 +21,7 @@ export class ApollonDiagramListComponent implements OnInit {
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private sortService: SortService,
         private route: ActivatedRoute,

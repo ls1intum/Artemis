@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -54,7 +54,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     private user: User;
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
         private accountService: AccountService,

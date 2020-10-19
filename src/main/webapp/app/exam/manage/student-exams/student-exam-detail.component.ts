@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 
@@ -32,7 +32,7 @@ export class StudentExamDetailComponent implements OnInit {
         private studentExamService: StudentExamService,
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
     ) {}
 
     /**

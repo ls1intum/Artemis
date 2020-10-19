@@ -76,8 +76,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private Course course;
 
-    private ExerciseGroup exerciseGroup;
-
     private ProgrammingExercise exercise;
 
     private ProgrammingExercise examExercise;
@@ -106,11 +104,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void setup() throws Exception {
         database.addUsers(numberOfStudents, 1, 1);
         course = database.addEmptyCourse();
-        exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         examExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -190,12 +188,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
-        staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()).forEach(config -> {
-            config.getCategoryMappings().forEach(mapping -> {
-                assertThat(mapping.getTool()).isNotNull();
-                assertThat(mapping.getCategory()).isNotNull();
-            });
-        });
+        staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
+            assertThat(mapping.getTool()).isNotNull();
+            assertThat(mapping.getCategory()).isNotNull();
+        }));
     }
 
     @Test

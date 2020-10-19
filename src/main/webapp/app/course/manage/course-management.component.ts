@@ -9,7 +9,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -35,7 +35,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     constructor(
         private courseService: CourseManagementService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
         private sortService: SortService,

@@ -8,7 +8,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -27,7 +27,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected exerciseHintService: ExerciseHintService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
     ) {}
 
