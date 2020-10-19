@@ -26,35 +26,29 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
-        final var resourcePath = Path.of("templates", "jenkins", "java", "config.xml");
-        final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+        final var buildPlan = isStaticCodeAnalysisEnabled ? "configWithStaticCodeAnalysis.xml" : "config.xml";
+        final var resourcePath = Path.of("templates", "jenkins", "java", buildPlan);
 
-        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
-        return XmlFileUtils.readXmlFile(xmlResource, replacements);
-    }
-
-    @Override
-    public Document buildConfigWithStaticCodeAnalysis(URL testRepositoryURL, URL assignmentRepositoryURL) {
-        final var resourcePath = Path.of("templates", "jenkins", "java", "configWithStaticCodeAnalysis.xml");
-        final var staticCodeAnalysisScript = createStaticCodeAnalysisScript();
-        final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
-
-        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
-        return XmlFileUtils.readXmlFile(xmlResource, replacements);
-    }
-
-    @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
-        if (!isSequential) {
-            return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
+        /*
+         * Create replacements for the build config XML files. Build plans with static code analysis have an additional post build task with a script running the static code
+         * analysis tools and copying the created reports to a specific directory.
+         */
+        Map<String, String> replacements;
+        if (isStaticCodeAnalysisEnabled) {
+            String staticCodeAnalysisScript = createStaticCodeAnalysisScript();
+            replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
+                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
+                    artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY, REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
+        }
+        else {
+            replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
+                    gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
+                    artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         }
 
-        throw new UnsupportedOperationException("Sequential Jenkins builds not yet supported for Java!");
+        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
+        return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
     private String createStaticCodeAnalysisScript() {
