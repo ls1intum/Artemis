@@ -183,7 +183,7 @@ public class TextSubmissionService extends SubmissionService {
      *
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId());
+        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
         final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
                 .map(TextCluster::getId).collect(toSet());
@@ -266,7 +266,13 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
-        return textSubmissionRepository.findByIdWithEagerResultFeedbackAndTextBlocks(submissionId)
+
+        var textSubmission = textSubmissionRepository.findByIdWithEagerResultFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
+
+        var textSubmissionWithTextBlocks = textSubmissionRepository.findByIdWithEagerTextBlocks(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
+        textSubmission.setBlocks(textSubmissionWithTextBlocks.getBlocks());
+        return textSubmission;
     }
 }

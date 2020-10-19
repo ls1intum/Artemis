@@ -141,7 +141,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL)")
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND EXISTS (select r.assessor from s.results r where r.assessor is not null and r.completionDate is not null))")
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -152,7 +152,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND s.result.assessor IS NOT NULL AND s.result.completionDate IS NOT NULL) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND EXISTS (select r.assessor from s.results r where r.assessor is not null and r.completionDate is not null)) AND NOT EXISTS (select prs from p.results prs where prs.assessor.id = p.student.id)")
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**

@@ -21,10 +21,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 @Repository
 public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubmission, Long> {
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
@@ -48,10 +48,10 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
+    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
+    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**

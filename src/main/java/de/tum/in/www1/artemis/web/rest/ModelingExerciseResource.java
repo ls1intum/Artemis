@@ -327,6 +327,7 @@ public class ModelingExerciseResource {
         }
         final var user = userService.getUserWithGroupsAndAuthorities();
         final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
+
         if (optionalOriginalModelingExercise.isEmpty()) {
             log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
             return notFound();

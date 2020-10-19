@@ -9,10 +9,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jplag.ExitException;
@@ -488,6 +486,13 @@ public class TextExerciseResource {
         }
 
         final var originalTextExercise = optionalOriginalTextExercise.get();
+        final var originalTextExerciseWithTextBlock = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResultsWithTextBlocks(sourceExerciseId).get();
+        Map<Long, List<TextBlock>> textSubmissions = originalTextExerciseWithTextBlock.getExampleSubmissions().stream().map(x -> (TextSubmission) x.getSubmission())
+                .collect(Collectors.toMap(x -> x.getId(), x -> x.getBlocks()));
+        originalTextExercise.getExampleSubmissions().stream().forEach(textSubmission -> {
+            ((TextSubmission) textSubmission.getSubmission()).setBlocks(textSubmissions.get(textSubmission.getSubmission().getId()));
+        });
+
         if (originalTextExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
             if (!authCheckService.isAtLeastInstructorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {
                 log.debug("User {} is not allowed to import exercises from exercise group {}", user.getId(), originalTextExercise.getExerciseGroup().getId());

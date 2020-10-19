@@ -61,10 +61,10 @@ public abstract class Submission extends DomainObject {
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({ "submission", "participation" })
-    @JoinColumn(unique = true)
-    private Result result;
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<Result> results = new ArrayList<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -94,12 +94,20 @@ public abstract class Submission extends DomainObject {
         return Duration.between(initilizationDate, submissionDate).toMinutes();
     }
 
+    /**
+     * Method used before changing relationship, first set to return the first in the ArrayList
+     * @return First Element in the ArrayList
+     */
     public Result getResult() {
-        return result;
+        return results.get(0);
     }
 
+    /**
+     * Method use before changing relationship between result and submission, add one result to the List of the result
+     * @param result
+     */
     public void setResult(Result result) {
-        this.result = result;
+        this.results.add(result);
     }
 
     public Participation getParticipation() {
