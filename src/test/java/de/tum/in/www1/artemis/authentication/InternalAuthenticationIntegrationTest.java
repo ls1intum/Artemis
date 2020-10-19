@@ -225,9 +225,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman");
+        student.setLogin("userWithTutorialGroup");
         student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
+        student.setEmail("userwithtutorialgroup@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
         authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
