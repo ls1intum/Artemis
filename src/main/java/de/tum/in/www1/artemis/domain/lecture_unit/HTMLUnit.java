@@ -1,16 +1,13 @@
-package de.tum.in.www1.artemis.domain.lecture_module;
+package de.tum.in.www1.artemis.domain.lecture_unit;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 @Entity
 @DiscriminatorValue("H")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class HTMLModule extends LectureModule {
+public class HTMLUnit extends LectureUnit {
 
     @Lob
     @Column(name = "markdown")
