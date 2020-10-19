@@ -32,7 +32,7 @@ public interface ContinuousIntegrationService {
      * @param planKey               the key of the plan
      * @param repositoryURL         the URL of the assignment repository (used to separate between exercise and solution)
      * @param testRepositoryURL     the URL of the test repository
-     * @param solutionRepositoryURL the URL of the solution repository
+     * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL);
 
