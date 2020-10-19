@@ -19,17 +19,9 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StudentQuestionService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     CourseRepository courseRepo;
@@ -62,11 +54,13 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestion() throws Exception {
-        StudentQuestion studentQuestion = new StudentQuestion();
-        studentQuestion.setQuestionText("Test Student Question 1");
-        studentQuestion.setVisibleForStudents(true);
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        StudentQuestion studentQuestionToSave = new StudentQuestion();
+        studentQuestionToSave.setQuestionText("Test Student Question 1");
+        studentQuestionToSave.setVisibleForStudents(true);
 
-        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.CREATED);
+        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestionToSave,
+                StudentQuestion.class, HttpStatus.CREATED);
 
         assertThat(createdStudentQuestion).isNotNull();
     }
@@ -76,7 +70,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void createExistingStudentQuestion() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        request.postWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -87,7 +81,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestion.setVisibleForStudents(false);
         studentQuestion.setQuestionText("New Test Student Question");
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion,
+                StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getQuestionText().equals("New Test Student Question"));
         assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
@@ -100,7 +95,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestion.setVisibleForStudents(false);
         studentQuestion.setQuestionText("New Test Student Question");
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion,
+                StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getQuestionText().equals("New Test Student Question"));
         assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
@@ -115,14 +111,16 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         // update own question --> OK
         studentQuestion_student1.setVisibleForStudents(false);
         studentQuestion_student1.setQuestionText("New Test Student Question");
-        StudentQuestion updatedStudentQuestion1 = request.putWithResponseBody("/api/student-questions", studentQuestion_student1, StudentQuestion.class, HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion1 = request.putWithResponseBody("/api/courses/" + studentQuestion_student1.getCourse().getId() + "/student-questions",
+                studentQuestion_student1, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion1.getQuestionText().equals("New Test Student Question"));
         assertThat(updatedStudentQuestion1.isVisibleForStudents()).isFalse();
 
         // update question from another student --> forbidden
         studentQuestion_student2.setVisibleForStudents(false);
         studentQuestion_student2.setQuestionText("New Test Student Question");
-        StudentQuestion updatedStudentQuestion2 = request.putWithResponseBody("/api/student-questions", studentQuestion_student2, StudentQuestion.class, HttpStatus.FORBIDDEN);
+        StudentQuestion updatedStudentQuestion2 = request.putWithResponseBody("/api/courses/" + studentQuestion_student2.getCourse().getId() + "/student-questions",
+                studentQuestion_student2, StudentQuestion.class, HttpStatus.FORBIDDEN);
         assertThat(updatedStudentQuestion2).isNull();
     }
 
@@ -132,7 +130,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
         Long exerciseID = studentQuestion.getExercise().getId();
 
-        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/exercises/" + exerciseID + "/student-questions", HttpStatus.OK, StudentQuestion.class);
+        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/courses/" + studentQuestion.getCourse().getId() + "/exercises/" + exerciseID + "/student-questions",
+                HttpStatus.OK, StudentQuestion.class);
         assertThat(returnedStudentQuestions.size()).isEqualTo(2);
     }
 
@@ -159,7 +158,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestionRepository.save(studentQuestion1);
         studentQuestionRepository.save(studentQuestion2);
 
-        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/lectures/" + lecture1.getId() + "/student-questions", HttpStatus.OK, StudentQuestion.class);
+        List<StudentQuestion> returnedStudentQuestions = request
+                .getList("/api/courses/" + studentQuestion1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/student-questions", HttpStatus.OK, StudentQuestion.class);
         assertThat(returnedStudentQuestions.size()).isEqualTo(2);
     }
 
@@ -170,16 +170,16 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion studentQuestion = studentQuestions.get(0);
         StudentQuestion studentQuestion1 = studentQuestions.get(1);
 
-        request.delete("/api/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
         // try to delete not existing question
-        request.delete("/api/student-questions/999", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/999", HttpStatus.NOT_FOUND);
 
         // delete question with no lecture id --> OK
         studentQuestion1.setLecture(null);
         studentQuestionRepository.save(studentQuestion1);
-        request.delete("/api/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + studentQuestion1.getCourse().getId() + "/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(0);
     }
 
@@ -191,11 +191,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion studentQuestion1_student2 = studentQuestions.get(1);
 
         // delete own question --> OK
-        request.delete("/api/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + studentQuestion_student1.getCourse().getId() + "/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
         // delete question from another user --> OK
-        request.delete("/api/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + studentQuestion1_student2.getCourse().getId() + "/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(0);
     }
 
@@ -207,11 +207,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion studentQuestion1_student2 = studentQuestions.get(1);
 
         // delete own question --> OK
-        request.delete("/api/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + studentQuestion_student1.getCourse().getId() + "/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
         // delete question from another student --> forbidden
-        request.delete("/api/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + studentQuestion1_student2.getCourse().getId() + "/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
     }
 
@@ -220,8 +220,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asInstructor() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class,
-                HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
+                "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(1));
     }
 
@@ -230,8 +230,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asTA() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", -1, StudentQuestion.class,
-                HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
+                "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", -1, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(-1));
     }
 
@@ -241,8 +241,8 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         List<StudentQuestion> questions = database.createCourseWithExerciseAndStudentQuestions();
         StudentQuestion studentQuestion = questions.get(0);
 
-        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class,
-                HttpStatus.OK);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
+                "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(2));
     }
 

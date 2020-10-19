@@ -149,3 +149,15 @@ jobs:
     - name: TypeScript Code Style
       run: yarn lint
       if: success() || failure()
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "docs/"
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Documentation
+        path: docs/_build/html/

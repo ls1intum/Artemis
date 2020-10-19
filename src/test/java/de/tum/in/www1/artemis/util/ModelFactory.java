@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -673,25 +674,21 @@ public class ModelFactory {
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
 
-        StringBuilder logBuilder = new StringBuilder();
-        for (int i = 0; i < 254; i++) {
-            logBuilder.append("a");
-        }
-        String logWith254Chars = logBuilder.toString();
+        String logWith254Chars = "a".repeat(254);
 
-        var buildLogDTO254Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        var buildLogDTO254Chars = new BambooBuildLogDTO();
         buildLogDTO254Chars.setDate(ZonedDateTime.now());
         buildLogDTO254Chars.setLog(logWith254Chars);
 
-        var buildLogDTO255Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        var buildLogDTO255Chars = new BambooBuildLogDTO();
         buildLogDTO255Chars.setDate(ZonedDateTime.now());
         buildLogDTO255Chars.setLog(logWith254Chars + "a");
 
-        var buildLogDTO256Chars = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        var buildLogDTO256Chars = new BambooBuildLogDTO();
         buildLogDTO256Chars.setDate(ZonedDateTime.now());
         buildLogDTO256Chars.setLog(logWith254Chars + "aa");
 
-        var largeBuildLogDTO = new BambooBuildResultNotificationDTO.BuildLogDTO();
+        var largeBuildLogDTO = new BambooBuildLogDTO();
         largeBuildLogDTO.setDate(ZonedDateTime.now());
         largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
 

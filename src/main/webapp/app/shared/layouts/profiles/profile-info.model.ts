@@ -23,4 +23,5 @@ export class ProfileInfo {
     allowedLdapUsernamePattern?: string;
     allowedCourseRegistrationUsernamePattern?: string;
     accountName?: string;
+    versionControlUrl?: string;
 }
