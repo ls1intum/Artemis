@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 
 @Service
@@ -22,8 +23,11 @@ public class StudentScoreService {
 
     private final StudentScoreRepository studentScoreRepository;
 
-    public StudentScoreService(StudentScoreRepository studentScoreRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public StudentScoreService(StudentScoreRepository studentScoreRepository, ExerciseRepository exerciseRepository) {
         this.studentScoreRepository = studentScoreRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -99,12 +103,15 @@ public class StudentScoreService {
 
         var participation = (StudentParticipation) updatedResult.getParticipation();
         var student = participation.getStudent();
-        var exercise = participation.getExercise();
+        var optionalExercise = exerciseRepository.findById(participation.getExercise().getId());
+        // var exercise = participation.getExercise();
 
-        if (student.isEmpty() || exercise == null) {
+        if (student.isEmpty() || optionalExercise.isEmpty()) {
             log.info("Weil keine Student oder keine Exercise");
             return;
         }
+
+        var exercise = optionalExercise.get();
 
         if (updatedResult.getStudentScore() != null) {
             log.info("Delete old StudentScore");
