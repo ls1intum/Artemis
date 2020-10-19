@@ -10,10 +10,10 @@ import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercise
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
-import { TestCasePassedBuildsGraphComponent } from 'app/exercises/programming/manage/grading/graphs/test-case-passed-builds-graph.component';
-import { CategoryIssuesGraphComponent } from 'app/exercises/programming/manage/grading/graphs/category-issues-graph.component';
-import { TestCaseDistributionGraphComponent } from 'app/exercises/programming/manage/grading/graphs/test-case-distribution-graph.component';
-import { ScaCategoryDistributionGraphComponent } from 'app/exercises/programming/manage/grading/graphs/sca-category-distribution-graph.component';
+import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
+import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 
 @NgModule({
     imports: [
@@ -33,10 +33,10 @@ import { ScaCategoryDistributionGraphComponent } from 'app/exercises/programming
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingDirtyWarningComponent,
         ProgrammingExerciseGradingTableActionsComponent,
-        TestCasePassedBuildsGraphComponent,
-        CategoryIssuesGraphComponent,
-        TestCaseDistributionGraphComponent,
-        ScaCategoryDistributionGraphComponent,
+        TestCasePassedBuildsChartComponent,
+        CategoryIssuesChartComponent,
+        TestCaseDistributionChartComponent,
+        ScaCategoryDistributionChartComponent,
     ],
     exports: [ProgrammingExerciseConfigureGradingComponent, ProgrammingExerciseGradingDirtyWarningComponent],
 })

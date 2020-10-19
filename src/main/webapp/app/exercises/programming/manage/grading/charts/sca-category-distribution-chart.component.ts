@@ -5,7 +5,7 @@ import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizo
 import { ChartDataSets } from 'chart.js';
 
 @Component({
-    selector: 'jhi-sca-category-distribution-graph',
+    selector: 'jhi-sca-category-distribution-chart',
     template: `
         <div>
             <div>
@@ -18,13 +18,13 @@ import { ChartDataSets } from 'chart.js';
         </div>
     `,
 })
-export class ScaCategoryDistributionGraphComponent implements OnChanges {
+export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() categories: StaticCodeAnalysisCategory[];
     @Input() categoryHitMap?: { [category: string]: number }[];
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Points']);
+    chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Minuspoints']);
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {

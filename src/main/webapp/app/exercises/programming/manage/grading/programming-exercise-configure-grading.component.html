@@ -124,24 +124,24 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Passed %">
                                 <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-test-case-passed-builds-graph
+                                    <jhi-test-case-passed-builds-chart
                                         [testCaseStats]="getTestCaseStats(row.testName)"
                                         [totalParticipations]="gradingStatistics?.numParticipations"
                                     >
-                                    </jhi-test-case-passed-builds-graph>
+                                    </jhi-test-case-passed-builds-chart>
                                 </ng-template>
                             </ngx-datatable-column>
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h2 class="mb-5">Live Charts</h2>
+                        <h2 class="mb-5">Charts <span *ngIf="!!changedTestCaseIds.length" class="badge badge-primary"></span></h2>
 
-                        <jhi-test-case-distribution-graph-2
+                        <jhi-test-case-distribution-chart
                             [testCases]="filteredTestCases"
                             [testCaseStats]="gradingStatistics?.testCaseStatsList"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
-                        ></jhi-test-case-distribution-graph-2>
+                        ></jhi-test-case-distribution-chart>
                     </div>
                 </div>
             </div>
@@ -207,27 +207,27 @@
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Issues by students">
                                 <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-category-issues-graph
+                                    <jhi-category-issues-chart
                                         *ngIf="row.state !== CategoryState.Inactive"
                                         [categoryIssuesStats]="categoryStats ? categoryStats[row.name] : null"
                                         [maxGradedIssues]="row.penalty > 0 ? row.maxPenalty / row.penalty : 0"
                                         [totalStudents]="gradingStatistics?.numParticipations || 0"
                                         [maxNumberOfIssues]="maxIssuesInCategory"
                                     >
-                                    </jhi-category-issues-graph>
+                                    </jhi-category-issues-chart>
                                 </ng-template>
                             </ngx-datatable-column>
                         </ngx-datatable>
                     </div>
                     <div>
-                        <h2 class="mb-5">Live Charts</h2>
+                        <h2 class="mb-5">Charts <span *ngIf="!!changedCategoryIds.length" class="badge badge-primary"></span></h2>
 
-                        <jhi-sca-category-distribution-graph
+                        <jhi-sca-category-distribution-chart
                             [categories]="staticCodeAnalysisCategories"
                             [categoryHitMap]="gradingStatistics?.categoryHitMap"
                             [totalParticipations]="gradingStatistics?.numParticipations"
                             [exercise]="exercise"
-                        ></jhi-sca-category-distribution-graph>
+                        ></jhi-sca-category-distribution-chart>
                     </div>
                 </div>
             </div>

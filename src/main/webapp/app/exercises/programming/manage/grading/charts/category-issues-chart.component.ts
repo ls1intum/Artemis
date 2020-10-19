@@ -8,7 +8,7 @@ export class IssueColumn {
 }
 
 @Component({
-    selector: 'jhi-category-issues-graph',
+    selector: 'jhi-category-issues-chart',
     template: `
         <div style="max-width: 120px; margin: auto;">
             <div style="height: 30px;" class="d-flex justify-content-between">
@@ -19,7 +19,7 @@ export class IssueColumn {
         </div>
     `,
 })
-export class CategoryIssuesGraphComponent implements OnChanges {
+export class CategoryIssuesChartComponent implements OnChanges {
     @Input() categoryIssuesStats?: { [numIssues: string]: number };
     @Input() maxGradedIssues: number;
     @Input() totalStudents: number;
@@ -37,7 +37,7 @@ export class CategoryIssuesGraphComponent implements OnChanges {
         const columnWidth = (100 + columnGap) / numColumns - columnGap;
 
         const columns = new Array(numColumns).fill(0).map((column, i, { length }) => {
-            const numIssues = length - i - 1;
+            const numIssues = i + 1;
             const numStudents = this.categoryIssuesStats ? this.categoryIssuesStats[numIssues] || 0 : 0;
             return {
                 w: columnWidth + '%',

@@ -2,9 +2,9 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 @Component({
-    selector: 'jhi-test-case-passed-builds-graph',
+    selector: 'jhi-test-case-passed-builds-chart',
     template: `
-        <div placement="left" [ngbTooltip]="passedPercent.toFixed(0) + '% passed, ' + failedPercent.toFixed(0) + '% failed.'">
+        <div placement="left" [ngbTooltip]="passedPercent.toFixed(0) + '% passed, ' + failedPercent.toFixed(0) + '% failed of ' + totalParticipations + ' students.'">
             <svg viewBox="0 0 100 10" style="border-radius: 4px">
                 <rect x="0" y="0" width="100" height="10" fill="#ddd"></rect>
 
@@ -14,7 +14,7 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
         </div>
     `,
 })
-export class TestCasePassedBuildsGraphComponent implements OnChanges {
+export class TestCasePassedBuildsChartComponent implements OnChanges {
     @Input() testCaseStats?: TestCaseStats;
     @Input() totalParticipations: number;
 

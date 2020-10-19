@@ -6,7 +6,7 @@ import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizo
 import { ChartDataSets } from 'chart.js';
 
 @Component({
-    selector: 'jhi-test-case-distribution-graph-2',
+    selector: 'jhi-test-case-distribution-chart',
     template: `
         <div>
             <div>
@@ -19,7 +19,7 @@ import { ChartDataSets } from 'chart.js';
         </div>
     `,
 })
-export class TestCaseDistributionGraphComponent implements OnChanges {
+export class TestCaseDistributionChartComponent implements OnChanges {
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStats?: TestCaseStats[];
     @Input() totalParticipations?: number;
@@ -42,13 +42,14 @@ export class TestCaseDistributionGraphComponent implements OnChanges {
         });
 
         const totalScore = testCaseScores.map(({ score, stats }) => (stats ? score * stats.numPassed! : 0)).reduce((sum, points) => sum + points, 0);
+        const totalPoints = this.exercise.maxScore! * this.totalParticipations;
 
         this.chartDatasets = testCaseScores.map((element, i) => ({
             label: element.testCase.testName!,
             data: [
                 (totalWeight > 0 ? element.testCase.weight! / totalWeight : 0) * 100,
                 element.score * 100,
-                element.stats && totalScore > 0 ? ((element.stats.numPassed! * element.score) / totalScore) * 100 : 0,
+                element.stats && totalScore > 0 ? ((element.stats.numPassed! * element.score) / totalPoints) * 100 : 0,
             ],
             backgroundColor: this.getColor(i / this.testCases.length, 50),
             hoverBackgroundColor: this.getColor(i / this.testCases.length, 60),
