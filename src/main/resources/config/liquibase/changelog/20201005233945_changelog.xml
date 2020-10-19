@@ -10,6 +10,8 @@
             <column name="achievement_rank" type="VARCHAR(255)"/>
             <column name="title" type="VARCHAR(255)"/>
             <column name="achievement_type" type="VARCHAR(255)"/>
+            <column name="parameter" type="BIGINT"/>
+            <column name="min_score_to_qualify" type="BIGINT"/>
             <column name="course_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
         </createTable>

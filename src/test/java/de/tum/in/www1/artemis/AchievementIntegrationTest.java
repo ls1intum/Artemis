@@ -73,7 +73,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
 
         achievementService.generateForCourse(firstCourse);
         achievementService.generateForCourse(secondCourse);
-        achievementService.generateForExercise(firstCourse, firstExercise);
     }
 
     @AfterEach
@@ -101,7 +100,8 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         var achievementsFirstCourse = request.get("/api/courses/" + courseId + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("Achievements in course " + courseId + " get deleted if course " + courseId + " is deleted").isEqualTo(0);
         var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted").isEqualTo(4);
+        assertThat(achievementsSecondCourse.size()).as("Achievements in course " + secondCourse.getId() + " do not get deleted if course " + courseId + " is deleted")
+                .isEqualTo(12);
     }
 
     @Test
@@ -110,9 +110,9 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         initTest();
         request.delete("/api/modeling-exercises/" + firstExercise.getId(), HttpStatus.OK);
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 4 in course " + firstCourse.getId()).isEqualTo(4);
+        assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
         var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 4 in course " + secondCourse.getId()).isEqualTo(4);
+        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
     }
 
     private void initTest() throws Exception {
@@ -129,6 +129,6 @@ public class AchievementIntegrationTest extends AbstractSpringIntegrationBambooB
         var achievementsFirstCourse = request.get("/api/courses/" + firstCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
         assertThat(achievementsFirstCourse.size()).as("Number of achievements for user should be 12 in course " + firstCourse.getId()).isEqualTo(12);
         var achievementsSecondCourse = request.get("/api/courses/" + secondCourse.getId() + "/achievements", HttpStatus.OK, Set.class);
-        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 4 in course " + secondCourse.getId()).isEqualTo(4);
+        assertThat(achievementsSecondCourse.size()).as("Number of achievements for user should be 12 in course " + secondCourse.getId()).isEqualTo(12);
     }
 }
