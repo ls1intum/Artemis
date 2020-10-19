@@ -690,24 +690,6 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
-    private void deleteWebHook(String projectKey, String repositorySlug, Integer webHookId) {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
-        log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not delete WebHook", e);
-        }
-    }
-
-    private void deleteExistingWebHooks(String projectKey, String repositorySlug) {
-        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        for (Integer webHookId : webHooks.keySet()) {
-            deleteWebHook(projectKey, repositorySlug, webHookId);
-        }
-    }
-
     /**
      * Deletes the given repository from Bitbucket.
      *

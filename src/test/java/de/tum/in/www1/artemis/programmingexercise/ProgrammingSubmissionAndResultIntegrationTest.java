@@ -134,32 +134,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submissionRepository.findAll()).hasSize(0);
     }
 
-    @ParameterizedTest
-    @EnumSource(IntegrationTestParticipationType.class)
-    void fetchCommitInfoOnNotifyPush(IntegrationTestParticipationType participationType) throws Exception {
-        Long participationId = getParticipationIdByType(participationType, 0);
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
-                "\"displayName\": \"Artemis\"");
-
-        final String projectKey = "test201904bprogrammingexercise6";
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
-
-        assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
-        // Needs to be set for using a custom repository method, known spring bug.
-        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participationId).get();
-        assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
-        assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
-
-        // Make sure the submission has the correct commit hash.
-        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        // The submission should be manual and submitted.
-        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
-        assertThat(submission.isSubmitted()).isTrue();
-    }
-
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
@@ -169,7 +143,15 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @EnumSource(IntegrationTestParticipationType.class)
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
+        // set the author name to "Artemis"
+        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+                "\"displayName\": \"Artemis\"");
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
