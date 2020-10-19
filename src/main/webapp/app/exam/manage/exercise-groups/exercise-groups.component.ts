@@ -8,7 +8,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
@@ -46,7 +46,7 @@ export class ExerciseGroupsComponent implements OnInit {
         private courseManagementService: CourseManagementService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiEventManager: JhiEventManager,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
     ) {}

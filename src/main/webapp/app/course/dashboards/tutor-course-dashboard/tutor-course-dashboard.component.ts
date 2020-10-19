@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
@@ -62,7 +62,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     constructor(
         private courseService: CourseManagementService,
         private examManagementService: ExamManagementService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

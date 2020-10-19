@@ -8,6 +8,6 @@ export class MockAlertService extends SpyObject {
     addAlert(alertOptions: JhiAlert) {
         return alertOptions;
     }
-    clear = () => {};
+    // clear = () => {};
     error = () => {};
 }
