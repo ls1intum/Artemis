@@ -623,6 +623,14 @@ public class ModelFactory {
         return apollonDiagram;
     }
 
+    /**
+     * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
+     *
+     * @param repoName name of the repository
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @return TestResultDTO with dummy data
+     */
     public static TestResultsDTO generateTestResultDTO(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
         var notification = new TestResultsDTO();
 
