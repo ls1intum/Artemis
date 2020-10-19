@@ -31,7 +31,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { TutorExerciseDashboardComponent } from 'app/exercises/shared/dashboards/tutor/tutor-exercise-dashboard.component';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
@@ -48,8 +48,8 @@ const expect = chai.expect;
 describe('TutorExerciseDashboardComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
-    let comp: TutorExerciseDashboardComponent;
-    let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
+    let comp: ExerciseAssessmentDashboardComponent;
+    let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingSubmissionStub: SinonStub;
     let guidedTourService: GuidedTourService;
@@ -76,7 +76,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 ArtemisAssessmentSharedModule,
             ],
             declarations: [
-                TutorExerciseDashboardComponent,
+                ExerciseAssessmentDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -120,7 +120,7 @@ describe('TutorExerciseDashboardComponent', () => {
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
+                fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
                 comp = fixture.componentInstance;
 
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);

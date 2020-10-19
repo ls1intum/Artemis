@@ -276,8 +276,7 @@
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studenten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
-            },
-            "tutorDashboard": "Tutor Klausur Dashboard"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",

@@ -1,12 +1,12 @@
 {
     "tour": {
         "courseAdministration": {
-            "tutorCourseDashboardButton": {
+            "assessmentDashboardButton": {
                 "headline": "Tutor Kurs Dashboard",
                 "content": "Im <tt>Tutor Kurs Dashboard</tt> kannst du die Studentenabgaben einsehen und bewerten."
             }
         },
-        "tutorCourseDashboard": {
+        "assessmentDashboard": {
             "overview": {
                 "headline": "Übersicht",
                 "content": "Hier findest du die Statistiken über deine <tt>Bewertungen</tt> und die <tt>Beschwerden</tt> und <tt>Feedbackanfragen</tt> über deine Bewertungen."
@@ -28,7 +28,7 @@
                 "content": "Nun gehen wir ins Aufgaben Dashboard und schauen uns die Aufgabendetails und Studentenabgaben an."
             }
         },
-        "tutorExerciseDashboard": {
+        "exerciseAssessmentDashboard": {
             "instructions": {
                 "headline": "Anleitung",
                 "content": "Dieser Abschnitt enthält die <tt>Aufgabenstellung</tt>, <tt>Beispiel Lösung</tt> und <tt>Bewertungsanweisungen</tt> der Übung. Bitte lies sie dir genau durch und fahre mit dem nächsten Schritt fort."
