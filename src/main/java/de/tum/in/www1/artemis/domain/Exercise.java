@@ -84,9 +84,7 @@ public abstract class Exercise extends DomainObject {
     private String gradingInstructions;
 
     @ManyToMany(mappedBy = "exercises")
-    @OrderColumn(name = "learning_goal_order")
-    @JsonIgnoreProperties("exercises")
-    public List<LearningGoal> learningGoals = new ArrayList<>();
+    public Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -471,36 +469,22 @@ public abstract class Exercise extends DomainObject {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
-    public List<LearningGoal> getLearningGoals() {
+    public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }
 
-    public void setLearningGoals(List<LearningGoal> learningGoals) {
+    public void setLearningGoals(Set<LearningGoal> learningGoals) {
         this.learningGoals = learningGoals;
     }
 
-    /**
-     * Adds a learning goal to the exercise. Also handles the other side of the relationship.
-     *
-     * @param learningGoal the learning goal to add
-     * @return the exercise with the learning goal added
-     */
-    public Exercise addLearningGoal(LearningGoal learningGoal) {
+    public void addLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.add(learningGoal);
         learningGoal.getExercises().add(this);
-        return this;
     }
 
-    /**
-     * Removes an learning goal from the exercise. Also handles the other side of the relationship
-     *
-     * @param learningGoal the learning goal to remove
-     * @return the exercise with the learning goal removed
-     */
-    public Exercise removeLearningGoal(LearningGoal learningGoal) {
+    public void removeLearningGoal(LearningGoal learningGoal) {
         this.learningGoals.remove(learningGoal);
         learningGoal.getExercises().remove(this);
-        return this;
     }
 
     public boolean isTeamMode() {

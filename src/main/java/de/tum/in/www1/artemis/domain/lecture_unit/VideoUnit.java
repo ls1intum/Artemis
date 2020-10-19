@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.lecture_module;
+package de.tum.in.www1.artemis.domain.lecture_unit;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -7,7 +7,7 @@ import javax.persistence.Lob;
 
 @Entity
 @DiscriminatorValue("V")
-public class VideoModule extends LectureModule {
+public class VideoUnit extends LectureUnit {
 
     @Column(name = "description")
     @Lob

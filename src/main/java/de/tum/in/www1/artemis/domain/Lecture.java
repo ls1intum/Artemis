@@ -13,7 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.lecture_module.LectureModule;
+import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 
 /**
  * A Lecture.
@@ -42,10 +42,10 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "lecture_module_order")
-    @JsonIgnoreProperties(value = "lecture", allowSetters = true)
-    private List<LectureModule> lectureModules = new ArrayList<>();
+    @JsonIgnoreProperties(value = "lecture")
+    private List<LectureUnit> lectureUnits = new ArrayList<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -112,18 +112,22 @@ public class Lecture extends DomainObject {
         this.attachments = attachments;
     }
 
-    public List<LectureModule> getLectureModules() {
-        return lectureModules;
+    public List<LectureUnit> getLectureUnits() {
+        return lectureUnits;
     }
 
-    public void setLectureModules(List<LectureModule> lectureModules) {
-        this.lectureModules = lectureModules;
+    public void setLectureUnits(List<LectureUnit> lectureUnits) {
+        this.lectureUnits = lectureUnits;
     }
 
-    public Lecture addLectureModule(LectureModule lectureModule) {
-        this.lectureModules.add(lectureModule);
-        lectureModule.setLecture(this);
-        return this;
+    public void addLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.add(lectureUnit);
+        lectureUnit.setLecture(this);
+    }
+
+    public void removeLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.remove(lectureUnit);
+        lectureUnit.setLecture(null);
     }
 
     public Set<StudentQuestion> getStudentQuestions() {

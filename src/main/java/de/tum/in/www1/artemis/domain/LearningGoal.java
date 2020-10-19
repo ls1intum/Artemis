@@ -9,11 +9,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.tum.in.www1.artemis.domain.lecture_module.LectureModule;
+import de.tum.in.www1.artemis.domain.lecture_unit.LectureUnit;
 
-/**
- * Entity that represents a learning goal students should try to achieve
- */
 @Entity
 @Table(name = "learning_goal")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -26,7 +23,7 @@ public class LearningGoal extends DomainObject {
     @Lob
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 
@@ -36,9 +33,9 @@ public class LearningGoal extends DomainObject {
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "learning_goal_lecture_module", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_module_id", referencedColumnName = "id"))
+    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"))
     @JsonIgnoreProperties("learningGoals")
-    private Set<LectureModule> lectureModules = new HashSet<>();
+    private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -60,47 +57,8 @@ public class LearningGoal extends DomainObject {
         return course;
     }
 
-    /**
-     * Sets the course property
-     *
-     * @param course entity to set the property to
-     */
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public Set<LectureModule> getLectureModules() {
-        return lectureModules;
-    }
-
-    public void setLectureModules(Set<LectureModule> lectureModules) {
-        this.lectureModules = lectureModules;
-    }
-
-    /**
-     * Adds an lecture module to the learning goal. Also handles the other side of the relationship
-     *
-     * @param lectureModule the lecture module to add
-     * @return learning goal with lecture module added
-     */
-    public LearningGoal addLectureModule(LectureModule lectureModule) {
-        this.lectureModules.add(lectureModule);
-        if (!lectureModule.getLearningGoals().contains(this)) {
-            lectureModule.getLearningGoals().add(this);
-        }
-        return this;
-    }
-
-    /**
-     * Removes a lecture module from the learning goal. Also handles the other side of the relationship.
-     *
-     * @param lectureModule the lectureModule to remove
-     * @return learning goal with lectureModule removed
-     */
-    public LearningGoal removeLectureModule(LectureModule lectureModule) {
-        this.lectureModules.remove(lectureModule);
-        lectureModule.getLearningGoals().remove(this);
-        return this;
     }
 
     public Set<Exercise> getExercises() {
@@ -111,30 +69,31 @@ public class LearningGoal extends DomainObject {
         this.exercises = exercises;
     }
 
-    /**
-     * Adds an exercise to the learning goal. Also handles the other side of the relationship
-     *
-     * @param exercise the exercise to add
-     * @return learning goal with exercise added
-     */
-    public LearningGoal addExercise(Exercise exercise) {
+    public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        if (!exercise.getLearningGoals().contains(this)) {
-            exercise.getLearningGoals().add(this);
-        }
-        return this;
+        exercise.getLearningGoals().add(this);
     }
 
-    /**
-     * Removes an exercise from the learning goal. Also handles the other side of the relationship.
-     *
-     * @param exercise exercise to remove from the learning goal
-     * @return learning goal with exercise removed
-     */
-    public LearningGoal removeExercise(Exercise exercise) {
+    public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
         exercise.getLearningGoals().remove(this);
-        return this;
     }
 
+    public Set<LectureUnit> getLectureUnits() {
+        return lectureUnits;
+    }
+
+    public void setLectureUnits(Set<LectureUnit> lectureUnits) {
+        this.lectureUnits = lectureUnits;
+    }
+
+    public void addLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.add(lectureUnit);
+        lectureUnit.getLearningGoals().add(this);
+    }
+
+    public void removeLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnits.remove(lectureUnit);
+        lectureUnit.getLearningGoals().remove(this);
+    }
 }
