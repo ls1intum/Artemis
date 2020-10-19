@@ -1,11 +1,11 @@
 {
     "artemisApp": {
-        "lectureModule": {
+        "lectureUnit": {
             "home": {
-                "title": "Vorlesungsmodule"
+                "title": "Vorlesungseinheiten"
             },
-            "moduleCreationCard": {
-                "title": "Erzeuge ein neues Vorlesungsmodul",
+            "unitCreationCard": {
+                "title": "Erzeuge ein neues Vorlesungseinheit",
                 "html": "HTML",
                 "exercise": "Aufgabe",
                 "video": "Video",

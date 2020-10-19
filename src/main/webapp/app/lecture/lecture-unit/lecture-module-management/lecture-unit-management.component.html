@@ -8,15 +8,15 @@
 
 <div *ngIf="!isLoading && lecture" class="container">
     <div class="row">
-        <div class="col-12 mx-auto" *ngFor="let lectureModule of lectureModules">
-            <h1>{{ lectureModule.title }}</h1>
+        <div class="col-12 mx-auto" *ngFor="let lectureUnit of lectureUnits">
+            <h1>{{ lectureUnit.title }}</h1>
         </div>
     </div>
 
-    <!-- Module Creation Card Row-->
+    <!-- Unit Creation Card Row-->
     <div class="row">
         <div class="col-12 mx-auto">
-            <jhi-module-creation-card (createHTMLModule)="createHTMLModule()"></jhi-module-creation-card>
+            <jhi-unit-creation-card (createHTMLUnit)="createHTMLUnit()"></jhi-unit-creation-card>
         </div>
     </div>
 </div>

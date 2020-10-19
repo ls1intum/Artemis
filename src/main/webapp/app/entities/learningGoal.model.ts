@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { LectureModule } from 'app/entities/lecture-module/lectureModule.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class LearningGoal implements BaseEntity {
     public id?: number;
@@ -9,7 +9,7 @@ export class LearningGoal implements BaseEntity {
     public description?: String;
     public course?: Course;
     public exercises?: Exercise[];
-    public lectureModules?: LectureModule[];
+    public lectureModules?: LectureUnit[];
 
     constructor() {}
 }

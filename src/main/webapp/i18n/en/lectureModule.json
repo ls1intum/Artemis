@@ -1,11 +1,11 @@
 {
     "artemisApp": {
-        "lectureModule": {
+        "lectureUnit": {
             "home": {
                 "title": "Lecture Modules"
             },
-            "moduleCreationCard": {
-                "title": "Add a new Lecture Module",
+            "unitCreationCard": {
+                "title": "Add a new Lecture Unit",
                 "html": "HTML",
                 "exercise": "Exercise",
                 "video": "Video",

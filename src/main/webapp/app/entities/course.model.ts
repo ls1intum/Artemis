@@ -5,6 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TutorGroup } from 'app/entities/tutor-group.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -35,6 +36,7 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
+    public learningGoals?: LearningGoal[];
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
 

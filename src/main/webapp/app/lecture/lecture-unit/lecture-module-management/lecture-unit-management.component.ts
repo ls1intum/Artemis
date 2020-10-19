@@ -3,25 +3,25 @@ import { ActivatedRoute } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { finalize, map } from 'rxjs/operators';
-import { HTMLModule } from 'app/entities/lecture-module/HTMLModule';
+import { HTMLUnit } from 'app/entities/lecture-unit/htmlUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { LectureModule } from 'app/entities/lecture-module/lectureModule.model';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HTMLModuleService } from 'app/lecture/lecture-module/HTMLModule/htmlmodule.service';
+import { HTMLUnitService } from 'app/lecture/lecture-unit/htmlUnit/htmlunit.service';
 
 @Component({
-    selector: 'jhi-lecture-module-management',
-    templateUrl: './lecture-module-management.component.html',
+    selector: 'jhi-lecture-unit-management',
+    templateUrl: './lecture-unit-management.component.html',
     styles: [],
 })
-export class LectureModuleManagementComponent implements OnInit {
+export class LectureUnitManagementComponent implements OnInit {
     lectureId: number;
     lecture: Lecture;
-    lectureModules: LectureModule[] = [];
+    lectureUnits: LectureUnit[] = [];
     isLoading = false;
 
-    constructor(private activatedRoute: ActivatedRoute, private lectureService: LectureService, private alertService: AlertService, private htmlModuleService: HTMLModuleService) {}
+    constructor(private activatedRoute: ActivatedRoute, private lectureService: LectureService, private alertService: AlertService, private htmlUnitService: HTMLUnitService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -37,7 +37,7 @@ export class LectureModuleManagementComponent implements OnInit {
             this.lectureService
                 .find(this.lectureId)
                 .pipe(
-                    map((response: HttpResponse<HTMLModule>) => response.body!),
+                    map((response: HttpResponse<HTMLUnit>) => response.body!),
                     finalize(() => {
                         this.isLoading = false;
                     }),
@@ -45,8 +45,8 @@ export class LectureModuleManagementComponent implements OnInit {
                 .subscribe(
                     (lecture) => {
                         this.lecture = lecture;
-                        if (this.lecture?.lectureModules) {
-                            this.lectureModules = this.lecture?.lectureModules;
+                        if (this.lecture?.lectureUnits) {
+                            this.lectureUnits = this.lecture?.lectureUnits;
                         }
                     },
                     (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -54,13 +54,13 @@ export class LectureModuleManagementComponent implements OnInit {
         }
     }
 
-    createHTMLModule() {
-        const newHTMLModule = new HTMLModule();
-        newHTMLModule.name = 'Lorem Ipsum';
-        newHTMLModule.lecture = this.lecture;
-        newHTMLModule.markdown = '';
+    createHTMLUnit() {
+        const newHTMLUnit = new HTMLUnit();
+        newHTMLUnit.name = 'Lorem Ipsum';
+        newHTMLUnit.lecture = this.lecture;
+        newHTMLUnit.markdown = '';
         this.isLoading = true;
-        this.htmlModuleService.create(newHTMLModule).subscribe(
+        this.htmlUnitService.create(newHTMLUnit).subscribe(
             () => this.loadData(),
             (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         );
