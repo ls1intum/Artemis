@@ -371,7 +371,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private void addFeedbackToResult(Result result, TestResultsDTO report) {
-        final ProgrammingExercise programmingExercise = ((ProgrammingExercise) result.getParticipation().getExercise());
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
         // Extract test case feedback
