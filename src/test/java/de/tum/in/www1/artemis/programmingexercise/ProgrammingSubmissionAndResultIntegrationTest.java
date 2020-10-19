@@ -93,6 +93,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -113,6 +114,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     public void tearDown() {
         database.resetDatabase();
         bambooRequestMockProvider.reset();
+        bitbucketRequestMockProvider.reset();
     }
 
     /**
@@ -130,6 +132,32 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAll()).hasSize(0);
+    }
+
+    @ParameterizedTest
+    @EnumSource(IntegrationTestParticipationType.class)
+    void fetchCommitInfoOnNotifyPush(IntegrationTestParticipationType participationType) throws Exception {
+        Long participationId = getParticipationIdByType(participationType, 0);
+        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+                "\"displayName\": \"Artemis\"");
+
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
+
+        assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
+        // Needs to be set for using a custom repository method, known spring bug.
+        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
+
+        // Make sure the submission has the correct commit hash.
+        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        // The submission should be manual and submitted.
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(submission.isSubmitted()).isTrue();
     }
 
     /**
@@ -449,11 +477,18 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
+        return postSubmission(participationId, expectedStatus, BITBUCKET_REQUEST);
+    }
+
+    /**
+     * This is the simulated request from the VCS to Artemis on a new commit.
+     */
+    private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+        Object obj = jsonParser.parse(jsonRequest);
 
         // Api should return ok.
-        request.postWithoutLocation("/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + participationId, obj, expectedStatus, new HttpHeaders());
+        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
 
         // Submission should have been created for the participation.
         assertThat(submissionRepository.findAll()).hasSize(1);

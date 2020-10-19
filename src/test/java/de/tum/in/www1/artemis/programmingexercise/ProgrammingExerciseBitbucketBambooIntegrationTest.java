@@ -494,8 +494,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
 
-        // Set up mock requests for start participation
-        mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), false);
+        // Set up mock requests for start participation and that a lti user is not existent
+        final boolean ltiUserExists = false;
+        mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
