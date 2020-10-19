@@ -203,6 +203,7 @@ public class BambooBuildPlanService {
                 tasks.add(0, checkoutTask);
                 return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
             }
+            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
 
