@@ -97,13 +97,14 @@
                                         [icon]="'question-circle'"
                                         class="text-secondary ml-2"
                                         [ngbPopover]="popoverContent"
+                                        triggers="mouseenter:mouseleave"
                                         placement="bottom"
                                         container="body"
                                     ></fa-icon>
                                     <ng-template #popoverContent>
                                         <div class="d-flex flex-column run-after-due-date-disabled">
                                             <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
-                                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
+                                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id!, 'edit']" class="ml-auto">
                                                 <jhi-button [icon]="'arrow-right'" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                                             </a>
                                         </div>

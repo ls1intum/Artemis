@@ -24,7 +24,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Minuspoints']);
+    chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Deductions'], ['all penalties', 'all detected issues', 'all deducted points']);
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {

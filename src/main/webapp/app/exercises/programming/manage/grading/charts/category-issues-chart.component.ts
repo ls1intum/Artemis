@@ -42,7 +42,7 @@ export class CategoryIssuesChartComponent implements OnChanges {
             return {
                 w: columnWidth + '%',
                 h: (numStudents / this.totalStudents) * 95 + 5 + '%',
-                color: numIssues > this.maxGradedIssues ? '#dc3545' : '#ffc107',
+                color: numStudents === 0 ? '#28a745' : numIssues > this.maxGradedIssues ? '#dc3545' : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} have ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });

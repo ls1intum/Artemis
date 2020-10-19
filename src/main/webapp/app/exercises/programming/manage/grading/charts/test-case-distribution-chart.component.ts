@@ -25,7 +25,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     @Input() totalParticipations?: number;
     @Input() exercise: ProgrammingExercise;
 
-    chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points']);
+    chartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus', 'Points'], ['all weights', 'all weights and bonuses', 'all achievable points']);
     chartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
