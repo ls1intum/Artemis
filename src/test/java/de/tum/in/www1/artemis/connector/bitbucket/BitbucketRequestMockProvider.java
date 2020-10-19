@@ -122,14 +122,23 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+        mockCopyRepositoryForParticipationWithStatus(exercise, username, HttpStatus.CREATED);
+    }
+
+    public void mockCopyRepositoryForParticipationWithStatus(ProgrammingExercise exercise, String username, HttpStatus status) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var templateRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
 
-        mockCopyRepository(projectKey, projectKey, templateRepoName, clonedRepoName);
+        mockCopyRepository(projectKey, projectKey, templateRepoName, clonedRepoName, status);
     }
 
     public void mockCopyRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName)
+            throws JsonProcessingException, URISyntaxException {
+        mockCopyRepository(sourceProjectKey, targetProjectKey, sourceRepoName, targetRepoName, HttpStatus.CREATED);
+    }
+
+    public void mockCopyRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName, HttpStatus httpStatus)
             throws JsonProcessingException, URISyntaxException {
         sourceRepoName = sourceRepoName.toLowerCase();
         targetRepoName = targetRepoName.toLowerCase();
@@ -138,7 +147,7 @@ public class BitbucketRequestMockProvider {
         final var cloneBody = new BitbucketCloneDTO(targetRepoName, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
 
         mockServer.expect(requestTo(copyRepoPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(cloneBody)))
-                .andRespond(withStatus(HttpStatus.CREATED));
+                .andRespond(withStatus(httpStatus));
     }
 
     public void mockGetBitbucketRepository(ProgrammingExercise exercise, String bitbucketRepoName, BitbucketRepositoryDTO bitbucketRepository)

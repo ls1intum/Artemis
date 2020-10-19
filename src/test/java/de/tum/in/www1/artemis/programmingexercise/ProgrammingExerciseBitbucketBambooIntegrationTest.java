@@ -477,7 +477,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void configureRepository_createUserWhenLtiUserIsNotExistent() throws Exception {
+    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
         exercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
@@ -501,6 +501,86 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testInternalServerError() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // Create a team with students
+        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+
+        // test for internal server error
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipationWithStatus(exercise, team.getParticipantIdentifier(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // Start participation
+        try {
+            participationService.startExercise(exercise, team, false);
+        }
+        catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("Error while forking repository");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void copyRepository_testBadRequestError() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // Create a team with students
+        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+
+        // test for internal server error
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipationWithStatus(exercise, team.getParticipantIdentifier(), HttpStatus.BAD_REQUEST);
+
+        // Start participation
+        try {
+            participationService.startExercise(exercise, team, false);
+        }
+        catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo("Error while forking repository");
+        }
+    }
+
+    // @Test
+    // @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    // public void configureRepository_createUserWhenLtiUserIsNotExistent() throws Exception {
+    //// exercise.setMode(ExerciseMode.TEAM);
+    // final String edxUsername = userPrefixEdx.get() + "student";
+    // setupRepositoryMocksParticipant(exercise, edxUsername, studentRepo);
+    //
+    // programmingExerciseRepository.save(exercise);
+    // database.addTemplateParticipationForProgrammingExercise(exercise);
+    // database.addSolutionParticipationForProgrammingExercise(exercise);
+    //
+    // // create a team for the user (necessary condition before starting an exercise)
+    // User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
+    // edxStudent.setPassword(userService.encryptor().encrypt(edxStudent.getPassword()));
+    // edxStudent = userRepo.save(edxStudent);
+    //
+    // assertThat(userRepo.findOneByLogin(edxStudent.getLogin()).get().getFirstName()).as("Student was correctly created").isEqualTo(edxStudent.getFirstName());
+    //
+    // // Set up mock requests for start participation and that a lti user is not existent
+    // final boolean ltiUserExists = false;
+    // mockConnectorRequestsForStartParticipation(exercise, edxStudent.getLogin(), Set.of(edxStudent), ltiUserExists);
+    //
+    // // Start participation with original team
+    // participationService.startExercise(exercise, edxStudent, false);
+    // }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
