@@ -19,6 +19,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -71,6 +72,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private profileService: ProfileService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
+        public programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
     ) {}
 
     /**
