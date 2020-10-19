@@ -164,7 +164,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(exercise).isEqualTo(programmingExerciseRepository.findById(generatedExercise.getId()));
     }
 
     // TODO: Don't duplicate tests for jenkins + gitlab. Rather delegate to central test classes
