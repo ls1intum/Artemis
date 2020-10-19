@@ -14,7 +14,7 @@ import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-system-notification-management',
@@ -40,7 +40,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     constructor(
         private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,

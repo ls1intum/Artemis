@@ -3,8 +3,7 @@ import * as chai from 'chai';
 import { By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { MomentModule } from 'ngx-moment';
 import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,10 +27,6 @@ describe('ComplaintsComponent', () => {
                 {
                     provide: ComplaintService,
                     useClass: MockComplaintService,
-                },
-                {
-                    provide: AlertService,
-                    useClass: MockAlertService,
                 },
             ],
         })

@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import * as moment from 'moment';
 import * as $ from 'jquery';
@@ -73,7 +73,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

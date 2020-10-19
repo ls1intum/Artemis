@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -26,7 +26,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     constructor(
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private sortService: SortService,
         courseService: CourseManagementService,
         translateService: TranslateService,
