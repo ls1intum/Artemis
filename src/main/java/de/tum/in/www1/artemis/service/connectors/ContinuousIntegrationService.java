@@ -238,7 +238,6 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER -> Constants.ASSIGNMENT_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
                 };
             }
         },
@@ -249,7 +248,6 @@ public interface ContinuousIntegrationService {
                 return switch (language) {
                     case JAVA, PYTHON, HASKELL, KOTLIN -> "";
                     case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
                 };
             }
         }

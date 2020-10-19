@@ -38,7 +38,8 @@ public class JenkinsBuildPlanCreatorProvider {
             case PYTHON -> pythonJenkinsBuildPlanCreator;
             case C -> cJenkinsBuildPlanCreator;
             case HASKELL -> haskellJenkinsBuildPlanCreator;
-            default -> throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
+            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
+            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
         };
     }
 }
