@@ -88,7 +88,7 @@ public class BambooBuildPlanService {
     /**
      * Creates a Build Plan for a Programming Exercise
      * @param programmingExercise  programming exercise with the required information to create the base build plan
-     * @param planKey the key of the plan
+     * @param planKey the key of the build plan
      * @param repositoryName the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
      * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the unique identifier
