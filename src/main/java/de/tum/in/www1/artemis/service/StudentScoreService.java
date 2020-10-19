@@ -88,10 +88,12 @@ public class StudentScoreService {
     public void updateResult(Result updatedResult) {
         // ignore results without score or participation
         if (updatedResult.getScore() == null || updatedResult.getParticipation() == null || !Boolean.TRUE.equals(updatedResult.isRated())) {
+            log.info("Weil kein Score, keine Participation oder Unrated");
             return;
         }
 
         if (updatedResult.getParticipation().getClass() != StudentParticipation.class) {
+            log.info("Weil keine StudentParticipation");
             return;
         }
 
@@ -100,16 +102,19 @@ public class StudentScoreService {
         var exercise = participation.getExercise();
 
         if (student.isEmpty() || exercise == null) {
+            log.info("Weil keine Student oder keine Exercise");
             return;
         }
 
         if (updatedResult.getStudentScore() != null) {
+            log.info("Delete old StudentScore");
             studentScoreRepository.delete(updatedResult.getStudentScore());
         }
 
         StudentScore studentScore = new StudentScore(student.get(), exercise, updatedResult);
         studentScore.setScore(updatedResult.getScore());
 
+        log.info("Insert StudentScore: " + studentScore + " mit Exercise: " + exercise + ", Student: " + student.get() + " und Result: " + updatedResult);
         studentScore = studentScoreRepository.save(studentScore);
         log.info("StudentScore: " + studentScore + " with Score: " + studentScore.getScore());
     }
