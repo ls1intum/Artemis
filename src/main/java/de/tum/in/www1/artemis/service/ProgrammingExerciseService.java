@@ -174,9 +174,9 @@ public class ProgrammingExerciseService {
         String projectKey = programmingExercise.getProjectKey();
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
