@@ -1,12 +1,11 @@
 # Artemis Documentation
 
-We use [Sphinx] for creating the Artemis documentation.
-Documentation is written in [reStructuredText] (RST).
+We use [Sphinx] for creating the Artemis documentation using [reStructuredText] (RST).
 To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
 ## Documentation Hosting
 
-The [Artemis documentation] is hosted on [Read the Docs] (RtD) for the `develop` (latest) and `master` (stable) branches, as well as for git tags.
+[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) and `main` (stable) branches, as well as for git tags.
 RtD will build and deploy changes automatically.
 
 ## Installing Sphinx Locally
@@ -16,7 +15,7 @@ When using pip, consider using [Python virtual environments].
 ```bash
 pip install -r requirements.txt
 ```
-More install options are explained in the [Installing Sphinx] documentation.
+The [Installing Sphinx] documentation explains more install options.
 
 ## Running Sphinx Locally
 

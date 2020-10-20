@@ -1,11 +1,11 @@
 *********************************************
-Artemis Server Coding and Design Guidelines
+Artemis server coding and design guidelines
 *********************************************
 
-Folder Structure
+Folder structure
 ==================
 
-Main application is stored under ``/src/main`` and the main folders are:
+The main application is stored under ``/src/main`` and the main folders are:
 
 * resources - script, config files and templates are stored here.
     * config - different configurations (production, development, etc.) for application.
@@ -21,17 +21,17 @@ Main application is stored under ``/src/main`` and the main folders are:
         * rest - contains resources (REST controllers) represented by separate files.
         * websocket - contains files related to the Web Socket and you can use messagingTemplate to push data to the client from the server through them.
 
-1. Naming Convention:
+1. Naming convention:
 =====================
 
 All variables, methods and classes should use CamelCase style. The only difference: a first letter of class should be capital. Most importantly use intention-revealing, pronounceable names.
 
-2. Single Responsibility Principle:
+2. Single responsibility principle:
 ===================================
 
 One method should be responsible only for one action, it should do it well and do it only. Reduce coupling, if our method does two or three different things at a time then we should consider splitting the functionality.
 
-3. Small Methods:
+3. Small methods:
 =================
 
 There is not a standard pattern for method length among the developers. Someone can say 5, in some cases even 20 lines of code is okay. Just try to make methods as small as possible.
@@ -41,7 +41,7 @@ There is not a standard pattern for method length among the developers. Someone 
 
 Avoid code duplication. If we cannot reuse a method in other place then probably this method is bad and we should consider a better way to write this method. Use Abstraction to abstract common things in one place.
 
-5. Variables/Methods Declaration:
+5. Variables and methods declaration:
 =================================
 
 * Encapsulate the code you feel might changed in future.
@@ -78,7 +78,7 @@ Only if we are writing complicated algorithm and our comments will help other de
 
 Utility methods can and should be placed in a class named for specific functionality, not “miscellaneous stuff related to project”. Most of the time, our static methods belong on a related class.
 
-10. Auto-configuration:
+10. Auto configuration:
 =======================
 
 Spring Boot favors Java-based configuration. Although it is possible to use Sprint Boot with XML sources but it’s generally not recommended. You need not put all your @Configuration into a single class. The @Import annotation can be used to import additional configuration classes.
@@ -111,14 +111,14 @@ Additional notes on the controller methods:
     * Bad Request - the request was wrong.
     * Not Found - can't find the requested data or it should be not accessible yet.
 
-12. Dependency Injection:
+12. Dependency injection:
 =========================
 
 * Some of you may argue this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
 * Use setter based DI only for optional dependencies.
 * Avoid circular dependencies, try constructor and setter based DI for such cases.
 
-13. Best REST practices:
+13. REST best practices:
 ========================
 
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
