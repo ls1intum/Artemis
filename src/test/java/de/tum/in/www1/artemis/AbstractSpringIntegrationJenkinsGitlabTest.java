@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.util.Verifiable;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" }
+@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
 @TestPropertySource(properties = { "info.tutorial-course-groups.tutors=artemis-artemistutorial-tutors", "info.tutorial-course-groups.students=artemis-artemistutorial-students",
         "info.tutorial-course-groups.instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
