@@ -21,7 +21,9 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 
-@SpringBootTest
+@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
+        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=",
+        "artemis.athene.submit-url=http://localhost/submit" })
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
