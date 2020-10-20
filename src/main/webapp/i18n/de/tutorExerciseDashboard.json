@@ -1,13 +1,13 @@
 {
     "artemisApp": {
-        "tutorExerciseDashboard": {
+        "exerciseAssessmentDashboard": {
             "home": {
                 "title": "Dashboard für Lehrerübungen"
             },
             "participation": {
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
             },
-            "pageHeader": "Tutor Übungs-Dashboard für die Übung",
+            "pageHeader": "Bewertungs-Dashboard für die Übung",
             "testRunPageHeader": "Testlauf Übungs-dashboard für die Übung:",
             "yourStatus": "Dein Status",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",

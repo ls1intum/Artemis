@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, of, Subscription, throwError } from 'rxjs';
@@ -15,7 +15,7 @@ import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-re
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
 })
-export class CodeEditorActionsComponent implements OnInit, OnDestroy {
+export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
     CommitState = CommitState;
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
@@ -89,6 +89,22 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .getBuildingState()
             .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
             .subscribe();
+    }
+
+    /**
+     * After save and commit, we need to wait for the 'save' to settle, see the setter {@link CodeEditorContainerComponent#unsavedFilesValue}.
+     * This is because the user might have changed files while the commit was executing.
+     * In that case, we do not reset the commit state to CommitState.CLEAN.
+     * @param changes
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.editorState && changes.editorState.previousValue === EditorState.SAVING && this.commitState === CommitState.COMMITTING) {
+            if (changes.editorState.currentValue === EditorState.CLEAN) {
+                this.commitState = CommitState.CLEAN;
+            } else {
+                this.commitState = CommitState.UNCOMMITTED_CHANGES;
+            }
+        }
     }
 
     ngOnDestroy(): void {
@@ -180,10 +196,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     }
                 }),
                 tap(() => {
-                    this.commitState = CommitState.CLEAN;
-                    // Note: this is not 100% clean, but not setting it here would complicate the state model.
+                    if (this.editorState === EditorState.CLEAN) {
+                        this.commitState = CommitState.CLEAN;
+                    }
                     // We just assume that after the commit a build happens if the repo is buildable.
                     if (this.buildable) {
+                        // Note: this is not 100% clean, but not setting it here would complicate the state model.
                         this.isBuilding = true;
                     }
                 }),

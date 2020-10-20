@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
  * Service Implementation for managing Tutor-Assessment-Dashboard.
  */
 @Service
-public class TutorDashboardService {
+public class AssessmentDashboardService {
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -35,7 +35,7 @@ public class TutorDashboardService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public TutorDashboardService(ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
+    public AssessmentDashboardService(ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, SubmissionService submissionService,
             ResultService resultService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -45,13 +45,13 @@ public class TutorDashboardService {
     }
 
     /**
-     * Prepares the exercises for the tutor dashboard by setting the tutor participations and statistics
+     * Prepares the exercises for the assessment dashboard by setting the tutor participations and statistics
      *
-     * @param exercises exercises to be prepared for the tutor dashboard
+     * @param exercises exercises to be prepared for the assessment dashboard
      * @param tutorParticipations participations of the tutors
      * @param examMode flag should be set for exam dashboard
      */
-    public void prepareExercisesForTutorDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
+    public void prepareExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
