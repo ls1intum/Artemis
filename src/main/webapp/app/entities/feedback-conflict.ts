@@ -2,9 +2,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
 
 export enum FeedbackConflictType {
-    INCONSISTENT_COMMENT = 'INCONSISTENT COMMENT',
-    INCONSISTENT_SCORE = 'INCONSISTENT SCORE',
-    INCONSISTENT_FEEDBACK = 'INCONSISTENT FEEDBACK',
+    INCONSISTENT_COMMENT = 'INCONSISTENT_COMMENT',
+    INCONSISTENT_SCORE = 'INCONSISTENT_SCORE',
+    INCONSISTENT_FEEDBACK = 'INCONSISTENT_FEEDBACK',
 }
 
 export class FeedbackConflict implements BaseEntity {
