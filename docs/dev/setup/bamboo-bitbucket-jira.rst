@@ -172,11 +172,11 @@ under ``localhost:7990``.
 
 9. Generate a personal access token
 
+   While username and password can still be used as a fallback, this option is already marked as deprecated and will
+   be removed in the future.
+
    9.1 Personal access token for Bamboo.
    
-      While username and password can still be used as a fallback, this option is already marked as deprecated and
-      will be removed in the future.
-
       - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
           .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
@@ -193,9 +193,6 @@ under ``localhost:7990``.
                   token: #insert the token here
 
    9.2 Personal access token for Bitbucket.
-   
-      While username and password can still be used as a fallback, this option is already marked as deprecated and
-      will be removed in the future.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
