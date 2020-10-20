@@ -24,7 +24,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -115,7 +115,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
-        private alertService: AlertService,
+        private alertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s

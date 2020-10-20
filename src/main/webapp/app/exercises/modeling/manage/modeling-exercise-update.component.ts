@@ -12,7 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -43,7 +43,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,

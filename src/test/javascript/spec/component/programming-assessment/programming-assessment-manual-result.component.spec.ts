@@ -20,7 +20,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
@@ -95,7 +95,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 ComplaintService,
                 BuildLogService,
                 AccountService,
-                AlertService,
+                JhiAlertService,
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },

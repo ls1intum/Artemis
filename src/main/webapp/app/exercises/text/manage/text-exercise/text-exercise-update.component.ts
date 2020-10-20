@@ -13,7 +13,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseCategory, ExerciseMode } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
@@ -42,7 +42,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,

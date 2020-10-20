@@ -16,21 +16,23 @@ import de.tum.in.www1.artemis.config.Constants;
 public class GitlabSshCloneLinkInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")
-    private URL GITLAB_SERVER_URL;
+    private URL gitlabServerUrl;
 
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    private Optional<String> GITLAB_SSH_URL_TEMPLATE;
+    private Optional<String> gitlabSshUrlTemplate;
 
     @Value("${artemis.version-control.ssh-keys-url-path:#{null}}")
-    private Optional<String> GITLAB_SSH_KEYS_URL_PATH;
+    private Optional<String> gitlabSshKeysUrlPath;
 
     @Override
     public void contribute(Info.Builder builder) {
 
-        if (GITLAB_SSH_URL_TEMPLATE.isPresent()) {
-            builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, GITLAB_SSH_URL_TEMPLATE);
-            if (GITLAB_SSH_KEYS_URL_PATH.isPresent()) {
-                final var sshKeysUrl = GITLAB_SERVER_URL + GITLAB_SSH_KEYS_URL_PATH.get();
+        builder.withDetail(Constants.VERSION_CONTROL_URL, gitlabServerUrl);
+
+        if (gitlabSshUrlTemplate.isPresent()) {
+            builder.withDetail(Constants.INFO_SSH_CLONE_URL_DETAIL, gitlabSshUrlTemplate);
+            if (gitlabSshKeysUrlPath.isPresent()) {
+                final var sshKeysUrl = gitlabServerUrl + gitlabSshKeysUrlPath.get();
                 builder.withDetail(Constants.INFO_SSH_KEYS_URL_DETAIL, sshKeysUrl);
             }
         }

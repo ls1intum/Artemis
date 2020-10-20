@@ -6,7 +6,7 @@ import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
@@ -89,7 +89,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
             ],
             providers: [
-                AlertService,
+                JhiAlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

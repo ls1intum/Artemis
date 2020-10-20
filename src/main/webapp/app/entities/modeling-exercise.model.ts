@@ -14,6 +14,8 @@ export enum UMLDiagramType {
     CommunicationDiagram = 'CommunicationDiagram',
     ComponentDiagram = 'ComponentDiagram',
     DeploymentDiagram = 'DeploymentDiagram',
+    PetriNet = 'PetriNet',
+    SyntaxTree = 'SyntaxTree',
 }
 
 export class ModelingExercise extends Exercise {

@@ -54,8 +54,15 @@
             "startDate": "Start",
             "endDate": "End",
             "accessGroups": "Access Groups",
-            "onlineCourse": "Online Course",
-            "registrationEnabled": "Student Registration Enabled",
+            "onlineCourse": {
+                "title": "Online Course",
+                "description": "Activate this checkbox for external online courses (e.g. on edX) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator."
+            },
+            "registrationEnabled": {
+                "title": "Student Course Registration Enabled",
+                "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
+            },
+            "registrationConfirmationMessage": "Registration Confirmation Message",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -78,7 +85,7 @@
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
             },
-            "instructorDashboard": "Instructor Dashboard",
+            "instructorDashboard": "Instructor Course Dashboard",
             "presentationScoreEnabled": {
                 "title": "Presentation Score",
                 "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."

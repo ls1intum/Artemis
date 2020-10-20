@@ -10,8 +10,6 @@ export const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP;
 export const MIN_POINTS_GREEN = 80;
 export const MIN_POINTS_ORANGE = 40;
 
-export const TUM_USERNAME_REGEX = /^([a-z]{2}\d{2}[a-z]{3})$/;
-
 export const MAX_SCORE_PATTERN = '^[0-9]{0,4}$'; // make sure max score is a positive natural integer (or 0)and not too large
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 

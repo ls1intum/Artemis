@@ -8,8 +8,7 @@
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
                     "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
-                    "videoUrl": "https://www.youtube.com/embed/8SQH98Y2MRk?rel=0",
-                    "hint": "Kopiere und füge <tt>https://bitbucket.ase.in.tum.de</tt> als URL ein."
+                    "videoUrl": "https://www.youtube.com/embed/8SQH98Y2MRk?rel=0"
                 }
             },
             "exercises": {
