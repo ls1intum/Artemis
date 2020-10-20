@@ -9,7 +9,7 @@
     [class.active]="selected"
     [class.positive-feedback]="textBlockRef.feedback?.credits! > 0 && !conflictMode"
     [class.negative-feedback]="textBlockRef.feedback?.credits! < 0 && !conflictMode"
-    [class.neutral-feedback]="(textBlockRef.feedback?.credits === 0 && conflictMode) || (conflictMode && !isConflictingFeedback)"
+    [class.neutral-feedback]=" !conflictMode ? textBlockRef.feedback?.credits === 0 : !isConflictingFeedback"
     [class.conflicting-feedback]="isConflictingFeedback"
 ></span>
 <!-- Display Feedback Editor -->
