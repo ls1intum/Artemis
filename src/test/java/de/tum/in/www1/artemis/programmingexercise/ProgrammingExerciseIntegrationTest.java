@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -757,6 +759,19 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
         bambooRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest
+    // It should fail for all ProgrammingExercises except Haskell
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setCheckoutSolutionRepository(true);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 

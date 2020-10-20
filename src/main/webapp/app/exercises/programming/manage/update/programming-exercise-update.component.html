@@ -96,10 +96,16 @@
                         <option value="PYTHON">Python</option>
                         <option value="C">C</option>
                         <option value="HASKELL">Haskell</option>
+                        <option value="KOTLIN">Kotlin</option>
+                        <option value="VHDL">VHDL</option>
+                        <option value="ASSEMBLER">Assembler</option>
                     </select>
                 </div>
 
-                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+                <div
+                    class="form-group-narrow"
+                    *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN"
+                >
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
                     <input
                         required
@@ -285,6 +291,22 @@
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+                        </label>
+                    </div>
+                </div>
+                <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
+                <div class="form-group-narrow" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.HASKELL">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_checkoutSolutionRepository">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="heckoutSolutionRepository"
+                                id="field_checkoutSolutionRepository"
+                                [(ngModel)]="programmingExercise.checkoutSolutionRepository"
+                            />
+                            <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
                         </label>
                     </div>
                 </div>
