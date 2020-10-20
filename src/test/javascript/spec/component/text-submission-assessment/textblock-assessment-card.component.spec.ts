@@ -61,4 +61,18 @@ describe('TextblockAssessmentCardComponent', () => {
         element = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
         expect(element).toBeTruthy();
     });
+
+    it('should delete feedback', () => {
+        component.textBlockRef.initFeedback();
+        fixture.detectChanges();
+
+        spyOn(component.didDelete, 'emit');
+        const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
+        const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
+        feedbackEditorComponent.dismiss();
+
+        expect(component.textBlockRef.feedback).toBe(undefined);
+        expect(component.didDelete.emit).toHaveBeenCalledTimes(1);
+        expect(component.didDelete.emit).toHaveBeenCalledWith(component.textBlockRef);
+    });
 });

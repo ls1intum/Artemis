@@ -79,6 +79,8 @@ public class ParticipationService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final UrlService urlService;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
@@ -86,7 +88,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             TeamRepository teamRepository, StudentExamRepository studentExamRepository, UserService userService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService,
-            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository) {
+            @Lazy QuizScheduleService quizScheduleService, RatingRepository ratingRepository, UrlService urlService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -106,6 +108,7 @@ public class ParticipationService {
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
         this.ratingRepository = ratingRepository;
+        this.urlService = urlService;
     }
 
     /**
@@ -264,7 +267,7 @@ public class ParticipationService {
                 participation.setSubmissions(programmingSubmissions);
                 initializeSubmission(participation, exercise, null);
                 submission = participation.getSubmissions().iterator().next();
-                // required so that the tutor dashboard statistics are calculated correctly
+                // required so that the assessment dashboard statistics are calculated correctly
                 submission.setSubmitted(true);
             }
             else {
@@ -519,7 +522,7 @@ public class ParticipationService {
             final var projectKey = programmingExercise.getProjectKey();
             final var participantIdentifier = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
+            final var templateRepoName = urlService.getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
             var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)

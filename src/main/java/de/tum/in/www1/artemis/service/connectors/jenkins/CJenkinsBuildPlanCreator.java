@@ -22,7 +22,7 @@ public class CJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
         final var resourcePath = Path.of("templates", "jenkins", "c", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH,
@@ -30,14 +30,5 @@ public class CJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
 
         final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
-    }
-
-    @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
-        if (!isSequential) {
-            return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
-        }
-
-        throw new UnsupportedOperationException("Sequential Jenkins builds not yet supported for C!");
     }
 }
