@@ -60,6 +60,8 @@ Suggestions
 
        Do not reload, you will receive a warning
 
+.. _participation_guide:
+
 Participating in the Artemis Online Exam
 ----------------------------------------
 
@@ -284,6 +286,8 @@ End Screen
    :align: center
 
    End Screen after Early Hand in
+
+.. _summary_guide:
 
 Summary
 ^^^^^^^

@@ -2,10 +2,15 @@
 Instructors’ Guide
 ******************
 
-    .. _timeline:
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
+|
 
 Timeline of an Artemis Online Exam
 ==================================
+.. _timeline:
 
 .. figure:: instructor/timeline.png
    :alt: Timeline of an Artemis Exam
@@ -218,7 +223,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 2. **Conduction**
 -----------------
-The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`.
+The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. When a student submits the exam, he cannot make any changes anymore to his exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
 
     .. _exam_assessment:
 
@@ -285,11 +290,13 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 .. note::
         Unsubmitted exams are not eligable for the assessment process.
 
-- By eliminating unsubmitted exams and exercises which were not part of the exam conduction, see `1.3 Exercise Groups`_, you can gain a more realistic overview of the performance of the students.
+- Review student performance using various metrics such as average, median and standard deviation.
+- Unsubmitted exams are not eligable for assessment and thereby appear as having no score. It can happen that an exercise is not part of any :ref:`student exam <student_exams>`. This is the case when Artemis selects a different exercise of the same exercise group for every :ref:`student exam <student_exams>`. Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the :ref:`exam conduction <exam_conduction>`, you can gain a more realistic overview of the performance of the students.
+- Review the students perceived difficulty of every exercise to improve exams in the future.
 - The exam scores can also be exported via |export|. This is useful to upload the results into university systems like `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file.
 
 - The exported ``CSV`` file includes the ``students name``, ``username``, ``email``, ``registration number``, their assigned ``exercises``, and their ``score`` for every exercise. 
-- The exported ``CSV`` file also contains the aggregated statistics of the exam conduction such as the ``number of participations`` and the ``average score`` per exercise. 
+- The exported ``CSV`` file also contains the aggregated statistics of the :ref:`exam conduction <exam_conduction>` such as the ``number of participations`` and the ``average score`` per exercise. 
 
 .. figure:: instructor/exam_statistics.png
    :alt: Exam Scores page
@@ -301,13 +308,34 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 
 5. **Student Review**
 ---------------------
-You can set the student review period in the :ref:`exam configuration <exam_creation_and_configuration>`, see `1.2 Create and Configure Exam`_. During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`.
+During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`. Students can provide their reasoning through a text message to clarify their objections. You can set the student review period in the :ref:`exam configuration <exam_creation_and_configuration>`, see `1.2 Create and Configure Exam`_. 
+
+- Students can submit complaints about their assessment in the *Summary* page. 
+- During the student review, a complaint button will appear for every manually assessed exercise. 
+- Students cannot submit complaints for automatically assessed exercises like quiz and programming exercises.
+- Students will be able to submit a complaint for programming exercises, if the automatic result has been reviewed manually by an assessor. This is only possible if ref:`manual assessment <manual_assessment>` is enabled for the programming exercise.
+
+    .. note::
+            If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
+
+- For more information on how students can participate in the student review and submit complaints, see :ref:`student summary guide <summary_guide>`.
+
 
     .. _complaint_assessment:
 
 6. **Complaint Assessment**
 ---------------------------
-During the complaint assessment, your assessors can review the complaints made by the students in the :ref:`student review <student_review>`. A second assessor must review the complaint and respond to it. You can access the complaints from the *Assessment Dashboard*. Artemis updates the results automatically when changes occur. After the complaint assessment, you can view the updated exam scores in the *Scores* page. There you can also export the data in ``CSV`` format, see `4.1 Exam Scores`_. 
+Artemis collects the complaints submitted by the students during the :ref:`student review <student_review>`. You can access and review the complaints similar to the :ref:`submissions <exam_assessment>` from the *Assessment Dashboard*. Every assessor can evaluate a complaint about the assessment of his/her peers and either accept or reject the complaint. Artemis will automatically update the results of accepted complaints. You can view the updated scores immediately in the *Scores* page. There you can also export the updated data in ``CSV`` format, see `4.1 Exam Scores`_. 
+
+- The complaints appear below the exercise submissions.
+- The original assessor of an assessment cannot respond to the complaint. A second assessor must review the complaint and respond to it.
+- Artemis tracks the progress of the complaint assessment and displays a progress bar in the *Assessment Dashboard*. This allows you to keep track of the complaint assessment and see how many open complaints are left.
+
+.. figure:: instructor/complaint_response.png
+   :alt: Complaint Response
+   :align: center
+
+   Assessor responding to a Complaint
 
 .. |assess_test_runs| image:: instructor/buttons/assess_test_runs.png
 .. |check_plagiarism| image:: instructor/buttons/check_plagiarism.png
@@ -330,6 +358,3 @@ During the complaint assessment, your assessors can review the complaints made b
 .. |summary| image:: instructor/buttons/summary.png
 .. |unlock_repo| image:: instructor/buttons/unlock_repo.png
 .. |view| image:: instructor/buttons/view.png
-
-
-
