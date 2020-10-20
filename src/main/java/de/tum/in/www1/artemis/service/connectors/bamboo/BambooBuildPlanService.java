@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationSer
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,7 +88,7 @@ public class BambooBuildPlanService {
     /**
      * Creates a Build Plan for a Programming Exercise
      * @param programmingExercise  programming exercise with the required information to create the base build plan
-     * @param planKey the key of the plan
+     * @param planKey the key of the build plan
      * @param repositoryName the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
      * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the unique identifier
@@ -149,10 +150,10 @@ public class BambooBuildPlanService {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         switch (programmingLanguage) {
-            case JAVA -> {
+            case JAVA, KOTLIN -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:java15-2"));
+                    defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
                 }
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
@@ -177,27 +178,31 @@ public class BambooBuildPlanService {
                 }
             }
             case PYTHON, C -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
-                }
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
-                tasks.add(0, checkoutTask);
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "test-reports/*results.xml");
             }
             case HASKELL -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
-                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                    defaultJob.dockerConfiguration(new DockerConfiguration().image("tumfpv/fpv-stack:8.4.4"));
-                }
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-reports/*.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
-                tasks.add(0, checkoutTask);
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
             }
+            case VHDL, ASSEMBLER -> {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
+            }
+            // this is needed, otherwise the compiler complaints with missing return statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
+    }
+
+    private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
+            Collection<String> activeProfiles, String resultDirectories) {
+        // Do not run the builds in extra docker containers if the dev-profile is active
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
+        }
+        final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
+        tasks.add(0, checkoutTask);
+        return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
@@ -272,12 +277,14 @@ public class BambooBuildPlanService {
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
-                final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
-                        .split("_"))).collect(Collectors.toList());
-                descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
-                final var scriptDescription = String.join(" ", descriptionElements);
-                try (final var inputStream = resource.getInputStream()) {
-                    tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream)));
+                if (resource.getFilename() != null) {
+                    final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
+                            .split("_"))).collect(Collectors.toList());
+                    descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
+                    final var scriptDescription = String.join(" ", descriptionElements);
+                    try (final var inputStream = resource.getInputStream()) {
+                        tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream, Charset.defaultCharset())));
+                    }
                 }
             }
 
@@ -286,5 +293,15 @@ public class BambooBuildPlanService {
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
+    }
+
+    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
+        var dockerImage = switch (language) {
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-2";
+            case PYTHON, C -> "ls1tum/artemis-python-docker:latest";
+            case HASKELL -> "tumfpv/fpv-stack:8.4.4";
+            case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
+        };
+        return new DockerConfiguration().image(dockerImage);
     }
 }

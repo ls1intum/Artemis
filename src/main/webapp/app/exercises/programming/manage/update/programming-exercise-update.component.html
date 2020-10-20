@@ -96,10 +96,16 @@
                         <option value="PYTHON">Python</option>
                         <option value="C">C</option>
                         <option value="HASKELL">Haskell</option>
+                        <option value="KOTLIN">Kotlin</option>
+                        <option value="VHDL">VHDL</option>
+                        <option value="ASSEMBLER">Assembler</option>
                     </select>
                 </div>
 
-                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+                <div
+                    class="form-group-narrow"
+                    *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN"
+                >
                     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
                     <input
                         required

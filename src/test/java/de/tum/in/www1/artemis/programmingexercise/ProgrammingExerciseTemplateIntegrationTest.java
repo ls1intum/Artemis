@@ -37,6 +37,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.util.*;
 
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -140,6 +141,38 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
         var testResults = readTestReports();
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 13));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void runTemplateTests_kotlin_exercise() throws Exception {
+        exercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
+
+        mockConnectorRequestsForSetup(exercise);
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        moveAssignmentSourcesOf(exerciseRepo);
+        int exitCode = invokeMaven();
+        assertThat(exitCode).isNotEqualTo(0);
+
+        var testResults = readTestReports();
+        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.FAILED, 12));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void runTemplateTests_kotlin_solution() throws Exception {
+        exercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
+
+        mockConnectorRequestsForSetup(exercise);
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        moveAssignmentSourcesOf(solutionRepo);
+        int exitCode = invokeMaven();
+        assertThat(exitCode).isEqualTo(0);
+
+        var testResults = readTestReports();
+        assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 12));
     }
 
     private int invokeMaven() throws MavenInvocationException {
