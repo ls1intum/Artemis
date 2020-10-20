@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,8 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -63,6 +66,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 
     @SpyBean
     protected ProgrammingSubmissionService programmingSubmissionService;
+
+    @Autowired
+    protected DatabaseUtilService database;
+
+    @Autowired
+    protected RequestUtilService request;
 
     @AfterEach
     public void resetSpyBeans() {

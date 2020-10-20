@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -38,7 +38,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
         private javaBridge: OrionConnectorService,
         private ideBuildAndTestService: OrionBuildAndTestService,

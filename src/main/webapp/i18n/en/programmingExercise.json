@@ -49,6 +49,10 @@
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
+            "checkoutSolutionRepository": {
+                "title": "Check out repository of sample solution",
+                "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful to compare the student's submission with the sample solution."
+            },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
                 "description": "This option enables the execution of static code analysis. Additional options are available on the grading page. This option can't be changed after the creation of the exercise."

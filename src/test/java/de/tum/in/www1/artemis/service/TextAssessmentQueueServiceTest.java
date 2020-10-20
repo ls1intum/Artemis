@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -36,9 +35,6 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    DatabaseUtilService database;
 
     private Random random;
 

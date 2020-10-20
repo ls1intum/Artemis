@@ -7,7 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -23,7 +23,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private fileUploadExerciseService: FileUploadExerciseService,
         private route: ActivatedRoute,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     /**

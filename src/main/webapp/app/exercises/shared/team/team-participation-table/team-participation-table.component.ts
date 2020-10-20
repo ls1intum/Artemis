@@ -4,7 +4,7 @@ import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Course } from 'app/entities/course.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
@@ -46,7 +46,7 @@ export class TeamParticipationTableComponent implements OnInit {
     exercises: ExerciseForTeam[];
     isLoading: boolean;
 
-    constructor(private teamService: TeamService, private exerciseService: ExerciseService, private jhiAlertService: AlertService, private router: Router) {}
+    constructor(private teamService: TeamService, private exerciseService: ExerciseService, private jhiAlertService: JhiAlertService, private router: Router) {}
 
     /**
      * Loads all needed data from the server for this component

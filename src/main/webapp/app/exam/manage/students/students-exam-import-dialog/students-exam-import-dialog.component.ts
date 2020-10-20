@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -43,7 +43,7 @@ export class StudentsExamImportDialogComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private activeModal: NgbActiveModal, private jhiAlertService: AlertService, private examManagementService: ExamManagementService) {}
+    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService, private examManagementService: ExamManagementService) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
