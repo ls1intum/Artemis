@@ -43,4 +43,4 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
     declarations: [ExerciseAssessmentDashboardComponent],
     providers: [],
 })
-export class ArtemisTutorExerciseDashboardModule {}
+export class ArtemisExerciseAssessmentDashboardModule {}

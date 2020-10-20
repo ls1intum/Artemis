@@ -45,7 +45,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('TutorExerciseDashboardComponent', () => {
+describe('ExerciseAssessmentDashboardComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
     let comp: ExerciseAssessmentDashboardComponent;

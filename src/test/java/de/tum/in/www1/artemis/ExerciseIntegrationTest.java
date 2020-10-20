@@ -81,7 +81,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboardTest() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboardTest() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
@@ -455,7 +455,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboard() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             var tutors = findTutors(course);
@@ -493,7 +493,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(value = "tutor6", roles = "TA")
-    public void testGetStatsForTutorExerciseDashboard_forbidden() throws Exception {
+    public void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }

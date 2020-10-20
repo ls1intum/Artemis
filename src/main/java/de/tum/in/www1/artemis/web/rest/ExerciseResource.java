@@ -197,7 +197,7 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
