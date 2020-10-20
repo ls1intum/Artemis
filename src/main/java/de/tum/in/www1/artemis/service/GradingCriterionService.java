@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -44,6 +46,41 @@ public class GradingCriterionService {
      */
     public List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(long exerciseId) {
         return gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+    }
+
+    /**
+     * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
+     * @param feedback feedback element that was set by SGI
+     * @param totalScore totalScore which is summed up. Starts from 0.0
+     * @return calculated total score from feedback elements set by SGI
+     */
+    public double computeTotalScore(Feedback feedback, double totalScore) {
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+        if (gradingInstructions.get(feedback.getGradingInstruction().getId()) != null) {
+            // We Encountered this grading instruction before
+            var maxCount = feedback.getGradingInstruction().getUsageCount();
+            var encounters = gradingInstructions.get(feedback.getGradingInstruction().getId());
+            if (maxCount > 0) {
+                if (encounters >= maxCount) {
+                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
+                    gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
+                }
+                else {
+                    // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
+                    gradingInstructions.put(feedback.getGradingInstruction().getId(), encounters + 1);
+                    totalScore += feedback.getGradingInstruction().getCredits();
+                }
+            }
+            else {
+                totalScore += feedback.getCredits();
+            }
+        }
+        else {
+            // First time encountering the grading instruction
+            gradingInstructions.put(feedback.getGradingInstruction().getId(), 1);
+            totalScore += feedback.getCredits();
+        }
+        return totalScore;
     }
 
 }
