@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -59,7 +59,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private cancelConfirmationText: string;
 
     constructor(
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,
@@ -134,7 +134,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {

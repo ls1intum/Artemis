@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -37,7 +37,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         private examManagementService: ExamManagementService,
         private eventManager: JhiEventManager,
         private accountService: AccountService,
-        private jhiAlertService: AlertService,
+        private jhiAlertService: JhiAlertService,
         private sortService: SortService,
     ) {
         this.predicate = 'id';

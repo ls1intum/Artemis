@@ -42,9 +42,7 @@ import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -83,12 +81,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     UserRepository userRepo;
-
-    @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    RequestUtilService request;
 
     @Autowired
     ResultRepository resultRepository;
@@ -173,10 +165,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport() {
-        final var resultNotification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
+        var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         final var staticCodeAnalysisFeedback = feedbackService
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
-        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
+                .createFeedbackFromStaticCodeAnalysisReports(ModelFactory.generateStaticCodeAnalysisReports(programmingExerciseWithStaticCodeAnalysis.getProgrammingLanguage()));
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, notification);
         final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)

@@ -203,13 +203,52 @@
                         ngbTooltip="{{ 'artemisApp.course.studentQuestionsEnabled.description' | translate }}"
                     ></fa-icon>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="onlineCourse" id="field_onlineCourse" formControlName="onlineCourse" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse" for="field_onlineCourse">Online Course</label>
+                <div class="form-check" *ngIf="!this.course.registrationEnabled">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="onlineCourse"
+                        id="field_onlineCourse"
+                        formControlName="onlineCourse"
+                        [checked]="course.onlineCourse"
+                        (change)="this.changeOnlineCourse()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse">Online Course</label>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | translate }}"
+                    ></fa-icon>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="registrationEnabled" id="field_registrationEnabled" formControlName="registrationEnabled" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled" for="field_registrationEnabled">Registration Enabled</label>
+                <div class="form-check" *ngIf="!this.course.onlineCourse">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="registrationEnabled"
+                        id="field_registrationEnabled"
+                        [checked]="course.registrationEnabled"
+                        (change)="this.changeRegistrationEnabled()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | translate }}"
+                    ></fa-icon>
+                </div>
+                <div class="form-group" *ngIf="course.registrationEnabled">
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
+                        >Registration Confirmation Message</label
+                    >
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="registrationConfirmationMessage"
+                        id="field_registrationConfirmationMessage"
+                        formControlName="registrationConfirmationMessage"
+                    />
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" [checked]="course.presentationScore !== 0" (change)="this.changePresentationScoreInput()" />

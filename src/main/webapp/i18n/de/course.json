@@ -54,8 +54,15 @@
             "startDate": "Start",
             "endDate": "Ende",
             "accessGroups": "Zugriffsrechte",
-            "onlineCourse": "Online Kurs",
-            "registrationEnabled": "Studierenden Registrierung aktiviert",
+            "onlineCourse": {
+                "title": "Online Kurs",
+                "description": "Aktiviere diese Checkbox für externe Online Kurse (z.B. auf edX), damit Studierende diesen Artemis Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Account Erstellung, sofern dies vom Artemis System Administrator eingestellt ist."
+            },
+            "registrationEnabled": {
+                "title": "Kurs Registrierung für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
+            },
+            "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
@@ -78,7 +85,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
-            "instructorDashboard": "Instruktor Dashboard",
+            "instructorDashboard": "Dozenten Kurs Dashboard",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
