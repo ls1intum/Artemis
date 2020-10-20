@@ -139,7 +139,7 @@ public class FeedbackService {
      * @return A filtered and better formatted error message
      */
     private String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
             // Replace all Junit Prefixes:
             // if it is the first line of the feedback, do not add empty newline at the start;
             // otherwise, insert additional newline to visually separate different exceptions.

@@ -28,6 +28,7 @@ All these exercises are supposed to be run either live in the lecture with insta
 
    user/introduction
    user/exercises
+   user/exam_mode
 
 
 .. toctree::
