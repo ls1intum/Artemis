@@ -141,6 +141,7 @@ public class ProgrammingExerciseImportService {
         versionControlService.get().addWebHooksForExercise(newExercise);
 
         try {
+            // Adjust placeholders that were replaced during creation of template exercise
             adjustProjectNames(templateExercise, newExercise);
         }
         catch (Exception e) {
