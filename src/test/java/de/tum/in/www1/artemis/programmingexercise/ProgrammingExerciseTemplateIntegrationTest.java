@@ -143,6 +143,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(TestResult.SUCCESSFUL, 13));
     }
 
+    // TODO: runTemplateTests_swift_exercise
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void runTemplateTests_kotlin_exercise() throws Exception {

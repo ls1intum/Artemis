@@ -185,23 +185,11 @@ public class BambooBuildPlanService {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/test-reports/*.xml");
             }
-            case VHDL, ASSEMBLER -> {
+            case VHDL, ASSEMBLER, SWIFT -> {
                 // Do not run the builds in extra docker containers if the dev-profile is active
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, activeProfiles, "**/result.xml");
             }
             // this is needed, otherwise the compiler complaints with missing return statement
-            case SWIFT -> {
-                // Do not run the builds in extra docker containers if the dev-profile is active
-                // if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                defaultJob.dockerConfiguration(new DockerConfiguration().image("swift:latest"));
-                // }
-                // TODO: swift result directories correct?
-                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns);
-                tasks.add(0, checkoutTask);
-                // return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
-                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])));
-            }
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
@@ -314,6 +302,7 @@ public class BambooBuildPlanService {
             case PYTHON, C -> "ls1tum/artemis-python-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.4.4";
             case VHDL, ASSEMBLER -> "tizianleonhardt/era-artemis-vhdl:latest";
+            case SWIFT -> "swift:latest";
         };
         return new DockerConfiguration().image(dockerImage);
     }
