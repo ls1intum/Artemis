@@ -20,7 +20,7 @@ public interface FeedbackConflictRepository extends JpaRepository<FeedbackConfli
             + "left join fetch conflict.firstFeedback f1 left join fetch f1.result r1 left join fetch r1.submission left join fetch r1.feedbacks left join fetch r1.assessor "
             + "left join fetch conflict.secondFeedback f2 left join fetch f2.result r2 left join fetch r2.submission left join fetch r2.feedbacks left join fetch r2.assessor "
             + "where conflict.conflict = true and (conflict.firstFeedback.id = :feedbackId or conflict.secondFeedback.id = :feedbackId)")
-    List<FeedbackConflict> findAllByFeedbackId(@Param("feedbackId") Long feedbackId);
+    List<FeedbackConflict> findAllWithEagerFeedbackResultAndSubmissionByFeedbackId(@Param("feedbackId") Long feedbackId);
 
     @Query("select distinct conflict from FeedbackConflict conflict where conflict.conflict = true and (conflict.firstFeedback.id in (:feedbackIds) or conflict.secondFeedback.id in (:feedbackIds))")
     List<FeedbackConflict> findAllConflictsByFeedbackList(@Param("feedbackIds") List<Long> feedbackIds);
