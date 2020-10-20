@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -56,8 +57,8 @@ public class AssessmentService {
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
-        Double maxScore = exercise.getMaxScore();
-        Double bonusPoints = exercise.getBonusPoints();
+        double maxScore = exercise.getMaxScore();
+        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
         // Exam results and manual results of programming exercises are always to rated
         if (exercise.hasExerciseGroup() || exercise instanceof ProgrammingExercise) {
