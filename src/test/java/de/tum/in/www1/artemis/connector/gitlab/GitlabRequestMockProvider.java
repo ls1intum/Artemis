@@ -67,14 +67,17 @@ public class GitlabRequestMockProvider {
         mockAddUserToGroup(exercise);
     }
 
-    private void mockGetUserID() throws GitLabApiException {
+    public void mockGetUserID() throws GitLabApiException {
         org.gitlab4j.api.models.User instructor = new org.gitlab4j.api.models.User();
         org.gitlab4j.api.models.User tutor = new org.gitlab4j.api.models.User();
+        org.gitlab4j.api.models.User user = new org.gitlab4j.api.models.User();
         instructor.setId(2);
         tutor.setId(3);
+        user.setId(4);
 
         doReturn(instructor).when(userApi).getUser("instructor1");
         doReturn(tutor).when(userApi).getUser("tutor1");
+        doReturn(user).when(userApi).getUser("user1");
     }
 
     public void mockUpdateUser() throws GitLabApiException {

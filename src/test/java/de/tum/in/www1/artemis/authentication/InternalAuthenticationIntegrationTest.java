@@ -13,10 +13,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -42,7 +39,6 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
@@ -124,7 +120,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @Order(1)
     public void launchLtiRequest_authViaEmail_success() throws Exception {
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
@@ -145,7 +140,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithAnonymousUser
-    @Order(2)
     public void authenticateAfterLtiRequest_success() throws Exception {
         launchLtiRequest_authViaEmail_success();
 
@@ -158,7 +152,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "ab12cde")
-    @Order(3)
     public void registerForCourse_internalAuth_success() throws Exception {
         final var student = ModelFactory.generateActivatedUser("ab12cde");
         userRepository.save(student);
@@ -176,14 +169,15 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    @Order(4)
     public void createUser_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman1");
+        student.setLogin("user1");
         student.setPassword("foobar");
-        student.setEmail("batman1@secret.invalid");
+        student.setEmail("user1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
 
@@ -202,14 +196,15 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    @Order(5)
     public void createTutor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman3");
+        student.setLogin("tutor1");
         student.setPassword("foobar");
-        student.setEmail("batman3@secret.invalid");
+        student.setEmail("btutor1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
         authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
@@ -228,14 +223,15 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    @Order(6)
     public void createInstructor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman2");
+        student.setLogin("instructor1");
         student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid2");
+        student.setEmail("instructor1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
         authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
@@ -255,7 +251,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithAnonymousUser
-    @Order(7)
     public void testJWTAuthentication() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
@@ -272,7 +267,6 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    @Order(8)
     public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockUpdateUser();
