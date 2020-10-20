@@ -182,7 +182,7 @@ under ``localhost:7990``.
           .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
-      - Copy the generated token to your ``application-local.yml``:
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
 
       .. code:: yaml
 
@@ -196,7 +196,7 @@ under ``localhost:7990``.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
-      - Copy the generated token to your ``application-local.yml``:
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control ``:
 
       .. code:: yaml
 
