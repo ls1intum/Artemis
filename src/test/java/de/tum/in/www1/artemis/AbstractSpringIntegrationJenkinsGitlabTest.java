@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
+@ActiveProfiles({ "artemis", "gitlab", "jenkins", "athene" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest {
 

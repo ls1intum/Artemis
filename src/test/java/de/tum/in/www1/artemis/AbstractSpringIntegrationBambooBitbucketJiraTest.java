@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.util.Verifiable;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling", "athene" })
+@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${server.url}")
