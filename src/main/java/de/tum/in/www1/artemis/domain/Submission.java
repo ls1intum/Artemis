@@ -99,7 +99,11 @@ public abstract class Submission extends DomainObject {
      * @return First Element in the ArrayList
      */
     public Result getResult() {
-        return results.get(0);
+        if(results.isEmpty()) {
+            return null;
+        } else {
+            return results.get(results.size() - 1);
+        }
     }
 
     /**
