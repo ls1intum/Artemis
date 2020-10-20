@@ -40,7 +40,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.feedback.credits! > 0 && !this.conflictMode;
     }
 
-    @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
+    @HostBinding('class.alert-danger') get negativeFeedbackClass(): boolean {
         return this.feedback.credits! < 0 && !this.conflictMode;
     }
 
