@@ -10,6 +10,9 @@ export enum ProgrammingLanguage {
     PYTHON = 'PYTHON',
     C = 'C',
     HASKELL = 'HASKELL',
+    KOTLIN = 'KOTLIN',
+    VHDL = 'VHDL',
+    ASSEMBLER = 'ASSEMBLER',
     SWIFT = 'SWIFT',
 }
 
@@ -27,6 +30,7 @@ export class ProgrammingExercise extends Exercise {
     public packageName?: string;
     public problemStatement?: string;
     public sequentialTestRuns?: boolean;
+    public checkoutSolutionRepository?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
     public testCasesChanged?: boolean;
@@ -52,5 +56,6 @@ export class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
+        this.checkoutSolutionRepository = false; // default value
     }
 }

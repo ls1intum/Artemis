@@ -20,7 +20,8 @@ public class JenkinsBuildPlanCreatorProvider {
     private final SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator;
 
     public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator, PythonJenkinsBuildPlanCreator pythonJenkinsBuildPlanCreator,
-            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator, SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator) {
+            CJenkinsBuildPlanCreator cJenkinsBuildPlanCreator, HaskellJenkinsBuildPlanCreator haskellJenkinsBuildPlanCreator,
+            SwiftJenkinsBuildPlanCreator swiftJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
         this.pythonJenkinsBuildPlanCreator = pythonJenkinsBuildPlanCreator;
         this.cJenkinsBuildPlanCreator = cJenkinsBuildPlanCreator;
@@ -37,12 +38,13 @@ public class JenkinsBuildPlanCreatorProvider {
      */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
-            case JAVA -> javaJenkinsBuildPlanCreator;
+            case JAVA, KOTLIN -> javaJenkinsBuildPlanCreator;
             case PYTHON -> pythonJenkinsBuildPlanCreator;
             case C -> cJenkinsBuildPlanCreator;
             case HASKELL -> haskellJenkinsBuildPlanCreator;
+            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
+            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
             case SWIFT -> swiftJenkinsBuildPlanCreator;
-            default -> throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
         };
     }
 }

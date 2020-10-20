@@ -8,10 +8,11 @@ import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.serv
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
 import { TranslateModule } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
+
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +24,7 @@ describe('Delete Dialog Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
-            providers: [DeleteDialogService, AlertService],
+            providers: [DeleteDialogService, JhiAlertService],
         });
 
         service = TestBed.inject(DeleteDialogService);

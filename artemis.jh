@@ -101,6 +101,9 @@ enum ProgrammingLanguage {
     PYTHON,
     C,
     HASKELL,
+    KOTLIN,
+    VHDL,
+    ASSEMBLER,
     SWIFT
 }
 

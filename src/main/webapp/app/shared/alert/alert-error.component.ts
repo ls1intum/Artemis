@@ -2,7 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlert, JhiEventManager, JhiEventWithContent } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
-import { AlertService } from 'app/core/alert/alert.service';
+import { JhiAlertService } from 'ng-jhipster';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 
 @Component({
@@ -22,7 +22,7 @@ export class AlertErrorComponent implements OnDestroy {
     errorListener: Subscription;
     httpErrorListener: Subscription;
 
-    constructor(private alertService: AlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
+    constructor(private alertService: JhiAlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: JhiEventWithContent<AlertError>) => {
             const errorResponse = response.content;
             this.addErrorAlert(errorResponse.message, errorResponse.key, errorResponse.params);
