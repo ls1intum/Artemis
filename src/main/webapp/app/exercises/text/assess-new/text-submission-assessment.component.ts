@@ -321,18 +321,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        feedbacks.forEach(function (feedback) {
-            feedback.conflictingTextAssessments = [
-                ...(feedback['firstConflicts'] ? feedback['firstConflicts'] : []),
-                ...(feedback['secondConflicts'] ? feedback['secondConflicts'] : []),
-            ];
-            delete feedback['firstConflicts'];
-            delete feedback['secondConflicts'];
-            feedback.conflictingTextAssessments.forEach(function (textAssessmentConflict) {
-                textAssessmentConflict.conflictingFeedbackId =
-                    textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;
-            });
-        });
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {

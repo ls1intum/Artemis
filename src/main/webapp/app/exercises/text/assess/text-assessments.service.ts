@@ -105,6 +105,7 @@ export class TextAssessmentsService {
                     result.participation = participation;
                     // Make sure Feedbacks Array is initialized
                     result.feedbacks = result.feedbacks || [];
+                    TextAssessmentsService.convertFeedbackConflictsFromServer(result.feedbacks);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
                 map((response) => response.body!),
@@ -174,6 +175,24 @@ export class TextAssessmentsService {
 
     private static convertItemFromServer(result: Result): Result {
         return Object.assign({}, result);
+    }
+
+    /**
+     * Convert Feedback elements to use single array of FeedbackConflicts in the Feedback class.
+     * It is stored with two references on the server side.
+     *
+     * @param feedbacks list of Feedback elements to convert.
+     */
+    private static convertFeedbackConflictsFromServer(feedbacks: Feedback[]): void {
+        feedbacks.forEach((feedback) => {
+            feedback.conflictingTextAssessments = [...(feedback['firstConflicts'] || []), ...(feedback['secondConflicts'] || [])];
+            delete feedback['firstConflicts'];
+            delete feedback['secondConflicts'];
+            feedback.conflictingTextAssessments.forEach((textAssessmentConflict) => {
+                textAssessmentConflict.conflictingFeedbackId =
+                    textAssessmentConflict['firstFeedback'].id === feedback.id ? textAssessmentConflict['secondFeedback'].id : textAssessmentConflict['firstFeedback'].id;
+            });
+        });
     }
 
     /**

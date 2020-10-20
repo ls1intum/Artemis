@@ -105,6 +105,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
             const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
             this.leftSubmission = participation.submissions![0];
+            this.exercise = participation.exercise as TextExercise;
         }
         this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
     }
