@@ -144,7 +144,7 @@ public class FeedbackService {
             // if it is the first line of the feedback, do not add empty newline at the start;
             // otherwise, insert additional newline to visually separate different exceptions.
             final boolean[] isFirst = { true };
-            return message.lines().map(line -> {
+            return message.trim().lines().map(line -> {
                 String replaceBy = isFirst[0] ? "" : "\n";
                 isFirst[0] = false;
                 return line
