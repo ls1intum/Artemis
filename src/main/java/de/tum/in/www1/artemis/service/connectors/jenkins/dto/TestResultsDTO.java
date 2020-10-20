@@ -3,9 +3,12 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestResultsDTO {
 
     private int successful;
@@ -21,6 +24,8 @@ public class TestResultsDTO {
     private List<CommitDTO> commits;
 
     private List<TestsuiteDTO> results;
+
+    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     private ZonedDateTime runDate;
 
@@ -90,5 +95,13 @@ public class TestResultsDTO {
 
     public void setResults(List<TestsuiteDTO> results) {
         this.results = results;
+    }
+
+    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
+        return staticCodeAnalysisReports;
+    }
+
+    public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
     }
 }
