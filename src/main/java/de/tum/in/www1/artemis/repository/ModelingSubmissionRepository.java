@@ -45,7 +45,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @return the list of modeling submissions with their results, the feedback list of the results, the assessor of the results, their participation and all results of the
      *         participations
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
     List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")

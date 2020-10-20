@@ -106,6 +106,7 @@ public abstract class Submission extends DomainObject {
         }
     }
 
+
     /**
      * Method use before changing relationship between result and submission, add one result to the List of the result
      * @param result
