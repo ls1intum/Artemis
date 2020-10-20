@@ -14,7 +14,7 @@
 
 <ng-template #conflict>
     <div class="conflict-container">
-        <div class="left card" [class.border-0]="false">
+        <div class="left card">
             <div class="card-header bg-primary text-white">
                 <div class="flew-grow-1">
                     <span *ngIf="isAssessor(this.leftSubmission?.result); else otherAssessorLeftCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
@@ -27,7 +27,7 @@
                 </div>
                 <jhi-score-display [maxScore]="exercise?.maxScore" [score]="leftTotalScore"></jhi-score-display>
             </div>
-            <div class="left-body card-body" [class.p-0]="false">
+            <div class="left-body card-body">
                 <jhi-text-assessment-area
                     [submission]="leftSubmission"
                     [(textBlockRefs)]="leftTextBlockRefs"
@@ -43,7 +43,7 @@
             <div class="draggable-left">
                 <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
             </div>
-            <div class="right card" [class.border-0]="false">
+            <div class="right card">
                 <div class="card-header bg-primary text-white">
                     <div class="flew-grow-1">
                         <span *ngIf="isAssessor(this.rightSubmission?.result); else otherAssessorRightCard" jhiTranslate="artemisApp.textAssessment.conflict.assessor"></span>
@@ -56,7 +56,7 @@
                     </div>
                     <jhi-score-display [maxScore]="exercise?.maxScore" [score]="rightTotalScore"></jhi-score-display>
                 </div>
-                <div class="right-body card-body" [class.p-0]="false">
+                <div class="right-body card-body">
                     <jhi-text-assessment-area
                         [submission]="rightSubmission"
                         [(textBlockRefs)]="rightTextBlockRefs"
