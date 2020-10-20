@@ -180,8 +180,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
     implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:3.1.0"
-    implementation "io.sentry:sentry-logback:3.1.0"
+    implementation "io.sentry:sentry-spring-boot-starter:3.1.1"
+    implementation "io.sentry:sentry-logback:3.1.1"
     implementation "org.jsoup:jsoup:1.13.1"
 
     // import JHipster dependencies BOM
@@ -248,7 +248,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.21"
+    implementation "mysql:mysql-connector-java:8.0.22"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:67.1"
