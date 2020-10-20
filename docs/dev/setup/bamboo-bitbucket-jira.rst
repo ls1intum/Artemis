@@ -197,14 +197,14 @@ under ``localhost:7990``.
       While username and password can still be used as a fallback, this option is already marked as deprecated and
       will be removed in the future.
 
-      - Log in as the admin user and go to Bamboo -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
+      - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
       - Copy the generated token to your ``application-local.yml``:
 
       .. code:: yaml
 
           artemis:
-              continuous-integration:
+              version-control:
                   user: <username>
                   password: <password>
                   token: #insert the token here
