@@ -190,7 +190,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 - Test runs are designed to offer the instructors confidence that the :ref:`exam conduction <exam_conduction>` will run smoothly. They allow you to experience the exam from the student’s perspective. A test run is distinct from a :ref:`student exam <student_exams>` and is not taken into consideration during the calculation of the exam scores. 
 - You can manage your test runs from the *Test Run* page.
-- To create a new test run you can press |create_test_run_button|. This will open a modal where you can select an exercise for each :ref:`exercise group <exercise_groups>`. You can also set the ``working time``. A test run will have as many exercises as there are :ref:`exercise groups <exercise_groups>`. It does consider the ``number of exercises`` set in the :ref:`exam configuration <exam_creation_and_configuration>`.
+- To create a new test run you can press |create_test_run_button|. This will open a popup where you can select an exercise for each :ref:`exercise group <exercise_groups>`. You can also set the ``working time``. A test run will have as many exercises as there are :ref:`exercise groups <exercise_groups>`. It does consider the ``number of exercises`` set in the :ref:`exam configuration <exam_creation_and_configuration>`.
 
     .. note::
         Exercise groups with no exercises are ignored.
@@ -198,8 +198,9 @@ During the exam creation and configuration, you can create your exam and configu
 .. figure:: instructor/create_test_run.png
    :alt: Create Test Run
    :align: center
+   :scale: 50%
 
-   Create test run modal with one exercise variant selected for each exercise group.
+   Create test run popup with one exercise variant selected for each exercise group.
 
 - When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run. 
 - An instructor can also assess his test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click |assess_test_runs|. 
