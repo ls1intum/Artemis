@@ -115,13 +115,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.automaticResult = this.getLatestAutomaticResult(this.participation.results);
                     this.manualResult = this.getLatestManualResult(this.participation.results);
 
-                    // Setup automatic feedback, set or round credits and set detailText if not already set
+                    // Setup automatic feedback
                     this.automaticFeedback = this.automaticResult?.feedbacks!;
                     this.automaticFeedback.forEach((feedback) => {
                         feedback.id = undefined;
-                        if (feedback.credits) {
-                            feedback.credits = Math.round(feedback.credits);
-                        } else {
+                        if (!feedback.credits) {
                             feedback.credits = 0;
                         }
                     });
@@ -409,6 +407,28 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private calculateTotalScore() {
         const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        this.totalScore = (feedbacks || []).reduce((totalScore, feedback) => totalScore + feedback.credits!, 0);
+        const maxPoints = this.exercise.maxScore! + this.exercise.bonusPoints! ?? 0.0;
+        let totalScore = 0.0;
+        let scoreAutomaticTests = 0.0;
+
+        feedbacks.forEach((feedback) => {
+            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+                scoreAutomaticTests += feedback.credits!;
+            } else {
+                totalScore += feedback.credits!;
+            }
+        });
+
+        // Cap automatic test feedback to maxScore + bonus points of exercise
+        if (scoreAutomaticTests > maxPoints) {
+            scoreAutomaticTests = maxPoints;
+        }
+
+        totalScore += scoreAutomaticTests;
+
+        if (totalScore < 0) {
+            totalScore = 0;
+        }
+        this.totalScore = totalScore;
     }
 }
