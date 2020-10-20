@@ -57,16 +57,16 @@ Append following to ~/.bashrc:
 Go to Plan Configuration > Default Job > Tasks  
 - Create default task to checkout repos "tests and assignment"
 - Create a task to build the swift project
-    - Name the task `Build swift`.
-    - Interpreter: `Shell`
-    - Script location: `inline`
-    - Body: `swift build`
-    - Enter the following in the Environment variables:  
-    `PATH=${system.PATH}:/usr/share/swift/usr/bin`
+  - Name the task `Build swift`.
+  - Interpreter: `Shell`
+  - Script location: `inline`
+  - Body: `swift build`
+  - Enter the following in the Environment variables:  
+  `PATH=${system.PATH}:/usr/share/swift/usr/bin`
 - Create a task to execute the swift project
-    - Name the task `Execute swift`.
-    - Interpreter: `Shell`
-    - Script location: `inline`
-    - Body: `swift run`
-    - Enter the following in the Environment variables:  
-    `PATH=${system.PATH}:/usr/share/swift/usr/bin`
+  - Name the task `Execute swift`.
+  - Interpreter: `Shell`
+  - Script location: `inline`
+  - Body: `swift run`
+  - Enter the following in the Environment variables:  
+  `PATH=${system.PATH}:/usr/share/swift/usr/bin`
