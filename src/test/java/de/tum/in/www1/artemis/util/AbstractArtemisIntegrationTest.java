@@ -1,11 +1,17 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
+import java.net.URL;
+
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -16,7 +22,7 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
  */
-public abstract class AbstractArtemisIntegrationTest {
+public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
@@ -70,5 +76,20 @@ public abstract class AbstractArtemisIntegrationTest {
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService,
                 examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationServiceSpy);
+    }
+
+    @Override
+    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
+    }
+
+    @Override
+    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
+        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(url);
+    }
+
+    @Override
+    public void mockGetProjectKeyFromAnyUrl(String projectKey) {
+        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(any());
     }
 }

@@ -84,17 +84,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private StudentExam studentExam1;
 
-    private final LocalRepository exerciseRepo = new LocalRepository();
-
-    private final LocalRepository testRepo = new LocalRepository();
-
-    private final LocalRepository solutionRepo = new LocalRepository();
-
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        users = database.addUsers(10, 1, 2);
+        users = programmingExerciseTestService.setupTestUsers(10, 1, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
@@ -104,19 +98,16 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);
         database.addStudentExam(exam2);
+        // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach
     public void resetDatabase() throws Exception {
-        database.resetDatabase();
-
+        programmingExerciseTestService.tearDown();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
 
-        exerciseRepo.resetLocalRepo();
-        testRepo.resetLocalRepo();
-        solutionRepo.resetLocalRepo();
         for (var repo : studentRepos) {
             repo.resetLocalRepo();
         }
@@ -186,16 +177,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 3); // we generate three additional student exams in the @Before method
 
         // start exercises
-        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
         List<ProgrammingExercise> programmingExercises = new ArrayList<>();
         for (var exercise : exam2.getExerciseGroups().get(4).getExercises()) {
             var programmingExercise = (ProgrammingExercise) exercise;
             programmingExercises.add(programmingExercise);
 
-            programmingExerciseTestService.setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
             for (var user : exam2.getRegisteredUsers()) {
                 var repo = new LocalRepository();
                 repo.configureRepos("studentRepo", "studentOriginRepo");
@@ -1121,7 +1109,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         bambooRequestMockProvider.enableMockingOfRequests(true);
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(4).getExercises().iterator().next();
         final String projectKey = programmingExercise.getProjectKey();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 

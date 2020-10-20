@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
@@ -40,7 +38,7 @@ import de.tum.in.www1.artemis.util.Verifiable;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ "artemis", "gitlab", "jenkins", "automaticText" })
 @TestPropertySource(properties = "artemis.user-management.use-external=false")
-public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest implements MockDelegate {
+public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @SpyBean
@@ -124,16 +122,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException {
-        // TODO: implement
-    }
-
-    @Override
-    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
-        // TODO: implement
-    }
-
-    @Override
-    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
         // TODO: implement
     }
 

@@ -42,5 +42,7 @@ public interface MockDelegate {
 
     void mockGetProjectKeyFromUrl(String projectKey, URL url);
 
+    void mockGetProjectKeyFromAnyUrl(String projectKey);
+
     void resetMockProvider();
 }

@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +33,6 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
@@ -51,7 +49,7 @@ import de.tum.in.www1.artemis.util.Verifiable;
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling", "athene" })
-public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest implements MockDelegate {
+public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
@@ -224,16 +222,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
             throws URISyntaxException, JsonProcessingException {
         bambooRequestMockProvider.mockGetBuildLogs(participation.getBuildPlanId(), logs);
-    }
-
-    @Override
-    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
-    }
-
-    @Override
-    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(url);
     }
 
     @Override

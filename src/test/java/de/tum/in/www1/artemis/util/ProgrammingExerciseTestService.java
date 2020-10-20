@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -110,15 +109,20 @@ public class ProgrammingExerciseTestService {
 
     private VersionControlService versionControlService;
 
+    // not needed right now but maybe in the future
     private ContinuousIntegrationService continuousIntegrationService;
 
     private MockDelegate mockDelegate;
+
+    public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
+        return database.addUsers(this.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfInstructors + 1);
+    }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
-        database.addUsers(numberOfStudents, 1, 1);
+
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         examExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup);
@@ -144,24 +148,29 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo.resetLocalRepo();
     }
 
-    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepo, LocalRepository solutionRepo, LocalRepository testRepo) throws Exception {
+    public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+    }
+
+    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository)
+            throws Exception {
         final var projectKey = exercise.getProjectKey();
 
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
-        var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepo.originRepoFile);
-        var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
-        var solutionRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.originRepoFile);
+        var exerciseRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(exerciseRepository.originRepoFile);
+        var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepository.originRepoFile);
+        var solutionRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepository.originRepoFile);
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
         doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
 
-        doReturn(gitService.getRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(exerciseRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
-        doReturn(gitService.getRepositoryByLocalPath(solutionRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
+        doReturn(gitService.getRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(exerciseRepoTestUrl.getURL(), true);
+        doReturn(gitService.getRepositoryByLocalPath(testRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
+        doReturn(gitService.getRepositoryByLocalPath(solutionRepository.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl.getURL(), true);
 
         mockDelegate.mockGetRepositorySlugFromUrl(exerciseRepoName, exerciseRepoTestUrl.getURL());
         mockDelegate.mockGetRepositorySlugFromUrl(testRepoName, testRepoTestUrl.getURL());
@@ -170,7 +179,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetProjectKeyFromUrl(projectKey, exerciseRepoTestUrl.getURL());
         mockDelegate.mockGetProjectKeyFromUrl(projectKey, testRepoTestUrl.getURL());
         mockDelegate.mockGetProjectKeyFromUrl(projectKey, solutionRepoTestUrl.getURL());
-        mockDelegate.mockGetProjectKeyFromUrl(projectKey, any());
+        mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
 
     /**
