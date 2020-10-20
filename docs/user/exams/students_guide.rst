@@ -29,19 +29,19 @@ Prerequisites
 Offline Mode
 ^^^^^^^^^^^^
 - The exam mode in Artemis tolerates issues with the Internet connection.
-- In case you are not connected, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
+- If you loose your connection, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
 - If your Internet connection recovers, Artemis will save your solution.
-- Artemis tries to save your solution every 30 seconds, when you navigate between exercises and when you click |save| or |save_continue|.
+- Artemis tries to save your solution every 30 seconds, when you navigate between exercises, and when you click |save| or |save_continue|.
 - Programming exercises have 2 modes.
 
     1. **Online code editor:** can only be used when you are online. 
 
         .. note::
-            You have to click on Submit! Otherwise your solution will *not* be pushed to the VC server and no build will be triggered.
+            You have to click on |submit|! Otherwise your solution will *not* be pushed to the VC server and no build will be triggered.
 
-    2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution)
+    2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution).
 
-- At the end of the online exercise, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded
+- At the end of the online exercise, you must be online within a given ``grace period`` and submit your exam, otherwise it will not be graded.
 
 Suggestions
 ^^^^^^^^^^^
@@ -54,11 +54,11 @@ Suggestions
     - Working in multiple browser windows at the same time is **not** allowed!
     - It will lead to synchronization issues and is seen as suspicious behaviour that can be flagged as cheating.
 
-.. figure:: student/reload.png
-   :alt: Reload
-   :align: center
+    .. figure:: student/reload.png
+       :alt: Reload
+       :align: center
 
-   Do not reload, you will receive a warning
+       Do not reload, you will receive a warning
 
 Participating in the Artemis Online Exam
 ----------------------------------------
@@ -102,8 +102,8 @@ Exam Conduction
 - Once the exam working time starts and you have confirmed your participation, the *Conduction* screen will appear. 
 - On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
 
-    - When there are ``unsaved`` **or** ``unsubmitted`` changes, the exercise representation on the navigation bar will become |unsaved|. 
-    - When your changes have been ``saved`` **and** ``submitted``, the exercise representation on the navigation bar will become |saved|. 
+    - When there are unsaved **or** unsubmitted changes, the exercise representation on the navigation bar becomes |unsaved|. 
+    - When your changes are saved **and** submitted, the exercise representation on the navigation bar becomes |saved|. 
     - |started| indicates that you have not started this exercise.
 
 - You can also navigate through the exercises when you are done with one by clicking |save_continue|. This action will save and submit your changes and move to the next exercise. 
