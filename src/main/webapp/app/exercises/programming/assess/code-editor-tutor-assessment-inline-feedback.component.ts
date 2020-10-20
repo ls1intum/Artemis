@@ -17,7 +17,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     set feedback(feedback: Feedback) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
-        this.editOnly = feedback ? true : false;
+        this.viewOnly = feedback ? true : false;
         if (this._feedback.gradingInstruction && this._feedback.gradingInstruction.usageCount !== 0) {
             this.disableEditScore = true;
         } else {
@@ -40,7 +40,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Output()
     onEditFeedback = new EventEmitter<number>();
 
-    editOnly: boolean;
+    viewOnly: boolean;
     oldFeedback: Feedback;
     disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
@@ -51,20 +51,22 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
-        this.editOnly = true;
         this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
+        this.viewOnly = true;
         this.onUpdateFeedback.emit(this.feedback);
     }
 
     /**
-     * When the current feedback was saved, we show the editOnly mode, otherwise the component is not displayed
+     * When a inline feedback already exists, we set it back and display it the viewOnly mode.
+     * Otherwise the component is not displayed anymore.
      * anymore in the parent component
      */
     cancelFeedback() {
         if (this.feedback.type === this.MANUAL) {
-            this.feedback = this.oldFeedback;
-            this.editOnly = true;
+            this.viewOnly = true;
         }
+        this.feedback = this.oldFeedback;
+        this.viewOnly = false;
         this.onCancelFeedback.emit(this.codeLine);
     }
 
@@ -80,11 +82,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Checks if component is in edit mode
+     * Checks if component is in view mode
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
-        this.editOnly = false;
+        this.viewOnly = false;
         this.onEditFeedback.emit(line);
     }
 
@@ -99,6 +101,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         } else {
             this.disableEditScore = false;
         }
-        this.onUpdateFeedback.emit(this.feedback);
+        this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
+        this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
     }
 }
