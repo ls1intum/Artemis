@@ -2,6 +2,12 @@
 Students’ Guide
 ===================
 
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
+|
+
 General Information
 -------------------
 
