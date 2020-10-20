@@ -158,15 +158,15 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{exerciseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long exerciseId) {
-        log.debug("REST request to get Exercise for tutor dashboard : {}", exerciseId);
+    public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
+        log.debug("REST request to get Exercise for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        // Programming exercises with only automatic assessment should *NOT* be available on the tutor dashboard!
+        // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
         if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             return badRequest();
         }
@@ -197,8 +197,8 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
-        log.debug("REST request to get exercise statistics for tutor dashboard : {}", exerciseId);
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
+        log.debug("REST request to get exercise statistics for assessment dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -214,7 +214,7 @@ public class ExerciseResource {
 
     /**
      * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
-     * stats for tutor dashboard and for instructor dashboard
+     * stats for assessment dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
      * @param examMode - flag to determine if test run submissions should be deducted from the statistics

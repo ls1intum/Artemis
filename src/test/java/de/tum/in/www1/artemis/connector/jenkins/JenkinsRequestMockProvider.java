@@ -50,7 +50,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException {
-        // TODO: we need to mock folder(...)
+        // TODO: we need to mockRetrieveArtifacts folder(...)
         doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), true);
     }
 
