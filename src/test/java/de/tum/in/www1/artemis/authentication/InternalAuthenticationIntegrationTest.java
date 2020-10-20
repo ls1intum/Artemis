@@ -185,12 +185,10 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
-        userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());
 
-        assertThat(userInDB.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the student").isTrue();
-        assertThat(userInDB.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has not been added to the student").isFalse();
-        assertThat(userInDB.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the student").isFalse();
+        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the student").isTrue();
+        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has not been added to the student").isFalse();
+        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the student").isFalse();
 
     }
 
@@ -213,12 +211,10 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
-        userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());
 
-        assertThat(userInDB.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the teaching assistant").isTrue();
-        assertThat(userInDB.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the teaching assistant").isTrue();
-        assertThat(userInDB.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the teaching assistant").isFalse();
+        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the teaching assistant").isTrue();
+        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the teaching assistant").isTrue();
+        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the teaching assistant").isFalse();
     }
 
     @Test
@@ -241,11 +237,10 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
-        userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());
-        assertThat(userInDB.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the instructor").isTrue();
-        assertThat(userInDB.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the instructor").isTrue();
-        assertThat(userInDB.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has been added to the instructor").isTrue();
+
+        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the instructor").isTrue();
+        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the instructor").isTrue();
+        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has been added to the instructor").isTrue();
 
     }
 
