@@ -42,12 +42,12 @@ public class Client {
 	private static func createRandomDatesList() -> [Date] {
 		let listLength: Int = randomIntegerWithin(5, 15)
 		var list = [Date]()
-		
+
 		let dateFormat: DateFormatter = DateFormatter()
 		dateFormat.dateFormat = "dd.MM.yyyy"
 		let lowestDate: Date! = dateFormat.date(from: "08.11.2016")
 		let highestDate: Date! = dateFormat.date(from: "15.04.2017")
-		
+
 		for _ in 0 ..< listLength {
 			let randomDate: Date! = randomDateWithin(lowestDate, highestDate)
 			list.append(randomDate)

@@ -1,6 +1,6 @@
 ﻿import Foundation
 
-public class MergeSort : SortStrategy {
+public class MergeSort: SortStrategy {
 	// Wrapper method for the real algorithm.
 	public func performSort(_ input: inout [Date]) {
 		mergesort(&input, 0, input.count - 1)
@@ -31,7 +31,7 @@ public class MergeSort : SortStrategy {
 				rightIndex += 1
 			}
 		}
-		
+
 		if (leftIndex <= middle) && (rightIndex > high) {
 			while leftIndex <= middle {
 				temp.append(input[leftIndex])
@@ -48,4 +48,3 @@ public class MergeSort : SortStrategy {
 		}
 	}
 }
-

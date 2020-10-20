@@ -10,7 +10,7 @@ public class Context {
 
 	public func setDates(_ dates: [Date]) {
 		self.dates = dates
-	} 
+	}
 
 	public func setSortAlgorithm(_ sa: SortStrategy) {
 		sortAlgorithm = sa
