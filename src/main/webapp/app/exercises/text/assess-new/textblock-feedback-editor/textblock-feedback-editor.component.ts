@@ -33,7 +33,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
-        return !this.conflictMode ? this.feedback.credits === 0  : !this.isConflictingFeedback;
+        return !this.conflictMode ? this.feedback.credits === 0 : !this.isConflictingFeedback;
     }
 
     @HostBinding('class.alert-success') get positiveFeedbackClass(): boolean {
