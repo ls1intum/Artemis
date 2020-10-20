@@ -174,9 +174,9 @@ public class ProgrammingExerciseService {
         String projectKey = programmingExercise.getProjectKey();
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
@@ -671,8 +671,11 @@ public class ProgrammingExerciseService {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
-        if (deleteBaseReposBuildPlans) {
+        final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
 
+        if (deleteBaseReposBuildPlans) {
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
             if (templateBuildPlanId != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
@@ -684,21 +687,29 @@ public class ProgrammingExerciseService {
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
-                final var templateRepositoryUrlAsUrl = programmingExercise.getTemplateRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
-                final var solutionRepositoryUrlAsUrl = programmingExercise.getSolutionRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(solutionRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
             }
             if (programmingExercise.getTestRepositoryUrl() != null) {
-                final var testRepositoryUrlAsUrl = programmingExercise.getTestRepositoryUrlAsUrl();
                 versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
-                gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        }
+        /*
+         * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
+         * the same short name as a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later. This however leaves no
+         * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
+         */
+        if (programmingExercise.getTemplateRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getSolutionRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(solutionRepositoryUrlAsUrl);
+        }
+        if (programmingExercise.getTestRepositoryUrl() != null) {
+            gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
