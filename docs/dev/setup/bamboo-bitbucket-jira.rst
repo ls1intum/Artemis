@@ -172,43 +172,40 @@ under ``localhost:7990``.
 
 9. Generate a personal access token
 
-9.1 Personal access token for Bamboo.
-   While username and password can still be used as a fallback, this option is already marked as deprecated and
-   will be removed in the future.
+   9.1 Personal access token for Bamboo.
+      While username and password can still be used as a fallback, this option is already marked as deprecated and
+      will be removed in the future.
 
-   - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+      - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
-       .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
-          :align: center
+          .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+             :align: center
 
-   - Copy the generated token to your ``application-local.yml``:
+      - Copy the generated token to your ``application-local.yml``:
 
-   .. code:: yaml
+      .. code:: yaml
 
-       artemis:
-           continuous-integration:
-               user: <username>
-               password: <password>
-               token: #insert the token here
+          artemis:
+              continuous-integration:
+                  user: <username>
+                  password: <password>
+                  token: #insert the token here
 
-9.1 Personal access token for Bitbucket.
-   While username and password can still be used as a fallback, this option is already marked as deprecated and
-   will be removed in the future.
+   9.2 Personal access token for Bitbucket.
+      While username and password can still be used as a fallback, this option is already marked as deprecated and
+      will be removed in the future.
 
-   - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage Account -> Personal access tokens -> Create token
+      - Log in as the admin user and go to Bamboo -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
-       .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
-          :align: center
+      - Copy the generated token to your ``application-local.yml``:
 
-   - Copy the generated token to your ``application-local.yml``:
+      .. code:: yaml
 
-   .. code:: yaml
-
-       artemis:
-           version-control:
-               user: <username>
-               password: <password>
-               token: #insert the token here
+          artemis:
+              continuous-integration:
+                  user: <username>
+                  password: <password>
+                  token: #insert the token here
 
 10. Disable XSRF checking
     Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
