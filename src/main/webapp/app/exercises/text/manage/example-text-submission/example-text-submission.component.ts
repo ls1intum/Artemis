@@ -359,7 +359,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Redirects back to the tutor dashboard if route param readOnly or toComplete is set.
+     * Redirects back to the assessment dashboard if route param readOnly or toComplete is set.
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back() {
