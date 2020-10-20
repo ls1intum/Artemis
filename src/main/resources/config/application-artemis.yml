@@ -71,14 +71,8 @@ artemis:
     git:
         name: Artemis
         email: artemis@in.tum.de
-    automatic-text:
-        segmentation-url: http://localhost:8000/segment
-        embedding-url: http://localhost:8001/embed
-        embedding-chunk-size: 50
-        clustering-url: http://localhost:8002/cluster
-        feedback-consistency-url: http://localhost:8001/feedback_consistency
-        secret: null
     athene:
         submit-url: http://localhost/submit
+        feedback-consistency-url: http://localhost:8001/feedback_consistency
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
         token-validity-in-seconds: 10800
