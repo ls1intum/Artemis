@@ -138,7 +138,7 @@ public class AutomaticTextAssessmentConflictService {
      * @return Set of text submissions
      */
     public Set<TextSubmission> getConflictingSubmissions(long feedbackId) {
-        List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllByFeedbackId(feedbackId);
+        List<FeedbackConflict> feedbackConflicts = this.feedbackConflictRepository.findAllWithEagerFeedbackResultAndSubmissionByFeedbackId(feedbackId);
         Set<TextSubmission> textSubmissionSet = feedbackConflicts.stream().map(conflict -> {
             if (conflict.getFirstFeedback().getId() == feedbackId) {
                 return (TextSubmission) conflict.getSecondFeedback().getResult().getSubmission();
