@@ -141,7 +141,7 @@ public class ProgrammingExerciseImportService {
         versionControlService.get().addWebHooksForExercise(newExercise);
 
         try {
-            adjustProjectName(templateExercise, newExercise);
+            adjustProjectNames(templateExercise, newExercise);
         }
         catch (Exception e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
@@ -297,7 +297,16 @@ public class ProgrammingExerciseImportService {
         newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
 
-    private void adjustProjectName(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
+    /**
+     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
+     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * @param templateExercise the exercise from which the values that should be replaced are extracted
+     * @param newExercise the exercise from which the values that should be inserted are extracted
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws InterruptedException If the checkout of one repository fails
+     * @throws IOException If the values in the files could not be replaced
+     */
+    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
         final var projectKey = newExercise.getProjectKey();
 
         Map<String, String> replacements = new HashMap<>();
@@ -313,6 +322,17 @@ public class ProgrammingExerciseImportService {
         adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
     }
 
+    /**
+     * Adjust project names in imported exercise for specific repository.
+     * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     * @param replacements the replacements that should be applied
+     * @param projectKey the project key of the new exercise
+     * @param repositoryName the name of the repository that should be adjusted
+     * @param user the user which performed the action (used as Git author)
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws InterruptedException If the checkout of one repository fails
+     * @throws IOException If the values in the files could not be replaced
+     */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
             throws GitAPIException, IOException, InterruptedException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName).getURL();
