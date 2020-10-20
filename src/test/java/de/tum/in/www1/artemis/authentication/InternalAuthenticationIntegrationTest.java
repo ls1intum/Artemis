@@ -13,7 +13,10 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +42,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
@@ -120,6 +124,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
+    @Order(1)
     public void launchLtiRequest_authViaEmail_success() throws Exception {
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
@@ -140,6 +145,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithAnonymousUser
+    @Order(2)
     public void authenticateAfterLtiRequest_success() throws Exception {
         launchLtiRequest_authViaEmail_success();
 
@@ -152,6 +158,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "ab12cde")
+    @Order(3)
     public void registerForCourse_internalAuth_success() throws Exception {
         final var student = ModelFactory.generateActivatedUser("ab12cde");
         userRepository.save(student);
@@ -169,35 +176,17 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
-
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        gitlabRequestMockProvider.mockUpdateUser();
-
-        final var newGroups = Set.of("foo", "bar");
-        student.setGroups(newGroups);
-        final var managedUserVM = new ManagedUserVM(student);
-
-        final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
-        updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
-
-        assertThat(response).isNotNull();
-        assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
-        assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
-    }
-
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @Order(4)
     public void createUser_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman");
+        student.setLogin("batman1");
         student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
+        student.setEmail("batman1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
+
         student.setAuthorities(authorities);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
@@ -213,13 +202,14 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
+    @Order(5)
     public void createTutor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("userWithTutorialGroup");
+        student.setLogin("batman3");
         student.setPassword("foobar");
-        student.setEmail("userwithtutorialgroup@secret.invalid");
+        student.setEmail("batman3@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
         authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
@@ -234,18 +224,18 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(userInDB.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the teaching assistant").isTrue();
         assertThat(userInDB.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the teaching assistant").isTrue();
         assertThat(userInDB.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the teaching assistant").isFalse();
-
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
+    @Order(6)
     public void createInstructor_withInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         database.addTutorialCourse();
 
         student.setId(null);
-        student.setLogin("batman");
+        student.setLogin("batman2");
         student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
+        student.setEmail("batman@secret.invalid2");
         Set<Authority> authorities = new HashSet<>();
         authorities.add(new Authority(AuthoritiesConstants.USER));
         authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
@@ -260,10 +250,12 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(userInDB.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the instructor").isTrue();
         assertThat(userInDB.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the instructor").isTrue();
         assertThat(userInDB.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has been added to the instructor").isTrue();
+
     }
 
     @Test
     @WithAnonymousUser
+    @Order(7)
     public void testJWTAuthentication() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
@@ -276,5 +268,25 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
         assertThat(jwtToken.getIdToken()).as("JWT token is present").isNotNull();
         assertThat(this.tokenProvider.validateToken(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    @Order(8)
+    public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+        gitlabRequestMockProvider.mockUpdateUser();
+
+        final var newGroups = Set.of("foo", "bar");
+        student.setGroups(newGroups);
+        final var managedUserVM = new ManagedUserVM(student);
+
+        final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
+        updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
+
+        assertThat(response).isNotNull();
+        assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
+        assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
     }
 }
