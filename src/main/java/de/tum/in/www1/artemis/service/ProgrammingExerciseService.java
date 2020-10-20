@@ -174,9 +174,9 @@ public class ProgrammingExerciseService {
         String projectKey = programmingExercise.getProjectKey();
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
@@ -322,7 +322,9 @@ public class ProgrammingExerciseService {
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
             throws Exception {
-        if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
+        // Only copy template if repo is empty
+        if (gitService.listFiles(repository).size() == 0
+                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
@@ -399,7 +401,7 @@ public class ProgrammingExerciseService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
 
@@ -409,7 +411,7 @@ public class ProgrammingExerciseService {
         // length, it
         // replaces fileTargets.get(i) with fileReplacements.get(i)
 
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             fileTargets.add("${packageName}");
             fileReplacements.add(programmingExercise.getPackageName());
         }
