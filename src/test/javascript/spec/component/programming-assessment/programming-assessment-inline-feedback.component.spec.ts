@@ -91,6 +91,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.feedback.gradingInstruction).to.be.equal(instruction);
         expect(comp.feedback.credits).to.be.equal(instruction.credits);
         expect(comp.feedback.detailText).to.be.equal(instruction.feedback);
-        expect(onUpdateFeedbackSpy).to.be.calledOnceWithExactly(comp.feedback);
+        expect(comp.feedback.reference).to.be.equal(`file:${fileName}_line:${codeLine}`);
     });
 });
