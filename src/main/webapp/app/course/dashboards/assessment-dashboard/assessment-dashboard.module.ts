@@ -1,15 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
-import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
+import { assessmentDashboardRoute } from './assessment-dashboard.route';
+import { AssessmentDashboardComponent } from './assessment-dashboard.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 
-const ENTITY_STATES = [...tutorCourseDashboardRoute];
+const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
@@ -21,6 +21,6 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
         ArtemisTutorLeaderboardModule,
         ArtemisTutorParticipationGraphModule,
     ],
-    declarations: [TutorCourseDashboardComponent],
+    declarations: [AssessmentDashboardComponent],
 })
-export class ArtemisTutorCourseDashboardModule {}
+export class ArtemisAssessmentDashboardModule {}

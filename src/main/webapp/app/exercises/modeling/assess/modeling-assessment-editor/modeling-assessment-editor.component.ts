@@ -134,7 +134,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {

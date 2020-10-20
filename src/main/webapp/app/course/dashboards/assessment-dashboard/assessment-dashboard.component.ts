@@ -19,10 +19,10 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-courses',
-    templateUrl: './tutor-course-dashboard.component.html',
+    templateUrl: './assessment-dashboard.component.html',
     providers: [CourseManagementService],
 })
-export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
+export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     readonly TeamFilterProp = TeamFilterProp;
 
     course: Course;
@@ -99,7 +99,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     loadAll() {
         if (this.isExamMode) {
             this.showFinishedExercises = true;
-            this.examManagementService.getExamWithInterestingExercisesForTutorDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
+            this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
                 this.courseService.checkAndSetCourseRights(this.course);

@@ -92,12 +92,12 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns the exam with the provided unique identifier for the tutor dashboard
+     * Returns the exam with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      * @param examId - the id of the exam
      * @param isTestRun - boolean to determine whether it is a test run
      */
-    getExamWithInterestingExercisesForTutorDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
+    getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
         let url: string;
         if (isTestRun) {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/for-exam-tutor-test-run-dashboard`;

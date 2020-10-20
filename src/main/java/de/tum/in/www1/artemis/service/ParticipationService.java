@@ -267,7 +267,7 @@ public class ParticipationService {
                 participation.setSubmissions(programmingSubmissions);
                 initializeSubmission(participation, exercise, null);
                 submission = participation.getSubmissions().iterator().next();
-                // required so that the tutor dashboard statistics are calculated correctly
+                // required so that the assessment dashboard statistics are calculated correctly
                 submission.setSubmitted(true);
             }
             else {
