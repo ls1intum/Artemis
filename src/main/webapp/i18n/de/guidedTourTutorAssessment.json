@@ -2,8 +2,8 @@
     "tour": {
         "courseAdministration": {
             "assessmentDashboardButton": {
-                "headline": "Tutor Kurs Dashboard",
-                "content": "Im <tt>Tutor Kurs Dashboard</tt> kannst du die Studentenabgaben einsehen und bewerten."
+                "headline": "Bewertungs Dashboard",
+                "content": "Im <tt>Bewertungs Dashboard</tt> kannst du die Studentenabgaben einsehen und bewerten."
             }
         },
         "assessmentDashboard": {
