@@ -143,14 +143,8 @@ export class TextAssessmentsService {
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
         feedbacks = feedbacks.map((feedback) => {
             feedback = Object.assign({}, feedback);
-            feedback.result = undefined;
-            /*if (feedback['firstConflicts']) {
-                feedback['firstConflicts'] = undefined;
-            }
-            if (feedback['secondConflicts']) {
-                feedback['secondConflicts'] = undefined;
-            }*/
-            feedback.conflictingTextAssessments = undefined;
+            delete feedback.result;
+            delete feedback.conflictingTextAssessments;
             return feedback;
         });
         textBlocks = textBlocks.map((textBlock) => {
