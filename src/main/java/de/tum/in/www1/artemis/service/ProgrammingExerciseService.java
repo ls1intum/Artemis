@@ -405,27 +405,25 @@ public class ProgrammingExerciseService {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
         }
 
+        Map<String, String> replacements = new HashMap<>();
+
         List<String> fileTargets = new ArrayList<>();
         List<String> fileReplacements = new ArrayList<>();
         // This is based on the correct order and assumes that boths lists have the same
         // length, it replaces fileTargets.get(i) with fileReplacements.get(i)
 
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
-            fileTargets.add("${packageName}");
-            fileReplacements.add(programmingExercise.getPackageName());
+            replacements.put("${packageName}", programmingExercise.getPackageName());
         }
         // there is no need in python to replace package names
 
-        fileTargets.add("${exerciseNamePomXml}");
-        fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+        replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
 
-        fileTargets.add("${exerciseName}");
-        fileReplacements.add(programmingExercise.getTitle());
+        replacements.put("${exerciseName}", programmingExercise.getTitle());
 
-        fileTargets.add("${studentWorkingDirectory}");
-        fileReplacements.add(Constants.STUDENT_WORKING_DIRECTORY);
+        replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
 
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
     }
 
     /**

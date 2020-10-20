@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpException;
@@ -302,29 +300,24 @@ public class ProgrammingExerciseImportService {
     private void adjustProjectName(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
         final var projectKey = newExercise.getProjectKey();
 
-        List<String> fileTargets = new ArrayList<>();
-        List<String> fileReplacements = new ArrayList<>();
-        // This is based on the correct order and assumes that boths lists have the same
-        // length, it replaces fileTargets.get(i) with fileReplacements.get(i)
+        Map<String, String> replacements = new HashMap<>();
 
-        fileTargets.add(templateExercise.getTitle().replaceAll(" ", "-"));
-        fileReplacements.add(newExercise.getTitle().replaceAll(" ", "-"));
+        replacements.put(templateExercise.getTitle().replaceAll(" ", "-"), newExercise.getTitle().replaceAll(" ", "-"));
 
-        fileTargets.add(templateExercise.getTitle());
-        fileReplacements.add(newExercise.getTitle());
+        replacements.put(templateExercise.getTitle(), newExercise.getTitle());
 
         final var user = userService.getUser();
 
-        adjustProjectName(fileTargets, fileReplacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName(), user);
-        adjustProjectName(fileTargets, fileReplacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName(), user);
-        adjustProjectName(fileTargets, fileReplacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName(), user);
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName(), user);
+        adjustProjectName(replacements, projectKey, projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName(), user);
     }
 
-    private void adjustProjectName(List<String> fileTargets, List<String> fileReplacements, String projectKey, String repositoryName, User user)
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
             throws GitAPIException, IOException, InterruptedException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName).getURL();
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Template adjusted by Artemis", user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
