@@ -624,7 +624,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForTutorDashboardWithStats() throws Exception {
+    public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
         getCourseForDashboardWithStats(false);
     }
 
@@ -644,7 +644,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
-    public void testGetCourseForTutorDashboardWithStats_tutorNotInCourse() throws Exception {
+    public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
@@ -652,17 +652,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTutorDashboardStats_withComplaints() throws Exception {
-        getTutorDashboardsStatsWithComplaints(true);
+    public void testGetAssessmentDashboardStats_withComplaints() throws Exception {
+        getAssessmentDashboardsStatsWithComplaints(true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTutorDashboardStats_withComplaints_withoutPoints() throws Exception {
-        getTutorDashboardsStatsWithComplaints(false);
+    public void testGetAssessmentDashboardStats_withComplaints_withoutPoints() throws Exception {
+        getAssessmentDashboardsStatsWithComplaints(false);
     }
 
-    private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
+    private void getAssessmentDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
         Course testCourse = database.addCourseWithOneReleasedTextExercise();
         var points = withPoints ? 15L : null;
         var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());

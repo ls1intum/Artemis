@@ -29,7 +29,7 @@ import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/pro
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
-import { TutorCourseDashboardComponent } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.component';
+import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
@@ -238,10 +238,10 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/assess',
-        component: TutorCourseDashboardComponent,
+        component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.examManagement.tutorDashboard',
+            pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -468,10 +468,10 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/tutor-exam-dashboard',
-        component: TutorCourseDashboardComponent,
+        component: AssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.examManagement.tutorDashboard',
+            pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
     },

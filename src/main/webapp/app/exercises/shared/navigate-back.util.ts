@@ -7,7 +7,7 @@ import { Submission } from 'app/entities/submission.model';
 /**
  * Navigate from Assessment Editor to Dashboard:
  *   1. For Team Exercises: Navigate to Team Dashboard with all Submissions of the Team
- *   2. For Regular Exercises: Navigate to the Tutor Exercise Dashboard
+ *   2. For Regular Exercises: Navigate to the Exercise Assessment Dashboard
  *   Fallback: If we do not know the exercise, we navigate back in the browsers history.
  *
  * @param location: Angular wrapper for interacting with Browser URL and History

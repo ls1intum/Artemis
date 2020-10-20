@@ -29,6 +29,7 @@ import com.google.common.base.Joiner;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -66,9 +67,12 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate) {
+    private final UrlService urlService;
+
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UrlService urlService) {
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.urlService = urlService;
     }
 
     @Override
@@ -107,17 +111,17 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        protectBranches(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
     public void addMemberToRepository(URL repositoryUrl, User user) {
-        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+        giveWritePermission(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
     }
 
     @Override
     public void removeMemberFromRepository(URL repositoryUrl, User user) {
-        removeStudentRepositoryAccess(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), user.getLogin());
+        removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -155,8 +159,8 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
-            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
+        if (!webHookExists(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl))) {
+            createWebHook(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
@@ -181,7 +185,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
-        deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        deleteRepositoryImpl(urlService.getProjectKeyFromUrl(repositoryUrl), urlService.getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
@@ -274,50 +278,6 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {
         return restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey, HttpMethod.GET, null, BitbucketProjectDTO.class).getBody();
-    }
-
-    /**
-     * Gets the project key from the given URL
-     *
-     * TODO: rework this!
-     *
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The project key
-     * @throws BitbucketException if the URL is invalid and no project key could be extracted
-     */
-    public String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
-        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 2) {
-            return urlParts[2];
-        }
-
-        log.error("No project key could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No project key could be found");
-    }
-
-    /**
-     * TODO: this is duplicated code from BambooService. Think about how to reuse it while being able to test and mock it properly
-     *
-     * Gets the repository slug from the given URL.
-     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
-     *
-     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
-     * @return The repository slug
-     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
-     */
-    public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
-        String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts[urlParts.length - 1].endsWith(".git")) {
-            String repositorySlug = urlParts[urlParts.length - 1];
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-            return repositorySlug;
-        }
-
-        log.error("No repository slug could be found for repository {}", repositoryUrl);
-        throw new BitbucketException("No repository slug could be found");
     }
 
     /**
@@ -712,8 +672,8 @@ public class BitbucketService extends AbstractVersionControlService {
         String projectKey;
         String repositorySlug;
         try {
-            projectKey = getProjectKeyFromUrl(repositoryUrl);
-            repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+            projectKey = urlService.getProjectKeyFromUrl(repositoryUrl);
+            repositorySlug = urlService.getRepositorySlugFromUrl(repositoryUrl);
         }
         catch (BitbucketException e) {
             // Either the project Key or the repository slug could not be extracted, therefor this can't be a valid URL
@@ -781,8 +741,8 @@ public class BitbucketService extends AbstractVersionControlService {
             else {
                 repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
             }
-            final var projectKey = getProjectKeyFromUrl(repositoryURL);
-            final var slug = getRepositorySlugFromUrl(repositoryURL);
+            final var projectKey = urlService.getProjectKeyFromUrl(repositoryURL);
+            final var slug = urlService.getRepositorySlugFromUrl(repositoryURL);
             final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
                     .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
             final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
@@ -805,7 +765,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public String getRepositoryName(URL repositoryUrl) {
-        return getRepositorySlugFromUrl(repositoryUrl);
+        return urlService.getRepositorySlugFromUrl(repositoryUrl);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {
