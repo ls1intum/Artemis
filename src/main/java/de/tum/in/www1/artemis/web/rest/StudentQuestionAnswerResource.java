@@ -110,12 +110,10 @@ public class StudentQuestionAnswerResource {
      * @param studentQuestionAnswer the studentQuestionAnswer to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer is not valid,
      *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
-            throws URISyntaxException {
+    public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
@@ -207,7 +205,7 @@ public class StudentQuestionAnswerResource {
      *
      * @param studentQuestionAnswer studentQuestionAnswer for which to check
      * @param user user for which to check
-     * @return Boolean if StudenQuestionAnswer can updated or deleted
+     * @return Boolean if StudentQuestionAnswer can updated or deleted
      */
     private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();
