@@ -247,7 +247,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             gitlab.getUserApi().deleteUser(userId, true);
         }
         catch (GitLabUserDoesNotExistException e) {
-            log.warn("Cannot delete user in GitLab. User does not exist! %s".formatted(login));
+            log.warn("Cannot delete user ''{}'' in GitLab. User does not exist! ", login);
         }
         catch (GitLabApiException e) {
             throw new GitLabException(String.format("Cannot delete user %s from GitLab!", login), e);

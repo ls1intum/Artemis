@@ -36,19 +36,24 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
+    @BeforeEach
+    public void setUp() {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+    }
+
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
         gitlabRequestMockProvider.reset();
     }
 
-    @BeforeEach
-    public void setUp() {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-    }
-
+    /**
+     * Tests the registration of a user when an old unactivated User existed.
+     * Also tries to verify that the inability to delete such user in GitLab does not hinder the operation.
+     * @throws Exception on unknown failure
+     */
     @Test
-    public void testUnactivatedUserIsDeletedCorrectly() throws Exception {
+    public void testUnactivatedUserIsDeletedDespiteUnableToDeleteInGitlab() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -75,6 +80,37 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         assertThat(updatedUser.isPresent()).isTrue();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("New Firstname");
         assertThat(updatedUser.get().getActivated()).isFalse();
+    }
+
+    /**
+     * Tests the registration of a user when can not overwrite and existing user.
+     * @throws Exception on unknown failure
+     */
+    @Test
+    public void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
+        // create activated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setFirstName("Old Firstname");
+        user = userRepo.save(user);
+
+        // setup user to register
+        user.setFirstName("New Firstname");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        // Simulate failure to delete GitLab user, this should not keep Artemis from creating a new user
+        gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
+        // Simulate creation of GitLab user
+        gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
+
+        // make request and assert Status 400
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        // Assert that old user data is still there
+        Optional<User> updatedUser = userRepo.findOneByLogin(user.getLogin());
+        assertThat(updatedUser.isPresent()).isTrue();
+        assertThat(updatedUser.get().getFirstName()).isEqualTo("Old Firstname");
+        assertThat(updatedUser.get().getActivated()).isTrue();
     }
 
 }

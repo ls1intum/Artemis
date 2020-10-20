@@ -125,6 +125,11 @@ public class GitlabRequestMockProvider {
         doReturn(null).when(userApi).getUser(eq(login));
     }
 
+    /**
+     * Mocks that given user is not found in GitLab and is hence created.
+     * @param login Login of the user who's creation is mocked
+     * @throws GitLabApiException Never
+     */
     public void mockCreationOfUser(String login) throws GitLabApiException {
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
