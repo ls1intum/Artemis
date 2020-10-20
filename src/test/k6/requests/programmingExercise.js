@@ -72,8 +72,8 @@ export function createProgrammingExercise(artemis, courseId, programmingLanguage
         case 'C':
             programmingExerciseProblemStatement = programmingExerciseProblemStatementC;
             break;
-        case "SWIFT":
-            // TODO: swift
+        case 'SWIFT':
+            // TODO: swift add test files
             programmingExerciseProblemStatement = programmingExerciseProblemStatementJava;
             break;
     }
