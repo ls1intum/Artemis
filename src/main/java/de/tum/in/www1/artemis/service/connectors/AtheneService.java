@@ -243,7 +243,6 @@ public class AtheneService {
         }
 
         return textBlocks;
-
     }
 
     /**
