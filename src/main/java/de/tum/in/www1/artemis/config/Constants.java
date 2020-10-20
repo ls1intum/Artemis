@@ -62,6 +62,8 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
+    public static final String SOLUTION_REPO_NAME = "solution";
+
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
@@ -93,6 +95,8 @@ public final class Constants {
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
     public static final String TESTS_CHECKOUT_PATH = "tests";
+
+    public static final String SOLUTION_CHECKOUT_PATH = "solution";
 
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
 
