@@ -201,10 +201,10 @@ Participating in Programming Exercises
 - If your exercise allows the use of the code editor your screen will be divided into three sections, from left to right: 
 
    1. The file browser
-   2. the code Editor
+   2. The code Editor
    3. The instructions
 
-- The file browser displays the structure of the assignment. You can access any file within the assignment. The files content will then be displayed on the code editor where you can edit the file's content. 
+- The file browser displays the file structure of the assignment. You can access any file within the assignment. Artemis will display the selected file's content in the code editor where you can edit it. 
 
     - You can add new files and directories using the ``Add File``  and ``Add Folder`` buttons.
     - You also have the ability to rename and delete files and folders, therefore **caution** is advised. 
@@ -253,8 +253,8 @@ Participating in Programming Exercises
     .. warning::
         You are responsible for pushing/submitting your code. Your instructors **cannot** help you if you have saved, but did not submit.
 
-- Real-time feedback in programming exercises during the online exam is limited.
-- You will only see if your code compiles or not
+- Your instructors can decide to limit the real-time feedback in programming exercises during the online exam.
+- In that case, you will only see if your code compiles or not:
 
     1. **0%, Build failed** means that your code does **not** compile!
     2. **0%, 0 of 0 passed** means that your code compiles but provides no further information about your final score. 
