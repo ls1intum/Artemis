@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor" })
-    Optional<Submission> findWithEagerResultById(Long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    Optional<Submission> findWithEagerResultsById(Long submissionId);
 
     @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findExampleSubmissionByIdWithEagerResult(long submissionId);
