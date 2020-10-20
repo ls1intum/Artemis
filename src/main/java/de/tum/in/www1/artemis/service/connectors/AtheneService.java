@@ -1,5 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
+import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authorizationHeaderForSymmetricSecret;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+
+import java.util.*;
+
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.NetworkingError;
@@ -10,20 +26,6 @@ import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
 import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.validation.constraints.NotNull;
-import java.util.*;
-
-import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authorizationHeaderForSymmetricSecret;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 @Service
 @Profile("athene")
@@ -57,7 +59,8 @@ public class AtheneService {
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
 
-    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextBlockService textBlockService, TextClusterRepository textClusterRepository, TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService) {
+    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextBlockService textBlockService,
+            TextClusterRepository textClusterRepository, TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService) {
         this.textSubmissionService = textSubmissionService;
         this.textBlockRepository = textBlockRepository;
         this.textBlockService = textBlockService;
@@ -70,7 +73,9 @@ public class AtheneService {
     private static class Request {
 
         public long courseId;
+
         public String callbackUrl;
+
         public List<TextSubmission> submissions;
 
         Request(@NotNull long courseId, @NotNull List<TextSubmission> submissions, @NotNull String callbackUrl) {
@@ -162,11 +167,13 @@ public class AtheneService {
 
                 // Register task for exercise as running, AtheneResource calls finishTask on result receive
                 startTask(exercise.getId());
-            } catch (NetworkingError networkingError) {
+            }
+            catch (NetworkingError networkingError) {
                 log.error("Error while calling Remote Service", networkingError);
             }
 
-        } else {
+        }
+        else {
 
             log.info("More than 10 submissions needed to calculate automatic feedback. Falling back to naive splitting");
 
@@ -199,11 +206,11 @@ public class AtheneService {
         // Parse textBlocks (blocks will come as AtheneDTO.TextBlock with their submissionId and need to be parsed)
         List<TextBlock> textBlocks = parseTextBlocks(blocks, exerciseId);
 
-        //Save textBlocks in Database
+        // Save textBlocks in Database
         final Map<String, TextBlock> textBlockMap;
         textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
 
-        //Save clusters in Database
+        // Save clusters in Database
         processClusters(clusters, textBlockMap, exerciseId);
 
         // Notify atheneService of finished task
@@ -222,12 +229,11 @@ public class AtheneService {
     public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlock> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true, false);
-        Map<Long, TextSubmission> submissionsMap = submissions.stream()
-            .collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
+        Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList();
-        for (AtheneDTO.TextBlock t: blocks) {
+        for (AtheneDTO.TextBlock t : blocks) {
             // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
             newBlock.setId(t.id);
@@ -269,7 +275,7 @@ public class AtheneService {
         for (TextCluster cluster : savedClusters) {
             cluster.setExercise(textExercise);
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
-                .collect(toList());
+                    .collect(toList());
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
             updatedBlockReferences = textBlockRepository.saveAll(updatedBlockReferences);
             cluster.setBlocks(updatedBlockReferences);

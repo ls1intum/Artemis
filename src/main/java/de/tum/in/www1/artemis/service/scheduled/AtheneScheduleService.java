@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
+import de.tum.in.www1.artemis.service.connectors.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -44,8 +44,8 @@ public class AtheneScheduleService {
 
     private final TaskScheduler scheduler;
 
-    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService,
-                                 @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, AtheneService atheneService) {
+    public AtheneScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            Environment env, AtheneService atheneService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseService = textExerciseService;
         this.scheduler = scheduler;

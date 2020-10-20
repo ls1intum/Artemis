@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -36,7 +36,7 @@ public class InstanceMessageReceiveService {
     private Optional<AtheneScheduleService> atheneScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-                                         TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
+            TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseService = textExerciseService;
