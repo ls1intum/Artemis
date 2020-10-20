@@ -149,7 +149,7 @@ public class AutomaticTextAssessmentConflictService {
                 return (TextSubmission) conflict.getFirstFeedback().getResult().getSubmission();
             }
         }).collect(toSet());
-        final Map<Long, List<TextBlock>> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionSet.stream().map(TextSubmission::getId).collect(toList())).stream()
+        final Map<Long, List<TextBlock>> textBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toList())).stream()
                 .collect(groupingBy(b -> b.getSubmission().getId()));
         textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlocks.get(textSubmission.getId())));
         return textSubmissionSet;

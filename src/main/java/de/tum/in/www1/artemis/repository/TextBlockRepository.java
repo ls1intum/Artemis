@@ -28,5 +28,5 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     List<TextBlock> findAllBySubmissionId(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission" })
-    List<TextBlock> findAllBySubmissionId(List<Long> ids);
+    List<TextBlock> findAllBySubmissionIdIn(List<Long> submissionIdList);
 }
