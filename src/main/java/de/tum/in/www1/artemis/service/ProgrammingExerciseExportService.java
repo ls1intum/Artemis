@@ -396,8 +396,8 @@ public class ProgrammingExerciseExportService {
         // Get all files in repository expect .git files
         List<String> allRepoFiles = listAllFilesInPath(repository.getLocalPath());
 
-        // is Java programming language
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+        // is Java or Kotlin programming language
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             // Filter all Eclipse .project files
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
