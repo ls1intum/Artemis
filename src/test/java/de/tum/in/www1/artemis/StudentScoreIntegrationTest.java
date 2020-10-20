@@ -137,16 +137,16 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course = courseRepo.findAll().get(0);
         // exercise3
         exercise = new TextExercise().course(course);
-        exerciseRepo.save(exercise);
+        exerciseRepo.saveAndFlush(exercise);
         // score for student2 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(75L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseExerciseOne.isEmpty()).as("response is not empty").isFalse();
@@ -162,7 +162,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     public void studentScoresForExerciseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
         course.setStudentGroupName("tutor");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
 
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -173,7 +173,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
 
         request.get("/api/student-scores/exercise/" + exerciseRepo.findAll().get(0).getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -192,16 +192,16 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         course = courseRepo.findAll().get(0);
         // exercise3
         exercise = new TextExercise().course(course);
-        exerciseRepo.save(exercise);
+        exerciseRepo.saveAndFlush(exercise);
         // score for student2 in exercise3 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(30L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
 
         responseCourseOne = request.get("/api/student-scores/course/" + courseRepo.findAll().get(0).getId(), HttpStatus.OK, List.class);
         assertThat(responseCourseOne.isEmpty()).as("response is not empty").isFalse();
@@ -216,7 +216,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
     public void studentScoresForCourseTestAccessForbidden() throws Exception {
         course = courseRepo.findAll().get(0);
         course.setStudentGroupName("tutor");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
 
         request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -227,7 +227,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
 
         request.get("/api/student-scores/course/" + course.getId(), HttpStatus.FORBIDDEN, List.class);
     }
@@ -245,12 +245,12 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // score for student3 in exercise1 in course1
         studentParticipation = database.addParticipationForExercise(exercise, user.getLogin());
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipationRepo.save(studentParticipation);
+        studentParticipationRepo.saveAndFlush(studentParticipation);
         result = new Result();
         result.setParticipation(studentParticipation);
         result.setRated(true);
         result.setScore(90L);
-        resultRepo.save(result);
+        resultRepo.saveAndFlush(result);
 
         responseExerciseOne = request.get("/api/student-scores/exercise/" + exercise.getId(), HttpStatus.OK, List.class);
 
@@ -278,7 +278,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: change back to student1 USER after releasing feature for students
         course = courseRepo.findAll().get(0);
         course.setInstructorGroupName("test");
-        courseRepo.save(course);
+        courseRepo.saveAndFlush(course);
         user = userRepo.findAllInGroup("tumuser").get(0);
         exercise = exerciseRepo.findAll().get(0);
 
@@ -296,7 +296,6 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(response.getScore()).as("response score is old score").isEqualTo(result.getScore());
 
         result.setScore(100L);
-        result.setStudentScore(response); // does nothing for listener somehow
         resultRepo.save(result);
 
         response = request.get("/api/student-scores/exercise/" + exercise.getId() + "/student/" + user.getLogin(), HttpStatus.OK, StudentScore.class);
@@ -333,7 +332,7 @@ public class StudentScoreIntegrationTest extends AbstractSpringIntegrationBamboo
         newResult.setParticipation(studentParticipation);
         newResult.setRated(true);
         newResult.setScore(15L);
-        resultRepo.save(newResult);
+        resultRepo.saveAndFlush(newResult);
         // kleiner umweg
         resultRepo.delete(oldResult);
 
