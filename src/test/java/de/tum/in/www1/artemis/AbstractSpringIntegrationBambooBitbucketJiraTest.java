@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.util.Verifiable;
 
@@ -50,6 +51,9 @@ import de.tum.in.www1.artemis.util.Verifiable;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "ldap", "scheduling", "athene" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
+
+    @SpyBean
+    protected LdapUserService ldapUserService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
@@ -74,7 +78,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, versionControlService, bambooServer);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer);
         super.resetSpyBeans();
     }
 

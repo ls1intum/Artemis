@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
@@ -26,9 +25,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
-
-    @SpyBean
-    protected LdapUserService ldapUserService;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
@@ -75,7 +71,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService,
-                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationServiceSpy);
+                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationServiceSpy, urlService);
     }
 
     @Override
