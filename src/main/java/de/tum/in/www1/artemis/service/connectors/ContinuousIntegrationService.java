@@ -28,12 +28,13 @@ public interface ContinuousIntegrationService {
     /**
      * Creates the base build plan for the given programming exercise
      *
-     * @param exercise          a programming exercise with the required information to create the base build plan
-     * @param planKey           the key of the plan
-     * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
-     * @param testRepositoryURL the URL of the test repository
+     * @param exercise              a programming exercise with the required information to create the base build plan
+     * @param planKey               the key of the plan
+     * @param repositoryURL         the URL of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryURL     the URL of the test repository
+     * @param solutionRepositoryURL the URL of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise ignored.
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL, URL solutionRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
@@ -237,8 +238,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL -> Constants.ASSIGNMENT_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for assignment repo has not yet been defined for " + language);
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -247,9 +247,18 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL -> "";
-                    case C -> Constants.TESTS_CHECKOUT_PATH;
-                    default -> throw new IllegalArgumentException("Repository checkout path for test repo has not yet been defined for " + language);
+                    case JAVA, PYTHON, HASKELL, KOTLIN -> "";
+                    case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
+                };
+            }
+        },
+        SOLUTION {
+
+            @Override
+            public String forProgrammingLanguage(ProgrammingLanguage language) {
+                return switch (language) {
+                    case HASKELL -> Constants.SOLUTION_CHECKOUT_PATH;
+                    default -> throw new IllegalArgumentException("Repository checkout path for solution repo has not yet been defined for " + language);
                 };
             }
         }
