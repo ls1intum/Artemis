@@ -31,7 +31,7 @@ Offline Mode
 - The exam mode in Artemis tolerates issues with the Internet connection.
 - In case you are not connected, you can continue working on text-, quiz- and modeling exercises, but you might get warnings that your solutions cannot be saved.
 - If your Internet connection recovers, Artemis will save your solution.
-- Artemis tries to save your solution every 30 seconds, when you navigate between exercises and when you click ``Save`` or ``Save & Continue``.
+- Artemis tries to save your solution every 30 seconds, when you navigate between exercises and when you click |save| or |save_continue|.
 - Programming exercises have 2 modes.
 
     1. **Online code editor:** can only be used when you are online. 
@@ -67,7 +67,7 @@ Accessing the Exam
 ^^^^^^^^^^^^^^^^^^
 - Log in to Artemis with your account credentials.
 - The current exam should be displayed at the top of the *Course Overview* screen.
-- You can also access the exam by navigating to the course and then clicking on ``Exams``.
+- You can also access the exam by navigating to the course and then to the exams.
 
     .. note::
         The exam will become visible shortly before the working time starts.
@@ -83,7 +83,7 @@ Welcome Screen
 ^^^^^^^^^^^^^^
 - The welcome screen gives you an overview of all the important information you need about the exam. 
 - Carefully read through the instructions.
-- Once you have read them, ``confirm`` that you will follow the rules and sign with your full name.
+- Once you have read them, confirm that you will follow the rule, sign with your full name and click |start|.
 
     .. note::
         Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
@@ -102,16 +102,16 @@ Exam Conduction
 - Once the exam working time starts and you have confirmed your participation, the *Conduction* screen will appear. 
 - On the header, you will find the *Exam Navigation Bar*. You can use this bar to navigate between different exercises. For each exercise an icon will display your current status.
 
-    - When there are ``unsaved`` **or** ``unsubmitted``, the exercise representation on the navigation bar will become ``yellow``. 
-    - When your changes have been ``saved`` **and** ``submitted``, it's background with turn ``blue`` and a ``checkmark`` icon will be shown. 
-    - A blue background without a checkmark indicates that you have not started this exercise.
+    - When there are ``unsaved`` **or** ``unsubmitted`` changes, the exercise representation on the navigation bar will become |unsaved|. 
+    - When your changes have been ``saved`` **and** ``submitted``, the exercise representation on the navigation bar will become |saved|. 
+    - |started| indicates that you have not started this exercise.
 
-- You can also navigate through the exercises when you are done with one by clicking ``Save & Continue``. This action will save and submit your changes and move to the next exercise. 
+- You can also navigate through the exercises when you are done with one by clicking |save_continue|. This action will save and submit your changes and move to the next exercise. 
 
     .. warning::
-        For programming exercises, you must manually press ``submit`` otherwise your solution will **not** be counted!
+        For programming exercises, you must manually press |submit| otherwise your solution will **not** be counted!
 
-- On the header, you will also find the ``Hand in early`` button. If you press this, you will be sent to the exam `End Screen`_. 
+- On the header, you will also find the |hand_in_early| button. If you press this, you will be sent to the exam `End Screen`_. 
 - The *time left* until the end of the exam is also shown next to the action buttons, or below, depending on your screen size.
 
     .. note::
@@ -133,7 +133,7 @@ Participating in Quiz Exercises
 
 - All questions are listed in the main screen below one another.
 - To navigate between them you can either scroll or use the ``question overview`` on the left. When you click on one of the question representations, your view will automatically scroll to the respective question.
-- To submit your solution, simply press ``Save & Continue``.
+- To submit your solution, simply press |save_continue|.
 
     .. note::
         Your submission will automatically be saved every 30 seconds. 
@@ -151,10 +151,10 @@ Participating in Text Exercises
     .. note::
         On small screens, the problem statement is shown above the text editor.
 
-- If you want to focus only on the text editor, you can collapse the problem statement by pressing on the ``right arrow``. This can be reverted by pressing the arrow again.
+- If you want to focus only on the text editor, you can collapse the problem statement by pressing on |right_arrow|. This can be reverted by pressing the arrow again.
 
     .. note::
-        You can also choose to resize the problem statement by dragging the ``outline box``.
+        You can also choose to resize the problem statement by dragging the outline box |outline_box|.
 
 - Within the editor you can type out your solution. The editor will automatically track your number of words and number of characters.
 
@@ -171,18 +171,18 @@ Participating in Modeling Exercises
     .. note::
         On small screens, the problem statement is shown above the modeling editor.
 
-- If you want to focus only on the modeling editor, you can collapse the problem statement by pressing on the ``right arrow``. This can be reverted by pressing the arrow again.
+- If you want to focus only on the modeling editor, you can collapse the problem statement by pressing on |right_arrow|. This can be reverted by pressing the arrow again.
 
     .. note::
-        You can also choose to resize the problem statement by dragging the ``outline box``.
+        You can also choose to resize the problem statement by dragging the outline box |outline_box|.
 
 - Within the editor you can model your solution. Depending on the diagram type, you will find the available elements on the right side of the editor. Simply drag and drop them into the editing field.
 - When you click on a dropped element, you can configure it by setting it's ``name``, it's ``attributes``, ``methods`` etc. 
 - To connect elements you can simply drag an element's edges to another element. The editor will then automatically connect those two. 
-- If you are unclear about how to use the modeling editor, you can click on ``Help``. It will provide further information about how to use the modeling editor. 
+- If you are unclear about how to use the modeling editor, you can click on |help|. It will provide further information about how to use the modeling editor. 
 
     .. note::
-        If you need more space, you can work in fullscreen by clicking on ``Fullscreen``. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode simply click ``Exit Fullscreen``.
+        If you need more space, you can work in fullscreen by clicking on |fullscreen|. This mode will use your whole screen for the modeling exercise thereby giving you more space to model your solution. To exit the fullscreen mode simply click |exit_fullscreen|.
 
 .. figure:: student/modeling_exercises.png
    :alt: Participating in Modeling Exercises
@@ -206,21 +206,21 @@ Participating in Programming Exercises
 
 - The file browser displays the file structure of the assignment. You can access any file within the assignment. Artemis will display the selected file's content in the code editor where you can edit it. 
 
-    - You can add new files and directories using the ``Add File``  and ``Add Folder`` buttons.
-    - You also have the ability to rename and delete files and folders, therefore **caution** is advised. 
+    - You can add new files and directories using the |add_file|  and |add_folder| buttons.
+    - You also have the ability to rename |rename| and delete |delete| files and folders, therefore **caution** is advised. 
 
         .. note::
-            If you accidentally delete or remove a file, you can use ``Refresh files``, to load the last saved version from the server.
+            If you accidentally delete or remove a file, you can use |refresh_files|, to load the last saved version from the server.
 
 - The code editor allows you to edit the content of specific files. It shows the line numbers and will also annotate the appropriate line, if a compilation error occurs. 
 - The instructions are docked to the right.
-- If you want to focus only on the code editor, you can collapse the instructions by pressing on the ``right arrow``. This can be reverted by pressing the arrow again. Similarly, if you want to collapse the file browser, you can press the ``left arrow`` above the file browser. 
+- If you want to focus only on the code editor, you can collapse the instructions by pressing on the |right_arrow|. This can be reverted by pressing the arrow again. Similarly, if you want to collapse the file browser, you can press the |left_arrow| above the file browser. 
 
     .. note::
-        You can also choose to resize any of the three sections by dragging the ``outline box``.
+        You can also choose to resize any of the three sections by dragging the |outline_box|.
 
-- When you press ``Save``, your files are saved on the Artemis server. However, you must press ``Submit`` for your solution to be counted!
-- When you press ``Submit``, your changes are pushed to the VC server and a build is started on the CI server. This is indicated by the results changing from ``No results found`` to ``Building and testing``.
+- When you press |save|, your files are saved on the Artemis server. However, you must press |submit| for your solution to be counted!
+- When you press |submit|, your changes are pushed to the version control (VC) server and a build is started on the continuous integration (CI) server. This is indicated by the results changing from |no_results_found| to |building_and_testing|.
 
     .. warning::
         There is no auto-submit!
@@ -231,7 +231,7 @@ Participating in Programming Exercises
 
    Participating in Programming Exercises with the online code editor and local IDE enabled
 
-- If your exercise allows the use of the local IDE you will have access to the button ``Clone Repository``.
+- If your exercise allows the use of the local IDE you will have access to the button |clone_repo|.
 - When you click it you can choose to clone the exercise via ``HTTPS`` or ``SSH``, if you have configured your private key.
 
     .. note::
@@ -242,7 +242,7 @@ Participating in Programming Exercises
     1. Clone the Exercise
     2. Import the project in your IDE
     3. Work on the code
-    4. Commit and push the code. A push is equivalent to pressing the ``Submit`` button.
+    4. Commit and push the code. A push is equivalent to pressing the |submit| button.
 
 .. figure:: student/clone_repository.png
    :alt: Clone Repository
@@ -256,8 +256,8 @@ Participating in Programming Exercises
 - Your instructors can decide to limit the real-time feedback in programming exercises during the online exam.
 - In that case, you will only see if your code compiles or not:
 
-    1. **0%, Build failed** means that your code does **not** compile!
-    2. **0%, 0 of 0 passed** means that your code compiles but provides no further information about your final score. 
+    1. |build_failed| means that your code does **not** compile!
+    2. |build_passed| means that your code compiles but provides no further information about your final score. 
 
 
     .. warning::
@@ -266,10 +266,10 @@ Participating in Programming Exercises
 End Screen
 ^^^^^^^^^^
 - When you are finished with the exercises, or the time runs out you navigate to the *End Screen*.
-- This is done either by clicking on ``Hand in early`` or automatically when the exam conduction time is over. 
+- This is done either by clicking on |hand_in_early| or automatically when the exam conduction time is over. 
 
     .. note::
-        If you navigated to this screen via ``Hand in early``, you have the option to return to the conduction by clicking on ``Continue``.
+        If you navigated to this screen via |hand_in_early|, you have the option to return to the conduction by clicking on |continue|.
 
 - In this screen you should confirm that you followed all the rules and sign with your full name, similar to the `Welcome Screen`_.
 - You are given an additional ``grace period`` to submit the exam after the conduction is over. This additional time is added to the timer shown on the top right.
@@ -298,7 +298,7 @@ Summary
    Summary before the results are published
 
 - Once the results have been published, you can view your score in the summary.
-- Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on ``complain`` and explain your rationale.
+- Additionally, if within the student review period, you have the option to complain about manual assessments made. To do this, simply click on |complain| and explain your rationale.
 - A second assessor, different from the original one will have the opportunity to review your complaint and respond to it.
         
     .. note::
@@ -309,3 +309,32 @@ Summary
    :align: center
 
    Complaining about the Assessment of a Text Exercise
+
+|
+
+.. |add_file| image:: student/buttons/add_file.png
+.. |add_folder| image:: student/buttons/add_folder.png
+.. |delete| image:: student/buttons/delete_file.png
+.. |rename| image:: student/buttons/rename_file.png
+.. |refresh_files| image:: student/buttons/refresh_files.png
+.. |submit| image:: student/buttons/submit.png
+.. |build_failed| image:: student/buttons/build_failed.png
+.. |save| image:: student/buttons/save.png
+.. |save_continue| image:: student/buttons/save_continue.png
+.. |start| image:: student/buttons/start.png
+.. |unsaved| image:: student/buttons/unsaved_changes.png
+.. |saved| image:: student/buttons/saved_changes.png
+.. |started| image:: student/buttons/started.png
+.. |right_arrow| image:: student/buttons/right_arrow.png
+.. |left_arrow| image:: student/buttons/left_arrow.png
+.. |outline_box| image:: student/buttons/outline_box.png
+.. |build_passed| image:: student/buttons/hidden.png
+.. |clone_repo| image:: student/buttons/clone_repo.png
+.. |hand_in_early| image:: student/buttons/hand_in_early.png
+.. |help| image:: student/buttons/help.png
+.. |continue| image:: student/buttons/continue.png
+.. |complain| image:: student/buttons/complain.png
+.. |fullscreen| image:: student/buttons/fullscreen.png
+.. |exit_fullscreen| image:: student/buttons/exit_fullscreen.png
+.. |building_and_testing| image:: student/buttons/building_and_testing.png
+.. |no_results_found| image:: student/buttons/no_results_found.png
